@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: Colors.border,
     paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 8,
+    height: 52,
     shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -409,9 +409,13 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    ...Typography.bodyMedium,
+    height: 24,
+    fontSize: 16,
     color: Colors.textPrimary,
     padding: 0,
+    margin: 0,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   sendButton: {
     marginLeft: 4,

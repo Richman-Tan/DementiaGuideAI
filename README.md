@@ -4,6 +4,12 @@ A modern iOS mobile application that acts as a digital library manager for demen
 
 ---
 
+## Application Workflow
+
+![DementiaGuide AI Workflow](./assets/workflow.png)
+
+---
+
 ## Overview
 
 DementiaGuide AI is designed for caregivers, family members, and healthcare professionals. The app provides evidence-based dementia care guidance through a calm, accessible, and emotionally supportive interface. The AI avatar — **Aria** — responds in real time with natural speech, lip-sync, and expressive visual communication.

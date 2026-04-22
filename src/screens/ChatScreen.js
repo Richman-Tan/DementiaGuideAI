@@ -189,7 +189,7 @@ export const ChatScreen = ({ navigation, route }) => {
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={insets.top + 52}
+        keyboardVerticalOffset={insets.top + 68}
       >
         {/* ── Messages ── */}
         <FlatList
@@ -297,11 +297,11 @@ const styles = StyleSheet.create({
   navBarSafeArea: {
     backgroundColor: '#F9F9F9',
   },
-  // Content row: fixed 52pt height, items vertically centered
+  // Content row: fixed height, items vertically centered
   navBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 52,
+    height: 68,
     paddingHorizontal: 8,
     backgroundColor: '#F9F9F9',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
 
   // ── Message list ──
   list: {
-    paddingTop: 12,
+    paddingTop: 24,
     paddingBottom: 4,
     paddingHorizontal: 8,
     gap: 2,

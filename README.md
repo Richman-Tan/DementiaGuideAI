@@ -8,6 +8,10 @@ A modern iOS mobile application that acts as a digital library manager for demen
 
 ![DementiaGuide AI Workflow](./assets/workflow.png)
 
+## Rag Pipeline Workflow
+
+<img width="1536" height="1024" alt="RAGPipieline" src="https://github.com/user-attachments/assets/a19212ea-bd53-41d7-bb79-c5fcdc1e44c0" />
+
 ---
 
 ## Video Walkthrough of our current Application

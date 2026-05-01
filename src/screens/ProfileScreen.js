@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  TextInput,
   Animated,
   StatusBar,
   Alert,
@@ -13,8 +14,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
+import { openaiService } from '../services/openaiService';
 
 const Section = ({ title, children }) => (
   <View style={styles.section}>
@@ -97,6 +100,68 @@ const TextSizeSelector = ({ value, onChange }) => {
   );
 };
 
+// ─── API Key Row ──────────────────────────────────────────────────────────────
+const ApiKeyRow = ({ value, onSave, onClear }) => {
+  const [editing, setEditing] = useState(false);
+  const [input, setInput] = useState('');
+  const [hidden, setHidden] = useState(true);
+
+  const displayValue = value ? `sk-...${value.slice(-4)}` : 'Not configured';
+
+  if (editing) {
+    return (
+      <View style={styles.apiKeyEditRow}>
+        <View style={[styles.settingIcon, { backgroundColor: `${Colors.primary}18` }]}>
+          <MaterialCommunityIcons name="key-variant" size={20} color={Colors.primary} />
+        </View>
+        <TextInput
+          style={styles.apiKeyInput}
+          value={input}
+          onChangeText={setInput}
+          placeholder="sk-proj-..."
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry={hidden}
+          placeholderTextColor={Colors.textTertiary}
+          accessibilityLabel="OpenAI API key input"
+        />
+        <TouchableOpacity onPress={() => setHidden(h => !h)} style={styles.eyeBtn}>
+          <MaterialCommunityIcons
+            name={hidden ? 'eye-outline' : 'eye-off-outline'}
+            size={20} color={Colors.textTertiary}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.saveKeyBtn, input.length < 20 && styles.saveKeyBtnDisabled]}
+          onPress={() => {
+            if (input.length >= 20) {
+              onSave(input);
+              setEditing(false);
+              setInput('');
+            }
+          }}
+        >
+          <Text style={styles.saveKeyText}>Save</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { setEditing(false); setInput(''); }}>
+          <Text style={styles.cancelKeyText}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <SettingRow
+      icon="key-variant"
+      iconColor={value ? Colors.success : Colors.warning}
+      label="OpenAI API Key"
+      sublabel={displayValue}
+      onPress={() => setEditing(true)}
+      isLast={false}
+    />
+  );
+};
+
 export const ProfileScreen = ({ navigation }) => {
   const [settings, setSettings] = useState({
     textSize: 'medium',
@@ -109,6 +174,7 @@ export const ProfileScreen = ({ navigation }) => {
     notificationsEnabled: true,
     darkMode: false,
   });
+  const [apiKey, setApiKey] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -117,9 +183,37 @@ export const ProfileScreen = ({ navigation }) => {
       duration: 500,
       useNativeDriver: true,
     }).start();
+    openaiService.getApiKey().then(k => setApiKey(k));
   }, []);
 
   const toggleSetting = (key) => setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const handleSaveApiKey = async (key) => {
+    await openaiService.saveApiKey(key);
+    setApiKey(key);
+    openaiService.initKnowledgeBase().catch(() => {});
+    Alert.alert(
+      'API Key Saved',
+      'Aria will now use your OpenAI key. The knowledge base will load in the background the next time you open the chat.'
+    );
+  };
+
+  const handleClearCache = () => {
+    Alert.alert(
+      'Clear AI Cache',
+      'This forces the knowledge base to re-download on next use. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear', style: 'destructive',
+          onPress: async () => {
+            await openaiService.clearCache();
+            Alert.alert('Cache cleared', 'Knowledge base will reload on next chat session.');
+          },
+        },
+      ]
+    );
+  };
 
   const handleClearData = () => {
     Alert.alert(
@@ -127,7 +221,11 @@ export const ProfileScreen = ({ navigation }) => {
       'This will remove all your conversation history. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Clear', style: 'destructive', onPress: () => {} },
+        {
+          text: 'Clear', style: 'destructive', onPress: async () => {
+            await AsyncStorage.removeItem('chat_messages_v1');
+          },
+        },
       ]
     );
   };
@@ -295,6 +393,26 @@ export const ProfileScreen = ({ navigation }) => {
             />
           </Section>
 
+          {/* AI Configuration */}
+          <Section title="AI Configuration">
+            <ApiKeyRow
+              value={apiKey}
+              onSave={handleSaveApiKey}
+              onClear={async () => {
+                await openaiService.clearApiKey();
+                setApiKey(null);
+              }}
+            />
+            <SettingRow
+              icon="database-remove-outline"
+              iconColor={Colors.error}
+              label="Clear AI Cache"
+              sublabel="Forces re-embedding of knowledge base on next use"
+              onPress={handleClearCache}
+              isLast
+            />
+          </Section>
+
           {/* About */}
           <Section title="About">
             <SettingRow
@@ -305,10 +423,10 @@ export const ProfileScreen = ({ navigation }) => {
               isLast={false}
             />
             <SettingRow
-              icon="cpu-64-bit"
+              icon="robot-outline"
               iconColor={Colors.textSecondary}
-              label="Powered by NVIDIA ACE"
-              sublabel="Real-time avatar interaction technology"
+              label="Powered by OpenAI"
+              sublabel="GPT-4o-mini with RAG knowledge retrieval"
               isLast={false}
             />
             <SettingRow
@@ -496,6 +614,47 @@ const styles = StyleSheet.create({
   },
   sizeChipTextActive: {
     color: Colors.primary,
+  },
+  apiKeyEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  apiKeyInput: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    backgroundColor: Colors.background,
+  },
+  eyeBtn: {
+    padding: 4,
+  },
+  saveKeyBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
+  saveKeyBtnDisabled: {
+    backgroundColor: Colors.border,
+  },
+  saveKeyText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  cancelKeyText: {
+    color: Colors.primary,
+    fontWeight: '500',
+    fontSize: 14,
   },
   trustFooter: {
     marginHorizontal: 20,

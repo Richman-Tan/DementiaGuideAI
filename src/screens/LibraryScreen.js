@@ -16,7 +16,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { CategoryCard } from '../components/CategoryCard';
 import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
-import { KNOWLEDGE_CATEGORIES, FEATURED_RESOURCES } from '../constants/data';
+import { KNOWLEDGE_CATEGORIES } from '../constants/data';
+import { KNOWLEDGE_BASE } from '../data/knowledgeBase';
+
+const CATEGORY_LABELS = Object.fromEntries(
+  KNOWLEDGE_CATEGORIES.map(c => [c.id, c.title])
+);
+const readTime = content => `${Math.ceil(content.split(/\s+/).length / 200)} min read`;
 
 const ResourceItem = ({ resource, onPress }) => (
   <TouchableOpacity
@@ -36,9 +42,9 @@ const ResourceItem = ({ resource, onPress }) => (
     </View>
     <Text style={styles.resourceTitle} numberOfLines={2}>{resource.title}</Text>
     <View style={styles.resourceMeta}>
-      <Text style={styles.resourceCategory}>{resource.category}</Text>
+      <Text style={styles.resourceCategory}>{CATEGORY_LABELS[resource.category] ?? resource.category}</Text>
       <View style={styles.dot} />
-      <Text style={styles.resourceReadTime}>{resource.readTime}</Text>
+      <Text style={styles.resourceReadTime}>{resource.readTime ?? readTime(resource.content)}</Text>
     </View>
     <View style={styles.resourceTags}>
       {resource.tags.slice(0, 3).map(tag => (
@@ -82,17 +88,15 @@ export const LibraryScreen = ({ navigation }) => {
 
   const FILTERS = [
     { id: 'all', label: 'All' },
-    { id: 'article', label: 'Articles' },
-    { id: 'guide', label: 'Guides' },
-    { id: 'saved', label: 'Saved' },
+    ...KNOWLEDGE_CATEGORIES.map(c => ({ id: c.id, label: c.title })),
   ];
 
-  const filteredResources = FEATURED_RESOURCES.filter(r => {
+  const filteredResources = KNOWLEDGE_BASE.filter(r => {
     const matchesSearch =
       !searchQuery ||
       r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesFilter = activeFilter === 'all' || r.type === activeFilter;
+    const matchesFilter = activeFilter === 'all' || r.category === activeFilter;
     return matchesSearch && matchesFilter;
   });
 
@@ -125,12 +129,12 @@ export const LibraryScreen = ({ navigation }) => {
             style={styles.statsBanner}
           >
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>228</Text>
+              <Text style={styles.statNumber}>{KNOWLEDGE_BASE.length}</Text>
               <Text style={styles.statLabel}>Resources</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>6</Text>
+              <Text style={styles.statNumber}>{KNOWLEDGE_CATEGORIES.length}</Text>
               <Text style={styles.statLabel}>Categories</Text>
             </View>
             <View style={styles.statDivider} />

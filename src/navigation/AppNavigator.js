@@ -9,6 +9,7 @@ import { ChatScreen } from '../screens/ChatScreen';
 import { LibraryScreen } from '../screens/LibraryScreen';
 import { VoiceScreen } from '../screens/VoiceScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { ArticleDetailScreen } from '../screens/ArticleDetailScreen';
 import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
 
@@ -94,6 +95,11 @@ export const AppNavigator = () => (
   <NavigationContainer>
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={MainTabs} />
+      <Stack.Screen
+        name="ArticleDetail"
+        component={ArticleDetailScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
     </Stack.Navigator>
   </NavigationContainer>
 );

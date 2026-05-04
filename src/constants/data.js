@@ -53,6 +53,15 @@ export const KNOWLEDGE_CATEGORIES = [
     colorMuted: '#EEF7F4',
     count: 7,
   },
+  {
+    id: 'prevention',
+    title: 'Prevention & Early Detection',
+    description: 'Risk factors, warning signs, and brain health strategies',
+    icon: 'brain',
+    color: '#5B9BD5',
+    colorMuted: '#EBF4FC',
+    count: 7,
+  },
 ];
 
 export const FEATURED_RESOURCES = [

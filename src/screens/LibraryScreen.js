@@ -139,7 +139,7 @@ export const LibraryScreen = ({ navigation }) => {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>2024</Text>
+              <Text style={styles.statNumber}>2025</Text>
               <Text style={styles.statLabel}>Updated</Text>
             </View>
           </LinearGradient>
@@ -187,20 +187,17 @@ export const LibraryScreen = ({ navigation }) => {
           </ScrollView>
         </Animated.View>
 
-        {/* Categories */}
-        {!searchQuery && (
+        {/* Categories — hidden when a filter is active or searching */}
+        {!searchQuery && activeFilter === 'all' && (
           <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Categories</Text>
-              <TouchableOpacity accessibilityLabel="See all categories">
-                <Text style={styles.seeAll}>See all</Text>
-              </TouchableOpacity>
+              <Text style={styles.sectionTitle}>Browse by Category</Text>
             </View>
             {KNOWLEDGE_CATEGORIES.map(cat => (
               <CategoryCard
                 key={cat.id}
                 category={cat}
-                onPress={() => navigation.navigate('Chat', { initialMessage: `Tell me about ${cat.title}` })}
+                onPress={(c) => setActiveFilter(c.id)}
               />
             ))}
           </Animated.View>
@@ -210,11 +207,18 @@ export const LibraryScreen = ({ navigation }) => {
         <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
-              {searchQuery ? `Results (${filteredResources.length})` : 'Featured Resources'}
+              {searchQuery
+                ? `Results (${filteredResources.length})`
+                : activeFilter !== 'all'
+                  ? `${KNOWLEDGE_CATEGORIES.find(c => c.id === activeFilter)?.title ?? 'Articles'} (${filteredResources.length})`
+                  : `All Resources (${filteredResources.length})`}
             </Text>
-            {!searchQuery && (
-              <TouchableOpacity accessibilityLabel="See all resources">
-                <Text style={styles.seeAll}>See all</Text>
+            {activeFilter !== 'all' && !searchQuery && (
+              <TouchableOpacity
+                onPress={() => setActiveFilter('all')}
+                accessibilityLabel="Clear category filter"
+              >
+                <Text style={styles.clearFilter}>Clear</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -237,7 +241,7 @@ export const LibraryScreen = ({ navigation }) => {
               <ResourceItem
                 key={r.id}
                 resource={r}
-                onPress={() => navigation.navigate('Chat', { initialMessage: `Tell me more about: ${r.title}` })}
+                onPress={(article) => navigation.navigate('ArticleDetail', { article })}
               />
             ))
           )}
@@ -409,6 +413,10 @@ const styles = StyleSheet.create({
   seeAll: {
     ...Typography.labelMedium,
     color: Colors.primary,
+  },
+  clearFilter: {
+    ...Typography.labelMedium,
+    color: Colors.error,
   },
   resourceCard: {
     backgroundColor: Colors.surface,

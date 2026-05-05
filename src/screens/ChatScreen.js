@@ -10,12 +10,12 @@ import {
   Animated,
   StatusBar,
   ScrollView,
+  FlatList,
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GiftedChat, Bubble } from 'react-native-gifted-chat';
 import { Avatar } from '../components/Avatar';
 import { Colors } from '../constants/colors';
 import { QUICK_QUESTIONS, SAMPLE_MESSAGES } from '../constants/data';
@@ -23,8 +23,6 @@ import { openaiService, OpenAIAuthError, OpenAIRateLimitError } from '../service
 
 const MESSAGES_KEY = 'chat_messages_v1';
 const MAX_PERSISTED = 100;
-const ARIA_USER = { _id: 'aria', name: 'Aria' };
-const ME_USER = { _id: 'user', name: 'You' };
 
 const ERROR_MESSAGES = {
   auth: 'Invalid API key — update it in Settings',
@@ -53,16 +51,6 @@ const TypingIndicator = ({ anim }) => (
   </View>
 );
 
-// ─── Helpers: convert between internal and GiftedChat formats ─────────────────
-const toGifted = (msg) => ({
-  _id: msg.id,
-  text: msg.text,
-  createdAt: new Date(msg.timestamp),
-  user: msg.role === 'user' ? ME_USER : ARIA_USER,
-  sources: msg.sources ?? [],
-  pending: false,
-});
-
 // ─── Persist helpers ──────────────────────────────────────────────────────────
 const persistMessages = async (internalMsgs) => {
   try {
@@ -85,7 +73,8 @@ const loadPersistedMessages = async () => {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 export const ChatScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
-  // Internal message list (newest last) — GiftedChat uses newest-first internally
+  const messageListRef = useRef(null);
+  // Internal message list (oldest first)
   const [internalMessages, setInternalMessages] = useState(SAMPLE_MESSAGES);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -172,6 +161,12 @@ export const ChatScreen = ({ navigation, route }) => {
     }
   }, [isTyping]);
 
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      messageListRef.current?.scrollToEnd({ animated: true });
+    });
+  }, [internalMessages.length, isTyping]);
+
   // ── Send message ──────────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (text) => {
     const trimmed = (text ?? '').trim();
@@ -234,76 +229,22 @@ export const ChatScreen = ({ navigation, route }) => {
     }
   }, [internalMessages, apiKeyMissing, isInitializing]);
 
-  // GiftedChat onSend handler
-  const onGiftedSend = useCallback((messages = []) => {
-    if (messages[0]?.text) sendMessage(messages[0].text);
-  }, [sendMessage]);
-
-  // Convert internal messages to GiftedChat format (newest first)
-  const giftedMessages = [...internalMessages].reverse().map(toGifted);
-
   // ── Custom renderers ──────────────────────────────────────────────────────────
 
-  const renderMessageText = (props) => {
-    const isUser = props.currentMessage.user._id === 'user';
+  const renderMessageBubble = (message) => {
+    const isUser = message.role === 'user';
+    const sources = message.sources ?? [];
     return (
-      <Text style={[
-        styles.messageText,
-        isUser ? styles.messageTextUser : styles.messageTextAria,
-      ]}>
-        {props.currentMessage.text}
-      </Text>
-    );
-  };
+      <View style={[styles.messageRow, isUser ? styles.messageRowUser : styles.messageRowAria]}>
+        <View style={[styles.messageBubble, isUser ? styles.messageBubbleUser : styles.messageBubbleAria]}>
+          <Text style={[
+            styles.messageText,
+            isUser ? styles.messageTextUser : styles.messageTextAria,
+          ]}>
+            {message.text}
+          </Text>
+        </View>
 
-  const renderBubble = (props) => {
-    const isUser = props.currentMessage.user._id === 'user';
-    const sources = props.currentMessage.sources ?? [];
-    return (
-      <View>
-        <Bubble
-          {...props}
-          wrapperStyle={{
-            right: {
-              backgroundColor: Colors.primary,
-              borderRadius: 18,
-              borderBottomRightRadius: 4,
-              marginRight: 0,
-              paddingHorizontal: 2,
-              shadowColor: Colors.primary,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.2,
-              shadowRadius: 4,
-              elevation: 3,
-            },
-            left: {
-              backgroundColor: '#F0F0F5',
-              borderRadius: 18,
-              borderBottomLeftRadius: 4,
-              marginLeft: 0,
-              paddingHorizontal: 2,
-            },
-          }}
-          textStyle={{
-            right: {
-              color: '#fff',
-              fontSize: 16,
-              lineHeight: 22,
-              letterSpacing: -0.2,
-            },
-            left: {
-              color: '#1A1A1A',
-              fontSize: 16,
-              lineHeight: 22,
-              letterSpacing: -0.2,
-            },
-          }}
-          timeTextStyle={{
-            right: { color: 'rgba(255,255,255,0.65)', fontSize: 11 },
-            left: { color: Colors.textTertiary, fontSize: 11 },
-          }}
-          renderMessageText={renderMessageText}
-        />
         {!isUser && sources.length > 0 && (
           <View style={styles.sourcesContainer}>
             <MaterialCommunityIcons name="book-open-outline" size={12} color={Colors.primary} />
@@ -317,6 +258,8 @@ export const ChatScreen = ({ navigation, route }) => {
       </View>
     );
   };
+
+  const renderMessageItem = ({ item }) => renderMessageBubble(item);
 
   const renderChatEmpty = () => (
     <View style={styles.emptyState}>
@@ -477,29 +420,19 @@ export const ChatScreen = ({ navigation, route }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={insets.top + 68}
       >
-        <GiftedChat
-          messages={giftedMessages}
-          onSend={onGiftedSend}
-          user={ME_USER}
-          renderBubble={renderBubble}
-          renderInputToolbar={() => null}
-          renderFooter={renderFooter}
-          renderChatEmpty={renderChatEmpty}
-          renderAvatar={null}
-          renderAvatarOnTop={false}
-          showUserAvatar={false}
-          showAvatarForEveryMessage={false}
-          renderUsernameOnMessage={false}
-          isTyping={false}
-          alwaysShowSend={false}
-          isKeyboardInternallyHandled={false}
+        <FlatList
+          ref={messageListRef}
+          data={internalMessages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessageItem}
+          ListEmptyComponent={renderChatEmpty}
+          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          listViewProps={{
-            showsVerticalScrollIndicator: false,
-            contentContainerStyle: { paddingTop: 8 },
-          }}
-          minInputToolbarHeight={0}
+          contentContainerStyle={styles.messageListContent}
+          onContentSizeChange={() => messageListRef.current?.scrollToEnd({ animated: true })}
         />
+
+        {renderFooter()}
 
         {inputBar}
       </KeyboardAvoidingView>
@@ -599,13 +532,45 @@ const styles = StyleSheet.create({
   },
 
   // Message text
+  messageListContent: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+    paddingTop: 8,
+    paddingHorizontal: 10,
+    paddingBottom: 12,
+  },
+  messageRow: {
+    marginBottom: 10,
+  },
+  messageRowAria: {
+    alignItems: 'flex-start',
+  },
+  messageRowUser: {
+    alignItems: 'flex-end',
+  },
+  messageBubble: {
+    maxWidth: '80%',
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  messageBubbleAria: {
+    backgroundColor: '#F0F0F5',
+    borderBottomLeftRadius: 4,
+  },
+  messageBubbleUser: {
+    backgroundColor: Colors.primary,
+    borderBottomRightRadius: 4,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   messageText: {
     fontSize: 16,
     lineHeight: 22,
     letterSpacing: -0.2,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 6,
   },
   messageTextUser: {
     color: '#fff',
@@ -765,7 +730,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    transform: [{ scaleY: -1 }],
+    paddingVertical: 40,
   },
   emptyText: {
     fontSize: 15,

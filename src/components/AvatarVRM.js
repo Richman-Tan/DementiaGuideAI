@@ -1,19 +1,9 @@
-import React, { useRef, useEffect, useMemo, useState } from 'react';
+import React, { useRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 export const DEFAULT_VRM_MODEL_URL =
-  'https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/fem_vroid.vrm';
-
-function dbg(msg) {
-  return `
-    (function(){
-      var el = document.getElementById('status');
-      if(el){ el.textContent = ${JSON.stringify(msg)}; el.style.color='#00ff88'; el.style.fontSize='14px'; }
-      if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({type:'debug',message:${JSON.stringify(msg)}}));
-    })();
-  `;
-}
+  'https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/beta/HairSample_Male.vrm';
 
 function buildHTML(modelUrl) {
   const safeUrl = modelUrl.replace(/'/g, '%27');
@@ -23,45 +13,79 @@ function buildHTML(modelUrl) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
 <style>
-  *{margin:0;padding:0;overflow:hidden}
-  html,body{width:100%;height:100%;background:transparent}
-  canvas{display:block}
-  #status{
-    position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);
-    text-align:center;color:#fff;
-    font:bold 15px/1.6 system-ui,sans-serif;
-    padding:8px;pointer-events:none;
-    text-shadow:0 1px 4px rgba(0,0,0,0.8)
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  #status {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    text-align: center;
+    color: #fff;
+    font: bold 15px/1.6 system-ui, sans-serif;
+    padding: 8px;
+    pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    z-index: 10;
   }
 </style>
 
-<!-- importmap — must appear before any module script -->
 <script type="importmap">
 {
   "imports": {
-    "three":          "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-    "three/addons/":  "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
     "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.5.2/lib/three-vrm.module.min.js"
   }
 }
 <\/script>
 
-<!-- non-module script: catch errors that happen during module loading -->
 <script>
 window._dbg = function(msg) {
   var el = document.getElementById('status');
-  if(el){ el.textContent = msg; el.style.color='#ffcc00'; }
-  if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({type:'debug',message:msg}));
+  if (el) {
+    el.textContent = msg;
+    el.style.color = '#ffcc00';
+  }
+
+  if (window.ReactNativeWebView) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      type: 'debug',
+      message: msg
+    }));
+  }
 };
+
 window.onerror = function(msg, src, line, col, err) {
-  window._dbg('JS error: ' + msg + ' (line ' + line + ')');
+  window._dbg('JS error: ' + msg + ' line ' + line);
   return false;
 };
+
 window.addEventListener('unhandledrejection', function(e) {
   var reason = e.reason && e.reason.message ? e.reason.message : String(e.reason);
   window._dbg('Unhandled promise rejection: ' + reason);
 });
+
 window._dbg('Page loaded, waiting for module...');
 <\/script>
 </head>
@@ -73,248 +97,494 @@ window._dbg('Page loaded, waiting for module...');
 window._dbg('Module script started');
 
 import * as THREE from 'three';
-window._dbg('THREE imported: r' + THREE.REVISION);
-
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-window._dbg('GLTFLoader imported');
-
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
-window._dbg('three-vrm imported');
 
-// ── Renderer ─────────────────────────────────────────────────────────────────
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
-document.body.prepend(renderer.domElement);
-window._dbg('Renderer created, loading model...');
-
-// ── Scene + fog ───────────────────────────────────────────────────────────────
-const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x080814, 0.12);
-
-// ── Camera (overwritten by frameCamera after model loads) ─────────────────────
-const cam = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 20);
-cam.position.set(0, 1.2, 2.5);
-cam.lookAt(0, 1.1, 0);
-
-// ── Lighting ──────────────────────────────────────────────────────────────────
-const key = new THREE.DirectionalLight(0xfff2dd, 2.4);
-key.position.set(0.7, 2.2, 1.8);
-key.castShadow = true;
-scene.add(key);
-
-const fill = new THREE.DirectionalLight(0xc5d5ff, 0.9);
-fill.position.set(-1.2, 0.8, 0.6);
-scene.add(fill);
-
-const rim = new THREE.DirectionalLight(0x8899ee, 0.6);
-rim.position.set(0, 1.5, -2.5);
-scene.add(rim);
-
-scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-
-// ── Auto-frame camera to show upper 65% of character ─────────────────────────
-function frameCamera(modelScene, camera) {
-  const box = new THREE.Box3().setFromObject(modelScene);
-  const size = new THREE.Vector3();
-  box.getSize(size);
-
-  const modelTop    = box.max.y;
-  const modelBottom = box.min.y;
-  const modelHeight = size.y;
-
-  const frameBottom = modelBottom + modelHeight * 0.35;
-  const frameTop    = modelTop    + modelHeight * 0.06;
-  const frameCenter = (frameBottom + frameTop) / 2;
-  const frameHeight = frameTop - frameBottom;
-
-  const fovRad     = (camera.fov * Math.PI) / 180;
-  const dist       = (frameHeight / 2) / Math.tan(fovRad / 2);
-  const paddedDist = dist * 1.15;
-
-  camera.position.set(0, frameCenter, paddedDist);
-  camera.lookAt(0, frameCenter, 0);
-  camera.updateProjectionMatrix();
-  window._dbg('Camera framed: h=' + modelHeight.toFixed(2) + ' dist=' + paddedDist.toFixed(2));
-}
-
-// ── Load VRM ──────────────────────────────────────────────────────────────────
-let vrm = null;
-const loader = new GLTFLoader();
-loader.crossOrigin = 'anonymous';
-loader.register(parser => new VRMLoaderPlugin(parser));
+window._dbg('Imports loaded: THREE r' + THREE.REVISION);
 
 const statusEl = document.getElementById('status');
 
-loader.load(
-  '${safeUrl}',
-  gltf => {
-    window._dbg('GLTF loaded, extracting VRM...');
-    vrm = gltf.userData.vrm;
-    if (!vrm) {
-      statusEl.textContent = 'No VRM data in model';
-      window._dbg('ERROR: No VRM data in gltf.userData.vrm');
-      return;
-    }
-    window._dbg('VRM extracted, optimising...');
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true,
+  powerPreference: 'high-performance'
+});
 
-    try { VRMUtils.removeUnnecessaryVertices(gltf.scene); } catch(e) {}
-    try { VRMUtils.combineSkeletons(gltf.scene); } catch(e) {}
-    try { VRMUtils.combineMorphs(vrm); } catch(e) {}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(window.innerWidth, window.innerHeight, false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-    // Disable frustum culling so meshes are never clipped out of view
-    vrm.scene.traverse(obj => { obj.frustumCulled = false; });
+document.body.appendChild(renderer.domElement);
 
-    vrm.scene.rotation.y = Math.PI;
-    scene.add(vrm.scene);
-    frameCamera(vrm.scene, cam);
+renderer.domElement.addEventListener('webglcontextlost', function(event) {
+  event.preventDefault();
+  window._dbg('WebGL context lost');
 
-    statusEl.style.display = 'none';
-    if (window.ReactNativeWebView)
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'loaded' }));
-  },
-  xhr => {
-    const pct = xhr.total ? Math.round(xhr.loaded / xhr.total * 100) : '?';
-    statusEl.textContent = 'Loading ' + pct + '%';
-    if (pct % 25 === 0) window._dbg('Model download ' + pct + '%');
-  },
-  err => {
-    const msg = err && err.message ? err.message : String(err);
-    statusEl.textContent = 'Load error — see debug';
-    window._dbg('Model load ERROR: ' + msg);
-    if (window.ReactNativeWebView)
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'error', message: msg }));
+  if (window.ReactNativeWebView) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      type: 'context_lost'
+    }));
   }
+});
+
+renderer.domElement.addEventListener('webglcontextrestored', function() {
+  window._dbg('WebGL context restored');
+});
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(
+  35,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  20
 );
 
-// ── State machine ─────────────────────────────────────────────────────────────
+camera.position.set(0, 1.25, 2.5);
+camera.lookAt(0, 1.25, 0);
+
+scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+
+const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+keyLight.position.set(1, 2, 2);
+scene.add(keyLight);
+
+const fillLight = new THREE.DirectionalLight(0xbfd7ff, 0.8);
+fillLight.position.set(-1.5, 1, 1);
+scene.add(fillLight);
+
+let vrm = null;
+let baseRotationY = 0;
+let basePositionY = 0;
 let avatarState = 'idle';
-function setAvatarState(s) { avatarState = s; }
-window.setAvatarState = setAvatarState;
-function onMsg(e) {
-  try { const d = JSON.parse(e.data); if (d && d.state) setAvatarState(d.state); } catch(ex) {}
-}
-window.addEventListener('message', onMsg);
-document.addEventListener('message', onMsg);
-
-// ── Animation helpers ─────────────────────────────────────────────────────────
-function lerp(a, b, t) { return a + (b - a) * t; }
-function bone(name) { return vrm?.humanoid?.getNormalizedBoneNode(name) ?? null; }
-function expr(name, val) { vrm?.expressionManager?.setValue(name, val); }
-
-const BLINK_HALF = 0.09;
-let blinkCooldown = Math.random() * 2 + 2;
-let blinking = false;
-let blinkProgress = 0;
 let mouthCurrent = 0;
-
-// ── Render loop ───────────────────────────────────────────────────────────────
 let lastTs = null;
 let elapsed = 0;
+let blinkCooldown = 2.2;
+let blinkProgress = 0;
+let blinking = false;
+const boneRefs = {};
+const boneBase = {};
 
-(function animate(ts) {
+function frameCamera(modelScene) {
+  const box = new THREE.Box3().setFromObject(modelScene);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+
+  box.getSize(size);
+  box.getCenter(center);
+
+  const height = size.y || 1.6;
+
+  const visibleBottom = box.min.y + height * 0.35;
+  const visibleTop = box.max.y + height * 0.08;
+  const visibleCenterY = (visibleBottom + visibleTop) / 2;
+  const visibleHeight = visibleTop - visibleBottom;
+
+  const fovRad = THREE.MathUtils.degToRad(camera.fov);
+  const distance = (visibleHeight / 2) / Math.tan(fovRad / 2);
+
+  camera.position.set(center.x, visibleCenterY, distance * 1.2);
+  camera.lookAt(center.x, visibleCenterY, center.z);
+  camera.updateProjectionMatrix();
+
+  window._dbg('Camera framed: h=' + height.toFixed(2) + ' dist=' + distance.toFixed(2));
+}
+
+function setAvatarState(state) {
+  avatarState = state || 'idle';
+}
+
+window.setAvatarState = setAvatarState;
+
+function handleIncomingMessage(event) {
+  try {
+    const data = JSON.parse(event.data);
+    if (data && data.state) {
+      setAvatarState(data.state);
+    }
+  } catch (e) {}
+}
+
+window.addEventListener('message', handleIncomingMessage);
+document.addEventListener('message', handleIncomingMessage);
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function bone(name) {
+  if (!vrm || !vrm.humanoid) return null;
+  if (!boneRefs[name]) {
+    boneRefs[name] = vrm.humanoid.getNormalizedBoneNode(name) || null;
+  }
+  return boneRefs[name];
+}
+
+function rememberBoneBase(name) {
+  const targetBone = bone(name);
+  if (!targetBone || boneBase[name]) return;
+  boneBase[name] = {
+    x: targetBone.rotation.x,
+    y: targetBone.rotation.y,
+    z: targetBone.rotation.z,
+  };
+}
+
+function setBoneRotation(name, x, y, z) {
+  const targetBone = bone(name);
+  if (!targetBone) return;
+
+  rememberBoneBase(name);
+  targetBone.rotation.x = x;
+  targetBone.rotation.y = y;
+  targetBone.rotation.z = z;
+}
+
+function applyRelaxedPose() {
+  // Pull the avatar out of the default T-pose into a calm neutral stance.
+  const leftUpperArm = bone('leftUpperArm');
+  const rightUpperArm = bone('rightUpperArm');
+  const leftLowerArm = bone('leftLowerArm');
+  const rightLowerArm = bone('rightLowerArm');
+  const leftHand = bone('leftHand');
+  const rightHand = bone('rightHand');
+  const spine = bone('spine');
+  const chest = bone('chest');
+  const neck = bone('neck');
+  const head = bone('head');
+
+  [
+    'spine',
+    'chest',
+    'neck',
+    'head',
+    'leftUpperArm',
+    'rightUpperArm',
+    'leftLowerArm',
+    'rightLowerArm',
+    'leftHand',
+    'rightHand',
+  ].forEach(rememberBoneBase);
+
+  if (spine) spine.rotation.x = -0.04;
+  if (chest) chest.rotation.x = 0.02;
+  if (neck) neck.rotation.x = 0.01;
+  if (head) head.rotation.x = -0.02;
+
+  if (leftUpperArm) {
+    leftUpperArm.rotation.z -= -1.3;
+    leftUpperArm.rotation.x += 0.04;
+    leftUpperArm.rotation.y += 0.05;
+  }
+
+  if (rightUpperArm) {
+    rightUpperArm.rotation.z += -1.3;
+    rightUpperArm.rotation.x += 0.04;
+    rightUpperArm.rotation.y -= 0.05;
+  }
+
+  if (leftLowerArm) {
+    leftLowerArm.rotation.z -= 0.04;
+    leftLowerArm.rotation.x -= 0.04;
+  }
+
+  if (rightLowerArm) {
+    rightLowerArm.rotation.z += 0.04;
+    rightLowerArm.rotation.x -= 0.04;
+  }
+
+  if (leftHand) leftHand.rotation.y += 0.02;
+  if (rightHand) rightHand.rotation.y -= 0.02;
+
+  [
+    'spine',
+    'chest',
+    'neck',
+    'head',
+    'leftUpperArm',
+    'rightUpperArm',
+    'leftLowerArm',
+    'rightLowerArm',
+    'leftHand',
+    'rightHand',
+  ].forEach((name) => {
+    const targetBone = bone(name);
+    if (!targetBone) return;
+    boneBase[name] = {
+      x: targetBone.rotation.x,
+      y: targetBone.rotation.y,
+      z: targetBone.rotation.z,
+    };
+  });
+}
+
+function setExpression(name, value) {
+  if (!vrm || !vrm.expressionManager) return;
+
+  try {
+    vrm.expressionManager.setValue(name, value);
+  } catch (e) {}
+}
+
+function loadVRM() {
+  window._dbg('Renderer created, loading model...');
+
+  const loader = new GLTFLoader();
+  loader.crossOrigin = 'anonymous';
+
+  loader.register((parser) => {
+    return new VRMLoaderPlugin(parser);
+  });
+
+  loader.load(
+    '${safeUrl}',
+    (gltf) => {
+      window._dbg('GLTF loaded, extracting VRM...');
+
+      vrm = gltf.userData.vrm;
+
+      if (!vrm) {
+        window._dbg('No VRM data found');
+        if (statusEl) statusEl.textContent = 'No VRM data found';
+        return;
+      }
+
+      window._dbg('VRM extracted, preparing scene...');
+
+      try {
+        VRMUtils.rotateVRM0(vrm);
+      } catch (e) {
+        console.log('rotateVRM0 skipped', e);
+      }
+
+      vrm.scene.traverse((obj) => {
+        obj.frustumCulled = false;
+        obj.visible = true;
+      });
+
+      baseRotationY = vrm.scene.rotation.y;
+      basePositionY = vrm.scene.position.y;
+
+      applyRelaxedPose();
+
+      scene.add(vrm.scene);
+      frameCamera(vrm.scene);
+
+      if (statusEl) {
+        statusEl.style.display = 'none';
+      }
+
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'loaded'
+        }));
+      }
+
+      window._dbg('Avatar loaded successfully');
+    },
+    (xhr) => {
+      const pct = xhr.total ? Math.round((xhr.loaded / xhr.total) * 100) : '?';
+
+      if (statusEl) {
+        statusEl.textContent = 'Loading ' + pct + '%';
+      }
+
+      if (pct === 100) {
+        window._dbg('Model download 100%');
+      }
+    },
+    (error) => {
+      const msg = error && error.message ? error.message : String(error);
+      window._dbg('Model load error: ' + msg);
+
+      if (statusEl) {
+        statusEl.textContent = 'Load error';
+      }
+
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'error',
+          message: msg
+        }));
+      }
+    }
+  );
+}
+
+function animate(ts) {
   requestAnimationFrame(animate);
 
-  if (lastTs === null) lastTs = ts;
-  const dt = Math.min((ts - lastTs) * 0.001, 0.05);
-  elapsed += dt;
-  lastTs = ts;
+  try {
+    if (lastTs === null) lastTs = ts;
 
-  if (!vrm) { renderer.render(scene, cam); return; }
+    const dt = Math.min((ts - lastTs) * 0.001, 0.05);
+    lastTs = ts;
+    elapsed += dt;
 
-  vrm.update(dt);
+    if (vrm) {
+      vrm.update(dt);
 
-  const speaking  = avatarState === 'speaking';
-  const listening = avatarState === 'listening';
+      const speaking = avatarState === 'speaking';
+      const listening = avatarState === 'listening';
+      const active = speaking || listening;
 
-  // Breathing
-  const breathRate  = speaking ? 1.2 : 0.7;
-  const breathDepth = speaking ? 0.013 : 0.007;
-  const chest = bone('chest');
-  const spine = bone('spine');
-  if (chest) chest.rotation.x = Math.sin(elapsed * breathRate) * breathDepth;
-  if (spine) spine.rotation.x = Math.sin(elapsed * breathRate + 0.4) * breathDepth * 0.5;
+      const bobAmp = speaking ? 0.012 : 0.006;
+      const bobRate = speaking ? 1.8 : listening ? 1.2 : 0.8;
 
-  // Hips sway
-  const hips = bone('hips');
-  if (hips) {
-    hips.rotation.z = Math.sin(elapsed * 0.25) * 0.008;
-    hips.position.y = Math.sin(elapsed * 0.7) * 0.003;
-  }
+      vrm.scene.position.y =
+        basePositionY + Math.sin(elapsed * bobRate) * bobAmp;
 
-  // Head
-  const head = bone('head');
-  if (head) {
-    const s = listening ? 1.7 : 1.0;
-    head.rotation.y = Math.sin(elapsed * 0.38) * 0.055 * s;
-    head.rotation.x = Math.sin(elapsed * 0.46) * 0.027 * s - 0.025;
-    head.rotation.z = Math.sin(elapsed * 0.29) * 0.018 * s;
-  }
+      const swayAmp = speaking ? 0.035 : listening ? 0.025 : 0.015;
 
-  // Neck
-  const neck = bone('neck');
-  if (neck) {
-    neck.rotation.y = Math.sin(elapsed * 0.38) * 0.018;
-    neck.rotation.x = Math.sin(elapsed * 0.46) * 0.010 - 0.008;
-  }
+      vrm.scene.rotation.y =
+        baseRotationY + Math.sin(elapsed * 0.35) * swayAmp;
 
-  // Eyes
-  const leftEye  = bone('leftEye');
-  const rightEye = bone('rightEye');
-  if (leftEye && rightEye) {
-    const gazeX = Math.sin(elapsed * 0.15) * 0.08;
-    const gazeY = Math.sin(elapsed * 0.21) * 0.04;
-    [leftEye, rightEye].forEach(e => { e.rotation.y = gazeX; e.rotation.x = gazeY; });
-  }
+      const breath = Math.sin(elapsed * (speaking ? 2.4 : 1.5));
+      const spineBase = boneBase.spine;
+      const chestBase = boneBase.chest;
+      const neckBase = boneBase.neck;
+      const headBase = boneBase.head;
+      const leftUpperArmBase = boneBase.leftUpperArm;
+      const rightUpperArmBase = boneBase.rightUpperArm;
+      const leftLowerArmBase = boneBase.leftLowerArm;
+      const rightLowerArmBase = boneBase.rightLowerArm;
 
-  // Arms
-  const lArm = bone('leftUpperArm');
-  const rArm = bone('rightUpperArm');
-  if (lArm) lArm.rotation.z =  0.06 + Math.sin(elapsed * 0.32) * 0.022;
-  if (rArm) rArm.rotation.z = -0.06 - Math.sin(elapsed * 0.32 + 1.1) * 0.022;
+      if (spineBase) {
+        setBoneRotation(
+          'spine',
+          spineBase.x + breath * 0.015,
+          spineBase.y,
+          spineBase.z
+        );
+      }
 
-  // Blink
-  blinkCooldown -= dt;
-  if (blinkCooldown <= 0 && !blinking) {
-    blinking = true;
-    blinkProgress = 0;
-    blinkCooldown = Math.random() * 3.5 + 2.0;
-  }
-  if (blinking) {
-    blinkProgress += dt / (BLINK_HALF * 2);
-    const v = blinkProgress < 0.5 ? blinkProgress * 2 : (1 - blinkProgress) * 2;
-    const clamped = Math.min(Math.max(v, 0), 1);
-    expr('blinkLeft',  clamped);
-    expr('blinkRight', clamped);
-    if (blinkProgress >= 1.0) {
-      blinking = false;
-      expr('blinkLeft',  0);
-      expr('blinkRight', 0);
+      if (chestBase) {
+        setBoneRotation(
+          'chest',
+          chestBase.x + breath * 0.025,
+          chestBase.y,
+          chestBase.z
+        );
+      }
+
+      if (neckBase) {
+        setBoneRotation(
+          'neck',
+          neckBase.x + Math.sin(elapsed * 0.6) * 0.01,
+          neckBase.y + Math.sin(elapsed * 0.45) * 0.015,
+          neckBase.z
+        );
+      }
+
+      if (headBase) {
+        setBoneRotation(
+          'head',
+          headBase.x + Math.sin(elapsed * 0.8) * (listening ? 0.04 : 0.018),
+          headBase.y + Math.sin(elapsed * 0.55) * (active ? 0.045 : 0.02),
+          headBase.z + Math.sin(elapsed * 0.35) * 0.01
+        );
+      }
+
+      if (leftUpperArmBase) {
+        setBoneRotation(
+          'leftUpperArm',
+          leftUpperArmBase.x + breath * 0.02,
+          leftUpperArmBase.y,
+          leftUpperArmBase.z + Math.sin(elapsed * 0.7) * 0.025
+        );
+      }
+
+      if (rightUpperArmBase) {
+        setBoneRotation(
+          'rightUpperArm',
+          rightUpperArmBase.x + breath * 0.02,
+          rightUpperArmBase.y,
+          rightUpperArmBase.z - Math.sin(elapsed * 0.7) * 0.025
+        );
+      }
+
+      if (leftLowerArmBase) {
+        setBoneRotation(
+          'leftLowerArm',
+          leftLowerArmBase.x + Math.sin(elapsed * 0.9) * 0.02,
+          leftLowerArmBase.y,
+          leftLowerArmBase.z
+        );
+      }
+
+      if (rightLowerArmBase) {
+        setBoneRotation(
+          'rightLowerArm',
+          rightLowerArmBase.x + Math.sin(elapsed * 0.9 + 0.8) * 0.02,
+          rightLowerArmBase.y,
+          rightLowerArmBase.z
+        );
+      }
+
+      const mouthTarget = speaking
+        ? 0.2 + Math.abs(Math.sin(elapsed * 7)) * 0.45
+        : 0;
+
+      mouthCurrent = lerp(mouthCurrent, mouthTarget, 0.2);
+
+      setExpression('aa', mouthCurrent);
+      setExpression('surprised', listening ? 0.08 : 0);
+
+      blinkCooldown -= dt;
+      if (!blinking && blinkCooldown <= 0) {
+        blinking = true;
+        blinkProgress = 0;
+        blinkCooldown = Math.random() * 2.5 + 1.8;
+      }
+
+      if (blinking) {
+        blinkProgress += dt / 0.16;
+        const blinkValue = blinkProgress < 0.5
+          ? blinkProgress * 2
+          : (1 - blinkProgress) * 2;
+        const clampedBlink = Math.min(Math.max(blinkValue, 0), 1);
+        setExpression('blinkLeft', clampedBlink);
+        setExpression('blinkRight', clampedBlink);
+
+        if (blinkProgress >= 1) {
+          blinking = false;
+          setExpression('blinkLeft', 0);
+          setExpression('blinkRight', 0);
+        }
+      }
+
+      if (vrm.expressionManager && vrm.expressionManager.update) {
+        vrm.expressionManager.update();
+      }
+    }
+
+    renderer.render(scene, camera);
+  } catch (error) {
+    const msg = error && error.message ? error.message : String(error);
+    window._dbg('Render loop error: ' + msg);
+
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'error',
+        message: msg
+      }));
     }
   }
-
-  // Mouth
-  const mouthTarget = speaking
-    ? Math.abs(Math.sin(elapsed * 7.5)) * 0.55 + Math.abs(Math.sin(elapsed * 13.3)) * 0.20
-    : 0;
-  mouthCurrent = lerp(mouthCurrent, mouthTarget, 0.22);
-  expr('aa', mouthCurrent);
-
-  expr('surprised', listening ? 0.20 : 0);
-
-  vrm.expressionManager?.update();
-  renderer.render(scene, cam);
-})();
+}
 
 window.addEventListener('resize', () => {
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  cam.aspect = window.innerWidth / window.innerHeight;
-  cam.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight, false);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  if (vrm) {
+    frameCamera(vrm.scene);
+  }
 });
+
+loadVRM();
+requestAnimationFrame(animate);
 <\/script>
 </body>
 </html>`;
@@ -330,39 +600,96 @@ export const AvatarVRM = ({
 }) => {
   const webRef = useRef(null);
   const stateRef = useRef('idle');
+
+  const [webKey, setWebKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Memoize the entire source object — a new object reference on every render
-  // would cause react-native-webview to call loadHTMLString again and restart the page.
-  const source = useMemo(() => ({ html: buildHTML(modelUrl) }), [modelUrl]);
+  const source = useMemo(
+    () => ({
+      html: buildHTML(modelUrl),
+      baseUrl: 'https://localhost/',
+    }),
+    [modelUrl]
+  );
+
+  const recoverWebView = useCallback((reason) => {
+    console.log('[AvatarVRM] Recovering WebView:', reason);
+    setLoading(true);
+    setError(false);
+    setWebKey((prev) => prev + 1);
+  }, []);
 
   useEffect(() => {
     const next = isSpeaking ? 'speaking' : isListening ? 'listening' : 'idle';
+
     if (next === stateRef.current) return;
+
     stateRef.current = next;
-    webRef.current?.injectJavaScript(`setAvatarState('${next}'); true;`);
+
+    webRef.current?.injectJavaScript(`
+      if (window.setAvatarState) {
+        window.setAvatarState('${next}');
+      }
+      true;
+    `);
   }, [isListening, isSpeaking]);
 
-  const handleMessage = (event) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === 'loaded') setLoading(false);
-      if (data.type === 'error') { setLoading(false); setError(true); }
-      // Log all debug messages from the WebView to the RN console
-      if (data.type === 'debug') console.log('[AvatarVRM]', data.message);
-    } catch {}
-  };
+  const handleMessage = useCallback(
+    (event) => {
+      console.log('[AvatarVRM] message:', event.nativeEvent.data);
 
-  const sizeStyle = (width != null || height != null) ? { width: width ?? 300, height: height ?? 420 } : {};
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+
+        if (data.type === 'loaded') {
+          setLoading(false);
+          setError(false);
+        }
+
+        if (data.type === 'error') {
+          setLoading(false);
+          setError(true);
+        }
+
+        if (data.type === 'context_lost') {
+          recoverWebView('webgl-context-lost');
+        }
+
+        if (data.type === 'debug') {
+          console.log('[AvatarVRM]', data.message);
+        }
+      } catch (e) {
+        console.log('[AvatarVRM] Failed to parse message:', e);
+      }
+    },
+    [recoverWebView]
+  );
+
+  const sizeStyle =
+    width != null || height != null
+      ? {
+          width: width ?? 300,
+          height: height ?? 420,
+        }
+      : {};
 
   return (
     <View style={[sizeStyle, styles.container, style]}>
       <WebView
+        key={webKey}
         ref={webRef}
         source={source}
         style={styles.webview}
         backgroundColor="transparent"
+        containerStyle={styles.webviewContainer}
+        onLoadStart={() => {
+          setLoading(true);
+          setError(false);
+        }}
+        onLoadEnd={() => {
+          console.log('[AvatarVRM] WebView load ended');
+        }}
         scrollEnabled={false}
         bounces={false}
         showsHorizontalScrollIndicator={false}
@@ -374,18 +701,50 @@ export const AvatarVRM = ({
         mixedContentMode="always"
         androidLayerType="hardware"
         allowsInlineMediaPlayback
+        onNavigationStateChange={(navState) => {
+          console.log(
+            '[AvatarVRM] nav',
+            navState.url,
+            'loading=',
+            navState.loading
+          );
+        }}
+        onShouldStartLoadWithRequest={(request) => {
+          const url = request?.url ?? '';
+
+          const allow =
+            url.startsWith('about:blank') ||
+            url.startsWith('https://localhost/') ||
+            url.startsWith('https://') ||
+            url.startsWith('http://') ||
+            url.startsWith('blob:') ||
+            url.startsWith('data:');
+
+          if (!allow) {
+            console.log('[AvatarVRM] Blocked navigation:', url);
+          }
+
+          return allow;
+        }}
         onMessage={handleMessage}
+        onContentProcessDidTerminate={() =>
+          recoverWebView('ios-content-process-terminated')
+        }
+        onRenderProcessGone={() => recoverWebView('android-render-process-gone')}
         onError={(e) => {
           console.log('[AvatarVRM] WebView error', e.nativeEvent);
-          setLoading(false); setError(true);
+          setLoading(false);
+          setError(true);
         }}
         onHttpError={(e) => {
           console.log('[AvatarVRM] HTTP error', e.nativeEvent.statusCode);
-          setLoading(false); setError(true);
+          setLoading(false);
+          setError(true);
         }}
       />
+
       {loading && !error && (
-        <View style={styles.loadingOverlay}>
+        <View pointerEvents="none" style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="rgba(255,255,255,0.7)" />
         </View>
       )}
@@ -396,6 +755,10 @@ export const AvatarVRM = ({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
+    backgroundColor: 'transparent',
+  },
+  webviewContainer: {
+    backgroundColor: 'transparent',
   },
   webview: {
     flex: 1,
@@ -405,5 +768,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
 });

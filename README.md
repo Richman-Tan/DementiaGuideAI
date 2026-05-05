@@ -33,7 +33,7 @@ DementiaGuide AI is designed for caregivers, family members, and healthcare prof
 | Framework | React Native (Expo SDK 54) |
 | Navigation | React Navigation 7 (Bottom Tabs + Native Stack) |
 | Avatar & Speech | NVIDIA ACE (Tokkio · Riva ASR/TTS · Audio2Face) |
-| Animations | React Native Reanimated + Animated API |
+| Animations | React Native Animated API |
 | Gradients | expo-linear-gradient |
 | Audio | expo-av |
 | Haptics | expo-haptics |

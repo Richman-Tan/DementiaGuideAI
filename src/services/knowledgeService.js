@@ -36,11 +36,13 @@ class KnowledgeService {
   // Return a small, curated selection for the home screen "Featured" list
   async getFeaturedResources() {
     const featured = [
+      'prevention_002',    // Warning Signs of Dementia
       'clinical_001',      // Stages of Dementia
       'caregiving_007',    // Establishing Daily Routine
       'communication_001', // Effective Verbal Communication
       'bestpractices_007', // Caregiver Burnout
       'homesafety_002',    // Bathroom Fall Prevention
+      'prevention_001',    // 14 Modifiable Risk Factors
     ];
     return KNOWLEDGE_BASE.filter(chunk => featured.includes(chunk.id));
   }

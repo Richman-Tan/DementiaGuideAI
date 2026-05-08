@@ -163,6 +163,9 @@ let elapsed = 0;
 let blinkCooldown = 2.2;
 let blinkProgress = 0;
 let blinking = false;
+let activeBlend = 0;
+let speakBlend = 0;
+let thinkBlend = 0;
 const boneRefs = {};
 const boneBase = {};
 
@@ -294,8 +297,41 @@ function applyRelaxedPose() {
     rightLowerArm.rotation.x -= 0.04;
   }
 
-  if (leftHand) leftHand.rotation.y += 0.02;
-  if (rightHand) rightHand.rotation.y -= 0.02;
+  // Forearm roll: twist the palm to face the thigh (pronation).
+  // In VRM normalised space, lower-arm X is the roll axis.
+  if (leftLowerArm)  leftLowerArm.rotation.x  -= 0.5;
+  if (rightLowerArm) rightLowerArm.rotation.x -= 0.5;
+
+  // Wrist: slight tilt so the hand hangs relaxed rather than rigid.
+  if (leftHand)  { leftHand.rotation.y  += 0.0;  leftHand.rotation.z  += 0.18; }
+  if (rightHand) { rightHand.rotation.y -= 0.0;  rightHand.rotation.z -= 0.18; }
+
+  // Finger curl — proximal joints curl more, intermediate joints curl less.
+  // Left hand: positive Z curls fingers inward; right hand: negative Z.
+  const L_CURL = 0.32;
+  const R_CURL = -0.32;
+  [
+    'leftIndexProximal',  'leftMiddleProximal',
+    'leftRingProximal',   'leftLittleProximal',
+  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += L_CURL; });
+  [
+    'leftIndexIntermediate',  'leftMiddleIntermediate',
+    'leftRingIntermediate',   'leftLittleIntermediate',
+  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += L_CURL * 0.55; });
+  [
+    'rightIndexProximal',  'rightMiddleProximal',
+    'rightRingProximal',   'rightLittleProximal',
+  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += R_CURL; });
+  [
+    'rightIndexIntermediate',  'rightMiddleIntermediate',
+    'rightRingIntermediate',   'rightLittleIntermediate',
+  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += R_CURL * 0.55; });
+
+  // Thumb: spread away from the palm slightly.
+  const lThumb = bone('leftThumbProximal');
+  const rThumb = bone('rightThumbProximal');
+  if (lThumb) lThumb.rotation.z += 0.22;
+  if (rThumb) rThumb.rotation.z -= 0.22;
 
   [
     'spine',
@@ -427,15 +463,21 @@ function animate(ts) {
 
       const speaking = avatarState === 'speaking';
       const listening = avatarState === 'listening';
-      const active = speaking || listening;
+      const thinking = avatarState === 'thinking';
+      const active = speaking || listening || thinking;
 
-      const bobAmp = speaking ? 0.012 : 0.006;
+      // Smooth blend values — drift toward target at ~0.04/frame (~0.6 s at 60 fps)
+      activeBlend = lerp(activeBlend, active    ? 1 : 0, 0.04);
+      speakBlend  = lerp(speakBlend,  speaking  ? 1 : 0, 0.04);
+      thinkBlend  = lerp(thinkBlend,  thinking  ? 1 : 0, 0.035);
+
+      const bobAmp = lerp(0.006, 0.012, speakBlend);
       const bobRate = speaking ? 1.8 : listening ? 1.2 : 0.8;
 
       vrm.scene.position.y =
         basePositionY + Math.sin(elapsed * bobRate) * bobAmp;
 
-      const swayAmp = speaking ? 0.035 : listening ? 0.025 : 0.015;
+      const swayAmp = lerp(0.015, lerp(0.025, 0.035, speakBlend), activeBlend);
 
       vrm.scene.rotation.y =
         baseRotationY + Math.sin(elapsed * 0.35) * swayAmp;
@@ -468,11 +510,25 @@ function animate(ts) {
         );
       }
 
+      // Compound look-around with thinking gaze bias (up-right = classic thinking direction).
+      const thinkGazeH = thinkBlend * 0.09;   // drift gaze right while thinking
+      const thinkGazeV = thinkBlend * (-0.06); // drift gaze up while thinking
+      const thinkTiltZ = thinkBlend * 0.13;    // tilt head slightly to the right
+
+      const lookH =
+        Math.sin(elapsed * 0.27) * lerp(0.10, 0.04, activeBlend) +
+        Math.sin(elapsed * 0.17) * lerp(0.045, 0.02, activeBlend) +
+        thinkGazeH;
+      const lookV =
+        Math.sin(elapsed * 0.38) * lerp(0.038, 0.022, activeBlend) +
+        Math.sin(elapsed * 0.23) * 0.012 +
+        thinkGazeV;
+
       if (neckBase) {
         setBoneRotation(
           'neck',
-          neckBase.x + Math.sin(elapsed * 0.6) * 0.01,
-          neckBase.y + Math.sin(elapsed * 0.45) * 0.015,
+          neckBase.x + breath * 0.008 + Math.sin(elapsed * 0.6) * 0.012,
+          neckBase.y + lookH * 0.38,
           neckBase.z
         );
       }
@@ -480,18 +536,25 @@ function animate(ts) {
       if (headBase) {
         setBoneRotation(
           'head',
-          headBase.x + Math.sin(elapsed * 0.8) * (listening ? 0.04 : 0.018),
-          headBase.y + Math.sin(elapsed * 0.55) * (active ? 0.045 : 0.02),
-          headBase.z + Math.sin(elapsed * 0.35) * 0.01
+          headBase.x + lookV,
+          headBase.y + lookH * 0.62,
+          headBase.z + Math.sin(elapsed * 0.35) * 0.012 + thinkTiltZ
         );
       }
+
+      // Arms: keep base z negative (natural hang) but swing with two
+      // frequencies and independent phases so left/right feel uncoupled.
+      const armSwingA = Math.sin(elapsed * 0.52);
+      const armSwingB = Math.sin(elapsed * 0.81);
+      const armSwingAR = Math.sin(elapsed * 0.52 + 1.1); // offset phase for right
+      const armSwingBR = Math.sin(elapsed * 0.81 + 0.7);
 
       if (leftUpperArmBase) {
         setBoneRotation(
           'leftUpperArm',
           leftUpperArmBase.x + breath * 0.02,
-          leftUpperArmBase.y,
-          leftUpperArmBase.z + Math.sin(elapsed * 0.7) * 0.025
+          leftUpperArmBase.y + armSwingB * 0.018,
+          leftUpperArmBase.z + armSwingA * 0.055 + armSwingB * 0.022
         );
       }
 
@@ -499,26 +562,26 @@ function animate(ts) {
         setBoneRotation(
           'rightUpperArm',
           rightUpperArmBase.x + breath * 0.02,
-          rightUpperArmBase.y,
-          rightUpperArmBase.z - Math.sin(elapsed * 0.7) * 0.025
+          rightUpperArmBase.y - armSwingBR * 0.018,
+          rightUpperArmBase.z - (armSwingAR * 0.055 + armSwingBR * 0.022)
         );
       }
 
       if (leftLowerArmBase) {
         setBoneRotation(
           'leftLowerArm',
-          leftLowerArmBase.x + Math.sin(elapsed * 0.9) * 0.02,
+          leftLowerArmBase.x + Math.sin(elapsed * 0.88) * 0.03,
           leftLowerArmBase.y,
-          leftLowerArmBase.z
+          leftLowerArmBase.z + Math.sin(elapsed * 0.63) * 0.025
         );
       }
 
       if (rightLowerArmBase) {
         setBoneRotation(
           'rightLowerArm',
-          rightLowerArmBase.x + Math.sin(elapsed * 0.9 + 0.8) * 0.02,
+          rightLowerArmBase.x + Math.sin(elapsed * 0.88 + 0.9) * 0.03,
           rightLowerArmBase.y,
-          rightLowerArmBase.z
+          rightLowerArmBase.z - Math.sin(elapsed * 0.63 + 0.6) * 0.025
         );
       }
 
@@ -596,6 +659,7 @@ export const AvatarVRM = ({
   height,
   isListening = false,
   isSpeaking = false,
+  isThinking = false,
   style,
 }) => {
   const webRef = useRef(null);
@@ -621,7 +685,7 @@ export const AvatarVRM = ({
   }, []);
 
   useEffect(() => {
-    const next = isSpeaking ? 'speaking' : isListening ? 'listening' : 'idle';
+    const next = isSpeaking ? 'speaking' : isThinking ? 'thinking' : isListening ? 'listening' : 'idle';
 
     if (next === stateRef.current) return;
 
@@ -633,7 +697,7 @@ export const AvatarVRM = ({
       }
       true;
     `);
-  }, [isListening, isSpeaking]);
+  }, [isListening, isSpeaking, isThinking]);
 
   const handleMessage = useCallback(
     (event) => {

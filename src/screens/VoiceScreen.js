@@ -12,10 +12,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
 import { AvatarVRM, DEFAULT_VRM_MODEL_URL } from '../components/AvatarVRM';
 import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
-import { aceService } from '../services/aceService';
+import { openaiService } from '../services/openaiService';
 
 const VoiceState = {
   IDLE: 'idle',
@@ -36,13 +37,30 @@ const QUICK_CHIPS = [
 export const VoiceScreen = ({ navigation }) => {
   const [voiceState, setVoiceState] = useState(VoiceState.IDLE);
   const [inputText, setInputText] = useState('');
-  const listenerRef = useRef(null);
+  const [conversationHistory, setConversationHistory] = useState([]);
+  const recordingRef = useRef(null);
+  const soundRef = useRef(null);
+  const abortRef = useRef(false);   // set true when user stops mid-response
+  const historyRef = useRef([]);    // kept in sync so callbacks always see latest
   const micPulse = useRef(new Animated.Value(1)).current;
   const insets = useSafeAreaInsets();
 
   const isActive = voiceState === VoiceState.LISTENING || voiceState === VoiceState.SPEAKING;
 
-  // Mic pulse when listening
+  // Keep historyRef in sync
+  useEffect(() => {
+    historyRef.current = conversationHistory;
+  }, [conversationHistory]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      recordingRef.current?.stopAndUnloadAsync().catch(() => {});
+      soundRef.current?.unloadAsync().catch(() => {});
+    };
+  }, []);
+
+  // Mic pulse animation
   useEffect(() => {
     if (voiceState === VoiceState.LISTENING) {
       Animated.loop(
@@ -57,37 +75,201 @@ export const VoiceScreen = ({ navigation }) => {
     }
   }, [voiceState]);
 
-  const handleMicPress = useCallback(async () => {
-    if (voiceState === VoiceState.IDLE) {
-      setVoiceState(VoiceState.LISTENING);
-      clearTimeout(listenerRef.current);
-      listenerRef.current = setTimeout(async () => {
-        const mockTranscript = 'How do I manage sundowning behaviour?';
-        setVoiceState(VoiceState.PROCESSING);
-        try {
-          const response = await aceService.sendText(mockTranscript);
-          setVoiceState(VoiceState.SPEAKING);
-          setTimeout(() => setVoiceState(VoiceState.IDLE), 5000);
-        } catch {
-          setVoiceState(VoiceState.IDLE);
+  // Core: stream RAG chat → sentence-split → parallel TTS → sequential playback.
+  // Each sentence's TTS fires as soon as the sentence is complete from the stream,
+  // so audio for sentence N is generating while sentence N-1 is playing.
+  const processQuery = useCallback(async (userText) => {
+    if (!userText.trim()) return;
+
+    setVoiceState(VoiceState.PROCESSING);
+    abortRef.current = false;
+
+    // Pre-warm audio mode immediately — overlaps with LLM streaming so it's
+    // ready by the time the first segment is done generating.
+    Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
+
+    try {
+      const history = historyRef.current;
+      let fullText = '';
+
+      // Promises of data URIs — pushed in sentence order, resolved concurrently.
+      const segmentPromises = [];
+
+      const addSegment = (text) => {
+        const clean = text.trim();
+        if (!clean) return;
+        // tts() now returns a data:audio/mpeg;base64,... URI — no disk write needed.
+        segmentPromises.push(openaiService.tts(clean, 'nova'));
+      };
+
+      // Stream response and split into sentences as chunks arrive.
+      // Hermes doesn't support lookbehind, so use a replace-then-split trick.
+      let buf = '';
+      for await (const chunk of openaiService.chatStream(userText, history)) {
+        if (abortRef.current) break;
+        fullText += chunk;
+        buf += chunk;
+        // Mark sentence ends with a private delimiter, then split
+        const marked = buf.replace(/([.!?])\s+/g, '$1\x1F');
+        const parts = marked.split('\x1F');
+        parts.slice(0, -1).forEach(s => addSegment(s));
+        buf = parts[parts.length - 1];
+      }
+      if (buf.trim() && !abortRef.current) addSegment(buf);
+
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'user', content: userText },
+        { role: 'assistant', content: fullText },
+      ]);
+
+      if (segmentPromises.length === 0 || abortRef.current) {
+        setVoiceState(VoiceState.IDLE);
+        return;
+      }
+
+      setVoiceState(VoiceState.SPEAKING);
+
+      // Play segments in order. While segment N plays, segment N+1's Sound object
+      // is already being created (decoding happens in parallel with playback).
+      let nextSoundPromise = null;
+
+      for (let i = 0; i < segmentPromises.length; i++) {
+        if (abortRef.current) break;
+
+        const uri = await segmentPromises[i];
+        if (abortRef.current) break;
+
+        if (soundRef.current) {
+          await soundRef.current.unloadAsync().catch(() => {});
+          soundRef.current = null;
         }
-      }, 3000);
-    } else if (voiceState === VoiceState.LISTENING) {
-      clearTimeout(listenerRef.current);
-      setVoiceState(VoiceState.IDLE);
-    } else if (voiceState === VoiceState.SPEAKING) {
+
+        const { sound } = nextSoundPromise
+          ? await nextSoundPromise
+          : await Audio.Sound.createAsync({ uri });
+        soundRef.current = sound;
+
+        // Kick off next segment's Sound creation while this one plays
+        if (i + 1 < segmentPromises.length) {
+          nextSoundPromise = segmentPromises[i + 1].then(
+            nextUri => Audio.Sound.createAsync({ uri: nextUri })
+          );
+        } else {
+          nextSoundPromise = null;
+        }
+
+        await new Promise(resolve => {
+          sound.setOnPlaybackStatusUpdate(status => {
+            if (status.didJustFinish || status.error) resolve();
+          });
+          sound.playAsync();
+        });
+
+        await sound.unloadAsync().catch(() => {});
+        soundRef.current = null;
+      }
+    } catch (err) {
+      console.error('[VoiceScreen] processQuery:', err);
+    } finally {
       setVoiceState(VoiceState.IDLE);
     }
-  }, [voiceState]);
+  }, []);
 
-  const handleChipPress = (chip) => {
-    setInputText(chip);
-  };
+  const startRecording = useCallback(async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') return;
 
-  const handleStop = () => {
-    clearTimeout(listenerRef.current);
+      // Tear down any lingering recorder before creating a new one
+      if (recordingRef.current) {
+        await recordingRef.current.stopAndUnloadAsync().catch(() => {});
+        recordingRef.current = null;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      recordingRef.current = recording;
+      setVoiceState(VoiceState.LISTENING);
+    } catch (err) {
+      console.error('[VoiceScreen] startRecording:', err);
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
+    }
+  }, []);
+
+  const stopAndTranscribe = useCallback(async () => {
+    const rec = recordingRef.current;
+    if (!rec) return;
+
+    setVoiceState(VoiceState.PROCESSING);
+
+    try {
+      await rec.stopAndUnloadAsync();
+      const uri = rec.getURI();
+      recordingRef.current = null;
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
+
+      const transcript = await openaiService.transcribe(uri);
+      if (!transcript) {
+        setVoiceState(VoiceState.IDLE);
+        return;
+      }
+
+      await processQuery(transcript);
+    } catch (err) {
+      console.error('[VoiceScreen] stopAndTranscribe:', err);
+      setVoiceState(VoiceState.IDLE);
+    }
+  }, [processQuery]);
+
+  const stopAudio = useCallback(async () => {
+    abortRef.current = true;
+    if (soundRef.current) {
+      await soundRef.current.stopAsync().catch(() => {});
+      await soundRef.current.unloadAsync().catch(() => {});
+      soundRef.current = null;
+    }
+  }, []);
+
+  const handleMicPress = useCallback(async () => {
+    if (voiceState === VoiceState.IDLE) {
+      await startRecording();
+    } else if (voiceState === VoiceState.LISTENING) {
+      await stopAndTranscribe();
+    } else if (voiceState === VoiceState.SPEAKING) {
+      await stopAudio();
+      setVoiceState(VoiceState.IDLE);
+    }
+  }, [voiceState, startRecording, stopAndTranscribe, stopAudio]);
+
+  const handleStop = useCallback(async () => {
+    if (recordingRef.current) {
+      await recordingRef.current.stopAndUnloadAsync().catch(() => {});
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
+      recordingRef.current = null;
+    }
+    await stopAudio();
     setVoiceState(VoiceState.IDLE);
-  };
+  }, [stopAudio]);
+
+  const handleChipPress = (chip) => setInputText(chip);
+
+  const handleTextSend = useCallback(async () => {
+    const text = inputText.trim();
+    if (!text || voiceState !== VoiceState.IDLE) return;
+    setInputText('');
+    await processQuery(text);
+  }, [inputText, voiceState, processQuery]);
 
   const micColor = voiceState === VoiceState.LISTENING
     ? '#4ECDC4'
@@ -99,7 +281,6 @@ export const VoiceScreen = ({ navigation }) => {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      {/* Full-screen dark gradient background */}
       <LinearGradient
         colors={['#0D0D1A', '#1A1A2E', '#16213E']}
         start={{ x: 0.3, y: 0 }}
@@ -127,16 +308,16 @@ export const VoiceScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Avatar — fills remaining space above bottom panel */}
+      {/* Avatar */}
       <View style={styles.avatarArea}>
         <AvatarVRM
           modelUrl={DEFAULT_VRM_MODEL_URL}
           isListening={voiceState === VoiceState.LISTENING}
           isSpeaking={voiceState === VoiceState.SPEAKING}
+          isThinking={voiceState === VoiceState.PROCESSING}
           style={styles.avatarVRM}
         />
 
-        {/* Floating name badge */}
         <View style={styles.nameBadge}>
           <View style={[styles.nameBadgeDot, { backgroundColor: isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)' }]} />
           <Text style={styles.nameBadgeText}>Aria</Text>
@@ -145,7 +326,7 @@ export const VoiceScreen = ({ navigation }) => {
 
       {/* Bottom control panel */}
       <View style={[styles.bottomPanel, { paddingBottom: insets.bottom + 12 }]}>
-        {/* Quick action chips */}
+        {/* Quick chips */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -165,7 +346,7 @@ export const VoiceScreen = ({ navigation }) => {
           ))}
         </ScrollView>
 
-        {/* Icon control row */}
+        {/* Icon row */}
         <View style={styles.iconRow}>
           <TouchableOpacity
             style={styles.iconBtn}
@@ -183,12 +364,11 @@ export const VoiceScreen = ({ navigation }) => {
             <MaterialCommunityIcons name="library-outline" size={22} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
 
-          {/* Mic — centre, larger */}
           <Animated.View style={{ transform: [{ scale: micPulse }] }}>
             <TouchableOpacity
               style={[styles.iconBtn, styles.micIconBtn, { borderColor: micColor }]}
               onPress={handleMicPress}
-              accessibilityLabel={voiceState === VoiceState.IDLE ? 'Start speaking' : 'Stop speaking'}
+              accessibilityLabel={voiceState === VoiceState.IDLE ? 'Start speaking' : 'Stop'}
             >
               <MaterialCommunityIcons
                 name={voiceState === VoiceState.LISTENING ? 'stop' : 'microphone'}
@@ -216,7 +396,8 @@ export const VoiceScreen = ({ navigation }) => {
             placeholder="Ask Anything..."
             placeholderTextColor="rgba(255,255,255,0.35)"
             returnKeyType="send"
-            onSubmitEditing={() => {}}
+            onSubmitEditing={handleTextSend}
+            editable={voiceState === VoiceState.IDLE}
           />
 
           {isActive ? (
@@ -225,7 +406,7 @@ export const VoiceScreen = ({ navigation }) => {
               <Text style={styles.stopText}>Stop</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.sendBtn} onPress={() => {}} accessibilityLabel="Send">
+            <TouchableOpacity style={styles.sendBtn} onPress={handleTextSend} accessibilityLabel="Send">
               <MaterialCommunityIcons name="send" size={20} color="#fff" />
             </TouchableOpacity>
           )}
@@ -240,8 +421,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0D0D1A',
   },
-
-  // Top bar
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -279,8 +458,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-
-  // Avatar area
   avatarArea: {
     flex: 1,
   },
@@ -313,8 +490,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-
-  // Bottom panel
   bottomPanel: {
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderTopWidth: 1,
@@ -323,8 +498,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     gap: 14,
   },
-
-  // Chips
   chipsRow: {
     paddingHorizontal: 16,
     gap: 8,
@@ -354,8 +527,6 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: '#fff',
   },
-
-  // Icon row
   iconRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -380,8 +551,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(78,205,196,0.12)',
     borderWidth: 2,
   },
-
-  // Input row
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',

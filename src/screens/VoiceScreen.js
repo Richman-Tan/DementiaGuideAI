@@ -5,19 +5,18 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-  Easing,
   StatusBar,
-  Platform,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Avatar } from '../components/Avatar';
-import { VoiceWaveform } from '../components/VoiceWaveform';
+import { Audio } from 'expo-av';
+import { AvatarVRM, DEFAULT_VRM_MODEL_URL } from '../components/AvatarVRM';
 import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
-import { aceService } from '../services/aceService';
+import { openaiService } from '../services/openaiService';
 
 const VoiceState = {
   IDLE: 'idle',
@@ -26,489 +25,538 @@ const VoiceState = {
   SPEAKING: 'speaking',
 };
 
-const STATE_META = {
-  [VoiceState.IDLE]: {
-    label: 'Tap to speak',
-    subLabel: 'Aria is ready to listen',
-    color: Colors.primary,
-    icon: 'microphone',
-  },
-  [VoiceState.LISTENING]: {
-    label: 'Listening...',
-    subLabel: 'Speak clearly — tap again to stop',
-    color: Colors.success,
-    icon: 'stop',
-  },
-  [VoiceState.PROCESSING]: {
-    label: 'Thinking...',
-    subLabel: 'Aria is preparing a response',
-    color: Colors.accent,
-    icon: 'dots-horizontal',
-  },
-  [VoiceState.SPEAKING]: {
-    label: 'Aria is speaking',
-    subLabel: 'Tap to interrupt',
-    color: Colors.accent,
-    icon: 'volume-high',
-  },
-};
-
-const TranscriptBubble = ({ text, role }) => (
-  <View style={[styles.transcriptBubble, role === 'user' ? styles.userBubble : styles.ariaBubble]}>
-    <Text style={[styles.transcriptRole, role === 'user' && styles.transcriptRoleUser]}>
-      {role === 'user' ? 'You' : 'Aria'}
-    </Text>
-    <Text style={[styles.transcriptText, role === 'user' && styles.transcriptTextUser]}>{text}</Text>
-  </View>
-);
+const QUICK_CHIPS = [
+  'Morning routine',
+  'Managing sundowning',
+  'Memory exercises',
+  'Medication reminders',
+  'Sleep tips',
+  'Caregiver support',
+];
 
 export const VoiceScreen = ({ navigation }) => {
   const [voiceState, setVoiceState] = useState(VoiceState.IDLE);
-  const [transcript, setTranscript] = useState([]);
-  const [showTranscript, setShowTranscript] = useState(true);
+  const [inputText, setInputText] = useState('');
+  const [conversationHistory, setConversationHistory] = useState([]);
+  const avatarRef = useRef(null);
+  const recordingRef = useRef(null);
+  const abortRef = useRef(false);   // set true when user stops mid-response
+  const historyRef = useRef([]);    // kept in sync so callbacks always see latest
+  const micPulse = useRef(new Animated.Value(1)).current;
+  const insets = useSafeAreaInsets();
 
-  const micScaleAnim = useRef(new Animated.Value(1)).current;
-  const micOpacityAnim = useRef(new Animated.Value(1)).current;
-  const statusOpacity = useRef(new Animated.Value(1)).current;
-  const outerPulse = useRef(new Animated.Value(1)).current;
-  const outerPulse2 = useRef(new Animated.Value(1)).current;
-  const listenerRef = useRef(null);
+  const isActive = voiceState === VoiceState.LISTENING || voiceState === VoiceState.SPEAKING;
 
-  const meta = STATE_META[voiceState];
+  // Keep historyRef in sync
+  useEffect(() => {
+    historyRef.current = conversationHistory;
+  }, [conversationHistory]);
 
-  // Microphone pulse animations when listening
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      recordingRef.current?.stopAndUnloadAsync().catch(() => {});
+      avatarRef.current?.stopAudio();
+    };
+  }, []);
+
+  // Mic pulse animation
   useEffect(() => {
     if (voiceState === VoiceState.LISTENING) {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(outerPulse, { toValue: 1.4, duration: 900, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(outerPulse, { toValue: 1, duration: 900, easing: Easing.in(Easing.quad), useNativeDriver: true }),
-        ])
-      ).start();
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(450),
-          Animated.timing(outerPulse2, { toValue: 1.6, duration: 900, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(outerPulse2, { toValue: 1, duration: 900, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+          Animated.timing(micPulse, { toValue: 1.25, duration: 700, useNativeDriver: true }),
+          Animated.timing(micPulse, { toValue: 1, duration: 700, useNativeDriver: true }),
         ])
       ).start();
     } else {
-      outerPulse.stopAnimation();
-      outerPulse2.stopAnimation();
-      Animated.spring(outerPulse, { toValue: 1, useNativeDriver: true }).start();
-      Animated.spring(outerPulse2, { toValue: 1, useNativeDriver: true }).start();
+      micPulse.stopAnimation();
+      Animated.spring(micPulse, { toValue: 1, useNativeDriver: true }).start();
     }
   }, [voiceState]);
 
-  // Processing spin
-  useEffect(() => {
-    if (voiceState === VoiceState.PROCESSING) {
-      Animated.loop(
-        Animated.timing(micScaleAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        })
-      ).start();
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(micOpacityAnim, { toValue: 0.5, duration: 500, useNativeDriver: true }),
-          Animated.timing(micOpacityAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-        ])
-      ).start();
-    } else {
-      micOpacityAnim.stopAnimation();
-      micOpacityAnim.setValue(1);
+  // Core: stream RAG chat → sentence-split → parallel TTS → sequential playback.
+  // Each sentence's TTS fires as soon as the sentence is complete from the stream,
+  // so audio for sentence N is generating while sentence N-1 is playing.
+  const processQuery = useCallback(async (userText) => {
+    if (!userText.trim()) return;
+
+    setVoiceState(VoiceState.PROCESSING);
+    abortRef.current = false;
+
+
+    try {
+      const history = historyRef.current;
+      let fullText = '';
+
+      // Promises of data URIs — pushed in sentence order, resolved concurrently.
+      const segmentPromises = [];
+
+      const addSegment = (text) => {
+        const clean = text.trim();
+        if (!clean) return;
+        // tts() now returns a data:audio/mpeg;base64,... URI — no disk write needed.
+        segmentPromises.push(openaiService.tts(clean, 'nova'));
+      };
+
+      // Stream response and split into sentences as chunks arrive.
+      // Hermes doesn't support lookbehind, so use a replace-then-split trick.
+      let buf = '';
+      for await (const chunk of openaiService.chatStream(userText, history)) {
+        if (abortRef.current) break;
+        fullText += chunk;
+        buf += chunk;
+        // Mark sentence ends with a private delimiter, then split
+        const marked = buf.replace(/([.!?])\s+/g, '$1\x1F');
+        const parts = marked.split('\x1F');
+        parts.slice(0, -1).forEach(s => addSegment(s));
+        buf = parts[parts.length - 1];
+      }
+      if (buf.trim() && !abortRef.current) addSegment(buf);
+
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'user', content: userText },
+        { role: 'assistant', content: fullText },
+      ]);
+
+      if (segmentPromises.length === 0 || abortRef.current) {
+        setVoiceState(VoiceState.IDLE);
+        return;
+      }
+
+      setVoiceState(VoiceState.SPEAKING);
+
+      // Play segments in order via WebView Web Audio API (provides real-time lip sync).
+      for (let i = 0; i < segmentPromises.length; i++) {
+        if (abortRef.current) break;
+        const uri = await segmentPromises[i];
+        if (abortRef.current) break;
+        if (avatarRef.current) await avatarRef.current.playAudio(uri);
+      }
+    } catch (err) {
+      console.error('[VoiceScreen] processQuery:', err);
+    } finally {
+      setVoiceState(VoiceState.IDLE);
     }
-  }, [voiceState]);
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') return;
+
+      // Tear down any lingering recorder before creating a new one
+      if (recordingRef.current) {
+        await recordingRef.current.stopAndUnloadAsync().catch(() => {});
+        recordingRef.current = null;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      recordingRef.current = recording;
+      setVoiceState(VoiceState.LISTENING);
+    } catch (err) {
+      console.error('[VoiceScreen] startRecording:', err);
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
+    }
+  }, []);
+
+  const stopAndTranscribe = useCallback(async () => {
+    const rec = recordingRef.current;
+    if (!rec) return;
+
+    setVoiceState(VoiceState.PROCESSING);
+
+    try {
+      await rec.stopAndUnloadAsync();
+      const uri = rec.getURI();
+      recordingRef.current = null;
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
+
+      const transcript = await openaiService.transcribe(uri);
+      if (!transcript) {
+        setVoiceState(VoiceState.IDLE);
+        return;
+      }
+
+      await processQuery(transcript);
+    } catch (err) {
+      console.error('[VoiceScreen] stopAndTranscribe:', err);
+      setVoiceState(VoiceState.IDLE);
+    }
+  }, [processQuery]);
+
+  const stopAudio = useCallback(() => {
+    abortRef.current = true;
+    avatarRef.current?.stopAudio();
+  }, []);
 
   const handleMicPress = useCallback(async () => {
     if (voiceState === VoiceState.IDLE) {
-      setVoiceState(VoiceState.LISTENING);
-      // TODO: Start Expo AV recording → stream to ACE Riva ASR
-      // Simulate listening for 3 seconds then processing
-      clearTimeout(listenerRef.current);
-      listenerRef.current = setTimeout(async () => {
-        const mockTranscript = "How do I manage sundowning behaviour?";
-        setTranscript(prev => [...prev, { role: 'user', text: mockTranscript }]);
-        setVoiceState(VoiceState.PROCESSING);
-
-        try {
-          const response = await aceService.sendText(mockTranscript);
-          setVoiceState(VoiceState.SPEAKING);
-          setTranscript(prev => [...prev, { role: 'aria', text: response.text }]);
-          // Simulate speech duration
-          setTimeout(() => setVoiceState(VoiceState.IDLE), 5000);
-        } catch {
-          setVoiceState(VoiceState.IDLE);
-        }
-      }, 3000);
+      await startRecording();
     } else if (voiceState === VoiceState.LISTENING) {
-      clearTimeout(listenerRef.current);
-      setVoiceState(VoiceState.IDLE);
+      await stopAndTranscribe();
     } else if (voiceState === VoiceState.SPEAKING) {
-      // Interrupt
+      await stopAudio();
       setVoiceState(VoiceState.IDLE);
     }
-  }, [voiceState]);
+  }, [voiceState, startRecording, stopAndTranscribe, stopAudio]);
 
-  const handleClear = () => {
-    setTranscript([]);
+  const handleStop = useCallback(async () => {
+    if (recordingRef.current) {
+      await recordingRef.current.stopAndUnloadAsync().catch(() => {});
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
+      recordingRef.current = null;
+    }
+    await stopAudio();
     setVoiceState(VoiceState.IDLE);
-  };
+  }, [stopAudio]);
 
-  const insets = useSafeAreaInsets();
+  const handleChipPress = (chip) => setInputText(chip);
+
+  const handleTextSend = useCallback(async () => {
+    const text = inputText.trim();
+    if (!text || voiceState !== VoiceState.IDLE) return;
+    setInputText('');
+    await processQuery(text);
+  }, [inputText, voiceState, processQuery]);
+
+  const micColor = voiceState === VoiceState.LISTENING
+    ? '#4ECDC4'
+    : voiceState === VoiceState.SPEAKING
+    ? Colors.accent
+    : 'rgba(255,255,255,0.85)';
 
   return (
-    <View style={styles.safe}>
+    <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       <LinearGradient
-        colors={['#2D5F70', '#4A7C8E', '#5D9381']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.6, y: 1 }}
-        style={styles.gradient}
-      >
-        {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => navigation.goBack()}
-            accessibilityLabel="Close voice screen"
-          >
-            <MaterialCommunityIcons name="chevron-down" size={26} color="rgba(255,255,255,0.9)" />
-          </TouchableOpacity>
+        colors={['#0D0D1A', '#1A1A2E', '#16213E']}
+        start={{ x: 0.3, y: 0 }}
+        end={{ x: 0.7, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
 
-          <Text style={styles.headerTitle}>Voice</Text>
+      {/* Top bar */}
+      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
+          style={styles.topIconBtn}
+          onPress={() => navigation.goBack()}
+          accessibilityLabel="Menu"
+        >
+          <MaterialCommunityIcons name="menu" size={24} color="rgba(255,255,255,0.9)" />
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.transcriptToggle}
-            onPress={() => setShowTranscript(!showTranscript)}
-            accessibilityLabel={showTranscript ? 'Hide transcript' : 'Show transcript'}
-          >
-            <MaterialCommunityIcons
-              name={showTranscript ? 'subtitles' : 'subtitles-outline'}
-              size={22}
-              color="rgba(255,255,255,0.9)"
-            />
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.captureBtn}
+          onPress={() => {}}
+          accessibilityLabel="Capture"
+        >
+          <MaterialCommunityIcons name="camera-iris" size={18} color="#fff" />
+          <Text style={styles.captureBtnText}>Capture</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Avatar */}
+      <View style={styles.avatarArea}>
+        <AvatarVRM
+          ref={avatarRef}
+          modelUrl={DEFAULT_VRM_MODEL_URL}
+          isListening={voiceState === VoiceState.LISTENING}
+          isSpeaking={voiceState === VoiceState.SPEAKING}
+          isThinking={voiceState === VoiceState.PROCESSING}
+          style={styles.avatarVRM}
+        />
+
+        <View style={styles.nameBadge}>
+          <View style={[styles.nameBadgeDot, { backgroundColor: isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)' }]} />
+          <Text style={styles.nameBadgeText}>Aria</Text>
         </View>
+      </View>
 
-        {/* Avatar */}
-        <View style={styles.avatarSection}>
-          <Avatar
-            size={110}
-            isListening={voiceState === VoiceState.LISTENING}
-            isSpeaking={voiceState === VoiceState.SPEAKING}
-            isIdle={voiceState === VoiceState.IDLE}
-          />
-          <Text style={styles.ariaName}>Aria</Text>
-          <Text style={styles.ariaRole}>DementiaGuide AI — Voice Interface</Text>
-          <Text style={styles.poweredBy}>Powered by NVIDIA ACE</Text>
-        </View>
-
-        {/* Waveform visualiser */}
-        <View style={styles.waveformContainer}>
-          <VoiceWaveform
-            isActive={voiceState === VoiceState.LISTENING || voiceState === VoiceState.SPEAKING}
-            color={
-              voiceState === VoiceState.SPEAKING
-                ? Colors.accent
-                : voiceState === VoiceState.LISTENING
-                ? Colors.success
-                : 'rgba(255,255,255,0.3)'
-            }
-            maxHeight={50}
-            barWidth={5}
-            gap={6}
-          />
-        </View>
-
-        {/* Status text */}
-        <View style={styles.statusSection}>
-          <View style={[styles.statusIndicator, { backgroundColor: `${meta.color}30` }]}>
-            <View style={[styles.statusDot, { backgroundColor: meta.color }]} />
-            <Text style={styles.statusLabel}>{meta.label}</Text>
-          </View>
-          <Text style={styles.statusSub}>{meta.subLabel}</Text>
-        </View>
-
-        {/* Transcript */}
-        {showTranscript && transcript.length > 0 && (
-          <View style={styles.transcriptContainer}>
-            <View style={styles.transcriptHeader}>
-              <Text style={styles.transcriptTitle}>Conversation</Text>
-              <TouchableOpacity onPress={handleClear} accessibilityLabel="Clear conversation">
-                <Text style={styles.clearText}>Clear</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView
-              style={styles.transcriptScroll}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.transcriptScrollContent}
+      {/* Bottom control panel */}
+      <View style={[styles.bottomPanel, { paddingBottom: insets.bottom + 12 }]}>
+        {/* Quick chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+        >
+          {QUICK_CHIPS.map((chip) => (
+            <TouchableOpacity
+              key={chip}
+              style={[styles.chip, inputText === chip && styles.chipActive]}
+              onPress={() => handleChipPress(chip)}
+              activeOpacity={0.75}
             >
-              {transcript.map((item, i) => (
-                <TranscriptBubble key={i} text={item.text} role={item.role} />
-              ))}
-            </ScrollView>
-          </View>
-        )}
+              <Text style={[styles.chipText, inputText === chip && styles.chipTextActive]}>
+                {chip}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-        {/* Mic button */}
-        <View style={styles.micSection}>
-          {voiceState === VoiceState.LISTENING && (
-            <>
-              <Animated.View
-                style={[
-                  styles.micRing,
-                  styles.micRingOuter,
-                  { transform: [{ scale: outerPulse2 }], opacity: 0.2 },
-                ]}
-              />
-              <Animated.View
-                style={[
-                  styles.micRing,
-                  { transform: [{ scale: outerPulse }], opacity: 0.3 },
-                ]}
-              />
-            </>
-          )}
-
+        {/* Icon row */}
+        <View style={styles.iconRow}>
           <TouchableOpacity
-            style={[styles.micButton, { backgroundColor: meta.color }]}
-            onPress={handleMicPress}
-            activeOpacity={0.85}
-            accessibilityLabel={meta.label}
-            accessibilityRole="button"
-            accessibilityState={{ selected: voiceState === VoiceState.LISTENING }}
-          >
-            <Animated.View style={{ opacity: micOpacityAnim }}>
-              <MaterialCommunityIcons name={meta.icon} size={32} color={Colors.textInverse} />
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Quick action row */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={styles.quickAction}
+            style={styles.iconBtn}
             onPress={() => navigation.navigate('Chat')}
             accessibilityLabel="Switch to text chat"
           >
-            <MaterialCommunityIcons name="keyboard-outline" size={20} color="rgba(255,255,255,0.8)" />
-            <Text style={styles.quickActionText}>Switch to text</Text>
+            <MaterialCommunityIcons name="keyboard-outline" size={22} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.quickAction}
+            style={styles.iconBtn}
             onPress={() => navigation.navigate('Library')}
             accessibilityLabel="Browse library"
           >
-            <MaterialCommunityIcons name="library-outline" size={20} color="rgba(255,255,255,0.8)" />
-            <Text style={styles.quickActionText}>Browse library</Text>
+            <MaterialCommunityIcons name="library-outline" size={22} color="rgba(255,255,255,0.8)" />
+          </TouchableOpacity>
+
+          <Animated.View style={{ transform: [{ scale: micPulse }] }}>
+            <TouchableOpacity
+              style={[styles.iconBtn, styles.micIconBtn, { borderColor: micColor }]}
+              onPress={handleMicPress}
+              accessibilityLabel={voiceState === VoiceState.IDLE ? 'Start speaking' : 'Stop'}
+            >
+              <MaterialCommunityIcons
+                name={voiceState === VoiceState.LISTENING ? 'stop' : 'microphone'}
+                size={26}
+                color={micColor}
+              />
+            </TouchableOpacity>
+          </Animated.View>
+
+          <TouchableOpacity style={styles.iconBtn} accessibilityLabel="Volume">
+            <MaterialCommunityIcons name="volume-high" size={22} color="rgba(255,255,255,0.8)" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.iconBtn} accessibilityLabel="Settings">
+            <MaterialCommunityIcons name="cog-outline" size={22} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+
+        {/* Ask anything row */}
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.input}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Ask Anything..."
+            placeholderTextColor="rgba(255,255,255,0.35)"
+            returnKeyType="send"
+            onSubmitEditing={handleTextSend}
+            editable={voiceState === VoiceState.IDLE}
+          />
+
+          {isActive ? (
+            <TouchableOpacity style={styles.stopBtn} onPress={handleStop} accessibilityLabel="Stop">
+              <View style={styles.stopIcon} />
+              <Text style={styles.stopText}>Stop</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.sendBtn} onPress={handleTextSend} accessibilityLabel="Send">
+              <MaterialCommunityIcons name="send" size={20} color="#fff" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safe: {
+  root: {
     flex: 1,
+    backgroundColor: '#0D0D1A',
   },
-  gradient: {
-    flex: 1,
-  },
-  header: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 8,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+  topIconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitle: {
-    ...Typography.titleLarge,
-    color: Colors.textInverse,
-  },
-  transcriptToggle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarSection: {
-    alignItems: 'center',
-    marginTop: 20,
-    gap: 8,
-  },
-  ariaName: {
-    ...Typography.headlineMedium,
-    color: Colors.textInverse,
-  },
-  ariaRole: {
-    ...Typography.bodySmall,
-    color: 'rgba(255,255,255,0.75)',
-  },
-  poweredBy: {
-    ...Typography.labelSmall,
-    color: 'rgba(255,255,255,0.45)',
-    letterSpacing: 0.5,
-  },
-  waveformContainer: {
-    alignItems: 'center',
-    marginTop: 24,
-    height: 60,
-    justifyContent: 'center',
-  },
-  statusSection: {
-    alignItems: 'center',
-    marginTop: 16,
-    gap: 6,
-  },
-  statusIndicator: {
+  captureBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    backgroundColor: 'rgba(100,180,255,0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(100,180,255,0.4)',
   },
-  statusDot: {
-    width: 8,
-    height: 8,
+  captureBtnText: {
+    ...Typography.labelMedium,
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  avatarArea: {
+    flex: 1,
+  },
+  avatarVRM: {
+    flex: 1,
+    alignSelf: 'stretch',
+  },
+  nameBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    position: 'absolute',
+    bottom: 16,
+    alignSelf: 'center',
+  },
+  nameBadgeDot: {
+    width: 7,
+    height: 7,
     borderRadius: 4,
   },
-  statusLabel: {
-    ...Typography.labelLarge,
-    color: Colors.textInverse,
-  },
-  statusSub: {
-    ...Typography.bodySmall,
-    color: 'rgba(255,255,255,0.65)',
-    textAlign: 'center',
-  },
-  transcriptContainer: {
-    flex: 1,
-    marginHorizontal: 20,
-    marginTop: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 20,
-    overflow: 'hidden',
-    maxHeight: 220,
-  },
-  transcriptHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-  },
-  transcriptTitle: {
-    ...Typography.labelLarge,
-    color: Colors.textInverse,
-  },
-  clearText: {
+  nameBadgeText: {
     ...Typography.labelMedium,
-    color: 'rgba(255,255,255,0.6)',
-  },
-  transcriptScroll: {
-    flex: 1,
-  },
-  transcriptScrollContent: {
-    padding: 12,
-    gap: 8,
-  },
-  transcriptBubble: {
-    borderRadius: 14,
-    padding: 12,
-    gap: 4,
-  },
-  ariaBubble: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignSelf: 'flex-start',
-    maxWidth: '85%',
-  },
-  userBubble: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignSelf: 'flex-end',
-    maxWidth: '85%',
-  },
-  transcriptRole: {
-    ...Typography.labelSmall,
-    color: 'rgba(255,255,255,0.6)',
-    textTransform: 'none',
-    letterSpacing: 0,
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
     fontWeight: '600',
-    fontSize: 11,
   },
-  transcriptRoleUser: {
-    textAlign: 'right',
+  bottomPanel: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    paddingTop: 14,
+    paddingHorizontal: 0,
+    gap: 14,
   },
-  transcriptText: {
-    ...Typography.bodySmall,
-    color: 'rgba(255,255,255,0.9)',
-    lineHeight: 20,
-  },
-  transcriptTextUser: {
-    textAlign: 'right',
-  },
-  micSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 28,
-    height: 120,
-  },
-  micRing: {
-    position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.success,
-  },
-  micRingOuter: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-  },
-  micButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  quickActions: {
+  chipsRow: {
+    paddingHorizontal: 16,
+    gap: 8,
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 24,
-    marginTop: 24,
-    paddingBottom: 24,
-  },
-  quickAction: {
     alignItems: 'center',
-    gap: 6,
   },
-  quickActionText: {
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  chipActive: {
+    backgroundColor: 'rgba(100,180,255,0.25)',
+    borderColor: 'rgba(100,180,255,0.5)',
+  },
+  chipText: {
     ...Typography.labelSmall,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 13,
+    fontWeight: '500',
     textTransform: 'none',
     letterSpacing: 0,
+  },
+  chipTextActive: {
+    color: '#fff',
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+    paddingHorizontal: 24,
+  },
+  iconBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  micIconBtn: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: 'rgba(78,205,196,0.12)',
+    borderWidth: 2,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  input: {
+    flex: 1,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: 20,
+    color: '#fff',
+    fontSize: 15,
+  },
+  stopBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 13,
+    borderRadius: 25,
+    backgroundColor: '#fff',
+  },
+  stopIcon: {
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+    backgroundColor: '#E53935',
+  },
+  stopText: {
+    ...Typography.labelMedium,
+    color: '#1E2D3D',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  sendBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

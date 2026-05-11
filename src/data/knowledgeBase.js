@@ -1,4 +1,5 @@
 // Dementia care knowledge base — 42 chunks, 7 per category.
+// Content paraphrased from authoritative sources; see source_url per chunk.
 // `embedding` is null at build time; populated at runtime from cache or API.
 
 export const KNOWLEDGE_BASE = [
@@ -7,56 +8,122 @@ export const KNOWLEDGE_BASE = [
     id: 'caregiving_001',
     category: 'caregiving',
     title: 'Managing Sundowning Behaviour',
-    content: `Sundowning refers to increased confusion, agitation, restlessness, and disorientation that typically worsens in the late afternoon and evening hours for people with dementia. It is one of the most challenging aspects of dementia care. Common triggers include fatigue accumulated during the day, low lighting that creates shadows and distorts perception, disrupted internal body clock, pain or physical discomfort, and overstimulation earlier in the day. Effective strategies include maintaining a consistent daily routine so the body clock is regulated, ensuring the home is well-lit in the late afternoon and evening to minimise shadows, planning activities and outings earlier in the day when the person is more alert, reducing noise and stimulation in the late afternoon, offering a light nutritious snack before the sundowning period, engaging in calming activities such as gentle music, slow walks, or hand massage as the evening approaches, and keeping curtains open during daylight hours to reinforce the natural light cycle. Avoid arguing or trying to reorient forcibly if the person is distressed — instead validate their feelings and gently redirect. If sundowning is severe and causing safety concerns, discuss medication options with the person's doctor. Keeping a diary of when sundowning occurs and what preceded it can help identify personal triggers.`,
+    content: `Sundowning refers to a pattern of increased confusion, restlessness, and agitation that worsens in the late afternoon and evening in people with dementia. While the condition affects each person differently, sundowning is one of the most widely reported and challenging caregiving experiences.
+
+Common contributing factors include fatigue accumulated throughout the day, reduced or changing light levels that create confusing shadows, disruption to the person's internal body clock, and overstimulation earlier in the day. Maintaining a consistent daily routine is one of the most effective strategies — when the day follows a predictable pattern, the brain can adapt even when explicit memory is impaired.
+
+Ensure the home is well-lit in the late afternoon and evening, particularly in rooms where the person spends time. Reducing background noise and stimulation from around mid-afternoon onwards, and planning more demanding activities and outings for the morning when the person is most alert, can significantly reduce the severity of sundowning.
+
+Calming activities approaching evening — gentle music, a slow walk, or hand massage — help transition into nighttime. A light nutritious snack before the sundowning period often helps. Avoid arguing or correcting the person if they become distressed; acknowledge their feelings and gently redirect. If sundowning is severe or creating safety risks, discuss this with the person's doctor. Keeping a brief diary of when sundowning occurs and what preceded it helps identify personal triggers.
+
+In Australia, the National Dementia Helpline (1800 100 500) provides 24/7 advice. In New Zealand, contact Dementia NZ (0800 004 001) or Alzheimer's NZ for local support.`,
     tags: ['sundowning', 'agitation', 'evening', 'routine', 'behaviour'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
   {
     id: 'caregiving_002',
     category: 'caregiving',
     title: 'Responding to Repetitive Questions and Actions',
-    content: `Repetitive questioning and repeated actions are among the most common and frustrating challenges in dementia caregiving. The person may ask the same question dozens of times within an hour, not because they are being difficult, but because they genuinely cannot retain the answer. The memory loss means each question feels like the first time they have asked it. Respond with patience and calmness each time — the emotional tone of your reply is retained longer than the words. Avoid saying "I just told you" or showing frustration, as this causes distress without resolving the underlying need. Instead, try to understand what feeling or need is behind the question: "When are we going home?" often reflects anxiety or discomfort rather than a genuine desire to leave. Address the feeling ("You're safe here, and I'm right with you") rather than the literal question. Use distraction and redirection — have a favourite activity, snack, or object ready to gently shift attention. Visual cues such as a whiteboard with the day, date, and key information can reduce some repetitive questions. For repetitive physical actions such as folding and unfolding, provide a purposeful activity that channels the behaviour (a pile of cloths to fold, a sorting task). Accept that some repetition is part of the condition and cannot be eliminated — managing your own stress response is as important as managing the behaviour.`,
+    content: `Repetitive questioning and repeated actions are among the most commonly reported challenges in dementia caregiving. The Alzheimer's Society explains that memory loss means that each time a person asks a question, it genuinely feels like the first time they have asked it — they are not being difficult, they simply cannot retain the answer.
+
+The emotional tone of a response is retained longer than the words themselves, so responding with irritation — even understandable irritation — leaves the person feeling distressed without resolving the underlying need. Phrases like "I already told you" are worth consciously avoiding.
+
+Try to understand the feeling or need behind the question rather than its literal content. A repeated question about "going home" often reflects anxiety, discomfort, or a need for reassurance rather than a literal desire to leave. Addressing that underlying feeling — "You're safe here, and I'm with you" — is typically more effective than repeating the factual answer.
+
+Distraction and redirection are practical tools: a favourite snack, a familiar activity, or a piece of music can gently shift attention. Visual cues like a whiteboard showing the day, date, and key information reduce some types of repetitive questioning. For repetitive physical actions such as folding and sorting, provide a purposeful task that channels the behaviour constructively — a pile of items to fold, a simple sorting activity.
+
+Accepting that some repetition cannot be eliminated, and focusing on managing your own response calmly, is an important part of sustainable caregiving.`,
     tags: ['repetitive questioning', 'memory loss', 'patience', 'redirection', 'behaviour'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'caregiving_003',
     category: 'caregiving',
     title: 'Personal Hygiene and Bathing Assistance',
-    content: `Helping a person with dementia maintain personal hygiene is sensitive work that requires preserving their dignity and managing potential resistance. Many people with dementia resist bathing due to fear of water, feeling cold, loss of privacy, or confusion about what is happening to them. Prepare the bathroom in advance — warm the room, have towels and clean clothes ready, and run warm water before the person enters to reduce the shock of starting. Use a calm, reassuring tone and involve the person in each step ("Now let's wash your hair"). Give simple one-step instructions and allow extra time — rushing creates anxiety. Offer a choice of shower or bath to preserve a sense of control. If the person resists strongly, try again later or on a different day; flexibility reduces confrontation. Dry and moisturise skin thoroughly, especially in skin folds, to prevent irritation. Check for any signs of injury, rashes, or skin breakdown during hygiene routines. For oral hygiene, use a soft-bristled brush and fluoride toothpaste, supervise or assist as needed, and offer sugar-free gum or mouth rinse if brushing is refused. Establish a consistent routine — many people accept hygiene more readily at the same time each day. Adapt approaches as dementia progresses; sponge baths may replace showers in later stages.`,
+    content: `Helping someone with dementia maintain personal hygiene requires balancing safety with dignity and respect for their preferences. The NHS recommends several practical approaches that carers find effective.
+
+Prepare everything before starting — warm the bathroom, lay out clean clothes and towels, and have everything within easy reach. A bath seat or shower chair and a handheld showerhead make seated showering safer and reduce the anxiety associated with standing. Throughout the process, reassure the person clearly: telling them "I'm not going to let you get hurt" can significantly reduce resistance.
+
+Ask how the person would like to be helped rather than assuming, and respect their preferred method wherever safely possible. Explain each step before it happens using short, simple instructions. If the person refuses or becomes distressed, do not push — try again later or on a different day. Flexibility reduces confrontation and preserves trust.
+
+For oral hygiene, supervise or assist with brushing using a soft-bristled toothbrush and fluoride toothpaste. Establishing a consistent routine helps — many people with dementia accept personal care more readily at the same time each day once it becomes part of a familiar pattern.
+
+Check the skin for redness, rashes, or soreness during hygiene routines. As dementia progresses, sponge baths may become more appropriate than full showers or baths. If significant resistance to personal care continues, speak with the person's GP or a dementia support worker for further strategies.`,
     tags: ['bathing', 'hygiene', 'dignity', 'resistance', 'personal care'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'caregiving_004',
     category: 'caregiving',
     title: 'Nutrition, Hydration, and Meal Management',
-    content: `Adequate nutrition and hydration are essential for people with dementia but become increasingly difficult to maintain as the condition progresses. Appetite changes, difficulty recognising food and hunger cues, swallowing problems, and the distraction or forgetting mid-meal all contribute to poor intake. Serve small, frequent, nutritious meals and snacks rather than three large meals. Offer favourite familiar foods and consider the person's cultural food preferences — familiar tastes are reassuring. Use brightly coloured plates that contrast with food to make meals visually clear. Reduce distractions during mealtimes: turn off the television, minimise table clutter, and sit at the same level as the person. Allow extra time and do not rush. Offer assistance only as needed — preserving independence with eating maintains dignity and improves intake. Watch for signs of swallowing difficulty (coughing, choking, food collecting in the cheek, wet or gurgly voice after eating) and refer for a speech therapy assessment if concerned. Pureed or soft foods may be needed in moderate to late stages. Hydration is often neglected — offer drinks regularly throughout the day, not only at meals. Fruit with high water content (watermelon, oranges) and soups contribute to fluid intake. Unexplained weight loss should always be reviewed by a doctor.`,
+    content: `Maintaining good nutrition and hydration in dementia becomes increasingly challenging as the condition progresses. The NHS recommends involving the person in meal preparation where possible, and offering foods they are known to enjoy in smaller portions — large meals can be overwhelming and reduce overall intake.
+
+Finger foods are practical when using cutlery becomes difficult. Brightly coloured plates that contrast with the food help the person see and identify what they are eating. Reduce distractions at mealtimes — turning off the television and minimising table clutter allows the person to focus on eating. Sit at the same level as the person, allow plenty of time, and offer assistance only as needed to preserve independence and dignity.
+
+Adequate hydration is critically important: dehydration worsens confusion and can contribute to urinary tract infections, which can cause sudden deterioration. Offer drinks regularly throughout the day, not only at mealtimes. Foods with high water content — such as watermelon and oranges — and soups also contribute to fluid intake.
+
+Watch for signs of swallowing difficulty: coughing, choking, food collecting in the cheek, or a wet or gurgly voice after eating. If these are observed, ask the GP for a referral to a speech and language therapist, who can advise on appropriate food textures and feeding techniques. Unexplained weight loss should always be reviewed medically. In later stages, pureed or soft foods may become necessary to maintain safe and comfortable eating.`,
     tags: ['nutrition', 'hydration', 'mealtimes', 'swallowing', 'appetite', 'weight loss'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'caregiving_005',
     category: 'caregiving',
     title: 'Sleep Disturbances and Night-Time Management',
-    content: `Sleep disturbances are extremely common in dementia, affecting both the person with dementia and their carer. Disrupted sleep-wake cycles, nighttime wandering, vivid dreams or nightmares, and repeatedly waking and calling out are all reported frequently. Establishing good sleep hygiene is the first line approach: maintain consistent bedtimes and wake times seven days a week, ensure the person gets exposure to natural daylight during the day (a morning walk is ideal), limit caffeine after midday, provide gentle physical activity in the afternoon, and avoid long daytime naps which reduce nighttime sleep drive. Create a calm pre-sleep routine — warm bath, soft music, or a familiar television programme. Ensure the bedroom is comfortable in temperature and not too dark (a nightlight reduces disorientation if the person wakes). If the person wanders at night, safety-proof the environment: door alarms, door handle covers, stair gates, and removing trip hazards. If they wake distressed, respond calmly, reassure them, and gently guide them back to bed rather than engaging in lengthy conversation. Avoid stimulating activities or bright lights if they wake. Medications for sleep should be a last resort and discussed carefully with the doctor, as sedatives increase fall risk and may worsen cognitive symptoms in dementia.`,
+    content: `Sleep problems are common in dementia and affect both the person with dementia and their carer. The NHS recommends placing a dementia-friendly clock — one that clearly shows whether it is day or night — beside the bed, so that if the person wakes they can orient themselves more easily without becoming frightened.
+
+Good sleep hygiene is the foundation of management: keep consistent bed and wake times seven days a week, increase exposure to natural daylight during the day (a morning walk is particularly effective), and reduce caffeine and alcohol in the evening. Physical activity during the day — even gentle movement — helps reduce night-time restlessness. Avoid long daytime naps, which reduce the drive to sleep at night.
+
+If the person wakes and is confused or distressed at night, respond calmly and reassure them. Guide them gently back to bed rather than engaging in lengthy conversation or turning on bright lights, which can stimulate wakefulness. A nightlight in the hallway between bedroom and bathroom helps the person orient themselves if they wake without becoming fully alert.
+
+If night-time wandering is a safety concern, door alarms and stair gates can alert carers without requiring physical restraint. If sleep problems are significantly affecting the carer's health, speak with the GP — both for the person with dementia and for the carer themselves. Sleep deprivation in carers is a health issue that warrants professional attention and support.`,
     tags: ['sleep', 'night wandering', 'insomnia', 'sleep hygiene', 'nighttime', 'disturbance'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'caregiving_006',
     category: 'caregiving',
     title: 'Managing Incontinence with Dignity',
-    content: `Incontinence affects most people with moderate to advanced dementia and requires sensitive management that preserves dignity. Urinary incontinence typically precedes faecal incontinence. Causes include the person forgetting where the toilet is, being unable to recognise the urge to go, difficulty undoing clothing, or physical problems such as urinary tract infections (which can also cause sudden worsening of cognition). The first step is a medical review to rule out treatable causes (urinary tract infection, constipation, medication side effects). Establish a regular prompted toileting routine — offer the toilet every two to three hours, after meals, and before bed, regardless of whether the person indicates a need. Ensure the toilet is clearly visible or marked with a sign. Clothing with elastic waists and minimal fastenings makes independent toileting easier. Use absorbent pads or underwear as needed, choosing the most discreet option to preserve dignity. When accidents occur, respond calmly and matter-of-factly without embarrassment or frustration — the person cannot control this and emotional reactions increase shame and distress. Keep skin clean and dry to prevent breakdown. If incontinence worsens suddenly, always reassess for a urinary tract infection. In late-stage dementia, a continence nurse specialist can advise on appropriate products and management strategies.`,
+    content: `Incontinence is common in moderate to advanced dementia and requires sensitive management that preserves the person's dignity. Dementia NZ notes that people with dementia may become incontinent not because of a physical bladder problem, but because they forget where the toilet is, cannot recognise the sensation in time, or have difficulty undoing clothing quickly enough.
+
+The first step is ruling out treatable causes. A urinary tract infection (UTI) can cause sudden incontinence and significant cognitive worsening in someone with dementia, and warrants prompt medical attention. Constipation is another common but often overlooked cause.
+
+Establish a regular prompted toileting routine — offer the toilet every two to three hours, after meals, and before bed, regardless of whether the person indicates a need. Clearly mark or sign the toilet door with both a picture and the word "TOILET" to help the person find it independently. The NHS also recommends using sensor lighting at night so the pathway is clearly visible. Clothing with elastic waists and minimal fastenings makes self-management easier.
+
+Use absorbent pads or underwear discreetly as needed, choosing the most dignified option available. When accidents occur, respond calmly and matter-of-factly — no expressions of frustration or embarrassment, as the person cannot control this and emotional reactions increase shame and distress.
+
+Keep skin clean and dry after accidents to prevent irritation and breakdown. If incontinence is worsening or causing significant difficulty, ask the GP for a referral to a continence nurse specialist who can advise on appropriate products and personalised management strategies.`,
     tags: ['incontinence', 'toileting', 'dignity', 'urinary tract infection', 'continence', 'personal care'],
+    source_url: 'https://dementia.nz/about-dementia/',
+    source_org: 'Dementia NZ',
     embedding: null,
   },
   {
     id: 'caregiving_007',
     category: 'caregiving',
     title: 'Establishing Daily Routine and Structure',
-    content: `A predictable, structured daily routine is one of the most effective tools in dementia care. Routine reduces anxiety, minimises confusion, and makes daily care tasks smoother because the person's brain learns the pattern even when explicit memory is impaired. Keep the sequence of daily activities consistent: waking, hygiene, breakfast, morning activity, lunch, rest or activity, dinner, and bedtime routine in the same order each day. Use the time when the person is most alert for engaging activities and medical appointments — this is usually mid-morning. Build in meaningful activities that align with the person's history and interests (gardening, music, crafts, cooking simple things, folding laundry). Avoid over-scheduling; too many activities causes fatigue and agitation. Mark the day visually — a large-print daily planner, whiteboard, or consistent television programmes at the same time provide temporal anchors. Introduce changes very gradually and expect some period of adjustment. Plan ahead for disruptions to routine (hospital appointments, family visits) by keeping them brief and returning to routine as quickly as possible. Caregivers benefit from routine too: knowing what to expect reduces their own stress and improves consistency of care. Share the routine plan with all family members and respite carers so the person receives consistent care across different people.`,
+    content: `A predictable, structured daily routine is one of the most effective tools in dementia care. Dementia Australia emphasises that even when explicit memory is impaired, the brain can learn and adapt to consistent patterns — making daily care tasks smoother and reducing anxiety and confusion for the person with dementia.
+
+Keep the sequence of daily activities consistent: waking, hygiene, breakfast, morning activity, lunch, rest, afternoon activity, dinner, and bedtime in the same order each day. Schedule medical appointments and more demanding activities during mid-morning when the person is typically most alert and rested. Build in meaningful activities that connect with the person's history and interests — gardening, music, simple cooking tasks, crafts, or sorting and folding — as these provide purpose and engagement without overwhelming.
+
+Avoid over-scheduling; too many activities causes fatigue and agitation. Provide visual anchors for the day — a large-print planner, a whiteboard showing the date and planned activities, or the reliable structure of favourite television programmes at consistent times.
+
+When the routine must change — for hospital appointments, family visits, or other disruptions — keep disruptions as brief as possible and return to the usual routine quickly. Introduce any permanent changes very gradually and expect some period of adjustment.
+
+Share the routine with all family members and any respite carers so the person receives consistent care regardless of who is present. Dementia Australia recommends a written routine plan accessible to everyone involved in the person's care as a practical tool for coordination across multiple carers.`,
     tags: ['routine', 'structure', 'daily schedule', 'predictability', 'consistency'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
 
@@ -65,56 +132,130 @@ export const KNOWLEDGE_BASE = [
     id: 'clinical_001',
     category: 'clinical',
     title: 'Stages of Dementia: Mild, Moderate, and Severe',
-    content: `Dementia typically progresses through three broad stages, though the pace and specific symptoms vary greatly between individuals and types of dementia. In mild (early) stage dementia, the person experiences memory lapses — particularly recent memory — word-finding difficulties, getting lost in familiar places, repeating questions, and mild changes in personality or mood. They can generally manage most daily activities independently but may need reminders. This is when legal and financial planning should occur while the person can still participate in decisions. In moderate (middle) stage dementia, problems become more pronounced. The person needs assistance with most activities of daily living including bathing, dressing, and meal preparation. Behavioural symptoms such as agitation, suspicion, wandering, and sleep disturbances are common. They may no longer recognise some family members. This is typically the longest stage and places the greatest strain on caregivers. In severe (late) stage dementia, the person requires full-time care for all physical needs. Communication becomes very limited or absent. Swallowing difficulties emerge, mobility decreases significantly, and there is increased risk of infections particularly pneumonia. Comfort-focused and palliative care becomes the priority. Knowing the current stage helps caregivers and health professionals plan appropriate support, anticipate what is coming, and have necessary conversations about future care before a crisis occurs.`,
+    content: `The Alzheimer's Society describes dementia progression in three broad stages, noting that symptoms vary significantly between individuals and types of dementia, and that the stages overlap rather than following a fixed sequence.
+
+In the early (mild) stage, a person has symptoms that affect daily life but can still manage many things independently. Memory lapses, word-finding difficulties, occasional disorientation, and mild personality or mood changes are common. With support and adjustments, people in this stage often maintain a good quality of life. This is the most important time to undertake legal and financial planning while the person can actively participate in decisions.
+
+In the middle (moderate) stage, symptoms become more severe and wide-ranging. The person begins to need help with more basic daily tasks — the Alzheimer's Society notes that assistance with washing, dressing, and toileting becomes necessary. Behavioural changes, communication difficulties, and increasing memory loss are characteristic. This is typically the longest stage and places the greatest demands on carers and support networks.
+
+In the late (severe) stage, the person needs more constant care. Difficulty with eating, drinking, and moving around becomes prominent, and professional care is usually required. Communication is severely limited, and comfort-focused care becomes the priority. The risk of infections — particularly pneumonia — increases significantly in this stage.
+
+Understanding the current stage helps families plan appropriate support, anticipate what is coming, and have important conversations about future care preferences before a crisis arises.`,
     tags: ['stages', 'mild dementia', 'moderate dementia', 'severe dementia', 'progression', 'planning'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/how-dementia-progresses/progression-stages-dementia',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'clinical_002',
     category: 'clinical',
-    title: "Alzheimer's Disease, Vascular Dementia, and Lewy Body Dementia",
-    content: `There are over 100 types of dementia; the three most common are Alzheimer's disease, vascular dementia, and dementia with Lewy bodies. Alzheimer's disease accounts for 60–70% of all dementia cases. It is caused by abnormal protein deposits (amyloid plaques and tau tangles) that damage brain cells over time. Memory loss — particularly of recent events — is the hallmark early symptom, followed by language difficulties, disorientation, and eventually loss of physical functions. Progression is gradual and typically spans 8–12 years from diagnosis. Vascular dementia (approximately 15–20% of cases) results from reduced blood flow to the brain due to strokes or small vessel disease. Onset may be sudden (following a stroke) or gradual. Symptoms vary widely depending on the area of brain affected and may include problems with planning and judgement, slowed thinking, and mood changes. A "stepped" progression — stable periods followed by sudden deterioration — is characteristic. Dementia with Lewy bodies (DLB) features core symptoms of fluctuating attention and alertness, detailed visual hallucinations (often of people or animals), and Parkinsonian motor symptoms (tremor, rigidity, slowness). People with DLB are highly sensitive to antipsychotic medications and these should be avoided unless specialist-supervised. Mixed dementia — typically a combination of Alzheimer's and vascular — is common in older people.`,
-    tags: ["Alzheimer's", 'vascular dementia', 'Lewy body', 'types of dementia', 'diagnosis', 'prognosis'],
+    title: 'Alzheimer\'s Disease, Vascular Dementia, and Lewy Body Dementia',
+    content: `The Alzheimer's Society identifies over 200 types of dementia, with four being most prevalent: Alzheimer's disease, vascular dementia, dementia with Lewy bodies, and frontotemporal dementia.
+
+Alzheimer's disease is the most common cause of dementia. Early signs include memory problems — particularly forgetting recent events — difficulties with thinking, language challenges, and perception issues. The disease progresses gradually; the person may ask the same questions repeatedly and gradually withdraw from activities.
+
+Vascular dementia, the second most common type, results from damage to blood vessels supplying the brain — following strokes or small vessel disease. Early symptoms often include problems with planning and concentrating, and short periods of sudden confusion. Unlike Alzheimer's, which tends to progress gradually, vascular dementia may follow a "stepped" pattern — periods of stability interrupted by sudden decline.
+
+Dementia with Lewy bodies is characterised by fluctuating alertness, detailed visual hallucinations, and problems with movement and sleep. People with Lewy body dementia require particular caution with certain medications — some antipsychotics can cause severe adverse reactions in this group.
+
+Frontotemporal dementia (sometimes called Pick's disease) causes early changes to personality and behaviour and/or difficulties with language — memory loss is less prominent initially, which can delay diagnosis. It is more common in people under 65.
+
+Young-onset dementia — diagnosed before age 65 — is less likely to involve memory loss as the first symptom and more likely to involve changes in behaviour, language, or personality.`,
+    tags: ['Alzheimer\'s', 'vascular dementia', 'Lewy body', 'types of dementia', 'diagnosis', 'prognosis'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/types-dementia',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'clinical_003',
     category: 'clinical',
     title: 'Medications Used in Dementia: Benefits, Limits, and Side Effects',
-    content: `Currently available medications for dementia treat symptoms but do not halt or reverse the underlying disease. The two main classes are cholinesterase inhibitors and memantine. Cholinesterase inhibitors — donepezil (Aricept), rivastigmine (Exelon), and galantamine (Razadyne) — work by increasing the availability of acetylcholine, a neurotransmitter involved in memory and learning. They are approved for mild to moderate Alzheimer's disease and sometimes used in DLB and Parkinson's dementia. Benefits include modest improvements in cognitive function, daily activities, and behaviour in some people. Common side effects include nausea, vomiting, diarrhoea, loss of appetite, insomnia, and vivid dreams; these are usually mild and lessen with time. Starting at a low dose and increasing gradually reduces side effects. Memantine (Namenda, Ebixa) works on the glutamate pathway and is approved for moderate to severe Alzheimer's disease, sometimes in combination with donepezil. Side effects include dizziness, headache, and constipation. Antidepressants (particularly SSRIs like sertraline or citalopram) may be used for depression and sometimes agitation. Antipsychotics may be used cautiously for severe agitation, aggression, or psychosis but carry significant risks in dementia (increased stroke risk, falls, sedation, mortality) and should only be prescribed when non-pharmacological approaches have failed, at the lowest effective dose for the shortest duration, with regular review.`,
+    content: `The NHS states clearly: "there is currently no cure for dementia," but several medications can help manage symptoms for a period. Understanding what these drugs can and cannot do helps carers and families set realistic expectations.
+
+Three acetylcholinesterase inhibitors are approved: donepezil (Aricept), rivastigmine (Exelon), and galantamine (Reminyl). These prevent the breakdown of acetylcholine, a brain chemical involved in memory and learning. They are used for Alzheimer's disease, dementia with Lewy bodies, and Parkinson's disease dementia — but not for vascular dementia or frontotemporal dementia, where they are not effective. Common side effects include nausea and appetite loss, which usually resolve within a few weeks.
+
+Memantine works on the glutamate pathway and is used for moderate to severe Alzheimer's disease and Lewy body dementia. Temporary side effects may include headaches and dizziness.
+
+The Alzheimer's Society notes that when these medications are effective, benefits typically last between six and twelve months before symptoms gradually worsen again, and that everyone responds differently. They do not stop, slow, or reverse the underlying disease — they may temporarily help with memory and thinking for some people.
+
+Antipsychotic medications — such as risperidone or haloperidol — may be prescribed for severe agitation, aggression, or distress when other approaches have not worked. These carry significant risks in dementia and should only be used under specialist supervision, at the lowest effective dose, for the shortest possible duration.
+
+Non-medication approaches including cognitive stimulation therapy, cognitive rehabilitation, and reminiscence work have good evidence for improving mood and quality of life.`,
     tags: ['donepezil', 'memantine', 'medication', 'cholinesterase inhibitor', 'antipsychotic', 'treatment'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/treatment/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'clinical_004',
     category: 'clinical',
     title: 'When to Seek Urgent Medical Review',
-    content: `Dementia caregivers must be able to recognise signs that warrant urgent medical assessment. Sudden significant worsening of confusion or behaviour — appearing much worse than usual over hours or days — often signals a physical cause such as urinary tract infection, chest infection, medication side effect, dehydration, constipation, or pain. This is known as delirium superimposed on dementia and is a medical emergency requiring same-day assessment. Other urgent signs include: new onset fever or chills; obvious pain the person cannot communicate; sudden fall or concern about a fracture; signs of infection (redness, swelling, discharge from a wound); refusal to eat or drink for more than 24 hours in someone who was previously eating; sudden onset of weakness, facial drooping, or speech difficulty which could indicate stroke; unexplained bruising that raises concern about a fall; chest pain or difficulty breathing. Do not assume a sudden decline in dementia is just "the dementia getting worse" — reversible physical causes are very common. Keep a brief written record of what has changed and when, as this helps the medical team assess the situation quickly. In New Zealand, if in doubt, call 111 for emergencies, your GP for urgent telephone advice, or Healthline (0800 611 116) for free 24/7 nurse advice. Having a summary of the person's diagnoses, current medications, and advance care wishes accessible speeds assessment significantly.`,
+    content: `The NHS emphasises that sudden significant worsening of confusion, behaviour, or physical ability in a person with dementia should never be dismissed as "just the dementia getting worse." A rapid change — over hours or days — almost always signals a treatable physical cause requiring prompt medical attention.
+
+The most common causes are urinary tract infections, chest infections, dehydration, constipation, uncontrolled pain, and medication side effects. This state — known as delirium superimposed on dementia — can resemble severe dementia worsening but is usually reversible with appropriate treatment.
+
+Urgent signs requiring same-day medical assessment include: a sudden marked increase in confusion or agitation beyond the person's usual baseline; new onset fever or chills; obvious signs of pain or discomfort; a fall with concern about fracture; refusal to eat or drink for more than 24 hours; signs of infection such as redness, swelling, or wound discharge; sudden weakness, facial drooping, or speech difficulty (possible stroke); and unexplained bruising.
+
+Keep a brief written record of what has changed and when, including the person's current medications and diagnoses. This information significantly speeds medical assessment.
+
+In New Zealand, contact your GP for urgent advice or call Healthline (0800 611 116) for free 24/7 nurse guidance. In an emergency, call 111. In Australia, call your GP, contact healthdirect (1800 022 222), or call 000 in an emergency.`,
     tags: ['delirium', 'urgent', 'infection', 'sudden deterioration', 'emergency', 'medical review'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/symptoms/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'clinical_005',
     category: 'clinical',
     title: 'The Dementia Diagnosis Process',
-    content: `Receiving a dementia diagnosis can be an overwhelming experience for both the person and their family. Understanding the process helps reduce anxiety. Diagnosis typically begins with the GP, who takes a detailed history, reviews medications (some cause reversible cognitive impairment), and performs basic cognitive screening tests such as the Mini-Mental State Examination (MMSE) or Montreal Cognitive Assessment (MoCA). Blood tests are ordered to exclude treatable causes of memory problems including thyroid disease, B12 deficiency, anaemia, and metabolic disorders. Depending on findings, the GP may refer to a geriatrician, neurologist, or old age psychiatrist for specialist assessment. This specialist review may include more detailed neuropsychological testing (a comprehensive assessment of memory, attention, language, and executive function), brain imaging (CT or MRI scan to detect structural changes, vascular disease, or exclude tumours), and in some cases a PET scan or lumbar puncture for cerebrospinal fluid biomarkers. A diagnosis may not always be reached on the first assessment — it sometimes requires observation over time as the condition evolves. A diagnosis of dementia is not the same as a diagnosis of Alzheimer's disease specifically; the type of dementia should be specified where possible as it guides treatment and prognosis. After diagnosis, connecting with a dementia support service for education, counselling, and care planning is strongly recommended — in New Zealand, contact Alzheimers NZ (alzheimers.org.nz / 0800 004 001) or Dementia NZ (dementia.nz) for post-diagnosis navigation, information, and local support.`,
+    content: `Receiving a dementia diagnosis is often described as overwhelming, but understanding the process can reduce anxiety for the person and their family. Dementia Australia emphasises that early diagnosis, while emotionally challenging, provides access to support, time to plan, and time to access treatment.
+
+Diagnosis typically begins with a GP visit. The doctor takes a detailed history, reviews medications (some cause reversible cognitive impairment), and performs cognitive screening tests such as the Mini-Mental State Examination (MMSE) or Montreal Cognitive Assessment (MoCA). Blood tests are ordered to rule out treatable causes including thyroid disease, vitamin B12 deficiency, and anaemia.
+
+If dementia is suspected, the GP may refer to a specialist — a geriatrician, neurologist, or old age psychiatrist — for a more detailed assessment. This may include comprehensive neuropsychological testing, brain imaging (CT or MRI scan), and in some cases more specialised investigations.
+
+In Australia, approximately 446,500 people are living with dementia, and dementia is now the leading cause of death for Australians. In New Zealand, tens of thousands of people live with dementia, with numbers expected to rise significantly as the population ages. Early diagnosis means earlier access to support, treatment, and the opportunity for the person to participate in planning their own care.
+
+After a diagnosis in Australia, contact Dementia Australia (dementia.org.au, 1800 100 500) for post-diagnosis navigation and local support. In New Zealand, contact Dementia NZ (dementia.nz, 0800 004 001) or Alzheimer's NZ (alzheimers.org.nz).`,
     tags: ['diagnosis', 'GP', 'specialist', 'cognitive testing', 'MMSE', 'MRI', 'memory clinic'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
   {
     id: 'clinical_006',
     category: 'clinical',
     title: 'Recognising and Managing Pain in People with Dementia',
-    content: `Pain is systematically undertreated in people with dementia because cognitive impairment affects their ability to report pain in the usual ways. They may be unable to say "I am in pain" but instead express it through changes in behaviour — increased agitation, calling out, withdrawal, grimacing, guarding a body part, resisting care, changes in appetite or sleep, or increased confusion. Before attributing behavioural changes to dementia itself, pain should always be considered and investigated. Common pain sources include arthritis, dental problems, urinary tract infections, constipation, pressure injuries, and undetected fractures from falls. Use a validated observational pain assessment tool such as the Abbey Pain Scale or PAINAD scale for people who cannot self-report. Observe the person at rest and during movement. Regular paracetamol (acetaminophen) scheduled rather than only when pain is obvious can significantly reduce agitation in people with dementia who have known pain conditions — several clinical trials have demonstrated behavioural improvements from this approach. Non-pharmacological pain management includes repositioning, gentle massage, heat or cold therapy, and addressing the underlying cause. Review all medications regularly; some are no longer appropriate or effective as dementia progresses. Any new or worsening pain should be investigated medically rather than simply managed behaviourally.`,
+    content: `Pain is frequently undertreated in people with dementia because cognitive impairment affects the ability to report pain in familiar ways. The Alzheimer's Society notes that a person with dementia may not be able to say "I am in pain" but may instead express it through changes in behaviour — increased agitation, calling out, withdrawal, grimacing, guarding a body part, resistance to care, or changes in appetite and sleep.
+
+Before attributing behavioural changes to the dementia itself, pain should always be considered and investigated. Common pain sources include arthritis, dental problems, urinary tract infections, constipation, pressure sores, and undetected fractures from falls.
+
+Validated observational pain assessment tools — such as the Abbey Pain Scale or PAINAD scale — are designed for people who cannot self-report. They involve observing facial expression, body language, vocalisation, and response to movement at rest and during care.
+
+Regular scheduled paracetamol — rather than only offering pain relief when obvious distress is observed — can significantly reduce agitation in people with dementia who have known pain conditions. Research has demonstrated measurable improvements in behaviour from this approach.
+
+Non-pharmacological pain management is also important: repositioning, gentle massage, heat or cold therapy, and addressing the underlying cause all have a role. Review all medications regularly, as some may no longer be appropriate as dementia progresses. Any new or worsening pain should be investigated medically rather than simply attributed to the dementia and managed behaviourally.`,
     tags: ['pain', 'pain assessment', 'agitation', 'non-verbal', 'Abbey Pain Scale', 'paracetamol'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'clinical_007',
     category: 'clinical',
     title: 'Advance Care Planning and Legal Documents',
-    content: `Advance care planning involves making decisions about future health care while the person with dementia still has the capacity to participate. It is one of the most important and time-sensitive tasks following a dementia diagnosis, yet is frequently delayed until a crisis occurs. Key legal documents include: an Enduring Power of Attorney (financial and property decisions), an Enduring Guardianship or Medical Power of Attorney (health and lifestyle decisions), and an Advance Care Directive or Advance Health Directive (a document specifying the person's wishes for medical treatment in specific future scenarios, including whether they want life-sustaining treatment). Requirements vary by country and region — in New Zealand, EPAs are registered with the Public Trust or a lawyer; consult a legal professional for your specific situation. An Advance Care Plan is a less formal document that outlines the person's values and preferences and is shared with the medical team. Goals of care discussions with the GP should cover: what the person values most in their life, what matters to them about their care, where they wish to live and die, their wishes about CPR, hospital admission, and feeding tubes in late-stage dementia. Involve the person while they have capacity. Review documents as the condition progresses. Store documents where they can be found in an emergency, share with the GP and specialists, and ensure all family members know what has been decided and why. These conversations, while difficult, reduce family conflict and ensure the person's wishes are honoured.`,
+    content: `Advance care planning involves making decisions about future health care while the person with dementia still has the legal capacity to participate. Dementia NZ and dementia organisations across the region consistently emphasise that this is one of the most time-sensitive tasks following a diagnosis — and one that is too often delayed until a crisis makes it significantly harder.
+
+Key legal documents include an Enduring Power of Attorney (EPA), which covers financial and property decisions, and an EPA for personal care and welfare, which covers health and lifestyle decisions. In New Zealand, EPAs must be completed while the person has full legal capacity and should be registered with the Public Trust or executed with a lawyer. In Australia, requirements vary by state — legal advice specific to your state or territory is important.
+
+An Advance Care Plan is a less formal but equally important document that describes the person's values, preferences for treatment, and wishes about end-of-life care. Sharing this with the GP and other treating clinicians ensures the person's wishes guide care decisions when they can no longer speak for themselves.
+
+Goals of care conversations should cover what matters most to the person, where they wish to be cared for, and their wishes about CPR, hospital admission, and artificial feeding in late-stage dementia. These conversations, though emotionally difficult, prevent family conflict and ensure wishes are honoured.
+
+In New Zealand, contact Dementia NZ (dementia.nz) or Alzheimer's NZ (alzheimers.org.nz) for guidance. In Australia, contact Dementia Australia (dementia.org.au). Store documents where they can be found quickly and share them with the GP.`,
     tags: ['advance care planning', 'power of attorney', 'advance directive', 'legal', 'capacity', 'end of life'],
+    source_url: 'https://dementia.nz/about-dementia/',
+    source_org: 'Dementia NZ',
     embedding: null,
   },
 
@@ -123,56 +264,128 @@ export const KNOWLEDGE_BASE = [
     id: 'bestpractices_001',
     category: 'best-practices',
     title: 'Handling Physical Aggression and Agitation',
-    content: `Physical aggression in dementia — hitting, scratching, biting, or pushing — is distressing for carers but is almost always a form of communication. The person is expressing fear, pain, discomfort, overwhelming sensory input, or a reaction to care they do not understand or consent to. The first response should always be to identify the trigger. Common triggers include being in pain during physical care (especially bathing and wound care), feeling threatened or invaded during personal care, being startled, and misinterpreting actions or voices. Immediate de-escalation strategies: step back and give physical space, use a calm slow voice and soft tone, make no sudden movements, get down to the person's eye level, acknowledge their feelings ("You seem upset, I'm not here to hurt you"), and temporarily withdraw from the task that triggered the behaviour. Do not restrain unless there is immediate safety risk. After the episode, reflect on what preceded it — diary-keeping helps identify patterns. Prevention strategies include explaining care tasks step by step before starting, asking permission before touching, approaching from the front so you are visible, maintaining a calm environment, and ensuring all physical needs (pain, discomfort, toileting, hunger) are met before beginning care tasks. If aggression escalates or causes injury, seek specialist behavioural assessment. Antipsychotic medications may be considered as a last resort with specialist oversight.`,
+    content: `Physical aggression in dementia — hitting, scratching, pushing, or biting — is distressing for carers but is almost always a form of communication. The Alzheimer's Society emphasises that the person is typically expressing fear, pain, confusion, or a reaction to care they do not understand — not deliberately causing harm.
+
+The first step is identifying the trigger. Common triggers include pain during physical care tasks, feeling threatened during personal care, being startled, or misinterpreting what is happening. In any incident, step back and give space — never restrain unless there is immediate safety risk. Use a calm, slow voice and get to the person's eye level. Acknowledge their feelings ("You seem upset — I'm not here to hurt you") and temporarily withdraw from the care task that triggered the behaviour.
+
+Prevention is more effective than responding after the fact. Explain care tasks step by step before beginning. Ask permission before touching. Approach from the front so you are visible. Ensure all physical needs — hunger, thirst, pain, toileting — are met before starting care tasks.
+
+Diary-keeping after incidents helps identify patterns: the time of day, the preceding activity, and the person's physical state often reveal consistent triggers that can be proactively addressed.
+
+If aggression escalates or results in injury, seek specialist behavioural assessment through the person's GP or dementia support team. Antipsychotic medications may be considered as an absolute last resort under specialist supervision, given their significant risks in older people with dementia.`,
     tags: ['aggression', 'agitation', 'de-escalation', 'behaviour', 'violence', 'triggers'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'bestpractices_002',
     category: 'best-practices',
     title: 'Reducing Anxiety Through Environment Design',
-    content: `The physical environment plays a powerful role in reducing anxiety, agitation, and confusion for people with dementia. The brain affected by dementia is highly sensitive to the environment because the person is increasingly unable to make sense of complex or unfamiliar spaces. Key environmental principles include: reducing clutter and visual noise which creates confusion and overstimulation; ensuring good lighting with no harsh shadows (a well-lit environment reduces hallucinations and misperceptions); using contrasting colours to help the person distinguish floors, walls, doors, and furniture; clearly marking important rooms such as the toilet with large, simple signs or pictures; keeping a consistent layout and avoiding rearranging furniture. Sound is particularly important — reduce background television and radio noise to avoid sensory overload, use familiar and preferred music as a calming intervention, and ensure hearing aids are in place and functioning. The home should feel familiar and personally meaningful: display family photos, familiar objects, and things the person has always loved. Access to a safe outdoor area or garden has significant wellbeing benefits. Temperature comfort matters — people with dementia often feel cold and cannot regulate or communicate this. In residential care settings, advocate for personalisation of the room with familiar items from home. Environmental modifications are often more effective and safer than medications for managing behavioural symptoms.`,
+    content: `Dementia Australia highlights that the physical environment plays a powerful role in reducing anxiety, agitation, and confusion for people with dementia. As the brain's ability to process complex environments diminishes, thoughtful design can substantially reduce distress and challenging behaviour — often more effectively than medication.
+
+Key principles include: reducing clutter and visual noise, which creates confusion and overstimulation; ensuring good lighting with no harsh shadows (well-lit environments reduce misperceptions and hallucinations, particularly in the late afternoon and evening); and using contrasting colours to help distinguish floors, walls, doors, and furniture.
+
+Mark important rooms clearly — particularly the toilet — with large, simple picture signs. Keep the home layout consistent; rearranging furniture disrupts learned patterns and increases disorientation. Display family photographs, familiar objects, and items the person has always valued — these reinforce identity and provide comfort.
+
+Sound management matters: reduce background television and radio noise, which contributes to sensory overload. Familiar music from the person's life, played at a comfortable volume, has significant calming benefits and can be used intentionally to reduce agitation.
+
+Access to a safe outdoor space or garden has wellbeing benefits that extend beyond the physical — fresh air, natural light, and the sensory experience of being outside reduce restlessness and improve mood. If wandering is a risk, ensure the outdoor area is securely fenced. Temperature comfort also matters: people with dementia often feel cold and may not be able to communicate this — check regularly and adjust accordingly.`,
     tags: ['environment', 'design', 'anxiety', 'lighting', 'clutter', 'noise', 'sensory'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
   {
     id: 'bestpractices_003',
     category: 'best-practices',
     title: 'Redirection and De-escalation Techniques',
-    content: `Redirection is the art of gently guiding a person with dementia away from a distressing thought, behaviour, or situation toward something more positive, without confrontation. It is one of the most effective non-pharmacological tools in dementia care. Effective redirection requires understanding the emotion behind the behaviour rather than the literal content. If a person repeatedly says they need to go to work, the feeling may be purpose or routine, not a literal desire to commute. Respond to the feeling: "It sounds like you want to feel useful — would you help me with this?" followed by offering a meaningful activity. Never argue, correct, or use logical reasoning during distress — the person's brain cannot process logic when the emotional brain is activated. Instead: acknowledge ("I can see you're worried"), validate ("That sounds really hard"), then redirect ("Let's have a cup of tea and I can tell you all about it"). Offer sensory distractions — a favourite snack, a piece of music, a photo album, or a familiar object to hold. Physical redirection can also work: suggest a walk, change rooms, or begin a gentle activity together. The timing of redirection matters — attempt it when the person is beginning to escalate, not at the peak of distress. If redirection fails in the moment, sometimes simply withdrawing and returning in 15 minutes when the emotional state has settled is the most effective response.`,
+    content: `Redirection involves gently guiding a person with dementia away from a distressing thought, situation, or behaviour toward something more positive — without confrontation. The NHS and dementia organisations consistently identify it as one of the most effective non-pharmacological tools available to carers.
+
+Effective redirection requires identifying the emotion behind the behaviour rather than its literal content. A person repeatedly saying they need to go to work may be expressing a need for purpose and structure, not a literal desire to commute. Address the feeling: "It sounds like you want to feel useful — would you help me with this?" followed by a meaningful activity.
+
+Do not argue, correct, or reason logically with a person who is in emotional distress — the brain cannot easily process logical information when emotionally activated. Instead, acknowledge and validate: "I can hear you're worried. You're safe here, and I'm with you" — then gently redirect to a favourite activity, snack, piece of music, or change of environment.
+
+Timing matters: attempt redirection when the person is beginning to escalate, not at the height of distress. If redirection fails in the moment, simply withdrawing calmly and returning in fifteen minutes — after the emotional state has had time to settle — is often the most effective approach.
+
+Sensory distractions are particularly useful: a favourite food, a meaningful photograph, a familiar object to hold, or a piece of music can shift attention more effectively than verbal persuasion alone.`,
     tags: ['redirection', 'de-escalation', 'distraction', 'behaviour management', 'communication'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'bestpractices_004',
     category: 'best-practices',
     title: 'Managing Hallucinations and Paranoia',
-    content: `Hallucinations (seeing, hearing, or sensing things that are not present) and paranoia (unfounded beliefs that someone is stealing, that a family member is an imposter, or that they are in danger) are common in some types of dementia, particularly Lewy body dementia and in advanced Alzheimer's disease. Hallucinations are not always distressing — some people with DLB have non-threatening visual hallucinations of children or animals that do not cause distress and may require no intervention. Only intervene if the experience is causing fear or unsafe behaviour. Do not argue or try to disprove a hallucination or delusion — this rarely works and increases distress. Instead, acknowledge the emotion: "That sounds frightening. I'm here with you and you're safe." Check environmental factors that may cause misperceptions: shadows from poor lighting, patterns on wallpaper or curtains that resemble faces, reflections in mirrors or windows. Covering or removing mirrors can help. Ensure hearing aids and glasses are being used properly — sensory impairment contributes to misperceptions. For paranoid beliefs about theft or danger, take complaints seriously and gently investigate: lost items are often misplaced by the person themselves. Keep a spare of commonly "stolen" items (reading glasses, keys) to produce when needed. If hallucinations or delusions are causing significant distress or dangerous behaviour, seek specialist assessment — pharmacological management may be considered but is not first-line.`,
+    content: `Hallucinations — seeing, hearing, or sensing things that are not present — and paranoid beliefs are particularly common in dementia with Lewy bodies, as the Alzheimer's Society notes, but occur across other dementia types as well, especially in later stages.
+
+Not all hallucinations require intervention. Some people with Lewy body dementia experience non-threatening visual hallucinations — of children, animals, or people — that do not cause distress. Only intervene if the experience is causing fear or unsafe behaviour.
+
+Never argue against or try to disprove a hallucination or paranoid belief — this rarely works and consistently increases distress. Instead, acknowledge the emotion: "That sounds frightening. I'm here with you and you're safe."
+
+Environmental factors often contribute to misperceptions: shadows from poor lighting, patterns on wallpaper or curtains that suggest faces, and reflections in mirrors can trigger false perceptions. Improving lighting, covering or removing mirrors, and simplifying visual patterns in the environment can reduce episodes.
+
+Paranoid beliefs — that someone is stealing, that a family member is an imposter, or that there is danger — should be taken seriously rather than dismissed. Look for misplaced items, and keep duplicates of commonly "lost" items (reading glasses, a purse) to produce when needed. Respond to the fear underneath the accusation: "I can hear you're worried. Let's look together."
+
+If hallucinations or delusions are causing significant distress or dangerous behaviour, speak with the person's GP — pharmacological management may be considered but requires careful specialist oversight.`,
     tags: ['hallucinations', 'paranoia', 'delusions', 'Lewy body', 'psychosis', 'behaviour'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/types-dementia',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'bestpractices_005',
     category: 'best-practices',
     title: 'Wandering Prevention and Safe-Return Strategies',
-    content: `Wandering — walking without a clear destination or getting lost — affects a significant proportion of people with dementia and is a major safety concern. It can result in exposure to traffic, extreme weather, falls, or the person being found far from home. Understand why wandering occurs: the person may be searching for something meaningful (their old home, a deceased spouse), responding to a physical need (pain, hunger, need to toilet), experiencing anxiety or boredom, acting on a former routine (walking to work), or being driven by restlessness from medications or the disease itself. Prevention strategies: ensure the person's physical needs are met at all times; provide structured daily physical activity (regular walks with a carer); use door alarms or motion-sensor alerts to notify you when doors are opened; consider door handle covers, childproof locks at a height above eye level, or camouflage techniques (painting doors the same colour as walls) to discourage exit. Enrol the person in a Safe Return programme — in New Zealand, Alzheimers NZ operates a Safe Return register; contact them on 0800 004 001 to register the person's details so that police and community members can help identify and return them safely if found. Ensure the person carries identification — a medic alert bracelet with name and contact number is practical. GPS tracking devices worn as watches or pendants are widely available and can provide significant peace of mind. Provide supervised outdoor time daily to reduce restlessness. Engage your neighbours and community — a note to neighbours with a photo and contact number means more eyes looking out.`,
+    content: `Wandering — leaving the home without a clear destination or becoming disoriented outdoors — is a significant safety concern in dementia care. It can result in exposure to traffic, extreme weather, falls, or the person being found far from home. Alzheimer's NZ and similar organisations note that understanding the cause is the starting point for effective prevention.
+
+The person may be searching for a familiar place or person (often deceased), responding to a physical need such as hunger or needing the toilet, acting on a former daily routine like walking to work, or expressing anxiety or boredom through movement.
+
+Prevention strategies include: ensuring physical needs are consistently met; building regular supervised outdoor activity into the daily routine to reduce restlessness; installing door alarms or motion-sensor alerts that notify carers when doors are opened; using door handle covers or locks placed above or below the person's natural line of sight; and camouflage techniques such as painting exit doors the same colour as surrounding walls.
+
+Enrol the person in a safe-return support programme through Alzheimer's NZ (alzheimers.org.nz) or Dementia NZ (dementia.nz) in New Zealand, or Dementia Australia (dementia.org.au) in Australia. Ensure the person carries identification — a medic alert bracelet with name and contact number is practical. GPS tracking devices worn as watches or pendants are widely available and provide significant reassurance.
+
+Inform neighbours: a note with the person's photo and a contact number means more people looking out. A safely accessible garden or outdoor area reduces the drive to leave by meeting the need for outdoor experience.`,
     tags: ['wandering', 'safe return', 'GPS', 'elopement', 'door alarm', 'safety', 'lost'],
+    source_url: 'https://alzheimers.org.nz/',
+    source_org: 'Alzheimer\'s NZ',
     embedding: null,
   },
   {
     id: 'bestpractices_006',
     category: 'best-practices',
     title: 'Responding to Accusations and Mistrust',
-    content: `Accusations — of stealing, lying, being an imposter, or having malicious intent — are painful experiences for family caregivers who are doing their utmost to help. These accusations arise from memory loss and the brain's attempt to make sense of a confusing world; the person genuinely believes what they are saying. They are not personal attacks. The most common scenario is accusations of theft: the person hides or misplaces items and, unable to remember doing so, concludes they have been stolen. Do not argue or attempt to convince the person they are wrong — this escalates distress without resolving the belief. Instead: remain calm and empathetic, acknowledge their concern ("I understand you're worried about your purse — let's look for it together"), search with them for the item, and maintain a sense of shared problem-solving. Keep spare copies of commonly lost items. Understand the emotional message behind the accusation: "You stole from me" may mean "I am frightened and something feels wrong." Address the fear, not the accusation. If the person believes you are an imposter, do not argue your identity. Instead, act as a familiar, caring presence regardless of whether they recognise you. Introduce yourself calmly: "I'm your daughter Sarah, and I'm here to help." Over time, many people with dementia come to trust certain people through consistent, calm interaction even without explicit recognition. Document serious or escalating accusations as they may indicate delirium or a medication issue.`,
+    content: `Accusations of stealing, lying, being an imposter, or acting with malicious intent are painful for family carers who are doing their best to help. Dementia Australia emphasises that these accusations arise from memory loss and the brain's attempt to make sense of a confusing world — the person genuinely believes what they are saying, and the accusations are not personal attacks.
+
+The most common scenario is accusations of theft: the person hides or misplaces objects and, unable to remember doing so, concludes they have been stolen. Do not argue or try to convince the person they are wrong. Instead, remain calm and empathetic: "I understand you're worried about your purse — let's look for it together." Search with them, maintain a sense of shared problem-solving, and keep spare copies of commonly "lost" items to produce when needed.
+
+Understanding the emotional message behind an accusation helps: "You stole from me" may mean "I am frightened and something feels wrong." Address the fear, not the accusation.
+
+If the person believes a family member is an imposter — not recognising them despite their physical presence — do not argue about identity. Simply introduce yourself calmly ("I'm your daughter Sarah, and I'm here to help") and allow the relationship to re-establish through the warmth and consistency of the interaction over time.
+
+Document serious or recurring accusations. If they are accompanied by sudden increased agitation or represent a significant change from baseline, raise this with the person's doctor — in some cases, escalating accusations reflect a delirium or medication change rather than the dementia itself.`,
     tags: ['accusations', 'mistrust', 'theft', 'imposter', 'behaviour', 'paranoia', 'family'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
   {
     id: 'bestpractices_007',
     category: 'best-practices',
     title: 'Caregiver Burnout: Recognising and Preventing Exhaustion',
-    content: `Caregiver burnout is a state of physical, emotional, and mental exhaustion that results from the sustained demands of caring for a person with dementia. It is extremely common — estimates suggest that 40–70% of dementia caregivers experience significant depression and anxiety. Burnout not only harms the caregiver but also compromises the quality of care for the person with dementia. Warning signs include: persistent fatigue that is not relieved by rest; withdrawing from friends, family, and activities you previously enjoyed; feeling hopeless or resentful; neglecting your own health needs (skipping meals, not attending medical appointments); increasing irritability or inability to tolerate the person you are caring for; feeling like caregiving is never-ending with no relief. Prevention and management strategies: accept that you cannot do this alone and actively seek help; take all respite care offers; maintain at least one activity for yourself each week that has nothing to do with caregiving; attend a caregiver support group (Alzheimers NZ and Dementia NZ offer these nationally — call 0800 004 001 or visit alzheimers.org.nz / dementia.nz); speak to your GP if you are experiencing depression or anxiety symptoms — these are medical conditions not personal failings; consider counselling from a psychologist experienced in caregiver issues; set realistic expectations and let go of what does not matter. Caring well for yourself is not selfish — it is the foundation of sustainable, high-quality care for your loved one.`,
+    content: `Caregiver burnout is a state of physical, emotional, and mental exhaustion that results from the sustained demands of caring for a person with dementia. Carers Australia notes that it is extremely common — and that it is not a personal failing, but a predictable consequence of providing high-intensity care without adequate support or relief.
+
+Warning signs include: persistent fatigue that does not improve with rest; withdrawing from friends, family, and activities you previously enjoyed; feeling hopeless or resentful; neglecting your own health needs; increasing irritability with the person you are caring for; and feeling that caregiving is endless with no prospect of relief.
+
+Prevention requires actively accepting help — which is harder than it sounds. Many carers believe they should manage alone, or that organising support costs more energy than it saves. Research consistently shows that carers who accept help maintain their own health better and provide higher-quality care for longer.
+
+Key strategies include: taking up all offers of respite care; attending a carer support group through Carers Australia (carersaustralia.com.au) or Carer Gateway (carergateway.gov.au); speaking with your GP if experiencing depression or anxiety — these are medical conditions that respond to treatment; accessing counselling from a psychologist with experience in carer issues; and setting realistic daily expectations.
+
+In New Zealand, Carers NZ (carers.net.nz) offers support, guidance, and connection to local carer resources and peer networks.`,
     tags: ['burnout', 'caregiver stress', 'depression', 'exhaustion', 'carer wellbeing', 'self-care'],
+    source_url: 'https://www.carersaustralia.com.au/information-for-carers/',
+    source_org: 'Carers Australia',
     embedding: null,
   },
 
@@ -181,56 +394,126 @@ export const KNOWLEDGE_BASE = [
     id: 'communication_001',
     category: 'communication',
     title: 'Effective Verbal Communication Techniques',
-    content: `Communication with a person with dementia requires adapting your approach to match their current abilities. As dementia progresses, language processing, word finding, and the ability to follow complex sentences all decline. Effective verbal communication principles include: speak slowly and clearly in a calm, low-pitched voice; use short, simple sentences with one idea or instruction at a time; ask one question at a time and wait — longer than feels comfortable — for a response; avoid open-ended questions ("What would you like to eat?") and instead offer limited choices ("Would you like soup or a sandwich?"); call the person by their preferred name and introduce yourself if needed; face the person directly at their eye level and ensure you have their attention before speaking; use their name at the start of sentences to gain and hold attention; avoid pronouns like "he," "she," and "they" — use names instead; do not talk about the person to others in their presence as if they are not there; avoid correcting or contradicting — redirect instead; and repeat or rephrase if something is not understood rather than simply raising your voice. When the person struggles to find a word, offer it gently without rushing or finishing all their sentences for them — this preserves their dignity and communication confidence. Keep sentences positive: say "Let's go for a walk" rather than "Don't sit there all day."`,
+    content: `Dementia Australia emphasises that effective communication with a person with dementia requires adapting to their current abilities rather than expecting them to adapt to you. As dementia progresses, word-finding, sentence processing, and the ability to follow complex instructions all decline — but connection remains possible with the right approach.
+
+Speak slowly and clearly in a calm, low-pitched voice. Use short, simple sentences with one idea at a time. Ask one question at a time, then wait — longer than feels comfortable — for a response. Avoid open-ended questions ("What would you like to eat?") and instead offer limited, concrete choices ("Would you like soup or a sandwich?").
+
+Face the person directly at their eye level before speaking. Use their preferred name at the start of sentences to gain and hold attention. Avoid pronouns like "he," "she," or "they" — use people's names instead. Never speak about the person to others in their presence as if they are not there.
+
+When the person struggles to find a word, offer it gently without rushing or consistently finishing all their sentences. This preserves communication confidence and dignity. If something is not understood, rephrase it rather than simply repeating at a higher volume.
+
+Keep sentences positive where possible — "Let's go for a walk" is more motivating than "Don't just sit there." These small adjustments in how we speak make a substantial difference to the person's ability to engage, feel respected, and maintain the sense that communication is still possible and worthwhile.`,
     tags: ['verbal communication', 'language', 'speech', 'instructions', 'conversation', 'technique'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
   {
     id: 'communication_002',
     category: 'communication',
     title: 'Non-Verbal Communication and Body Language',
-    content: `As dementia progresses and verbal communication becomes more difficult, non-verbal communication — touch, facial expression, gesture, posture, tone of voice, and eye contact — becomes increasingly important. The emotional message of communication is processed longer than the verbal content; the person may forget what was said but retain how they felt during the interaction. Your facial expression should convey warmth, calmness, and patience — even if you are feeling frustrated, consciously adopting an open, gentle expression and relaxed body posture changes the interaction. Maintain eye contact at the same level (sit or crouch down rather than standing over the person). Use gentle touch on the hand or forearm to convey reassurance and connection, but be attentive to whether the person accepts and welcomes touch — some people with dementia find unexpected touch startling or threatening. Your tone of voice carries more meaning than your words; a soft, warm, unhurried tone reassures even when the words are not fully understood. Nod and use facial expressions of interest and encouragement as the person speaks, even if speech is fragmented or confused. Use gesture to support verbal communication — pointing, demonstrating an action, or using pictures helps bridge the language gap. Mirror the person's body language subtly to create a sense of connection and safety. Music, singing, and rhythmic movement are powerful non-verbal communication tools that often reach people even in advanced dementia.`,
+    content: `As dementia progresses and verbal communication becomes more difficult, non-verbal communication — touch, facial expression, gesture, tone of voice, posture, and eye contact — becomes increasingly important. The Alzheimer's Society notes that the emotional message of an interaction is retained far longer than the words spoken: a person may forget what was said but retain how the interaction made them feel.
+
+Your facial expression should convey warmth, calm, and patience. Even when you are feeling frustrated, consciously adopting a relaxed, open, and gentle expression changes the quality of the interaction for both of you. Maintain comfortable eye contact at the person's level — sit or crouch down rather than standing over them.
+
+Gentle touch on the hand or forearm conveys reassurance and connection, but remain attentive to whether the person welcomes touch — some find unexpected contact startling. Your tone of voice carries more meaning than your words alone; a soft, unhurried, warm tone reassures even when the specific words are not fully understood.
+
+Use gesture to support verbal communication — pointing, demonstrating an action, or using pictures helps bridge gaps in language comprehension. Mirror the person's body language subtly to create a sense of connection and ease.
+
+Music and singing — particularly songs from the person's younger years — are powerful forms of non-verbal communication that remain effective even in advanced dementia when verbal language has largely been lost. They can open connection, evoke emotional responses, and create moments of genuine engagement when other forms of communication have become very difficult.`,
     tags: ['non-verbal', 'body language', 'touch', 'tone of voice', 'facial expression', 'connection'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'communication_003',
     category: 'communication',
     title: 'Validation Therapy Approach',
-    content: `Validation therapy, developed by Naomi Feil, is an approach to communicating with people with moderate to late-stage dementia that emphasises entering the person's subjective reality rather than correcting or reorienting them. The core principle is that all behaviour has meaning and that feelings are valid regardless of whether the content is factually accurate. Rather than telling a person "Your mother is dead, she can't visit" when they ask for their deceased mother, validation therapy suggests responding to the emotion underneath: "You're missing your mum. Tell me about her — what was she like?" This approach acknowledges the person's feelings, reduces distress, maintains dignity, and often creates meaningful moments of connection. Key techniques include: using the person's preferred name and a warm tone; maintaining eye contact and a non-judgmental expression; asking clarifying, open-ended questions about the content of their experience ("Where do you need to go?"); using the person's preferred sensory channel (some respond more to touch, others to sound); using polarity to help express feelings ("What's the worst thing about this?"); finding the link to the present ("What does that remind you of now?"); and using music from their personal history which can open communication. Validation therapy does not involve going along with everything uncritically — it involves responding to the emotional truth of the person's experience.`,
+    content: `Validation therapy, developed by Naomi Feil, is an approach to communicating with people with moderate to late-stage dementia that emphasises entering the person's subjective reality rather than correcting or reorienting them. It is widely used and recommended by organisations including Dementia NZ as a person-centred communication framework.
+
+The core principle is that all behaviour has meaning and that feelings are valid regardless of whether their content is factually accurate. Rather than telling a person "Your mother died twenty years ago" when they are asking for her, validation therapy suggests responding to the emotion: "You're missing your mum. Tell me about her — what was she like?"
+
+This approach acknowledges the person's feelings, reduces distress, maintains dignity, and often creates meaningful moments of connection. Key techniques include: using the person's preferred name and a warm, respectful tone; maintaining comfortable eye contact; asking open, curious questions about their experience; and responding to the emotional truth rather than the literal content of what is said.
+
+Validation therapy is not about uncritically agreeing with everything — it is about responding to the emotional reality of the person's experience. Someone who is frightened, however irrationally, deserves to have that fear acknowledged and responded to with genuine warmth rather than argued away.
+
+For carers, learning to respond this way rather than automatically correcting or reorienting represents an achievable but significant shift in approach — one that typically reduces distress for both the person with dementia and the carer over time.`,
     tags: ['validation therapy', 'Naomi Feil', 'therapeutic communication', 'feelings', 'empathy', 'advanced dementia'],
+    source_url: 'https://dementia.nz/about-dementia/',
+    source_org: 'Dementia NZ',
     embedding: null,
   },
   {
     id: 'communication_004',
     category: 'communication',
     title: 'Reminiscence Therapy and Life Review',
-    content: `Reminiscence therapy uses the relative preservation of long-term memory in dementia to facilitate meaningful conversation and connection. Because dementia affects recent memory first, people often retain vivid memories of their youth, working years, significant life events, and cultural experiences for many years after the diagnosis. Reminiscence can be informal — naturally weaving discussion of the past into daily conversation — or structured, using a life review approach with photographs, music, objects, and stories as prompts. Creating a personalised memory box or life story book is a powerful tool: gather photographs from different decades of the person's life, objects associated with hobbies or work, newspaper clippings from significant historical events in their lifetime, and favourite music. These can be shared with professional carers, respite workers, and new care settings to maintain the person's identity and personhood. Benefits of reminiscence include improved mood, reduced agitation, strengthened relationships between the person and their carer, and maintenance of identity and self-esteem. Family members can contribute by sharing memories and stories, especially with younger generations. For group reminiscence (offered in many day programs and residential settings), shared experiences such as popular culture, historical events, or occupational themes create a sense of community and belonging. Reminiscence is not just about the past — it is a vehicle for connection in the present.`,
+    content: `The NHS identifies reminiscence and life story work as an evidence-supported non-medication treatment for dementia, noting that it helps improve mood and wellbeing. This approach draws on the relative preservation of long-term memory in dementia — people often retain vivid memories of their youth and significant life events for many years after diagnosis.
+
+Reminiscence can be informal — naturally weaving discussion of the past into daily conversation — or structured, using a life review approach with photographs, music, and meaningful objects as prompts. A personalised life story book or memory box is a particularly powerful tool: gather photographs from different decades of the person's life, objects connected to hobbies or work, music from significant eras, and items associated with cultural identity and family history.
+
+These can be shared with professional carers, respite workers, and residential care settings so that the person's identity, history, and preferences are preserved and honoured across all care contexts. A one-page life history summary — covering key relationships, occupations, interests, significant places, and cultural background — can make a significant difference in care quality.
+
+Benefits of reminiscence include improved mood, reduced agitation, stronger connection between the person and their carer, and maintenance of identity and self-esteem. For group reminiscence, shared historical experiences and popular culture create community and belonging.
+
+Reminiscence is not simply an exercise in nostalgia — it is a vehicle for connection, dignity, and personhood in the present moment.`,
     tags: ['reminiscence', 'life review', 'memory', 'life story', 'long-term memory', 'connection', 'identity'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/treatment/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'communication_005',
     category: 'communication',
     title: 'Simple Language and Visual Communication Aids',
-    content: `As dementia progresses, abstract concepts, complex sentences, and implied meanings become increasingly difficult to process. Adapting the language you use and supplementing verbal communication with visual cues makes daily interactions significantly more successful. Use concrete, literal language: instead of "Get yourself ready," say "Put your shirt on." Avoid metaphors, sarcasm, or idioms which are often interpreted literally and cause confusion. Visual communication aids include: large-print labels on cupboards, drawers, and doors with both words and pictures; a whiteboard or picture board in the kitchen showing the day's activities; a photo of the toilet on the bathroom door; picture menus for meals; and a personalised communication book or tablet app with photos of family members, key activities, and common requests. Augmentative and Alternative Communication (AAC) tools — ranging from low-tech picture cards to high-tech speech-generating apps — can be helpful for people who have lost verbal speech but retain some literacy or symbol recognition. Involve a speech pathologist for assessment and recommendations if communication is significantly impaired. Written notes can support verbal communication: writing down a key word or name as you speak it helps some people process the information more effectively. In care settings, ensure that all staff know the person's communication preferences and abilities, including any specialist tools they use.`,
+    content: `As dementia progresses, abstract language, complex sentences, and implied meanings become increasingly difficult to process. Dementia Australia emphasises the value of adapting language and supplementing verbal communication with visual cues to make daily interactions more successful.
+
+Use concrete, literal language: instead of "Get yourself ready," say "Put on your shirt." Avoid metaphors, sarcasm, and idioms, which are often interpreted literally and cause confusion. Write down key words or names as you speak them — this can help some people process information more effectively by combining hearing and reading.
+
+Visual communication aids include: large-print labels on cupboards, drawers, and doors with both words and pictures; a whiteboard or notice board showing the day's planned activities; a photo of the toilet on the bathroom door; and picture menus or communication boards showing common choices and requests.
+
+For people who have lost verbal speech but retain some literacy or symbol recognition, Augmentative and Alternative Communication (AAC) tools — ranging from low-tech picture cards to speech-generating apps — can provide an ongoing means of expression and maintain independence. A speech-language therapist can assess communication abilities and recommend the most appropriate tools.
+
+In residential care or when multiple carers are involved, ensure that all staff know the person's communication preferences, abilities, and any specialist tools they use. A one-page communication profile — describing how the person communicates, what helps, and what does not — can make a significant difference when shared across the care team.`,
     tags: ['visual aids', 'labels', 'picture communication', 'AAC', 'language', 'speech pathologist'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
   {
     id: 'communication_006',
     category: 'communication',
-    title: "When the Person Doesn't Recognise You",
-    content: `One of the most emotionally difficult experiences in dementia caregiving is when the person no longer recognises you — a spouse of 50 years, a devoted child, or a close friend. Prosopagnosia (face recognition difficulty) and impaired episodic memory combine to make this particularly common in moderate to late-stage dementia. It is important to understand that not being recognised does not mean the person does not feel the connection — they often respond positively to the care, presence, and emotional warmth of people they cannot name. Do not introduce yourself as "Mum, it's me, your daughter!" in a hurt or corrective tone — this often creates confusion and distress. Instead, introduce yourself simply and calmly: "Hello Mum, I'm Sarah, I've come to see you," and allow the relationship to re-establish through the quality of the interaction rather than through explicit identification. Do not take it personally — this is a symptom of a brain disease, not a reflection of the strength of your relationship or what you meant to each other. Grief about this loss is legitimate and should be acknowledged — many caregivers describe a feeling of "anticipatory grief" as their loved one gradually becomes less able to reciprocate the relationship in familiar ways. Seek support from a counsellor, support group, or other family members. Focus on the quality of the present moment — the person can still experience joy, comfort, and love even without name-recognition.`,
+    title: 'When the Person Doesn\'t Recognise You',
+    content: `One of the most emotionally painful experiences in dementia caregiving is when the person no longer recognises a spouse, child, or close friend. The Alzheimer's Society emphasises that this is a symptom of brain disease — not a reflection of the strength of the relationship or what it has meant.
+
+Not being recognised does not mean the person does not feel connection. Many people with dementia respond warmly to the care and emotional presence of people they cannot name — the relationship continues, even without explicit recognition.
+
+Do not introduce yourself in a hurt or corrective tone ("Mum, it's me — your daughter!"). Instead, introduce yourself simply and calmly: "Hello Mum, I'm Sarah, I've come to see you." Allow the connection to re-establish through the quality of the interaction — warmth, calmness, and consistency — rather than through explicit identification. Over time, many people with dementia come to trust certain people through consistent, caring presence even without naming them.
+
+Grief about this loss is real and legitimate. Many carers describe a form of "anticipatory grief" — mourning the loss of the relationship as it was, even while the person is still present. This experience benefits from acknowledgment and support, whether from a counsellor, a support group, or other family members who understand.
+
+The Alzheimer's Society encourages carers to focus on the quality of the present moment rather than on what has been lost. Even without name-recognition, the person with dementia can still experience comfort, joy, and love in the interaction.`,
     tags: ['recognition', 'identity', 'grief', 'relationship', 'imposter syndrome', 'connection'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'communication_007',
     category: 'communication',
     title: 'Communicating with Non-Verbal Patients',
-    content: `In advanced dementia, the ability to use and understand spoken language may be severely reduced or lost entirely. Communication does not end, however — it evolves. Understanding and responding to non-verbal communication becomes the primary means of connection and care. In late-stage dementia, the person's main communication channels are facial expression, body language, vocalisation, and response to sensory stimulation. Signs of comfort include: relaxed facial muscles, soft eyes, still or gently moving body, quiet vocalisation or sighing, accepting touch and leaning in. Signs of discomfort, pain, or distress include: furrowed brow, tightly closed eyes, tears, clenched jaw or hands, pulling away from touch, moaning, calling out, or increased rigidity. Respond to these signals attentively — assume all communication has meaning and try to identify and address the underlying need. Introduce yourself and explain what you are doing throughout all care tasks, even if you believe the person cannot understand; hearing a familiar, calm voice provides comfort. Music — particularly personally meaningful music from earlier in life — remains a powerful communication channel in advanced dementia and can evoke emotional responses and moments of connection long after language has faded. Gentle touch, holding a hand, or skin-to-skin contact conveys care and presence. Aromatherapy (familiar personal scents such as a perfume or cologne the person used for decades) can also be meaningful. Prioritise comfort and dignity in all interactions.`,
+    content: `In advanced dementia, the ability to use and understand spoken language may be severely reduced or absent. As the NHS notes, communication does not end at this stage — it evolves. Understanding non-verbal signals becomes the primary means of connection and care.
+
+Signs of comfort in a person with late-stage dementia include: relaxed facial muscles, soft eyes, still or gently moving body, quiet vocalisation or sighing, and accepting touch. Signs of discomfort or distress include: furrowed brow, clenched jaw or fists, pulling away from touch, moaning, calling out, and increased muscular rigidity.
+
+Respond to these signals attentively. Assume all communication has meaning and try to identify and address the underlying need. Introduce yourself and narrate care activities throughout — "I'm going to help you wash your face now" — even if you believe the person cannot understand the words. Hearing a familiar, calm voice provides comfort regardless of whether the language is fully comprehended.
+
+Music — particularly songs meaningful to the person from earlier in their life — remains one of the most powerful communication tools in advanced dementia. It can evoke emotional responses and moments of genuine connection long after verbal language has faded. The NHS acknowledges music, gentle touch, and familiar sensory experiences as important in late-stage care.
+
+Gentle touch — holding a hand, a reassuring hand on the shoulder — conveys care and presence. Familiar scents associated with the person's life can also be meaningful. In all interactions at this stage, comfort and dignity are the primary goals of care.`,
     tags: ['non-verbal', 'advanced dementia', 'late stage', 'comfort', 'pain signals', 'touch', 'music'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
+    source_org: 'NHS UK',
     embedding: null,
   },
 
@@ -239,56 +522,126 @@ export const KNOWLEDGE_BASE = [
     id: 'homesafety_001',
     category: 'home-safety',
     title: 'Kitchen and Cooking Safety',
-    content: `The kitchen contains significant hazards for people with dementia — sharp implements, hot surfaces, gas and electric appliances, and toxic cleaning products. As dementia progresses, unsupervised cooking becomes unsafe due to forgetting food on the stove, confusion with appliances, and impaired judgement about heat and electrical safety. Early-stage strategies: install an automatic stove shut-off device which turns the burner off after a set period; use an induction cooktop which only heats when a pot is present and turns off automatically; remove the stove knobs and replace only when cooking with supervision; declutter countertops and remove sharp knives to a locked drawer; label cupboards clearly with pictures and words. Supervision strategies: cook together, maintaining independence for as long as safely possible by breaking tasks into simple steps. Store cleaning products and medications in locked cupboards or out of the kitchen entirely. If the person can no longer safely cook but wishes to contribute, create safe kitchen activities: washing vegetables, stirring (cold) ingredients, setting the table. Check the smoke detector and carbon monoxide alarm regularly. In late-stage dementia, all appliances should be disconnected or removed if the person is unsupervised. When assessing kitchen safety, consider not only the person's current ability but their pattern of behaviour over recent weeks — increasing near-misses signal that greater restriction is needed.`,
+    content: `The kitchen contains significant hazards for people with dementia, and managing these risks requires a graduated approach as the condition progresses. The NHS advises carers to adapt kitchen arrangements to the person's current abilities, involving them in food preparation for as long as safely possible.
+
+Early-stage strategies include: installing an automatic stove shut-off device or stove guard; moving cleaning products and medications to a locked cabinet; decluttering countertops and securing sharp knives; and labelling cupboards clearly with pictures and words. Cooking alongside the person — breaking tasks into simple steps such as stirring, washing vegetables, or setting the table — preserves involvement and a sense of purpose while maintaining safety.
+
+The NHS recommends ensuring adequate hydration as part of kitchen routines: drinks should be readily available and offered regularly throughout the day, not just at mealtimes.
+
+As the condition progresses and unsupervised kitchen use becomes unsafe, consider removing the stove knobs when the person is alone, or installing an induction cooktop that only heats when a pan is present. Check smoke detectors and carbon monoxide alarms regularly. In late-stage dementia, disconnect or disable appliances when the person is unsupervised.
+
+When assessing kitchen safety, consider the pattern of behaviour over recent weeks rather than a single incident — increasing near-misses or forgotten food on the stove signal that greater safety measures are needed, even if no accident has yet occurred.`,
     tags: ['kitchen', 'cooking', 'stove', 'fire', 'safety', 'appliances', 'supervision'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'homesafety_002',
     category: 'home-safety',
     title: 'Bathroom Fall Prevention and Safety',
-    content: `The bathroom is the highest-risk room for falls in the home, and falls in people with dementia are particularly dangerous due to impaired protective responses and often delayed recognition of injury. Key modifications include: install grab rails beside the toilet, inside the bath, and inside the shower — these must be professionally mounted into wall studs to bear weight; use a non-slip mat inside the bath or shower and a non-slip rug on the bathroom floor (check all mats have non-slip backing and are secured at edges); install a shower chair or bath seat to allow seated showering; consider a handheld shower head for greater flexibility and control during assisted bathing; set the hot water system to a maximum of 50°C to prevent scalding — confusion can prevent the person from responding appropriately to burning water; ensure good lighting and install a nightlight for nighttime toilet visits; a raised toilet seat with arms makes sitting and rising from the toilet safer. Keep the bathroom uncluttered and remove unnecessary items from the floor. Consider a toilet frame or commode chair if mobility is significantly impaired. Regular podiatry review to manage foot pain and nail care reduces fall risk. Review footwear — the person should wear well-fitting, flat, closed-toe shoes with non-slip soles, not slippers or socks alone. After a fall, a medical review and home occupational therapy assessment should be arranged.`,
+    content: `The bathroom is the highest-risk room for falls in the home, and falls in people with dementia carry particular danger because impaired responses mean injuries may not be reported or recognised promptly. The NHS recommends a series of modifications that significantly reduce this risk.
+
+Install grab rails beside the toilet, inside the bath, and inside or beside the shower — these must be professionally mounted into wall studs to safely bear weight. Non-slip mats inside the bath or shower and non-slip rugs on the bathroom floor (with non-slip backing and secured edges) reduce slipping risk. A shower chair or bath seat allows seated showering, and a handheld showerhead gives greater flexibility and control.
+
+Set the hot water thermostat to a maximum of 50°C to prevent scalding — a person with dementia may not be able to recognise or respond appropriately to burning water. Ensure good lighting in the bathroom at all times, and install a nightlight for night-time toilet visits.
+
+The NHS recommends using clear visual signs on the toilet door to help the person find their way, particularly at night. A raised toilet seat with arms makes sitting and rising safer. Keep the bathroom uncluttered and remove unnecessary items from the floor.
+
+Review footwear throughout the home: the person should wear well-fitting, closed-toe, flat shoes with non-slip soles rather than loose slippers or socks alone. After any fall, arrange a medical review and, where possible, an occupational therapy home assessment.`,
     tags: ['falls', 'bathroom', 'grab rails', 'shower chair', 'fall prevention', 'safety modifications'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'homesafety_003',
     category: 'home-safety',
     title: 'Medication Management and Safe Storage',
-    content: `Medication errors are a significant and often overlooked risk in dementia. The person may forget to take medications, take them multiple times, or take the wrong dose. They may also access and take medications that are not prescribed for them, or mistake medications for food or sweets. All medications should be stored in a locked box or cabinet to prevent unsupervised access. Use a pill organiser filled weekly by the carer or pharmacist to simplify daily medication routines; however, supervise administration to ensure the correct dose is taken at the correct time. Consider a blister-packed medication system (available through most pharmacies) where each day's doses are individually sealed — this makes it immediately clear if a dose has been missed or doubled. Medication reminder apps, automatic pill dispensers with alarms, or daily prompting by a carer can all improve adherence. Keep a current, accurate medication list (name, dose, frequency, prescribing doctor) accessible in the home and in the person's bag or wallet for emergency situations. Review all medications at least every six months with the GP or pharmacist — some medications that were appropriate at diagnosis are no longer appropriate or safe as dementia progresses, and new medications should always be assessed for interaction effects and appropriateness in dementia. Never split, crush, or dissolve medications without pharmacist advice — some slow-release formulations are dangerous if the coating is broken.`,
+    content: `Medication management is a significant and often underestimated risk in dementia care. The NHS notes that people with dementia may forget to take medications, take them more than once, take someone else's medication, or mistake tablets for food or sweets.
+
+All medications should be stored in a locked box or cabinet to prevent unsupervised access. Use a clearly labelled pill organiser filled each week by the carer or pharmacist — but supervise administration to ensure the correct dose is taken at the correct time. Blister-packed medication systems (available through most pharmacies), where each day's doses are individually sealed, make it immediately visible if a dose has been missed or taken twice.
+
+Keep a current, accurate medication list — including drug name, dose, frequency, and prescribing doctor — accessible in the home and in the person's bag for emergency situations. This information is critical for any medical assessment, particularly in an emergency.
+
+Review all medications at least every six months with the GP or pharmacist. Some medications appropriate at diagnosis become unsuitable as dementia progresses — reviewing the full medication list regularly avoids unnecessary risk. Never split, crush, or dissolve tablets without pharmacist advice — some slow-release formulations are dangerous if the coating is broken.
+
+Medication reminder apps and automatic pill dispensers with alarms can supplement — but should not replace — carer supervision of medication taking. When in doubt about a missed or doubled dose, contact the pharmacist or GP rather than guessing.`,
     tags: ['medication', 'pill organiser', 'locked storage', 'medication errors', 'blister pack', 'safety'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'homesafety_004',
     category: 'home-safety',
     title: 'Fire Safety and Electrical Hazards',
-    content: `Fire risk in the home increases significantly with dementia. Forgotten cooking, smoking unattended, misuse of heaters, and confusion about appliances all contribute. Prevention measures include: install interconnected smoke alarms in every room including bedrooms and the kitchen — test monthly; install a heat-activated alarm in the kitchen in addition to standard smoke alarms; contact your local fire service, as many offer free home fire safety visits and may supply or fit smoke alarms for free. If the person smokes, do not allow unsupervised smoking inside; provide a designated outdoor smoking area and supervise. Remove matches, lighters, and candles; use flameless LED candles for aesthetic or religious purposes. Ensure all heaters have automatic tip-over switches; do not use open-bar electric radiators or fan heaters without supervision; keep heaters at least one metre from curtains and furniture. Disable the stove (remove knobs or use a stove guard) if unsupervised cooking is a risk. Keep electrical cords in good repair and avoid running them under rugs or through high-traffic areas. Do not overload power boards. Know the home's fire escape plan and practice it; ensure the person cannot be locked in by deadlock keys that require a key to open from the inside. Store emergency contacts and the person's information near the main door or in a clearly labelled folder.`,
+    content: `Fire risk in the home increases significantly with dementia. Forgotten cooking, unattended smoking, misuse of heaters, and confusion about appliances are all common fire causes. Dementia Australia and fire services across Australia and New Zealand recommend a proactive approach.
+
+Install interconnected smoke alarms in every room including bedrooms and the kitchen, and test them monthly. A heat-activated alarm in the kitchen provides additional safety near cooking areas. Many local fire services — including Fire and Emergency NZ (fireandemergency.nz) — offer free home safety visits and may supply or install alarms for eligible households.
+
+If the person smokes, do not allow unsupervised smoking indoors. Remove matches, lighters, and candles from accessible areas. Use flameless LED candles where candles serve a cultural or religious purpose.
+
+Ensure all heaters have automatic tip-over switches and are kept at least one metre from curtains and furniture. Remove the stove knobs or install a stove guard if unsupervised cooking is a safety risk.
+
+Keep electrical cords in good repair and avoid running them under rugs. Know the home's fire escape plan — ensure the person cannot be locked in by deadlock keys that require a key to open from the inside. Store emergency contact information and a summary of the person's diagnoses and current medications near the main door so it is accessible to emergency responders. Check and replace smoke alarm batteries twice per year.`,
     tags: ['fire safety', 'smoke alarm', 'stove', 'heater', 'electrical', 'cooking', 'prevention'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
   {
     id: 'homesafety_005',
     category: 'home-safety',
     title: 'Door and Exit Management for Wanderers',
-    content: `Managing exits from the home is a critical safety concern for people with dementia who wander. The goal is to balance safety with dignity — creating barriers to unsafe wandering without creating an institutional or prison-like feel. Effective strategies include a layered approach: door alarms that chime or alert the carer when a door is opened (simple battery-powered options are widely available); childproof double locks or chain locks placed above or below eye level (people with dementia typically look at the door at eye level and may not think to look up or down); doorbell alerts sent to a carer's phone via a smart doorbell; camouflage techniques where the door is painted the same colour as the surrounding wall, fitted with a full-length mirror, or covered with a picture or bookcase-style cover. A door stop alarm placed under the door creates resistance and sound. Consider the person's motivation for wandering when designing the solution — if they are anxious about a family member, addressing the anxiety may reduce wandering behaviour itself. An automatic GPS tracking device (smart watch or pendant) provides a last-resort safety net if exit prevention fails. Ensure all household members, visitors, and carers are aware of and consistently implement whatever measures are in place — a single inconsistency can undermine the strategy. Keep the immediate outdoor area fenced if possible; a safely accessible garden with seating reduces the drive to escape by providing appropriate outdoor access.`,
+    content: `Managing exits from the home for a person with dementia who wanders requires a layered approach that balances genuine safety with dignity. Alzheimer's NZ recommends strategies that create effective barriers without creating an institutional or confining atmosphere.
+
+A combination of measures works better than any single solution: door alarms that chime when a door is opened alert carers immediately; childproof double locks or chain locks placed above or below the person's natural eye level are often overlooked; and camouflage techniques — painting exit doors the same colour as the surrounding wall, adding a full-length mirror over an exit door, or placing a bookcase-style cover over a door — reduce the visual salience of exits.
+
+A doorstop alarm placed under the door creates resistance and sound. Smart doorbells with smartphone alerts can notify a carer instantly when movement near the door is detected.
+
+The motivation behind wandering should inform the approach. If the person is anxious about a family member, addressing that anxiety may reduce wandering behaviour itself. If they are bored or restless, building more structured outdoor activity into the daily routine reduces the drive to leave independently.
+
+Ensure a safely accessible garden or outdoor area is available if possible — a fenced garden with seating and sensory interest provides appropriate outdoor access and significantly reduces the drive to seek unsanctioned exit. As a last-resort safety net, a GPS tracking device worn as a watch or pendant provides location information if other prevention measures fail.`,
     tags: ['door alarms', 'exit', 'locks', 'wandering prevention', 'GPS', 'camouflage', 'home safety'],
+    source_url: 'https://alzheimers.org.nz/',
+    source_org: 'Alzheimer\'s NZ',
     embedding: null,
   },
   {
     id: 'homesafety_006',
     category: 'home-safety',
     title: 'Driving and Dementia: When to Stop',
-    content: `Driving cessation is one of the most emotionally charged issues in dementia care. The ability to drive safely requires divided attention, rapid reaction times, spatial judgement, and rule-following — all capacities that dementia erodes. A dementia diagnosis does not automatically require immediate driving cessation; in early mild dementia some individuals may still drive safely, but regular assessment is essential. In New Zealand, doctors have a professional obligation to advise patients that they must not drive if their condition impairs driving ability, and may notify the New Zealand Transport Agency (NZTA) if a patient continues to drive and poses a road safety risk. The GP or specialist will typically arrange a formal driving assessment with an occupational therapist qualified in driver assessment. Families often notice declining driving safety before the person does — getting lost on familiar routes, failing to stop at lights, difficulty with roundabouts or parking, near-misses, or dents and scrapes that have no explanation. If there is concern, raise it with the doctor. Do not secretly disable the car — this may undermine trust and create significant distress. Instead, have an honest and empathetic conversation with the person and involve the doctor to provide clinical authorisation to stop. Plan alternatives in advance: organise family driving rosters, investigate local transport options, connect with community transport services (many are free for people with health care cards), or consider a local taxi or rideshare account. Acknowledge the significant loss of independence driving represents and address the emotional impact with compassion.`,
+    content: `Driving cessation is one of the most emotionally charged conversations in dementia care. Dementia NZ acknowledges that for many people, driving represents independence, identity, and social connection — and that the transition requires compassion as well as clarity about safety.
+
+Driving safely requires divided attention, rapid reaction times, spatial judgement, and rule-following — all abilities that dementia erodes progressively. A diagnosis does not automatically mean immediate cessation, but regular reassessment is essential and the period during which driving remains safe is typically limited.
+
+Family members often notice declining driving safety before the person does: getting lost on familiar routes, difficulty at roundabouts or intersections, unexplained dents or near-misses, or confusion about road rules. If you have concerns, raise them with the person's doctor. In New Zealand, GPs have reporting obligations to the New Zealand Transport Agency (NZTA) when a medical condition may impair driving safety. A formal occupational therapy driving assessment provides an objective, independent evaluation that is more reliable than self-assessment.
+
+Do not secretly disable the vehicle — this erodes trust and creates significant distress without addressing the underlying issue. Instead, involve the doctor in an honest, empathetic conversation with the person about safety.
+
+Plan alternatives well before they are needed: family driving rosters, local transport options, community transport services, and taxi or rideshare accounts all support continued independence and social connection after driving ends. Acknowledge the loss with genuine empathy — it is a significant change that deserves respect.`,
     tags: ['driving', 'driving cessation', 'road safety', 'occupational therapist', 'licence', 'independence'],
+    source_url: 'https://dementia.nz/about-dementia/',
+    source_org: 'Dementia NZ',
     embedding: null,
   },
   {
     id: 'homesafety_007',
     category: 'home-safety',
     title: 'Stair Safety, Signage, and Environmental Cues',
-    content: `Environmental modifications throughout the home can significantly reduce confusion, falls, and unsafe behaviour for people with dementia. Stairs are a significant fall risk — consider whether the person truly needs to use upper floors, and whether a stair gate at the top is needed if they regularly become disoriented. Apply non-slip treads to each step, ensure banisters are secure, and use high-contrast edge strips on each step to make the edge visible. Good signage uses both words and pictures: large, clearly printed labels on doors (TOILET with a picture, BEDROOM with a picture, KITCHEN) help the person navigate independently and maintain dignity. In the bathroom, label taps HOT (red) and COLD (blue) with colour-coded labels. Reduce clutter throughout the home — clear pathways of at least 90cm between furniture, remove rugs that are not fully secured, tape down all trailing cords, and move furniture so there is a clear, direct route to the toilet from the bedroom. Install motion-activated nightlights in the hallway between bedroom and bathroom — adequate lighting at night dramatically reduces disorientation and falls. Mark the person's bedroom door with a personalised cue (a photo of them, a favourite object, a meaningful picture) so they can find it independently. Remove large mirrors in corridors if the person is startled by their own reflection. Consider an occupational therapist home visit for a comprehensive safety assessment.`,
+    content: `Environmental modifications throughout the home reduce confusion, falls, and unsafe behaviour for people with dementia. The Alzheimer's Society and occupational therapists specialising in dementia recommend a comprehensive home assessment at diagnosis and as the condition progresses.
+
+Stairs are a significant fall risk: apply non-slip treads to each step, ensure banisters are secure and ideally on both sides, and use high-contrast edge strips to make each step edge clearly visible. A stair gate at the top of the stairs may be necessary if the person regularly becomes disoriented.
+
+Good signage uses both words and pictures: large, clearly printed labels on doors — TOILET with a picture, BEDROOM with a personalised photo, KITCHEN — help the person navigate independently. In the bathroom, colour-code hot and cold taps. Personalise the bedroom door with a meaningful photograph or familiar object so the person can identify their room.
+
+Install motion-activated nightlights in the hallway between the bedroom and bathroom — adequate lighting at night dramatically reduces falls and disorientation. Remove large mirrors in corridors if the person is startled or distressed by their own reflection.
+
+Clear pathways through the home of at least 90cm between furniture, remove rugs that are not securely fixed, tape down trailing cords, and eliminate trip hazards from all walkways. An occupational therapy home visit for a comprehensive safety assessment is strongly recommended and can often be arranged through the person's GP or through Alzheimer's NZ (alzheimers.org.nz) in New Zealand.`,
     tags: ['stairs', 'signage', 'labels', 'nightlights', 'occupational therapist', 'fall prevention', 'home modifications'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
 
@@ -297,56 +650,124 @@ export const KNOWLEDGE_BASE = [
     id: 'wellbeing_001',
     category: 'wellbeing',
     title: 'Respite Care Options for Family Carers',
-    content: `Respite care provides temporary relief to the primary family carer by having someone else care for the person with dementia for a defined period. Regular respite is not a luxury — it is a clinical necessity to sustain the carer's health and enable them to continue caring safely over the long term. Options range from a few hours to several weeks. In-home respite involves a trained care worker coming to the home while the carer takes time away — this is least disruptive for the person with dementia as they remain in their familiar environment. Community day programs (often called day centres or memory care programs) provide structured activities, social connection, and meals several days per week; many people with dementia enjoy these once they become familiar. Overnight or residential respite (typically one to four weeks) in a residential aged care facility gives the carer a longer break; this option is more disruptive and the person may need time to re-settle after returning home. Home Support Services in New Zealand are funded through Health New Zealand based on a free Needs Assessment and Service Coordination (NASC) assessment — ask your GP for a referral. The Carer Support subsidy (Ministry of Health) provides funded days of respite care each year. Carers NZ (0800 777 797 / carers.net.nz) provides support and funding specifically for carers. Alzheimers NZ (0800 004 001) and Dementia NZ (dementia.nz) can help identify local respite options in your region. Plan respite before it is urgently needed — crises make planning impossible.`,
+    content: `Regular respite is not a luxury for dementia carers — it is a clinical necessity for sustainable care. My Aged Care emphasises that taking breaks allows carers to maintain their own health, relationships, and wellbeing, which directly improves the quality of care they can provide.
+
+Options range from a few hours to several weeks. In-home respite involves a trained care worker coming to the person's home while the carer takes time away — this is the least disruptive option for the person with dementia, as they remain in a familiar environment. Community day programmes (day centres or memory care programmes) provide structured activities, social connection, and meals several days per week; many people with dementia enjoy these once they become familiar with the routine.
+
+Overnight or residential respite in an aged care facility gives the carer a longer break of one to four weeks. This option can be more disruptive — the person may take time to re-settle after returning home — but provides the carer with genuine recovery time.
+
+In Australia, respite and in-home supports are accessed through My Aged Care (myagedcare.gov.au). Carer Gateway (carergateway.gov.au) provides coaching, peer support, and practical planning for carers. In New Zealand, respite and carer supports are available through Carers NZ (carers.net.nz) and local health services — Dementia NZ (dementia.nz) can assist with identifying local options.
+
+Plan respite before it is urgently needed. In a carer health crisis, organising respite becomes significantly harder. Building a trusted network of relief carers and services before they are needed is one of the most important things a carer can do.`,
     tags: ['respite', 'day program', 'in-home care', 'My Aged Care', 'carer support', 'relief'],
+    source_url: 'https://www.myagedcare.gov.au/',
+    source_org: 'My Aged Care',
     embedding: null,
   },
   {
     id: 'wellbeing_002',
     category: 'wellbeing',
     title: 'Emotional Stages of Becoming a Dementia Caregiver',
-    content: `Becoming a caregiver for a person with dementia is a profound life transition that commonly involves a complex range of emotions that unfold over time. There is no single "right way" to feel, and many carers experience cycling through emotions rather than moving through discrete stages. Common emotional experiences include: shock and disbelief at the time of diagnosis — "This can't be right"; grief for the person as they were before dementia, for the future you had planned together, and for the relationship as it changes; fear about the future, about your own capacity to cope, and about the unknown progression of the disease; guilt — feeling you are not doing enough, have chosen work over caring, placed them in respite, or felt relief when they died; anger — at the disease, at the person for how they have changed, at other family members who are not pulling their weight; love — most carers describe profound love that motivates them to continue even when it is very hard; and meaning — many carers ultimately find that caregiving, while intensely difficult, is also one of the most meaningful experiences of their lives. These emotions are all valid. Seeking counselling or support group connection helps normalise what you are feeling. Alzheimers NZ and Dementia NZ offer counselling services specifically for carers — contact Alzheimers NZ on 0800 004 001 or visit alzheimers.org.nz.`,
+    content: `Becoming a carer for a person with dementia is a profound life transition that commonly involves a complex and shifting range of emotions. Carers Australia emphasises that there is no single right way to feel, and that many carers experience emotions cycling and recurring rather than resolving in a neat sequence.
+
+Common emotional experiences include: shock and disbelief at the time of diagnosis; grief for the person as they were before dementia and for the future you had planned together; fear about progression, about your own capacity to cope, and about the unknown; guilt — for not doing enough, for choosing respite, for moments of anger, or for feeling relief; anger — at the disease, at the person for how they have changed, or at other family members who are not equally involved; and profound love — the most enduring motivation for most carers.
+
+Many carers ultimately find that caregiving, despite its intensity and difficulty, becomes one of the most meaningful experiences of their lives. This does not make the hard moments less real or less valid.
+
+These emotions are all legitimate. Seeking counselling or support group connection normalises them and prevents the social isolation that makes caregiving harder. Carers Australia (carersaustralia.com.au) provides counselling referrals and connection to local carer support groups across Australia. In New Zealand, Carers NZ (carers.net.nz) offers equivalent support, guidance, and connection to local peer networks.`,
     tags: ['grief', 'guilt', 'carer emotions', 'adjustment', 'counselling', 'support', 'wellbeing'],
+    source_url: 'https://www.carersaustralia.com.au/information-for-carers/',
+    source_org: 'Carers Australia',
     embedding: null,
   },
   {
     id: 'wellbeing_003',
     category: 'wellbeing',
     title: 'Carer Support Groups and Peer Networks',
-    content: `Connecting with others who understand the experience of dementia caregiving can be one of the most effective sources of practical and emotional support. Support groups — whether in-person or online — provide a space where carers can speak honestly about their experiences without fear of judgment or burdening family members. Key benefits include: normalising difficult emotions such as resentment, grief, and exhaustion; learning practical strategies from other carers who have faced similar challenges; reducing social isolation (a major risk factor for carer depression); gaining a sense of community and belonging; and receiving up-to-date information about local services and resources. Alzheimers NZ (alzheimers.org.nz) and Dementia NZ (dementia.nz) run face-to-face support groups nationwide through their regional branches, as well as online groups for carers who cannot attend in person, including groups for younger onset dementia carers and carers from diverse communities. Carers NZ (carers.net.nz / 0800 777 797) connects carers to local groups and online communities. Many groups are run by carers themselves — peer-led groups can be particularly powerful. Online communities at alzheimers.org.nz and international communities provide 24/7 peer support. Local councils, community health centres, and GP clinics often know of smaller local groups. The right group is one where you feel safe to speak honestly — it may take trying more than one to find the best fit.`,
+    content: `Connecting with others who understand the experience of dementia caregiving is consistently identified by carers as one of the most valuable sources of support. Dementia Australia facilitates support groups — in-person and online — where carers can speak honestly about their experiences without fear of judgment or of burdening family members.
+
+Key benefits of carer support groups include: normalising difficult emotions such as resentment, grief, and exhaustion; learning practical strategies from people who have navigated similar challenges; reducing social isolation, which is a significant risk factor for carer depression; and gaining a sense of community and belonging that sustains motivation over the long term.
+
+In Australia, Dementia Australia (dementia.org.au, 1800 100 500) runs support groups and can connect carers to local options. Forward with Dementia (forwardwithdementia.au) and Dementia Support Australia (dementia.com.au) also provide resources and referrals. Carer Gateway (carergateway.gov.au) offers coaching, counselling, and connection to peer support.
+
+In New Zealand, Dementia NZ (dementia.nz) and Alzheimer's NZ (alzheimers.org.nz) run local support programmes. Carers NZ (carers.net.nz) provides peer support, coaching, and practical assistance for family carers across the country.
+
+The right group is one where you feel safe to speak honestly. It may take trying more than one group to find the right fit — this is expected and entirely worth the effort.`,
     tags: ['support group', 'peer support', 'Dementia Australia', 'Carer Gateway', 'isolation', 'community'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
   {
     id: 'wellbeing_004',
     category: 'wellbeing',
     title: 'Financial Assistance and Government Supports for Carers',
-    content: `Caring for a person with dementia has significant financial implications — reduced or ceased paid employment, costs of care services, home modifications, and eventually residential care. Understanding available supports is essential. In New Zealand, key financial supports for carers include: the Carer Support subsidy (Ministry of Health) — provides funded days of respite care per year for people providing substantial in-home care; the Supported Living Payment (Work and Income NZ) — income support for full-time carers who cannot engage in paid work; the Disability Allowance — a weekly payment for ongoing disability-related health costs; and Carers NZ (0800 777 797 / carers.net.nz) which connects carers to local funding and support. For the person with dementia: Home Support Services funded through Health New Zealand (accessed via a free Needs Assessment and Service Coordination (NASC) assessment — ask your GP for a referral) provide personal care, domestic assistance, meals, and social support. When the person can no longer live at home, the Long Term Residential Care (LTRC) subsidy — means-tested and administered by Work and Income NZ — provides government funding toward residential aged care costs; a government-subsidised place is available for all eligible New Zealand residents regardless of their financial situation. Financial planning advice from a licensed aged care financial adviser is strongly recommended before residential placement — your GP, Alzheimers NZ, or Citizens Advice Bureau can assist with a referral. For those with younger onset dementia (under 65), contact Whaikaha – Ministry of Disabled People (whaikaha.govt.nz) for disability support options. Legal advice regarding Enduring Power of Attorney is essential early in the diagnosis process.`,
+    content: `Caring for a person with dementia has significant financial implications — reduced employment, costs of care services, home modifications, and eventually residential care. Understanding available supports early is essential for sustainable planning.
+
+In Australia, key financial supports for carers include Carer Payment and Carer Allowance through Services Australia. For the person with dementia, in-home and community supports are accessed through My Aged Care (myagedcare.gov.au), including the Commonwealth Home Support Programme and Home Care Package pathways. Carer Gateway (carergateway.gov.au) provides practical planning, coaching, and respite support for carers. Financial planning advice from a licensed aged care financial adviser is strongly recommended before residential placement — fee structures are complex and early advice can significantly reduce costs.
+
+For younger onset dementia (diagnosed under 65), NDIS pathways may apply in Australia. Dementia Australia (dementia.org.au) can help families identify the most appropriate entry point to the support system.
+
+In New Zealand, Work and Income NZ provides carer support payments and financial assistance for eligible carers. Dementia NZ (dementia.nz) and Alzheimer's NZ (alzheimers.org.nz) can help navigate available services and identify locally accessible support.
+
+Arranging an Enduring Power of Attorney while the person still has legal capacity is also essential — it enables financial management decisions to be made on their behalf when they are no longer able to act independently, and is significantly harder to put in place once capacity is lost.`,
     tags: ['financial', 'Carer Payment', 'Carer Allowance', 'My Aged Care', 'NDIS', 'Home Care Package', 'government support'],
+    source_url: 'https://www.myagedcare.gov.au/',
+    source_org: 'My Aged Care',
     embedding: null,
   },
   {
     id: 'wellbeing_005',
     category: 'wellbeing',
     title: 'Maintaining Your Own Health While Caregiving',
-    content: `Family carers of people with dementia are significantly more likely than non-carers to experience depression, anxiety, physical health problems, social isolation, and sleep deprivation. The research is unambiguous: ignoring your own health while caregiving is not sustainable. Yet carers consistently prioritise the person they care for and neglect their own needs. Essential health maintenance for carers includes: keeping your own GP appointments — do not cancel them for caregiving tasks; tell your GP that you are a full-time carer, as this context is important for assessing your health; maintain screening and immunisations; attend to your own dental and specialist appointments. Sleep is particularly important — chronic sleep deprivation caused by night-time caregiving is a medical issue, not merely tiredness. Seek help with night supervision so you can sleep. Physical activity — even 20–30 minutes of walking three to five times per week — significantly reduces depression and anxiety; explore options like a treadmill at home or a regular neighbour or friend who can sit with the person while you walk. Maintain social connections even when it is difficult to get out — phone calls, video calls, and brief visits matter. Maintain at least one activity purely for your own enjoyment each week — reading, a hobby, a social activity. If you are experiencing persistent sadness, tearfulness, loss of interest in things you used to enjoy, or hopelessness, speak to your GP — depression is extremely common in carers and responds well to treatment.`,
+    content: `The NHS emphasises that carers who neglect their own health cannot sustain high-quality care over time. Research across multiple countries consistently shows that dementia carers are significantly more likely than non-carers to experience depression, anxiety, sleep deprivation, social isolation, and physical health problems.
+
+Register with your GP as a carer and request a carer's assessment where available. Tell your GP that you are a full-time carer: this context is important for interpreting your symptoms and planning appropriate support. Do not cancel your own medical appointments to manage caregiving demands — this is one of the most common and most damaging carer habits.
+
+Sleep is particularly critical: chronic sleep deprivation caused by night-time caregiving is a medical issue, not merely tiredness. Seek help with night-time supervision so you can sleep adequately. Physical activity — even 20 to 30 minutes of walking three to five times per week — significantly reduces depression and anxiety and is feasible even during intensive caregiving periods.
+
+Maintain social connections even when it is difficult to get out. Phone calls, video calls, and brief visits sustain the relationships that provide emotional resilience. Maintain at least one activity each week that is purely for your own enjoyment.
+
+If you are experiencing persistent sadness, tearfulness, loss of interest in activities you previously enjoyed, or feelings of hopelessness, speak with your GP. Depression in carers is extremely common, frequently unrecognised, and responds well to treatment when identified.`,
     tags: ['carer health', 'self-care', 'depression', 'GP', 'sleep', 'exercise', 'social connection'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'wellbeing_006',
     category: 'wellbeing',
     title: 'Asking for and Accepting Help',
-    content: `One of the most difficult aspects of caregiving is asking for and accepting help from others. Many carers struggle with this due to a sense of duty ("This is my responsibility"), pride ("I should be able to manage"), fear of being a burden, or practical barriers ("It takes longer to explain than to do it myself"). Research consistently shows that carers who accept help have better health outcomes, lower rates of burnout, and provide better quality care for longer. Practical strategies for getting more help include: be specific when asking — "Can you sit with Mum from 2–4 on Thursday so I can go to my appointment?" is more effective than "I need help sometimes"; keep a list of tasks that others can do (shopping, driving to appointments, lawn mowing, meal preparation, phone calls to navigate systems) that you can assign when someone offers; accept imperfect help graciously — if someone does a task differently than you would, resist correcting unless it is genuinely unsafe; consider a formal family meeting to distribute caregiving tasks fairly among siblings and other family members; use community services (home care, day programs) rather than trying to do everything personally; and if you are caring for a parent, accept that your own children and partner also have needs that deserve your time and energy — caregiving is most sustainable when it does not consume the entire family.`,
+    content: `One of the hardest aspects of dementia caregiving is asking for and accepting help from others. Many carers feel a sense of duty ("This is my responsibility"), pride ("I should be able to manage"), or fear of burdening others. Dementia NZ and carer organisations consistently note that carers who accept help have better health outcomes and provide better quality care for longer.
+
+Be specific when asking for help: "Can you sit with Dad from 2 to 4 on Thursday so I can attend my appointment?" is far more effective than a vague "I need help sometimes." Keep a list of tasks that others can do — shopping, driving to appointments, lawn mowing, phone calls to navigate systems, meal preparation — that you can offer when someone volunteers.
+
+Accept imperfect help graciously. If someone does a task differently than you would, resist correcting unless it is genuinely unsafe. Focusing on whether the outcome meets the person's needs rather than whether the method matches yours makes it easier for others to continue helping sustainably.
+
+Consider a formal family meeting to distribute caregiving tasks fairly among siblings and other family members. Shared responsibility is more sustainable than one person carrying the full burden. Use community services — home care, day programmes, and respite — rather than trying to do everything personally.
+
+In New Zealand, Dementia NZ (dementia.nz, 0800 004 001) can help identify local home support and community services. Carers NZ (carers.net.nz) provides practical support for carers navigating what is available in their area.`,
     tags: ['help-seeking', 'family support', 'delegating', 'carer support', 'burnout prevention', 'community services'],
+    source_url: 'https://dementia.nz/about-dementia/',
+    source_org: 'Dementia NZ',
     embedding: null,
   },
   {
     id: 'wellbeing_007',
     category: 'wellbeing',
     title: 'Transitioning to Residential Aged Care',
-    content: `The decision to transition a loved one to residential aged care is one of the most emotionally difficult decisions family carers face. It is often accompanied by grief, guilt ("I promised I would never put them in a home"), relief, and uncertainty. Understanding that residential care can provide the best quality of life for a person with advanced dementia — through specialised staffing, social activities, and consistent care — helps to contextualise the decision. Transition indicators include: the person's care needs exceed what one person can safely provide at home; significant safety risks that cannot be managed in the home; the primary carer is experiencing serious health consequences from caregiving; or the person with dementia would benefit from the social environment and activities of a care setting. How to choose a residential care facility: visit multiple facilities, observe how staff interact with residents, check HealthCERT certification and recent audit reports via the Ministry of Health website (health.govt.nz/aged-care), and ensure the facility can meet the person's specific needs (e.g., secure memory care unit for those who wander). Involve the person with dementia in the decision where they have capacity, and where they do not, ensure their previously expressed values and preferences guide the choice. The transition period typically takes 4–8 weeks for the person to feel settled. Continue to visit regularly, bring familiar items from home, and maintain involvement in care decisions. Transition is not abandonment — it is a form of love.`,
+    content: `The decision to transition a loved one to residential aged care is one of the most emotionally difficult decisions a family carer faces. My Aged Care emphasises that residential care — when the right facility is chosen and the transition is managed well — can provide a quality of life that is genuinely difficult to achieve at home once care needs become very high.
+
+Common triggers for considering residential care include: care needs that exceed what one person can safely provide at home; significant safety risks that cannot be managed in a home environment; serious health consequences for the primary carer from ongoing caregiving; or the recognition that the person would benefit from consistent professional care, structured activity, and specialist staffing.
+
+In Australia, use My Aged Care (myagedcare.gov.au) to compare residential care providers, understand funding, and apply for assessment. Visit multiple facilities, observe how staff interact with residents, and ensure the facility can meet the specific needs of someone with dementia — including whether a secure memory care unit is available. In New Zealand, Dementia NZ (dementia.nz) and Alzheimer's NZ (alzheimers.org.nz) can help families understand residential care options.
+
+Involve the person with dementia in the decision where they retain capacity. The transition period typically takes four to eight weeks for the person to feel settled — continue to visit regularly, bring familiar objects from home, and remain actively involved in care decisions.
+
+Transition to residential care is not abandonment — it is a form of love that acknowledges when the level of care needed has moved beyond what one household can safely provide.`,
     tags: ['residential care', 'nursing home', 'transition', 'aged care', 'guilt', 'decision', 'placement'],
+    source_url: 'https://www.myagedcare.gov.au/',
+    source_org: 'My Aged Care',
     embedding: null,
   },
 
@@ -355,56 +776,122 @@ export const KNOWLEDGE_BASE = [
     id: 'prevention_001',
     category: 'prevention',
     title: 'The 14 Modifiable Risk Factors for Dementia',
-    content: `The 2024 Lancet Commission on dementia prevention, intervention, and care identified 14 modifiable risk factors that together account for approximately 45% of all dementia cases worldwide. Addressing these factors will not guarantee prevention, but reducing them can delay or prevent a significant proportion of cases. The 14 factors span the life course: in early life, low educational attainment increases risk — staying in education longer builds cognitive reserve, the brain's resilience to damage. In midlife, hearing loss is the single largest modifiable risk factor; treat hearing loss promptly and wear hearing protection in noisy environments. Hypertension (high blood pressure) in midlife — not just in older age — significantly increases risk; monitor and treat it. Obesity increases risk via vascular and metabolic pathways; maintaining a healthy weight from middle age is protective. Traumatic brain injury from falls, sport, or accidents is a modifiable risk; use helmets, fall prevention strategies, and address fall risk in older adults. Excessive alcohol consumption (more than 21 standard drinks per week) damages the brain directly; reduce intake. In later life, smoking damages blood vessels supplying the brain; quitting at any age reduces risk. Depression is both a risk factor and an early symptom; treat it promptly. Physical inactivity is one of the most impactful and modifiable factors; regular exercise is consistently protective. Diabetes damages blood vessels and increases inflammation; manage blood glucose carefully. Air pollution from traffic and industry is an emerging risk factor; limit prolonged exposure. Social isolation is strongly associated with cognitive decline; maintain social connections. High LDL cholesterol in midlife increases vascular risk; manage it through diet, exercise, and medication where needed. Vision loss — the newest addition to the 2024 list — is associated with increased risk; have vision tested and corrected regularly. Non-modifiable factors include age (the biggest risk factor overall), family history, and certain genetic variants such as APOE ε4. However, genetics is not destiny — lifestyle factors significantly influence whether genetic risk translates into dementia. The key message from the Lancet Commission is that dementia prevention begins early, extends across the whole life course, and is achievable through changes most people can make.`,
+    content: `The 2024 Lancet Commission on dementia prevention, intervention, and care identified 14 modifiable risk factors that together account for approximately 45 percent of all dementia cases worldwide. The Alzheimer's Society highlights this research as evidence that dementia is not inevitable — addressing these factors across the life course can delay or prevent a significant proportion of cases.
+
+The 14 factors span life stages. In early life: low educational attainment — staying in education longer builds cognitive reserve. In midlife: hearing loss (the single largest modifiable risk factor — treat it promptly); high blood pressure (manage from midlife onwards, not just in older age); obesity; traumatic brain injury; excessive alcohol consumption (more than 21 standard drinks per week); and vision loss (added to the list in the 2024 update). In later life: smoking; depression; physical inactivity; diabetes; social isolation; air pollution; and high LDL cholesterol.
+
+Each of these is modifiable — meaning that addressing it reduces risk, even if other factors remain present. The combined effect of addressing multiple risk factors simultaneously is substantial.
+
+Non-modifiable factors include age (the largest overall risk factor), genetic variants such as APOE ε4, and family history. However, the Lancet Commission's key message is clear: genetics is not destiny, and lifestyle factors significantly influence whether genetic risk translates into dementia.
+
+Prevention begins early and extends across the whole life course. The most impactful changes most people can make include: treating hearing and vision loss promptly; managing blood pressure and cholesterol from midlife; staying physically active; maintaining social connections; and avoiding smoking and excessive alcohol.`,
     tags: ['risk factors', 'prevention', 'Lancet Commission', 'modifiable risk', 'lifestyle', 'brain health'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'prevention_002',
     category: 'prevention',
-    title: 'Recognising the Warning Signs of Dementia (Mate Wareware)',
-    content: `Dementia — known in te reo Māori as mate wareware — develops gradually, and its early signs are often dismissed as normal ageing or stress. Recognising the warning signs early leads to earlier diagnosis, earlier access to support, and time for the person and family to plan while the person retains capacity. The ten key warning signs to watch for are: (1) Memory loss that disrupts daily life — forgetting recently learned information, asking the same question repeatedly, increasingly relying on memory aids or others for things previously managed independently. This differs from normal ageing, where occasional forgetfulness of names or appointments is expected and the information is retrieved later. (2) Challenges in planning or solving problems — difficulty following a familiar recipe, managing monthly bills, or concentrating on detailed tasks. (3) Difficulty completing familiar tasks — getting lost driving a familiar route, forgetting the rules of a favourite game, or struggling to complete tasks at work. (4) Confusion with time or place — losing track of dates, seasons, and the passage of time; forgetting where they are or how they got there. (5) Trouble understanding visual images and spatial relationships — difficulty reading, judging distance, or distinguishing contrast — which may affect driving. (6) New problems with words in speaking or writing — stopping mid-sentence, struggling to find the right word, substituting unusual words. (7) Misplacing things and losing the ability to retrace steps — putting items in unusual places (e.g., keys in the freezer) and being unable to retrace steps to find them; may accuse others of stealing. (8) Decreased or poor judgement — changes in decision-making, for example giving large amounts of money to telemarketers, or neglecting personal hygiene. (9) Withdrawal from work or social activities — avoiding hobbies, social engagements, or work projects due to difficulty keeping up. (10) Changes in mood and personality — becoming confused, suspicious, depressed, fearful, or anxious; being easily upset when out of their comfort zone. If you notice several of these signs in yourself or someone you care about, see a GP. Early diagnosis is beneficial — do not wait. In New Zealand, contact Alzheimers NZ (0800 004 001 / alzheimers.org.nz) or Dementia NZ (dementia.nz) for guidance on next steps.`,
-    tags: ['warning signs', 'early detection', 'mate wareware', 'Māori', 'memory loss', 'diagnosis', 'symptoms'],
+    title: 'Recognising the Warning Signs of Dementia',
+    content: `The NHS emphasises that dementia is not a normal part of ageing, and that warning signs should prompt a GP visit rather than being dismissed as expected age-related change. Recognising symptoms early enables earlier diagnosis, earlier access to support, and time for the person to participate in planning their own care.
+
+Early symptoms described by the NHS include: memory loss — particularly forgetting recent events, names, and faces; difficulty concentrating, planning, or following a familiar recipe; problems completing familiar tasks such as driving a known route; confusion about time, place, or what is currently happening; trouble understanding visual information and spatial relationships; difficulty finding words in speaking or writing; misplacing items and being unable to retrace steps; poor or changed judgement; withdrawal from hobbies, social activities, or work; and changes in mood or personality — including increased anxiety, suspicion, or irritability in situations that previously would not have caused distress.
+
+The key distinction from normal ageing: occasional forgetfulness of a name or misplacing an item, with later recall, is within normal range. Dementia-related changes are more persistent, worsen over time, and begin to meaningfully interfere with daily life.
+
+If you notice several of these signs in yourself or someone you care about, book an appointment with a GP. In New Zealand, contact Dementia NZ (dementia.nz, 0800 004 001) or Alzheimer's NZ (alzheimers.org.nz) for information and guidance. In Australia, contact Dementia Australia (dementia.org.au, 1800 100 500).`,
+    tags: ['warning signs', 'early detection', 'memory loss', 'diagnosis', 'symptoms'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/symptoms/',
+    source_org: 'NHS UK',
     embedding: null,
   },
   {
     id: 'prevention_003',
     category: 'prevention',
     title: 'Physical Activity and Brain Health: Exercise as Prevention',
-    content: `Physical activity is one of the most well-evidenced and modifiable protective factors against dementia. Regular exercise reduces the risk of developing dementia by approximately 28–35% across multiple large studies, and reduces the risk of Alzheimer's disease specifically by around 45%. It achieves this through multiple biological mechanisms: improving cardiovascular function and cerebral blood flow; reducing neuroinflammation; promoting the release of brain-derived neurotrophic factor (BDNF), a protein that supports the growth and maintenance of brain cells; reducing vascular risk factors including hypertension, diabetes, and obesity; and improving sleep quality, mood, and stress regulation — all of which independently benefit brain health. The FINGER study (Finnish Geriatric Intervention Study to Prevent Cognitive Impairment and Disability), one of the largest dementia prevention trials, demonstrated that a multi-domain lifestyle intervention including physical exercise improved cognitive performance by 25% compared to a control group in older adults at risk of dementia. Physical activity recommendations for brain health: aim for at least 150 minutes of moderate-intensity aerobic activity per week — this can be broken into 30-minute sessions five days per week. Moderate intensity means your heart rate increases and you can hold a conversation but not sing. Activities include brisk walking, swimming, cycling, dancing, and water aerobics. Resistance training (strength exercise) two to three times per week provides additional benefits and is particularly important for older adults. Balance and coordination exercises (tai chi, yoga) reduce fall risk and have cognitive benefits. Even short bouts of activity are beneficial — a 10-minute brisk walk produces measurable improvements in mood and cognition. For people who are currently sedentary, starting slowly and building gradually is more sustainable than an intensive start. Involving a walking group, exercise class, or exercise buddy significantly improves adherence. In New Zealand, many councils and community centres offer low-cost or free exercise programmes for older adults — your GP or Health NZ can provide local referrals.`,
+    content: `Dementia Australia highlights physical activity as one of the most well-evidenced and modifiable protective factors against dementia. Regular exercise achieves this through multiple pathways: improving cardiovascular function and cerebral blood flow; reducing neuroinflammation; promoting the release of brain-derived neurotrophic factor (BDNF), which supports brain cell growth and maintenance; reducing vascular risk factors including high blood pressure, diabetes, and obesity; and improving sleep quality and mood — all of which independently benefit brain health.
+
+The FINGER study (Finnish Geriatric Intervention Study to Prevent Cognitive Impairment and Disability) — one of the largest dementia prevention trials — demonstrated that a multi-domain lifestyle intervention including physical exercise improved cognitive performance significantly compared to a control group in older adults at elevated risk.
+
+For brain health, aim for at least 150 minutes of moderate-intensity aerobic activity per week — for example, 30-minute sessions five days per week. Moderate intensity means your heart rate increases and you can hold a conversation but not easily sing. Suitable activities include brisk walking, swimming, cycling, dancing, and water aerobics.
+
+Resistance training two to three times per week provides additional brain health benefits and is especially important for older adults. Balance and coordination exercises such as tai chi and yoga reduce fall risk and have cognitive benefits.
+
+Even short bouts of movement help. Starting slowly and building gradually is more sustainable than an intensive start. Many councils and community centres in Australia and New Zealand offer low-cost or free exercise programmes for older adults — your GP can help with referrals.`,
     tags: ['exercise', 'physical activity', 'prevention', 'FINGER study', 'brain health', 'BDNF', 'aerobic', 'resistance'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
   {
     id: 'prevention_004',
     category: 'prevention',
     title: 'Cognitive Engagement, Social Connection, and Brain Reserve',
-    content: `Cognitive reserve refers to the brain's resilience to damage — the ability to continue functioning well despite accumulating pathology. People with higher cognitive reserve can sustain more brain damage before symptoms appear. Cognitive reserve is built across the life course through education, mentally stimulating work, lifelong learning, and intellectually engaging leisure activities. The key insight is that it is never too late to build cognitive reserve — even activities started in later life are protective. Cognitively stimulating activities that benefit brain health include: learning a new language (bilingualism is one of the most powerful cognitive reserve builders, delaying dementia onset by 4–5 years in some studies); learning a musical instrument; studying a new subject formally or informally; reading and writing regularly; playing chess, strategy games, cards, or puzzles; engaging with technology and digital tools; and taking up a complex new hobby such as woodworking, painting, or gardening. The key is novelty and challenge — activities that are routine and no longer mentally demanding provide less benefit than those that stretch capability. Social connection is a separate but equally important protective factor. Social isolation is associated with a 60% increased risk of dementia. Social engagement protects brain health through multiple pathways: cognitive stimulation from conversation and relationship navigation; emotional regulation and reduction of chronic stress; physical activity associated with social engagement; and sense of purpose and meaning. Protective social activities include: maintaining regular contact with family and friends; joining clubs, groups, or community organisations; volunteering; attending religious or cultural gatherings; and mentoring or teaching others. In New Zealand, te ao Māori (the Māori worldview) emphasises whanaungatanga (relationships and connection) and belonging to whānau (family) and hapū (community) — these cultural connections are intrinsically protective for brain health. For whānau supporting a person with mate wareware, maintaining cultural identity, language, and connection to community remains important for the person's wellbeing throughout the dementia journey.`,
-    tags: ['cognitive reserve', 'social connection', 'mental stimulation', 'bilingualism', 'prevention', 'whanaungatanga', 'brain health', 'learning'],
+    content: `Cognitive reserve is the brain's resilience to damage — the ability to function well despite accumulating pathology. The Alzheimer's Society notes that people with higher cognitive reserve sustain more brain damage before symptoms become apparent. Reserve is built across the life course through education, mentally stimulating work, and intellectually engaging leisure activities — and building it is possible at any age.
+
+Cognitively stimulating activities that build reserve include: learning a new language (bilingualism is one of the most powerful reserve-builders, with some research suggesting it delays dementia onset by several years); learning a musical instrument; studying a new subject formally or informally; reading and writing regularly; playing chess, strategy games, or card games; and taking up a complex new hobby. The key is novelty and challenge — activities that have become routine and no longer feel mentally demanding provide less benefit than those that genuinely stretch capability.
+
+Social connection is a separate but equally important protective factor. Social isolation is associated with significantly elevated dementia risk. Social engagement protects brain health through: cognitive stimulation from conversation and relationship navigation; emotional regulation and stress reduction; physical activity often associated with social participation; and sense of purpose and meaning.
+
+Protective social activities include: maintaining regular contact with family and friends; joining clubs, community organisations, or volunteer groups; and mentoring or teaching others. In New Zealand, connection to community, whānau, and cultural identity is particularly protective — maintaining language, cultural practices, and kinship networks benefits cognitive health and overall wellbeing across the lifespan.`,
+    tags: ['cognitive reserve', 'social connection', 'mental stimulation', 'bilingualism', 'prevention', 'brain health', 'learning'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'prevention_005',
     category: 'prevention',
     title: 'Younger Onset Dementia: Under 65 — Unique Challenges and Support',
-    content: `Younger onset dementia (also called early onset dementia) refers to dementia diagnosed in people under the age of 65. It accounts for approximately 5–9% of all dementia cases and presents unique challenges that differ substantially from dementia in older adults. In New Zealand, approximately 4,000–5,000 people are estimated to be living with younger onset dementia. The causes of younger onset dementia differ from late-onset dementia: while Alzheimer's disease is still the most common cause, a greater proportion of younger onset cases involve frontotemporal dementia (FTD), vascular dementia, Lewy body dementia, and rare genetic forms including familial Alzheimer's disease caused by mutations in the PSEN1, PSEN2, or APP genes. Genetic testing and counselling may be relevant for younger people and their families. The challenges faced by people with younger onset dementia are distinct: employment is often suddenly disrupted at a stage of life when career and financial security are critical; mortgage and financial obligations may be active; children may still be at home and dependent; the person may be a primary carer for others; and superannuation and retirement savings may not yet be accessible. Relationships are profoundly affected — partners face sudden changes in roles, loss of a peer relationship, and often need to take on sole financial responsibility. Children of a person with younger onset dementia may experience significant emotional distress and may need dedicated psychological support. The social and emotional impact of a younger onset diagnosis is often underestimated — the person may look and physically feel well, making the diagnosis harder for others to understand and accept. Support services in New Zealand: Alzheimers NZ and Dementia NZ both provide specific support for younger onset dementia — contact them on 0800 004 001 or dementia.nz. People under 65 may be eligible for support through Whaikaha – Ministry of Disabled People (whaikaha.govt.nz) rather than aged care pathways. Employment New Zealand and Work and Income NZ can assist with financial support and workplace accommodations. Driving assessment and workplace adjustments should be arranged promptly after diagnosis. The person's employer has legal obligations regarding reasonable accommodation under the Employment Relations Act and the Human Rights Act.`,
-    tags: ['younger onset', 'early onset', 'under 65', 'frontotemporal', 'genetic', 'employment', 'financial', 'Whaikaha', 'family'],
+    content: `The Alzheimer's Society notes that dementia diagnosed before age 65 — known as young-onset or early-onset dementia — is less likely to present with memory loss as the first symptom and more likely to involve changes in behaviour, language, or personality. This atypical presentation frequently delays diagnosis, sometimes by years.
+
+Frontotemporal dementia, which causes early personality and language changes, is proportionally more common in younger onset cases than in late-onset dementia. Genetic causes are also more likely to be relevant — genetic counselling may be appropriate for the person and their family.
+
+The life circumstances of younger people with dementia differ substantially from those of older people: employment may be suddenly disrupted at a critical career stage; mortgages and financial obligations are typically active; children may still be at home and dependent; and the person may themselves be a carer for others. These circumstances require different support approaches from those designed primarily for older populations.
+
+Partners of people with younger onset dementia often face sudden changes in roles, loss of a peer relationship, and the need to assume sole financial responsibility. Children in the household may need dedicated psychological support to make sense of the changes they are witnessing.
+
+In New Zealand, Dementia NZ (dementia.nz) and Alzheimer's NZ (alzheimers.org.nz) provide support tailored to younger onset dementia. In Australia, Dementia Australia (dementia.org.au) provides dedicated resources and connection to NDIS pathways, which may apply for people diagnosed under 65.`,
+    tags: ['younger onset', 'early onset', 'under 65', 'frontotemporal', 'genetic', 'employment', 'financial', 'family'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/types-dementia',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
   {
     id: 'prevention_006',
     category: 'prevention',
     title: 'After a Dementia Diagnosis: Navigating the First Months',
-    content: `The period immediately following a dementia diagnosis is often described as overwhelming, frightening, and confusing. Yet it is also a critically important window of time — because the person with dementia retains capacity to make decisions, express their wishes, and participate in planning. Acting early on the following priorities makes an enormous difference to future wellbeing for both the person and their family. Legal and financial planning: the most urgent priority. While the person has legal capacity, arrange Enduring Power of Attorney (EPA) — both personal care and welfare, and property — so that a trusted person can make decisions when the person can no longer do so independently. In New Zealand, EPAs are registered with the Public Trust or a lawyer. Do not delay this: once capacity is lost, a court application is required which is expensive and distressing. Also complete or update a Will and consider an Advance Care Plan. Connect with support services: contact Alzheimers NZ (0800 004 001 / alzheimers.org.nz) or Dementia NZ (dementia.nz) as a first step. Both organisations offer post-diagnosis support, information days, one-to-one support, and connection to local services. Your GP can refer for a NASC (Needs Assessment and Service Coordination) assessment to understand what home support funding the person is entitled to. Driving: a formal occupational therapy driving assessment should be arranged promptly — driving ability must be assessed independently of self-report. Workplace: if the person is still employed, occupational therapy and HR involvement are needed; workplace accommodations may allow continued employment for a period. Disclosure: there is no obligation to tell everyone immediately — take time to decide who to tell and when, starting with close family. A dementia diagnosis does not end a person's life — many people live well with dementia for years, particularly in the early stage. Focus on what the person can still do and enjoy: maintaining social activities, exercise, hobbies, and routines. Involve the person in all decisions about their care and life for as long as possible. The motto of the dementia advocacy movement — "Nothing about us without us" — reflects the importance of the person with dementia remaining an active participant in their own life and care.`,
-    tags: ['post-diagnosis', 'first steps', 'power of attorney', 'advance care plan', 'driving', 'disclosure', 'support services', 'NASC'],
+    content: `Dementia Australia describes the period following a dementia diagnosis as a critically important window — because the person retains legal capacity to make decisions, express wishes, and participate in planning their own care and future. Acting on several priorities in the weeks following diagnosis makes an enormous difference to future wellbeing for both the person and their family.
+
+Legal and financial planning is the most urgent priority. While the person has capacity, arrange an Enduring Power of Attorney for both financial decisions and personal care decisions. In Australia, requirements vary by state and territory. In New Zealand, consult a lawyer or the Public Trust for EPA registration. Once capacity is lost, legal processes become significantly more complex and stressful for everyone.
+
+Connect with support services promptly: Dementia Australia (dementia.org.au, 1800 100 500) and Dementia Support Australia (dementia.com.au) in Australia; Dementia NZ (dementia.nz, 0800 004 001) and Alzheimer's NZ (alzheimers.org.nz) in New Zealand. These organisations offer post-diagnosis navigation, information, and connection to local services.
+
+If the person still drives, arrange a formal occupational therapy driving assessment. Ask the GP for a referral to My Aged Care (Australia) or appropriate home support services (New Zealand) to understand what funded support may be available.
+
+A dementia diagnosis does not end a person's life — many people live well with dementia for years. Focus on what the person can still do and enjoy, and involve them in all decisions about their care and life for as long as possible.`,
+    tags: ['post-diagnosis', 'first steps', 'power of attorney', 'advance care plan', 'driving', 'disclosure', 'support services'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
   {
     id: 'prevention_007',
     category: 'prevention',
     title: 'Mild Cognitive Impairment: What It Means and What to Expect',
-    content: `Mild Cognitive Impairment (MCI) is a condition in which a person experiences cognitive decline that is greater than expected for their age and education level, but does not meet the criteria for dementia because it does not significantly interfere with daily life and independence. MCI is an important condition to understand because it sits on a spectrum between normal ageing and dementia, and some — but not all — people with MCI will go on to develop dementia. MCI affects approximately 15–20% of people aged 65 and over. It is typically identified through formal cognitive testing and is confirmed when test results fall below what is expected for the person's age and education, but daily function is largely preserved. There are two main subtypes: amnestic MCI (memory is primarily affected) and non-amnestic MCI (executive function, language, or visuospatial abilities are primarily affected). The relationship between MCI and dementia: approximately 10–15% of people with MCI progress to dementia each year; however, up to 40% of people with MCI remain stable, and some return to normal cognitive function. MCI does not inevitably lead to dementia. Factors associated with higher risk of progression include: amnestic MCI subtype, abnormal biomarkers (amyloid on PET scan or in cerebrospinal fluid), the APOE ε4 genetic variant, cardiovascular risk factors, depression, sleep disorders, and a faster rate of cognitive change over time. What to do if you or someone you care for has MCI: address all modifiable risk factors — particularly cardiovascular risk (blood pressure, cholesterol, blood glucose), hearing and vision, physical activity, sleep quality, and social engagement. These lifestyle modifications are the most evidence-based approach to slowing progression. Attend regular GP monitoring appointments (typically 6-monthly) to track changes in cognitive function. Remain as cognitively and physically active as possible. Ensure legal and financial affairs are in order while capacity is fully intact — do not wait until a dementia diagnosis. In New Zealand, contact Alzheimers NZ (0800 004 001) for information and support; MCI support groups exist in some regions.`,
+    content: `Mild Cognitive Impairment (MCI) is a condition where a person's cognitive abilities have declined more than expected for their age and education level, but not to a degree that significantly disrupts daily independence. The Alzheimer's Society describes it as sitting on a spectrum between normal ageing and dementia.
+
+MCI is important to understand because some — but not all — people with MCI will go on to develop dementia. Approximately 10 to 15 percent of people with MCI progress to dementia each year; however, a significant proportion remain stable, and some return to normal cognitive function. MCI does not inevitably lead to dementia.
+
+There are two main subtypes: amnestic MCI (memory is primarily affected) and non-amnestic MCI (executive function, language, or visuospatial abilities are primarily affected). Factors associated with higher risk of progression include the amnestic subtype, the APOE ε4 genetic variant, cardiovascular risk factors, depression, sleep disorders, and a faster rate of cognitive change over time.
+
+If you or someone you care about has MCI, address all modifiable risk factors — particularly blood pressure, cholesterol, blood glucose, hearing, vision, physical activity, sleep quality, and social engagement. These lifestyle modifications are the most evidence-based approach currently available for slowing progression. Attend regular GP monitoring appointments (typically six-monthly) to track changes.
+
+Ensure legal and financial affairs are in order while capacity is fully intact — do not wait for a dementia diagnosis. In New Zealand, contact Dementia NZ (dementia.nz) or Alzheimer's NZ (alzheimers.org.nz) for information. In Australia, contact Dementia Australia (dementia.org.au) or StepUp for Dementia Research (stepupfordementiaresearch.org.au) to learn about research participation.`,
     tags: ['MCI', 'mild cognitive impairment', 'early stage', 'progression', 'monitoring', 'APOE', 'risk', 'normal ageing'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
+    source_org: 'Alzheimer\'s Society UK',
     embedding: null,
   },
 ];

@@ -12,6 +12,7 @@ import {
   ScrollView,
   FlatList,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -249,9 +250,20 @@ export const ChatScreen = ({ navigation, route }) => {
           <View style={styles.sourcesContainer}>
             <MaterialCommunityIcons name="book-open-outline" size={12} color={Colors.primary} />
             <View style={styles.sourcesList}>
-              {sources.map((s, i) => (
-                <Text key={i} style={styles.sourceText}>· {s}</Text>
-              ))}
+              {sources.map((s, i) => {
+                const isObj = typeof s === 'object' && s !== null;
+                const label = isObj ? (s.org ?? s.title) : s;
+                const url = isObj ? s.url : null;
+                return (
+                  <Text
+                    key={i}
+                    style={[styles.sourceText, url && styles.sourceLink]}
+                    onPress={url ? () => Linking.openURL(url) : undefined}
+                  >
+                    · {label}
+                  </Text>
+                );
+              })}
             </View>
           </View>
         )}
@@ -598,6 +610,9 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     lineHeight: 15,
     fontStyle: 'italic',
+  },
+  sourceLink: {
+    textDecorationLine: 'underline',
   },
 
   // Input area

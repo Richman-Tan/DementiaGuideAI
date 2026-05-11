@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { KNOWLEDGE_BASE } from '../data/knowledgeBase';
 
 const SECURE_KEY = 'openai_api_key';
-const CACHE_KEY = 'kb_embeddings_v1';
+const CACHE_KEY = 'kb_embeddings_v2';
 const OPENAI_BASE = 'https://api.openai.com/v1';
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const CHAT_MODEL = 'gpt-4o-mini';
@@ -391,20 +391,28 @@ IMPORTANT RULES:
     // Parse out Sources section if the model included it
     const sourcesMatch = rawText.match(/Sources:\s*([\s\S]+?)(?:\n\n|$)/i);
     let responseText = rawText;
-    let sources = [];
+    let sourceTitles = [];
 
     if (sourcesMatch) {
       responseText = rawText.slice(0, rawText.indexOf(sourcesMatch[0])).trim();
-      sources = sourcesMatch[1]
+      sourceTitles = sourcesMatch[1]
         .split('\n')
         .map(s => s.replace(/^[·\-\*•]\s*/, '').trim())
         .filter(Boolean);
     }
 
     // Fall back to retrieved chunk titles if model didn't list sources
-    if (sources.length === 0 && chunks.length > 0) {
-      sources = chunks.slice(0, 3).map(c => c.title);
+    if (sourceTitles.length === 0 && chunks.length > 0) {
+      sourceTitles = chunks.slice(0, 3).map(c => c.title);
     }
+
+    // Enrich titles with source_url and source_org from matched chunks
+    const chunkByTitle = new Map(chunks.map(c => [c.title, c]));
+    const sources = sourceTitles.map(title => ({
+      title,
+      url: chunkByTitle.get(title)?.source_url ?? null,
+      org: chunkByTitle.get(title)?.source_org ?? null,
+    }));
 
     return { text: responseText, sources };
   }

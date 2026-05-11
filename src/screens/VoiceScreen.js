@@ -38,8 +38,8 @@ export const VoiceScreen = ({ navigation }) => {
   const [voiceState, setVoiceState] = useState(VoiceState.IDLE);
   const [inputText, setInputText] = useState('');
   const [conversationHistory, setConversationHistory] = useState([]);
+  const avatarRef = useRef(null);
   const recordingRef = useRef(null);
-  const soundRef = useRef(null);
   const abortRef = useRef(false);   // set true when user stops mid-response
   const historyRef = useRef([]);    // kept in sync so callbacks always see latest
   const micPulse = useRef(new Animated.Value(1)).current;
@@ -56,7 +56,7 @@ export const VoiceScreen = ({ navigation }) => {
   useEffect(() => {
     return () => {
       recordingRef.current?.stopAndUnloadAsync().catch(() => {});
-      soundRef.current?.unloadAsync().catch(() => {});
+      avatarRef.current?.stopAudio();
     };
   }, []);
 
@@ -84,9 +84,6 @@ export const VoiceScreen = ({ navigation }) => {
     setVoiceState(VoiceState.PROCESSING);
     abortRef.current = false;
 
-    // Pre-warm audio mode immediately — overlaps with LLM streaming so it's
-    // ready by the time the first segment is done generating.
-    Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
 
     try {
       const history = historyRef.current;
@@ -130,44 +127,12 @@ export const VoiceScreen = ({ navigation }) => {
 
       setVoiceState(VoiceState.SPEAKING);
 
-      // Play segments in order. While segment N plays, segment N+1's Sound object
-      // is already being created (decoding happens in parallel with playback).
-      let nextSoundPromise = null;
-
+      // Play segments in order via WebView Web Audio API (provides real-time lip sync).
       for (let i = 0; i < segmentPromises.length; i++) {
         if (abortRef.current) break;
-
         const uri = await segmentPromises[i];
         if (abortRef.current) break;
-
-        if (soundRef.current) {
-          await soundRef.current.unloadAsync().catch(() => {});
-          soundRef.current = null;
-        }
-
-        const { sound } = nextSoundPromise
-          ? await nextSoundPromise
-          : await Audio.Sound.createAsync({ uri });
-        soundRef.current = sound;
-
-        // Kick off next segment's Sound creation while this one plays
-        if (i + 1 < segmentPromises.length) {
-          nextSoundPromise = segmentPromises[i + 1].then(
-            nextUri => Audio.Sound.createAsync({ uri: nextUri })
-          );
-        } else {
-          nextSoundPromise = null;
-        }
-
-        await new Promise(resolve => {
-          sound.setOnPlaybackStatusUpdate(status => {
-            if (status.didJustFinish || status.error) resolve();
-          });
-          sound.playAsync();
-        });
-
-        await sound.unloadAsync().catch(() => {});
-        soundRef.current = null;
+        if (avatarRef.current) await avatarRef.current.playAudio(uri);
       }
     } catch (err) {
       console.error('[VoiceScreen] processQuery:', err);
@@ -232,13 +197,9 @@ export const VoiceScreen = ({ navigation }) => {
     }
   }, [processQuery]);
 
-  const stopAudio = useCallback(async () => {
+  const stopAudio = useCallback(() => {
     abortRef.current = true;
-    if (soundRef.current) {
-      await soundRef.current.stopAsync().catch(() => {});
-      await soundRef.current.unloadAsync().catch(() => {});
-      soundRef.current = null;
-    }
+    avatarRef.current?.stopAudio();
   }, []);
 
   const handleMicPress = useCallback(async () => {
@@ -311,6 +272,7 @@ export const VoiceScreen = ({ navigation }) => {
       {/* Avatar */}
       <View style={styles.avatarArea}>
         <AvatarVRM
+          ref={avatarRef}
           modelUrl={DEFAULT_VRM_MODEL_URL}
           isListening={voiceState === VoiceState.LISTENING}
           isSpeaking={voiceState === VoiceState.SPEAKING}

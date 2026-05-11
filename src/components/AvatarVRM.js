@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useMemo, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 
@@ -585,11 +585,21 @@ function animate(ts) {
         );
       }
 
-      const mouthTarget = speaking
-        ? 0.2 + Math.abs(Math.sin(elapsed * 7)) * 0.45
-        : 0;
+      let mouthTarget = 0;
+      if (lipSyncActive && lipSyncAnalyser && lipSyncBuf) {
+        lipSyncAnalyser.getByteTimeDomainData(lipSyncBuf);
+        let sumSq = 0;
+        for (let i = 0; i < lipSyncBuf.length; i++) {
+          const x = (lipSyncBuf[i] / 128.0) - 1.0;
+          sumSq += x * x;
+        }
+        const rms = Math.sqrt(sumSq / lipSyncBuf.length);
+        mouthTarget = Math.min(0.8, rms * 6.0);
+      } else if (speaking) {
+        mouthTarget = 0.2 + Math.abs(Math.sin(elapsed * 7)) * 0.45;
+      }
 
-      mouthCurrent = lerp(mouthCurrent, mouthTarget, 0.2);
+      mouthCurrent = lerp(mouthCurrent, mouthTarget, lipSyncActive ? 0.5 : 0.2);
 
       setExpression('aa', mouthCurrent);
       setExpression('surprised', listening ? 0.08 : 0);
@@ -647,13 +657,59 @@ window.addEventListener('resize', () => {
 });
 
 loadVRM();
+// === LIP SYNC VIA WEB AUDIO API ===
+let lipSyncCtx = null, lipSyncAnalyser = null, lipSyncBuf = null;
+let lipSyncSource = null, lipSyncActive = false;
+
+window.playAudioWithLipSync = async function(dataUri) {
+  if (lipSyncSource) { try { lipSyncSource.stop(); } catch(e) {} }
+  lipSyncActive = false; lipSyncAnalyser = null; lipSyncBuf = null; lipSyncSource = null;
+  try {
+    const base64 = dataUri.slice(dataUri.indexOf(',') + 1);
+    const bin = atob(base64);
+    const ab = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) ab[i] = bin.charCodeAt(i);
+
+    if (!lipSyncCtx) lipSyncCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
+
+    const decoded = await lipSyncCtx.decodeAudioData(ab.buffer);
+    lipSyncAnalyser = lipSyncCtx.createAnalyser();
+    lipSyncAnalyser.fftSize = 256;
+    lipSyncBuf = new Uint8Array(lipSyncAnalyser.frequencyBinCount);
+
+    lipSyncSource = lipSyncCtx.createBufferSource();
+    lipSyncSource.buffer = decoded;
+    lipSyncSource.connect(lipSyncAnalyser);
+    lipSyncAnalyser.connect(lipSyncCtx.destination);
+    lipSyncActive = true;
+
+    lipSyncSource.onended = () => {
+      lipSyncActive = false; lipSyncAnalyser = null; lipSyncBuf = null; lipSyncSource = null;
+      if (window.ReactNativeWebView)
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioEnd' }));
+    };
+    lipSyncSource.start(0);
+  } catch(err) {
+    lipSyncActive = false;
+    if (window.ReactNativeWebView)
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioEnd', error: String(err) }));
+  }
+};
+
+window.stopAudioLipSync = function() {
+  lipSyncActive = false;
+  if (lipSyncSource) { try { lipSyncSource.stop(); } catch(e) {} lipSyncSource = null; }
+  lipSyncAnalyser = null; lipSyncBuf = null;
+};
+
 requestAnimationFrame(animate);
 <\/script>
 </body>
 </html>`;
 }
 
-export const AvatarVRM = ({
+export const AvatarVRM = forwardRef(({
   modelUrl = DEFAULT_VRM_MODEL_URL,
   width,
   height,
@@ -661,13 +717,27 @@ export const AvatarVRM = ({
   isSpeaking = false,
   isThinking = false,
   style,
-}) => {
+}, ref) => {
   const webRef = useRef(null);
   const stateRef = useRef('idle');
+  const audioEndResolveRef = useRef(null);
 
   const [webKey, setWebKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    playAudio: (dataUri) => new Promise(resolve => {
+      audioEndResolveRef.current = resolve;
+      webRef.current?.injectJavaScript(
+        `window.playAudioWithLipSync(${JSON.stringify(dataUri)});true;`
+      );
+    }),
+    stopAudio: () => {
+      audioEndResolveRef.current = null;
+      webRef.current?.injectJavaScript(`window.stopAudioLipSync();true;`);
+    },
+  }));
 
   const source = useMemo(
     () => ({
@@ -723,6 +793,12 @@ export const AvatarVRM = ({
         if (data.type === 'debug') {
           console.log('[AvatarVRM]', data.message);
         }
+
+        if (data.type === 'audioEnd') {
+          const resolve = audioEndResolveRef.current;
+          audioEndResolveRef.current = null;
+          resolve?.();
+        }
       } catch (e) {
         console.log('[AvatarVRM] Failed to parse message:', e);
       }
@@ -765,6 +841,7 @@ export const AvatarVRM = ({
         mixedContentMode="always"
         androidLayerType="hardware"
         allowsInlineMediaPlayback
+        mediaPlaybackRequiresUserAction={false}
         onNavigationStateChange={(navState) => {
           console.log(
             '[AvatarVRM] nav',
@@ -814,7 +891,7 @@ export const AvatarVRM = ({
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

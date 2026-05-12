@@ -594,7 +594,7 @@ function animate(ts) {
           sumSq += x * x;
         }
         const rms = Math.sqrt(sumSq / lipSyncBuf.length);
-        mouthTarget = Math.min(0.8, rms * 6.0);
+        mouthTarget = Math.min(1.0, rms * 10.0);
       } else if (speaking) {
         mouthTarget = 0.2 + Math.abs(Math.sin(elapsed * 7)) * 0.45;
       }

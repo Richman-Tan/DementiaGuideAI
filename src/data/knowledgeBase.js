@@ -1,4 +1,4 @@
-// Dementia care knowledge base — 42 chunks, 7 per category.
+// Dementia care knowledge base — 70 chunks, 10 per category.
 // Content paraphrased from authoritative sources; see source_url per chunk.
 // `embedding` is null at build time; populated at runtime from cache or API.
 
@@ -892,6 +892,356 @@ Ensure legal and financial affairs are in order while capacity is fully intact �
     tags: ['MCI', 'mild cognitive impairment', 'early stage', 'progression', 'monitoring', 'APOE', 'risk', 'normal ageing'],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
     source_org: 'Alzheimer\'s Society UK',
+    embedding: null,
+  },
+
+  // ─── CAREGIVING (extended: 008–010) ─────────────────────────────────────────
+  {
+    id: 'caregiving_008',
+    category: 'caregiving',
+    title: 'Dementia Support Australia — Specialist In-Home Behavioural Support',
+    content: `Dementia Support Australia (DSA) provides free, specialist consultative support for people living with dementia who are experiencing behavioural and psychological symptoms that are difficult to manage. Funded by the Australian Government, DSA operates nationally through a network of specialist dementia advisers, nurses, and clinicians, and its services are available to people with dementia at home, in residential care, and to the family carers and support workers who care for them.
+
+Behavioural and psychological symptoms of dementia (BPSD) — including agitation, aggression, wandering, sleep disturbance, depression, anxiety, and hallucinations — affect up to 90 percent of people with dementia at some point in the course of the illness. These symptoms are among the most stressful aspects of caregiving and a primary driver of premature residential placement. DSA's specialist consultants work directly with families to identify the underlying triggers of these behaviours and develop personalised, non-pharmacological management strategies.
+
+DSA treats behaviour as communication — asking what unmet need, physical discomfort, emotional distress, or environmental factor is driving the behaviour, and addressing that underlying cause rather than seeking to suppress the behaviour with medication. This philosophy aligns with national and international best-practice guidelines and reduces the use of antipsychotic medications, which carry significant risks including increased risk of stroke and death in older people with dementia.
+
+To access DSA services in Australia, call the National Dementia Helpline 1800 100 500 (available 24 hours a day, seven days a week) or visit dementia.com.au. Services are free regardless of whether the person has a formal aged care package in place. DSA also provides educational resources and telephone guidance for carers dealing with acute behavioural crises. A GP referral is not required.`,
+    tags: ['Dementia Support Australia', 'behaviour support', 'BPSD', 'agitation', 'specialist', 'helpline'],
+    source_url: 'https://www.dementia.com.au/',
+    source_org: 'Dementia Support Australia',
+    embedding: null,
+  },
+  {
+    id: 'caregiving_009',
+    category: 'caregiving',
+    title: 'Carer Gateway — Australia\'s Dedicated Support Programme for Carers',
+    content: `Carer Gateway (carergateway.gov.au) is an Australian Government programme providing free, coordinated services and emotional and practical support specifically for people in a caring role. For dementia carers — who face sustained, intensive demands and are at significantly elevated risk of physical and mental health deterioration — Carer Gateway is a critical and often underutilised resource.
+
+Services available through Carer Gateway include tailored support packages that fund practical assistance such as cleaning, meal preparation, home maintenance, or transport for the carer; professional counselling for carers experiencing emotional difficulty, anxiety, or depression; planned and emergency respite so that carers have reliable relief when needed; structured coaching from trained carer coaches to help carers develop sustainable strategies; and online skills courses covering topics from managing carer stress to navigating the aged care system.
+
+Carer Gateway also connects carers to peer support groups — both in-person and online — facilitated by people with lived experience of caring. Research consistently identifies peer connection as among the most valued and effective supports for dementia carers, reducing isolation and building resilience over the long term.
+
+To access Carer Gateway services, call 1800 422 737 (Monday to Friday, 8am to 5pm Australian Eastern Standard Time) or use the eligibility checker at carergateway.gov.au. Services are available for carers of any age caring for a person with any long-term illness, disability, or dementia-related condition. Access is also available through My Aged Care (myagedcare.gov.au). Translated resources for carers from non-English-speaking backgrounds are available through the website.`,
+    tags: ['Carer Gateway', 'respite', 'counselling', 'carer support', 'coaching', 'practical support', 'Australia'],
+    source_url: 'https://www.carergateway.gov.au/',
+    source_org: 'Carer Gateway',
+    embedding: null,
+  },
+  {
+    id: 'caregiving_010',
+    category: 'caregiving',
+    title: 'Forward with Dementia — Evidence-Based Guidance for the Year After Diagnosis',
+    content: `Forward with Dementia (forwardwithdementia.au) is an internationally developed, evidence-based programme and website designed specifically for people in the first year following a dementia diagnosis and those who support them. It was created by a research consortium spanning universities in Australia (UNSW, University of Sydney, University of Wollongong), Canada, the United Kingdom, the Netherlands, and Poland, in partnership with Dementia Alliance International.
+
+The programme addresses the disorientation and overwhelm that characterise the first year after diagnosis by providing structured, clinician-reviewed guidance on what to expect, what decisions need to be made early, and how to prioritise next steps. Content is developed for three distinct audiences: people living with dementia, family carers, and healthcare professionals — each of whom has different information needs and concerns in the immediate post-diagnosis period.
+
+Topics covered include understanding the specific diagnosis and what it means; managing daily activities; legal and financial planning; self-care for carers; communicating with the healthcare team; planning for future care needs; and accessing community supports. The site draws on the latest clinical research and presents it in accessible, practical language without requiring medical background knowledge. It also includes personal stories from people living with dementia and their carers.
+
+For carers in Australia seeking guidance in the first year following a loved one's diagnosis, Forward with Dementia provides a valuable structured starting point alongside specialist services from Dementia Australia (dementia.org.au, 1800 100 500), Dementia Support Australia (dementia.com.au), and Carer Gateway (carergateway.gov.au). In New Zealand, complement it with Dementia NZ (dementia.nz, 0800 004 001) and Alzheimer's NZ (alzheimers.org.nz).`,
+    tags: ['post-diagnosis', 'first year', 'Forward with Dementia', 'guidance', 'planning', 'evidence-based'],
+    source_url: 'https://www.forwardwithdementia.au/',
+    source_org: 'Forward with Dementia',
+    embedding: null,
+  },
+
+  // ─── CLINICAL (extended: 008–010) ────────────────────────────────────────────
+  {
+    id: 'clinical_008',
+    category: 'clinical',
+    title: 'Reversible and Treatable Causes of Dementia-Like Symptoms',
+    content: `Mayo Clinic emphasises a crucial and frequently underappreciated fact: not all conditions causing memory loss, confusion, and cognitive impairment represent true, progressive dementia. A number of treatable medical conditions can produce dementia-like symptoms that closely mimic early Alzheimer's disease or other forms of dementia — and these must be systematically excluded before a dementia diagnosis is confirmed, because treating them can fully or substantially reverse cognitive decline.
+
+Conditions that commonly cause reversible dementia-like symptoms include: hypothyroidism (underactive thyroid), which causes slowed thinking, memory impairment, and depression; vitamin B12 deficiency, particularly common in older adults, causing cognitive impairment that is fully reversible if caught early; medication side effects — particularly from sedatives, anticholinergic drugs (including some antihistamines and bladder medications), and certain blood pressure drugs; depression, which can cause pseudodementia with profound memory and concentration difficulties; urinary tract infections and other acute infections, which can cause sudden delirium that mimics severe dementia worsening; normal-pressure hydrocephalus, characterised by the triad of gait disturbance, urinary incontinence, and cognitive impairment; and subdural haematoma following a head injury, sometimes weeks or months earlier.
+
+For this reason, every assessment for suspected dementia should include a comprehensive medical workup: blood tests for thyroid function, vitamin B12, folate, full blood count, glucose, renal and liver function; a full medication review including all over-the-counter preparations and supplements; and brain imaging (CT or MRI) to exclude structural causes.
+
+Mayo Clinic notes that when a reversible cause is identified and treated promptly, cognitive function can improve substantially or normalise entirely. This makes a thorough initial evaluation — rather than an immediate dementia diagnosis — essential, particularly when symptom onset has been relatively sudden rather than gradual.`,
+    tags: ['reversible dementia', 'treatable causes', 'B12 deficiency', 'hypothyroidism', 'delirium', 'medication', 'Mayo Clinic'],
+    source_url: 'https://www.mayoclinic.org/diseases-conditions/dementia/symptoms-causes/syc-20352013',
+    source_org: 'Mayo Clinic',
+    embedding: null,
+  },
+  {
+    id: 'clinical_009',
+    category: 'clinical',
+    title: 'Rare Dementias — Recognising Less Common Forms and Finding Support',
+    content: `While Alzheimer's disease, vascular dementia, and Lewy body dementia account for the majority of dementia diagnoses, a significant proportion of people — particularly those with younger-onset dementia — have rarer forms that present very differently and require specialist diagnostic pathways. The Alzheimer's Society identifies over 200 subtypes of dementia. Rare dementias as a group are frequently misdiagnosed or subject to prolonged diagnostic delays, particularly because their early symptoms do not follow the familiar pattern of memory loss.
+
+Rare dementias include: Posterior Cortical Atrophy (PCA), which primarily affects visual processing and spatial awareness rather than memory; Primary Progressive Aphasia (PPA), which targets language ability while other cognitive functions remain relatively preserved; Corticobasal Syndrome (CBS) and Progressive Supranuclear Palsy (PSP), both characterised by movement difficulties alongside cognitive change; Huntington's disease, an autosomal dominant inherited condition causing progressive movement disorder and dementia; and Creutzfeldt-Jakob Disease (CJD), a rapidly progressive prion disease that is rare but requires urgent specialist assessment.
+
+Diagnosis typically requires specialist neurological evaluation, detailed neuropsychological testing, and often specialised brain imaging beyond standard MRI. Some rare dementias have specific genetic components, making genetic counselling an important consideration for the person and their family — particularly where children or siblings may be at heritable risk.
+
+In Australia, Rare Dementia Support (raredementiasupport.org.au) provides dedicated support, information, and connection to specialist services for people with rare dementias and their families, recognising that standard dementia services may be unfamiliar with their specific condition. Dementia Australia (dementia.org.au, 1800 100 500) can also help navigate specialist referral pathways. In New Zealand, Dementia NZ (dementia.nz, 0800 004 001) and Alzheimer's NZ (alzheimers.org.nz) provide guidance for families facing rare dementia diagnoses.`,
+    tags: ['rare dementia', 'PCA', 'PPA', 'PSP', 'CBS', 'Huntington\'s', 'CJD', 'specialist', 'Rare Dementia Support'],
+    source_url: 'https://www.raredementiasupport.org.au/',
+    source_org: 'Rare Dementia Support Australia',
+    embedding: null,
+  },
+  {
+    id: 'clinical_010',
+    category: 'clinical',
+    title: 'The Wicking Dementia Research and Education Centre — Free Courses for All',
+    content: `The Wicking Dementia Research and Education Centre at the University of Tasmania is one of Australia's foremost dementia research and education institutions. Established through a significant philanthropic gift, the Wicking Centre integrates biomedical research with population health approaches and a deep commitment to accessible public education about dementia.
+
+One of the Wicking Centre's most impactful contributions is the Understanding Dementia Massive Open Online Course (MOOC), which has been accessed by hundreds of thousands of people worldwide. The course runs approximately ten weeks, is available free online, and provides a rigorous, evidence-based foundation in dementia — its biology, its progression, its management, and its human and social impact. A companion course, Preventing Dementia, covers the evidence on modifiable risk factors and protective lifestyle strategies. Both are appropriate for family carers, healthcare workers, community members, and people recently diagnosed with dementia or MCI.
+
+The Wicking Centre also conducts peer-reviewed research across dementia prevention, care quality, end-of-life care in dementia, and the experiences of people living with dementia and their carers. It produces findings specifically relevant to Australian and Pacific populations, complementing the predominantly European and North American research literature that currently dominates the field.
+
+For carers, family members, and health professionals seeking a deep, scientifically grounded understanding of dementia, the Wicking Centre's free online courses (available at utas.edu.au/wicking) are among the highest quality and most accessible resources available globally. Completion of the Understanding Dementia course is associated with increased carer confidence, improved care quality, and better understanding of what to expect as the condition progresses.`,
+    tags: ['Wicking Dementia Centre', 'UTAS', 'MOOC', 'Understanding Dementia', 'education', 'research', 'free course'],
+    source_url: 'https://www.utas.edu.au/wicking',
+    source_org: 'Wicking Dementia Research and Education Centre',
+    embedding: null,
+  },
+
+  // ─── BEST PRACTICES (extended: 008–010) ──────────────────────────────────────
+  {
+    id: 'bestpractices_008',
+    category: 'best-practices',
+    title: 'Fall Prevention Strategies in Dementia Care',
+    content: `Falls are among the most serious and frequent safety incidents in dementia care. People with dementia are at approximately two to three times greater risk of falls than cognitively intact older adults — due to gait and balance changes, reduced hazard awareness, medication side effects affecting balance and blood pressure, and dementia's direct impact on spatial orientation and reaction time. The Jockey Club Centre for Positive Ageing (JCCPA) and Dementia Australia both identify fall prevention as a priority component of safe dementia care.
+
+A comprehensive falls risk assessment should include: a physiotherapist assessment of mobility, strength, and balance; a medication review with the GP or pharmacist, paying specific attention to drugs causing dizziness, sedation, or orthostatic hypotension (a sudden drop in blood pressure on standing); a vision check; and a thorough home hazard assessment. Any fall — even one without apparent injury — warrants medical review to check for fractures or head injury, because people with dementia may not reliably report pain.
+
+Environmental modifications that significantly reduce fall risk include: removing loose rugs and all trip hazards from walkways; ensuring all areas of the home including outdoor paths are well-lit, particularly at night; installing grab rails beside the toilet and in the shower; using non-slip mats in the bathroom; and ensuring the person always wears well-fitting, flat-soled, non-slip enclosed shoes rather than loose slippers. A nightlight in the hallway between bedroom and bathroom is one of the single most effective interventions for preventing night-time falls.
+
+Regular supervised physical activity specifically targeting strength, balance, and coordination — including physiotherapy-guided programmes, tai chi, and seated exercises — reduces falls risk and should be maintained for as long as possible. In Australia, physiotherapy can be accessed through a My Aged Care Home Care Package or on GP referral. In New Zealand, contact Dementia NZ (dementia.nz) or the person's GP for referral to community physiotherapy.`,
+    tags: ['falls', 'fall prevention', 'balance', 'physiotherapy', 'grab rails', 'JCCPA', 'home safety'],
+    source_url: 'https://www.jccpa.org.hk/en/about-dementia/caring-tips/fall-prevention-tips/',
+    source_org: 'Jockey Club Centre for Positive Ageing',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_009',
+    category: 'best-practices',
+    title: 'Oral Health and Dental Care for People with Dementia',
+    content: `Oral health in people with dementia deteriorates significantly as the condition progresses and is frequently overlooked in broader care planning. The Jockey Club Centre for Positive Ageing (JCCPA) identifies oral care as a priority area, noting that poor oral health leads to pain, infection, difficulty eating, and aspiration pneumonia — all of which worsen quality of life and overall health and can significantly accelerate decline.
+
+In the early stages, supervise and prompt tooth brushing twice daily using a soft-bristled toothbrush and fluoride toothpaste. Break the task into single, concrete steps — "Pick up the toothbrush," "Add the toothpaste," "Brush the front teeth" — to maintain the person's independent participation for as long as possible. An electric toothbrush with a large handle is often easier to manage for both the person and their carer. Dental check-ups should continue every six months; alerting the dentist in advance to the person's dementia allows them to adapt their approach accordingly.
+
+As dementia progresses and self-care becomes difficult, the carer takes a more active role. If the person resists the toothbrush, try a foam mouth sponge or a clean gloved finger with a small amount of toothpaste. For denture wearers, remove and clean dentures nightly and inspect both the dentures and gums regularly for sores, ill-fitting areas, or signs of infection — ill-fitting dentures are a common and often unrecognised source of pain in people who cannot reliably report discomfort.
+
+Dry mouth — a frequent side effect of many dementia medications — significantly increases the risk of tooth decay and oral infection. Encourage regular sips of water throughout the day and ask the pharmacist about saliva substitutes if dryness is significant. Any new reluctance to eat, facial grimacing around mealtimes, or unexplained behavioural change should prompt a dental review to exclude oral pain as a contributing cause.`,
+    tags: ['oral health', 'dental care', 'toothbrushing', 'dentures', 'dry mouth', 'JCCPA', 'pain'],
+    source_url: 'https://www.jccpa.org.hk/en/about-dementia/caring-tips/oral-care/',
+    source_org: 'Jockey Club Centre for Positive Ageing',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_010',
+    category: 'best-practices',
+    title: 'Safe Physical Transfers and Mobility Assistance in Dementia Care',
+    content: `As dementia progresses and mobility declines, assisting a person to move safely — from bed to chair, from chair to toilet, in and out of vehicles — becomes an increasingly important and potentially hazardous component of daily care. The Jockey Club Centre for Positive Ageing (JCCPA) provides guidance on safe transfer technique that protects both the person with dementia and their carer from injury.
+
+The fundamental principle is to use the person's remaining mobility rather than lifting their full weight wherever possible. Where the person can weight-bear and follow simple instructions, a guided standing transfer — in which the carer supports and guides movement rather than lifting — is substantially safer than a manual lift for both parties. Break each transfer into one clear instruction at a time and allow adequate time for the person to respond before proceeding.
+
+Carer back safety is as important as the person's safety — many dementia carers sustain serious back injuries from poor transfer technique. Maintain a wide base of support with feet apart, keep your back straight, bend at the knees, and stay close to the person throughout the movement. Never attempt to catch someone who is falling; instead, guide their descent gently and call for assistance. Attempting to catch a falling person is a leading cause of carer injury.
+
+For people who can no longer weight-bear safely, mechanical aids — slide sheets, transfer boards, and ceiling or floor hoists — should be sourced and used before injury occurs, not after. An occupational therapist can assess the person's transfer needs and recommend appropriate equipment and technique. Dementia Training Australia (dta.com.au) and the person's occupational therapist provide formal training in safe manual handling, which is strongly recommended before attempting complex assisted transfers without professional guidance.`,
+    tags: ['manual handling', 'transfers', 'mobility', 'back safety', 'JCCPA', 'hoist', 'occupational therapist'],
+    source_url: 'https://www.jccpa.org.hk/en/about-dementia/caring-tips/safe-lifting/',
+    source_org: 'Jockey Club Centre for Positive Ageing',
+    embedding: null,
+  },
+
+  // ─── COMMUNICATION (extended: 008–010) ───────────────────────────────────────
+  {
+    id: 'communication_008',
+    category: 'communication',
+    title: 'Culturally Appropriate Dementia Care for Chinese Communities',
+    content: `The Caring for People with Dementia Together (CPT) project (chinesedementia.org.nz) is a cross-community partnership involving Dementia Auckland, Age Concern Auckland, Health New Zealand Counties Manukau, the University of Auckland, and Vagus Centre. It was established to develop accessible and culturally relevant dementia services for Chinese New Zealanders — a community identified by the Dementia Economic Impact Report 2020 as accessing existing dementia services at lower rates than all other ethnic groups in New Zealand.
+
+Cultural and linguistic factors play a significant role in this gap. Dementia information is overwhelmingly produced in English, making it inaccessible to Chinese older adults and family members who primarily communicate in Mandarin, Cantonese, or other Chinese languages. Significant stigma — including cultural beliefs that dementia is a normal part of ageing or a private family matter not to be discussed outside the immediate family — discourages help-seeking. Care approaches need to respect collective family decision-making, the importance of maintaining face, and traditional understandings of illness and care responsibility.
+
+The CPT project focuses on three priorities: raising awareness within the Chinese community and promoting brain health to reduce dementia risk; providing education and support for carers and families in culturally appropriate formats, including Chinese-language resources and videos; and implementing a Living Well programme for Chinese people living with dementia that connects participants to culturally relevant activities and peer support.
+
+For Chinese New Zealanders affected by dementia, chinesedementia.org.nz provides bilingual information in English and Chinese and can connect families to culturally appropriate local services. Contact chineseservices@dementiaauckland.org.nz for enquiries. In Australia, Dementia Australia (dementia.org.au, 1800 100 500) provides multilingual resources and connection to culturally appropriate support.`,
+    tags: ['Chinese community', 'culturally appropriate', 'bilingual', 'Cantonese', 'Mandarin', 'stigma', 'CPT project', 'New Zealand'],
+    source_url: 'https://www.chinesedementia.org.nz/',
+    source_org: 'Chinese Dementia NZ (CPT Project)',
+    embedding: null,
+  },
+  {
+    id: 'communication_009',
+    category: 'communication',
+    title: 'Talk with Ted — AI-Assisted Communication Practice for Carers',
+    content: `Talk with Ted is an AI-powered interactive learning tool developed by Dementia Australia to help family carers and care workers develop and practise communication skills with a person with dementia in a safe, consequence-free environment. Ted is an avatar — a virtual representation of a person living with dementia — that responds to the carer's communication attempts in realistic and nuanced ways, enabling deliberate skill development before applying techniques in real care situations.
+
+The core value of Talk with Ted is experiential learning through safe practice. Carers can attempt different approaches to challenging scenarios — including managing agitation, responding to repetitive questioning, delivering unwelcome information, or supporting a distressed person — and receive immediate feedback on what worked, what escalated the situation, and what to try differently. This cycle of practice, feedback, and reflection is significantly more effective for skill development than learning communication theory without practical application.
+
+Talk with Ted is particularly valuable for new carers who have not yet had opportunity to build confidence through real experience, and for experienced carers encountering unfamiliar or escalating situations. Its availability outside clinic hours and without requiring a trained facilitator makes it accessible to carers at the moment they need support — not only during scheduled appointments or training courses.
+
+The tool reflects a broader move toward AI-assisted education in dementia care that extends learning beyond formal training contexts. It is used alongside — not instead of — face-to-face carer education programmes from Dementia Australia (dementia.org.au), Dementia Training Australia (dta.com.au), and Carer Gateway (carergateway.gov.au). For carers wanting to build confidence for a specific upcoming challenge or difficult conversation, Talk with Ted provides a uniquely accessible and low-risk practice environment.`,
+    tags: ['Talk with Ted', 'AI avatar', 'communication practice', 'simulation', 'Dementia Australia', 'carer training', 'digital tool'],
+    source_url: 'https://www.dementia.org.au/',
+    source_org: 'Dementia Australia',
+    embedding: null,
+  },
+  {
+    id: 'communication_010',
+    category: 'communication',
+    title: 'Supporting Culturally and Linguistically Diverse People with Dementia',
+    content: `For people from culturally and linguistically diverse (CALD) backgrounds, dementia creates a distinctive communication challenge: as the condition progresses, people commonly revert to their first language, losing the ability to communicate in a language learned later in life. A Chinese-born person who has spoken fluent English for decades may progressively lose their English and communicate only in Cantonese or Mandarin. A Pacific Islander may revert to their home language. An immigrant who learned the language of their adopted country as an adult may effectively lose that language well before other abilities decline.
+
+Dementia Australia and the Alzheimer's Society emphasise the importance of recognising and accommodating this reversion. Language is deeply tied to identity, emotional memory, and sense of self. Communicating — or attempting to communicate — in a person's first language maintains connection, dignity, and emotional wellbeing even when explicit memory is severely impaired. Carers who speak the person's first language should be prioritised in care arrangements wherever possible.
+
+Where bilingual carers are unavailable, professional interpreting services are the appropriate resource for medical appointments and clinical discussions. In Australia, the Translating and Interpreting Service (TIS National, 131 450) is available around the clock in over 100 languages. Plan for this in advance, and avoid using family members as interpreters in clinical settings — they may be emotionally affected by what is being discussed and may not accurately convey clinical information in either direction.
+
+Non-verbal cultural connection through music from the person's country of origin, culturally significant foods, familiar cultural objects, and family photographs is valuable for all people with dementia but particularly for those whose verbal communication has become unreliable. For Chinese communities in New Zealand, chinesedementia.org.nz provides bilingual resources. For Pacific communities and all New Zealanders, Dementia NZ (dementia.nz) and Alzheimer's NZ (alzheimers.org.nz) can connect families to appropriate support.`,
+    tags: ['CALD', 'culturally diverse', 'first language', 'interpreter', 'TIS National', 'multilingual', 'Pacific communities'],
+    source_url: 'https://www.dementia.org.au/',
+    source_org: 'Dementia Australia',
+    embedding: null,
+  },
+
+  // ─── CAREGIVER WELLBEING (extended: 008–010) ─────────────────────────────────
+  {
+    id: 'wellbeing_008',
+    category: 'wellbeing',
+    title: 'Dementia Support Australia — Free Specialist Support for Behavioural Crises',
+    content: `Dementia Support Australia (DSA) is an Australian Government-funded national service providing free specialist support for people with dementia experiencing behavioural and psychological symptoms of dementia (BPSD) — the most common and most stressful category of dementia-related difficulty for family carers. DSA is available to people with dementia living at home or in residential aged care, and the service is free at the point of access without requiring a GP referral.
+
+Many carers reach a point where behaviours they previously managed — agitation, aggression, night-time wandering, distressed calling, refusal of personal care — become unmanageable without specialist input. DSA's clinical consultants conduct face-to-face assessments in the home or care setting, complete a thorough review of the person's history and circumstances, and develop an individualised management plan grounded in person-centred, non-pharmacological approaches.
+
+The DSA approach treats behaviour as communication of an unmet need, physical discomfort, emotional distress, or environmental factor. The focus is on identifying and addressing that underlying cause rather than suppressing the behaviour with medication. This aligns with national and international best-practice guidelines and reduces the use of antipsychotic medications, which carry significant risks in older people with dementia including increased risk of stroke and falls.
+
+For families who have been told nothing more can be done, or who are considering residential placement primarily because of unmanageable behaviour, a DSA consultation should be sought before that decision is made. In many cases, specialist assessment leads to significant improvement in behaviour and restored carer confidence. To access DSA services, call the National Dementia Helpline 1800 100 500 (24 hours a day, 7 days a week) or visit dementia.com.au.`,
+    tags: ['Dementia Support Australia', 'DSA', 'BPSD', 'specialist support', 'behaviour management', 'non-pharmacological', 'helpline'],
+    source_url: 'https://www.dementia.com.au/',
+    source_org: 'Dementia Support Australia',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_009',
+    category: 'wellbeing',
+    title: 'Digital Support Tools: BrainTrack and Ask Annie',
+    content: `Two digital tools developed specifically for the dementia care context — BrainTrack and Ask Annie — provide accessible, evidence-informed support for brain health monitoring and practical caregiving, extending the reach of professional guidance into everyday life.
+
+BrainTrack is a free app designed for individuals who are concerned about their own cognitive health, as well as for people with a diagnosis of MCI or early dementia who want to monitor changes over time. The app enables users to complete brief, validated cognitive assessments at regular intervals; track lifestyle factors known to affect brain health including physical activity, sleep quality, diet, social connection, and mood; and generate a summary report suitable for sharing with a GP. This makes it easier to have an informed, evidenced conversation about cognitive concerns with a healthcare professional rather than relying solely on the memory of intermittent symptoms.
+
+Ask Annie is a mobile app developed to support home care workers and family carers of people with dementia. It provides practical, evidence-based guidance on common caregiving challenges — including managing agitation, supporting personal hygiene, responding to difficult behaviours, recognising warning signs that warrant medical attention, and improving communication — in a searchable, in-the-moment format. Ask Annie is designed to be consulted during care delivery, making evidence-based guidance available regardless of whether a trainer or support coordinator is present.
+
+Both tools complement — rather than replace — professional dementia support. For specialist clinical guidance, contact the National Dementia Helpline 1800 100 500 (Australia), Dementia NZ 0800 004 001 (New Zealand), or arrange a consultation with a GP or Dementia Support Australia (dementia.com.au). For ongoing carer support and skills development, Carer Gateway (carergateway.gov.au) provides free coaching, counselling, and peer connection.`,
+    tags: ['BrainTrack', 'Ask Annie', 'digital health', 'app', 'cognitive monitoring', 'carer support', 'technology'],
+    source_url: 'https://www.dementia.org.au/',
+    source_org: 'Dementia Australia',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_010',
+    category: 'wellbeing',
+    title: 'My Aged Care — Australia\'s Gateway to Funded Home and Residential Care',
+    content: `My Aged Care (myagedcare.gov.au) is the Australian Government's central access point for funded aged care services. For dementia carers, understanding the My Aged Care pathway is essential for securing funded support that can significantly improve quality of life and delay premature residential placement — but the system is complex and early engagement produces far better outcomes than last-minute crisis navigation.
+
+The process begins with an eligibility assessment, initiated by calling My Aged Care on 1800 200 422 or registering online. A Regional Assessment Service (RAS) assessor determines eligibility for the Commonwealth Home Support Programme (CHSP) — entry-level services including domestic assistance, personal care, meals, transport, and social support provided on a co-contribution basis. For people with higher or more complex care needs, an Aged Care Assessment Team (ACAT) assessment determines eligibility for a Home Care Package (HCP), ranging from Level 1 (basic care needs) to Level 4 (high care needs, approximately $60,000 per year in funded support). For dementia, Level 3 or Level 4 packages are typically needed as the condition progresses.
+
+Wait times for higher-level Home Care Packages can be significant. Applying as soon as care needs begin to increase — well before a crisis — prevents the gap between need and support from becoming unmanageable. Interim CHSP services can usually be arranged while waiting for a higher-level package.
+
+For residential aged care, the ACAT assessment is also required. My Aged Care's service finder allows comparison of residential providers, understanding of fee structures, and identification of facilities with specific dementia expertise or secure memory care units. Dementia Australia (dementia.org.au, 1800 100 500) provides guidance specifically for families navigating My Aged Care for the first time, including self-advocacy and provider selection.`,
+    tags: ['My Aged Care', 'Home Care Package', 'CHSP', 'ACAT', 'aged care', 'Australia', 'residential care', 'funding'],
+    source_url: 'https://www.myagedcare.gov.au/',
+    source_org: 'My Aged Care',
+    embedding: null,
+  },
+
+  // ─── PREVENTION & EARLY DETECTION (extended: 008–010) ────────────────────────
+  {
+    id: 'prevention_008',
+    category: 'prevention',
+    title: 'Brain Health for Adults — Health New Zealand Te Whatu Ora',
+    content: `Health New Zealand Te Whatu Ora (healthnz.govt.nz) provides an evidence-based brain health framework for adults reinforcing a central and optimistic message: close to half of all dementia cases could be delayed or prevented through modifiable lifestyle factors, and it is never too early — or too late — to begin protecting brain health. The framework draws on the same evidence base as the 2024 Lancet Commission on Dementia Prevention and the FINGER trial (Finnish Geriatric Intervention Study).
+
+The Health NZ framework organises brain health actions around three interconnected pillars. A healthy body encompasses: attending regular health check-ups to manage blood pressure, cholesterol, and blood glucose; taking preventive care of hearing and vision; maintaining a healthy body weight; being physically active; eating a nutritious diet; avoiding smoking; limiting alcohol consumption; and protecting the head from injury and concussion. A healthy mind and spirit covers: seeking help promptly for depression and anxiety; continuing to learn and engaging in mentally stimulating activities; managing stress; attending to spiritual wellbeing; achieving 6 to 10 hours of quality sleep per night; and practising stress-reduction techniques. Staying socially connected recognises that strong relationships and community participation independently protect brain health — social isolation is one of the major modifiable risk factors for dementia.
+
+The framework explicitly recognises that lifestyle changes work best when they are suited to a person's age and stage of life, enjoyable, sustainable, ideally undertaken with others, and long-term. Starting small and building gradually is encouraged — small, consistent changes accumulate into significant protection over time.
+
+This resource is freely available at healthnz.govt.nz and directly complements the work of Dementia NZ (dementia.nz, 0800 004 001) and Alzheimer's NZ (alzheimers.org.nz) in supporting New Zealanders affected by or at risk of dementia. People with specific concerns about brain health should discuss personalised risk reduction priorities with their GP.`,
+    tags: ['Health NZ', 'brain health', 'Te Whatu Ora', 'prevention', 'New Zealand', 'lifestyle', 'modifiable risk'],
+    source_url: 'https://www.healthnz.govt.nz/health-topics/conditions-treatments/brain-and-nerves/dementia/brain-health-for-adults',
+    source_org: 'Health New Zealand Te Whatu Ora',
+    embedding: null,
+  },
+  {
+    id: 'prevention_009',
+    category: 'prevention',
+    title: 'StepUp for Dementia Research — Volunteering for a Future Without Dementia',
+    content: `StepUp for Dementia Research (stepupfordementiaresearch.org.au) is Australia's national dementia research registry, connecting people interested in participating in dementia and brain ageing studies with researchers seeking volunteers. It was developed by the University of Sydney in partnership with the University of Exeter and University College London, with initial funding from the Australian Government Department of Health, and supports a broad portfolio of dementia and ageing research across Australia.
+
+Without research participants, even the most well-designed prevention and treatment studies cannot progress. StepUp matches registered volunteers to studies based on their individual profile, health status, age, and interests — and registration does not commit anyone to any specific study. After registration, volunteers receive information about relevant studies they may be eligible for, and can decide independently whether to participate in each.
+
+Crucially, healthy volunteers are as valuable as those with dementia or cognitive impairment — many prevention and early detection studies specifically require cognitively healthy older adults as comparison groups. Family carers, people with MCI, people with a family history of dementia, and people who have received a dementia diagnosis are all encouraged to register. Participation options are diverse: some studies involve online surveys only; others involve cognitive assessments, blood tests, brain imaging, or lifestyle interventions.
+
+Registering with StepUp for Dementia Research is free, takes approximately 15 minutes, and can be completed entirely online at stepupfordementiaresearch.org.au. For people who want to contribute to dementia prevention and treatment beyond their own health behaviours, participation in well-designed research is one of the most direct and meaningful contributions available.`,
+    tags: ['StepUp', 'dementia research', 'clinical trials', 'research participation', 'prevention research', 'Australia', 'University of Sydney'],
+    source_url: 'https://www.stepupfordementiaresearch.org.au/',
+    source_org: 'StepUp for Dementia Research',
+    embedding: null,
+  },
+  {
+    id: 'prevention_010',
+    category: 'prevention',
+    title: 'Community-Based Brain Health Screening — The Jockey Club Model',
+    content: `The Jockey Club "Brain Health" Dementia Screening and Community Support Project, operated by the Jockey Club Centre for Positive Ageing (JCCPA) in Hong Kong, provides a replicable model of community-based early detection and intervention that is internationally recognised for its integrated approach. The programme rests on robust evidence: individuals with mild cognitive impairment who receive no intervention face a 10 to 15 percent annual risk of progressing to dementia, while those who receive timely, evidence-based support have substantially better outcomes.
+
+The programme serves community members aged 60 and above who have concerns about memory decline or have been identified as potentially having mild cognitive impairment or early dementia. Services are structured around "early detection, early diagnosis, and early intervention" and include: electronic cognitive screening; diagnostic services with up to 18 months of medical consultation and subsidised medication access for eligible participants; targeted post-diagnostic support services within the first year of diagnosis; and counselling and community resource referrals for family carers.
+
+The programme operates through a network of community partner organisations across Hong Kong's districts, recognising that accessible, geographically distributed service delivery substantially increases help-seeking — particularly in communities where stigma reduces self-referral to centralised specialist services. A family intervention and empowerment approach, treating carer wellbeing and capability as equally important to the wellbeing of the person with dementia, is central to the programme's design.
+
+This community-based proactive screening model reflects the direction of best practice globally. In New Zealand, Alzheimer's NZ (alzheimers.org.nz), Dementia NZ (dementia.nz), and Health NZ (healthnz.govt.nz) promote early assessment and provide post-diagnostic support consistent with these principles. In Australia, Dementia Australia (dementia.org.au) and Dementia Support Australia (dementia.com.au) deliver comparable early intervention and support services.`,
+    tags: ['JCCPA', 'Jockey Club', 'community screening', 'early detection', 'Hong Kong', 'MCI', 'prevention programme', 'family empowerment'],
+    source_url: 'https://www.jccpa.org.hk/en/projects/dscs/',
+    source_org: 'Jockey Club Centre for Positive Ageing',
+    embedding: null,
+  },
+
+  // ─── HOME SAFETY (extended: 008–010) ─────────────────────────────────────────
+  {
+    id: 'homesafety_008',
+    category: 'home-safety',
+    title: 'Assistive Technology for Home Safety and Independence',
+    content: `Assistive technology encompasses devices and systems that extend safe independent living for people with dementia while reducing carer supervision burden. Dementia Australia and Alzheimer's NZ note that technology works best when introduced early — before a safety crisis makes urgent adoption necessary — and when the person with dementia is involved in selecting and becoming familiar with devices before they become critical.
+
+Medication management devices include automatic pill dispensers that open at programmed times, sound an alarm if a dose is not collected, and in some models lock individual compartments to prevent unintended access to other doses. These significantly reduce medication errors in early to moderate dementia without requiring constant carer supervision. Smart home technology includes motion-activated lighting that turns on automatically when the person moves at night — one of the most effective single interventions for preventing night-time falls; smart plugs that can cut power to a stove left on unattended; door sensors that send instant phone alerts when external doors are opened; and video doorbell systems for remote monitoring.
+
+Personal safety devices include GPS tracking wristbands and pendants that provide real-time location information when a person wanders; medic alert bracelets engraved with the person's name, diagnosis, and emergency contact; and personal emergency response buttons that summon help if the person falls or becomes distressed alone. Telehealth and remote check-in services allow family members to maintain connection and monitor wellbeing from a distance — particularly valuable when the primary carer does not live in the same household.
+
+Introduce assistive technology collaboratively and transparently. A sudden introduction of monitoring technology without explanation can feel invasive and damage trust. Explaining what each device does, involving the person in choosing it, and framing it around their safety and continued independence is the most effective and respectful approach.`,
+    tags: ['assistive technology', 'GPS tracker', 'pill dispenser', 'smart home', 'medic alert', 'remote monitoring', 'independence'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
+    embedding: null,
+  },
+  {
+    id: 'homesafety_009',
+    category: 'home-safety',
+    title: 'Water Safety and Temperature Hazards in the Home',
+    content: `Water-related hazards present significant risks for people with dementia that are often overlooked in home safety planning. Dementia impairs the ability to recognise and respond appropriately to temperature extremes — a person may not notice that bathwater or tap water is dangerously hot, or may fail to respond to feeling cold. Both scalding and cold exposure are real and preventable risks.
+
+The most important single water safety intervention is setting the household hot water thermostat to a maximum of 50°C. At this temperature, extended contact causes no immediate tissue damage; at 60°C, serious burns can occur within seconds. This adjustment is straightforward and permanent, requiring no ongoing vigilance from the carer. Anti-scald devices fitted to individual taps and shower fixtures provide an additional layer of protection by preventing water above a set temperature from flowing — these are available from plumbing suppliers and can generally be installed without major renovation.
+
+Cold exposure is an underappreciated hazard: people with dementia may sit in cold rooms without recognising discomfort, wear seasonally inappropriate clothing without initiating a change, or go outdoors in cold weather without adequate protection. Regularly check body temperature and room temperature — particularly in winter — rather than relying on the person to self-report feeling cold. Establish a habit of checking that the person's clothing is appropriate for current conditions.
+
+Unsupervised access to garden ponds, swimming pools, or open water features requires specific attention: dementia impairs hazard recognition and a fall near or into water can be fatal. Fence or secure all open water features, and ensure the person cannot access them without supervision. For people known to seek out water, assess whether a locked garden gate or other barrier is warranted.`,
+    tags: ['water safety', 'scalding', 'temperature', 'hot water thermostat', 'hypothermia', 'garden pond', 'cold exposure'],
+    source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
+    source_org: 'NHS UK',
+    embedding: null,
+  },
+  {
+    id: 'homesafety_010',
+    category: 'home-safety',
+    title: 'Conducting a Structured Dementia Home Safety Assessment',
+    content: `A structured home safety assessment is one of the most impactful proactive steps a family can take following a dementia diagnosis. Dementia Australia recommends an assessment at or shortly after diagnosis, with reassessment at least annually and whenever there is a significant change in the person's condition, abilities, or behaviour.
+
+A formal occupational therapy (OT) home assessment is the gold standard. OTs who specialise in home modification and ageing-in-place conduct a systematic room-by-room evaluation identifying fall hazards, fire risks, medication safety concerns, exit security, environmental factors contributing to disorientation and anxiety, and unmet assistive technology needs. They provide prioritised, specific recommendations and can prescribe and arrange funded equipment. In Australia, occupational therapy home assessments can be accessed through a My Aged Care Home Care Package or on GP referral. In New Zealand, contact Alzheimer's NZ (alzheimers.org.nz, 0800 004 001) or the person's GP for referral.
+
+Carers who want to begin an assessment themselves can use checklists published by Dementia Australia (dementia.org.au) or Alzheimer's NZ as a starting framework. Key areas include: entry and exit security; fall hazards in bathrooms, bedrooms, hallways, stairs, and outdoor areas; kitchen safety including appliances, cleaning products, and sharp items; fire safety including smoke alarms, stove guards, and heater placement; medication security; lighting adequacy including nightlights; and garden and outdoor safety.
+
+Prioritise modifications based on the person's specific current and near-term risks — a phased approach spread over several months is manageable and sustainable. Keep a written record of what has been modified and when, so that future reassessments can track progress and identify gaps. For carers who find the process overwhelming, Dementia Australia (1800 100 500) and Alzheimer's NZ (0800 004 001) can help identify occupational therapy or specialist support.`,
+    tags: ['home safety assessment', 'occupational therapist', 'OT', 'home modification', 'checklist', 'proactive', 'Dementia Australia'],
+    source_url: 'https://www.dementia.org.au/information/about-dementia',
+    source_org: 'Dementia Australia',
     embedding: null,
   },
 ];

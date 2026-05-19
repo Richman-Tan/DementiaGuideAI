@@ -1,36 +1,42 @@
-import { KNOWLEDGE_BASE } from '../data/knowledgeBase';
+import { supabase } from './supabaseService';
 import { openaiService } from './openaiService';
 
 class KnowledgeService {
-  // Semantic search across the full knowledge base via the RAG pipeline.
-  // Falls back to tag/title keyword matching if embeddings are not yet ready.
+  // Semantic search via RAG pipeline → Supabase pgvector.
+  // Falls back to Supabase full-text keyword search if OpenAI is unavailable.
   async searchResources(query) {
     try {
-      const chunks = await openaiService.search(query);
-      return chunks;
+      return await openaiService.search(query);
     } catch {
-      // Fallback: keyword match on title and tags
-      const q = query.toLowerCase();
-      return KNOWLEDGE_BASE.filter(
-        r =>
-          r.title.toLowerCase().includes(q) ||
-          r.tags.some(t => t.toLowerCase().includes(q))
-      ).slice(0, 5);
+      // Fallback: keyword match via Supabase
+      const { data } = await supabase
+        .from('knowledge_chunks')
+        .select('id, category, title, content, tags, source_url, source_org')
+        .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
+        .limit(5);
+      return data ?? [];
     }
   }
 
   async getCategories() {
-    // Return distinct categories with live counts from the knowledge base
-    const counts = KNOWLEDGE_BASE.reduce((acc, chunk) => {
-      acc[chunk.category] = (acc[chunk.category] ?? 0) + 1;
+    // Return distinct categories with live counts from Supabase
+    const { data } = await supabase
+      .from('knowledge_chunks')
+      .select('category');
+    if (!data) return {};
+    return data.reduce((acc, row) => {
+      acc[row.category] = (acc[row.category] ?? 0) + 1;
       return acc;
     }, {});
-    return counts;
   }
 
   // Return all articles belonging to a given category ID
   async getCategoryResources(categoryId) {
-    return KNOWLEDGE_BASE.filter(chunk => chunk.category === categoryId);
+    const { data } = await supabase
+      .from('knowledge_chunks')
+      .select('id, category, title, content, tags, source_url, source_org')
+      .eq('category', categoryId);
+    return data ?? [];
   }
 
   // Return a small, curated selection for the home screen "Featured" list
@@ -44,8 +50,16 @@ class KnowledgeService {
       'homesafety_002',    // Bathroom Fall Prevention
       'prevention_001',    // 14 Modifiable Risk Factors
     ];
-    return KNOWLEDGE_BASE.filter(chunk => featured.includes(chunk.id));
+    const { data } = await supabase
+      .from('knowledge_chunks')
+      .select('id, category, title, content, tags, source_url, source_org')
+      .in('id', featured);
+    // Preserve original curation order
+    return featured
+      .map(id => data?.find(c => c.id === id))
+      .filter(Boolean);
   }
 }
 
 export const knowledgeService = new KnowledgeService();
+

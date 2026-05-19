@@ -179,15 +179,15 @@ function frameCamera(modelScene) {
 
   const height = size.y || 1.6;
 
-  const visibleBottom = box.min.y + height * 0.35;
-  const visibleTop = box.max.y + height * 0.08;
+  const visibleBottom = box.min.y + height * 0.55;
+  const visibleTop = box.max.y + height * 0.06;
   const visibleCenterY = (visibleBottom + visibleTop) / 2;
   const visibleHeight = visibleTop - visibleBottom;
 
   const fovRad = THREE.MathUtils.degToRad(camera.fov);
   const distance = (visibleHeight / 2) / Math.tan(fovRad / 2);
 
-  camera.position.set(center.x, visibleCenterY, distance * 1.2);
+  camera.position.set(center.x, visibleCenterY, distance * 1.0);
   camera.lookAt(center.x, visibleCenterY, center.z);
   camera.updateProjectionMatrix();
 

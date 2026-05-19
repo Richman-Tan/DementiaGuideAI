@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
 import { openaiService } from '../services/openaiService';
+import { elevenLabsService } from '../lib/tts/elevenLabsService';
 
 const Section = ({ title, children }) => (
   <View style={styles.section}>
@@ -101,12 +102,14 @@ const TextSizeSelector = ({ value, onChange }) => {
 };
 
 // ─── API Key Row ──────────────────────────────────────────────────────────────
-const ApiKeyRow = ({ value, onSave, onClear }) => {
+// label defaults to "OpenAI API Key" so existing usages need no change.
+const ApiKeyRow = ({ value, onSave, onClear, label = 'OpenAI API Key', placeholder = 'sk-proj-...' }) => {
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState('');
   const [hidden, setHidden] = useState(true);
 
-  const displayValue = value ? `sk-...${value.slice(-4)}` : 'Not configured';
+  // Mask the key regardless of provider prefix (sk-, xi-, etc.)
+  const displayValue = value ? `…${value.slice(-4)}` : 'Not configured';
 
   if (editing) {
     return (
@@ -118,12 +121,12 @@ const ApiKeyRow = ({ value, onSave, onClear }) => {
           style={styles.apiKeyInput}
           value={input}
           onChangeText={setInput}
-          placeholder="sk-proj-..."
+          placeholder={placeholder}
           autoCapitalize="none"
           autoCorrect={false}
           secureTextEntry={hidden}
           placeholderTextColor={Colors.textTertiary}
-          accessibilityLabel="OpenAI API key input"
+          accessibilityLabel={`${label} input`}
         />
         <TouchableOpacity onPress={() => setHidden(h => !h)} style={styles.eyeBtn}>
           <MaterialCommunityIcons
@@ -154,7 +157,7 @@ const ApiKeyRow = ({ value, onSave, onClear }) => {
     <SettingRow
       icon="key-variant"
       iconColor={value ? Colors.success : Colors.warning}
-      label="OpenAI API Key"
+      label={label}
       sublabel={displayValue}
       onPress={() => setEditing(true)}
       isLast={false}
@@ -174,7 +177,8 @@ export const ProfileScreen = ({ navigation }) => {
     notificationsEnabled: true,
     darkMode: false,
   });
-  const [apiKey, setApiKey] = useState(null);
+  const [apiKey, setApiKey]               = useState(null);
+  const [elevenLabsKey, setElevenLabsKey] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -184,6 +188,7 @@ export const ProfileScreen = ({ navigation }) => {
       useNativeDriver: true,
     }).start();
     openaiService.getApiKey().then(k => setApiKey(k));
+    elevenLabsService.getApiKey().then(k => setElevenLabsKey(k));
   }, []);
 
   const toggleSetting = (key) => setSettings(prev => ({ ...prev, [key]: !prev[key] }));
@@ -195,6 +200,15 @@ export const ProfileScreen = ({ navigation }) => {
     Alert.alert(
       'API Key Saved',
       'Aria will now use your OpenAI key. The knowledge base will load in the background the next time you open the chat.'
+    );
+  };
+
+  const handleSaveElevenLabsKey = async (key) => {
+    await elevenLabsService.saveApiKey(key);
+    setElevenLabsKey(key);
+    Alert.alert(
+      'ElevenLabs Key Saved',
+      'Aria will now use ElevenLabs for higher-quality voice with precise lip sync.'
     );
   };
 
@@ -403,6 +417,16 @@ export const ProfileScreen = ({ navigation }) => {
                 setApiKey(null);
               }}
             />
+            <ApiKeyRow
+              value={elevenLabsKey}
+              onSave={handleSaveElevenLabsKey}
+              onClear={async () => {
+                await elevenLabsService.clearApiKey();
+                setElevenLabsKey(null);
+              }}
+              label="ElevenLabs API Key"
+              placeholder="el-..."
+            />
             <SettingRow
               icon="database-remove-outline"
               iconColor={Colors.error}
@@ -426,7 +450,7 @@ export const ProfileScreen = ({ navigation }) => {
               icon="robot-outline"
               iconColor={Colors.textSecondary}
               label="Powered by OpenAI"
-              sublabel="GPT-4o-mini with RAG knowledge retrieval"
+              sublabel={elevenLabsKey ? 'GPT-4o-mini + ElevenLabs voice (precise lip sync)' : 'GPT-4o-mini with OpenAI voice'}
               isLast={false}
             />
             <SettingRow

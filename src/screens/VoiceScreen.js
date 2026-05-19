@@ -12,18 +12,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import { AvatarVRM, DEFAULT_VRM_MODEL_URL } from '../components/AvatarVRM';
 import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
-import { openaiService } from '../services/openaiService';
-
-const VoiceState = {
-  IDLE: 'idle',
-  LISTENING: 'listening',
-  PROCESSING: 'processing',
-  SPEAKING: 'speaking',
-};
+import { useAvatarConversation, VoiceState } from '../hooks/useAvatarConversation';
 
 const QUICK_CHIPS = [
   'Morning routine',
@@ -35,30 +27,22 @@ const QUICK_CHIPS = [
 ];
 
 export const VoiceScreen = ({ navigation }) => {
-  const [voiceState, setVoiceState] = useState(VoiceState.IDLE);
   const [inputText, setInputText] = useState('');
-  const [conversationHistory, setConversationHistory] = useState([]);
-  const avatarRef = useRef(null);
-  const recordingRef = useRef(null);
-  const abortRef = useRef(false);   // set true when user stops mid-response
-  const historyRef = useRef([]);    // kept in sync so callbacks always see latest
-  const micPulse = useRef(new Animated.Value(1)).current;
-  const insets = useSafeAreaInsets();
+  const avatarRef  = useRef(null);
+  const micPulse   = useRef(new Animated.Value(1)).current;
+  const insets     = useSafeAreaInsets();
+
+  const {
+    voiceState,
+    processQuery,
+    startRecording,
+    stopAndTranscribe,
+    stopAudio,
+    handleMicPress,
+    handleStop,
+  } = useAvatarConversation({ avatarRef });
 
   const isActive = voiceState === VoiceState.LISTENING || voiceState === VoiceState.SPEAKING;
-
-  // Keep historyRef in sync
-  useEffect(() => {
-    historyRef.current = conversationHistory;
-  }, [conversationHistory]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      recordingRef.current?.stopAndUnloadAsync().catch(() => {});
-      avatarRef.current?.stopAudio();
-    };
-  }, []);
 
   // Mic pulse animation
   useEffect(() => {
@@ -74,154 +58,6 @@ export const VoiceScreen = ({ navigation }) => {
       Animated.spring(micPulse, { toValue: 1, useNativeDriver: true }).start();
     }
   }, [voiceState]);
-
-  // Core: stream RAG chat → sentence-split → parallel TTS → sequential playback.
-  // Each sentence's TTS fires as soon as the sentence is complete from the stream,
-  // so audio for sentence N is generating while sentence N-1 is playing.
-  const processQuery = useCallback(async (userText) => {
-    if (!userText.trim()) return;
-
-    setVoiceState(VoiceState.PROCESSING);
-    abortRef.current = false;
-
-
-    try {
-      const history = historyRef.current;
-      let fullText = '';
-
-      // Promises of data URIs — pushed in sentence order, resolved concurrently.
-      const segmentPromises = [];
-
-      const addSegment = (text) => {
-        const clean = text.trim();
-        if (!clean) return;
-        // tts() now returns a data:audio/mpeg;base64,... URI — no disk write needed.
-        segmentPromises.push(openaiService.tts(clean, 'nova'));
-      };
-
-      // Stream response and split into sentences as chunks arrive.
-      // Hermes doesn't support lookbehind, so use a replace-then-split trick.
-      let buf = '';
-      for await (const chunk of openaiService.chatStream(userText, history)) {
-        if (abortRef.current) break;
-        fullText += chunk;
-        buf += chunk;
-        // Mark sentence ends with a private delimiter, then split
-        const marked = buf.replace(/([.!?])\s+/g, '$1\x1F');
-        const parts = marked.split('\x1F');
-        parts.slice(0, -1).forEach(s => addSegment(s));
-        buf = parts[parts.length - 1];
-      }
-      if (buf.trim() && !abortRef.current) addSegment(buf);
-
-      setConversationHistory(prev => [
-        ...prev,
-        { role: 'user', content: userText },
-        { role: 'assistant', content: fullText },
-      ]);
-
-      if (segmentPromises.length === 0 || abortRef.current) {
-        setVoiceState(VoiceState.IDLE);
-        return;
-      }
-
-      setVoiceState(VoiceState.SPEAKING);
-
-      // Play segments in order via WebView Web Audio API (provides real-time lip sync).
-      for (let i = 0; i < segmentPromises.length; i++) {
-        if (abortRef.current) break;
-        const uri = await segmentPromises[i];
-        if (abortRef.current) break;
-        if (avatarRef.current) await avatarRef.current.playAudio(uri);
-      }
-    } catch (err) {
-      console.error('[VoiceScreen] processQuery:', err);
-    } finally {
-      setVoiceState(VoiceState.IDLE);
-    }
-  }, []);
-
-  const startRecording = useCallback(async () => {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') return;
-
-      // Tear down any lingering recorder before creating a new one
-      if (recordingRef.current) {
-        await recordingRef.current.stopAndUnloadAsync().catch(() => {});
-        recordingRef.current = null;
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      recordingRef.current = recording;
-      setVoiceState(VoiceState.LISTENING);
-    } catch (err) {
-      console.error('[VoiceScreen] startRecording:', err);
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
-    }
-  }, []);
-
-  const stopAndTranscribe = useCallback(async () => {
-    const rec = recordingRef.current;
-    if (!rec) return;
-
-    setVoiceState(VoiceState.PROCESSING);
-
-    try {
-      await rec.stopAndUnloadAsync();
-      const uri = rec.getURI();
-      recordingRef.current = null;
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-      });
-
-      const transcript = await openaiService.transcribe(uri);
-      if (!transcript) {
-        setVoiceState(VoiceState.IDLE);
-        return;
-      }
-
-      await processQuery(transcript);
-    } catch (err) {
-      console.error('[VoiceScreen] stopAndTranscribe:', err);
-      setVoiceState(VoiceState.IDLE);
-    }
-  }, [processQuery]);
-
-  const stopAudio = useCallback(() => {
-    abortRef.current = true;
-    avatarRef.current?.stopAudio();
-  }, []);
-
-  const handleMicPress = useCallback(async () => {
-    if (voiceState === VoiceState.IDLE) {
-      await startRecording();
-    } else if (voiceState === VoiceState.LISTENING) {
-      await stopAndTranscribe();
-    } else if (voiceState === VoiceState.SPEAKING) {
-      await stopAudio();
-      setVoiceState(VoiceState.IDLE);
-    }
-  }, [voiceState, startRecording, stopAndTranscribe, stopAudio]);
-
-  const handleStop = useCallback(async () => {
-    if (recordingRef.current) {
-      await recordingRef.current.stopAndUnloadAsync().catch(() => {});
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
-      recordingRef.current = null;
-    }
-    await stopAudio();
-    setVoiceState(VoiceState.IDLE);
-  }, [stopAudio]);
 
   const handleChipPress = (chip) => setInputText(chip);
 

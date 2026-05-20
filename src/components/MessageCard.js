@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSettings } from '../context/SettingsContext';
 
-export const MessageCard = ({ message, onPlayAudio, settings }) => {
+export const MessageCard = ({ message, onPlayAudio }) => {
   const isAssistant = message.role === 'assistant';
-  const textScale = settings?.textSize === 'large' ? 1.15 : settings?.textSize === 'small' ? 0.9 : 1;
+  const { textScale } = useSettings();
 
   return (
     <View style={[styles.wrapper, isAssistant ? styles.assistantWrapper : styles.userWrapper]}>

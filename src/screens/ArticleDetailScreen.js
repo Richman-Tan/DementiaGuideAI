@@ -16,6 +16,7 @@ import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
 import { KNOWLEDGE_CATEGORIES } from '../constants/data';
 import { KNOWLEDGE_BASE } from '../data/knowledgeBase';
+import { useSettings } from '../context/SettingsContext';
 
 const wordCount = content => content.split(/\s+/).length;
 const readTime = content => `${Math.ceil(wordCount(content) / 200)} min read`;
@@ -38,6 +39,7 @@ const parseContent = (content) => {
 
 export const ArticleDetailScreen = ({ navigation, route }) => {
   const { article } = route.params;
+  const { textScale } = useSettings();
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(18)).current;
@@ -155,10 +157,10 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
                       {part.num}
                     </Text>
                   </View>
-                  <Text style={styles.numberedText}>{part.text}</Text>
+                  <Text style={[styles.numberedText, { fontSize: 16 * textScale, lineHeight: 26 * textScale }]}>{part.text}</Text>
                 </View>
               ) : (
-                <Text key={part.key} style={styles.bodyText}>{part.text}</Text>
+                <Text key={part.key} style={[styles.bodyText, { fontSize: 16 * textScale, lineHeight: 26 * textScale }]}>{part.text}</Text>
               )
             )}
           </View>

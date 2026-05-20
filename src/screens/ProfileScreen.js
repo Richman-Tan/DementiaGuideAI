@@ -19,35 +19,42 @@ import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
 import { openaiService } from '../services/openaiService';
 import { elevenLabsService } from '../lib/tts/elevenLabsService';
+import { useSettings } from '../context/SettingsContext';
 
-const Section = ({ title, children }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.sectionCard}>{children}</View>
-  </View>
-);
+const Section = ({ title, children }) => {
+  const { textScale } = useSettings();
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { fontSize: 12 * textScale }]}>{title}</Text>
+      <View style={styles.sectionCard}>{children}</View>
+    </View>
+  );
+};
 
-const SettingRow = ({ icon, iconColor = Colors.primary, label, sublabel, onPress, right, isLast = false }) => (
-  <TouchableOpacity
-    style={[styles.settingRow, !isLast && styles.settingRowBorder]}
-    onPress={onPress}
-    disabled={!onPress && !right}
-    activeOpacity={onPress ? 0.7 : 1}
-    accessibilityLabel={label}
-    accessibilityRole={onPress ? 'button' : 'none'}
-  >
-    <View style={[styles.settingIcon, { backgroundColor: `${iconColor}18` }]}>
-      <MaterialCommunityIcons name={icon} size={20} color={iconColor} />
-    </View>
-    <View style={styles.settingText}>
-      <Text style={styles.settingLabel}>{label}</Text>
-      {sublabel && <Text style={styles.settingSublabel}>{sublabel}</Text>}
-    </View>
-    {right ?? (onPress && (
-      <MaterialCommunityIcons name="chevron-right" size={18} color={Colors.textTertiary} />
-    ))}
-  </TouchableOpacity>
-);
+const SettingRow = ({ icon, iconColor = Colors.primary, label, sublabel, onPress, right, isLast = false }) => {
+  const { textScale } = useSettings();
+  return (
+    <TouchableOpacity
+      style={[styles.settingRow, !isLast && styles.settingRowBorder]}
+      onPress={onPress}
+      disabled={!onPress && !right}
+      activeOpacity={onPress ? 0.7 : 1}
+      accessibilityLabel={label}
+      accessibilityRole={onPress ? 'button' : 'none'}
+    >
+      <View style={[styles.settingIcon, { backgroundColor: `${iconColor}18` }]}>
+        <MaterialCommunityIcons name={icon} size={20} color={iconColor} />
+      </View>
+      <View style={styles.settingText}>
+        <Text style={[styles.settingLabel, { fontSize: 16 * textScale }]}>{label}</Text>
+        {sublabel && <Text style={[styles.settingSublabel, { fontSize: 12 * textScale }]}>{sublabel}</Text>}
+      </View>
+      {right ?? (onPress && (
+        <MaterialCommunityIcons name="chevron-right" size={18} color={Colors.textTertiary} />
+      ))}
+    </TouchableOpacity>
+  );
+};
 
 const ToggleRow = ({ icon, iconColor, label, sublabel, value, onToggle, isLast }) => (
   <SettingRow
@@ -166,8 +173,8 @@ const ApiKeyRow = ({ value, onSave, onClear, label = 'OpenAI API Key', placehold
 };
 
 export const ProfileScreen = ({ navigation }) => {
+  const { textSize, textScale, setTextSize } = useSettings();
   const [settings, setSettings] = useState({
-    textSize: 'medium',
     contrast: 'standard',
     audioEnabled: true,
     subtitlesEnabled: true,
@@ -251,8 +258,8 @@ export const ProfileScreen = ({ navigation }) => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-          <Text style={styles.headerTitle}>Settings</Text>
-          <Text style={styles.headerSub}>Personalise your DementiaGuide AI experience</Text>
+          <Text style={[styles.headerTitle, { fontSize: 28 * textScale, lineHeight: 28 * textScale * 1.3 }]}>Settings</Text>
+          <Text style={[styles.headerSub, { fontSize: 14 * textScale }]}>Personalise your DementiaGuide AI experience</Text>
         </Animated.View>
 
         {/* Profile card */}
@@ -267,8 +274,8 @@ export const ProfileScreen = ({ navigation }) => {
               <MaterialCommunityIcons name="account" size={32} color={Colors.primary} />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>Caregiver</Text>
-              <Text style={styles.profileRole}>Family Member</Text>
+              <Text style={[styles.profileName, { fontSize: 20 * textScale }]}>Caregiver</Text>
+              <Text style={[styles.profileRole, { fontSize: 14 * textScale }]}>Family Member</Text>
             </View>
             <TouchableOpacity style={styles.editProfileButton} accessibilityLabel="Edit profile">
               <MaterialCommunityIcons name="pencil-outline" size={18} color="rgba(255,255,255,0.85)" />
@@ -288,8 +295,8 @@ export const ProfileScreen = ({ navigation }) => {
                 <Text style={styles.settingSublabel}>Adjust text size across the app</Text>
               </View>
               <TextSizeSelector
-                value={settings.textSize}
-                onChange={val => setSettings(prev => ({ ...prev, textSize: val }))}
+                value={textSize}
+                onChange={setTextSize}
               />
             </View>
 

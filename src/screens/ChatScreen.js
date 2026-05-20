@@ -21,6 +21,7 @@ import { Avatar } from '../components/Avatar';
 import { Colors } from '../constants/colors';
 import { QUICK_QUESTIONS, SAMPLE_MESSAGES } from '../constants/data';
 import { openaiService, OpenAIAuthError, OpenAIRateLimitError } from '../services/openaiService';
+import { useSettings } from '../context/SettingsContext';
 
 const MESSAGES_KEY = 'chat_messages_v1';
 const MAX_PERSISTED = 100;
@@ -74,6 +75,7 @@ const loadPersistedMessages = async () => {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 export const ChatScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
+  const { textScale } = useSettings();
   const messageListRef = useRef(null);
   // Internal message list (oldest first)
   const [internalMessages, setInternalMessages] = useState(SAMPLE_MESSAGES);
@@ -241,6 +243,7 @@ export const ChatScreen = ({ navigation, route }) => {
           <Text style={[
             styles.messageText,
             isUser ? styles.messageTextUser : styles.messageTextAria,
+            { fontSize: 16 * textScale, lineHeight: 22 * textScale },
           ]}>
             {message.text}
           </Text>
@@ -276,7 +279,7 @@ export const ChatScreen = ({ navigation, route }) => {
   const renderChatEmpty = () => (
     <View style={styles.emptyState}>
       <MaterialCommunityIcons name="chat-outline" size={48} color={Colors.border} />
-      <Text style={styles.emptyText}>Ask Aria anything about dementia care</Text>
+      <Text style={[styles.emptyText, { fontSize: 15 * textScale }]}>Ask Aria anything about dementia care</Text>
     </View>
   );
 

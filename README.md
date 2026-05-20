@@ -1,6 +1,6 @@
 # DementiaGuide AI
 
-A modern iOS mobile application that acts as a digital library for dementia care information. Users can ask questions through text or voice and receive responses through a real-time 3D avatar with lip-sync powered by the Web Audio API.
+A modern iOS mobile application that acts as a digital library for dementia care information. Users can ask questions through text or voice and receive responses through a real-time 3D avatar with lip-sync driven by ElevenLabs character-level alignment.
 
 ---
 
@@ -22,7 +22,7 @@ https://github.com/user-attachments/assets/ed2a9be7-1b46-41a0-905e-609f599734e5
 
 ## Overview
 
-DementiaGuide AI is designed for caregivers, family members, and healthcare professionals. The app provides evidence-based dementia care guidance through a calm, accessible, and emotionally supportive interface. The AI avatar — **Aria** — is a VRM model rendered in real time with natural speech, lip-sync driven by the Web Audio API, and expressive idle animations.
+DementiaGuide AI is designed for caregivers, family members, and healthcare professionals. The app provides evidence-based dementia care guidance through a calm, accessible, and emotionally supportive interface. The AI avatar — **Aria** — is a VRM model rendered in real time with natural speech, multi-shape lip-sync driven by ElevenLabs character-level alignment, and expressive idle animations.
 
 ---
 
@@ -33,15 +33,16 @@ DementiaGuide AI is designed for caregivers, family members, and healthcare prof
 | Framework | React Native (Expo SDK 54) |
 | Navigation | React Navigation 7 (Bottom Tabs + Native Stack) |
 | AI / RAG | OpenAI `gpt-4o-mini` + `text-embedding-3-small` |
+| STT | OpenAI Whisper (`whisper-1`) via `expo-av` audio recording |
+| TTS | ElevenLabs `eleven_turbo_v2_5` (primary) · OpenAI `tts-1` (fallback) |
+| Lip Sync | ElevenLabs character-level alignment → viseme timeline → 5 VRM blend shapes |
 | Avatar | VRM 3D model via Three.js r180 + `@pixiv/three-vrm` in a WebView |
-| Lip Sync | Web Audio API — real-time RMS → mouth blend shape |
-| TTS | `expo-speech` |
 | Animations | React Native Animated API |
 | Gradients | expo-linear-gradient |
-| Audio | expo-av |
+| Audio | expo-av · Web Audio API (WebView) |
 | Haptics | expo-haptics |
 | Safe Area | react-native-safe-area-context |
-| Storage | `@react-native-async-storage/async-storage`, `expo-secure-store` |
+| Storage | `@react-native-async-storage/async-storage` · `expo-secure-store` |
 
 ---
 
@@ -50,9 +51,9 @@ DementiaGuide AI is designed for caregivers, family members, and healthcare prof
 | Screen | Description |
 |---|---|
 | **Home** | Avatar hero card, quick question chips, text/voice entry, navigation grid |
-| **Chat** | iMessage-style conversation (GiftedChat), typing indicator, clickable source links |
+| **Chat** | iMessage-style conversation, typing indicator, clickable source links |
 | **Library** | Searchable knowledge base across 6 dementia-care categories with article detail view |
-| **Voice** | Full-screen voice UI with real-time waveform, state machine, and transcript |
+| **Voice** | Full-screen voice UI — records via Whisper STT, streams LLM response, plays avatar speech sentence-by-sentence with lip sync |
 | **Settings** | Accessibility controls — text size, contrast, audio, subtitles, haptics, privacy |
 
 ---
@@ -64,6 +65,8 @@ DementiaGuideAi/
 ├── App.js
 ├── babel.config.js
 ├── app.json                          # Expo config
+├── scripts/
+│   └── test-responses.mjs            # CLI tool to test RAG output against sample questions
 └── src/
     ├── navigation/
     │   └── AppNavigator.js           # Bottom tab + stack navigator
@@ -72,14 +75,23 @@ DementiaGuideAi/
     │   ├── ChatScreen.js             # GiftedChat UI, calls openaiService, shows sources
     │   ├── LibraryScreen.js
     │   ├── ArticleDetailScreen.js    # Full article view from Library
-    │   ├── VoiceScreen.js
-    │   └── ProfileScreen.js          # AI configuration (API key, privacy controls)
+    │   ├── VoiceScreen.js            # Voice conversation UI (Whisper → LLM → TTS → avatar)
+    │   └── ProfileScreen.js          # AI configuration (API keys, privacy controls)
     ├── components/
-    │   ├── AvatarVRM.js              # VRM avatar in WebView (Three.js + lip sync)
+    │   ├── AvatarVRM.js              # VRM avatar in WebView (Three.js + viseme lip sync)
     │   ├── Avatar.js                 # Legacy animated avatar (idle/listening/speaking)
     │   ├── MessageCard.js            # Chat bubble with sources and actions
     │   ├── CategoryCard.js           # Library category row
     │   └── VoiceWaveform.js          # 9-bar animated waveform
+    ├── hooks/
+    │   └── useAvatarConversation.js  # Voice pipeline orchestration (STT → LLM stream → TTS queue → playback)
+    ├── lib/
+    │   ├── tts/
+    │   │   ├── ttsService.js         # TTS provider selection (ElevenLabs primary, OpenAI fallback)
+    │   │   └── elevenLabsService.js  # ElevenLabs API wrapper (audio + character alignment)
+    │   └── lipsync/
+    │       ├── createVisemeTimeline.js  # Converts ElevenLabs alignment → viseme frame sequence
+    │       └── phonemeMap.js            # Character → VRM viseme mapping
     ├── constants/
     │   ├── colors.js
     │   ├── typography.js
@@ -87,7 +99,7 @@ DementiaGuideAi/
     ├── data/
     │   └── knowledgeBase.js          # 42 dementia care knowledge chunks (7 per category)
     └── services/
-        ├── openaiService.js          # Full RAG pipeline (embeddings, semantic search, chat)
+        ├── openaiService.js          # Full RAG pipeline (embeddings, semantic search, streaming chat, Whisper STT)
         ├── aceService.js             # NVIDIA ACE stub (used by VoiceScreen mock)
         └── knowledgeService.js       # Knowledge base search (used by LibraryScreen)
 ```
@@ -102,6 +114,7 @@ DementiaGuideAi/
 - Expo CLI
 - Xcode (for iOS Simulator) or Expo Go on a physical device
 - An OpenAI API key
+- An ElevenLabs API key (optional — enables vowel-accurate lip sync; falls back to amplitude-based sync without it)
 
 ### Install
 
@@ -126,7 +139,33 @@ npx expo start --ios --clear
 
 ### API Key Setup
 
-Enter your OpenAI API key in the app under **Settings → AI Configuration**. The key is stored securely via `expo-secure-store` and never leaves the device.
+Enter your API keys in the app under **Settings → AI Configuration**:
+- **OpenAI key** — required for chat, STT (Whisper), and fallback TTS
+- **ElevenLabs key** — optional; enables the full viseme lip sync pipeline
+
+Both keys are stored securely via `expo-secure-store` and never leave the device.
+
+---
+
+## Voice Conversation Pipeline
+
+The Voice screen runs a fully pipelined conversation flow managed by `useAvatarConversation.js`:
+
+```
+[Microphone] → expo-av recording
+     ↓
+[Whisper STT] → transcribed text
+     ↓
+[OpenAI gpt-4o-mini stream] → tokens arrive sentence by sentence
+     ↓
+[ElevenLabs TTS] ← fires immediately per sentence, in parallel
+     ↓
+[Viseme timeline] ← character alignment → mouth shape keyframes
+     ↓
+[AvatarVRM WebView] → plays audio + drives 5 blend shapes in real time
+```
+
+Each sentence is sent to TTS as soon as it completes in the LLM stream — so the avatar begins speaking the first sentence while later sentences are still being generated.
 
 ---
 
@@ -142,7 +181,13 @@ Each state drives:
 - Thinking gaze bias (up-right)
 - Breathing depth on spine/chest bones
 
-**Lip sync** uses the Web Audio API. When TTS audio plays, an `AnalyserNode` measures RMS energy per frame and maps it to the `aa` blend shape, producing mouth movement that tracks the actual audio waveform.
+**Lip sync — ElevenLabs viseme path (primary)**
+
+ElevenLabs returns character-level timestamps alongside the audio. These are converted into a viseme frame sequence by `createVisemeTimeline.js`, mapping characters to one of five VRM blend shapes: `aa` (open), `ih` (smile-open), `ou` (round), `ee` (wide), `oh` (rounded-open). During playback, the WebView tracks `AudioContext.currentTime` each frame, binary-searches the viseme timeline, and cross-fades between the active and next frame over the final 20% of each frame's duration.
+
+**Lip sync — RMS fallback path (OpenAI TTS or no ElevenLabs key)**
+
+When no alignment data is available, a Web Audio `AnalyserNode` measures RMS amplitude per frame and maps it to the `aa` blend shape, producing open/close jaw movement that tracks the audio loudness.
 
 **Recovery:** If the WebGL context is lost (iOS background eviction, Android process kill), the WebView automatically remounts.
 
@@ -159,7 +204,10 @@ Each state drives:
   height={420}
 />
 
-// Play TTS audio with lip sync
+// Play TTS audio with viseme lip sync (ElevenLabs path)
+await avatarRef.current.playAudio({ audio: base64DataUri, visemeTimeline });
+
+// Play TTS audio with RMS fallback
 await avatarRef.current.playAudio(base64DataUri);
 
 // Stop early
@@ -178,10 +226,18 @@ The chat is powered by a fully client-side RAG pipeline in `src/services/openaiS
 | Chat model | `gpt-4o-mini` |
 | Context window | Last 6 messages |
 | Retrieval | Top-5 chunks, min similarity 0.25 |
-| Embedding cache | AsyncStorage key `kb_embeddings_v1` |
+| Embedding cache | AsyncStorage key `kb_embeddings_v2` |
 | Message history | AsyncStorage key `chat_messages_v1` (max 100) |
 
 The knowledge base (`src/data/knowledgeBase.js`) contains 42 curated dementia care chunks across 6 categories: caregiving, clinical, behavioral best practices, home safety, wellbeing, and communication.
+
+### Testing RAG output
+
+```bash
+OPENAI_API_KEY=sk-... node scripts/test-responses.mjs
+```
+
+Runs a set of sample questions through the full pipeline and prints each response alongside the retrieved knowledge base chunks and their similarity scores. Edit the `QUESTIONS` array in the script to test specific queries.
 
 ---
 

@@ -16,6 +16,7 @@ import { AvatarVRM, DEFAULT_VRM_MODEL_URL } from '../components/AvatarVRM';
 import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
 import { useAvatarConversation, VoiceState } from '../hooks/useAvatarConversation';
+import { useSettings } from '../context/SettingsContext';
 
 const QUICK_CHIPS = [
   'Morning routine',
@@ -28,6 +29,7 @@ const QUICK_CHIPS = [
 
 export const VoiceScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState('');
+  const { textScale } = useSettings();
   const avatarRef  = useRef(null);
   const micPulse   = useRef(new Animated.Value(1)).current;
   const insets     = useSafeAreaInsets();
@@ -137,7 +139,7 @@ export const VoiceScreen = ({ navigation }) => {
               onPress={() => handleChipPress(chip)}
               activeOpacity={0.75}
             >
-              <Text style={[styles.chipText, inputText === chip && styles.chipTextActive]}>
+              <Text style={[styles.chipText, inputText === chip && styles.chipTextActive, { fontSize: 13 * textScale }]}>
                 {chip}
               </Text>
             </TouchableOpacity>
@@ -188,7 +190,7 @@ export const VoiceScreen = ({ navigation }) => {
         {/* Ask anything row */}
         <View style={styles.inputRow}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { fontSize: 15 * textScale }]}
             value={inputText}
             onChangeText={setInputText}
             placeholder="Ask Anything..."

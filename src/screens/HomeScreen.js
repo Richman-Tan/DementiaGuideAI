@@ -17,9 +17,11 @@ import { Avatar } from '../components/Avatar';
 import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
 import { QUICK_QUESTIONS } from '../constants/data';
+import { useSettings } from '../context/SettingsContext';
 
 export const HomeScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState('');
+  const { textScale } = useSettings();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const inputRef = useRef(null);
@@ -75,8 +77,8 @@ export const HomeScreen = ({ navigation }) => {
         >
           <View style={styles.headerTop}>
             <View>
-              <Text style={styles.greeting}>{getGreeting()}</Text>
-              <Text style={styles.appName}>DementiaGuide AI</Text>
+              <Text style={[styles.greeting, { fontSize: 16 * textScale }]}>{getGreeting()}</Text>
+              <Text style={[styles.appName, { fontSize: 28 * textScale, lineHeight: 28 * textScale * 1.3 }]}>DementiaGuide AI</Text>
             </View>
             <TouchableOpacity
               style={styles.settingsButton}
@@ -89,7 +91,7 @@ export const HomeScreen = ({ navigation }) => {
           </View>
 
           {/* Tagline */}
-          <Text style={styles.tagline}>Your trusted companion for dementia care guidance</Text>
+          <Text style={[styles.tagline, { fontSize: 14 * textScale }]}>Your trusted companion for dementia care guidance</Text>
         </Animated.View>
 
         {/* Avatar Hero */}
@@ -114,8 +116,8 @@ export const HomeScreen = ({ navigation }) => {
               </View>
 
               <View style={styles.heroText}>
-                <Text style={styles.heroHeading}>How can I help you today?</Text>
-                <Text style={styles.heroSubheading}>
+                <Text style={[styles.heroHeading, { fontSize: 24 * textScale, lineHeight: 24 * textScale * 1.3 }]}>How can I help you today?</Text>
+                <Text style={[styles.heroSubheading, { fontSize: 14 * textScale }]}>
                   Ask a question, explore resources, or start a conversation about dementia care.
                 </Text>
               </View>
@@ -181,7 +183,7 @@ export const HomeScreen = ({ navigation }) => {
 
         {/* Quick Questions */}
         <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-          <Text style={styles.sectionTitle}>Common Questions</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 20 * textScale }]}>Common Questions</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -195,7 +197,7 @@ export const HomeScreen = ({ navigation }) => {
                 accessibilityLabel={q}
                 accessibilityRole="button"
               >
-                <Text style={styles.quickChipText}>{q}</Text>
+                <Text style={[styles.quickChipText, { fontSize: 14 * textScale }]}>{q}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -203,7 +205,7 @@ export const HomeScreen = ({ navigation }) => {
 
         {/* Navigation Cards */}
         <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-          <Text style={styles.sectionTitle}>Explore</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 20 * textScale }]}>Explore</Text>
           <View style={styles.navGrid}>
             <TouchableOpacity
               style={[styles.navCard, { backgroundColor: Colors.primaryMuted }]}

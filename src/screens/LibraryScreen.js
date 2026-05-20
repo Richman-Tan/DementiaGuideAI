@@ -18,13 +18,16 @@ import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
 import { KNOWLEDGE_CATEGORIES } from '../constants/data';
 import { KNOWLEDGE_BASE } from '../data/knowledgeBase';
+import { useSettings } from '../context/SettingsContext';
 
 const CATEGORY_LABELS = Object.fromEntries(
   KNOWLEDGE_CATEGORIES.map(c => [c.id, c.title])
 );
 const readTime = content => `${Math.ceil(content.split(/\s+/).length / 200)} min read`;
 
-const ResourceItem = ({ resource, onPress }) => (
+const ResourceItem = ({ resource, onPress }) => {
+  const { textScale } = useSettings();
+  return (
   <TouchableOpacity
     style={styles.resourceCard}
     onPress={() => onPress?.(resource)}
@@ -40,7 +43,7 @@ const ResourceItem = ({ resource, onPress }) => (
       />
       <Text style={styles.resourceTypeText}>{resource.type === 'guide' ? 'Guide' : 'Article'}</Text>
     </View>
-    <Text style={styles.resourceTitle} numberOfLines={2}>{resource.title}</Text>
+    <Text style={[styles.resourceTitle, { fontSize: 18 * textScale, lineHeight: 22 * textScale }]} numberOfLines={2}>{resource.title}</Text>
     <View style={styles.resourceMeta}>
       <Text style={styles.resourceCategory}>{CATEGORY_LABELS[resource.category] ?? resource.category}</Text>
       <View style={styles.dot} />
@@ -60,11 +63,13 @@ const ResourceItem = ({ resource, onPress }) => (
       style={styles.resourceArrow}
     />
   </TouchableOpacity>
-);
+  );
+};
 
 export const LibraryScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const { textScale } = useSettings();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const searchScaleAnim = useRef(new Animated.Value(1)).current;
@@ -109,8 +114,8 @@ export const LibraryScreen = ({ navigation }) => {
         <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.headerTitle}>Knowledge Library</Text>
-              <Text style={styles.headerSub}>Evidence-based dementia care resources</Text>
+              <Text style={[styles.headerTitle, { fontSize: 28 * textScale, lineHeight: 28 * textScale * 1.3 }]}>Knowledge Library</Text>
+              <Text style={[styles.headerSub, { fontSize: 14 * textScale }]}>Evidence-based dementia care resources</Text>
             </View>
             <TouchableOpacity
               style={styles.chatButton}
@@ -152,7 +157,7 @@ export const LibraryScreen = ({ navigation }) => {
           <View style={[styles.searchBar, isSearchFocused && styles.searchBarFocused]}>
             <MaterialCommunityIcons name="magnify" size={20} color={isSearchFocused ? Colors.primary : Colors.textTertiary} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { fontSize: 16 * textScale }]}
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholder="Search resources, topics, keywords..."
@@ -179,7 +184,7 @@ export const LibraryScreen = ({ navigation }) => {
                 accessibilityRole="button"
                 accessibilityState={{ selected: activeFilter === f.id }}
               >
-                <Text style={[styles.filterText, activeFilter === f.id && styles.filterTextActive]}>
+                <Text style={[styles.filterText, activeFilter === f.id && styles.filterTextActive, { fontSize: 14 * textScale }]}>
                   {f.label}
                 </Text>
               </TouchableOpacity>
@@ -191,7 +196,7 @@ export const LibraryScreen = ({ navigation }) => {
         {!searchQuery && activeFilter === 'all' && (
           <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Browse by Category</Text>
+              <Text style={[styles.sectionTitle, { fontSize: 20 * textScale }]}>Browse by Category</Text>
             </View>
             {KNOWLEDGE_CATEGORIES.map(cat => (
               <CategoryCard
@@ -206,7 +211,7 @@ export const LibraryScreen = ({ navigation }) => {
         {/* Resources */}
         <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
+            <Text style={[styles.sectionTitle, { fontSize: 20 * textScale }]}>
               {searchQuery
                 ? `Results (${filteredResources.length})`
                 : activeFilter !== 'all'
@@ -226,8 +231,8 @@ export const LibraryScreen = ({ navigation }) => {
           {filteredResources.length === 0 ? (
             <View style={styles.emptyState}>
               <MaterialCommunityIcons name="file-search-outline" size={48} color={Colors.border} />
-              <Text style={styles.emptyTitle}>No results found</Text>
-              <Text style={styles.emptyBody}>Try different search terms or browse a category</Text>
+              <Text style={[styles.emptyTitle, { fontSize: 18 * textScale }]}>No results found</Text>
+              <Text style={[styles.emptyBody, { fontSize: 14 * textScale }]}>Try different search terms or browse a category</Text>
               <TouchableOpacity
                 style={styles.askAriaButton}
                 onPress={() => navigation.navigate('Chat', { initialMessage: searchQuery })}
@@ -263,8 +268,8 @@ export const LibraryScreen = ({ navigation }) => {
               >
                 <MaterialCommunityIcons name="robot-excited-outline" size={32} color={Colors.textInverse} />
                 <View style={styles.ctaText}>
-                  <Text style={styles.ctaTitle}>Can't find what you need?</Text>
-                  <Text style={styles.ctaSub}>Ask Aria — your AI guide is ready to help</Text>
+                  <Text style={[styles.ctaTitle, { fontSize: 18 * textScale }]}>Can't find what you need?</Text>
+                  <Text style={[styles.ctaSub, { fontSize: 14 * textScale }]}>Ask Aria — your AI guide is ready to help</Text>
                 </View>
                 <MaterialCommunityIcons name="chevron-right" size={22} color="rgba(255,255,255,0.8)" />
               </LinearGradient>

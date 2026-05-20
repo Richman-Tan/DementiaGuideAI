@@ -16,6 +16,7 @@ import { AvatarVRM, DEFAULT_VRM_MODEL_URL } from '../components/AvatarVRM';
 import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
 import { useAvatarConversation, VoiceState } from '../hooks/useAvatarConversation';
+import { useSettings } from '../context/SettingsContext';
 
 const QUICK_CHIPS = [
   'Morning routine',
@@ -28,6 +29,7 @@ const QUICK_CHIPS = [
 
 export const VoiceScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState('');
+  const { textScale, avatarEnabled } = useSettings();
   const avatarRef  = useRef(null);
   const micPulse   = useRef(new Animated.Value(1)).current;
   const insets     = useSafeAreaInsets();
@@ -107,14 +109,27 @@ export const VoiceScreen = ({ navigation }) => {
 
       {/* Avatar */}
       <View style={styles.avatarArea}>
-        <AvatarVRM
-          ref={avatarRef}
-          modelUrl={DEFAULT_VRM_MODEL_URL}
-          isListening={voiceState === VoiceState.LISTENING}
-          isSpeaking={voiceState === VoiceState.SPEAKING}
-          isThinking={voiceState === VoiceState.PROCESSING}
-          style={styles.avatarVRM}
-        />
+        {avatarEnabled ? (
+          <AvatarVRM
+            ref={avatarRef}
+            modelUrl={DEFAULT_VRM_MODEL_URL}
+            isListening={voiceState === VoiceState.LISTENING}
+            isSpeaking={voiceState === VoiceState.SPEAKING}
+            isThinking={voiceState === VoiceState.PROCESSING}
+            style={styles.avatarVRM}
+          />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <MaterialCommunityIcons
+              name={voiceState === VoiceState.LISTENING ? 'microphone' : voiceState === VoiceState.SPEAKING ? 'volume-high' : voiceState === VoiceState.PROCESSING ? 'dots-horizontal' : 'robot-excited-outline'}
+              size={64}
+              color={isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)'}
+            />
+            <Text style={styles.avatarPlaceholderState}>
+              {voiceState === VoiceState.LISTENING ? 'Listening…' : voiceState === VoiceState.SPEAKING ? 'Speaking…' : voiceState === VoiceState.PROCESSING ? 'Thinking…' : 'Ready'}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.nameBadge}>
           <View style={[styles.nameBadgeDot, { backgroundColor: isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)' }]} />
@@ -137,7 +152,7 @@ export const VoiceScreen = ({ navigation }) => {
               onPress={() => handleChipPress(chip)}
               activeOpacity={0.75}
             >
-              <Text style={[styles.chipText, inputText === chip && styles.chipTextActive]}>
+              <Text style={[styles.chipText, inputText === chip && styles.chipTextActive, { fontSize: 13 * textScale }]}>
                 {chip}
               </Text>
             </TouchableOpacity>
@@ -188,7 +203,7 @@ export const VoiceScreen = ({ navigation }) => {
         {/* Ask anything row */}
         <View style={styles.inputRow}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { fontSize: 15 * textScale }]}
             value={inputText}
             onChangeText={setInputText}
             placeholder="Ask Anything..."
@@ -262,6 +277,18 @@ const styles = StyleSheet.create({
   avatarVRM: {
     flex: 1,
     alignSelf: 'stretch',
+  },
+  avatarPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  avatarPlaceholderState: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   nameBadge: {
     flexDirection: 'row',

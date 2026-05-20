@@ -29,7 +29,7 @@ const QUICK_CHIPS = [
 
 export const VoiceScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState('');
-  const { textScale } = useSettings();
+  const { textScale, avatarEnabled } = useSettings();
   const avatarRef  = useRef(null);
   const micPulse   = useRef(new Animated.Value(1)).current;
   const insets     = useSafeAreaInsets();
@@ -109,14 +109,27 @@ export const VoiceScreen = ({ navigation }) => {
 
       {/* Avatar */}
       <View style={styles.avatarArea}>
-        <AvatarVRM
-          ref={avatarRef}
-          modelUrl={DEFAULT_VRM_MODEL_URL}
-          isListening={voiceState === VoiceState.LISTENING}
-          isSpeaking={voiceState === VoiceState.SPEAKING}
-          isThinking={voiceState === VoiceState.PROCESSING}
-          style={styles.avatarVRM}
-        />
+        {avatarEnabled ? (
+          <AvatarVRM
+            ref={avatarRef}
+            modelUrl={DEFAULT_VRM_MODEL_URL}
+            isListening={voiceState === VoiceState.LISTENING}
+            isSpeaking={voiceState === VoiceState.SPEAKING}
+            isThinking={voiceState === VoiceState.PROCESSING}
+            style={styles.avatarVRM}
+          />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <MaterialCommunityIcons
+              name={voiceState === VoiceState.LISTENING ? 'microphone' : voiceState === VoiceState.SPEAKING ? 'volume-high' : voiceState === VoiceState.PROCESSING ? 'dots-horizontal' : 'robot-excited-outline'}
+              size={64}
+              color={isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)'}
+            />
+            <Text style={styles.avatarPlaceholderState}>
+              {voiceState === VoiceState.LISTENING ? 'Listening…' : voiceState === VoiceState.SPEAKING ? 'Speaking…' : voiceState === VoiceState.PROCESSING ? 'Thinking…' : 'Ready'}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.nameBadge}>
           <View style={[styles.nameBadgeDot, { backgroundColor: isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)' }]} />
@@ -264,6 +277,18 @@ const styles = StyleSheet.create({
   avatarVRM: {
     flex: 1,
     alignSelf: 'stretch',
+  },
+  avatarPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  avatarPlaceholderState: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   nameBadge: {
     flexDirection: 'row',

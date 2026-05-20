@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Audio } from 'expo-av';
 import { openaiService } from '../services/openaiService';
 import { tts } from '../lib/tts/ttsService';
+import { useSettings } from '../context/SettingsContext';
 
 // ─── Voice state machine ──────────────────────────────────────────────────────
 export const VoiceState = {
@@ -42,6 +43,7 @@ export const VoiceState = {
 export function useAvatarConversation({ avatarRef }) {
   const [voiceState, setVoiceState]               = useState(VoiceState.IDLE);
   const [conversationHistory, setConversationHistory] = useState([]);
+  const { audioEnabled } = useSettings();
 
   const recordingRef = useRef(null);
   const abortRef     = useRef(false);  // set true when user stops mid-response
@@ -80,7 +82,7 @@ export function useAvatarConversation({ avatarRef }) {
 
       const addSegment = (text) => {
         const clean = text.trim();
-        if (!clean) return;
+        if (!clean || !audioEnabled) return;
         segmentPromises.push(tts(clean));
       };
 

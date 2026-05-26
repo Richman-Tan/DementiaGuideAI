@@ -29,7 +29,7 @@ const QUICK_CHIPS = [
 
 export const VoiceScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState('');
-  const { textScale, avatarEnabled } = useSettings();
+  const { textScale, avatarEnabled, subtitlesEnabled, audioEnabled, updateSetting } = useSettings();
   const avatarRef  = useRef(null);
   const micPulse   = useRef(new Animated.Value(1)).current;
   const insets     = useSafeAreaInsets();
@@ -42,6 +42,9 @@ export const VoiceScreen = ({ navigation }) => {
     stopAudio,
     handleMicPress,
     handleStop,
+    error,
+    clearError,
+    currentSubtitle,
   } = useAvatarConversation({ avatarRef });
 
   const isActive = voiceState === VoiceState.LISTENING || voiceState === VoiceState.SPEAKING;
@@ -92,18 +95,9 @@ export const VoiceScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.topIconBtn}
           onPress={() => navigation.goBack()}
-          accessibilityLabel="Menu"
+          accessibilityLabel="Go back"
         >
           <MaterialCommunityIcons name="menu" size={24} color="rgba(255,255,255,0.9)" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.captureBtn}
-          onPress={() => {}}
-          accessibilityLabel="Capture"
-        >
-          <MaterialCommunityIcons name="camera-iris" size={18} color="#fff" />
-          <Text style={styles.captureBtnText}>Capture</Text>
         </TouchableOpacity>
       </View>
 
@@ -135,10 +129,28 @@ export const VoiceScreen = ({ navigation }) => {
           <View style={[styles.nameBadgeDot, { backgroundColor: isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)' }]} />
           <Text style={styles.nameBadgeText}>Aria</Text>
         </View>
+
+        {/* Subtitle bar — absolute overlay so it doesn't affect avatar size */}
+        {subtitlesEnabled && currentSubtitle.length > 0 && voiceState === VoiceState.SPEAKING && (
+          <View style={styles.subtitleBar}>
+            <Text style={styles.subtitleText} numberOfLines={3}>{currentSubtitle}</Text>
+          </View>
+        )}
       </View>
 
       {/* Bottom control panel */}
       <View style={[styles.bottomPanel, { paddingBottom: insets.bottom + 12 }]}>
+        {/* Error banner */}
+        {error && (
+          <View style={styles.errorBanner}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#FF6B6B" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity onPress={clearError}>
+              <MaterialCommunityIcons name="close" size={16} color="#FF6B6B" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Quick chips */}
         <ScrollView
           horizontal
@@ -191,11 +203,23 @@ export const VoiceScreen = ({ navigation }) => {
             </TouchableOpacity>
           </Animated.View>
 
-          <TouchableOpacity style={styles.iconBtn} accessibilityLabel="Volume">
-            <MaterialCommunityIcons name="volume-high" size={22} color="rgba(255,255,255,0.8)" />
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => updateSetting('audioEnabled', !audioEnabled)}
+            accessibilityLabel="Volume"
+          >
+            <MaterialCommunityIcons
+              name={audioEnabled ? 'volume-high' : 'volume-off'}
+              size={22}
+              color={audioEnabled ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)'}
+            />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.iconBtn} accessibilityLabel="Settings">
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => navigation.navigate('Profile')}
+            accessibilityLabel="Settings"
+          >
             <MaterialCommunityIcons name="cog-outline" size={22} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
         </View>
@@ -254,23 +278,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  captureBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 24,
-    backgroundColor: 'rgba(100,180,255,0.22)',
-    borderWidth: 1,
-    borderColor: 'rgba(100,180,255,0.4)',
-  },
-  captureBtnText: {
-    ...Typography.labelMedium,
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   avatarArea: {
     flex: 1,
   },
@@ -314,6 +321,42 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.85)',
     fontSize: 13,
     fontWeight: '600',
+  },
+  subtitleBar: {
+    position: 'absolute',
+    bottom: 56,
+    left: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+    zIndex: 10,
+  },
+  subtitleText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 107, 107, 0.12)',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    marginHorizontal: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.25)',
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#FF6B6B',
+    lineHeight: 18,
   },
   bottomPanel: {
     backgroundColor: 'rgba(255,255,255,0.06)',

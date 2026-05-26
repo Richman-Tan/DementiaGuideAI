@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Audio } from 'expo-av';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
 import { openaiService } from '../services/openaiService';
 import { tts } from '../lib/tts/ttsService';
 import { useSettings } from '../context/SettingsContext';
@@ -42,6 +44,10 @@ const WHISPER_RECORDING_OPTIONS = {
 // responses before the first .!? boundary arrives.
 const EARLY_CHUNK_CHARS = 80;
 
+// Shared AsyncStorage key with ChatScreen — both read/write the same array.
+const MESSAGES_KEY = 'chat_messages_v1';
+const MAX_PERSISTED = 100;
+
 /**
  * useAvatarConversation
  *
@@ -74,6 +80,8 @@ const EARLY_CHUNK_CHARS = 80;
 export function useAvatarConversation({ avatarRef }) {
   const [voiceState, setVoiceState]               = useState(VoiceState.IDLE);
   const [conversationHistory, setConversationHistory] = useState([]);
+  const [error, setError]                         = useState(null);            // string | null
+  const [currentSubtitle, setCurrentSubtitle]     = useState(''); // current speaking sentence
   const { audioEnabled } = useSettings();
 
   const recordingRef = useRef(null);
@@ -85,11 +93,26 @@ export function useAvatarConversation({ avatarRef }) {
     historyRef.current = conversationHistory;
   }, [conversationHistory]);
 
-  // Pre-warm KB embeddings when the hook mounts (VoiceScreen opens).
-  // initKnowledgeBase() is idempotent — deduplication in openaiService prevents
-  // double-init if chatStream() is called before this resolves.
+  // On mount: pre-warm KB embeddings and load persisted conversation history
+  // so the voice pipeline shares context with ChatScreen.
   useEffect(() => {
-    openaiService.initKnowledgeBase().catch(() => {});
+    const init = async () => {
+      openaiService.initKnowledgeBase().catch(() => {});
+      try {
+        const raw = await AsyncStorage.getItem(MESSAGES_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (Array.isArray(saved) && saved.length > 0) {
+            const history = saved
+              .filter(m => m.role === 'user' || m.role === 'assistant')
+              .map(m => ({ role: m.role, content: m.text ?? m.content ?? '' }));
+            setConversationHistory(history);
+            historyRef.current = history;
+          }
+        }
+      } catch { /* non-critical */ }
+    };
+    init();
   }, []);
 
   // Cleanup on unmount
@@ -135,15 +158,15 @@ export function useAvatarConversation({ avatarRef }) {
           console.log(`[LATENCY] first_sentence_ready_ms +${pts.first_sentence - t0}`);
           pts.tts_start = Date.now();
           console.log(`[LATENCY] tts_first_request_start_ms +${pts.tts_start - t0}`);
-          const p = tts(clean);
-          p.then(() => {
+          const p = tts(clean).then(result => {
             pts.tts_ready = Date.now();
             console.log(`[LATENCY] tts_first_audio_ready_ms +${pts.tts_ready - t0}`);
-          }).catch(() => {});
+            return { ...result, text: clean };
+          });
           queue.promises.push(p);
           firstSeg = false;
         } else {
-          queue.promises.push(tts(clean));
+          queue.promises.push(tts(clean).then(result => ({ ...result, text: clean })));
         }
         wake();
       };
@@ -199,6 +222,17 @@ export function useAvatarConversation({ avatarRef }) {
           { role: 'user',      content: userText },
           { role: 'assistant', content: fullText  },
         ]);
+        // Persist voice exchange to AsyncStorage in ChatScreen format so both
+        // screens share a unified history.
+        try {
+          const raw = await AsyncStorage.getItem(MESSAGES_KEY);
+          const existing = raw ? JSON.parse(raw) : [];
+          const now = Date.now();
+          const userEntry = { id: `v_${now}`, role: 'user', text: userText, sources: [], timestamp: new Date().toISOString() };
+          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: [], timestamp: new Date().toISOString() };
+          const updated = [...existing, userEntry, assistantEntry].slice(-MAX_PERSISTED);
+          await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(updated));
+        } catch { /* non-critical */ }
         queue.done = true;
         wake(); // unblock consumer even if no segments were added
       }
@@ -225,6 +259,7 @@ export function useAvatarConversation({ avatarRef }) {
 
         const segment = await queue.promises[i]; // wait for TTS to resolve
         if (abortRef.current) break;
+        setCurrentSubtitle(segment.text ?? '');
 
         if (firstPlay) {
           pts.avatar_play = Date.now();
@@ -252,7 +287,9 @@ export function useAvatarConversation({ avatarRef }) {
       await Promise.all([producerTask(), consumerTask()]);
     } catch (err) {
       console.error('[useAvatarConversation] processQuery error:', err);
+      setError(err.message ?? 'Something went wrong. Please try again.');
     } finally {
+      setCurrentSubtitle('');
       setVoiceState(VoiceState.IDLE);
       const d = (a, b) => (a != null && b != null) ? a - b : null;
       console.log('[LATENCY SUMMARY]', JSON.stringify({
@@ -321,10 +358,14 @@ export function useAvatarConversation({ avatarRef }) {
         return;
       }
 
+      // Clean up temp recording file before proceeding
+      FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
+
       // Pass t0 and sttDoneAt so processQuery shares the same timing anchor
       await processQuery(transcript, t0, sttDoneAt);
     } catch (err) {
       console.error('[useAvatarConversation] stopAndTranscribe:', err);
+      setError(err.message ?? 'Could not transcribe audio. Please try again.');
       setVoiceState(VoiceState.IDLE);
     }
   }, [processQuery]);
@@ -365,5 +406,8 @@ export function useAvatarConversation({ avatarRef }) {
     stopAudio,
     handleMicPress,
     handleStop,
+    error,
+    clearError: () => setError(null),
+    currentSubtitle,
   };
 }

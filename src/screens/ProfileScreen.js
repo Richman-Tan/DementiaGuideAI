@@ -23,17 +23,17 @@ import { elevenLabsService } from '../lib/tts/elevenLabsService';
 import { useSettings } from '../context/SettingsContext';
 
 const Section = ({ title, children }) => {
-  const { textScale } = useSettings();
+  const { textScale, colors } = useSettings();
   return (
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { fontSize: 12 * textScale }]}>{title}</Text>
-      <View style={styles.sectionCard}>{children}</View>
+      <View style={[styles.sectionCard, { backgroundColor: colors.surface }]}>{children}</View>
     </View>
   );
 };
 
 const SettingRow = ({ icon, iconColor = Colors.primary, label, sublabel, onPress, right, isLast = false }) => {
-  const { textScale } = useSettings();
+  const { textScale, colors } = useSettings();
   return (
     <TouchableOpacity
       style={[styles.settingRow, !isLast && styles.settingRowBorder]}
@@ -47,8 +47,8 @@ const SettingRow = ({ icon, iconColor = Colors.primary, label, sublabel, onPress
         <MaterialCommunityIcons name={icon} size={20} color={iconColor} />
       </View>
       <View style={styles.settingText}>
-        <Text style={[styles.settingLabel, { fontSize: 16 * textScale }]}>{label}</Text>
-        {sublabel && <Text style={[styles.settingSublabel, { fontSize: 12 * textScale }]}>{sublabel}</Text>}
+        <Text style={[styles.settingLabel, { fontSize: 16 * textScale, color: colors.textPrimary }]}>{label}</Text>
+        {sublabel && <Text style={[styles.settingSublabel, { fontSize: 12 * textScale, color: colors.textTertiary }]}>{sublabel}</Text>}
       </View>
       {right ?? (onPress && (
         <MaterialCommunityIcons name="chevron-right" size={18} color={Colors.textTertiary} />
@@ -181,13 +181,8 @@ export const ProfileScreen = ({ navigation }) => {
     textSize, textScale, setTextSize,
     hapticFeedback, audioEnabled, avatarEnabled, autoPlayResponses,
     updateSetting, triggerHaptic,
+    darkMode, highContrast, subtitlesEnabled, colors,
   } = useSettings();
-  const [settings, setSettings] = useState({
-    contrast: 'standard',
-    subtitlesEnabled: true,
-    notificationsEnabled: true,
-    darkMode: false,
-  });
   const [apiKey, setApiKey]               = useState(null);
   const [elevenLabsKey, setElevenLabsKey] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -201,8 +196,6 @@ export const ProfileScreen = ({ navigation }) => {
     openaiService.getApiKey().then(k => setApiKey(k));
     elevenLabsService.getApiKey().then(k => setElevenLabsKey(k));
   }, []);
-
-  const toggleSetting = (key) => setSettings(prev => ({ ...prev, [key]: !prev[key] }));
 
   const handleSaveApiKey = async (key) => {
     await openaiService.saveApiKey(key);
@@ -308,14 +301,14 @@ export const ProfileScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-          <Text style={[styles.headerTitle, { fontSize: 28 * textScale, lineHeight: 28 * textScale * 1.3 }]}>Settings</Text>
-          <Text style={[styles.headerSub, { fontSize: 14 * textScale }]}>Personalise your DementiaGuide AI experience</Text>
+          <Text style={[styles.headerTitle, { fontSize: 28 * textScale, lineHeight: 28 * textScale * 1.3, color: colors.textPrimary }]}>Settings</Text>
+          <Text style={[styles.headerSub, { fontSize: 14 * textScale, color: colors.textTertiary }]}>Personalise your DementiaGuide AI experience</Text>
         </Animated.View>
 
         {/* Profile card */}
@@ -361,13 +354,8 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.textSecondary}
               label="High Contrast"
               sublabel="Increase colour contrast for readability"
-              value={settings.contrast === 'high'}
-              onToggle={() =>
-                setSettings(prev => ({
-                  ...prev,
-                  contrast: prev.contrast === 'high' ? 'standard' : 'high',
-                }))
-              }
+              value={highContrast}
+              onToggle={(v) => { triggerHaptic('light'); updateSetting('highContrast', v); }}
               isLast={false}
             />
 
@@ -386,8 +374,8 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.textSecondary}
               label="Dark Mode"
               sublabel="Easier on the eyes in low light"
-              value={settings.darkMode}
-              onToggle={() => toggleSetting('darkMode')}
+              value={darkMode}
+              onToggle={(v) => { triggerHaptic('light'); updateSetting('darkMode', v); }}
               isLast
             />
           </Section>
@@ -419,8 +407,8 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.info}
               label="Subtitles"
               sublabel="Show captions during voice responses"
-              value={settings.subtitlesEnabled}
-              onToggle={() => toggleSetting('subtitlesEnabled')}
+              value={subtitlesEnabled}
+              onToggle={(v) => { triggerHaptic('light'); updateSetting('subtitlesEnabled', v); }}
               isLast={false}
             />
 

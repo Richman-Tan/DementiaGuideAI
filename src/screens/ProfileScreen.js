@@ -180,7 +180,7 @@ export const ProfileScreen = ({ navigation }) => {
   const {
     textSize, textScale, setTextSize,
     hapticFeedback, audioEnabled, avatarEnabled, autoPlayResponses,
-    updateSetting, triggerHaptic,
+    updateSetting, toggleDarkMode, triggerHaptic,
     darkMode, highContrast, subtitlesEnabled, colors,
   } = useSettings();
   const [apiKey, setApiKey]               = useState(null);
@@ -375,7 +375,7 @@ export const ProfileScreen = ({ navigation }) => {
               label="Dark Mode"
               sublabel="Easier on the eyes in low light"
               value={darkMode}
-              onToggle={(v) => { triggerHaptic('light'); updateSetting('darkMode', v); }}
+              onToggle={() => { triggerHaptic('medium'); toggleDarkMode(); }}
               isLast
             />
           </Section>

@@ -21,6 +21,10 @@ import { Avatar } from '../components/Avatar';
 import { Colors } from '../constants/colors';
 import { QUICK_QUESTIONS, SAMPLE_MESSAGES } from '../constants/data';
 import { openaiService, OpenAIAuthError, OpenAIRateLimitError } from '../services/openaiService';
+import { useSettings } from '../context/SettingsContext';
+import * as FileSystem from 'expo-file-system';
+import { Audio } from 'expo-av';
+import { tts } from '../lib/tts/ttsService';
 
 const MESSAGES_KEY = 'chat_messages_v1';
 const MAX_PERSISTED = 100;
@@ -32,9 +36,9 @@ const ERROR_MESSAGES = {
 };
 
 // ─── Typing indicator ─────────────────────────────────────────────────────────
-const TypingIndicator = ({ anim }) => (
+const TypingIndicator = ({ anim, bubbleStyle }) => (
   <View style={styles.typingRow}>
-    <View style={styles.typingBubble}>
+    <View style={[styles.typingBubble, bubbleStyle]}>
       {[0, 1, 2].map(i => (
         <Animated.View
           key={i}
@@ -74,6 +78,7 @@ const loadPersistedMessages = async () => {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 export const ChatScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
+  const { textScale, autoPlayResponses, colors } = useSettings();
   const messageListRef = useRef(null);
   // Internal message list (oldest first)
   const [internalMessages, setInternalMessages] = useState(SAMPLE_MESSAGES);
@@ -85,6 +90,7 @@ export const ChatScreen = ({ navigation, route }) => {
   const [error, setError] = useState(null); // null | 'auth' | 'ratelimit' | 'network'
   const initialMessageSent = useRef(false);
   const typingAnim = useRef(new Animated.Value(0)).current;
+  const soundRef = useRef(null);
 
   // ── Startup ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -119,9 +125,21 @@ export const ChatScreen = ({ navigation, route }) => {
     init();
   }, []);
 
+  // Unload sound when screen unmounts
+  useEffect(() => {
+    return () => { soundRef.current?.unloadAsync().catch(() => {}); };
+  }, []);
+
   // Re-check API key when screen comes back into focus (e.g. after saving in Profile)
+  // Also reload messages in case voice conversation added new ones
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', async () => {
+      // Reload messages in case voice conversation added new ones
+      const saved = await loadPersistedMessages();
+      if (saved.length > 0) {
+        setInternalMessages(saved);
+      }
+
       if (apiKeyMissing) {
         const hasKey = await openaiService.hasApiKey();
         if (hasKey) {
@@ -216,7 +234,30 @@ export const ChatScreen = ({ navigation, route }) => {
         return updated;
       });
 
-      setTimeout(() => setIsSpeaking(false), 3000);
+      if (autoPlayResponses) {
+        tts(response.text).then(async ({ audio }) => {
+          try {
+            await Audio.setAudioModeAsync({ playsInSilentModeIOS: true, allowsRecordingIOS: false });
+            const base64 = audio.replace('data:audio/mpeg;base64,', '');
+            const tempPath = `${FileSystem.cacheDirectory}aria_chat_${Date.now()}.mp3`;
+            await FileSystem.writeAsStringAsync(tempPath, base64, { encoding: FileSystem.EncodingType.Base64 });
+            const { sound } = await Audio.Sound.createAsync({ uri: tempPath });
+            soundRef.current = sound;
+            await sound.playAsync();
+            sound.setOnPlaybackStatusUpdate(status => {
+              if (status.didJustFinish) {
+                sound.unloadAsync().catch(() => {});
+                FileSystem.deleteAsync(tempPath, { idempotent: true }).catch(() => {});
+                setIsSpeaking(false);
+              }
+            });
+          } catch { /* non-critical — TTS failure should not affect chat UX */ }
+        }).catch(() => {});
+      }
+
+      if (!autoPlayResponses) {
+        setTimeout(() => setIsSpeaking(false), 3000);
+      }
     } catch (e) {
       setIsTyping(false);
       if (e instanceof OpenAIAuthError) {
@@ -228,7 +269,7 @@ export const ChatScreen = ({ navigation, route }) => {
         setError('network');
       }
     }
-  }, [internalMessages, apiKeyMissing, isInitializing]);
+  }, [internalMessages, apiKeyMissing, isInitializing, autoPlayResponses]);
 
   // ── Custom renderers ──────────────────────────────────────────────────────────
 
@@ -237,10 +278,11 @@ export const ChatScreen = ({ navigation, route }) => {
     const sources = message.sources ?? [];
     return (
       <View style={[styles.messageRow, isUser ? styles.messageRowUser : styles.messageRowAria]}>
-        <View style={[styles.messageBubble, isUser ? styles.messageBubbleUser : styles.messageBubbleAria]}>
+        <View style={[styles.messageBubble, isUser ? styles.messageBubbleUser : [styles.messageBubbleAria, { backgroundColor: colors.border }]]}>
           <Text style={[
             styles.messageText,
-            isUser ? styles.messageTextUser : styles.messageTextAria,
+            isUser ? styles.messageTextUser : [styles.messageTextAria, { color: colors.textPrimary }],
+            { fontSize: 16 * textScale, lineHeight: 22 * textScale },
           ]}>
             {message.text}
           </Text>
@@ -276,18 +318,18 @@ export const ChatScreen = ({ navigation, route }) => {
   const renderChatEmpty = () => (
     <View style={styles.emptyState}>
       <MaterialCommunityIcons name="chat-outline" size={48} color={Colors.border} />
-      <Text style={styles.emptyText}>Ask Aria anything about dementia care</Text>
+      <Text style={[styles.emptyText, { fontSize: 15 * textScale }]}>Ask Aria anything about dementia care</Text>
     </View>
   );
 
   const renderFooter = () => {
     if (!isTyping) return null;
-    return <TypingIndicator anim={typingAnim} />;
+    return <TypingIndicator anim={typingAnim} bubbleStyle={{ backgroundColor: colors.border }} />;
   };
 
   // ── Input bar (rendered outside GiftedChat so layout is never clipped) ────────
   const inputBar = (
-    <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+    <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, 8), backgroundColor: colors.surface, borderTopColor: colors.border }]}>
       {isInitializing ? (
         <View style={styles.initRow}>
           <ActivityIndicator size="small" color={Colors.primary} />
@@ -302,11 +344,11 @@ export const ChatScreen = ({ navigation, route }) => {
           {QUICK_QUESTIONS.slice(0, 5).map((chip, i) => (
             <TouchableOpacity
               key={i}
-              style={styles.chip}
+              style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => sendMessage(chip)}
               accessibilityLabel={chip}
             >
-              <Text style={styles.chipText}>{chip}</Text>
+              <Text style={[styles.chipText, { color: colors.primary }]}>{chip}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -333,9 +375,9 @@ export const ChatScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         )}
 
-        <View style={[styles.pillWrap, inputText.trim() && styles.pillWrapActive]}>
+        <View style={[styles.pillWrap, { backgroundColor: colors.surface, borderColor: colors.border }, inputText.trim() && styles.pillWrapActive]}>
           <TextInput
-            style={styles.pillInput}
+            style={[styles.pillInput, { color: colors.textPrimary }]}
             value={inputText}
             onChangeText={setInputText}
             placeholder={apiKeyMissing ? 'Add your API key in Settings first' : 'Ask Aria anything…'}
@@ -375,14 +417,14 @@ export const ChatScreen = ({ navigation, route }) => {
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="dark-content" />
 
       {/* Safe-area fill behind Dynamic Island */}
-      <View style={[styles.navBarSafeArea, { height: insets.top }]} />
+      <View style={[styles.navBarSafeArea, { height: insets.top, backgroundColor: colors.surface }]} />
 
       {/* Nav bar */}
-      <View style={styles.navBar}>
+      <View style={[styles.navBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.navBtn}
           onPress={() => navigation.goBack()}
@@ -395,7 +437,7 @@ export const ChatScreen = ({ navigation, route }) => {
         <TouchableOpacity style={styles.navCenter} activeOpacity={0.7}>
           <Avatar size={36} isSpeaking={isSpeaking} isListening={false} isIdle={!isSpeaking} />
           <View style={styles.navMeta}>
-            <Text style={styles.navName}>Aria</Text>
+            <Text style={[styles.navName, { color: colors.textPrimary }]}>Aria</Text>
             <Text style={[styles.navStatus, isSpeaking && { color: Colors.accent }]}>
               {isSpeaking ? 'Speaking…' : isTyping ? 'Thinking…' : isInitializing ? 'Loading…' : 'Online'}
             </Text>

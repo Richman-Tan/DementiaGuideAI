@@ -98,11 +98,12 @@ class OpenAIService {
   // Async generator — yields text chunks as they stream from the API so the
   // caller can start TTS on completed sentences before the full response arrives.
 
-  async *chatStream(userMessage, conversationHistory = []) {
+  async *chatStream(userMessage, conversationHistory = [], timingCbs = null) {
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new OpenAIAuthError('No API key configured');
 
     const chunks = await this.search(userMessage, TOP_K);
+    timingCbs?.onRagDone?.();
     const contextBlock = chunks.length > 0
       ? `[CONTEXT]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/CONTEXT]`
       : '[CONTEXT]\nNo specific knowledge base entries matched this query.\n[/CONTEXT]';
@@ -172,6 +173,7 @@ class OpenAIService {
     };
 
     xhr.send(body);
+    timingCbs?.onLlmSend?.();
 
     while (true) {
       while (pending.length > 0) yield pending.shift();

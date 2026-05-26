@@ -16,6 +16,7 @@ import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
 import { KNOWLEDGE_CATEGORIES } from '../constants/data';
 import { KNOWLEDGE_BASE } from '../data/knowledgeBase';
+import { useSettings } from '../context/SettingsContext';
 
 const wordCount = content => content.split(/\s+/).length;
 const readTime = content => `${Math.ceil(wordCount(content) / 200)} min read`;
@@ -38,6 +39,7 @@ const parseContent = (content) => {
 
 export const ArticleDetailScreen = ({ navigation, route }) => {
   const { article } = route.params;
+  const { textScale, colors } = useSettings();
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(18)).current;
@@ -79,7 +81,7 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
   }, [navigation]);
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
       {/* Coloured header band */}
@@ -155,17 +157,17 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
                       {part.num}
                     </Text>
                   </View>
-                  <Text style={styles.numberedText}>{part.text}</Text>
+                  <Text style={[styles.numberedText, { fontSize: 16 * textScale, lineHeight: 26 * textScale, color: colors.textPrimary }]}>{part.text}</Text>
                 </View>
               ) : (
-                <Text key={part.key} style={styles.bodyText}>{part.text}</Text>
+                <Text key={part.key} style={[styles.bodyText, { fontSize: 16 * textScale, lineHeight: 26 * textScale, color: colors.textPrimary }]}>{part.text}</Text>
               )
             )}
           </View>
 
           {/* Tags */}
           <View style={styles.tagsSection}>
-            <Text style={styles.tagsSectionLabel}>Topics covered</Text>
+            <Text style={[styles.tagsSectionLabel, { color: colors.textTertiary }]}>Topics covered</Text>
             <View style={styles.tagsRow}>
               {article.tags.map(tag => (
                 <View
@@ -203,11 +205,11 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
           {/* Related articles */}
           {relatedArticles.length > 0 && (
             <View style={styles.relatedSection}>
-              <Text style={styles.relatedTitle}>More in {category?.title}</Text>
+              <Text style={[styles.relatedTitle, { color: colors.textTertiary }]}>More in {category?.title}</Text>
               {relatedArticles.map(related => (
                 <TouchableOpacity
                   key={related.id}
-                  style={styles.relatedCard}
+                  style={[styles.relatedCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                   onPress={() => handleRelatedArticle(related)}
                   activeOpacity={0.75}
                   accessibilityLabel={related.title}
@@ -220,8 +222,8 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
                     />
                   </View>
                   <View style={styles.relatedMeta}>
-                    <Text style={styles.relatedCardTitle} numberOfLines={2}>{related.title}</Text>
-                    <Text style={styles.relatedReadTime}>{readTime(related.content)}</Text>
+                    <Text style={[styles.relatedCardTitle, { color: colors.textPrimary }]} numberOfLines={2}>{related.title}</Text>
+                    <Text style={[styles.relatedReadTime, { color: colors.textTertiary }]}>{readTime(related.content)}</Text>
                   </View>
                   <MaterialCommunityIcons name="chevron-right" size={16} color={Colors.textTertiary} />
                 </TouchableOpacity>

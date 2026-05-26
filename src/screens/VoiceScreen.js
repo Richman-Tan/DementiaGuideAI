@@ -12,18 +12,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import { AvatarVRM, DEFAULT_VRM_MODEL_URL } from '../components/AvatarVRM';
 import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
-import { openaiService } from '../services/openaiService';
-
-const VoiceState = {
-  IDLE: 'idle',
-  LISTENING: 'listening',
-  PROCESSING: 'processing',
-  SPEAKING: 'speaking',
-};
+import { useAvatarConversation, VoiceState } from '../hooks/useAvatarConversation';
+import { useSettings } from '../context/SettingsContext';
 
 const QUICK_CHIPS = [
   'Morning routine',
@@ -35,30 +28,26 @@ const QUICK_CHIPS = [
 ];
 
 export const VoiceScreen = ({ navigation }) => {
-  const [voiceState, setVoiceState] = useState(VoiceState.IDLE);
   const [inputText, setInputText] = useState('');
-  const [conversationHistory, setConversationHistory] = useState([]);
-  const avatarRef = useRef(null);
-  const recordingRef = useRef(null);
-  const abortRef = useRef(false);   // set true when user stops mid-response
-  const historyRef = useRef([]);    // kept in sync so callbacks always see latest
-  const micPulse = useRef(new Animated.Value(1)).current;
-  const insets = useSafeAreaInsets();
+  const { textScale, avatarEnabled, subtitlesEnabled, audioEnabled, updateSetting } = useSettings();
+  const avatarRef  = useRef(null);
+  const micPulse   = useRef(new Animated.Value(1)).current;
+  const insets     = useSafeAreaInsets();
+
+  const {
+    voiceState,
+    processQuery,
+    startRecording,
+    stopAndTranscribe,
+    stopAudio,
+    handleMicPress,
+    handleStop,
+    error,
+    clearError,
+    currentSubtitle,
+  } = useAvatarConversation({ avatarRef });
 
   const isActive = voiceState === VoiceState.LISTENING || voiceState === VoiceState.SPEAKING;
-
-  // Keep historyRef in sync
-  useEffect(() => {
-    historyRef.current = conversationHistory;
-  }, [conversationHistory]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      recordingRef.current?.stopAndUnloadAsync().catch(() => {});
-      avatarRef.current?.stopAudio();
-    };
-  }, []);
 
   // Mic pulse animation
   useEffect(() => {
@@ -74,154 +63,6 @@ export const VoiceScreen = ({ navigation }) => {
       Animated.spring(micPulse, { toValue: 1, useNativeDriver: true }).start();
     }
   }, [voiceState]);
-
-  // Core: stream RAG chat → sentence-split → parallel TTS → sequential playback.
-  // Each sentence's TTS fires as soon as the sentence is complete from the stream,
-  // so audio for sentence N is generating while sentence N-1 is playing.
-  const processQuery = useCallback(async (userText) => {
-    if (!userText.trim()) return;
-
-    setVoiceState(VoiceState.PROCESSING);
-    abortRef.current = false;
-
-
-    try {
-      const history = historyRef.current;
-      let fullText = '';
-
-      // Promises of data URIs — pushed in sentence order, resolved concurrently.
-      const segmentPromises = [];
-
-      const addSegment = (text) => {
-        const clean = text.trim();
-        if (!clean) return;
-        // tts() now returns a data:audio/mpeg;base64,... URI — no disk write needed.
-        segmentPromises.push(openaiService.tts(clean, 'nova'));
-      };
-
-      // Stream response and split into sentences as chunks arrive.
-      // Hermes doesn't support lookbehind, so use a replace-then-split trick.
-      let buf = '';
-      for await (const chunk of openaiService.chatStream(userText, history)) {
-        if (abortRef.current) break;
-        fullText += chunk;
-        buf += chunk;
-        // Mark sentence ends with a private delimiter, then split
-        const marked = buf.replace(/([.!?])\s+/g, '$1\x1F');
-        const parts = marked.split('\x1F');
-        parts.slice(0, -1).forEach(s => addSegment(s));
-        buf = parts[parts.length - 1];
-      }
-      if (buf.trim() && !abortRef.current) addSegment(buf);
-
-      setConversationHistory(prev => [
-        ...prev,
-        { role: 'user', content: userText },
-        { role: 'assistant', content: fullText },
-      ]);
-
-      if (segmentPromises.length === 0 || abortRef.current) {
-        setVoiceState(VoiceState.IDLE);
-        return;
-      }
-
-      setVoiceState(VoiceState.SPEAKING);
-
-      // Play segments in order via WebView Web Audio API (provides real-time lip sync).
-      for (let i = 0; i < segmentPromises.length; i++) {
-        if (abortRef.current) break;
-        const uri = await segmentPromises[i];
-        if (abortRef.current) break;
-        if (avatarRef.current) await avatarRef.current.playAudio(uri);
-      }
-    } catch (err) {
-      console.error('[VoiceScreen] processQuery:', err);
-    } finally {
-      setVoiceState(VoiceState.IDLE);
-    }
-  }, []);
-
-  const startRecording = useCallback(async () => {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') return;
-
-      // Tear down any lingering recorder before creating a new one
-      if (recordingRef.current) {
-        await recordingRef.current.stopAndUnloadAsync().catch(() => {});
-        recordingRef.current = null;
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      recordingRef.current = recording;
-      setVoiceState(VoiceState.LISTENING);
-    } catch (err) {
-      console.error('[VoiceScreen] startRecording:', err);
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
-    }
-  }, []);
-
-  const stopAndTranscribe = useCallback(async () => {
-    const rec = recordingRef.current;
-    if (!rec) return;
-
-    setVoiceState(VoiceState.PROCESSING);
-
-    try {
-      await rec.stopAndUnloadAsync();
-      const uri = rec.getURI();
-      recordingRef.current = null;
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-      });
-
-      const transcript = await openaiService.transcribe(uri);
-      if (!transcript) {
-        setVoiceState(VoiceState.IDLE);
-        return;
-      }
-
-      await processQuery(transcript);
-    } catch (err) {
-      console.error('[VoiceScreen] stopAndTranscribe:', err);
-      setVoiceState(VoiceState.IDLE);
-    }
-  }, [processQuery]);
-
-  const stopAudio = useCallback(() => {
-    abortRef.current = true;
-    avatarRef.current?.stopAudio();
-  }, []);
-
-  const handleMicPress = useCallback(async () => {
-    if (voiceState === VoiceState.IDLE) {
-      await startRecording();
-    } else if (voiceState === VoiceState.LISTENING) {
-      await stopAndTranscribe();
-    } else if (voiceState === VoiceState.SPEAKING) {
-      await stopAudio();
-      setVoiceState(VoiceState.IDLE);
-    }
-  }, [voiceState, startRecording, stopAndTranscribe, stopAudio]);
-
-  const handleStop = useCallback(async () => {
-    if (recordingRef.current) {
-      await recordingRef.current.stopAndUnloadAsync().catch(() => {});
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
-      recordingRef.current = null;
-    }
-    await stopAudio();
-    setVoiceState(VoiceState.IDLE);
-  }, [stopAudio]);
 
   const handleChipPress = (chip) => setInputText(chip);
 
@@ -254,40 +95,62 @@ export const VoiceScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.topIconBtn}
           onPress={() => navigation.goBack()}
-          accessibilityLabel="Menu"
+          accessibilityLabel="Go back"
         >
           <MaterialCommunityIcons name="menu" size={24} color="rgba(255,255,255,0.9)" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.captureBtn}
-          onPress={() => {}}
-          accessibilityLabel="Capture"
-        >
-          <MaterialCommunityIcons name="camera-iris" size={18} color="#fff" />
-          <Text style={styles.captureBtnText}>Capture</Text>
         </TouchableOpacity>
       </View>
 
       {/* Avatar */}
       <View style={styles.avatarArea}>
-        <AvatarVRM
-          ref={avatarRef}
-          modelUrl={DEFAULT_VRM_MODEL_URL}
-          isListening={voiceState === VoiceState.LISTENING}
-          isSpeaking={voiceState === VoiceState.SPEAKING}
-          isThinking={voiceState === VoiceState.PROCESSING}
-          style={styles.avatarVRM}
-        />
+        {avatarEnabled ? (
+          <AvatarVRM
+            ref={avatarRef}
+            modelUrl={DEFAULT_VRM_MODEL_URL}
+            isListening={voiceState === VoiceState.LISTENING}
+            isSpeaking={voiceState === VoiceState.SPEAKING}
+            isThinking={voiceState === VoiceState.PROCESSING}
+            style={styles.avatarVRM}
+          />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <MaterialCommunityIcons
+              name={voiceState === VoiceState.LISTENING ? 'microphone' : voiceState === VoiceState.SPEAKING ? 'volume-high' : voiceState === VoiceState.PROCESSING ? 'dots-horizontal' : 'robot-excited-outline'}
+              size={64}
+              color={isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)'}
+            />
+            <Text style={styles.avatarPlaceholderState}>
+              {voiceState === VoiceState.LISTENING ? 'Listening…' : voiceState === VoiceState.SPEAKING ? 'Speaking…' : voiceState === VoiceState.PROCESSING ? 'Thinking…' : 'Ready'}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.nameBadge}>
           <View style={[styles.nameBadgeDot, { backgroundColor: isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)' }]} />
           <Text style={styles.nameBadgeText}>Aria</Text>
         </View>
+
+        {/* Subtitle bar — absolute overlay so it doesn't affect avatar size */}
+        {subtitlesEnabled && currentSubtitle.length > 0 && voiceState === VoiceState.SPEAKING && (
+          <View style={styles.subtitleBar}>
+            <Text style={styles.subtitleText} numberOfLines={3}>{currentSubtitle}</Text>
+          </View>
+        )}
       </View>
 
       {/* Bottom control panel */}
       <View style={[styles.bottomPanel, { paddingBottom: insets.bottom + 12 }]}>
+        {/* Error banner */}
+        {error && (
+          <View style={styles.errorBanner}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#FF6B6B" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity onPress={clearError}>
+              <MaterialCommunityIcons name="close" size={16} color="#FF6B6B" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Quick chips */}
         <ScrollView
           horizontal
@@ -301,7 +164,7 @@ export const VoiceScreen = ({ navigation }) => {
               onPress={() => handleChipPress(chip)}
               activeOpacity={0.75}
             >
-              <Text style={[styles.chipText, inputText === chip && styles.chipTextActive]}>
+              <Text style={[styles.chipText, inputText === chip && styles.chipTextActive, { fontSize: 13 * textScale }]}>
                 {chip}
               </Text>
             </TouchableOpacity>
@@ -340,11 +203,23 @@ export const VoiceScreen = ({ navigation }) => {
             </TouchableOpacity>
           </Animated.View>
 
-          <TouchableOpacity style={styles.iconBtn} accessibilityLabel="Volume">
-            <MaterialCommunityIcons name="volume-high" size={22} color="rgba(255,255,255,0.8)" />
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => updateSetting('audioEnabled', !audioEnabled)}
+            accessibilityLabel="Volume"
+          >
+            <MaterialCommunityIcons
+              name={audioEnabled ? 'volume-high' : 'volume-off'}
+              size={22}
+              color={audioEnabled ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)'}
+            />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.iconBtn} accessibilityLabel="Settings">
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => navigation.navigate('Profile')}
+            accessibilityLabel="Settings"
+          >
             <MaterialCommunityIcons name="cog-outline" size={22} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
         </View>
@@ -352,7 +227,7 @@ export const VoiceScreen = ({ navigation }) => {
         {/* Ask anything row */}
         <View style={styles.inputRow}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { fontSize: 15 * textScale }]}
             value={inputText}
             onChangeText={setInputText}
             placeholder="Ask Anything..."
@@ -403,29 +278,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  captureBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 24,
-    backgroundColor: 'rgba(100,180,255,0.22)',
-    borderWidth: 1,
-    borderColor: 'rgba(100,180,255,0.4)',
-  },
-  captureBtnText: {
-    ...Typography.labelMedium,
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   avatarArea: {
     flex: 1,
   },
   avatarVRM: {
     flex: 1,
     alignSelf: 'stretch',
+  },
+  avatarPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  avatarPlaceholderState: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   nameBadge: {
     flexDirection: 'row',
@@ -451,6 +321,42 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.85)',
     fontSize: 13,
     fontWeight: '600',
+  },
+  subtitleBar: {
+    position: 'absolute',
+    bottom: 56,
+    left: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+    zIndex: 10,
+  },
+  subtitleText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 107, 107, 0.12)',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    marginHorizontal: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.25)',
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#FF6B6B',
+    lineHeight: 18,
   },
   bottomPanel: {
     backgroundColor: 'rgba(255,255,255,0.06)',

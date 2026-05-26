@@ -1,15 +1,12 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import { KNOWLEDGE_BASE } from '../data/knowledgeBase';
+import { supabase } from './supabaseService';
 
 const SECURE_KEY = 'openai_api_key';
-const CACHE_KEY = 'kb_embeddings_v2';
 const OPENAI_BASE = 'https://api.openai.com/v1';
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const CHAT_MODEL = 'gpt-4o-mini';
 const MIN_SIMILARITY = 0.25;
 const TOP_K = 5;
-const BATCH_SIZE = 20;
 const MAX_HISTORY = 6;
 
 class OpenAIAuthError extends Error {
@@ -21,9 +18,6 @@ class OpenAIRateLimitError extends Error {
 
 class OpenAIService {
   constructor() {
-    this._chunks = KNOWLEDGE_BASE.map(c => ({ ...c, embedding: null }));
-    this.isInitialized = false;
-    this._initPromise = null;
     this._cachedKey = null;
   }
 
@@ -52,66 +46,9 @@ class OpenAIService {
     return !!k && k.length > 10;
   }
 
-  // ─── Embedding Cache ────────────────────────────────────────────────────────
 
-  async _loadCache() {
-    try {
-      const raw = await AsyncStorage.getItem(CACHE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  }
 
-  async _saveCache(cache) {
-    try {
-      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-    } catch { /* non-critical */ }
-  }
 
-  // ─── Knowledge Base Init ────────────────────────────────────────────────────
-
-  async initKnowledgeBase() {
-    if (this.isInitialized) return;
-    // Deduplicate concurrent calls
-    if (this._initPromise) return this._initPromise;
-    this._initPromise = this._doInit().finally(() => { this._initPromise = null; });
-    return this._initPromise;
-  }
-
-  async _doInit() {
-    const apiKey = await this.getApiKey();
-    if (!apiKey) throw new OpenAIAuthError('No API key configured');
-
-    const cache = await this._loadCache();
-    const missing = this._chunks.filter(c => !cache[c.id]);
-
-    if (missing.length > 0) {
-      // Batch embed missing chunks
-      for (let i = 0; i < missing.length; i += BATCH_SIZE) {
-        const batch = missing.slice(i, i + BATCH_SIZE);
-        const texts = batch.map(c => `${c.title}. ${c.content}`);
-        const embeddings = await this._batchEmbed(texts, apiKey);
-        embeddings.forEach((emb, idx) => {
-          cache[batch[idx].id] = emb;
-        });
-      }
-      await this._saveCache(cache);
-    }
-
-    // Populate in-memory chunks with embeddings
-    this._chunks.forEach(c => {
-      if (cache[c.id]) c.embedding = cache[c.id];
-    });
-
-    this.isInitialized = true;
-  }
-
-  async clearCache() {
-    await AsyncStorage.removeItem(CACHE_KEY);
-    this._chunks.forEach(c => { c.embedding = null; });
-    this.isInitialized = false;
-  }
 
   // ─── Raw OpenAI Calls ───────────────────────────────────────────────────────
 
@@ -136,15 +73,6 @@ class OpenAIService {
     return resp.json();
   }
 
-  async _batchEmbed(texts, apiKey) {
-    const data = await this._callOpenAI('/embeddings', {
-      model: EMBEDDING_MODEL,
-      input: texts,
-    }, apiKey);
-    // Sort by index to preserve order
-    return data.data.sort((a, b) => a.index - b.index).map(d => d.embedding);
-  }
-
   async _embedQuery(text) {
     const data = await this._callOpenAI('/embeddings', {
       model: EMBEDDING_MODEL,
@@ -153,13 +81,24 @@ class OpenAIService {
     return data.data[0].embedding;
   }
 
+  // ─── Semantic Search (Supabase pgvector) ────────────────────────────────────
+
+  async search(query, topK = TOP_K) {
+    const queryEmbedding = await this._embedQuery(query);
+    const { data, error } = await supabase.rpc('match_chunks', {
+      query_embedding: queryEmbedding,
+      match_count: topK,
+      min_similarity: MIN_SIMILARITY,
+    });
+    if (error) throw new Error(`Supabase search error: ${error.message}`);
+    return data ?? [];
+  }
+
   // ─── Streaming Chat ─────────────────────────────────────────────────────────
   // Async generator — yields text chunks as they stream from the API so the
   // caller can start TTS on completed sentences before the full response arrives.
 
   async *chatStream(userMessage, conversationHistory = [], timingCbs = null) {
-    if (!this.isInitialized) await this.initKnowledgeBase();
-
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new OpenAIAuthError('No API key configured');
 
@@ -307,35 +246,6 @@ class OpenAIService {
     return data.text?.trim() ?? '';
   }
 
-  // ─── Cosine Similarity ──────────────────────────────────────────────────────
-
-  _cosineSimilarity(a, b) {
-    let dot = 0, normA = 0, normB = 0;
-    for (let i = 0; i < a.length; i++) {
-      dot += a[i] * b[i];
-      normA += a[i] * a[i];
-      normB += b[i] * b[i];
-    }
-    const denom = Math.sqrt(normA) * Math.sqrt(normB);
-    return denom === 0 ? 0 : dot / denom;
-  }
-
-  // ─── Semantic Search ────────────────────────────────────────────────────────
-
-  async search(query, topK = TOP_K) {
-    if (!this.isInitialized) await this.initKnowledgeBase();
-
-    const queryEmbedding = await this._embedQuery(query);
-    const scored = this._chunks
-      .filter(c => c.embedding !== null)
-      .map(c => ({ chunk: c, score: this._cosineSimilarity(queryEmbedding, c.embedding) }))
-      .filter(r => r.score >= MIN_SIMILARITY)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topK);
-
-    return scored.map(r => r.chunk);
-  }
-
   // ─── System Prompt ──────────────────────────────────────────────────────────
 
   _buildSystemPrompt() {
@@ -354,10 +264,6 @@ IMPORTANT RULES:
   // ─── RAG Chat ───────────────────────────────────────────────────────────────
 
   async chat(userMessage, conversationHistory = []) {
-    if (!this.isInitialized) {
-      await this.initKnowledgeBase();
-    }
-
     // Retrieve relevant chunks
     const chunks = await this.search(userMessage, TOP_K);
 

@@ -42,6 +42,14 @@ export default function AdminPage() {
   const [toast, setToast]                 = useState(null);
   const [expandedId, setExpandedId]       = useState(null);
 
+  // ─── Ingest state ──────────────────────────────────────────────────────────
+  const [ingestOpen, setIngestOpen]       = useState(false);
+  const [ingestMode, setIngestMode]       = useState('url');
+  const EMPTY_INGEST = { url: '', category: 'clinical', org: '', prefix: '', sourceUrl: '' };
+  const [ingestForm, setIngestForm]       = useState({ url: '', category: 'clinical', org: '', prefix: '', sourceUrl: '' });
+  const [ingestFile, setIngestFile]       = useState(null);
+  const [ingestStatus, setIngestStatus]   = useState(null);
+
   useEffect(() => { fetchChunks(); }, []);
 
   async function fetchChunks() {
@@ -157,6 +165,46 @@ export default function AdminPage() {
     setIsNew(true);
   }
 
+  function openIngest() {
+    setIngestStatus(null);
+    setIngestFile(null);
+    setIngestForm({ url: '', category: 'clinical', org: '', prefix: '', sourceUrl: '' });
+    setIngestOpen(true);
+  }
+
+  async function handleIngest() {
+    setIngestStatus({ processing: true });
+    try {
+      let res;
+      if (ingestMode === 'url') {
+        res = await fetch('/api/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url:      ingestForm.url,
+            category: ingestForm.category,
+            org:      ingestForm.org,
+            prefix:   ingestForm.prefix || undefined,
+          }),
+        });
+      } else {
+        const fd = new FormData();
+        fd.append('file', ingestFile);
+        fd.append('category', ingestForm.category);
+        fd.append('org',      ingestForm.org);
+        if (ingestForm.sourceUrl) fd.append('sourceUrl', ingestForm.sourceUrl);
+        if (ingestForm.prefix)    fd.append('prefix',    ingestForm.prefix);
+        res = await fetch('/api/ingest', { method: 'POST', body: fd });
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setIngestStatus({ processing: false, result: data });
+      await fetchChunks();
+    } catch (e) {
+      setIngestStatus({ processing: false, error: e.message });
+    }
+  }
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -177,7 +225,10 @@ export default function AdminPage() {
             ))}
           </p>
         </div>
-        <button onClick={openAdd} style={btn('#2563eb')}>+ Add Chunk</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={openIngest} style={btn('#7c3aed')}>↑ Ingest URL / PDF</button>
+          <button onClick={openAdd} style={btn('#2563eb')}>+ Add Chunk</button>
+        </div>
       </div>
 
       {/* ── Filters ── */}
@@ -305,13 +356,169 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ── Footer note ── */}
-      <p style={{ marginTop: 16, fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
-        To add content from URLs or PDFs, use the CLI:{' '}
-        <code style={{ background: '#f3f4f6', padding: '1px 5px', borderRadius: 3 }}>
-          node scripts/ingest.mjs --source &lt;url&gt; --category &lt;slug&gt; --org &lt;name&gt;
-        </code>
-      </p>
+      {/* ── Ingest Modal ── */}
+      {ingestOpen && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.55)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 50, padding: 16,
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 12, padding: 28,
+            width: '100%', maxWidth: 560,
+            maxHeight: '90vh', overflowY: 'auto',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+          }}>
+            <h2 style={{ margin: '0 0 18px', fontSize: 17, fontWeight: 700 }}>
+              ↑ Ingest from URL or PDF
+            </h2>
+
+            {/* Mode tabs */}
+            <div style={{ display: 'flex', marginBottom: 20, border: '1px solid #e5e7eb', borderRadius: 7, overflow: 'hidden' }}>
+              {['url', 'pdf'].map(m => (
+                <button
+                  key={m}
+                  onClick={() => { setIngestMode(m); setIngestFile(null); setIngestStatus(null); }}
+                  disabled={ingestStatus?.processing}
+                  style={{
+                    flex: 1, padding: '9px 0', border: 'none',
+                    background: ingestMode === m ? '#7c3aed' : '#fff',
+                    color:      ingestMode === m ? '#fff' : '#6b7280',
+                    fontWeight: 600, fontSize: 13, cursor: 'pointer',
+                  }}
+                >
+                  {m === 'url' ? '🔗 URL' : '📄 PDF'}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'grid', gap: 14 }}>
+              {ingestMode === 'url' ? (
+                <Field label="URL to ingest">
+                  <input
+                    style={inputSt}
+                    type="url"
+                    value={ingestForm.url}
+                    onChange={e => setIngestForm(p => ({ ...p, url: e.target.value }))}
+                    placeholder="https://www.alzheimers.org.uk/..."
+                    disabled={ingestStatus?.processing}
+                  />
+                </Field>
+              ) : (
+                <>
+                  <Field label="PDF file">
+                    <input
+                      style={{ ...inputSt, padding: '6px 10px' }}
+                      type="file"
+                      accept=".pdf"
+                      onChange={e => setIngestFile(e.target.files[0] || null)}
+                      disabled={ingestStatus?.processing}
+                    />
+                  </Field>
+                  <Field label="Source URL (optional — shown as attribution link)">
+                    <input
+                      style={inputSt}
+                      type="url"
+                      value={ingestForm.sourceUrl}
+                      onChange={e => setIngestForm(p => ({ ...p, sourceUrl: e.target.value }))}
+                      placeholder="https://..."
+                      disabled={ingestStatus?.processing}
+                    />
+                  </Field>
+                </>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <Field label="Category">
+                  <select
+                    style={inputSt}
+                    value={ingestForm.category}
+                    onChange={e => setIngestForm(p => ({ ...p, category: e.target.value }))}
+                    disabled={ingestStatus?.processing}
+                  >
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </Field>
+                <Field label="Source Organisation">
+                  <input
+                    style={inputSt}
+                    value={ingestForm.org}
+                    onChange={e => setIngestForm(p => ({ ...p, org: e.target.value }))}
+                    placeholder="e.g. Dementia Australia"
+                    disabled={ingestStatus?.processing}
+                  />
+                </Field>
+              </div>
+
+              <Field label="ID prefix (optional — auto-derived from title if blank)">
+                <input
+                  style={inputSt}
+                  value={ingestForm.prefix}
+                  onChange={e => setIngestForm(p => ({ ...p, prefix: e.target.value.toLowerCase().replace(/\s+/g, '_') }))}
+                  placeholder="e.g. alzheimers_disease"
+                  disabled={ingestStatus?.processing}
+                />
+              </Field>
+            </div>
+
+            {/* Status */}
+            {ingestStatus?.processing && (
+              <div style={{ marginTop: 18, padding: '12px 16px', background: '#eff6ff', borderRadius: 7, color: '#1d4ed8', fontSize: 13 }}>
+                ⏳ Fetching content, auto-tagging, and generating embeddings… (~10–20 s)
+              </div>
+            )}
+            {ingestStatus?.result && (
+              <div style={{ marginTop: 18, padding: '12px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 7 }}>
+                <strong style={{ color: '#166534' }}>
+                  ✓ {ingestStatus.result.chunks_added} chunk{ingestStatus.result.chunks_added !== 1 ? 's' : ''} added
+                </strong>
+                {ingestStatus.result.article_title && (
+                  <p style={{ margin: '4px 0 0', color: '#166534', fontSize: 13 }}>"{ingestStatus.result.article_title}"</p>
+                )}
+                <p style={{ margin: '8px 0 0', fontSize: 12, color: '#374151' }}>
+                  IDs:{' '}
+                  {ingestStatus.result.ids.map(id => (
+                    <code key={id} style={{ background: '#dcfce7', padding: '1px 5px', borderRadius: 3, marginRight: 4 }}>{id}</code>
+                  ))}
+                </p>
+              </div>
+            )}
+            {ingestStatus?.error && (
+              <div style={{ marginTop: 18, padding: '12px 16px', background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 7, color: '#991b1b', fontSize: 13 }}>
+                <strong>Error:</strong> {ingestStatus.error}
+              </div>
+            )}
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setIngestOpen(false)}
+                style={btn('#6b7280')}
+                disabled={ingestStatus?.processing}
+              >
+                {ingestStatus?.result ? 'Close' : 'Cancel'}
+              </button>
+              {!ingestStatus?.result && (
+                <button
+                  onClick={handleIngest}
+                  style={btn('#7c3aed')}
+                  disabled={
+                    ingestStatus?.processing ||
+                    (ingestMode === 'url' ? !ingestForm.url : !ingestFile) ||
+                    !ingestForm.org
+                  }
+                >
+                  {ingestStatus?.processing ? 'Ingesting…' : '↑ Ingest'}
+                </button>
+              )}
+            </div>
+            <p style={{ margin: '10px 0 0', fontSize: 12, color: '#9ca3af', lineHeight: 1.5 }}>
+              Content is auto-chunked (~500 words), auto-tagged via GPT-4o-mini, and embedded via OpenAI text-embedding-3-small.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Edit / Add Modal ── */}
       {editChunk && (

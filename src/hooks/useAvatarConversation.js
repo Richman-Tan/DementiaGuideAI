@@ -42,7 +42,7 @@ const WHISPER_RECORDING_OPTIONS = {
 // Secondary sentence split: fire TTS early when a sentence buffer exceeds this
 // length and contains a comma/semicolon, avoiding long silences on clause-heavy
 // responses before the first .!? boundary arrives.
-const EARLY_CHUNK_CHARS = 80;
+const EARLY_CHUNK_CHARS = 150;
 
 // Shared AsyncStorage key with ChatScreen — both read/write the same array.
 const MESSAGES_KEY = 'chat_messages_v1';
@@ -274,10 +274,12 @@ export function useAvatarConversation({ avatarRef }) {
 
         if (avatarRef.current) await avatarRef.current.playAudio(segment);
 
-        // Skip the inter-segment gap after the final segment
+        // Small gap to let the AudioContext finish before the next segment.
+        // TTS audio already includes natural trailing silence; 50 ms is enough
+        // to avoid any bridge-timing overlap without creating perceptible pauses.
         const isLast = queue.done && i === queue.promises.length - 1;
         if (!isLast && !abortRef.current) {
-          await new Promise(r => setTimeout(r, 420));
+          await new Promise(r => setTimeout(r, 50));
         }
         i++;
       }

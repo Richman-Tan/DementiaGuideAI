@@ -79,7 +79,7 @@ class ElevenLabsService {
         body: JSON.stringify({
           text,
           model_id: DEFAULT_MODEL_ID,
-          output_format: 'mp3_22050_32',
+          output_format: 'mp3_44100_64',
           voice_settings: {
             stability: 0.40,
             similarity_boost: 0.75,

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "DementiaGuideAi",
+    "name": "DementiaGuide AI",
     "slug": "DementiaGuideAi",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,7 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.DementiaGuideAi"
+      "bundleIdentifier": "com.richmantan.dementiaGuideAi",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "DementiaGuide AI uses the microphone to let you ask questions by voice, supporting hands-free use for caregivers and people living with dementia.",
+        "NSFaceIDUsageDescription": "Used to protect your saved settings."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,13 +26,24 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.DementiaGuideAi"
+      "package": "com.richmantan.dementiaGuideAi",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "DementiaGuide AI uses the microphone to support voice-based questions — helpful for caregivers who need hands-free access to dementia care information."
+        }
+      ]
     ]
   }
 }

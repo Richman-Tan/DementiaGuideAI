@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import { getThemeColors } from '../constants/colors';
 
 const STORAGE_KEY = '@dg_settings_v1';
 const TEXT_SCALE  = { small: 0.88, medium: 1.0, large: 1.18 };
@@ -11,6 +12,9 @@ const DEFAULTS = {
   audioEnabled:      true,
   avatarEnabled:     true,
   autoPlayResponses: false,
+  darkMode:          false,
+  highContrast:      false,
+  subtitlesEnabled:  true,
 };
 
 const SettingsContext = createContext(null);
@@ -63,6 +67,11 @@ export const SettingsProvider = ({ children }) => {
     }
   }, [settings.hapticFeedback]);
 
+  const colors = useMemo(
+    () => getThemeColors(settings.darkMode, settings.highContrast),
+    [settings.darkMode, settings.highContrast]
+  );
+
   const value = {
     textSize:          settings.textSize,
     textScale:         TEXT_SCALE[settings.textSize] ?? 1.0,
@@ -70,6 +79,10 @@ export const SettingsProvider = ({ children }) => {
     audioEnabled:      settings.audioEnabled,
     avatarEnabled:     settings.avatarEnabled,
     autoPlayResponses: settings.autoPlayResponses,
+    darkMode:          settings.darkMode,
+    highContrast:      settings.highContrast,
+    subtitlesEnabled:  settings.subtitlesEnabled,
+    colors,
     setTextSize,
     updateSetting,
     triggerHaptic,

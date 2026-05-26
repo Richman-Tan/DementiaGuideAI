@@ -37,8 +37,9 @@
  * -----------------------------------------------------------------------------
  *
  *   --source    (required) Local path to a PDF OR a public https:// URL
- *   --category  (required) Category slug: caregiving | clinical | communication
- *                          | prevention | bestpractices | homesafety | support
+ *   --category  (required) One of the following slugs:
+ *                          caregiving | clinical | communication |
+ *                          prevention | best-practices | home-safety | well-being
  *   --org       (required) Name of the source organisation (e.g. "NHS UK")
  *   --url       (optional) Canonical URL to attribute as source_url.
  *                          Defaults to --source if source is a URL.
@@ -83,10 +84,17 @@ const org      = getArg('org');
 const urlArg   = getArg('url');
 const prefix   = getArg('prefix');
 
+const VALID_CATEGORIES = ['caregiving', 'clinical', 'communication', 'prevention', 'best-practices', 'home-safety', 'well-being'];
+
 if (!source || !category || !org) {
   console.error(
     'Usage: node scripts/ingest.mjs --source <path|url> --category <slug> --org <name> [--url <url>] [--prefix <id_prefix>] [--dry-run]'
   );
+  process.exit(1);
+}
+
+if (!VALID_CATEGORIES.includes(category)) {
+  console.error(`Invalid category "${category}". Must be one of: ${VALID_CATEGORIES.join(' | ')}`);
   process.exit(1);
 }
 
@@ -103,6 +111,7 @@ if (!hasDryRun && (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !OPENAI_API_KE
 
 const OPENAI_BASE      = 'https://api.openai.com/v1';
 const EMBEDDING_MODEL  = 'text-embedding-3-small';
+const CHAT_MODEL       = 'gpt-4o-mini';
 const CHUNK_WORDS      = 500;
 const OVERLAP_WORDS    = 50;
 const MIN_CHUNK_WORDS  = 40;
@@ -197,11 +206,69 @@ function chunkText(text, sourceTitle) {
     category,
     title:      chunks.length === 1 ? sourceTitle : `${sourceTitle} (Part ${idx + 1})`,
     content,
-    tags:       [],
+    tags:       [],  // populated by autoTagChunks()
     source_url: urlArg ?? (source.startsWith('http') ? source : null),
     source_org: org,
     embedding:  null,
   }));
+}
+
+// ─── Auto-tagging via GPT-4o-mini ─────────────────────────────────────────────
+// Sends each chunk's title + content to GPT and asks for 4-6 relevant tags.
+// Tags match the style of the existing knowledge base (lowercase, 1-3 words each).
+
+async function autoTagChunks(chunks) {
+  console.log('\nGenerating tags...');
+  for (const chunk of chunks) {
+    const resp = await fetch(`${OPENAI_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization:  `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: CHAT_MODEL,
+        max_tokens: 60,
+        temperature: 0,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a specialist tagger for a dementia care knowledge base used by caregivers and clinicians. ' +
+              'Given a chunk of text, produce ONLY a JSON array of 5 to 8 lowercase tags that are SPECIFIC to the ' +
+              'exact content — not generic dementia labels. ' +
+              'Rules: ' +
+              '(1) Tags must reflect the specific condition, symptom, technique, medication, risk factor, or situation discussed — not just "dementia" or "caregiving". ' +
+              '(2) Include the specific disease type if mentioned (e.g. "alzheimer\'s disease", "vascular dementia", "lewy body dementia"). ' +
+              '(3) Include specific symptoms or behaviours mentioned (e.g. "sundowning", "repetitive questioning", "dysphagia", "incontinence"). ' +
+              '(4) Include specific interventions or strategies if present (e.g. "prompted toileting", "cognitive stimulation therapy", "reminiscence therapy"). ' +
+              '(5) Include specific medications if named (e.g. "donepezil", "memantine", "risperidone"). ' +
+              '(6) Include the target audience if clear (e.g. "family carer", "clinician", "aged care worker"). ' +
+              '(7) Use 1-3 words per tag, all lowercase. ' +
+              '(8) No explanation, no markdown — return ONLY the JSON array. ' +
+              'Bad example (too generic): ["dementia","memory","caregiving","brain"] ' +
+              'Good example: ["alzheimer\'s disease","amyloid plaques","tau tangles","early diagnosis","MCI","atypical alzheimer\'s","risk factors","family carer"]',
+          },
+          {
+            role: 'user',
+            content: `Title: ${chunk.title}\n\nContent: ${chunk.content.slice(0, 800)}`,
+          },
+        ],
+      }),
+    });
+    if (!resp.ok) {
+      console.warn(`  Warning: tagging failed for "${chunk.title}" — leaving tags empty`);
+      continue;
+    }
+    const data = await resp.json();
+    const raw  = data.choices[0].message.content.trim();
+    try {
+      chunk.tags = JSON.parse(raw);
+      console.log(`  "${chunk.title}" → [${chunk.tags.join(', ')}]`);
+    } catch {
+      console.warn(`  Warning: could not parse tags for "${chunk.title}": ${raw}`);
+    }
+  }
 }
 
 // ─── OpenAI embedding ─────────────────────────────────────────────────────────
@@ -243,20 +310,30 @@ async function main() {
   // 2. Chunk
   const chunks = chunkText(text, title);
 
+  // 3. Auto-tag (requires OPENAI_API_KEY even in dry-run if tags are wanted)
+  if (OPENAI_API_KEY) {
+    await autoTagChunks(chunks);
+  } else {
+    console.log('\nSkipping auto-tagging (no OPENAI_API_KEY set)');
+  }
+
   if (hasDryRun) {
     console.log('\n── DRY RUN — chunks that would be uploaded ──\n');
     chunks.forEach((c, i) => {
-      console.log(`[${i + 1}] id: ${c.id}`);
-      console.log(`    title: ${c.title}`);
-      console.log(`    words: ${c.content.split(' ').length}`);
-      console.log(`    preview: ${c.content.slice(0, 120)}...`);
+      console.log(`[${i + 1}] id:       ${c.id}`);
+      console.log(`    title:    ${c.title}`);
+      console.log(`    words:    ${c.content.split(' ').length}`);
+      console.log(`    tags:     [${c.tags.join(', ')}]`);
+      console.log(`    content:\n`);
+      // Print full content indented so it can be reviewed for accuracy
+      c.content.split('\n').forEach(line => console.log(`      ${line}`));
       console.log();
     });
     console.log(`Total: ${chunks.length} chunks. Run without --dry-run to upload.`);
     return;
   }
 
-  // 3. Embed in batches
+  // 4. Embed in batches
   console.log('\nGenerating embeddings...');
   for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
     const batch = chunks.slice(i, i + BATCH_SIZE);
@@ -267,7 +344,7 @@ async function main() {
     console.log(' done');
   }
 
-  // 4. Upsert to Supabase
+  // 5. Upsert to Supabase
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
   });

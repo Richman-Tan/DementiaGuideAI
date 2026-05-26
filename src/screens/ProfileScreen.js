@@ -10,6 +10,7 @@ import {
   Animated,
   StatusBar,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -18,37 +19,47 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
 import { openaiService } from '../services/openaiService';
+import { elevenLabsService } from '../lib/tts/elevenLabsService';
+import { useSettings } from '../context/SettingsContext';
 
-const Section = ({ title, children }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.sectionCard}>{children}</View>
-  </View>
-);
-
-const SettingRow = ({ icon, iconColor = Colors.primary, label, sublabel, onPress, right, isLast = false }) => (
-  <TouchableOpacity
-    style={[styles.settingRow, !isLast && styles.settingRowBorder]}
-    onPress={onPress}
-    disabled={!onPress && !right}
-    activeOpacity={onPress ? 0.7 : 1}
-    accessibilityLabel={label}
-    accessibilityRole={onPress ? 'button' : 'none'}
-  >
-    <View style={[styles.settingIcon, { backgroundColor: `${iconColor}18` }]}>
-      <MaterialCommunityIcons name={icon} size={20} color={iconColor} />
+const Section = ({ title, children }) => {
+  const { textScale, colors } = useSettings();
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { fontSize: 12 * textScale }]}>{title}</Text>
+      <View style={[styles.sectionCard, { backgroundColor: colors.surface }]}>{children}</View>
     </View>
-    <View style={styles.settingText}>
-      <Text style={styles.settingLabel}>{label}</Text>
-      {sublabel && <Text style={styles.settingSublabel}>{sublabel}</Text>}
-    </View>
-    {right ?? (onPress && (
-      <MaterialCommunityIcons name="chevron-right" size={18} color={Colors.textTertiary} />
-    ))}
-  </TouchableOpacity>
-);
+  );
+};
 
-const ToggleRow = ({ icon, iconColor, label, sublabel, value, onToggle, isLast }) => (
+const SettingRow = ({ icon, iconColor = Colors.primary, label, sublabel, onPress, right, isLast = false }) => {
+  const { textScale, colors } = useSettings();
+  return (
+    <TouchableOpacity
+      style={[styles.settingRow, !isLast && styles.settingRowBorder]}
+      onPress={onPress}
+      disabled={!onPress && !right}
+      activeOpacity={onPress ? 0.7 : 1}
+      accessibilityLabel={label}
+      accessibilityRole={onPress ? 'button' : 'none'}
+    >
+      <View style={[styles.settingIcon, { backgroundColor: `${iconColor}18` }]}>
+        <MaterialCommunityIcons name={icon} size={20} color={iconColor} />
+      </View>
+      <View style={styles.settingText}>
+        <Text style={[styles.settingLabel, { fontSize: 16 * textScale, color: colors.textPrimary }]}>{label}</Text>
+        {sublabel && <Text style={[styles.settingSublabel, { fontSize: 12 * textScale, color: colors.textTertiary }]}>{sublabel}</Text>}
+      </View>
+      {right ?? (onPress && (
+        <MaterialCommunityIcons name="chevron-right" size={18} color={Colors.textTertiary} />
+      ))}
+    </TouchableOpacity>
+  );
+};
+
+const ToggleRow = ({ icon, iconColor, label, sublabel, value, onToggle, isLast }) => {
+  const { triggerHaptic } = useSettings();
+  return (
   <SettingRow
     icon={icon}
     iconColor={iconColor}
@@ -58,7 +69,7 @@ const ToggleRow = ({ icon, iconColor, label, sublabel, value, onToggle, isLast }
     right={
       <Switch
         value={value}
-        onValueChange={onToggle}
+        onValueChange={(v) => { triggerHaptic('light'); onToggle(v); }}
         trackColor={{ false: Colors.border, true: Colors.primary }}
         thumbColor={Colors.surface}
         ios_backgroundColor={Colors.border}
@@ -66,7 +77,8 @@ const ToggleRow = ({ icon, iconColor, label, sublabel, value, onToggle, isLast }
       />
     }
   />
-);
+  );
+};
 
 const TextSizeSelector = ({ value, onChange }) => {
   const sizes = [
@@ -101,12 +113,14 @@ const TextSizeSelector = ({ value, onChange }) => {
 };
 
 // ─── API Key Row ──────────────────────────────────────────────────────────────
-const ApiKeyRow = ({ value, onSave, onClear }) => {
+// label defaults to "OpenAI API Key" so existing usages need no change.
+const ApiKeyRow = ({ value, onSave, onClear, label = 'OpenAI API Key', placeholder = 'sk-proj-...' }) => {
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState('');
   const [hidden, setHidden] = useState(true);
 
-  const displayValue = value ? `sk-...${value.slice(-4)}` : 'Not configured';
+  // Mask the key regardless of provider prefix (sk-, xi-, etc.)
+  const displayValue = value ? `…${value.slice(-4)}` : 'Not configured';
 
   if (editing) {
     return (
@@ -118,12 +132,12 @@ const ApiKeyRow = ({ value, onSave, onClear }) => {
           style={styles.apiKeyInput}
           value={input}
           onChangeText={setInput}
-          placeholder="sk-proj-..."
+          placeholder={placeholder}
           autoCapitalize="none"
           autoCorrect={false}
           secureTextEntry={hidden}
           placeholderTextColor={Colors.textTertiary}
-          accessibilityLabel="OpenAI API key input"
+          accessibilityLabel={`${label} input`}
         />
         <TouchableOpacity onPress={() => setHidden(h => !h)} style={styles.eyeBtn}>
           <MaterialCommunityIcons
@@ -154,7 +168,7 @@ const ApiKeyRow = ({ value, onSave, onClear }) => {
     <SettingRow
       icon="key-variant"
       iconColor={value ? Colors.success : Colors.warning}
-      label="OpenAI API Key"
+      label={label}
       sublabel={displayValue}
       onPress={() => setEditing(true)}
       isLast={false}
@@ -163,18 +177,14 @@ const ApiKeyRow = ({ value, onSave, onClear }) => {
 };
 
 export const ProfileScreen = ({ navigation }) => {
-  const [settings, setSettings] = useState({
-    textSize: 'medium',
-    contrast: 'standard',
-    audioEnabled: true,
-    subtitlesEnabled: true,
-    avatarEnabled: true,
-    hapticFeedback: true,
-    autoPlayResponses: false,
-    notificationsEnabled: true,
-    darkMode: false,
-  });
-  const [apiKey, setApiKey] = useState(null);
+  const {
+    textSize, textScale, setTextSize,
+    hapticFeedback, audioEnabled, avatarEnabled, autoPlayResponses,
+    updateSetting, toggleDarkMode, triggerHaptic,
+    darkMode, highContrast, subtitlesEnabled, colors,
+  } = useSettings();
+  const [apiKey, setApiKey]               = useState(null);
+  const [elevenLabsKey, setElevenLabsKey] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -184,9 +194,8 @@ export const ProfileScreen = ({ navigation }) => {
       useNativeDriver: true,
     }).start();
     openaiService.getApiKey().then(k => setApiKey(k));
+    elevenLabsService.getApiKey().then(k => setElevenLabsKey(k));
   }, []);
-
-  const toggleSetting = (key) => setSettings(prev => ({ ...prev, [key]: !prev[key] }));
 
   const handleSaveApiKey = async (key) => {
     await openaiService.saveApiKey(key);
@@ -195,6 +204,15 @@ export const ProfileScreen = ({ navigation }) => {
     Alert.alert(
       'API Key Saved',
       'Aria will now use your OpenAI key. The knowledge base will load in the background the next time you open the chat.'
+    );
+  };
+
+  const handleSaveElevenLabsKey = async (key) => {
+    await elevenLabsService.saveApiKey(key);
+    setElevenLabsKey(key);
+    Alert.alert(
+      'ElevenLabs Key Saved',
+      'Aria will now use ElevenLabs for higher-quality voice with precise lip sync.'
     );
   };
 
@@ -224,21 +242,73 @@ export const ProfileScreen = ({ navigation }) => {
         {
           text: 'Clear', style: 'destructive', onPress: async () => {
             await AsyncStorage.removeItem('chat_messages_v1');
+            triggerHaptic('success');
           },
         },
       ]
     );
   };
 
+  const handlePrivacyPolicy = () => {
+    Alert.alert(
+      'Privacy Policy',
+      'DementiaGuide AI is designed with privacy at its core.\n\n' +
+      '• Your API keys are stored using device-level encryption and never sent to our servers.\n\n' +
+      '• Conversation history is saved locally on your device only.\n\n' +
+      '• Questions you ask are sent directly from your device to OpenAI and ElevenLabs using your own API keys — we never see them.\n\n' +
+      '• We do not collect, share, or sell any personal information.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleMedicalDisclaimer = () => {
+    Alert.alert(
+      'Medical Disclaimer',
+      'DementiaGuide AI provides information for general guidance only.\n\n' +
+      'It is not a substitute for professional medical advice, diagnosis, or treatment. ' +
+      'Always consult a qualified healthcare provider for dementia-related concerns.\n\n' +
+      'In an emergency, call 000 (Australia) or 111 (New Zealand) immediately.',
+      [{ text: 'Understood' }]
+    );
+  };
+
+  const handleRateApp = async () => {
+    const url = 'itms-apps://itunes.apple.com/app/id';
+    const supported = await Linking.canOpenURL(url).catch(() => false);
+    if (supported) {
+      Linking.openURL(url);
+    } else {
+      Alert.alert('Rate the App', 'Thank you for your support! Rating will be available once the app is published on the App Store.');
+    }
+  };
+
+  const handleHelpSupport = () => {
+    Linking.openURL('mailto:support@dementiaai.co.nz?subject=DementiaGuide%20AI%20Support').catch(() => {
+      Alert.alert(
+        'Help & Support',
+        'For help using DementiaGuide AI, please contact us at:\n\nsupport@dementiaai.co.nz',
+        [{ text: 'OK' }]
+      );
+    });
+  };
+
+  const handleEditProfile = () => {
+    Alert.alert(
+      'Edit Profile',
+      'Profile customisation is coming in a future update.',
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-          <Text style={styles.headerTitle}>Settings</Text>
-          <Text style={styles.headerSub}>Personalise your DementiaGuide AI experience</Text>
+          <Text style={[styles.headerTitle, { fontSize: 28 * textScale, lineHeight: 28 * textScale * 1.3, color: colors.textPrimary }]}>Settings</Text>
+          <Text style={[styles.headerSub, { fontSize: 14 * textScale, color: colors.textTertiary }]}>Personalise your DementiaGuide AI experience</Text>
         </Animated.View>
 
         {/* Profile card */}
@@ -253,10 +323,10 @@ export const ProfileScreen = ({ navigation }) => {
               <MaterialCommunityIcons name="account" size={32} color={Colors.primary} />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>Caregiver</Text>
-              <Text style={styles.profileRole}>Family Member</Text>
+              <Text style={[styles.profileName, { fontSize: 20 * textScale }]}>Caregiver</Text>
+              <Text style={[styles.profileRole, { fontSize: 14 * textScale }]}>Family Member</Text>
             </View>
-            <TouchableOpacity style={styles.editProfileButton} accessibilityLabel="Edit profile">
+            <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile} accessibilityLabel="Edit profile">
               <MaterialCommunityIcons name="pencil-outline" size={18} color="rgba(255,255,255,0.85)" />
             </TouchableOpacity>
           </LinearGradient>
@@ -274,8 +344,8 @@ export const ProfileScreen = ({ navigation }) => {
                 <Text style={styles.settingSublabel}>Adjust text size across the app</Text>
               </View>
               <TextSizeSelector
-                value={settings.textSize}
-                onChange={val => setSettings(prev => ({ ...prev, textSize: val }))}
+                value={textSize}
+                onChange={setTextSize}
               />
             </View>
 
@@ -284,13 +354,8 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.textSecondary}
               label="High Contrast"
               sublabel="Increase colour contrast for readability"
-              value={settings.contrast === 'high'}
-              onToggle={() =>
-                setSettings(prev => ({
-                  ...prev,
-                  contrast: prev.contrast === 'high' ? 'standard' : 'high',
-                }))
-              }
+              value={highContrast}
+              onToggle={(v) => { triggerHaptic('light'); updateSetting('highContrast', v); }}
               isLast={false}
             />
 
@@ -299,8 +364,8 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.secondary}
               label="Haptic Feedback"
               sublabel="Vibration on interactions"
-              value={settings.hapticFeedback}
-              onToggle={() => toggleSetting('hapticFeedback')}
+              value={hapticFeedback}
+              onToggle={(v) => updateSetting('hapticFeedback', v)}
               isLast={false}
             />
 
@@ -309,8 +374,8 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.textSecondary}
               label="Dark Mode"
               sublabel="Easier on the eyes in low light"
-              value={settings.darkMode}
-              onToggle={() => toggleSetting('darkMode')}
+              value={darkMode}
+              onToggle={() => { triggerHaptic('medium'); toggleDarkMode(); }}
               isLast
             />
           </Section>
@@ -322,8 +387,8 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.primary}
               label="Show Avatar"
               sublabel="Display Aria's visual avatar interface"
-              value={settings.avatarEnabled}
-              onToggle={() => toggleSetting('avatarEnabled')}
+              value={avatarEnabled}
+              onToggle={(v) => updateSetting('avatarEnabled', v)}
               isLast={false}
             />
 
@@ -332,8 +397,8 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.accent}
               label="Audio Responses"
               sublabel="Aria speaks responses aloud"
-              value={settings.audioEnabled}
-              onToggle={() => toggleSetting('audioEnabled')}
+              value={audioEnabled}
+              onToggle={(v) => updateSetting('audioEnabled', v)}
               isLast={false}
             />
 
@@ -342,8 +407,8 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.info}
               label="Subtitles"
               sublabel="Show captions during voice responses"
-              value={settings.subtitlesEnabled}
-              onToggle={() => toggleSetting('subtitlesEnabled')}
+              value={subtitlesEnabled}
+              onToggle={(v) => { triggerHaptic('light'); updateSetting('subtitlesEnabled', v); }}
               isLast={false}
             />
 
@@ -352,8 +417,8 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.secondary}
               label="Auto-play Responses"
               sublabel="Automatically play audio when Aria responds"
-              value={settings.autoPlayResponses}
-              onToggle={() => toggleSetting('autoPlayResponses')}
+              value={autoPlayResponses}
+              onToggle={(v) => updateSetting('autoPlayResponses', v)}
               isLast
             />
           </Section>
@@ -365,7 +430,7 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.success}
               label="Privacy Policy"
               sublabel="How we handle your data"
-              onPress={() => {}}
+              onPress={handlePrivacyPolicy}
               isLast={false}
             />
             <SettingRow
@@ -380,7 +445,7 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.info}
               label="Medical Disclaimer"
               sublabel="Information is not a substitute for professional advice"
-              onPress={() => {}}
+              onPress={handleMedicalDisclaimer}
               isLast={false}
             />
             <SettingRow
@@ -402,6 +467,16 @@ export const ProfileScreen = ({ navigation }) => {
                 await openaiService.clearApiKey();
                 setApiKey(null);
               }}
+            />
+            <ApiKeyRow
+              value={elevenLabsKey}
+              onSave={handleSaveElevenLabsKey}
+              onClear={async () => {
+                await elevenLabsService.clearApiKey();
+                setElevenLabsKey(null);
+              }}
+              label="ElevenLabs API Key"
+              placeholder="el-..."
             />
             <SettingRow
               icon="database-remove-outline"
@@ -426,7 +501,7 @@ export const ProfileScreen = ({ navigation }) => {
               icon="robot-outline"
               iconColor={Colors.textSecondary}
               label="Powered by OpenAI"
-              sublabel="GPT-4o-mini with RAG knowledge retrieval"
+              sublabel={elevenLabsKey ? 'GPT-4o-mini + ElevenLabs voice (precise lip sync)' : 'GPT-4o-mini with OpenAI voice'}
               isLast={false}
             />
             <SettingRow
@@ -434,7 +509,7 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.warning}
               label="Rate the App"
               sublabel="Help us improve with your feedback"
-              onPress={() => {}}
+              onPress={handleRateApp}
               isLast={false}
             />
             <SettingRow
@@ -442,7 +517,7 @@ export const ProfileScreen = ({ navigation }) => {
               iconColor={Colors.primary}
               label="Help & Support"
               sublabel="Get help using DementiaGuide AI"
-              onPress={() => {}}
+              onPress={handleHelpSupport}
               isLast
             />
           </Section>

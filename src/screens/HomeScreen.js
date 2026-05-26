@@ -17,9 +17,11 @@ import { Avatar } from '../components/Avatar';
 import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
 import { QUICK_QUESTIONS } from '../constants/data';
+import { useSettings } from '../context/SettingsContext';
 
 export const HomeScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState('');
+  const { textScale, colors } = useSettings();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const inputRef = useRef(null);
@@ -61,7 +63,7 @@ export const HomeScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
       <ScrollView
@@ -75,11 +77,11 @@ export const HomeScreen = ({ navigation }) => {
         >
           <View style={styles.headerTop}>
             <View>
-              <Text style={styles.greeting}>{getGreeting()}</Text>
-              <Text style={styles.appName}>DementiaGuide AI</Text>
+              <Text style={[styles.greeting, { fontSize: 16 * textScale, color: colors.textSecondary }]}>{getGreeting()}</Text>
+              <Text style={[styles.appName, { fontSize: 28 * textScale, lineHeight: 28 * textScale * 1.3, color: colors.textPrimary }]}>DementiaGuide AI</Text>
             </View>
             <TouchableOpacity
-              style={styles.settingsButton}
+              style={[styles.settingsButton, { backgroundColor: colors.surface }]}
               onPress={() => navigation.navigate('Profile')}
               accessibilityLabel="Open settings"
               accessibilityRole="button"
@@ -89,7 +91,7 @@ export const HomeScreen = ({ navigation }) => {
           </View>
 
           {/* Tagline */}
-          <Text style={styles.tagline}>Your trusted companion for dementia care guidance</Text>
+          <Text style={[styles.tagline, { fontSize: 14 * textScale, color: colors.textTertiary }]}>Your trusted companion for dementia care guidance</Text>
         </Animated.View>
 
         {/* Avatar Hero */}
@@ -114,8 +116,8 @@ export const HomeScreen = ({ navigation }) => {
               </View>
 
               <View style={styles.heroText}>
-                <Text style={styles.heroHeading}>How can I help you today?</Text>
-                <Text style={styles.heroSubheading}>
+                <Text style={[styles.heroHeading, { fontSize: 24 * textScale, lineHeight: 24 * textScale * 1.3 }]}>How can I help you today?</Text>
+                <Text style={[styles.heroSubheading, { fontSize: 14 * textScale }]}>
                   Ask a question, explore resources, or start a conversation about dementia care.
                 </Text>
               </View>
@@ -146,11 +148,11 @@ export const HomeScreen = ({ navigation }) => {
           style={[styles.inputCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
         >
           <View style={styles.inputRow}>
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <MaterialCommunityIcons name="magnify" size={20} color={Colors.textTertiary} style={styles.inputIcon} />
               <TextInput
                 ref={inputRef}
-                style={styles.textInput}
+                style={[styles.textInput, { fontSize: 16 * textScale, color: colors.textPrimary }]}
                 value={inputText}
                 onChangeText={setInputText}
                 placeholder="Ask anything about dementia care..."
@@ -181,7 +183,7 @@ export const HomeScreen = ({ navigation }) => {
 
         {/* Quick Questions */}
         <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-          <Text style={styles.sectionTitle}>Common Questions</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 20 * textScale, color: colors.textPrimary }]}>Common Questions</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -190,12 +192,12 @@ export const HomeScreen = ({ navigation }) => {
             {QUICK_QUESTIONS.map((q, i) => (
               <TouchableOpacity
                 key={i}
-                style={styles.quickChip}
+                style={[styles.quickChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 onPress={() => handleQuickQuestion(q)}
                 accessibilityLabel={q}
                 accessibilityRole="button"
               >
-                <Text style={styles.quickChipText}>{q}</Text>
+                <Text style={[styles.quickChipText, { fontSize: 14 * textScale, color: colors.textSecondary }]}>{q}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -203,7 +205,7 @@ export const HomeScreen = ({ navigation }) => {
 
         {/* Navigation Cards */}
         <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-          <Text style={styles.sectionTitle}>Explore</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 20 * textScale, color: colors.textPrimary }]}>Explore</Text>
           <View style={styles.navGrid}>
             <TouchableOpacity
               style={[styles.navCard, { backgroundColor: Colors.primaryMuted }]}
@@ -213,7 +215,7 @@ export const HomeScreen = ({ navigation }) => {
             >
               <MaterialCommunityIcons name="chat-outline" size={28} color={Colors.primary} />
               <Text style={[styles.navCardTitle, { color: Colors.primaryDark }]}>Chat</Text>
-              <Text style={styles.navCardSub}>Ask questions</Text>
+              <Text style={[styles.navCardSub, { color: colors.textTertiary }]}>Ask questions</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -224,7 +226,7 @@ export const HomeScreen = ({ navigation }) => {
             >
               <MaterialCommunityIcons name="library-outline" size={28} color={Colors.secondary} />
               <Text style={[styles.navCardTitle, { color: Colors.secondaryDark }]}>Library</Text>
-              <Text style={styles.navCardSub}>Browse resources</Text>
+              <Text style={[styles.navCardSub, { color: colors.textTertiary }]}>Browse resources</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -235,7 +237,7 @@ export const HomeScreen = ({ navigation }) => {
             >
               <MaterialCommunityIcons name="microphone-outline" size={28} color={Colors.accent} />
               <Text style={[styles.navCardTitle, { color: Colors.accentDark }]}>Voice</Text>
-              <Text style={styles.navCardSub}>Speak with Aria</Text>
+              <Text style={[styles.navCardSub, { color: colors.textTertiary }]}>Speak with Aria</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>

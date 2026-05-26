@@ -12,6 +12,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { ArticleDetailScreen } from '../screens/ArticleDetailScreen';
 import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
+import { useSettings } from '../context/SettingsContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -24,72 +25,79 @@ const TabIcon = ({ name, label, focused, color }) => (
   </View>
 );
 
-const MainTabs = () => (
-  <Tab.Navigator
-    screenOptions={{
-      headerShown: false,
-      tabBarStyle: tabStyles.tabBar,
-      tabBarShowLabel: false,
-      tabBarActiveTintColor: Colors.primary,
-      tabBarInactiveTintColor: Colors.tabInactive,
-    }}
-  >
-    <Tab.Screen
-      name="Home"
-      component={HomeScreen}
-      options={{
-        tabBarIcon: ({ focused, color }) => (
-          <TabIcon name={focused ? 'home' : 'home-outline'} label="Home" focused={focused} color={color} />
-        ),
-        tabBarAccessibilityLabel: 'Home',
+const MainTabs = () => {
+  const { colors } = useSettings();
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          ...tabStyles.tabBar,
+          backgroundColor: colors.tabBackground,
+          borderTopColor: colors.border,
+        },
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.tabInactive,
       }}
-    />
-    <Tab.Screen
-      name="Chat"
-      component={ChatScreen}
-      options={{
-        tabBarIcon: ({ focused, color }) => (
-          <TabIcon name={focused ? 'chat' : 'chat-outline'} label="Chat" focused={focused} color={color} />
-        ),
-        tabBarAccessibilityLabel: 'Chat with Aria',
-      }}
-    />
-    <Tab.Screen
-      name="Voice"
-      component={VoiceScreen}
-      options={{
-        tabBarIcon: ({ focused, color }) => (
-          <View style={tabStyles.voiceTabWrapper}>
-            <View style={tabStyles.voiceCenterButton}>
-              <MaterialCommunityIcons name="microphone" size={26} color={Colors.textInverse} />
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'home' : 'home-outline'} label="Home" focused={focused} color={color} />
+          ),
+          tabBarAccessibilityLabel: 'Home',
+        }}
+      />
+      <Tab.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'chat' : 'chat-outline'} label="Chat" focused={focused} color={color} />
+          ),
+          tabBarAccessibilityLabel: 'Chat with Aria',
+        }}
+      />
+      <Tab.Screen
+        name="Voice"
+        component={VoiceScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => (
+            <View style={tabStyles.voiceTabWrapper}>
+              <View style={[tabStyles.voiceCenterButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
+                <MaterialCommunityIcons name="microphone" size={26} color={colors.textInverse} />
+              </View>
             </View>
-          </View>
-        ),
-        tabBarAccessibilityLabel: 'Voice interaction',
-      }}
-    />
-    <Tab.Screen
-      name="Library"
-      component={LibraryScreen}
-      options={{
-        tabBarIcon: ({ focused, color }) => (
-          <TabIcon name={focused ? 'library' : 'library-outline'} label="Library" focused={focused} color={color} />
-        ),
-        tabBarAccessibilityLabel: 'Knowledge library',
-      }}
-    />
-    <Tab.Screen
-      name="Profile"
-      component={ProfileScreen}
-      options={{
-        tabBarIcon: ({ focused, color }) => (
-          <TabIcon name={focused ? 'tune-variant' : 'tune-variant'} label="Settings" focused={focused} color={color} />
-        ),
-        tabBarAccessibilityLabel: 'Settings',
-      }}
-    />
-  </Tab.Navigator>
-);
+          ),
+          tabBarAccessibilityLabel: 'Voice interaction',
+        }}
+      />
+      <Tab.Screen
+        name="Library"
+        component={LibraryScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'library' : 'library-outline'} label="Library" focused={focused} color={color} />
+          ),
+          tabBarAccessibilityLabel: 'Knowledge library',
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'tune-variant' : 'tune-variant'} label="Settings" focused={focused} color={color} />
+          ),
+          tabBarAccessibilityLabel: 'Settings',
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
 
 export const AppNavigator = () => (
   <NavigationContainer>

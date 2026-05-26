@@ -179,15 +179,15 @@ function frameCamera(modelScene) {
 
   const height = size.y || 1.6;
 
-  const visibleBottom = box.min.y + height * 0.35;
-  const visibleTop = box.max.y + height * 0.08;
+  const visibleBottom = box.min.y + height * 0.55;
+  const visibleTop = box.max.y + height * 0.06;
   const visibleCenterY = (visibleBottom + visibleTop) / 2;
   const visibleHeight = visibleTop - visibleBottom;
 
   const fovRad = THREE.MathUtils.degToRad(camera.fov);
   const distance = (visibleHeight / 2) / Math.tan(fovRad / 2);
 
-  camera.position.set(center.x, visibleCenterY, distance * 1.2);
+  camera.position.set(center.x, visibleCenterY, distance * 1.0);
   camera.lookAt(center.x, visibleCenterY, center.z);
   camera.updateProjectionMatrix();
 
@@ -585,23 +585,42 @@ function animate(ts) {
         );
       }
 
-      let mouthTarget = 0;
-      if (lipSyncActive && lipSyncAnalyser && lipSyncBuf) {
-        lipSyncAnalyser.getByteTimeDomainData(lipSyncBuf);
-        let sumSq = 0;
-        for (let i = 0; i < lipSyncBuf.length; i++) {
-          const x = (lipSyncBuf[i] / 128.0) - 1.0;
-          sumSq += x * x;
+      // ─── MOUTH / LIP SYNC ─────────────────────────────────────────────────
+      if (visemeMode && lipSyncActive) {
+        // ElevenLabs path: drive all five mouth shapes from the viseme timeline.
+        // No lerp applied here — crossfade is baked into getVisemeWeights() itself.
+        const w = LipSyncController.getVisemeWeights();
+        setExpression('aa', w.aa);
+        setExpression('ih', w.ih);
+        setExpression('ou', w.ou);
+        setExpression('ee', w.ee);
+        setExpression('oh', w.oh);
+        mouthCurrent = Math.max(w.aa, w.ih, w.ou, w.ee, w.oh);
+      } else {
+        // RMS fallback path — original amplitude-based approach.
+        // Only 'aa' is driven; the other shapes are zeroed to avoid stale values
+        // if the mode was recently switched from viseme mode.
+        let mouthTarget = 0;
+        if (lipSyncActive && lipSyncAnalyser && lipSyncBuf) {
+          lipSyncAnalyser.getByteTimeDomainData(lipSyncBuf);
+          let sumSq = 0;
+          for (let i = 0; i < lipSyncBuf.length; i++) {
+            const x = (lipSyncBuf[i] / 128.0) - 1.0;
+            sumSq += x * x;
+          }
+          const rms = Math.sqrt(sumSq / lipSyncBuf.length);
+          mouthTarget = Math.min(1.0, rms * 15.0);
+        } else if (speaking) {
+          mouthTarget = 0.2 + Math.abs(Math.sin(elapsed * 7)) * 0.45;
         }
-        const rms = Math.sqrt(sumSq / lipSyncBuf.length);
-        mouthTarget = Math.min(0.8, rms * 6.0);
-      } else if (speaking) {
-        mouthTarget = 0.2 + Math.abs(Math.sin(elapsed * 7)) * 0.45;
+        mouthCurrent = lerp(mouthCurrent, mouthTarget, lipSyncActive ? 0.5 : 0.2);
+        setExpression('aa', mouthCurrent);
+        setExpression('ih', 0);
+        setExpression('ou', 0);
+        setExpression('ee', 0);
+        setExpression('oh', 0);
       }
 
-      mouthCurrent = lerp(mouthCurrent, mouthTarget, lipSyncActive ? 0.5 : 0.2);
-
-      setExpression('aa', mouthCurrent);
       setExpression('surprised', listening ? 0.08 : 0);
 
       blinkCooldown -= dt;
@@ -657,23 +676,141 @@ window.addEventListener('resize', () => {
 });
 
 loadVRM();
-// === LIP SYNC VIA WEB AUDIO API ===
-let lipSyncCtx = null, lipSyncAnalyser = null, lipSyncBuf = null;
-let lipSyncSource = null, lipSyncActive = false;
 
+// ─── LIP SYNC STATE ──────────────────────────────────────────────────────────
+// Shared by both the RMS fallback path and the viseme-timeline path.
+let lipSyncCtx    = null;
+let lipSyncSource = null;
+let lipSyncActive = false;
+
+// RMS fallback path (used when no ElevenLabs key / no alignment data).
+let lipSyncAnalyser = null;
+let lipSyncBuf      = null;
+
+// Viseme timeline path (used when ElevenLabs returns character-level alignment).
+// visemeMode = true  → LipSyncController.getVisemeWeights() drives the mouth.
+// visemeMode = false → AnalyserNode RMS drives 'aa' only (legacy behaviour).
+let visemeMode     = false;
+let visemeTimeline = null;   // { frames: [{time, viseme, duration, weight}], totalDuration }
+let audioStartTime = null;   // AudioContext.currentTime at the moment source.start(0) fires
+
+// ─── LipSyncController ───────────────────────────────────────────────────────
+// Runs inside the WebView every animation frame.
+//
+// How viseme timing works:
+//   audioStartTime is captured at source.start(0).
+//   now = lipSyncCtx.currentTime - audioStartTime gives playback position in seconds.
+//   Binary search finds the most recently started frame (O(log n), ~6 ops for 50 frames).
+//   During the last 20% of each frame's duration the controller cross-fades
+//   the current viseme out and the next viseme in — this produces natural-looking
+//   mouth transitions without an additional lerp layer on top.
+//
+// Why no lerp on top of getVisemeWeights():
+//   AudioContext.currentTime advances continuously at 60 fps. The blendT value
+//   inside getVisemeWeights already moves linearly 0→1 over 20% of the frame
+//   duration. Adding setExpression(lerp(prev, target, 0.5)) would add a second
+//   smoothing layer, causing the viseme to "lag" past the audio cue it maps to.
+const LipSyncController = {
+  getVisemeWeights: function() {
+    const result = { aa: 0, ih: 0, ou: 0, ee: 0, oh: 0 };
+    if (!visemeMode || !visemeTimeline || audioStartTime === null || !lipSyncCtx) {
+      return result;
+    }
+
+    const now    = lipSyncCtx.currentTime - audioStartTime;
+    const frames = visemeTimeline.frames;
+    if (!frames || !frames.length) return result;
+
+    // Binary search: largest frames[i].time ≤ now
+    let lo = 0, hi = frames.length - 1, activeIdx = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (frames[mid].time <= now) { activeIdx = mid; lo = mid + 1; }
+      else hi = mid - 1;
+    }
+    if (activeIdx < 0) return result;
+
+    const active   = frames[activeIdx];
+    const progress = Math.min((now - active.time) / Math.max(active.duration, 0.001), 1.0);
+
+    // Cross-fade: last 20% of the current frame overlaps into the next frame.
+    const FADE_START = 0.80;
+    let currentWeight = active.weight;
+    let nextViseme    = null;
+    let nextWeight    = 0;
+
+    if (progress > FADE_START && activeIdx + 1 < frames.length) {
+      const blendT = (progress - FADE_START) / (1.0 - FADE_START); // 0 → 1
+      const next   = frames[activeIdx + 1];
+      currentWeight = active.weight * (1.0 - blendT);
+      nextViseme    = next.viseme;
+      nextWeight    = next.weight * blendT;
+    }
+
+    if (active.viseme !== 'neutral' && result[active.viseme] !== undefined) {
+      result[active.viseme] = Math.max(result[active.viseme], currentWeight);
+    }
+    if (nextViseme && nextViseme !== 'neutral' && result[nextViseme] !== undefined) {
+      result[nextViseme] = Math.max(result[nextViseme], nextWeight);
+    }
+
+    return result;
+  },
+};
+
+// ─── Helper: decode a data URI and play it through AudioContext ───────────────
+async function _decodeAndPlay(dataUri) {
+  const base64 = dataUri.slice(dataUri.indexOf(',') + 1);
+  const bin    = atob(base64);
+  const ab     = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) ab[i] = bin.charCodeAt(i);
+
+  if (!lipSyncCtx) {
+    lipSyncCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Auto-resume if iOS suspends the context mid-playback (e.g. audio session change)
+    lipSyncCtx.addEventListener('statechange', function() {
+      if (lipSyncCtx && lipSyncCtx.state === 'suspended') {
+        lipSyncCtx.resume().catch(function() {});
+      }
+    });
+  }
+  if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
+
+  return lipSyncCtx.decodeAudioData(ab.buffer);
+}
+
+function _stopCurrent() {
+  if (lipSyncSource) {
+    lipSyncSource.onended = null; // prevent stale audioEnd from resolving next segment early
+    try { lipSyncSource.stop(); } catch(e) {}
+    lipSyncSource = null;
+  }
+  lipSyncActive   = false;
+  lipSyncAnalyser = null;
+  lipSyncBuf      = null;
+  visemeMode      = false;
+  visemeTimeline  = null;
+  audioStartTime  = null;
+}
+
+function _onAudioEnded(errorMsg) {
+  _stopCurrent();
+  if (window.ReactNativeWebView) {
+    const msg = errorMsg
+      ? { type: 'audioEnd', error: errorMsg }
+      : { type: 'audioEnd' };
+    window.ReactNativeWebView.postMessage(JSON.stringify(msg));
+  }
+}
+
+// ─── RMS FALLBACK PATH ───────────────────────────────────────────────────────
+// Used when ElevenLabs is not configured or its call fails.
+// Driven by Web Audio AnalyserNode amplitude → 'aa' blend shape only.
 window.playAudioWithLipSync = async function(dataUri) {
-  if (lipSyncSource) { try { lipSyncSource.stop(); } catch(e) {} }
-  lipSyncActive = false; lipSyncAnalyser = null; lipSyncBuf = null; lipSyncSource = null;
+  _stopCurrent();
+  visemeMode = false;
   try {
-    const base64 = dataUri.slice(dataUri.indexOf(',') + 1);
-    const bin = atob(base64);
-    const ab = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) ab[i] = bin.charCodeAt(i);
-
-    if (!lipSyncCtx) lipSyncCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
-
-    const decoded = await lipSyncCtx.decodeAudioData(ab.buffer);
+    const decoded   = await _decodeAndPlay(dataUri);
     lipSyncAnalyser = lipSyncCtx.createAnalyser();
     lipSyncAnalyser.fftSize = 256;
     lipSyncBuf = new Uint8Array(lipSyncAnalyser.frequencyBinCount);
@@ -684,23 +821,52 @@ window.playAudioWithLipSync = async function(dataUri) {
     lipSyncAnalyser.connect(lipSyncCtx.destination);
     lipSyncActive = true;
 
-    lipSyncSource.onended = () => {
-      lipSyncActive = false; lipSyncAnalyser = null; lipSyncBuf = null; lipSyncSource = null;
-      if (window.ReactNativeWebView)
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioEnd' }));
-    };
+    lipSyncSource.onended = () => _onAudioEnded(null);
+    if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioStart' }));
+    }
     lipSyncSource.start(0);
   } catch(err) {
-    lipSyncActive = false;
-    if (window.ReactNativeWebView)
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioEnd', error: String(err) }));
+    _onAudioEnded(String(err));
   }
 };
 
+// ─── VISEME TIMELINE PATH ────────────────────────────────────────────────────
+// Used when ElevenLabs returns character-level alignment data.
+// LipSyncController.getVisemeWeights() reads audioCtx.currentTime each frame
+// to determine which viseme frame is active and applies a 20% crossfade into
+// the next frame for smooth transitions between mouth shapes.
+//
+// To swap the TTS provider: implement ttsWithAlignment() in a new service class
+// and update ttsService.js. The visemeTimeline shape must match VisemeTimeline:
+//   { frames: [{time, viseme, duration, weight}], totalDuration }
+window.playAudioWithVisemeTimeline = async function(dataUri, timeline) {
+  _stopCurrent();
+  visemeMode     = true;
+  visemeTimeline = timeline;
+  try {
+    const decoded = await _decodeAndPlay(dataUri);
+    lipSyncSource = lipSyncCtx.createBufferSource();
+    lipSyncSource.buffer = decoded;
+    lipSyncSource.connect(lipSyncCtx.destination); // no analyser needed
+    lipSyncActive = true;
+
+    lipSyncSource.onended = () => _onAudioEnded(null);
+    if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
+    audioStartTime = lipSyncCtx.currentTime; // anchor after resume so timing is accurate
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioStart' }));
+    }
+    lipSyncSource.start(0);
+  } catch(err) {
+    _onAudioEnded(String(err));
+  }
+};
+
+// ─── STOP ────────────────────────────────────────────────────────────────────
 window.stopAudioLipSync = function() {
-  lipSyncActive = false;
-  if (lipSyncSource) { try { lipSyncSource.stop(); } catch(e) {} lipSyncSource = null; }
-  lipSyncAnalyser = null; lipSyncBuf = null;
+  _stopCurrent();
 };
 
 requestAnimationFrame(animate);
@@ -721,22 +887,59 @@ export const AvatarVRM = forwardRef(({
   const webRef = useRef(null);
   const stateRef = useRef('idle');
   const audioEndResolveRef = useRef(null);
+  const audioStartCbRef = useRef(null);
 
   const [webKey, setWebKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useImperativeHandle(ref, () => ({
-    playAudio: (dataUri) => new Promise(resolve => {
+    /**
+     * Play an audio segment and animate the avatar's mouth.
+     *
+     * @param {string|{audio:string, visemeTimeline:object|null}} payload
+     *   - Plain string: data URI → uses RMS-based fallback (legacy / OpenAI TTS).
+     *   - Object { audio, visemeTimeline }:
+     *       audio          — data:audio/mpeg;base64,... URI
+     *       visemeTimeline — { frames, totalDuration } from ElevenLabs alignment,
+     *                        or null to fall back to RMS mode automatically.
+     *
+     * Returns a Promise that resolves when the audio segment finishes playing.
+     *
+     * How the audio queue works (in useAvatarConversation):
+     *   Segments are generated concurrently (each sentence fires TTS immediately),
+     *   but playAudio() is awaited in order so the avatar speaks sentence-by-sentence
+     *   while later segments continue generating in the background.
+     */
+    playAudio: (payload) => new Promise(resolve => {
       audioEndResolveRef.current = resolve;
-      webRef.current?.injectJavaScript(
-        `window.playAudioWithLipSync(${JSON.stringify(dataUri)});true;`
-      );
+
+      if (typeof payload === 'string') {
+        // Legacy / fallback: plain data URI → RMS lip sync
+        webRef.current?.injectJavaScript(
+          `window.playAudioWithLipSync(${JSON.stringify(payload)});true;`
+        );
+      } else {
+        // ElevenLabs path: pass audio + viseme timeline into the WebView
+        const { audio, visemeTimeline } = payload;
+        if (visemeTimeline) {
+          webRef.current?.injectJavaScript(
+            `window.playAudioWithVisemeTimeline(${JSON.stringify(audio)}, ${JSON.stringify(visemeTimeline)});true;`
+          );
+        } else {
+          // Object payload but no timeline — use RMS fallback with the audio URI
+          webRef.current?.injectJavaScript(
+            `window.playAudioWithLipSync(${JSON.stringify(audio)});true;`
+          );
+        }
+      }
     }),
     stopAudio: () => {
       audioEndResolveRef.current = null;
+      audioStartCbRef.current = null;
       webRef.current?.injectJavaScript(`window.stopAudioLipSync();true;`);
     },
+    setOnAudioStart: (cb) => { audioStartCbRef.current = cb; },
   }));
 
   const source = useMemo(
@@ -792,6 +995,12 @@ export const AvatarVRM = forwardRef(({
 
         if (data.type === 'debug') {
           console.log('[AvatarVRM]', data.message);
+        }
+
+        if (data.type === 'audioStart') {
+          const cb = audioStartCbRef.current;
+          audioStartCbRef.current = null;
+          cb?.();
         }
 
         if (data.type === 'audioEnd') {

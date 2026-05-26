@@ -765,14 +765,26 @@ async function _decodeAndPlay(dataUri) {
   const ab     = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) ab[i] = bin.charCodeAt(i);
 
-  if (!lipSyncCtx) lipSyncCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (!lipSyncCtx) {
+    lipSyncCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Auto-resume if iOS suspends the context mid-playback (e.g. audio session change)
+    lipSyncCtx.addEventListener('statechange', function() {
+      if (lipSyncCtx && lipSyncCtx.state === 'suspended') {
+        lipSyncCtx.resume().catch(function() {});
+      }
+    });
+  }
   if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
 
   return lipSyncCtx.decodeAudioData(ab.buffer);
 }
 
 function _stopCurrent() {
-  if (lipSyncSource) { try { lipSyncSource.stop(); } catch(e) {} lipSyncSource = null; }
+  if (lipSyncSource) {
+    lipSyncSource.onended = null; // prevent stale audioEnd from resolving next segment early
+    try { lipSyncSource.stop(); } catch(e) {}
+    lipSyncSource = null;
+  }
   lipSyncActive   = false;
   lipSyncAnalyser = null;
   lipSyncBuf      = null;
@@ -810,6 +822,7 @@ window.playAudioWithLipSync = async function(dataUri) {
     lipSyncActive = true;
 
     lipSyncSource.onended = () => _onAudioEnded(null);
+    if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
     if (window.ReactNativeWebView) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioStart' }));
     }
@@ -837,10 +850,11 @@ window.playAudioWithVisemeTimeline = async function(dataUri, timeline) {
     lipSyncSource = lipSyncCtx.createBufferSource();
     lipSyncSource.buffer = decoded;
     lipSyncSource.connect(lipSyncCtx.destination); // no analyser needed
-    lipSyncActive  = true;
-    audioStartTime = lipSyncCtx.currentTime;       // anchor for playback position
+    lipSyncActive = true;
 
     lipSyncSource.onended = () => _onAudioEnded(null);
+    if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
+    audioStartTime = lipSyncCtx.currentTime; // anchor after resume so timing is accurate
     if (window.ReactNativeWebView) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioStart' }));
     }

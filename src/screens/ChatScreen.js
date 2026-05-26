@@ -19,9 +19,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Avatar } from '../components/Avatar';
 import { Colors } from '../constants/colors';
-import { QUICK_QUESTIONS, SAMPLE_MESSAGES } from '../constants/data';
+import { QUICK_QUESTIONS, QUICK_QUESTIONS_BY_ROLE, SAMPLE_MESSAGES } from '../constants/data';
 import { openaiService, OpenAIAuthError, OpenAIRateLimitError } from '../services/openaiService';
 import { useSettings } from '../context/SettingsContext';
+import { detectCrisis, CRISIS_RESPONSE_TEXT, CRISIS_CONTACTS, callNumber } from '../utils/crisisDetector';
+import { logFeedback } from '../utils/feedbackLogger';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
 import { tts } from '../lib/tts/ttsService';
@@ -78,7 +80,7 @@ const loadPersistedMessages = async () => {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 export const ChatScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
-  const { textScale, autoPlayResponses, colors } = useSettings();
+  const { textScale, autoPlayResponses, colors, userRole, simpleLanguage } = useSettings();
   const messageListRef = useRef(null);
   // Internal message list (oldest first)
   const [internalMessages, setInternalMessages] = useState(SAMPLE_MESSAGES);
@@ -88,6 +90,7 @@ export const ChatScreen = ({ navigation, route }) => {
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState(null); // null | 'auth' | 'ratelimit' | 'network'
+  const [messageFeedback, setMessageFeedback] = useState({}); // messageId → 'up' | 'down'
   const initialMessageSent = useRef(false);
   const typingAnim = useRef(new Animated.Value(0)).current;
   const soundRef = useRef(null);
@@ -209,6 +212,26 @@ export const ChatScreen = ({ navigation, route }) => {
     setInputText('');
     setIsTyping(true);
 
+    // ── Crisis check ──────────────────────────────────────────────────────────
+    // Bypass the LLM entirely — insert a hardcoded safety card, no API call.
+    if (detectCrisis(trimmed)) {
+      setIsTyping(false);
+      const crisisMsg = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        isCrisis: true,
+        text: CRISIS_RESPONSE_TEXT,
+        sources: [],
+        timestamp: new Date().toISOString(),
+      };
+      setInternalMessages(prev => {
+        const updated = [...prev, crisisMsg];
+        persistMessages(updated);
+        return updated;
+      });
+      return;
+    }
+
     // Build history for the RAG context window (last 6 messages)
     const history = internalMessages.slice(-6).map(m => ({
       role: m.role === 'user' ? 'user' : 'assistant',
@@ -216,7 +239,7 @@ export const ChatScreen = ({ navigation, route }) => {
     }));
 
     try {
-      const response = await openaiService.chat(trimmed, history);
+      const response = await openaiService.chat(trimmed, history, { userRole, simpleLanguage });
       setIsTyping(false);
       setIsSpeaking(true);
 
@@ -274,6 +297,47 @@ export const ChatScreen = ({ navigation, route }) => {
   // ── Custom renderers ──────────────────────────────────────────────────────────
 
   const renderMessageBubble = (message) => {
+    // ── Crisis card ────────────────────────────────────────────────────────────
+    if (message.isCrisis) {
+      return (
+        <View style={styles.crisisCard}>
+          <View style={styles.crisisHeader}>
+            <MaterialCommunityIcons name="alert-circle" size={18} color="#D4375D" />
+            <Text style={[styles.crisisTitle, { fontSize: 14 * textScale }]}>
+              Urgent support available
+            </Text>
+          </View>
+          <Text style={[styles.crisisBody, { fontSize: 14 * textScale }]}>
+            {message.text}
+          </Text>
+          <View style={styles.crisisContacts}>
+            {CRISIS_CONTACTS.map(c => (
+              <TouchableOpacity
+                key={c.label}
+                style={[styles.crisisContactBtn, { borderColor: c.color }]}
+                onPress={() => callNumber(c.number)}
+                accessibilityLabel={`Call ${c.label}: ${c.number}`}
+                accessibilityRole="button"
+              >
+                <MaterialCommunityIcons name="phone" size={15} color={c.color} />
+                <View style={styles.crisisContactText}>
+                  <Text style={[styles.crisisContactLabel, { color: c.color, fontSize: 13 * textScale }]}>
+                    {c.label}
+                  </Text>
+                  <Text style={[styles.crisisContactSub, { fontSize: 11 * textScale }]}>
+                    {c.sublabel}
+                  </Text>
+                  <Text style={[styles.crisisContactNumber, { color: c.color, fontSize: 13 * textScale }]}>
+                    {c.number}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      );
+    }
+
     const isUser = message.role === 'user';
     const sources = message.sources ?? [];
     return (
@@ -309,6 +373,42 @@ export const ChatScreen = ({ navigation, route }) => {
             </View>
           </View>
         )}
+
+        {/* Feedback — thumbs up/down on assistant messages */}
+        {!isUser && (
+          <View style={styles.feedbackRow}>
+            {['up', 'down'].map(dir => {
+              const given = messageFeedback[message.id];
+              const isActive = given === dir;
+              return (
+                <TouchableOpacity
+                  key={dir}
+                  style={[styles.feedbackBtn, isActive && styles.feedbackBtnActive]}
+                  onPress={() => {
+                    if (given) return;
+                    setMessageFeedback(prev => ({ ...prev, [message.id]: dir }));
+                    const idx = internalMessages.findIndex(m => m.id === message.id);
+                    const prevUser = internalMessages.slice(0, idx).reverse().find(m => m.role === 'user');
+                    logFeedback({
+                      messageId: message.id,
+                      query: prevUser?.text ?? '',
+                      answer: message.text,
+                      feedback: dir,
+                    });
+                  }}
+                  accessibilityLabel={dir === 'up' ? 'Mark helpful' : 'Mark not helpful'}
+                  accessibilityRole="button"
+                >
+                  <MaterialCommunityIcons
+                    name={dir === 'up' ? 'thumb-up-outline' : 'thumb-down-outline'}
+                    size={14}
+                    color={isActive ? (dir === 'up' ? Colors.success : Colors.error) : '#C7C7CC'}
+                  />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
     );
   };
@@ -341,7 +441,7 @@ export const ChatScreen = ({ navigation, route }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chips}
         >
-          {QUICK_QUESTIONS.slice(0, 5).map((chip, i) => (
+          {(QUICK_QUESTIONS_BY_ROLE[userRole] ?? QUICK_QUESTIONS).slice(0, 5).map((chip, i) => (
             <TouchableOpacity
               key={i}
               style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}
@@ -793,5 +893,81 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.textTertiary,
     textAlign: 'center',
+  },
+
+  // Crisis card
+  crisisCard: {
+    marginBottom: 10,
+    marginHorizontal: 10,
+    backgroundColor: '#FFF5F5',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#FFCDD2',
+    padding: 14,
+  },
+  crisisHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginBottom: 8,
+  },
+  crisisTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#D4375D',
+  },
+  crisisBody: {
+    fontSize: 14,
+    color: '#444',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  crisisContacts: {
+    gap: 8,
+  },
+  crisisContactBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
+  },
+  crisisContactText: {
+    flex: 1,
+    gap: 1,
+  },
+  crisisContactLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  crisisContactSub: {
+    fontSize: 11,
+    color: '#8E8E93',
+  },
+  crisisContactNumber: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  // Feedback buttons
+  feedbackRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginLeft: 4,
+    marginTop: 4,
+  },
+  feedbackBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#F0F0F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  feedbackBtnActive: {
+    backgroundColor: '#E8F4FF',
   },
 });

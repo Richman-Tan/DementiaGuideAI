@@ -16,6 +16,8 @@ const DEFAULTS = {
   darkMode:          false,
   highContrast:      false,
   subtitlesEnabled:  true,
+  userRole:          null,   // 'family' | 'professional' | 'student' | 'other'
+  simpleLanguage:    false,
 };
 
 const SettingsContext = createContext(null);
@@ -123,6 +125,8 @@ export const SettingsProvider = ({ children }) => {
     darkMode:          settings.darkMode,
     highContrast:      settings.highContrast,
     subtitlesEnabled:  settings.subtitlesEnabled,
+    userRole:          settings.userRole,
+    simpleLanguage:    settings.simpleLanguage,
     colors,
     setTextSize,
     updateSetting,

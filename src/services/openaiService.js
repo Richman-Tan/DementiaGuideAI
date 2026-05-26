@@ -9,6 +9,11 @@ const MIN_SIMILARITY = 0.25;
 const TOP_K = 5;
 const MAX_HISTORY = 6;
 
+// Hard-coded disclaimer appended in code — not delegated to the LLM so it
+// is never accidentally omitted. Exported so voice flow can also append it.
+export const MEDICAL_DISCLAIMER =
+  '\n\nThis information is for general guidance only and is not medical advice. Please consult a healthcare professional for medical concerns.';
+
 class OpenAIAuthError extends Error {
   constructor(msg) { super(msg); this.name = 'OpenAIAuthError'; }
 }
@@ -98,7 +103,7 @@ class OpenAIService {
   // Async generator — yields text chunks as they stream from the API so the
   // caller can start TTS on completed sentences before the full response arrives.
 
-  async *chatStream(userMessage, conversationHistory = [], timingCbs = null) {
+  async *chatStream(userMessage, conversationHistory = [], timingCbs = null, options = {}) {
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new OpenAIAuthError('No API key configured');
 
@@ -114,7 +119,7 @@ class OpenAIService {
     }));
 
     const messages = [
-      { role: 'system', content: this._buildSystemPrompt() },
+      { role: 'system', content: this._buildSystemPrompt(options) },
       ...recentHistory,
       { role: 'user', content: `${contextBlock}\n\nUser question: ${userMessage}` },
     ];
@@ -123,7 +128,7 @@ class OpenAIService {
       model: CHAT_MODEL,
       messages,
       max_tokens: 600,
-      temperature: 0.4,
+      temperature: 0.2,
       stream: true,
     });
 
@@ -246,24 +251,44 @@ class OpenAIService {
     return data.text?.trim() ?? '';
   }
 
-  // ─── System Prompt ──────────────────────────────────────────────────────────
+  // ─── Disclaimer helper ──────────────────────────────────────────────────────
 
-  _buildSystemPrompt() {
+  _appendDisclaimer(text) {
+    const lower = text.toLowerCase();
+    if (lower.includes('general guidance only') || lower.includes('not medical advice')) return text;
+    return text + MEDICAL_DISCLAIMER;
+  }
+
+  // ─── System Prompt ──────────────────────────────────────────────────────────
+  // Accepts options so callers can inject role context and language mode without
+  // adding new parameters to every public method.
+
+  _buildSystemPrompt({ userRole = null, simpleLanguage = false } = {}) {
+    const roleLines = {
+      family:       'You are speaking with a family caregiver. Use warm, practical language and acknowledge the emotional weight of caring for a loved one.',
+      professional: 'You are speaking with a professional caregiver or healthcare worker. You may use clinical terminology but remain approachable.',
+      student:      'You are speaking with a healthcare student learning about dementia care. Explain concepts clearly to support their understanding.',
+    };
+    const roleClause  = roleLines[userRole] ? `\n\n${roleLines[userRole]}` : '';
+    const simpleClause = simpleLanguage
+      ? '\n\nIMPORTANT: Use very simple words and short sentences. Break complex information into numbered steps. Avoid all medical jargon — if a technical term is necessary, immediately explain it in plain language.'
+      : '';
+
     return `You are Aria, a compassionate and knowledgeable AI assistant created to support family caregivers, healthcare workers, and families caring for people with dementia. You work like a specialised library — every answer you give is grounded in the curated knowledge passages provided to you.
 
 IMPORTANT RULES:
 1. Base your response ONLY on the context passages provided. Do not draw on outside knowledge.
-2. If the context passages do not contain enough information to answer the question, say so honestly: "I don't have specific information about that in my knowledge base, but I recommend speaking with your GP or Dementia Australia (1800 100 500)."
+2. If the context passages do not contain enough information to answer the question, say so honestly: "I don't have specific information about that in my knowledge base, but I recommend speaking with your GP or Dementia NZ (0800 433 636)."
 3. Be warm, empathetic, and emotionally supportive — caregiving is hard, and the person reading your response may be exhausted or distressed.
 4. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
 5. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
 6. After your response, on a new line, write "Sources:" followed by a bullet list of the knowledge base titles you drew from (one per line, starting with "·"). Only list sources you actually used.
-7. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.`;
+7. Do NOT include a medical disclaimer — one is appended automatically.${roleClause}${simpleClause}`;
   }
 
   // ─── RAG Chat ───────────────────────────────────────────────────────────────
 
-  async chat(userMessage, conversationHistory = []) {
+  async chat(userMessage, conversationHistory = [], options = {}) {
     // Retrieve relevant chunks
     const chunks = await this.search(userMessage, TOP_K);
 
@@ -279,7 +304,7 @@ IMPORTANT RULES:
     }));
 
     const messages = [
-      { role: 'system', content: this._buildSystemPrompt() },
+      { role: 'system', content: this._buildSystemPrompt(options) },
       ...recentHistory,
       {
         role: 'user',
@@ -291,7 +316,7 @@ IMPORTANT RULES:
       model: CHAT_MODEL,
       messages,
       max_tokens: 600,
-      temperature: 0.4,
+      temperature: 0.2,
     });
 
     const rawText = data.choices[0].message.content.trim();
@@ -322,7 +347,7 @@ IMPORTANT RULES:
       org: chunkByTitle.get(title)?.source_org ?? null,
     }));
 
-    return { text: responseText, sources };
+    return { text: this._appendDisclaimer(responseText), sources };
   }
 }
 

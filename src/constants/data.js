@@ -108,6 +108,37 @@ export const QUICK_QUESTIONS = [
   'What respite care options are available?',
 ];
 
+export const QUICK_QUESTIONS_BY_ROLE = {
+  family: [
+    'How do I manage sundowning?',
+    'How do I handle aggressive behavior?',
+    'What respite care options are available?',
+    'How do I help with daily hygiene?',
+    'How can I reduce caregiver burnout?',
+  ],
+  professional: [
+    'What are evidence-based communication strategies?',
+    'How should I manage wandering safely?',
+    'What medications are commonly used?',
+    'How do I support a person with late-stage dementia?',
+    'What is validation therapy?',
+  ],
+  student: [
+    'What are the stages of dementia?',
+    'What is validation therapy?',
+    'How does dementia affect the brain?',
+    'What are the warning signs of dementia?',
+    'How do I communicate with someone who has memory loss?',
+  ],
+  other: [
+    'What are early signs of dementia?',
+    'How can I help someone with dementia?',
+    'What support services exist in New Zealand?',
+    'How do I manage sundowning?',
+    'What respite care options are available?',
+  ],
+};
+
 export const SAMPLE_MESSAGES = [
   {
     id: '1',

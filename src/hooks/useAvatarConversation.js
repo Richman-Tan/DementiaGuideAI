@@ -2,9 +2,10 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
-import { openaiService } from '../services/openaiService';
+import { openaiService, MEDICAL_DISCLAIMER } from '../services/openaiService';
 import { tts } from '../lib/tts/ttsService';
 import { useSettings } from '../context/SettingsContext';
+import { detectCrisis, CRISIS_RESPONSE_TEXT } from '../utils/crisisDetector';
 
 // ─── Voice state machine ──────────────────────────────────────────────────────
 export const VoiceState = {
@@ -82,7 +83,7 @@ export function useAvatarConversation({ avatarRef }) {
   const [conversationHistory, setConversationHistory] = useState([]);
   const [error, setError]                         = useState(null);            // string | null
   const [currentSubtitle, setCurrentSubtitle]     = useState(''); // current speaking sentence
-  const { audioEnabled } = useSettings();
+  const { audioEnabled, userRole, simpleLanguage } = useSettings();
 
   const recordingRef = useRef(null);
   const abortRef     = useRef(false);  // set true when user stops mid-response
@@ -129,6 +130,43 @@ export function useAvatarConversation({ avatarRef }) {
   // wait for the full LLM response before playing the first audio segment.
   const processQuery = useCallback(async (userText, t0 = Date.now(), sttDoneAt = null) => {
     if (!userText.trim()) return;
+
+    // ── Crisis check ───────────────────────────────────────────────────────────
+    // Bypass the LLM entirely and speak a hardcoded safety message.
+    if (detectCrisis(userText)) {
+      setVoiceState(VoiceState.SPEAKING);
+      setCurrentSubtitle(CRISIS_RESPONSE_TEXT);
+
+      // Persist to shared AsyncStorage so ChatScreen shows the crisis card.
+      try {
+        const raw = await AsyncStorage.getItem(MESSAGES_KEY);
+        const existing = raw ? JSON.parse(raw) : [];
+        const now = Date.now();
+        const updated = [
+          ...existing,
+          { id: `v_${now}`,     role: 'user',     text: userText,             sources: [], timestamp: new Date().toISOString() },
+          { id: `v_${now + 1}`, role: 'assistant', text: CRISIS_RESPONSE_TEXT, sources: [], isCrisis: true, timestamp: new Date().toISOString() },
+        ].slice(-MAX_PERSISTED);
+        await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(updated));
+      } catch { /* non-critical */ }
+
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'user',      content: userText },
+        { role: 'assistant', content: CRISIS_RESPONSE_TEXT },
+      ]);
+
+      if (audioEnabled) {
+        try {
+          const result = await tts(CRISIS_RESPONSE_TEXT);
+          if (avatarRef.current) await avatarRef.current.playAudio(result);
+        } catch { /* TTS failure is non-critical for safety message */ }
+      }
+
+      setCurrentSubtitle('');
+      setVoiceState(VoiceState.IDLE);
+      return;
+    }
 
     setVoiceState(VoiceState.PROCESSING);
     abortRef.current = false;
@@ -187,7 +225,7 @@ export function useAvatarConversation({ avatarRef }) {
         console.log(`[LATENCY] rag_start_ms +${pts.rag_start - t0}`);
 
         let firstChunk = true;
-        for await (const chunk of openaiService.chatStream(userText, history, timingCbs)) {
+        for await (const chunk of openaiService.chatStream(userText, history, timingCbs, { userRole, simpleLanguage })) {
           if (abortRef.current) break;
           if (firstChunk) {
             pts.first_token = Date.now();
@@ -217,10 +255,13 @@ export function useAvatarConversation({ avatarRef }) {
 
         if (buf.trim() && !abortRef.current) addSegment(buf);
       } finally {
+        // Append disclaimer to stored text (not spoken aloud — that would add
+        // unwanted latency and be repetitive during voice conversations).
+        const storedText = fullText + MEDICAL_DISCLAIMER;
         setConversationHistory(prev => [
           ...prev,
           { role: 'user',      content: userText },
-          { role: 'assistant', content: fullText  },
+          { role: 'assistant', content: storedText },
         ]);
         // Persist voice exchange to AsyncStorage in ChatScreen format so both
         // screens share a unified history.
@@ -229,7 +270,7 @@ export function useAvatarConversation({ avatarRef }) {
           const existing = raw ? JSON.parse(raw) : [];
           const now = Date.now();
           const userEntry = { id: `v_${now}`, role: 'user', text: userText, sources: [], timestamp: new Date().toISOString() };
-          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: [], timestamp: new Date().toISOString() };
+          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: storedText, sources: [], timestamp: new Date().toISOString() };
           const updated = [...existing, userEntry, assistantEntry].slice(-MAX_PERSISTED);
           await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(updated));
         } catch { /* non-critical */ }

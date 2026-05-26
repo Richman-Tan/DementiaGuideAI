@@ -16,11 +16,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Share } from 'react-native';
 import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
 import { openaiService } from '../services/openaiService';
 import { elevenLabsService } from '../lib/tts/elevenLabsService';
 import { useSettings } from '../context/SettingsContext';
+import { getFeedbackLog, clearFeedbackLog } from '../utils/feedbackLogger';
 
 const Section = ({ title, children }) => {
   const { textScale, colors } = useSettings();
@@ -182,6 +184,7 @@ export const ProfileScreen = ({ navigation }) => {
     hapticFeedback, audioEnabled, avatarEnabled, autoPlayResponses,
     updateSetting, toggleDarkMode, triggerHaptic,
     darkMode, highContrast, subtitlesEnabled, colors,
+    simpleLanguage,
   } = useSettings();
   const [apiKey, setApiKey]               = useState(null);
   const [elevenLabsKey, setElevenLabsKey] = useState(null);
@@ -300,6 +303,40 @@ export const ProfileScreen = ({ navigation }) => {
     );
   };
 
+  const handleViewFeedback = async () => {
+    const log = await getFeedbackLog();
+    if (log.length === 0) {
+      Alert.alert('Feedback Log', 'No feedback recorded yet. Use the thumbs up/down buttons after Aria responds.');
+      return;
+    }
+    const up   = log.filter(e => e.feedback === 'up').length;
+    const down = log.filter(e => e.feedback === 'down').length;
+    Alert.alert(
+      `Feedback Log (${log.length} entries)`,
+      `👍 Helpful: ${up}\n👎 Not helpful: ${down}\n\nWould you like to export the full log?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Export',
+          onPress: async () => {
+            await Share.share({
+              message: JSON.stringify(log, null, 2),
+              title: 'DementiaGuide AI Feedback Log',
+            });
+          },
+        },
+        {
+          text: 'Clear log',
+          style: 'destructive',
+          onPress: async () => {
+            await clearFeedbackLog();
+            Alert.alert('Cleared', 'Feedback log has been cleared.');
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
@@ -376,6 +413,16 @@ export const ProfileScreen = ({ navigation }) => {
               sublabel="Easier on the eyes in low light"
               value={darkMode}
               onToggle={() => { triggerHaptic('medium'); toggleDarkMode(); }}
+              isLast={false}
+            />
+
+            <ToggleRow
+              icon="text-short"
+              iconColor={Colors.primary}
+              label="Simple Language"
+              sublabel="Shorter sentences and simpler words from Aria"
+              value={simpleLanguage}
+              onToggle={v => { triggerHaptic('light'); updateSetting('simpleLanguage', v); }}
               isLast
             />
           </Section>
@@ -446,6 +493,14 @@ export const ProfileScreen = ({ navigation }) => {
               label="Medical Disclaimer"
               sublabel="Information is not a substitute for professional advice"
               onPress={handleMedicalDisclaimer}
+              isLast={false}
+            />
+            <SettingRow
+              icon="thumb-up-outline"
+              iconColor={Colors.success}
+              label="View Feedback Log"
+              sublabel="See responses you marked helpful or not"
+              onPress={handleViewFeedback}
               isLast={false}
             />
             <SettingRow

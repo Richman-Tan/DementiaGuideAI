@@ -31,5 +31,11 @@
     "react-native-screens": "~4.16.0",
     "three": "^0.184.0"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "jsdom": "^29.1.1",
+    "node-fetch": "^3.3.2",
+    "pdf-parse": "^2.4.5"
+  }
 }

@@ -12,6 +12,36 @@ export const VoiceState = {
   SPEAKING:   'speaking',
 };
 
+// Whisper-optimised recording: 16 kHz mono reduces upload size ~4× vs HIGH_QUALITY
+// with no accuracy loss (Whisper resamples to 16 kHz internally).
+const WHISPER_RECORDING_OPTIONS = {
+  isMeteringEnabled: false,
+  android: {
+    extension: '.m4a',
+    outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+    audioEncoder: Audio.AndroidAudioEncoder.AAC,
+    sampleRate: 16000,
+    numberOfChannels: 1,
+    bitRate: 32000,
+  },
+  ios: {
+    extension: '.m4a',
+    outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
+    audioQuality: Audio.IOSAudioQuality.LOW,
+    sampleRate: 16000,
+    numberOfChannels: 1,
+    bitRate: 32000,
+    linearPCMBitDepth: 16,
+    linearPCMIsBigEndian: false,
+    linearPCMIsFloat: false,
+  },
+};
+
+// Secondary sentence split: fire TTS early when a sentence buffer exceeds this
+// length and contains a comma/semicolon, avoiding long silences on clause-heavy
+// responses before the first .!? boundary arrives.
+const EARLY_CHUNK_CHARS = 80;
+
 /**
  * useAvatarConversation
  *
@@ -22,13 +52,14 @@ export const VoiceState = {
  *   1. startRecording()     — expo-av records microphone audio
  *   2. stopAndTranscribe()  — Whisper transcribes the recording
  *   3. processQuery(text)   — runs the streaming conversation loop:
- *        a. chatStream() yields LLM tokens
- *        b. Sentence boundaries detected via punctuation
- *        c. Each complete sentence fires ttsService.tts() immediately
- *           (Promises pushed in order, resolved concurrently — later sentences
- *            generate while earlier ones are still playing)
- *        d. Segments played in order via avatarRef.current.playAudio()
- *           which resolves when the audio ends, keeping mouth sync tight
+ *        a. producerTask(): chatStream() yields LLM tokens; sentence boundaries
+ *           detected via punctuation (and early comma chunking); each complete
+ *           sentence fires tts() immediately and is pushed to an async queue.
+ *        b. consumerTask(): starts as soon as the first TTS promise is queued
+ *           (does NOT wait for the full LLM stream to complete). Plays segments
+ *           in order via avatarRef.current.playAudio() which resolves on audioEnd.
+ *        c. Both tasks run concurrently via Promise.all() — first audio plays
+ *           while later sentences are still generating/synthesising.
  *
  * How to swap the LLM provider:
  *   Replace the chatStream() call below with a different async generator that
@@ -54,6 +85,13 @@ export function useAvatarConversation({ avatarRef }) {
     historyRef.current = conversationHistory;
   }, [conversationHistory]);
 
+  // Pre-warm KB embeddings when the hook mounts (VoiceScreen opens).
+  // initKnowledgeBase() is idempotent — deduplication in openaiService prevents
+  // double-init if chatStream() is called before this resolves.
+  useEffect(() => {
+    openaiService.initKnowledgeBase().catch(() => {});
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -63,76 +101,170 @@ export function useAvatarConversation({ avatarRef }) {
   }, [avatarRef]);
 
   // ─── Core conversation loop ─────────────────────────────────────────────────
-  // Stream LLM response sentence-by-sentence → TTS fires per sentence →
-  // audio segments queued and played in order while later segments generate.
-  const processQuery = useCallback(async (userText) => {
+  // Producer-consumer pattern: LLM streaming and TTS playback run concurrently.
+  // The consumer starts as soon as the first sentence is queued — it does NOT
+  // wait for the full LLM response before playing the first audio segment.
+  const processQuery = useCallback(async (userText, t0 = Date.now(), sttDoneAt = null) => {
     if (!userText.trim()) return;
 
     setVoiceState(VoiceState.PROCESSING);
     abortRef.current = false;
 
-    try {
-      const history  = historyRef.current;
-      let   fullText = '';
+    // Timing accumulator — checkpoints set inline, printed in finally
+    const pts = { stt_done: sttDoneAt };
 
-      // Each entry is a Promise<{ audio, visemeTimeline }> pushed in sentence order.
-      // Promises resolve concurrently so TTS for sentence N+1 is already generating
-      // while sentence N is playing — this is the key latency reduction.
-      const segmentPromises = [];
+    // ── Shared async queue (single consumer, Hermes-safe) ────────────────────
+    // JS is single-threaded so array writes are never truly concurrent.
+    // The notify slot holds at most one waiter (only the consumer ever sets it).
+    const queue = { promises: [], done: false, notify: null };
+    const wake  = () => { const n = queue.notify; queue.notify = null; n?.(); };
+
+    // ── Producer: stream LLM → split sentences → enqueue TTS promises ────────
+    const producerTask = async () => {
+      const history = historyRef.current;
+      let fullText  = '';
+      let buf       = '';
+      let firstSeg  = true;
 
       const addSegment = (text) => {
         const clean = text.trim();
         if (!clean || !audioEnabled) return;
-        segmentPromises.push(tts(clean));
+
+        if (firstSeg) {
+          pts.first_sentence = Date.now();
+          console.log(`[LATENCY] first_sentence_ready_ms +${pts.first_sentence - t0}`);
+          pts.tts_start = Date.now();
+          console.log(`[LATENCY] tts_first_request_start_ms +${pts.tts_start - t0}`);
+          const p = tts(clean);
+          p.then(() => {
+            pts.tts_ready = Date.now();
+            console.log(`[LATENCY] tts_first_audio_ready_ms +${pts.tts_ready - t0}`);
+          }).catch(() => {});
+          queue.promises.push(p);
+          firstSeg = false;
+        } else {
+          queue.promises.push(tts(clean));
+        }
+        wake();
       };
 
-      // Stream LLM tokens and split into sentences on punctuation boundaries.
-      // Uses a delimiter trick (\x1F) to avoid lookbehind (unsupported in Hermes).
-      let buf = '';
-      for await (const chunk of openaiService.chatStream(userText, history)) {
-        if (abortRef.current) break;
-        fullText += chunk;
-        buf      += chunk;
-        const marked = buf.replace(/([.!?])\s+/g, '$1\x1F');
-        const parts  = marked.split('\x1F');
-        parts.slice(0, -1).forEach(s => addSegment(s));
-        buf = parts[parts.length - 1];
+      try {
+        const timingCbs = {
+          onRagDone: () => {
+            pts.rag_done = Date.now();
+            console.log(`[LATENCY] rag_done_ms +${pts.rag_done - t0}`);
+          },
+          onLlmSend: () => {
+            pts.llm_send = Date.now();
+            console.log(`[LATENCY] llm_request_start_ms +${pts.llm_send - t0}`);
+          },
+        };
+
+        pts.rag_start = Date.now();
+        console.log(`[LATENCY] rag_start_ms +${pts.rag_start - t0}`);
+
+        let firstChunk = true;
+        for await (const chunk of openaiService.chatStream(userText, history, timingCbs)) {
+          if (abortRef.current) break;
+          if (firstChunk) {
+            pts.first_token = Date.now();
+            console.log(`[LATENCY] first_token_ms +${pts.first_token - t0}`);
+            firstChunk = false;
+          }
+          fullText += chunk;
+          buf      += chunk;
+
+          // Primary split: sentence boundaries on .!?
+          // Uses \x1F delimiter trick to avoid lookbehind (unsupported in Hermes).
+          const marked = buf.replace(/([.!?])\s+/g, '$1\x1F');
+          const parts  = marked.split('\x1F');
+          parts.slice(0, -1).forEach(s => addSegment(s));
+          buf = parts[parts.length - 1];
+
+          // Secondary split: fire TTS early when buffer is long and contains a
+          // natural pause point, so clause-heavy responses don't block first audio.
+          if (buf.length > EARLY_CHUNK_CHARS) {
+            const splitIdx = Math.max(buf.lastIndexOf(','), buf.lastIndexOf(';'));
+            if (splitIdx > 15) {
+              addSegment(buf.slice(0, splitIdx + 1));
+              buf = buf.slice(splitIdx + 1).trimStart();
+            }
+          }
+        }
+
+        if (buf.trim() && !abortRef.current) addSegment(buf);
+      } finally {
+        setConversationHistory(prev => [
+          ...prev,
+          { role: 'user',      content: userText },
+          { role: 'assistant', content: fullText  },
+        ]);
+        queue.done = true;
+        wake(); // unblock consumer even if no segments were added
       }
-      // Flush any remaining text after the stream ends
-      if (buf.trim() && !abortRef.current) addSegment(buf);
+    };
 
-      setConversationHistory(prev => [
-        ...prev,
-        { role: 'user',      content: userText  },
-        { role: 'assistant', content: fullText   },
-      ]);
+    // ── Consumer: play in order, starting on first available promise ──────────
+    const consumerTask = async () => {
+      let i             = 0;
+      let speakingStart = false;
+      let firstPlay     = true;
 
-      if (segmentPromises.length === 0 || abortRef.current) {
-        setVoiceState(VoiceState.IDLE);
-        return;
-      }
+      while (true) {
+        // Block until there is a queued promise or the producer is done
+        while (i >= queue.promises.length && !queue.done) {
+          await new Promise(r => { queue.notify = r; });
+        }
+        if (i >= queue.promises.length) break; // producer done, nothing left
 
-      setVoiceState(VoiceState.SPEAKING);
-
-      // Play segments in order. Awaiting each playAudio() call ensures the avatar
-      // finishes speaking one sentence before the next begins, keeping lip sync
-      // tightly coupled to the audio. playAudio() resolves on the 'audioEnd' event
-      // from the WebView (fired by lipSyncSource.onended).
-      for (let i = 0; i < segmentPromises.length; i++) {
+        if (!speakingStart) {
+          setVoiceState(VoiceState.SPEAKING); // fires at first sentence, not end of stream
+          speakingStart = true;
+        }
         if (abortRef.current) break;
-        const segment = await segmentPromises[i]; // { audio, visemeTimeline }
+
+        const segment = await queue.promises[i]; // wait for TTS to resolve
         if (abortRef.current) break;
+
+        if (firstPlay) {
+          pts.avatar_play = Date.now();
+          console.log(`[LATENCY] avatar_play_request_ms +${pts.avatar_play - t0}`);
+          // One-shot callback: fires when WebView signals audio has actually started
+          avatarRef.current?.setOnAudioStart(() => {
+            pts.audio_started = Date.now();
+            console.log(`[LATENCY] avatar_audio_started_ms +${pts.audio_started - t0}`);
+          });
+          firstPlay = false;
+        }
+
         if (avatarRef.current) await avatarRef.current.playAudio(segment);
-        if (i < segmentPromises.length - 1 && !abortRef.current) {
+
+        // Skip the inter-segment gap after the final segment
+        const isLast = queue.done && i === queue.promises.length - 1;
+        if (!isLast && !abortRef.current) {
           await new Promise(r => setTimeout(r, 420));
         }
+        i++;
       }
+    };
+
+    try {
+      await Promise.all([producerTask(), consumerTask()]);
     } catch (err) {
       console.error('[useAvatarConversation] processQuery error:', err);
     } finally {
       setVoiceState(VoiceState.IDLE);
+      const d = (a, b) => (a != null && b != null) ? a - b : null;
+      console.log('[LATENCY SUMMARY]', JSON.stringify({
+        stt_ms:            d(pts.stt_done,      t0),
+        rag_ms:            d(pts.rag_done,       pts.rag_start),
+        llm_to_token_ms:   d(pts.first_token,    pts.llm_send),
+        first_sentence_ms: d(pts.first_sentence, pts.first_token),
+        tts_first_ms:      d(pts.tts_ready,      pts.tts_start),
+        to_first_audio_ms: d(pts.audio_started,  t0),
+      }));
     }
-  }, [avatarRef]);
+  }, [avatarRef, audioEnabled]);
 
   // ─── Recording ─────────────────────────────────────────────────────────────
 
@@ -151,9 +283,7 @@ export function useAvatarConversation({ avatarRef }) {
         playsInSilentModeIOS: true,
       });
 
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      const { recording } = await Audio.Recording.createAsync(WHISPER_RECORDING_OPTIONS);
       recordingRef.current = recording;
       setVoiceState(VoiceState.LISTENING);
     } catch (err) {
@@ -165,6 +295,9 @@ export function useAvatarConversation({ avatarRef }) {
   const stopAndTranscribe = useCallback(async () => {
     const rec = recordingRef.current;
     if (!rec) return;
+
+    const t0 = Date.now();
+    console.log(`[LATENCY] recording_stop_ms +0`);
 
     setVoiceState(VoiceState.PROCESSING);
 
@@ -178,13 +311,18 @@ export function useAvatarConversation({ avatarRef }) {
         playsInSilentModeIOS: true,
       });
 
+      console.log(`[LATENCY] stt_start_ms +${Date.now() - t0}`);
       const transcript = await openaiService.transcribe(uri);
+      const sttDoneAt = Date.now();
+      console.log(`[LATENCY] stt_done_ms +${sttDoneAt - t0}`);
+
       if (!transcript) {
         setVoiceState(VoiceState.IDLE);
         return;
       }
 
-      await processQuery(transcript);
+      // Pass t0 and sttDoneAt so processQuery shares the same timing anchor
+      await processQuery(transcript, t0, sttDoneAt);
     } catch (err) {
       console.error('[useAvatarConversation] stopAndTranscribe:', err);
       setVoiceState(VoiceState.IDLE);

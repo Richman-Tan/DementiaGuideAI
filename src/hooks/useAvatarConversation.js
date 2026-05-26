@@ -123,6 +123,9 @@ export function useAvatarConversation({ avatarRef }) {
         const segment = await segmentPromises[i]; // { audio, visemeTimeline }
         if (abortRef.current) break;
         if (avatarRef.current) await avatarRef.current.playAudio(segment);
+        if (i < segmentPromises.length - 1 && !abortRef.current) {
+          await new Promise(r => setTimeout(r, 420));
+        }
       }
     } catch (err) {
       console.error('[useAvatarConversation] processQuery error:', err);

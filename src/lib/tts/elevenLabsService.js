@@ -81,8 +81,10 @@ class ElevenLabsService {
           model_id: DEFAULT_MODEL_ID,
           output_format: 'mp3_44100_128',
           voice_settings: {
-            stability: 0.5,
+            stability: 0.40,
             similarity_boost: 0.75,
+            style: 0.20,
+            speed: 0.87,
           },
         }),
       }

@@ -810,6 +810,9 @@ window.playAudioWithLipSync = async function(dataUri) {
     lipSyncActive = true;
 
     lipSyncSource.onended = () => _onAudioEnded(null);
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioStart' }));
+    }
     lipSyncSource.start(0);
   } catch(err) {
     _onAudioEnded(String(err));
@@ -838,6 +841,9 @@ window.playAudioWithVisemeTimeline = async function(dataUri, timeline) {
     audioStartTime = lipSyncCtx.currentTime;       // anchor for playback position
 
     lipSyncSource.onended = () => _onAudioEnded(null);
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioStart' }));
+    }
     lipSyncSource.start(0);
   } catch(err) {
     _onAudioEnded(String(err));
@@ -867,6 +873,7 @@ export const AvatarVRM = forwardRef(({
   const webRef = useRef(null);
   const stateRef = useRef('idle');
   const audioEndResolveRef = useRef(null);
+  const audioStartCbRef = useRef(null);
 
   const [webKey, setWebKey] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -915,8 +922,10 @@ export const AvatarVRM = forwardRef(({
     }),
     stopAudio: () => {
       audioEndResolveRef.current = null;
+      audioStartCbRef.current = null;
       webRef.current?.injectJavaScript(`window.stopAudioLipSync();true;`);
     },
+    setOnAudioStart: (cb) => { audioStartCbRef.current = cb; },
   }));
 
   const source = useMemo(
@@ -972,6 +981,12 @@ export const AvatarVRM = forwardRef(({
 
         if (data.type === 'debug') {
           console.log('[AvatarVRM]', data.message);
+        }
+
+        if (data.type === 'audioStart') {
+          const cb = audioStartCbRef.current;
+          audioStartCbRef.current = null;
+          cb?.();
         }
 
         if (data.type === 'audioEnd') {

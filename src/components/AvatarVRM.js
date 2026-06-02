@@ -171,6 +171,11 @@ let baseRotationY = 0;
 let basePositionY = 0;
 let avatarState = 'idle';
 let mouthCurrent = 0;
+// All internal viseme keys — vowels + consonant articulators
+const ALL_VISEME_KEYS = ['aa','ih','ou','ee','oh','v_pp','v_ff','v_th','v_dd','v_kk','v_ch','v_ss','v_nn','v_rr'];
+// Per-channel smoothed weights — lerped each frame so transitions feel organic
+const vSmooth = { aa:0, ih:0, ou:0, ee:0, oh:0, v_pp:0, v_ff:0, v_th:0, v_dd:0, v_kk:0, v_ch:0, v_ss:0, v_nn:0, v_rr:0 };
+const V_LERP = 0.55;
 let lastTs = null;
 let elapsed = 0;
 let blinkCooldown = 2.2;
@@ -245,7 +250,7 @@ function bone(name) {
 const BONE_NAME_MAP = {
   'hips':                    ['Hips'],
   'spine':                   ['Spine'],
-  'chest':                   ['Spine2'],
+  'chest':                   ['Spine2', 'Spine1', 'Chest'],
   'neck':                    ['Neck'],
   'head':                    ['Head'],
   'leftUpperArm':            ['LeftArm'],
@@ -342,15 +347,15 @@ function applyRelaxedPose() {
   if (head) head.rotation.x = -0.02;
 
   if (leftUpperArm) {
-    leftUpperArm.rotation.z -= -1.3;
+    leftUpperArm.rotation.z -= -1.2;
     leftUpperArm.rotation.x += 0.04;
-    leftUpperArm.rotation.y += 0.05;
+    leftUpperArm.rotation.y += 1.5;
   }
 
   if (rightUpperArm) {
-    rightUpperArm.rotation.z += -1.3;
+    rightUpperArm.rotation.z += -1.2;
     rightUpperArm.rotation.x += 0.04;
-    rightUpperArm.rotation.y -= 0.05;
+    rightUpperArm.rotation.y -= 1.5;
   }
 
   if (leftLowerArm) {
@@ -421,14 +426,27 @@ function applyRelaxedPose() {
   });
 }
 
-// Maps our internal expression names to RPM ARKit / Oculus viseme morph target names.
-// Viseme names follow the Oculus/RPM convention present on Wolf3D_Head and Wolf3D_Teeth.
-const EXPR_MAP = {
-  'aa':         ['viseme_aa'],
-  'ih':         ['viseme_I'],
-  'ou':         ['viseme_U'],
-  'ee':         ['viseme_E'],
-  'oh':         ['viseme_O'],
+// Maps our internal expression names to morph target names on the head mesh.
+// Defaults follow RPM/Oculus/ARKit convention. patchExprMap() rewrites entries
+// at runtime if the loaded model uses a different naming convention.
+let EXPR_MAP = {
+  // ── Vowel visemes (Oculus/RPM names by default) ───────────────────────────
+  'aa':    ['viseme_aa'],
+  'ih':    ['viseme_I'],
+  'ou':    ['viseme_U'],
+  'ee':    ['viseme_E'],
+  'oh':    ['viseme_O'],
+  // ── Consonant visemes ─────────────────────────────────────────────────────
+  'v_pp':  ['viseme_PP'],
+  'v_ff':  ['viseme_FF'],
+  'v_th':  ['viseme_TH'],
+  'v_dd':  ['viseme_DD'],
+  'v_kk':  ['viseme_kk'],
+  'v_ch':  ['viseme_CH'],
+  'v_ss':  ['viseme_SS'],
+  'v_nn':  ['viseme_nn'],
+  'v_rr':  ['viseme_RR'],
+  // ── Facial expressions ────────────────────────────────────────────────────
   'blinkLeft':  ['eyeBlinkLeft'],
   'blinkRight': ['eyeBlinkRight'],
   'happy':      ['mouthSmileLeft', 'mouthSmileRight'],
@@ -436,8 +454,96 @@ const EXPR_MAP = {
   'surprised':  ['eyeWideLeft', 'eyeWideRight'],
 };
 
-// Viseme expressions are mirrored to Wolf3D_Teeth (which has matching morph targets).
-const VISEME_KEYS = new Set(['aa', 'ih', 'ou', 'ee', 'oh']);
+// Alternate blend shape names used by some ARKit/MetaPerson exports.
+const EXPR_ALTERNATES = {
+  'blinkLeft':  [['eyeBlinkLeft'], ['EyeBlink_L'], ['Blink_L']],
+  'blinkRight': [['eyeBlinkRight'], ['EyeBlink_R'], ['Blink_R']],
+  'surprised':  [['eyeWideLeft', 'eyeWideRight'], ['EyeWide_L', 'EyeWide_R']],
+  'happy':      [['mouthSmileLeft', 'mouthSmileRight'], ['mouthSmile_L', 'mouthSmile_R']],
+  'relaxed':    [['cheekSquintLeft', 'cheekSquintRight'], ['cheekSquint_L', 'cheekSquint_R']],
+};
+
+function patchExprMap() {
+  if (!headMesh || !headMesh.morphTargetDictionary) return;
+  const dict = headMesh.morphTargetDictionary;
+
+  // Patch eye/face expression names for alternate ARKit export conventions.
+  for (const [key, variants] of Object.entries(EXPR_ALTERNATES)) {
+    for (const variant of variants) {
+      if (variant.every(name => name in dict)) {
+        EXPR_MAP[key] = variant;
+        break;
+      }
+    }
+  }
+
+  // AvatarSDK MetaPerson export — viseme shapes exist but without the "viseme_" prefix.
+  // Shape names: aa, ih, ou, oh, E (note uppercase E for the "ee" vowel).
+  // Must be checked BEFORE the jawOpen fallback because this model has both.
+  if (!('viseme_aa' in dict) && 'aa' in dict && 'ih' in dict) {
+    // Vowels
+    EXPR_MAP.aa = ['aa'];
+    EXPR_MAP.ih = ['ih'];
+    EXPR_MAP.ou = ['ou'];
+    EXPR_MAP.ee = 'E' in dict ? ['E'] : EXPR_MAP.ee;
+    EXPR_MAP.oh = ['oh'];
+    // Consonant articulators (AvatarSDK exports without viseme_ prefix)
+    if ('PP' in dict) EXPR_MAP.v_pp = ['PP'];
+    if ('FF' in dict) EXPR_MAP.v_ff = ['FF'];
+    if ('TH' in dict) EXPR_MAP.v_th = ['TH'];
+    if ('DD' in dict) EXPR_MAP.v_dd = ['DD'];
+    if ('kk' in dict) EXPR_MAP.v_kk = ['kk'];
+    if ('CH' in dict) EXPR_MAP.v_ch = ['CH'];
+    if ('SS' in dict) EXPR_MAP.v_ss = ['SS'];
+    if ('nn' in dict) EXPR_MAP.v_nn = ['nn'];
+    if ('RR' in dict) EXPR_MAP.v_rr = ['RR'];
+    window._dbg('Visemes: AvatarSDK full set (vowels + consonant articulators)');
+  }
+
+  // If the model has no Oculus viseme shapes (viseme_aa etc.) but has ARKit jaw/mouth
+  // shapes, remap the five visemes onto weighted ARKit combos.
+  // Each entry is [morphName, scale] — the incoming viseme weight (0–1) is multiplied
+  // by scale so we can mix multiple shapes at different intensities.
+  else if (!('viseme_aa' in dict) && !('aa' in dict) && 'jawOpen' in dict) {
+    const has = (n) => n in dict;
+    // aa — open vowel ("father"): strong jaw drop + lower lip pull
+    EXPR_MAP.aa = [
+      ['jawOpen',            0.72],
+      ...(has('mouthLowerDownLeft')  ? [['mouthLowerDownLeft',  0.50], ['mouthLowerDownRight', 0.50]] : []),
+      ...(has('mouthRollLower')      ? [['mouthRollLower',      0.22]] : []),
+    ];
+    // ih — front vowel ("bit"): wide lip stretch, slight jaw
+    EXPR_MAP.ih = [
+      ['jawOpen',            0.22],
+      ...(has('mouthStretchLeft')    ? [['mouthStretchLeft',    0.78], ['mouthStretchRight',   0.78]] : []),
+      ...(has('mouthDimpleLeft')     ? [['mouthDimpleLeft',     0.18], ['mouthDimpleRight',    0.18]] : []),
+    ];
+    // ou — rounded vowel ("you"): pucker with moderate jaw
+    EXPR_MAP.ou = [
+      ['jawOpen',            0.28],
+      ...(has('mouthPucker')         ? [['mouthPucker',         0.88]] : []),
+      ...(has('mouthFunnel')         ? [['mouthFunnel',         0.25]] : []),
+    ];
+    // ee — high front vowel ("see"): strong stretch, near-closed jaw
+    EXPR_MAP.ee = [
+      ['jawOpen',            0.12],
+      ...(has('mouthStretchLeft')    ? [['mouthStretchLeft',    0.82], ['mouthStretchRight',   0.82]] : []),
+      ...(has('mouthSmileLeft')      ? [['mouthSmileLeft',      0.16], ['mouthSmileRight',     0.16]] : []),
+    ];
+    // oh — rounded open vowel ("go"): funnel + strong jaw drop
+    EXPR_MAP.oh = [
+      ['jawOpen',            0.65],
+      ...(has('mouthFunnel')         ? [['mouthFunnel',         0.78]] : []),
+      ...(has('mouthLowerDownLeft')  ? [['mouthLowerDownLeft',  0.22], ['mouthLowerDownRight', 0.22]] : []),
+    ];
+    window._dbg('Visemes remapped to weighted ARKit shapes');
+  }
+
+  window._dbg('EXPR_MAP.aa=' + EXPR_MAP.aa + ' blinkLeft=' + EXPR_MAP.blinkLeft);
+}
+
+// Viseme keys — all of these are mirrored to teethMesh when present.
+const VISEME_KEYS = new Set(ALL_VISEME_KEYS);
 
 function setMorphTarget(mesh, morphName, value) {
   if (!mesh || !mesh.morphTargetDictionary) return;
@@ -452,9 +558,14 @@ function setExpression(name, value) {
   const targets = EXPR_MAP[name];
   if (!targets) return;
   const isViseme = VISEME_KEYS.has(name);
-  for (const t of targets) {
-    setMorphTarget(headMesh, t, value);
-    if (isViseme && teethMesh) setMorphTarget(teethMesh, t, value);
+  for (const entry of targets) {
+    // Each entry is either a plain string or a [morphName, scale] pair.
+    // Scaled entries let one logical viseme drive multiple morphs at different intensities.
+    const morphName = Array.isArray(entry) ? entry[0] : entry;
+    const scale     = Array.isArray(entry) ? entry[1] : 1.0;
+    const v = value * scale;
+    setMorphTarget(headMesh, morphName, v);
+    if (isViseme && teethMesh) setMorphTarget(teethMesh, morphName, v);
   }
 }
 
@@ -471,16 +582,64 @@ function loadModel() {
 
       model = gltf.scene;
 
+      // Collect all meshes that carry morph targets for scored head/teeth detection.
+      const morphMeshes = [];
       model.traverse((obj) => {
         obj.frustumCulled = false;
-        if (obj.isMesh) {
-          // RPM-specific names take priority; fall back to first mesh with morph targets
-          if (obj.name === 'Wolf3D_Head')  headMesh  = obj;
-          if (obj.name === 'Wolf3D_Teeth') teethMesh = obj;
-          if (!headMesh && obj.morphTargetDictionary) headMesh = obj;
-        }
+        if (!obj.isMesh) return;
+        const morphCount = obj.morphTargetDictionary ? Object.keys(obj.morphTargetDictionary).length : 0;
+        window._dbg('Mesh: ' + obj.name + (morphCount ? ' [' + morphCount + ' morphs]' : ''));
+        if (morphCount > 0) morphMeshes.push(obj);
+
+        // RPM exact names — highest priority
+        if (obj.name === 'Wolf3D_Head')  headMesh  = obj;
+        if (obj.name === 'Wolf3D_Teeth') teethMesh = obj;
       });
 
+      // If RPM names didn't match, resolve head mesh by scored fallback
+      if (!headMesh) {
+        // P2: name contains 'head' or 'face' (case-insensitive)
+        for (const m of morphMeshes) {
+          const nm = m.name.toLowerCase();
+          if (nm.includes('head') || nm.includes('face')) { headMesh = m; break; }
+        }
+      }
+      if (!headMesh) {
+        // P3: mesh with an eye-blink morph (reliable face-mesh marker); among matches pick the one
+        // with the most morphs so we get jaw/mouth shapes too (MetaPerson has two face meshes).
+        let p3best = null;
+        for (const m of morphMeshes) {
+          const d = m.morphTargetDictionary;
+          if ('eyeBlinkLeft' in d || 'EyeBlink_L' in d || 'Blink_L' in d) {
+            if (!p3best || Object.keys(d).length > Object.keys(p3best.morphTargetDictionary).length) {
+              p3best = m;
+            }
+          }
+        }
+        if (p3best) headMesh = p3best;
+      }
+      if (!headMesh && morphMeshes.length > 0) {
+        // P4: mesh with the most morph targets
+        morphMeshes.sort((a, b) => Object.keys(b.morphTargetDictionary).length - Object.keys(a.morphTargetDictionary).length);
+        headMesh = morphMeshes[0];
+      }
+
+      // Teeth: Wolf3D_Teeth already set, else name-match, else skip
+      if (!teethMesh) {
+        for (const m of morphMeshes) {
+          if (m.name.toLowerCase().includes('teeth')) { teethMesh = m; break; }
+        }
+      }
+
+      if (headMesh) {
+        const names = Object.keys(headMesh.morphTargetDictionary).slice(0, 15).join(', ');
+        window._dbg('Head mesh: ' + headMesh.name + ', morphs: ' + names);
+      } else {
+        window._dbg('Head mesh: NOT FOUND — expressions will be inactive');
+      }
+      if (teethMesh) window._dbg('Teeth mesh: ' + teethMesh.name);
+
+      patchExprMap();
       buildBoneMap();
 
       baseRotationY = model.rotation.y;
@@ -659,19 +818,23 @@ function animate(ts) {
 
       // ─── MOUTH / LIP SYNC ─────────────────────────────────────────────────
       if (visemeMode && lipSyncActive) {
-        // ElevenLabs path: drive all five mouth shapes from the viseme timeline.
-        // No lerp applied here — crossfade is baked into getVisemeWeights() itself.
+        // Drive all 14 viseme channels with per-channel smoothing.
         const w = LipSyncController.getVisemeWeights();
-        setExpression('aa', w.aa);
-        setExpression('ih', w.ih);
-        setExpression('ou', w.ou);
-        setExpression('ee', w.ee);
-        setExpression('oh', w.oh);
-        mouthCurrent = Math.max(w.aa, w.ih, w.ou, w.ee, w.oh);
+        let maxV = 0;
+        for (let vi = 0; vi < ALL_VISEME_KEYS.length; vi++) {
+          const k = ALL_VISEME_KEYS[vi];
+          vSmooth[k] = lerp(vSmooth[k], w[k] || 0, V_LERP);
+          setExpression(k, vSmooth[k]);
+          if (vSmooth[k] > maxV) maxV = vSmooth[k];
+        }
+        mouthCurrent = maxV;
       } else {
-        // RMS fallback path — original amplitude-based approach.
-        // Only 'aa' is driven; the other shapes are zeroed to avoid stale values
-        // if the mode was recently switched from viseme mode.
+        // Decay all viseme channels so the mouth closes smoothly when audio ends.
+        for (let vi = 0; vi < ALL_VISEME_KEYS.length; vi++) {
+          vSmooth[ALL_VISEME_KEYS[vi]] = lerp(vSmooth[ALL_VISEME_KEYS[vi]], 0, V_LERP);
+        }
+
+        // RMS fallback path — amplitude drives 'aa' only.
         let mouthTarget = 0;
         if (lipSyncActive && lipSyncAnalyser && lipSyncBuf) {
           lipSyncAnalyser.getByteTimeDomainData(lipSyncBuf);
@@ -686,11 +849,11 @@ function animate(ts) {
           mouthTarget = 0.2 + Math.abs(Math.sin(elapsed * 7)) * 0.45;
         }
         mouthCurrent = lerp(mouthCurrent, mouthTarget, lipSyncActive ? 0.5 : 0.2);
-        setExpression('aa', mouthCurrent);
-        setExpression('ih', 0);
-        setExpression('ou', 0);
-        setExpression('ee', 0);
-        setExpression('oh', 0);
+        // 'aa' blends RMS-driven value with any decaying viseme weight for a smooth hand-off.
+        setExpression('aa', Math.max(mouthCurrent, vSmooth.aa));
+        for (let vi = 1; vi < ALL_VISEME_KEYS.length; vi++) {
+          setExpression(ALL_VISEME_KEYS[vi], vSmooth[ALL_VISEME_KEYS[vi]]);
+        }
       }
 
       setExpression('surprised', listening ? 0.08 : 0);
@@ -785,7 +948,7 @@ let audioStartTime = null;   // AudioContext.currentTime at the moment source.st
 //   smoothing layer, causing the viseme to "lag" past the audio cue it maps to.
 const LipSyncController = {
   getVisemeWeights: function() {
-    const result = { aa: 0, ih: 0, ou: 0, ee: 0, oh: 0 };
+    const result = { aa:0, ih:0, ou:0, ee:0, oh:0, v_pp:0, v_ff:0, v_th:0, v_dd:0, v_kk:0, v_ch:0, v_ss:0, v_nn:0, v_rr:0 };
     if (!visemeMode || !visemeTimeline || audioStartTime === null || !lipSyncCtx) {
       return result;
     }

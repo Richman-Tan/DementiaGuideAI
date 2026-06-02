@@ -21,7 +21,7 @@ import { useAvatarConversation, VoiceState } from '../hooks/useAvatarConversatio
 import { useSettings } from '../context/SettingsContext';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const ZHENJA_ASSET = require('../../assets/ready-player-me-female-character/source/zhenja.glb');
+const ZHENJA_ASSET = require('../../assets/avatar2/model.glb');
 
 const QUICK_CHIPS = [
   'Morning routine',

@@ -229,7 +229,9 @@ export function useAvatarConversation({ avatarRef }) {
           const existing = raw ? JSON.parse(raw) : [];
           const now = Date.now();
           const userEntry = { id: `v_${now}`, role: 'user', text: userText, sources: [], timestamp: new Date().toISOString() };
-          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: [], timestamp: new Date().toISOString() };
+          // Resolve inline citations from the completed stream
+          const { citations } = openaiService.resolveStreamCitations(fullText);
+          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: citations, timestamp: new Date().toISOString() };
           const updated = [...existing, userEntry, assistantEntry].slice(-MAX_PERSISTED);
           await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(updated));
         } catch { /* non-critical */ }

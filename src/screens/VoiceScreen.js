@@ -84,7 +84,8 @@ export const VoiceScreen = ({ navigation }) => {
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       <LinearGradient
-        colors={['#0D0D1A', '#1A1A2E', '#16213E']}
+        colors={['#080B14', '#0E1525', '#0D1B2A', '#0A1A20']}
+        locations={[0, 0.4, 0.75, 1]}
         start={{ x: 0.3, y: 0 }}
         end={{ x: 0.7, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -94,10 +95,10 @@ export const VoiceScreen = ({ navigation }) => {
       <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity
           style={styles.topIconBtn}
-          onPress={() => navigation.goBack()}
-          accessibilityLabel="Go back"
+          onPress={() => navigation.navigate('Home')}
+          accessibilityLabel="Return to home"
         >
-          <MaterialCommunityIcons name="menu" size={24} color="rgba(255,255,255,0.9)" />
+          <MaterialCommunityIcons name="arrow-left" size={24} color="rgba(255,255,255,0.9)" />
         </TouchableOpacity>
       </View>
 
@@ -131,7 +132,7 @@ export const VoiceScreen = ({ navigation }) => {
         </View>
 
         {/* Subtitle bar — absolute overlay so it doesn't affect avatar size */}
-        {subtitlesEnabled && currentSubtitle.length > 0 && voiceState === VoiceState.SPEAKING && (
+        {currentSubtitle.length > 0 && voiceState === VoiceState.SPEAKING && (
           <View style={styles.subtitleBar}>
             <Text style={styles.subtitleText} numberOfLines={3}>{currentSubtitle}</Text>
           </View>
@@ -171,7 +172,7 @@ export const VoiceScreen = ({ navigation }) => {
           ))}
         </ScrollView>
 
-        {/* Icon row */}
+        {/* Icon row — mic as primary, flanked by text and volume */}
         <View style={styles.iconRow}>
           <TouchableOpacity
             style={styles.iconBtn}
@@ -179,14 +180,6 @@ export const VoiceScreen = ({ navigation }) => {
             accessibilityLabel="Switch to text chat"
           >
             <MaterialCommunityIcons name="keyboard-outline" size={22} color="rgba(255,255,255,0.8)" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.iconBtn}
-            onPress={() => navigation.navigate('Library')}
-            accessibilityLabel="Browse library"
-          >
-            <MaterialCommunityIcons name="library-outline" size={22} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
 
           <Animated.View style={{ transform: [{ scale: micPulse }] }}>
@@ -213,14 +206,6 @@ export const VoiceScreen = ({ navigation }) => {
               size={22}
               color={audioEnabled ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)'}
             />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.iconBtn}
-            onPress={() => navigation.navigate('Profile')}
-            accessibilityLabel="Settings"
-          >
-            <MaterialCommunityIcons name="cog-outline" size={22} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
         </View>
 

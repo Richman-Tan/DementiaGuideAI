@@ -25,7 +25,7 @@ function buildHTML(modelUrl) {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: transparent;
+    background: #0D0D1A;
   }
 
   canvas {
@@ -113,6 +113,9 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x0D0D1A, 1.0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.85;
 
 document.body.appendChild(renderer.domElement);
 
@@ -143,15 +146,23 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 1.25, 2.5);
 camera.lookAt(0, 1.25, 0);
 
-scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+// Deep navy ambient — low intensity preserves shadow depth
+scene.add(new THREE.AmbientLight(0x1A2A3A, 0.9));
 
-const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
-keyLight.position.set(1, 2, 2);
+// Key light — warm white from front-left
+const keyLight = new THREE.DirectionalLight(0xFFEEDD, 2.2);
+keyLight.position.set(-1.5, 2.0, 2.0);
 scene.add(keyLight);
 
-const fillLight = new THREE.DirectionalLight(0xbfd7ff, 0.8);
-fillLight.position.set(-1.5, 1, 1);
+// Fill light — cool blue-white from right
+const fillLight = new THREE.DirectionalLight(0xDDEEFF, 0.6);
+fillLight.position.set(2.0, 0.5, 1.0);
 scene.add(fillLight);
+
+// Rim/back light — teal-cyan brand accent, separates avatar from background
+const rimLight = new THREE.DirectionalLight(0x3CC8C8, 1.8);
+rimLight.position.set(0.5, 1.0, -3.0);
+scene.add(rimLight);
 
 let vrm = null;
 let baseRotationY = 0;
@@ -169,6 +180,11 @@ let thinkBlend = 0;
 const boneRefs = {};
 const boneBase = {};
 
+// Micro-saccade state — tiny random eye fixation shifts
+let nextSaccadeTime = 0;
+let saccadeOffsetX  = 0;
+let saccadeOffsetY  = 0;
+
 function frameCamera(modelScene) {
   const box = new THREE.Box3().setFromObject(modelScene);
   const size = new THREE.Vector3();
@@ -179,15 +195,16 @@ function frameCamera(modelScene) {
 
   const height = size.y || 1.6;
 
-  const visibleBottom = box.min.y + height * 0.55;
-  const visibleTop = box.max.y + height * 0.06;
+  // Chest-up framing: crop waist and below so the face dominates the view
+  const visibleBottom = box.min.y + height * 0.62;
+  const visibleTop = box.max.y + height * 0.04;
   const visibleCenterY = (visibleBottom + visibleTop) / 2;
   const visibleHeight = visibleTop - visibleBottom;
 
   const fovRad = THREE.MathUtils.degToRad(camera.fov);
   const distance = (visibleHeight / 2) / Math.tan(fovRad / 2);
 
-  camera.position.set(center.x, visibleCenterY, distance * 1.0);
+  camera.position.set(center.x, visibleCenterY, distance * 0.95);
   camera.lookAt(center.x, visibleCenterY, center.z);
   camera.updateProjectionMatrix();
 
@@ -399,6 +416,16 @@ function loadVRM() {
         obj.visible = true;
       });
 
+      // MToon1 rim enhancement — edge brightening that reacts to the rim light
+      vrm.scene.traverse((obj) => {
+        if (!obj.isMesh || !obj.material) return;
+        const mat = obj.material;
+        if (!mat.isMToonMaterial) return;
+        if (mat.rimLightFactor !== undefined)  mat.rimLightFactor  = 0.5;
+        if (mat.rimFresnelPower !== undefined) mat.rimFresnelPower = 2.5;
+        if (mat.rimLiftFactor !== undefined)   mat.rimLiftFactor   = 0.3;
+      });
+
       baseRotationY = vrm.scene.rotation.y;
       basePositionY = vrm.scene.position.y;
 
@@ -533,11 +560,18 @@ function animate(ts) {
         );
       }
 
+      // Micro-saccades: random tiny fixation shifts every 0.8–2.5 s
+      if (elapsed > nextSaccadeTime) {
+        saccadeOffsetX = (Math.random() - 0.5) * 0.045;
+        saccadeOffsetY = (Math.random() - 0.5) * 0.030;
+        nextSaccadeTime = elapsed + 0.8 + Math.random() * 1.7;
+      }
+
       if (headBase) {
         setBoneRotation(
           'head',
-          headBase.x + lookV,
-          headBase.y + lookH * 0.62,
+          headBase.x + lookV + saccadeOffsetX,
+          headBase.y + lookH * 0.62 + saccadeOffsetY,
           headBase.z + Math.sin(elapsed * 0.35) * 0.012 + thinkTiltZ
         );
       }
@@ -622,6 +656,10 @@ function animate(ts) {
       }
 
       setExpression('surprised', listening ? 0.08 : 0);
+
+      // Warm idle: gentle resting smile that fades during active states
+      setExpression('happy',   lerp(0, 0.12, 1 - activeBlend));
+      setExpression('relaxed', lerp(0, 0.10, 1 - speakBlend));
 
       blinkCooldown -= dt;
       if (!blinking && blinkCooldown <= 0) {
@@ -1030,7 +1068,7 @@ export const AvatarVRM = forwardRef(({
         ref={webRef}
         source={source}
         style={styles.webview}
-        backgroundColor="transparent"
+        backgroundColor="#0D0D1A"
         containerStyle={styles.webviewContainer}
         onLoadStart={() => {
           setLoading(true);
@@ -1105,14 +1143,14 @@ export const AvatarVRM = forwardRef(({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    backgroundColor: 'transparent',
+    backgroundColor: '#0D0D1A',
   },
   webviewContainer: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#0D0D1A',
   },
   webview: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#0D0D1A',
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

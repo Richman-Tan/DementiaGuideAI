@@ -65,6 +65,7 @@ const MainTabs = () => {
         name="Voice"
         component={VoiceScreen}
         options={{
+          tabBarStyle: { display: 'none' },
           tabBarIcon: ({ focused, color }) => (
             <View style={tabStyles.voiceTabWrapper}>
               <View style={[tabStyles.voiceCenterButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>

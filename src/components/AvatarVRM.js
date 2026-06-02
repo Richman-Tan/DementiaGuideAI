@@ -54,8 +54,7 @@ function buildHTML(modelUrl) {
 {
   "imports": {
     "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
-    "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.5.2/lib/three-vrm.module.min.js"
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
   }
 }
 <\/script>
@@ -98,7 +97,6 @@ window._dbg('Module script started');
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 
 window._dbg('Imports loaded: THREE r' + THREE.REVISION);
 
@@ -164,7 +162,11 @@ const rimLight = new THREE.DirectionalLight(0x3CC8C8, 1.8);
 rimLight.position.set(0.5, 1.0, -3.0);
 scene.add(rimLight);
 
-let vrm = null;
+// GLB model references
+let model     = null;   // gltf.scene — the root Object3D
+let headMesh  = null;   // Wolf3D_Head — drives visemes, blinks, expressions
+let teethMesh = null;   // Wolf3D_Teeth — mirrors viseme morph targets
+
 let baseRotationY = 0;
 let basePositionY = 0;
 let avatarState = 'idle';
@@ -177,7 +179,9 @@ let blinking = false;
 let activeBlend = 0;
 let speakBlend = 0;
 let thinkBlend = 0;
-const boneRefs = {};
+
+// Bone map built once on load — keyed by our normalised names
+const boneMap  = {};
 const boneBase = {};
 
 // Micro-saccade state — tiny random eye fixation shifts
@@ -234,11 +238,56 @@ function lerp(a, b, t) {
 }
 
 function bone(name) {
-  if (!vrm || !vrm.humanoid) return null;
-  if (!boneRefs[name]) {
-    boneRefs[name] = vrm.humanoid.getNormalizedBoneNode(name) || null;
+  return boneMap[name] || null;
+}
+
+// Mixamo → our normalised bone name (RPM exports use Mixamo rig)
+const BONE_NAME_MAP = {
+  'hips':                    ['Hips'],
+  'spine':                   ['Spine'],
+  'chest':                   ['Spine2'],
+  'neck':                    ['Neck'],
+  'head':                    ['Head'],
+  'leftUpperArm':            ['LeftArm'],
+  'rightUpperArm':           ['RightArm'],
+  'leftLowerArm':            ['LeftForeArm'],
+  'rightLowerArm':           ['RightForeArm'],
+  'leftHand':                ['LeftHand'],
+  'rightHand':               ['RightHand'],
+  'leftIndexProximal':       ['LeftHandIndex1'],
+  'leftIndexIntermediate':   ['LeftHandIndex2'],
+  'leftMiddleProximal':      ['LeftHandMiddle1'],
+  'leftMiddleIntermediate':  ['LeftHandMiddle2'],
+  'leftRingProximal':        ['LeftHandRing1'],
+  'leftRingIntermediate':    ['LeftHandRing2'],
+  'leftLittleProximal':      ['LeftHandPinky1'],
+  'leftLittleIntermediate':  ['LeftHandPinky2'],
+  'leftThumbProximal':       ['LeftHandThumb1'],
+  'rightIndexProximal':      ['RightHandIndex1'],
+  'rightIndexIntermediate':  ['RightHandIndex2'],
+  'rightMiddleProximal':     ['RightHandMiddle1'],
+  'rightMiddleIntermediate': ['RightHandMiddle2'],
+  'rightRingProximal':       ['RightHandRing1'],
+  'rightRingIntermediate':   ['RightHandRing2'],
+  'rightLittleProximal':     ['RightHandPinky1'],
+  'rightLittleIntermediate': ['RightHandPinky2'],
+  'rightThumbProximal':      ['RightHandThumb1'],
+};
+
+function buildBoneMap() {
+  const reverseMap = {};
+  for (const [normalised, candidates] of Object.entries(BONE_NAME_MAP)) {
+    for (const candidate of candidates) {
+      reverseMap[candidate] = normalised;
+    }
   }
-  return boneRefs[name];
+  model.traverse((obj) => {
+    if (!obj.isBone && !obj.isSkinnedMesh) return;
+    const normalised = reverseMap[obj.name];
+    if (normalised && !boneMap[normalised]) {
+      boneMap[normalised] = obj;
+    }
+  });
 }
 
 function rememberBoneBase(name) {
@@ -372,104 +421,95 @@ function applyRelaxedPose() {
   });
 }
 
-function setExpression(name, value) {
-  if (!vrm || !vrm.expressionManager) return;
+// Maps our internal expression names to RPM ARKit / Oculus viseme morph target names.
+// Viseme names follow the Oculus/RPM convention present on Wolf3D_Head and Wolf3D_Teeth.
+const EXPR_MAP = {
+  'aa':         ['viseme_aa'],
+  'ih':         ['viseme_I'],
+  'ou':         ['viseme_U'],
+  'ee':         ['viseme_E'],
+  'oh':         ['viseme_O'],
+  'blinkLeft':  ['eyeBlinkLeft'],
+  'blinkRight': ['eyeBlinkRight'],
+  'happy':      ['mouthSmileLeft', 'mouthSmileRight'],
+  'relaxed':    ['cheekSquintLeft', 'cheekSquintRight'],
+  'surprised':  ['eyeWideLeft', 'eyeWideRight'],
+};
 
-  try {
-    vrm.expressionManager.setValue(name, value);
-  } catch (e) {}
+// Viseme expressions are mirrored to Wolf3D_Teeth (which has matching morph targets).
+const VISEME_KEYS = new Set(['aa', 'ih', 'ou', 'ee', 'oh']);
+
+function setMorphTarget(mesh, morphName, value) {
+  if (!mesh || !mesh.morphTargetDictionary) return;
+  const idx = mesh.morphTargetDictionary[morphName];
+  if (idx !== undefined) {
+    mesh.morphTargetInfluences[idx] = Math.max(0, Math.min(1, value));
+  }
 }
 
-function loadVRM() {
-  window._dbg('Renderer created, loading model...');
+function setExpression(name, value) {
+  if (!headMesh) return;
+  const targets = EXPR_MAP[name];
+  if (!targets) return;
+  const isViseme = VISEME_KEYS.has(name);
+  for (const t of targets) {
+    setMorphTarget(headMesh, t, value);
+    if (isViseme && teethMesh) setMorphTarget(teethMesh, t, value);
+  }
+}
+
+function loadModel() {
+  window._dbg('Renderer created, loading GLB model...');
 
   const loader = new GLTFLoader();
   loader.crossOrigin = 'anonymous';
 
-  loader.register((parser) => {
-    return new VRMLoaderPlugin(parser);
-  });
-
   loader.load(
     '${safeUrl}',
     (gltf) => {
-      window._dbg('GLTF loaded, extracting VRM...');
+      window._dbg('GLTF loaded, setting up model...');
 
-      vrm = gltf.userData.vrm;
+      model = gltf.scene;
 
-      if (!vrm) {
-        window._dbg('No VRM data found');
-        if (statusEl) statusEl.textContent = 'No VRM data found';
-        return;
-      }
-
-      window._dbg('VRM extracted, preparing scene...');
-
-      try {
-        VRMUtils.rotateVRM0(vrm);
-      } catch (e) {
-        console.log('rotateVRM0 skipped', e);
-      }
-
-      vrm.scene.traverse((obj) => {
+      model.traverse((obj) => {
         obj.frustumCulled = false;
-        obj.visible = true;
+        if (obj.isMesh) {
+          // RPM-specific names take priority; fall back to first mesh with morph targets
+          if (obj.name === 'Wolf3D_Head')  headMesh  = obj;
+          if (obj.name === 'Wolf3D_Teeth') teethMesh = obj;
+          if (!headMesh && obj.morphTargetDictionary) headMesh = obj;
+        }
       });
 
-      // MToon1 rim enhancement — edge brightening that reacts to the rim light
-      vrm.scene.traverse((obj) => {
-        if (!obj.isMesh || !obj.material) return;
-        const mat = obj.material;
-        if (!mat.isMToonMaterial) return;
-        if (mat.rimLightFactor !== undefined)  mat.rimLightFactor  = 0.5;
-        if (mat.rimFresnelPower !== undefined) mat.rimFresnelPower = 2.5;
-        if (mat.rimLiftFactor !== undefined)   mat.rimLiftFactor   = 0.3;
-      });
+      buildBoneMap();
 
-      baseRotationY = vrm.scene.rotation.y;
-      basePositionY = vrm.scene.position.y;
+      baseRotationY = model.rotation.y;
+      basePositionY = model.position.y;
 
       applyRelaxedPose();
 
-      scene.add(vrm.scene);
-      frameCamera(vrm.scene);
+      scene.add(model);
+      frameCamera(model);
 
-      if (statusEl) {
-        statusEl.style.display = 'none';
-      }
+      if (statusEl) statusEl.style.display = 'none';
 
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'loaded'
-        }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'loaded' }));
       }
 
       window._dbg('Avatar loaded successfully');
     },
     (xhr) => {
       const pct = xhr.total ? Math.round((xhr.loaded / xhr.total) * 100) : '?';
-
-      if (statusEl) {
-        statusEl.textContent = 'Loading ' + pct + '%';
-      }
-
-      if (pct === 100) {
-        window._dbg('Model download 100%');
-      }
+      if (statusEl) statusEl.textContent = 'Loading ' + pct + '%';
+      if (pct === 100) window._dbg('Model download 100%');
     },
     (error) => {
       const msg = error && error.message ? error.message : String(error);
       window._dbg('Model load error: ' + msg);
-
-      if (statusEl) {
-        statusEl.textContent = 'Load error';
-      }
-
+      if (statusEl) statusEl.textContent = 'Load error';
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'error',
-          message: msg
-        }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'error', message: msg }));
       }
     }
   );
@@ -485,9 +525,7 @@ function animate(ts) {
     lastTs = ts;
     elapsed += dt;
 
-    if (vrm) {
-      vrm.update(dt);
-
+    if (model) {
       const speaking = avatarState === 'speaking';
       const listening = avatarState === 'listening';
       const thinking = avatarState === 'thinking';
@@ -501,12 +539,12 @@ function animate(ts) {
       const bobAmp = lerp(0.006, 0.012, speakBlend);
       const bobRate = speaking ? 1.8 : listening ? 1.2 : 0.8;
 
-      vrm.scene.position.y =
+      model.position.y =
         basePositionY + Math.sin(elapsed * bobRate) * bobAmp;
 
       const swayAmp = lerp(0.015, lerp(0.025, 0.035, speakBlend), activeBlend);
 
-      vrm.scene.rotation.y =
+      model.rotation.y =
         baseRotationY + Math.sin(elapsed * 0.35) * swayAmp;
 
       const breath = Math.sin(elapsed * (speaking ? 2.4 : 1.5));
@@ -684,9 +722,6 @@ function animate(ts) {
         }
       }
 
-      if (vrm.expressionManager && vrm.expressionManager.update) {
-        vrm.expressionManager.update();
-      }
     }
 
     renderer.render(scene, camera);
@@ -708,12 +743,12 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
-  if (vrm) {
-    frameCamera(vrm.scene);
+  if (model) {
+    frameCamera(model);
   }
 });
 
-loadVRM();
+loadModel();
 
 // ─── LIP SYNC STATE ──────────────────────────────────────────────────────────
 // Shared by both the RMS fallback path and the viseme-timeline path.

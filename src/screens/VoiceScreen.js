@@ -12,11 +12,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { AvatarVRM, DEFAULT_VRM_MODEL_URL } from '../components/AvatarVRM';
+import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system/legacy';
+import { AvatarVRM } from '../components/AvatarVRM';
 import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
 import { useAvatarConversation, VoiceState } from '../hooks/useAvatarConversation';
 import { useSettings } from '../context/SettingsContext';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ZHENJA_ASSET = require('../../assets/ready-player-me-female-character/source/zhenja.glb');
 
 const QUICK_CHIPS = [
   'Morning routine',
@@ -29,10 +34,32 @@ const QUICK_CHIPS = [
 
 export const VoiceScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState('');
+  const [modelUri, setModelUri] = useState(null);
   const { textScale, avatarEnabled, subtitlesEnabled, audioEnabled, updateSetting } = useSettings();
   const avatarRef  = useRef(null);
   const micPulse   = useRef(new Animated.Value(1)).current;
   const insets     = useSafeAreaInsets();
+
+  // Load the RPM GLB from the app bundle as a base64 data URI so the WebView can fetch it.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const asset = Asset.fromModule(ZHENJA_ASSET);
+        await asset.downloadAsync();
+        const localUri = asset.localUri;
+        const base64 = await FileSystem.readAsStringAsync(localUri, {
+          encoding: 'base64',
+        });
+        if (!cancelled) {
+          setModelUri('data:model/gltf-binary;base64,' + base64);
+        }
+      } catch (e) {
+        console.warn('[VoiceScreen] Failed to load zhenja.glb:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const {
     voiceState,
@@ -104,10 +131,10 @@ export const VoiceScreen = ({ navigation }) => {
 
       {/* Avatar */}
       <View style={styles.avatarArea}>
-        {avatarEnabled ? (
+        {avatarEnabled && modelUri ? (
           <AvatarVRM
             ref={avatarRef}
-            modelUrl={DEFAULT_VRM_MODEL_URL}
+            modelUrl={modelUri}
             isListening={voiceState === VoiceState.LISTENING}
             isSpeaking={voiceState === VoiceState.SPEAKING}
             isThinking={voiceState === VoiceState.PROCESSING}

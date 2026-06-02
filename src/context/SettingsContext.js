@@ -16,6 +16,7 @@ const DEFAULTS = {
   darkMode:          false,
   highContrast:      false,
   subtitlesEnabled:  true,
+  conciseMode:       false,
 };
 
 const SettingsContext = createContext(null);
@@ -123,6 +124,7 @@ export const SettingsProvider = ({ children }) => {
     darkMode:          settings.darkMode,
     highContrast:      settings.highContrast,
     subtitlesEnabled:  settings.subtitlesEnabled,
+    conciseMode:       settings.conciseMode,
     colors,
     setTextSize,
     updateSetting,

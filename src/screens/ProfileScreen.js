@@ -181,7 +181,7 @@ export const ProfileScreen = ({ navigation }) => {
     textSize, textScale, setTextSize,
     hapticFeedback, audioEnabled, avatarEnabled, autoPlayResponses,
     updateSetting, toggleDarkMode, triggerHaptic,
-    darkMode, highContrast, subtitlesEnabled, colors,
+    darkMode, highContrast, subtitlesEnabled, conciseMode, colors,
   } = useSettings();
   const [apiKey, setApiKey]               = useState(null);
   const [elevenLabsKey, setElevenLabsKey] = useState(null);
@@ -419,6 +419,16 @@ export const ProfileScreen = ({ navigation }) => {
               sublabel="Automatically play audio when Aria responds"
               value={autoPlayResponses}
               onToggle={(v) => updateSetting('autoPlayResponses', v)}
+              isLast={false}
+            />
+
+            <ToggleRow
+              icon="lightning-bolt"
+              iconColor={Colors.warning}
+              label="Get to the Point"
+              sublabel="Shorter answers — no filler words or jargon"
+              value={conciseMode}
+              onToggle={(v) => updateSetting('conciseMode', v)}
               isLast
             />
           </Section>

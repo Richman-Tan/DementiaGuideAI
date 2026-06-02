@@ -82,7 +82,7 @@ export function useAvatarConversation({ avatarRef }) {
   const [conversationHistory, setConversationHistory] = useState([]);
   const [error, setError]                         = useState(null);            // string | null
   const [currentSubtitle, setCurrentSubtitle]     = useState(''); // current speaking sentence
-  const { audioEnabled } = useSettings();
+  const { audioEnabled, conciseMode } = useSettings();
 
   const recordingRef = useRef(null);
   const abortRef     = useRef(false);  // set true when user stops mid-response
@@ -187,7 +187,7 @@ export function useAvatarConversation({ avatarRef }) {
         console.log(`[LATENCY] rag_start_ms +${pts.rag_start - t0}`);
 
         let firstChunk = true;
-        for await (const chunk of openaiService.chatStream(userText, history, timingCbs)) {
+        for await (const chunk of openaiService.chatStream(userText, history, timingCbs, { conciseMode })) {
           if (abortRef.current) break;
           if (firstChunk) {
             pts.first_token = Date.now();

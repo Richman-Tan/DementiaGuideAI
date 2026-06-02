@@ -204,8 +204,13 @@ const boneBase = {};
 
 // Micro-saccade state — tiny random eye fixation shifts
 let nextSaccadeTime = 0;
-let saccadeOffsetX  = 0;
-let saccadeOffsetY  = 0;
+let saccadeTargetX  = 0, saccadeTargetY  = 0;
+let saccadeCurrentX = 0, saccadeCurrentY = 0;
+
+// Phase accumulators — prevent sine discontinuities when rate changes
+let bobPhase   = 0;
+let swayPhase  = 0;
+let breathPhase = 0;
 
 // Conversational gaze state machine
 // 'center' = looking at camera (eye contact); 'away' = natural glance break
@@ -823,11 +828,13 @@ function animate(ts) {
 
       // ─── BODY BOB & SWAY ──────────────────────────────────────────────────
       const bobAmp  = lerp(ANIM.BOB_IDLE, ANIM.BOB_ACTIVE, speakBlend);
-      const bobRate = speaking ? ANIM.BOB_RATE_SPEAK : listening ? ANIM.BOB_RATE_LISTEN : ANIM.BOB_RATE_IDLE;
-      model.position.y = basePositionY + Math.sin(elapsed * bobRate) * bobAmp;
+      const bobRate = lerp(lerp(ANIM.BOB_RATE_IDLE, ANIM.BOB_RATE_LISTEN, listenBlend), ANIM.BOB_RATE_SPEAK, speakBlend);
+      bobPhase += dt * bobRate;
+      model.position.y = basePositionY + Math.sin(bobPhase) * bobAmp;
 
       const swayAmp = lerp(ANIM.SWAY_IDLE, lerp(ANIM.SWAY_ACTIVE, ANIM.SWAY_SPEAK, speakBlend), activeBlend);
-      model.rotation.y = baseRotationY + Math.sin(elapsed * ANIM.SWAY_RATE) * swayAmp;
+      swayPhase += dt * ANIM.SWAY_RATE;
+      model.rotation.y = baseRotationY + Math.sin(swayPhase) * swayAmp;
 
       // ─── ORGANIC BREATHING ────────────────────────────────────────────────
       // Modulate breath rate with a slow secondary oscillator so the rhythm
@@ -837,8 +844,9 @@ function animate(ts) {
         breathVarNext   = elapsed + 3.0 + Math.random() * 5.0;
       }
       breathVarCurrent = lerp(breathVarCurrent, breathVarTarget, dt * 0.15);
-      const breathRate = (speaking ? ANIM.BREATH_RATE_SPEAK : ANIM.BREATH_RATE_IDLE) + breathVarCurrent;
-      const breath = Math.sin(elapsed * breathRate);
+      const breathRate = lerp(ANIM.BREATH_RATE_IDLE, ANIM.BREATH_RATE_SPEAK, speakBlend) + breathVarCurrent;
+      breathPhase += dt * breathRate;
+      const breath = Math.sin(breathPhase);
 
       const spineBase        = boneBase.spine;
       const chestBase        = boneBase.chest;
@@ -914,12 +922,15 @@ function animate(ts) {
 
       // Micro-saccades — fast tiny fixation shifts routed primarily to the eye bones
       if (elapsed > nextSaccadeTime) {
-        saccadeOffsetX  = (Math.random() - 0.5) * ANIM.SACCADE_X_AMP;
-        saccadeOffsetY  = (Math.random() - 0.5) * ANIM.SACCADE_Y_AMP;
+        saccadeTargetX  = (Math.random() - 0.5) * ANIM.SACCADE_X_AMP;
+        saccadeTargetY  = (Math.random() - 0.5) * ANIM.SACCADE_Y_AMP;
         const saccadeMin = listenBlend > 0.5 ? 0.6 : ANIM.SACCADE_MIN;
         const saccadeMax = listenBlend > 0.5 ? 1.8 : ANIM.SACCADE_MAX;
         nextSaccadeTime = elapsed + saccadeMin + Math.random() * (saccadeMax - saccadeMin);
       }
+      // Saccades interpolate toward target — fast but smooth, not an instant pop
+      saccadeCurrentX = lerp(saccadeCurrentX, saccadeTargetX, dt * 18.0);
+      saccadeCurrentY = lerp(saccadeCurrentY, saccadeTargetY, dt * 18.0);
 
       // ─── EYE BONES ────────────────────────────────────────────────────────
       // Eyes lead the gaze direction; head follows passively at reduced scale.
@@ -933,15 +944,15 @@ function animate(ts) {
 
       if (leftEyeBase) {
         setBoneRotation('leftEye',
-          leftEyeBase.x + eyeV + saccadeOffsetX * ANIM.EYE_SACCADE,
-          leftEyeBase.y + eyeH + saccadeOffsetY * ANIM.EYE_SACCADE,
+          leftEyeBase.x + eyeV + saccadeCurrentX * ANIM.EYE_SACCADE,
+          leftEyeBase.y + eyeH + saccadeCurrentY * ANIM.EYE_SACCADE,
           leftEyeBase.z
         );
       }
       if (rightEyeBase) {
         setBoneRotation('rightEye',
-          rightEyeBase.x + eyeV + saccadeOffsetX * ANIM.EYE_SACCADE,
-          rightEyeBase.y + eyeH + saccadeOffsetY * ANIM.EYE_SACCADE,
+          rightEyeBase.x + eyeV + saccadeCurrentX * ANIM.EYE_SACCADE,
+          rightEyeBase.y + eyeH + saccadeCurrentY * ANIM.EYE_SACCADE,
           rightEyeBase.z
         );
       }
@@ -950,8 +961,8 @@ function animate(ts) {
       if (headBase) {
         setBoneRotation(
           'head',
-          headBase.x + lookV * (1.0 - ANIM.EYE_V_SCALE) + saccadeOffsetX * (1.0 - ANIM.EYE_SACCADE) + empathyTiltX + listenTiltX,
-          headBase.y + lookH * 0.62 * (1.0 - ANIM.EYE_H_SCALE) + saccadeOffsetY * (1.0 - ANIM.EYE_SACCADE),
+          headBase.x + lookV * (1.0 - ANIM.EYE_V_SCALE) + saccadeCurrentX * (1.0 - ANIM.EYE_SACCADE) + empathyTiltX + listenTiltX,
+          headBase.y + lookH * 0.62 * (1.0 - ANIM.EYE_H_SCALE) + saccadeCurrentY * (1.0 - ANIM.EYE_SACCADE),
           headBase.z + Math.sin(elapsed * ANIM.HEAD_ROLL_FREQ) * ANIM.HEAD_ROLL_AMP + thinkTiltZ + empathyTiltZ
         );
       }

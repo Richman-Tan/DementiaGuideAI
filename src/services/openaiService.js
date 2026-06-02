@@ -98,7 +98,7 @@ class OpenAIService {
   // Async generator — yields text chunks as they stream from the API so the
   // caller can start TTS on completed sentences before the full response arrives.
 
-  async *chatStream(userMessage, conversationHistory = [], timingCbs = null) {
+  async *chatStream(userMessage, conversationHistory = [], timingCbs = null, { conciseMode = false } = {}) {
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new OpenAIAuthError('No API key configured');
 
@@ -114,7 +114,7 @@ class OpenAIService {
     }));
 
     const messages = [
-      { role: 'system', content: this._buildSystemPrompt() },
+      { role: 'system', content: this._buildSystemPrompt(conciseMode) },
       ...recentHistory,
       { role: 'user', content: `${contextBlock}\n\nUser question: ${userMessage}` },
     ];
@@ -248,7 +248,10 @@ class OpenAIService {
 
   // ─── System Prompt ──────────────────────────────────────────────────────────
 
-  _buildSystemPrompt() {
+  _buildSystemPrompt(conciseMode = false) {
+    const conciseRule = conciseMode
+      ? '\n8. CONCISE MODE IS ON: Answer in 1–2 short paragraphs maximum. Lead with the direct answer immediately — no preamble, no filler phrases ("Great question!", "Of course!", "Certainly!"), no restating the question. Cut any sentence that does not add new information. Plain words only; no jargon.'
+      : '';
     return `You are Aria, a compassionate and knowledgeable AI assistant created to support family caregivers, healthcare workers, and families caring for people with dementia. You work like a specialised library — every answer you give is grounded in the curated knowledge passages provided to you.
 
 IMPORTANT RULES:
@@ -258,12 +261,12 @@ IMPORTANT RULES:
 4. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
 5. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
 6. After your response, on a new line, write "Sources:" followed by a bullet list of the knowledge base titles you drew from (one per line, starting with "·"). Only list sources you actually used.
-7. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.`;
+7. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.${conciseRule}`;
   }
 
   // ─── RAG Chat ───────────────────────────────────────────────────────────────
 
-  async chat(userMessage, conversationHistory = []) {
+  async chat(userMessage, conversationHistory = [], { conciseMode = false } = {}) {
     // Retrieve relevant chunks
     const chunks = await this.search(userMessage, TOP_K);
 
@@ -279,7 +282,7 @@ IMPORTANT RULES:
     }));
 
     const messages = [
-      { role: 'system', content: this._buildSystemPrompt() },
+      { role: 'system', content: this._buildSystemPrompt(conciseMode) },
       ...recentHistory,
       {
         role: 'user',

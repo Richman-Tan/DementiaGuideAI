@@ -178,12 +178,25 @@ const vSmooth = { aa:0, ih:0, ou:0, ee:0, oh:0, v_pp:0, v_ff:0, v_th:0, v_dd:0, 
 const V_LERP = 0.55;
 let lastTs = null;
 let elapsed = 0;
-let blinkCooldown = 2.2;
-let blinkProgress = 0;
-let blinking = false;
-let activeBlend = 0;
-let speakBlend = 0;
-let thinkBlend = 0;
+// State blends — each lerps 0→1 as the matching state becomes active
+let activeBlend  = 0;
+let speakBlend   = 0;
+let thinkBlend   = 0;
+let empathyBlend = 0;
+let waitBlend    = 0;
+let listenBlend  = 0;
+
+// Blink state machine — phases: idle|closing|hold|opening|between|closing2|hold2|opening2
+let blinkPhase    = 'idle';
+let blinkTimer    = 0;
+let blinkNext     = 3.0;   // seconds until next blink trigger
+let blinkIsDouble = false;
+let blinkValue    = 0;     // 0 = eyes open, 1 = fully closed
+
+// Organic breathing rhythm variation (prevents mechanical regularity)
+let breathVarTarget  = 0;
+let breathVarCurrent = 0;
+let breathVarNext    = 4.0;
 
 // Bone map built once on load — keyed by our normalised names
 const boneMap  = {};
@@ -242,6 +255,65 @@ function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
+// ─── ANIMATION CONFIGURATION ─────────────────────────────────────────────────
+// All animation intensities, rates, and thresholds live here — tweak freely.
+const ANIM = {
+  // Breathing
+  BREATH_RATE_IDLE:    1.5,    BREATH_RATE_SPEAK:   2.2,
+  BREATH_SPINE_AMP:    0.015,  BREATH_CHEST_AMP:    0.025,
+  BREATH_NECK_AMP:     0.008,  BREATH_ARM_AMP:      0.018,
+  BREATH_VAR_AMP:      0.003,  // organic rate modulation depth
+
+  // Body bob / sway
+  BOB_IDLE:      0.005,  BOB_ACTIVE:      0.010,
+  BOB_RATE_IDLE: 0.7,    BOB_RATE_LISTEN: 1.1,   BOB_RATE_SPEAK: 1.7,
+  SWAY_IDLE:     0.012,  SWAY_ACTIVE:     0.022,  SWAY_SPEAK:     0.030,
+  SWAY_RATE:     0.33,
+
+  // Head look-around (dual-frequency natural drift)
+  LOOK_H_AMP1: 0.09,   LOOK_H_AMP2: 0.040, LOOK_H_FREQ1: 0.25, LOOK_H_FREQ2: 0.16,
+  LOOK_V_AMP1: 0.035,  LOOK_V_AMP2: 0.011, LOOK_V_FREQ1: 0.37, LOOK_V_FREQ2: 0.22,
+  LOOK_ACTIVE_SCALE: 0.40,
+  HEAD_ROLL_AMP: 0.010, HEAD_ROLL_FREQ: 0.33,
+
+  // Micro-saccades (randomised fixation shifts)
+  SACCADE_X_AMP: 0.040, SACCADE_Y_AMP: 0.028,
+  SACCADE_MIN:   1.0,   SACCADE_MAX:   3.0,
+
+  // Blinking — natural asymmetric eyelid kinematics (fast close, slow open)
+  BLINK_CLOSE_DUR:   0.075,  // fast close  (~75 ms)
+  BLINK_HOLD_DUR:    0.030,  // hold closed (~30 ms)
+  BLINK_OPEN_DUR:    0.180,  // slow open   (~180 ms)
+  BLINK_MIN:         2.2,    // minimum seconds between blinks
+  BLINK_MAX:         5.0,    // maximum seconds between blinks
+  BLINK_DOUBLE_PROB: 0.18,   // probability of a double blink
+  BLINK_DOUBLE_GAP:  0.12,   // pause between the two closures in a double blink
+
+  // State-specific head pose biases (radians)
+  THINK_GAZE_H:    0.09,  THINK_GAZE_V:    -0.06,  THINK_TILT_Z:   0.13,
+  EMPATHY_TILT_Z: -0.08,  EMPATHY_TILT_X:   0.015,
+  LISTEN_TILT_X:   0.010,
+
+  // Arms
+  ARM_FREQ1: 0.50, ARM_FREQ2: 0.79, ARM_AMP1: 0.050, ARM_AMP2: 0.020,
+  ARM_LOWER_FREQ: 0.86, ARM_LOWER_AMP: 0.028,
+  ARM_TWIST_FREQ: 0.61, ARM_TWIST_AMP: 0.022,
+
+  // Facial expressions
+  IDLE_SMILE:         0.14,  IDLE_RELAX:        0.10,
+  ACTIVE_SMILE_MIN:   0.04,  // floor — smile never fully disappears
+  LISTEN_SURPRISE:    0.07,  LISTEN_BROW_INNER: 0.08,
+  EMPATHY_BROW_INNER: 0.12,  THINK_BROW_DOWN:   0.08,
+};
+
+// Smooth-step: slow-in, slow-out — more organic than linear for eyelids
+function smoothstep(t) {
+  const c = t < 0 ? 0 : t > 1 ? 1 : t;
+  return c * c * (3 - 2 * c);
+}
+function blinkCurveClose(t) { return smoothstep(t / ANIM.BLINK_CLOSE_DUR); }
+function blinkCurveOpen(t)  { return 1 - smoothstep(t / ANIM.BLINK_OPEN_DUR); }
+
 function bone(name) {
   return boneMap[name] || null;
 }
@@ -253,6 +325,8 @@ const BONE_NAME_MAP = {
   'chest':                   ['Spine2', 'Spine1', 'Chest'],
   'neck':                    ['Neck'],
   'head':                    ['Head'],
+  'leftShoulder':            ['LeftShoulder'],
+  'rightShoulder':           ['RightShoulder'],
   'leftUpperArm':            ['LeftArm'],
   'rightUpperArm':           ['RightArm'],
   'leftLowerArm':            ['LeftForeArm'],
@@ -346,15 +420,22 @@ function applyRelaxedPose() {
   if (neck) neck.rotation.x = 0.01;
   if (head) head.rotation.x = -0.02;
 
+  // Clavicle: slight forward-and-down set so the shoulder sits naturally on the torso
+  // rather than being pulled back or shrugged. Adjust z to push arm geometry outward.
+  const leftShoulder  = bone('leftShoulder');
+  const rightShoulder = bone('rightShoulder');
+  if (leftShoulder)  { leftShoulder.rotation.z  -= 0.16;  leftShoulder.rotation.y  += 0.05; }
+  if (rightShoulder) { rightShoulder.rotation.z += 0.16;  rightShoulder.rotation.y -= 0.05; }
+
   if (leftUpperArm) {
     leftUpperArm.rotation.z -= -1.25;
-    leftUpperArm.rotation.x += 0.04;
+    leftUpperArm.rotation.x += 0.1;
     leftUpperArm.rotation.y += 1.5;
   }
 
   if (rightUpperArm) {
     rightUpperArm.rotation.z += -1.25;
-    rightUpperArm.rotation.x += 0.04;
+    rightUpperArm.rotation.x += 0.1;
     rightUpperArm.rotation.y -= 1.5;
   }
 
@@ -409,6 +490,8 @@ function applyRelaxedPose() {
     'chest',
     'neck',
     'head',
+    'leftShoulder',
+    'rightShoulder',
     'leftUpperArm',
     'rightUpperArm',
     'leftLowerArm',
@@ -452,6 +535,10 @@ let EXPR_MAP = {
   'happy':      ['mouthSmileLeft', 'mouthSmileRight'],
   'relaxed':    ['cheekSquintLeft', 'cheekSquintRight'],
   'surprised':  ['eyeWideLeft', 'eyeWideRight'],
+  // ── Eyebrow expressions (RPM ARKit names) ────────────────────────────────
+  'browInnerUp': ['browInnerUp'],
+  'browDown':    ['browDownLeft', 'browDownRight'],
+  'browOuterUp': ['browOuterUpLeft', 'browOuterUpRight'],
 };
 
 // Alternate blend shape names used by some ARKit/MetaPerson exports.
@@ -461,6 +548,8 @@ const EXPR_ALTERNATES = {
   'surprised':  [['eyeWideLeft', 'eyeWideRight'], ['EyeWide_L', 'EyeWide_R']],
   'happy':      [['mouthSmileLeft', 'mouthSmileRight'], ['mouthSmile_L', 'mouthSmile_R']],
   'relaxed':    [['cheekSquintLeft', 'cheekSquintRight'], ['cheekSquint_L', 'cheekSquint_R']],
+  'browInnerUp': [['browInnerUp'], ['BrowInnerUp']],
+  'browDown':    [['browDownLeft', 'browDownRight'], ['BrowDown_L', 'BrowDown_R']],
 };
 
 function patchExprMap() {
@@ -685,134 +774,148 @@ function animate(ts) {
     elapsed += dt;
 
     if (model) {
-      const speaking = avatarState === 'speaking';
+      // ─── STATE DETECTION ──────────────────────────────────────────────────
+      const speaking  = avatarState === 'speaking';
       const listening = avatarState === 'listening';
-      const thinking = avatarState === 'thinking';
-      const active = speaking || listening || thinking;
+      const thinking  = avatarState === 'thinking';
+      const empathy   = avatarState === 'empathy';
+      const waiting   = avatarState === 'waiting';
+      const active    = speaking || listening || thinking || empathy || waiting;
 
-      // Smooth blend values — drift toward target at ~0.04/frame (~0.6 s at 60 fps)
-      activeBlend = lerp(activeBlend, active    ? 1 : 0, 0.04);
-      speakBlend  = lerp(speakBlend,  speaking  ? 1 : 0, 0.04);
-      thinkBlend  = lerp(thinkBlend,  thinking  ? 1 : 0, 0.035);
+      // Blend values drift toward target at ~0.04/frame (~0.6 s at 60 fps)
+      activeBlend  = lerp(activeBlend,  active    ? 1 : 0, 0.04);
+      speakBlend   = lerp(speakBlend,   speaking  ? 1 : 0, 0.04);
+      thinkBlend   = lerp(thinkBlend,   thinking  ? 1 : 0, 0.035);
+      empathyBlend = lerp(empathyBlend, empathy   ? 1 : 0, 0.030);
+      waitBlend    = lerp(waitBlend,    waiting   ? 1 : 0, 0.035);
+      listenBlend  = lerp(listenBlend,  listening ? 1 : 0, 0.04);
 
-      const bobAmp = lerp(0.006, 0.012, speakBlend);
-      const bobRate = speaking ? 1.8 : listening ? 1.2 : 0.8;
+      // ─── BODY BOB & SWAY ──────────────────────────────────────────────────
+      const bobAmp  = lerp(ANIM.BOB_IDLE, ANIM.BOB_ACTIVE, speakBlend);
+      const bobRate = speaking ? ANIM.BOB_RATE_SPEAK : listening ? ANIM.BOB_RATE_LISTEN : ANIM.BOB_RATE_IDLE;
+      model.position.y = basePositionY + Math.sin(elapsed * bobRate) * bobAmp;
 
-      model.position.y =
-        basePositionY + Math.sin(elapsed * bobRate) * bobAmp;
+      const swayAmp = lerp(ANIM.SWAY_IDLE, lerp(ANIM.SWAY_ACTIVE, ANIM.SWAY_SPEAK, speakBlend), activeBlend);
+      model.rotation.y = baseRotationY + Math.sin(elapsed * ANIM.SWAY_RATE) * swayAmp;
 
-      const swayAmp = lerp(0.015, lerp(0.025, 0.035, speakBlend), activeBlend);
+      // ─── ORGANIC BREATHING ────────────────────────────────────────────────
+      // Modulate breath rate with a slow secondary oscillator so the rhythm
+      // never locks into a perfectly regular pattern.
+      if (elapsed > breathVarNext) {
+        breathVarTarget = (Math.random() - 0.5) * ANIM.BREATH_VAR_AMP;
+        breathVarNext   = elapsed + 3.0 + Math.random() * 5.0;
+      }
+      breathVarCurrent = lerp(breathVarCurrent, breathVarTarget, dt * 0.15);
+      const breathRate = (speaking ? ANIM.BREATH_RATE_SPEAK : ANIM.BREATH_RATE_IDLE) + breathVarCurrent;
+      const breath = Math.sin(elapsed * breathRate);
 
-      model.rotation.y =
-        baseRotationY + Math.sin(elapsed * 0.35) * swayAmp;
-
-      const breath = Math.sin(elapsed * (speaking ? 2.4 : 1.5));
-      const spineBase = boneBase.spine;
-      const chestBase = boneBase.chest;
-      const neckBase = boneBase.neck;
-      const headBase = boneBase.head;
-      const leftUpperArmBase = boneBase.leftUpperArm;
+      const spineBase        = boneBase.spine;
+      const chestBase        = boneBase.chest;
+      const neckBase         = boneBase.neck;
+      const headBase         = boneBase.head;
+      const leftUpperArmBase  = boneBase.leftUpperArm;
       const rightUpperArmBase = boneBase.rightUpperArm;
-      const leftLowerArmBase = boneBase.leftLowerArm;
+      const leftLowerArmBase  = boneBase.leftLowerArm;
       const rightLowerArmBase = boneBase.rightLowerArm;
 
       if (spineBase) {
-        setBoneRotation(
-          'spine',
-          spineBase.x + breath * 0.015,
-          spineBase.y,
-          spineBase.z
-        );
+        setBoneRotation('spine', spineBase.x + breath * ANIM.BREATH_SPINE_AMP, spineBase.y, spineBase.z);
       }
 
       if (chestBase) {
-        setBoneRotation(
-          'chest',
-          chestBase.x + breath * 0.025,
-          chestBase.y,
-          chestBase.z
-        );
+        setBoneRotation('chest', chestBase.x + breath * ANIM.BREATH_CHEST_AMP, chestBase.y, chestBase.z);
       }
 
-      // Compound look-around with thinking gaze bias (up-right = classic thinking direction).
-      const thinkGazeH = thinkBlend * 0.09;   // drift gaze right while thinking
-      const thinkGazeV = thinkBlend * (-0.06); // drift gaze up while thinking
-      const thinkTiltZ = thinkBlend * 0.13;    // tilt head slightly to the right
+      // ─── HEAD LOOK-AROUND ─────────────────────────────────────────────────
+      // Dual-frequency drift creates a more organic figure-8 gaze pattern.
+      // Active states reduce wander so the avatar stays focused on the user.
+      const lookScale = lerp(1.0, ANIM.LOOK_ACTIVE_SCALE, activeBlend);
+
+      const thinkGazeH   = thinkBlend   * ANIM.THINK_GAZE_H;
+      const thinkGazeV   = thinkBlend   * ANIM.THINK_GAZE_V;
+      const thinkTiltZ   = thinkBlend   * ANIM.THINK_TILT_Z;
+      const empathyTiltZ = empathyBlend * ANIM.EMPATHY_TILT_Z;  // left tilt — warmth direction
+      const empathyTiltX = empathyBlend * ANIM.EMPATHY_TILT_X;
+      const listenTiltX  = listenBlend  * ANIM.LISTEN_TILT_X;   // slight forward lean for attention
 
       const lookH =
-        Math.sin(elapsed * 0.27) * lerp(0.10, 0.04, activeBlend) +
-        Math.sin(elapsed * 0.17) * lerp(0.045, 0.02, activeBlend) +
+        Math.sin(elapsed * ANIM.LOOK_H_FREQ1) * ANIM.LOOK_H_AMP1 * lookScale +
+        Math.sin(elapsed * ANIM.LOOK_H_FREQ2) * ANIM.LOOK_H_AMP2 * lookScale +
         thinkGazeH;
       const lookV =
-        Math.sin(elapsed * 0.38) * lerp(0.038, 0.022, activeBlend) +
-        Math.sin(elapsed * 0.23) * 0.012 +
+        Math.sin(elapsed * ANIM.LOOK_V_FREQ1) * ANIM.LOOK_V_AMP1 * lookScale +
+        Math.sin(elapsed * ANIM.LOOK_V_FREQ2) * ANIM.LOOK_V_AMP2 +
         thinkGazeV;
 
       if (neckBase) {
         setBoneRotation(
           'neck',
-          neckBase.x + breath * 0.008 + Math.sin(elapsed * 0.6) * 0.012,
+          neckBase.x + breath * ANIM.BREATH_NECK_AMP + Math.sin(elapsed * 0.6) * 0.012,
           neckBase.y + lookH * 0.38,
           neckBase.z
         );
       }
 
-      // Micro-saccades: random tiny fixation shifts every 0.8–2.5 s
+      // Micro-saccades — randomised fixation shifts; interval varies per state
       if (elapsed > nextSaccadeTime) {
-        saccadeOffsetX = (Math.random() - 0.5) * 0.045;
-        saccadeOffsetY = (Math.random() - 0.5) * 0.030;
-        nextSaccadeTime = elapsed + 0.8 + Math.random() * 1.7;
+        saccadeOffsetX  = (Math.random() - 0.5) * ANIM.SACCADE_X_AMP;
+        saccadeOffsetY  = (Math.random() - 0.5) * ANIM.SACCADE_Y_AMP;
+        // Listening state saccades faster (more attentive eye activity)
+        const saccadeMin = listenBlend > 0.5 ? 0.6 : ANIM.SACCADE_MIN;
+        const saccadeMax = listenBlend > 0.5 ? 1.8 : ANIM.SACCADE_MAX;
+        nextSaccadeTime = elapsed + saccadeMin + Math.random() * (saccadeMax - saccadeMin);
       }
 
       if (headBase) {
         setBoneRotation(
           'head',
-          headBase.x + lookV + saccadeOffsetX,
+          headBase.x + lookV + saccadeOffsetX + empathyTiltX + listenTiltX,
           headBase.y + lookH * 0.62 + saccadeOffsetY,
-          headBase.z + Math.sin(elapsed * 0.35) * 0.012 + thinkTiltZ
+          headBase.z + Math.sin(elapsed * ANIM.HEAD_ROLL_FREQ) * ANIM.HEAD_ROLL_AMP + thinkTiltZ + empathyTiltZ
         );
       }
 
-      // Arms: keep base z negative (natural hang) but swing with two
-      // frequencies and independent phases so left/right feel uncoupled.
-      const armSwingA = Math.sin(elapsed * 0.52);
-      const armSwingB = Math.sin(elapsed * 0.81);
-      const armSwingAR = Math.sin(elapsed * 0.52 + 1.1); // offset phase for right
-      const armSwingBR = Math.sin(elapsed * 0.81 + 0.7);
+      // ─── ARMS ─────────────────────────────────────────────────────────────
+      // Two frequencies per arm, with independent phase offsets per side,
+      // so left and right arms never swing in perfect lockstep.
+      const armSwingA  = Math.sin(elapsed * ANIM.ARM_FREQ1);
+      const armSwingB  = Math.sin(elapsed * ANIM.ARM_FREQ2);
+      const armSwingAR = Math.sin(elapsed * ANIM.ARM_FREQ1 + 1.1);
+      const armSwingBR = Math.sin(elapsed * ANIM.ARM_FREQ2 + 0.7);
 
       if (leftUpperArmBase) {
         setBoneRotation(
           'leftUpperArm',
-          leftUpperArmBase.x + breath * 0.02,
+          leftUpperArmBase.x + breath * ANIM.BREATH_ARM_AMP,
           leftUpperArmBase.y + armSwingB * 0.018,
-          leftUpperArmBase.z + armSwingA * 0.055 + armSwingB * 0.022
+          leftUpperArmBase.z + armSwingA * ANIM.ARM_AMP1 + armSwingB * ANIM.ARM_AMP2
         );
       }
 
       if (rightUpperArmBase) {
         setBoneRotation(
           'rightUpperArm',
-          rightUpperArmBase.x + breath * 0.02,
+          rightUpperArmBase.x + breath * ANIM.BREATH_ARM_AMP,
           rightUpperArmBase.y - armSwingBR * 0.018,
-          rightUpperArmBase.z - (armSwingAR * 0.055 + armSwingBR * 0.022)
+          rightUpperArmBase.z - (armSwingAR * ANIM.ARM_AMP1 + armSwingBR * ANIM.ARM_AMP2)
         );
       }
 
       if (leftLowerArmBase) {
         setBoneRotation(
           'leftLowerArm',
-          leftLowerArmBase.x + Math.sin(elapsed * 0.88) * 0.03,
+          leftLowerArmBase.x + Math.sin(elapsed * ANIM.ARM_LOWER_FREQ) * ANIM.ARM_LOWER_AMP,
           leftLowerArmBase.y,
-          leftLowerArmBase.z + Math.sin(elapsed * 0.63) * 0.025
+          leftLowerArmBase.z + Math.sin(elapsed * ANIM.ARM_TWIST_FREQ) * ANIM.ARM_TWIST_AMP
         );
       }
 
       if (rightLowerArmBase) {
         setBoneRotation(
           'rightLowerArm',
-          rightLowerArmBase.x + Math.sin(elapsed * 0.88 + 0.9) * 0.03,
+          rightLowerArmBase.x + Math.sin(elapsed * ANIM.ARM_LOWER_FREQ + 0.9) * ANIM.ARM_LOWER_AMP,
           rightLowerArmBase.y,
-          rightLowerArmBase.z - Math.sin(elapsed * 0.63 + 0.6) * 0.025
+          rightLowerArmBase.z - Math.sin(elapsed * ANIM.ARM_TWIST_FREQ + 0.6) * ANIM.ARM_TWIST_AMP
         );
       }
 
@@ -856,34 +959,82 @@ function animate(ts) {
         }
       }
 
-      setExpression('surprised', listening ? 0.08 : 0);
+      // ─── FACIAL EXPRESSIONS ───────────────────────────────────────────────
+      // Eyebrows: each state has a distinct shape; setExpression silently no-ops
+      // if the morph target doesn't exist in this particular model export.
+      const browInner = listenBlend  * ANIM.LISTEN_BROW_INNER
+                      + empathyBlend * ANIM.EMPATHY_BROW_INNER;
+      const browDown  = thinkBlend   * ANIM.THINK_BROW_DOWN;
+      setExpression('browInnerUp', browInner);
+      setExpression('browDown',    browDown);
 
-      // Warm idle: gentle resting smile that fades during active states
-      setExpression('happy',   lerp(0, 0.12, 1 - activeBlend));
-      setExpression('relaxed', lerp(0, 0.10, 1 - speakBlend));
+      // Attentive wide-eye on listening
+      setExpression('surprised', listenBlend * ANIM.LISTEN_SURPRISE);
 
-      blinkCooldown -= dt;
-      if (!blinking && blinkCooldown <= 0) {
-        blinking = true;
-        blinkProgress = 0;
-        blinkCooldown = Math.random() * 2.5 + 1.8;
+      // Warm smile: never fully disappears — keeps the avatar feeling friendly
+      // even when active. ACTIVE_SMILE_MIN is a subtle floor value.
+      const smileTarget = lerp(ANIM.ACTIVE_SMILE_MIN, ANIM.IDLE_SMILE, 1 - activeBlend * 0.75);
+      setExpression('happy',   smileTarget);
+      setExpression('relaxed', lerp(0, ANIM.IDLE_RELAX, 1 - speakBlend));
+
+      // ─── BLINK STATE MACHINE ──────────────────────────────────────────────
+      // Natural eyelid kinematics: fast close (~75 ms), brief hold, slow open (~180 ms).
+      // 18% of blinks are doubles — a brief re-closure shortly after the first.
+      blinkTimer += dt;
+      switch (blinkPhase) {
+        case 'idle':
+          if (blinkTimer >= blinkNext) {
+            blinkPhase    = 'closing';
+            blinkTimer    = 0;
+            blinkIsDouble = Math.random() < ANIM.BLINK_DOUBLE_PROB;
+          }
+          break;
+        case 'closing':
+          blinkValue = blinkCurveClose(blinkTimer);
+          if (blinkTimer >= ANIM.BLINK_CLOSE_DUR) { blinkPhase = 'hold'; blinkTimer = 0; }
+          break;
+        case 'hold':
+          blinkValue = 1;
+          if (blinkTimer >= ANIM.BLINK_HOLD_DUR) { blinkPhase = 'opening'; blinkTimer = 0; }
+          break;
+        case 'opening':
+          blinkValue = blinkCurveOpen(blinkTimer);
+          if (blinkTimer >= ANIM.BLINK_OPEN_DUR) {
+            blinkValue = 0;
+            if (blinkIsDouble) {
+              blinkPhase = 'between';
+              blinkTimer = 0;
+            } else {
+              blinkPhase = 'idle';
+              blinkNext  = ANIM.BLINK_MIN + Math.random() * (ANIM.BLINK_MAX - ANIM.BLINK_MIN);
+              blinkTimer = 0;
+            }
+          }
+          break;
+        case 'between':
+          blinkValue = 0;
+          if (blinkTimer >= ANIM.BLINK_DOUBLE_GAP) { blinkPhase = 'closing2'; blinkTimer = 0; }
+          break;
+        case 'closing2':
+          blinkValue = blinkCurveClose(blinkTimer);
+          if (blinkTimer >= ANIM.BLINK_CLOSE_DUR) { blinkPhase = 'hold2'; blinkTimer = 0; }
+          break;
+        case 'hold2':
+          blinkValue = 1;
+          if (blinkTimer >= ANIM.BLINK_HOLD_DUR) { blinkPhase = 'opening2'; blinkTimer = 0; }
+          break;
+        case 'opening2':
+          blinkValue = blinkCurveOpen(blinkTimer);
+          if (blinkTimer >= ANIM.BLINK_OPEN_DUR) {
+            blinkValue = 0;
+            blinkPhase = 'idle';
+            blinkNext  = ANIM.BLINK_MIN + Math.random() * (ANIM.BLINK_MAX - ANIM.BLINK_MIN);
+            blinkTimer = 0;
+          }
+          break;
       }
-
-      if (blinking) {
-        blinkProgress += dt / 0.16;
-        const blinkValue = blinkProgress < 0.5
-          ? blinkProgress * 2
-          : (1 - blinkProgress) * 2;
-        const clampedBlink = Math.min(Math.max(blinkValue, 0), 1);
-        setExpression('blinkLeft', clampedBlink);
-        setExpression('blinkRight', clampedBlink);
-
-        if (blinkProgress >= 1) {
-          blinking = false;
-          setExpression('blinkLeft', 0);
-          setExpression('blinkRight', 0);
-        }
-      }
+      setExpression('blinkLeft',  blinkValue);
+      setExpression('blinkRight', blinkValue);
 
     }
 
@@ -1115,9 +1266,11 @@ export const AvatarVRM = forwardRef(({
   modelUrl = DEFAULT_VRM_MODEL_URL,
   width,
   height,
-  isListening = false,
-  isSpeaking = false,
-  isThinking = false,
+  isListening   = false,
+  isSpeaking    = false,
+  isThinking    = false,
+  isEmpathetic  = false,
+  isWaiting     = false,
   style,
 }, ref) => {
   const webRef = useRef(null);
@@ -1194,7 +1347,12 @@ export const AvatarVRM = forwardRef(({
   }, []);
 
   useEffect(() => {
-    const next = isSpeaking ? 'speaking' : isThinking ? 'thinking' : isListening ? 'listening' : 'idle';
+    const next = isSpeaking   ? 'speaking'
+               : isThinking   ? 'thinking'
+               : isEmpathetic ? 'empathy'
+               : isListening  ? 'listening'
+               : isWaiting    ? 'waiting'
+               : 'idle';
 
     if (next === stateRef.current) return;
 
@@ -1206,7 +1364,7 @@ export const AvatarVRM = forwardRef(({
       }
       true;
     `);
-  }, [isListening, isSpeaking, isThinking]);
+  }, [isListening, isSpeaking, isThinking, isEmpathetic, isWaiting]);
 
   const handleMessage = useCallback(
     (event) => {

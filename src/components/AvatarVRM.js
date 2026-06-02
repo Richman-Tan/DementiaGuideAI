@@ -207,6 +207,16 @@ let nextSaccadeTime = 0;
 let saccadeOffsetX  = 0;
 let saccadeOffsetY  = 0;
 
+// Conversational gaze state machine
+// 'center' = looking at camera (eye contact); 'away' = natural glance break
+let gazePhase    = 'center';
+let gazeTimer    = 0;
+let gazeDuration = 1.5;   // seconds to hold current gaze phase
+let gazeTargetH  = 0;     // horizontal gaze target (0 = camera center)
+let gazeTargetV  = 0.01;  // slight upward = looking into eyes rather than forehead
+let gazeCurrentH = 0;
+let gazeCurrentV = 0;
+
 function frameCamera(modelScene) {
   const box = new THREE.Box3().setFromObject(modelScene);
   const size = new THREE.Vector3();
@@ -280,6 +290,23 @@ const ANIM = {
   SACCADE_X_AMP: 0.040, SACCADE_Y_AMP: 0.028,
   SACCADE_MIN:   1.0,   SACCADE_MAX:   3.0,
 
+  // Conversational gaze — eye contact with natural periodic breaks
+  GAZE_HOLD_MIN:     1.8,   // minimum seconds of direct eye contact
+  GAZE_HOLD_RANGE:   2.5,   // random range on top → 1.8–4.3 s eye contact
+  GAZE_AWAY_MIN:     0.45,  // minimum seconds of looking away
+  GAZE_AWAY_RANGE:   0.85,  // random range on top → 0.45–1.3 s break
+  GAZE_AWAY_H:       0.09,  // max horizontal offset when glancing (radians)
+  GAZE_AWAY_V:       0.05,  // max vertical offset when glancing (radians)
+  GAZE_RETURN_SPEED: 4.5,   // lerp multiplier returning to center (fast, deliberate)
+  GAZE_SHIFT_SPEED:  3.0,   // lerp multiplier shifting gaze away (slightly slower)
+  GAZE_MICRO_H:      0.012, // residual horizontal head micro-movement
+  GAZE_MICRO_V:      0.007, // residual vertical head micro-movement
+
+  // Eye bone rotation — eyes lead, head follows
+  EYE_H_SCALE:   0.60,  // fraction of horizontal gaze handled by eye bones (rest = head)
+  EYE_V_SCALE:   0.65,  // fraction of vertical gaze handled by eye bones
+  EYE_SACCADE:   0.75,  // fraction of saccade offset routed to eyes vs. head
+
   // Blinking — natural asymmetric eyelid kinematics (fast close, slow open)
   BLINK_CLOSE_DUR:   0.075,  // fast close  (~75 ms)
   BLINK_HOLD_DUR:    0.030,  // hold closed (~30 ms)
@@ -325,6 +352,8 @@ const BONE_NAME_MAP = {
   'chest':                   ['Spine2', 'Spine1', 'Chest'],
   'neck':                    ['Neck'],
   'head':                    ['Head'],
+  'leftEye':                 ['LeftEye'],
+  'rightEye':                ['RightEye'],
   'leftShoulder':            ['LeftShoulder'],
   'rightShoulder':           ['RightShoulder'],
   'leftUpperArm':            ['LeftArm'],
@@ -490,6 +519,8 @@ function applyRelaxedPose() {
     'chest',
     'neck',
     'head',
+    'leftEye',
+    'rightEye',
     'leftShoulder',
     'rightShoulder',
     'leftUpperArm',
@@ -826,51 +857,101 @@ function animate(ts) {
         setBoneRotation('chest', chestBase.x + breath * ANIM.BREATH_CHEST_AMP, chestBase.y, chestBase.z);
       }
 
-      // ─── HEAD LOOK-AROUND ─────────────────────────────────────────────────
-      // Dual-frequency drift creates a more organic figure-8 gaze pattern.
-      // Active states reduce wander so the avatar stays focused on the user.
-      const lookScale = lerp(1.0, ANIM.LOOK_ACTIVE_SCALE, activeBlend);
-
-      const thinkGazeH   = thinkBlend   * ANIM.THINK_GAZE_H;
-      const thinkGazeV   = thinkBlend   * ANIM.THINK_GAZE_V;
+      // ─── CONVERSATIONAL GAZE ──────────────────────────────────────────────
+      // Hold natural eye contact most of the time; take short periodic breaks
+      // just as a real person would in conversation. Thinking state overrides
+      // with its upward-right wander; idle retains gentle micro-movement.
       const thinkTiltZ   = thinkBlend   * ANIM.THINK_TILT_Z;
-      const empathyTiltZ = empathyBlend * ANIM.EMPATHY_TILT_Z;  // left tilt — warmth direction
+      const empathyTiltZ = empathyBlend * ANIM.EMPATHY_TILT_Z;
       const empathyTiltX = empathyBlend * ANIM.EMPATHY_TILT_X;
-      const listenTiltX  = listenBlend  * ANIM.LISTEN_TILT_X;   // slight forward lean for attention
+      const listenTiltX  = listenBlend  * ANIM.LISTEN_TILT_X;
 
-      const lookH =
-        Math.sin(elapsed * ANIM.LOOK_H_FREQ1) * ANIM.LOOK_H_AMP1 * lookScale +
-        Math.sin(elapsed * ANIM.LOOK_H_FREQ2) * ANIM.LOOK_H_AMP2 * lookScale +
-        thinkGazeH;
-      const lookV =
-        Math.sin(elapsed * ANIM.LOOK_V_FREQ1) * ANIM.LOOK_V_AMP1 * lookScale +
-        Math.sin(elapsed * ANIM.LOOK_V_FREQ2) * ANIM.LOOK_V_AMP2 +
-        thinkGazeV;
+      gazeTimer += dt;
+      if (gazeTimer >= gazeDuration) {
+        gazeTimer = 0;
+        if (gazePhase === 'center') {
+          // Break eye contact — glance to the side or slightly up/down
+          gazePhase   = 'away';
+          gazeTargetH = (Math.random() * 2 - 1) * ANIM.GAZE_AWAY_H;
+          gazeTargetV = (Math.random() * 2 - 1) * ANIM.GAZE_AWAY_V;
+          // Speaking: shorter breaks; listening: very brief; idle: longer wanders
+          const awayScale = speaking ? 0.65 : listening ? 0.5 : 1.0;
+          gazeDuration = (ANIM.GAZE_AWAY_MIN + Math.random() * ANIM.GAZE_AWAY_RANGE) * awayScale;
+        } else {
+          // Return to eye contact
+          gazePhase   = 'center';
+          gazeTargetH = 0;
+          gazeTargetV = 0.01;  // very slight upward = looking into eyes
+          // Listening holds eye contact longest; speaking normal; idle shorter
+          const holdScale = listening ? 1.4 : speaking ? 1.0 : 0.7;
+          gazeDuration = (ANIM.GAZE_HOLD_MIN + Math.random() * ANIM.GAZE_HOLD_RANGE) * holdScale;
+        }
+      }
 
+      // Smooth the gaze — returning to center is slightly faster (decisive)
+      const gazeSpeed = gazePhase === 'center' ? ANIM.GAZE_RETURN_SPEED : ANIM.GAZE_SHIFT_SPEED;
+      gazeCurrentH = lerp(gazeCurrentH, gazeTargetH, dt * gazeSpeed);
+      gazeCurrentV = lerp(gazeCurrentV, gazeTargetV, dt * gazeSpeed);
+
+      // Tiny residual micro-movement so the head never looks frozen on a point
+      const microH = Math.sin(elapsed * ANIM.LOOK_H_FREQ1) * ANIM.GAZE_MICRO_H
+                   + Math.sin(elapsed * ANIM.LOOK_H_FREQ2) * ANIM.GAZE_MICRO_H * 0.4;
+      const microV = Math.sin(elapsed * ANIM.LOOK_V_FREQ1) * ANIM.GAZE_MICRO_V;
+
+      // Thinking state blends the gaze machine out and replaces with upward-right wander
+      const lookH = lerp(gazeCurrentH + microH, ANIM.THINK_GAZE_H, thinkBlend);
+      const lookV = lerp(gazeCurrentV + microV, ANIM.THINK_GAZE_V, thinkBlend);
+
+      // Neck follows at reduced scale — eyes carry most of the horizontal gaze
       if (neckBase) {
         setBoneRotation(
           'neck',
           neckBase.x + breath * ANIM.BREATH_NECK_AMP + Math.sin(elapsed * 0.6) * 0.012,
-          neckBase.y + lookH * 0.38,
+          neckBase.y + lookH * 0.38 * (1.0 - ANIM.EYE_H_SCALE),
           neckBase.z
         );
       }
 
-      // Micro-saccades — randomised fixation shifts; interval varies per state
+      // Micro-saccades — fast tiny fixation shifts routed primarily to the eye bones
       if (elapsed > nextSaccadeTime) {
         saccadeOffsetX  = (Math.random() - 0.5) * ANIM.SACCADE_X_AMP;
         saccadeOffsetY  = (Math.random() - 0.5) * ANIM.SACCADE_Y_AMP;
-        // Listening state saccades faster (more attentive eye activity)
         const saccadeMin = listenBlend > 0.5 ? 0.6 : ANIM.SACCADE_MIN;
         const saccadeMax = listenBlend > 0.5 ? 1.8 : ANIM.SACCADE_MAX;
         nextSaccadeTime = elapsed + saccadeMin + Math.random() * (saccadeMax - saccadeMin);
       }
 
+      // ─── EYE BONES ────────────────────────────────────────────────────────
+      // Eyes lead the gaze direction; head follows passively at reduced scale.
+      // This creates the natural human pattern of eyes moving first, head
+      // drifting to catch up. Saccades route primarily here so they look like
+      // actual eye micro-movements rather than head twitches.
+      const leftEyeBase  = boneBase.leftEye;
+      const rightEyeBase = boneBase.rightEye;
+      const eyeH = lerp(gazeCurrentH, ANIM.THINK_GAZE_H, thinkBlend) * ANIM.EYE_H_SCALE;
+      const eyeV = lerp(gazeCurrentV, ANIM.THINK_GAZE_V, thinkBlend) * ANIM.EYE_V_SCALE;
+
+      if (leftEyeBase) {
+        setBoneRotation('leftEye',
+          leftEyeBase.x + eyeV + saccadeOffsetX * ANIM.EYE_SACCADE,
+          leftEyeBase.y + eyeH + saccadeOffsetY * ANIM.EYE_SACCADE,
+          leftEyeBase.z
+        );
+      }
+      if (rightEyeBase) {
+        setBoneRotation('rightEye',
+          rightEyeBase.x + eyeV + saccadeOffsetX * ANIM.EYE_SACCADE,
+          rightEyeBase.y + eyeH + saccadeOffsetY * ANIM.EYE_SACCADE,
+          rightEyeBase.z
+        );
+      }
+
+      // Head carries the remaining gaze fraction — tilt/empathy offsets stay full
       if (headBase) {
         setBoneRotation(
           'head',
-          headBase.x + lookV + saccadeOffsetX + empathyTiltX + listenTiltX,
-          headBase.y + lookH * 0.62 + saccadeOffsetY,
+          headBase.x + lookV * (1.0 - ANIM.EYE_V_SCALE) + saccadeOffsetX * (1.0 - ANIM.EYE_SACCADE) + empathyTiltX + listenTiltX,
+          headBase.y + lookH * 0.62 * (1.0 - ANIM.EYE_H_SCALE) + saccadeOffsetY * (1.0 - ANIM.EYE_SACCADE),
           headBase.z + Math.sin(elapsed * ANIM.HEAD_ROLL_FREQ) * ANIM.HEAD_ROLL_AMP + thinkTiltZ + empathyTiltZ
         );
       }

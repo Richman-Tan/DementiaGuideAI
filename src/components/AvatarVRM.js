@@ -144,22 +144,22 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 1.25, 2.5);
 camera.lookAt(0, 1.25, 0);
 
-// Deep navy ambient — low intensity preserves shadow depth
-scene.add(new THREE.AmbientLight(0x1A2A3A, 0.9));
+// Bright warm neutral ambient — lifts shadow floor so eye sockets are not dark
+scene.add(new THREE.AmbientLight(0xD0C8C0, 0.70));
 
-// Key light — warm white from front-left
-const keyLight = new THREE.DirectionalLight(0xFFEEDD, 2.2);
-keyLight.position.set(-1.5, 2.0, 2.0);
+// Key light — reduced intensity, moved forward (+Z) to fill the face frontally
+const keyLight = new THREE.DirectionalLight(0xFFF5E8, 1.3);
+keyLight.position.set(-0.8, 2.0, 3.5);
 scene.add(keyLight);
 
-// Fill light — cool blue-white from right
-const fillLight = new THREE.DirectionalLight(0xDDEEFF, 0.6);
-fillLight.position.set(2.0, 0.5, 1.0);
+// Fill light — warm front-right, even coverage, removes harsh shadows
+const fillLight = new THREE.DirectionalLight(0xFFEDD8, 0.70);
+fillLight.position.set(1.2, 1.0, 3.0);
 scene.add(fillLight);
 
-// Rim/back light — teal-cyan brand accent, separates avatar from background
-const rimLight = new THREE.DirectionalLight(0x3CC8C8, 1.8);
-rimLight.position.set(0.5, 1.0, -3.0);
+// Subtle warm-gold top rim — very low intensity, separates hair from background
+const rimLight = new THREE.DirectionalLight(0xFFD090, 0.15);
+rimLight.position.set(0.0, 3.0, -2.0);
 scene.add(rimLight);
 
 // GLB model references
@@ -204,16 +204,16 @@ function frameCamera(modelScene) {
 
   const height = size.y || 1.6;
 
-  // Chest-up framing: crop waist and below so the face dominates the view
-  const visibleBottom = box.min.y + height * 0.62;
-  const visibleTop = box.max.y + height * 0.04;
+  // Head + chest framing: show top 42% of avatar with moderate headroom
+  const visibleBottom = box.min.y + height * 0.58;
+  const visibleTop = box.max.y + height * 0.06;
   const visibleCenterY = (visibleBottom + visibleTop) / 2;
   const visibleHeight = visibleTop - visibleBottom;
 
   const fovRad = THREE.MathUtils.degToRad(camera.fov);
   const distance = (visibleHeight / 2) / Math.tan(fovRad / 2);
 
-  camera.position.set(center.x, visibleCenterY, distance * 0.95);
+  camera.position.set(center.x, visibleCenterY, distance * 1.0);
   camera.lookAt(center.x, visibleCenterY, center.z);
   camera.updateProjectionMatrix();
 
@@ -347,13 +347,13 @@ function applyRelaxedPose() {
   if (head) head.rotation.x = -0.02;
 
   if (leftUpperArm) {
-    leftUpperArm.rotation.z -= -1.2;
+    leftUpperArm.rotation.z -= -1.25;
     leftUpperArm.rotation.x += 0.04;
     leftUpperArm.rotation.y += 1.5;
   }
 
   if (rightUpperArm) {
-    rightUpperArm.rotation.z += -1.2;
+    rightUpperArm.rotation.z += -1.25;
     rightUpperArm.rotation.x += 0.04;
     rightUpperArm.rotation.y -= 1.5;
   }

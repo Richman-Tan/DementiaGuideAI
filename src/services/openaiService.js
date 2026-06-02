@@ -98,7 +98,9 @@ class OpenAIService {
   // Async generator — yields text chunks as they stream from the API so the
   // caller can start TTS on completed sentences before the full response arrives.
 
-  async *chatStream(userMessage, conversationHistory = [], timingCbs = null, { conciseMode = false } = {}) {
+  async *chatStream(userMessage, conversationHistory = [], timingCbs = null,
+                    { conciseMode = false, responseStyle = 'balanced', jargonMode = 'explain',
+                      ariaPersonality = 'warm', isCaregiversSetup = false } = {}) {
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new OpenAIAuthError('No API key configured');
 
@@ -114,15 +116,20 @@ class OpenAIService {
     }));
 
     const messages = [
-      { role: 'system', content: this._buildSystemPrompt(conciseMode) },
+      { role: 'system', content: this._buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup }) },
       ...recentHistory,
       { role: 'user', content: `${contextBlock}\n\nUser question: ${userMessage}` },
     ];
 
+    const maxTokens = conciseMode || responseStyle === 'brief' ? 300
+                    : responseStyle === 'detailed'   ? 900
+                    : responseStyle === 'step-by-step' ? 700
+                    : 600;
+
     const body = JSON.stringify({
       model: CHAT_MODEL,
       messages,
-      max_tokens: 600,
+      max_tokens: maxTokens,
       temperature: 0.4,
       stream: true,
     });
@@ -248,25 +255,62 @@ class OpenAIService {
 
   // ─── System Prompt ──────────────────────────────────────────────────────────
 
-  _buildSystemPrompt(conciseMode = false) {
-    const conciseRule = conciseMode
-      ? '\n8. CONCISE MODE IS ON: Answer in 1–2 short paragraphs maximum. Lead with the direct answer immediately — no preamble, no filler phrases ("Great question!", "Of course!", "Certainly!"), no restating the question. Cut any sentence that does not add new information. Plain words only; no jargon.'
+  _buildSystemPrompt({
+    conciseMode       = false,
+    responseStyle     = 'balanced',
+    jargonMode        = 'explain',
+    ariaPersonality   = 'warm',
+    isCaregiversSetup = false,
+  } = {}) {
+    // Caregiver preamble
+    const caregiverPreamble = isCaregiversSetup
+      ? 'The person using this app is a family caregiver or support worker. Frame responses to support them in their caring role, not as advice to the person with dementia.\n\n'
       : '';
-    return `You are Aria, a compassionate and knowledgeable AI assistant created to support family caregivers, healthcare workers, and families caring for people with dementia. You work like a specialised library — every answer you give is grounded in the curated knowledge passages provided to you.
+
+    // Rule 3 — personality
+    const rule3 = {
+      warm:      '3. Be warm, gentle, and emotionally supportive. Validate feelings before giving information. Caregiving is hard, and the person reading your response may be exhausted or distressed.',
+      calm:      '3. Maintain a calm, steady, and reassuring tone. Be clear and measured without excessive emotional language.',
+      friendly:  '3. Be warm and encouraging — like a knowledgeable friend. Use natural, conversational language and a positive tone.',
+      practical: '3. Be direct and practical. Lead with the most useful information. Avoid lengthy emotional preambles.',
+    }[ariaPersonality] ?? '3. Be warm, empathetic, and emotionally supportive.';
+
+    // Rule 4 — jargon
+    const rule4 = {
+      explain: "4. If you use a medical or technical word, immediately define it in plain language in parentheses — e.g. \"lewy body dementia (a type of dementia that affects movement and memory)\".",
+      avoid:   '4. Never use medical jargon or technical terms. Always use the simplest everyday word available.',
+      ok:      '4. Use plain, everyday language.',
+    }[jargonMode] ?? "4. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.";
+
+    // Rule 5 — response length (conciseMode overrides responseStyle)
+    let rule5 = '5. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.';
+    if (conciseMode) {
+      rule5 = '5. CONCISE MODE ON: Answer in 1–2 short paragraphs maximum. Lead with the direct answer immediately — no preamble, no filler phrases, no restating the question.';
+    } else if (responseStyle === 'brief') {
+      rule5 = '5. Keep responses very short — 1 to 2 sentences maximum. State the answer first, then stop.';
+    } else if (responseStyle === 'detailed') {
+      rule5 = '5. Give thorough, detailed responses — 4 to 6 paragraphs if the topic warrants it. Include context, examples, and practical tips.';
+    } else if (responseStyle === 'step-by-step') {
+      rule5 = '5. Format any instructions or processes as a numbered list. Break every process into small, clear steps. Use plain language for each step.';
+    }
+
+    return `${caregiverPreamble}You are Aria, a compassionate and knowledgeable AI assistant created to support family caregivers, healthcare workers, and families caring for people with dementia. You work like a specialised library — every answer you give is grounded in the curated knowledge passages provided to you.
 
 IMPORTANT RULES:
 1. Base your response ONLY on the context passages provided. Do not draw on outside knowledge.
 2. If the context passages do not contain enough information to answer the question, say so honestly: "I don't have specific information about that in my knowledge base, but I recommend speaking with your GP or Dementia Australia (1800 100 500)."
-3. Be warm, empathetic, and emotionally supportive — caregiving is hard, and the person reading your response may be exhausted or distressed.
-4. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
-5. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
+${rule3}
+${rule4}
+${rule5}
 6. After your response, on a new line, write "Sources:" followed by a bullet list of the knowledge base titles you drew from (one per line, starting with "·"). Only list sources you actually used.
-7. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.${conciseRule}`;
+7. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.`;
   }
 
   // ─── RAG Chat ───────────────────────────────────────────────────────────────
 
-  async chat(userMessage, conversationHistory = [], { conciseMode = false } = {}) {
+  async chat(userMessage, conversationHistory = [],
+             { conciseMode = false, responseStyle = 'balanced', jargonMode = 'explain',
+               ariaPersonality = 'warm', isCaregiversSetup = false } = {}) {
     // Retrieve relevant chunks
     const chunks = await this.search(userMessage, TOP_K);
 
@@ -282,7 +326,7 @@ IMPORTANT RULES:
     }));
 
     const messages = [
-      { role: 'system', content: this._buildSystemPrompt(conciseMode) },
+      { role: 'system', content: this._buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup }) },
       ...recentHistory,
       {
         role: 'user',
@@ -290,10 +334,15 @@ IMPORTANT RULES:
       },
     ];
 
+    const maxTokens = conciseMode || responseStyle === 'brief' ? 300
+                    : responseStyle === 'detailed'   ? 900
+                    : responseStyle === 'step-by-step' ? 700
+                    : 600;
+
     const data = await this._callOpenAI('/chat/completions', {
       model: CHAT_MODEL,
       messages,
-      max_tokens: 600,
+      max_tokens: maxTokens,
       temperature: 0.4,
     });
 

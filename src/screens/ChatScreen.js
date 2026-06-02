@@ -78,7 +78,10 @@ const loadPersistedMessages = async () => {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 export const ChatScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
-  const { textScale, autoPlayResponses, conciseMode, colors } = useSettings();
+  const {
+    textScale, autoPlayResponses, conciseMode, colors,
+    responseStyle, jargonMode, ariaPersonality, isCaregiversSetup,
+  } = useSettings();
   const messageListRef = useRef(null);
   // Internal message list (oldest first)
   const [internalMessages, setInternalMessages] = useState(SAMPLE_MESSAGES);
@@ -216,7 +219,8 @@ export const ChatScreen = ({ navigation, route }) => {
     }));
 
     try {
-      const response = await openaiService.chat(trimmed, history, { conciseMode });
+      const response = await openaiService.chat(trimmed, history,
+          { conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup });
       setIsTyping(false);
       setIsSpeaking(true);
 

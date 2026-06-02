@@ -32,7 +32,8 @@ export async function tts(text, options = {}) {
     try {
       const { audioBase64, visemeTimeline } = await elevenLabsService.ttsWithAlignment(
         text,
-        options.voice
+        options.voice,
+        options.speechRate ?? 1.0
       );
       return {
         audio: `data:audio/mpeg;base64,${audioBase64}`,

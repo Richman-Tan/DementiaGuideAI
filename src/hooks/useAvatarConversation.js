@@ -82,7 +82,10 @@ export function useAvatarConversation({ avatarRef }) {
   const [conversationHistory, setConversationHistory] = useState([]);
   const [error, setError]                         = useState(null);            // string | null
   const [currentSubtitle, setCurrentSubtitle]     = useState(''); // current speaking sentence
-  const { audioEnabled, conciseMode } = useSettings();
+  const {
+    audioEnabled, conciseMode,
+    responseStyle, jargonMode, ariaPersonality, isCaregiversSetup, speechRate,
+  } = useSettings();
 
   const recordingRef = useRef(null);
   const abortRef     = useRef(false);  // set true when user stops mid-response
@@ -158,7 +161,7 @@ export function useAvatarConversation({ avatarRef }) {
           console.log(`[LATENCY] first_sentence_ready_ms +${pts.first_sentence - t0}`);
           pts.tts_start = Date.now();
           console.log(`[LATENCY] tts_first_request_start_ms +${pts.tts_start - t0}`);
-          const p = tts(clean).then(result => {
+          const p = tts(clean, { speechRate }).then(result => {
             pts.tts_ready = Date.now();
             console.log(`[LATENCY] tts_first_audio_ready_ms +${pts.tts_ready - t0}`);
             return { ...result, text: clean };
@@ -166,7 +169,7 @@ export function useAvatarConversation({ avatarRef }) {
           queue.promises.push(p);
           firstSeg = false;
         } else {
-          queue.promises.push(tts(clean).then(result => ({ ...result, text: clean })));
+          queue.promises.push(tts(clean, { speechRate }).then(result => ({ ...result, text: clean })));
         }
         wake();
       };
@@ -187,7 +190,8 @@ export function useAvatarConversation({ avatarRef }) {
         console.log(`[LATENCY] rag_start_ms +${pts.rag_start - t0}`);
 
         let firstChunk = true;
-        for await (const chunk of openaiService.chatStream(userText, history, timingCbs, { conciseMode })) {
+        for await (const chunk of openaiService.chatStream(userText, history, timingCbs,
+            { conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup })) {
           if (abortRef.current) break;
           if (firstChunk) {
             pts.first_token = Date.now();

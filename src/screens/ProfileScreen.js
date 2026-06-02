@@ -528,6 +528,14 @@ export const ProfileScreen = ({ navigation }) => {
               label="Help & Support"
               sublabel="Get help using DementiaGuide AI"
               onPress={handleHelpSupport}
+              isLast={false}
+            />
+            <SettingRow
+              icon="restart"
+              iconColor={Colors.secondary}
+              label="Reset setup guide"
+              sublabel="Go through the setup steps again"
+              onPress={() => updateSetting('hasCompletedOnboarding', false)}
               isLast
             />
           </Section>

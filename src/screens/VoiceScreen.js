@@ -165,13 +165,13 @@ export const VoiceScreen = ({ navigation }) => {
             <Text style={styles.subtitleText} numberOfLines={3}>{currentSubtitle}</Text>
           </View>
         )}
-        {voiceState === VoiceState.IDLE && conversationHistory.length === 0 && (
+        {/* {voiceState === VoiceState.IDLE && conversationHistory.length === 0 && (
           <View style={styles.subtitleBar}>
             <Text style={styles.subtitleText} numberOfLines={2}>
               {"Hello! I'm Aria, your DementiaGuide AI assistant. I'm here to help you find information, answer questions, and provide support around dementia care. How can I help you today?"}
             </Text>
           </View>
-        )}
+        )} */}
       </View>
 
       {/* Bottom control panel */}

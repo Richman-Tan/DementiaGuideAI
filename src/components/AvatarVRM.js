@@ -212,6 +212,30 @@ let bobPhase   = 0;
 let swayPhase  = 0;
 let breathPhase = 0;
 
+// Idle smile moment state machine
+let idleSmileActive  = false;
+let idleSmileTimer   = 0;
+let idleSmileNext    = 5.0 + Math.random() * 8.0;
+let idleSmileHold    = 0;
+let idleSmileTarget  = 0;
+let idleSmileCurrent = 0;
+
+// Idle head tilt moment state machine
+let idleTiltActive  = false;
+let idleTiltTimer   = 0;
+let idleTiltNext    = 8.0 + Math.random() * 10.0;
+let idleTiltHold    = 0;
+let idleTiltTarget  = 0;
+let idleTiltCurrent = 0;
+
+// Listening nod state machine
+let nodActive  = false;
+let nodTimer   = 0;
+let nodNext    = 3.5 + Math.random() * 3.5;
+let nodHold    = 0;
+let nodTarget  = 0;
+let nodCurrent = 0;
+
 // Conversational gaze state machine
 // 'center' = looking at camera (eye contact); 'away' = natural glance break
 let gazePhase    = 'center';
@@ -232,11 +256,12 @@ function frameCamera(modelScene) {
 
   const height = size.y || 1.6;
 
-  // Head + chest framing: show top 42% of avatar with moderate headroom
-  const visibleBottom = box.min.y + height * 0.58;
-  const visibleTop = box.max.y + height * 0.06;
+  // Waist-up framing: show top 45% of avatar (head down to just above the hips).
+  // Extra headroom above (+0.10) keeps the face from sitting at the very top.
+  const visibleBottom = box.min.y + height * 0.55;
+  const visibleTop    = box.max.y + height * 0.10;
   const visibleCenterY = (visibleBottom + visibleTop) / 2;
-  const visibleHeight = visibleTop - visibleBottom;
+  const visibleHeight  = visibleTop - visibleBottom;
 
   const fovRad = THREE.MathUtils.degToRad(camera.fov);
   const distance = (visibleHeight / 2) / Math.tan(fovRad / 2);
@@ -296,10 +321,10 @@ const ANIM = {
   SACCADE_MIN:   1.0,   SACCADE_MAX:   3.0,
 
   // Conversational gaze — eye contact with natural periodic breaks
-  GAZE_HOLD_MIN:     1.8,   // minimum seconds of direct eye contact
-  GAZE_HOLD_RANGE:   2.5,   // random range on top → 1.8–4.3 s eye contact
-  GAZE_AWAY_MIN:     0.45,  // minimum seconds of looking away
-  GAZE_AWAY_RANGE:   0.85,  // random range on top → 0.45–1.3 s break
+  GAZE_HOLD_MIN:     1.4,   // minimum seconds of direct eye contact
+  GAZE_HOLD_RANGE:   2.0,   // random range on top → 1.4–3.4 s eye contact
+  GAZE_AWAY_MIN:     0.30,  // minimum seconds of looking away
+  GAZE_AWAY_RANGE:   0.70,  // random range on top → 0.30–1.0 s break
   GAZE_AWAY_H:       0.09,  // max horizontal offset when glancing (radians)
   GAZE_AWAY_V:       0.05,  // max vertical offset when glancing (radians)
   GAZE_RETURN_SPEED: 4.5,   // lerp multiplier returning to center (fast, deliberate)
@@ -316,8 +341,8 @@ const ANIM = {
   BLINK_CLOSE_DUR:   0.075,  // fast close  (~75 ms)
   BLINK_HOLD_DUR:    0.030,  // hold closed (~30 ms)
   BLINK_OPEN_DUR:    0.180,  // slow open   (~180 ms)
-  BLINK_MIN:         2.2,    // minimum seconds between blinks
-  BLINK_MAX:         5.0,    // maximum seconds between blinks
+  BLINK_MIN:         3.0,    // minimum seconds between blinks
+  BLINK_MAX:         7.5,    // maximum seconds between blinks
   BLINK_DOUBLE_PROB: 0.18,   // probability of a double blink
   BLINK_DOUBLE_GAP:  0.12,   // pause between the two closures in a double blink
 
@@ -325,6 +350,11 @@ const ANIM = {
   THINK_GAZE_H:    0.09,  THINK_GAZE_V:    -0.06,  THINK_TILT_Z:   0.13,
   EMPATHY_TILT_Z: -0.08,  EMPATHY_TILT_X:   0.015,
   LISTEN_TILT_X:   0.010,
+  WAIT_TILT_Z:     0.040,  // gentle curious lean when waiting (~2.3°)
+  NOD_AMP:         0.032,  // listening nod forward-dip amplitude (~1.8°)
+  NOD_SPEED:       2.2,    // lerp speed toward/away from nod peak
+  NOD_HOLD_MIN:    0.30,   NOD_HOLD_MAX:    0.70,  // seconds to hold dipped position
+  NOD_INT_MIN:     3.5,    NOD_INT_MAX:     7.0,   // seconds between nod triggers
 
   // Arms
   ARM_FREQ1: 0.50, ARM_FREQ2: 0.79, ARM_AMP1: 0.050, ARM_AMP2: 0.020,
@@ -332,10 +362,21 @@ const ANIM = {
   ARM_TWIST_FREQ: 0.61, ARM_TWIST_AMP: 0.022,
 
   // Facial expressions
-  IDLE_SMILE:         0.14,  IDLE_RELAX:        0.10,
-  ACTIVE_SMILE_MIN:   0.04,  // floor — smile never fully disappears
-  LISTEN_SURPRISE:    0.07,  LISTEN_BROW_INNER: 0.08,
+  IDLE_SMILE:         0.28,  IDLE_RELAX:        0.18,
+  ACTIVE_SMILE_MIN:   0.10,  // floor — smile never fully disappears
+  LISTEN_SURPRISE:    0.04,  LISTEN_BROW_INNER: 0.08,
   EMPATHY_BROW_INNER: 0.12,  THINK_BROW_DOWN:   0.08,
+
+  // Idle personality moments — gentle smile + head tilt to feel warm and alive
+  IDLE_SMILE_PEAK:         0.68,  // peak smile weight during a moment
+  IDLE_SMILE_MOMENT_SPEED: 2.8,   // lerp speed toward/away from peak
+  IDLE_SMILE_HOLD_MIN:     1.5,   IDLE_SMILE_HOLD_MAX:     3.0,
+  IDLE_SMILE_INT_MIN:      5.0,   IDLE_SMILE_INT_MAX:      12.0,
+
+  IDLE_TILT_AMP:           0.055, // max head roll (~3°)
+  IDLE_TILT_SPEED:         1.0,
+  IDLE_TILT_HOLD_MIN:      1.2,   IDLE_TILT_HOLD_MAX:      2.8,
+  IDLE_TILT_INT_MIN:       10.0,  IDLE_TILT_INT_MAX:       24.0,
 };
 
 // Smooth-step: slow-in, slow-out — more organic than linear for eyelids
@@ -364,7 +405,9 @@ const BONE_NAME_MAP = {
   'leftUpperArm':            ['LeftArm'],
   'rightUpperArm':           ['RightArm'],
   'leftLowerArm':            ['LeftForeArm'],
+  'leftLowerArmRoll':        ['LeftForeArm1'],
   'rightLowerArm':           ['RightForeArm'],
+  'rightLowerArmRoll':       ['RightForeArm1'],
   'leftHand':                ['LeftHand'],
   'rightHand':               ['RightHand'],
   'leftIndexProximal':       ['LeftHandIndex1'],
@@ -483,37 +526,42 @@ function applyRelaxedPose() {
     rightLowerArm.rotation.x -= 0.04;
   }
 
-  // Forearm roll: twist the palm to face the thigh (pronation).
-  // In VRM normalised space, lower-arm X is the roll axis.
-  if (leftLowerArm)  leftLowerArm.rotation.x  -= 0.5;
+  // Elbow hang angle — X only on the main forearm bone (this bone is elbow flex,
+  // not the roll axis; adding Y here swings the arm rather than twisting the palm).
+  if (leftLowerArm)  leftLowerArm.rotation.x -= 0.5;
   if (rightLowerArm) rightLowerArm.rotation.x -= 0.5;
 
-  // Wrist: slight tilt so the hand hangs relaxed rather than rigid.
-  if (leftHand)  { leftHand.rotation.y  += 0.0;  leftHand.rotation.z  += 0.18; }
-  if (rightHand) { rightHand.rotation.y -= 0.0;  rightHand.rotation.z -= 0.18; }
+  // Palm supination via the dedicated twist/roll bones (LeftForeArm1 / RightForeArm1).
+  // These start at identity T-pose and exist purely for forearm roll — Y rotation
+  // here is a clean supination with zero positional side-effect on the arm.
+  const leftLowerArmRoll  = bone('leftLowerArmRoll');
+  const rightLowerArmRoll = bone('rightLowerArmRoll');
+  if (leftLowerArmRoll)  leftLowerArmRoll.rotation.y  -= 1.4;
+  if (rightLowerArmRoll) rightLowerArmRoll.rotation.y += 1.4;
 
-  // Finger curl — proximal joints curl more, intermediate joints curl less.
-  // Left hand: positive Z curls fingers inward; right hand: negative Z.
-  const L_CURL = 0.32;
-  const R_CURL = -0.32;
+  // Wrist: tiny extension to prevent droop; palm direction set by roll bones above.
+  if (leftHand)  { leftHand.rotation.x -= 0.05;  leftHand.rotation.y += 0.0;  leftHand.rotation.z += 0.0; }
+  if (rightHand) { rightHand.rotation.x -= 0.05;  rightHand.rotation.y += 0.0;  rightHand.rotation.z += 0.0; }
+
+  // Finger curl — negative X is the curl/flexion direction in this RPM rig.
+  // T-pose starts at x≈+0.284 (slight extension); subtracting X moves into flexion.
+  // Symmetric for both hands (positive X = extension for both, from GLB data).
+  const CURL_P = 0.45;          // proximal joints
+  const CURL_I = CURL_P * 0.55; // intermediate joints curl less
   [
     'leftIndexProximal',  'leftMiddleProximal',
     'leftRingProximal',   'leftLittleProximal',
-  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += L_CURL; });
+    'rightIndexProximal', 'rightMiddleProximal',
+    'rightRingProximal',  'rightLittleProximal',
+  ].forEach(n => { const b = bone(n); if (b) b.rotation.x -= CURL_P; });
   [
     'leftIndexIntermediate',  'leftMiddleIntermediate',
     'leftRingIntermediate',   'leftLittleIntermediate',
-  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += L_CURL * 0.55; });
-  [
-    'rightIndexProximal',  'rightMiddleProximal',
-    'rightRingProximal',   'rightLittleProximal',
-  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += R_CURL; });
-  [
-    'rightIndexIntermediate',  'rightMiddleIntermediate',
-    'rightRingIntermediate',   'rightLittleIntermediate',
-  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += R_CURL * 0.55; });
+    'rightIndexIntermediate', 'rightMiddleIntermediate',
+    'rightRingIntermediate',  'rightLittleIntermediate',
+  ].forEach(n => { const b = bone(n); if (b) b.rotation.x -= CURL_I; });
 
-  // Thumb: spread away from the palm slightly.
+  // Thumb: natural rest position.
   const lThumb = bone('leftThumbProximal');
   const rThumb = bone('rightThumbProximal');
   if (lThumb) lThumb.rotation.z += 0.22;
@@ -932,6 +980,62 @@ function animate(ts) {
       saccadeCurrentX = lerp(saccadeCurrentX, saccadeTargetX, dt * 18.0);
       saccadeCurrentY = lerp(saccadeCurrentY, saccadeTargetY, dt * 18.0);
 
+      // ─── IDLE PERSONALITY MOMENTS ─────────────────────────────────────────
+      // Smile and head tilt moments only fire when Aria is at rest (activeBlend low).
+      // Both fade out automatically as she becomes active.
+      const isIdleEnough = activeBlend < 0.25;
+
+      idleSmileTimer += dt;
+      if (!idleSmileActive && isIdleEnough && idleSmileTimer >= idleSmileNext) {
+        idleSmileActive = true;
+        idleSmileHold   = ANIM.IDLE_SMILE_HOLD_MIN + Math.random() * (ANIM.IDLE_SMILE_HOLD_MAX - ANIM.IDLE_SMILE_HOLD_MIN);
+        idleSmileTarget = ANIM.IDLE_SMILE_PEAK;
+        idleSmileTimer  = 0;
+      } else if (idleSmileActive && idleSmileTimer >= idleSmileHold) {
+        idleSmileActive = false;
+        idleSmileTarget = 0;
+        idleSmileTimer  = 0;
+        idleSmileNext   = ANIM.IDLE_SMILE_INT_MIN + Math.random() * (ANIM.IDLE_SMILE_INT_MAX - ANIM.IDLE_SMILE_INT_MIN);
+      }
+      idleSmileCurrent = lerp(idleSmileCurrent, idleSmileTarget, dt * ANIM.IDLE_SMILE_MOMENT_SPEED);
+
+      idleTiltTimer += dt;
+      if (!idleTiltActive && isIdleEnough && idleTiltTimer >= idleTiltNext) {
+        idleTiltActive = true;
+        idleTiltHold   = ANIM.IDLE_TILT_HOLD_MIN + Math.random() * (ANIM.IDLE_TILT_HOLD_MAX - ANIM.IDLE_TILT_HOLD_MIN);
+        idleTiltTarget = (Math.random() > 0.5 ? 1 : -1) * ANIM.IDLE_TILT_AMP * (0.6 + Math.random() * 0.4);
+        idleTiltTimer  = 0;
+      } else if (idleTiltActive && idleTiltTimer >= idleTiltHold) {
+        idleTiltActive = false;
+        idleTiltTarget = 0;
+        idleTiltTimer  = 0;
+        idleTiltNext   = ANIM.IDLE_TILT_INT_MIN + Math.random() * (ANIM.IDLE_TILT_INT_MAX - ANIM.IDLE_TILT_INT_MIN);
+      }
+      idleTiltCurrent = lerp(idleTiltCurrent, idleTiltTarget, dt * ANIM.IDLE_TILT_SPEED);
+
+      // ─── LISTENING NOD ────────────────────────────────────────────────────
+      // Gentle periodic forward head-dip to signal active listening.
+      // Only fires while listenBlend is high; fades proportionally as state leaves.
+      const isListeningEnough = listenBlend > 0.3;
+      nodTimer += dt;
+      if (!nodActive && isListeningEnough && nodTimer >= nodNext) {
+        nodActive = true;
+        nodHold   = ANIM.NOD_HOLD_MIN + Math.random() * (ANIM.NOD_HOLD_MAX - ANIM.NOD_HOLD_MIN);
+        nodTarget = ANIM.NOD_AMP;
+        nodTimer  = 0;
+      } else if (nodActive && nodTimer >= nodHold) {
+        nodActive = false;
+        nodTarget = 0;
+        nodTimer  = 0;
+        nodNext   = ANIM.NOD_INT_MIN + Math.random() * (ANIM.NOD_INT_MAX - ANIM.NOD_INT_MIN);
+      }
+      nodCurrent = lerp(nodCurrent, nodTarget, dt * ANIM.NOD_SPEED);
+      if (!isListeningEnough) nodCurrent = lerp(nodCurrent, 0, dt * ANIM.NOD_SPEED);
+
+      // Scale both idle moments out when active so transitions feel seamless
+      const idleTiltOutput  = idleTiltCurrent  * (1 - activeBlend);
+      const idleSmileOutput = idleSmileCurrent * (1 - activeBlend);
+
       // ─── EYE BONES ────────────────────────────────────────────────────────
       // Eyes lead the gaze direction; head follows passively at reduced scale.
       // This creates the natural human pattern of eyes moving first, head
@@ -961,9 +1065,9 @@ function animate(ts) {
       if (headBase) {
         setBoneRotation(
           'head',
-          headBase.x + lookV * (1.0 - ANIM.EYE_V_SCALE) + saccadeCurrentX * (1.0 - ANIM.EYE_SACCADE) + empathyTiltX + listenTiltX,
+          headBase.x + lookV * (1.0 - ANIM.EYE_V_SCALE) + saccadeCurrentX * (1.0 - ANIM.EYE_SACCADE) + empathyTiltX + listenTiltX + nodCurrent * listenBlend,
           headBase.y + lookH * 0.62 * (1.0 - ANIM.EYE_H_SCALE) + saccadeCurrentY * (1.0 - ANIM.EYE_SACCADE),
-          headBase.z + Math.sin(elapsed * ANIM.HEAD_ROLL_FREQ) * ANIM.HEAD_ROLL_AMP + thinkTiltZ + empathyTiltZ
+          headBase.z + Math.sin(elapsed * ANIM.HEAD_ROLL_FREQ) * ANIM.HEAD_ROLL_AMP + thinkTiltZ + empathyTiltZ + waitBlend * ANIM.WAIT_TILT_Z + idleTiltOutput
         );
       }
 
@@ -1063,11 +1167,10 @@ function animate(ts) {
       // Attentive wide-eye on listening
       setExpression('surprised', listenBlend * ANIM.LISTEN_SURPRISE);
 
-      // Warm smile: never fully disappears — keeps the avatar feeling friendly
-      // even when active. ACTIVE_SMILE_MIN is a subtle floor value.
+      // Warm smile: baseline never fully disappears; occasional idle moments peak higher.
       const smileTarget = lerp(ANIM.ACTIVE_SMILE_MIN, ANIM.IDLE_SMILE, 1 - activeBlend * 0.75);
-      setExpression('happy',   smileTarget);
-      setExpression('relaxed', lerp(0, ANIM.IDLE_RELAX, 1 - speakBlend));
+      setExpression('happy',   Math.max(smileTarget, idleSmileOutput));
+      setExpression('relaxed', lerp(0.04, ANIM.IDLE_RELAX, 1 - speakBlend));
 
       // ─── BLINK STATE MACHINE ──────────────────────────────────────────────
       // Natural eyelid kinematics: fast close (~75 ms), brief hold, slow open (~180 ms).

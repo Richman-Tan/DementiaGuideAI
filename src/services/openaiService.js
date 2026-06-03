@@ -269,7 +269,7 @@ IMPORTANT RULES:
 6. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
 7. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
 8. Do NOT add a Sources section at the end. Citations are inline only.
-9. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.`;
+  9. Always end every response with this exact closing sentence: "This information is for guidance only and does not replace professional medical advice. For more support, contact Dementia Australia on 1800 100 500 and consult a healthcare professional for individual decisions."`;
   }
 
   // Build a numbered context block from retrieved chunks and return both

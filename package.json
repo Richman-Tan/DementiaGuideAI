@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test:answers": "node scripts/test-responses.mjs"
   },
   "dependencies": {
     "@pixiv/three-vrm": "^3.5.2",

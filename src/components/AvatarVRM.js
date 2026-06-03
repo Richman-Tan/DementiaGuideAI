@@ -192,8 +192,8 @@ scene.add(rimLight);
 // Increase position[1] (Y) to raise the room; more negative Z = further back.
 const BACKDROP_CONFIG = {
   url:       '${safeBackdropUrl}',
-  position:  [0, -1.0, -5.0],
-  rotation:  [0, 0, 0],
+  position:  [1, -1.0, -2.0],
+  rotation:  [0, -0.5, 0],
   scale:     [1.8, 1.8, 1.8],
   dimAmount: 0.80,
 };
@@ -1253,8 +1253,16 @@ function animate(ts) {
         for (let vi = 0; vi < ALL_VISEME_KEYS.length; vi++) {
           const k = ALL_VISEME_KEYS[vi];
           vSmooth[k] = lerp(vSmooth[k], w[k] || 0, vLerp);
-          setExpression(k, vSmooth[k]);
-          if (vSmooth[k] > maxV) maxV = vSmooth[k];
+          // Organic micro-variation: product of two incommensurable sines per channel
+          // prevents mechanical identical-weight repetition on recurring phonemes.
+          // Proportional to current weight so silent channels remain silent.
+          const organicNoise = Math.sin(elapsed * (0.71 + vi * 0.13) + vi * 2.09)
+                             * Math.sin(elapsed * (1.37 + vi * 0.08) + vi * 0.77);
+          const finalW = vSmooth[k] > 0.05
+            ? Math.max(0, Math.min(1, vSmooth[k] + organicNoise * 0.08 * vSmooth[k]))
+            : vSmooth[k];
+          setExpression(k, finalW);
+          if (finalW > maxV) maxV = finalW;
         }
         mouthCurrent = maxV;
 
@@ -1316,8 +1324,11 @@ function animate(ts) {
       }
 
       // ─── FACIAL EXPRESSIONS ───────────────────────────────────────────────
-      // Emotion blend fades in when audio is playing and out when silent.
-      speechEmotionBlend = lerp(speechEmotionBlend, lipSyncActive ? 1.0 : 0.0, dt * 2.5);
+      // Emotion fades in fast when audio plays; decays slowly when silent (~1.5 s cooldown).
+      // Slow decay means the expression barely dips during the 50 ms inter-sentence gap,
+      // keeping consecutive sentences emotionally continuous.
+      speechEmotionBlend = lerp(speechEmotionBlend, lipSyncActive ? 1.0 : 0.0,
+        dt * (lipSyncActive ? 2.5 : 0.6));
       const eb = speechEmotionBlend * speakBlend; // only active while speaking
 
       // Base brow values from avatar state
@@ -1387,6 +1398,7 @@ function animate(ts) {
             } else {
               blinkPhase = 'idle';
               blinkNext  = ANIM.BLINK_MIN + Math.random() * (ANIM.BLINK_MAX - ANIM.BLINK_MIN);
+              if (speakBlend > 0.3) blinkNext *= 1.8; // people blink ~50% less while speaking
               blinkTimer = 0;
             }
           }
@@ -1409,6 +1421,7 @@ function animate(ts) {
             blinkValue = 0;
             blinkPhase = 'idle';
             blinkNext  = ANIM.BLINK_MIN + Math.random() * (ANIM.BLINK_MAX - ANIM.BLINK_MIN);
+            if (speakBlend > 0.3) blinkNext *= 1.8;
             blinkTimer = 0;
           }
           break;

@@ -30,6 +30,9 @@ const DEFAULTS = {
   communicationMode: 'both',      // 'voice' | 'text' | 'both'
   speechRate:        1.0,         // 0.82 | 1.0 | 1.15
 
+  // Avatar / persona selection
+  selectedAvatarId:  'aria_sdk',    // key into AVATAR_PROFILES
+
   // Support & UI guidance
   supportLevel:      'comfortable', // 'comfortable' | 'some-help' | 'clear' | 'guided'
 
@@ -161,6 +164,9 @@ export const SettingsProvider = ({ children }) => {
     jargonMode:        settings.jargonMode,
     communicationMode: settings.communicationMode,
     speechRate:        settings.speechRate,
+
+    // Avatar / persona selection
+    selectedAvatarId:  settings.selectedAvatarId,
 
     // Support & UI guidance
     supportLevel:      settings.supportLevel,

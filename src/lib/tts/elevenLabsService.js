@@ -64,7 +64,7 @@ class ElevenLabsService {
    * To swap the voice provider later: replace this class with one that implements
    * the same ttsWithAlignment(text, voiceId) signature and update ttsService.js.
    */
-  async ttsWithAlignment(text, voiceId = DEFAULT_VOICE_ID, speechRate = 1.0) {
+  async ttsWithAlignment(text, voiceId = DEFAULT_VOICE_ID, speechRate = 1.0, visemeWeights = null) {
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new ElevenLabsAuthError('No ElevenLabs API key configured');
 
@@ -104,7 +104,7 @@ class ElevenLabsService {
     }
 
     const visemeTimeline = data.alignment
-      ? createVisemeTimeline(data.alignment)
+      ? createVisemeTimeline(data.alignment, { visemeWeights: visemeWeights || undefined })
       : null;
 
     return {

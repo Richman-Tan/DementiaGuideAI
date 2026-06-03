@@ -105,12 +105,25 @@ function buildWordScales(characters) {
  * @returns {{ frames: VisemeFrame[], totalDuration: number }}
  *   VisemeFrame: { time, viseme, duration, weight }
  */
-export function createVisemeTimeline(alignment) {
+/**
+ * @param {object} alignment  - ElevenLabs character-level alignment
+ * @param {object} [options]
+ * @param {object} [options.visemeWeights] - Per-avatar weight overrides (from avatarProfiles.js).
+ *   When provided, these replace VISEME_WEIGHT from phonemeMap.js so each model can be tuned
+ *   independently. Digraph weights are scaled proportionally via the aa weight ratio.
+ */
+export function createVisemeTimeline(alignment, options = {}) {
   const { characters, character_start_times_seconds, character_end_times_seconds } = alignment;
 
   if (!characters || !characters.length) {
     return { frames: [], totalDuration: 0 };
   }
+
+  // Resolve which weight table to use for this render.
+  // Digraph weights are absolute values tuned to the AvatarSDK baseline (aa=0.68).
+  // Scale them proportionally when a different profile's aa weight is used.
+  const resolvedWeights = options.visemeWeights || VISEME_WEIGHT;
+  const digraphScale    = resolvedWeights.aa / VISEME_WEIGHT.aa; // 1.0 for SDK, ~1.25 for RPM
 
   // Pre-compute per-character word stress scale (1.0 = content word, 0.68 = function word).
   const wordScales = buildWordScales(characters);
@@ -144,7 +157,7 @@ export function createVisemeTimeline(alignment) {
           if (entry.viseme === 'neutral') {
             rawFrames.push({ time: start, viseme: 'neutral', duration, weight: 0 });
           } else {
-            rawFrames.push({ time: start, viseme: entry.viseme, duration, weight: entry.weight * wordScales[i] });
+            rawFrames.push({ time: start, viseme: entry.viseme, duration, weight: entry.weight * digraphScale * wordScales[i] });
           }
           i += 2;
           continue;
@@ -168,15 +181,15 @@ export function createVisemeTimeline(alignment) {
     if (viseme === 'neutral') {
       rawFrames.push({ time: start, viseme: 'neutral', duration, weight: 0 });
     } else if (viseme) {
-      // Use per-character weight override when defined, otherwise fall back to viseme table.
+      // CHAR_WEIGHT_OVERRIDE takes priority; otherwise use the resolved (profile-specific) table.
       // Multiply by the word's stress scale so function words articulate less than content words.
       const baseWeight = CHAR_WEIGHT_OVERRIDE[char] !== undefined
-        ? CHAR_WEIGHT_OVERRIDE[char]
-        : VISEME_WEIGHT[viseme];
+        ? CHAR_WEIGHT_OVERRIDE[char] * digraphScale // scale overrides too so bilabials stay proportional
+        : resolvedWeights[viseme] ?? VISEME_WEIGHT[viseme];
       rawFrames.push({ time: start, viseme, duration, weight: baseWeight * wordScales[i] });
     } else {
       // Generic alphabetic consonant — tiny jaw activity so avatar doesn't look frozen
-      rawFrames.push({ time: start, viseme: DEFAULT_CONSONANT_VISEME, duration, weight: DEFAULT_CONSONANT_WEIGHT * wordScales[i] });
+      rawFrames.push({ time: start, viseme: DEFAULT_CONSONANT_VISEME, duration, weight: DEFAULT_CONSONANT_WEIGHT * digraphScale * wordScales[i] });
     }
 
     i++;

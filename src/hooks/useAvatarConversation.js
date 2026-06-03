@@ -6,6 +6,7 @@ import { openaiService } from '../services/openaiService';
 import { tts } from '../lib/tts/ttsService';
 import { detectSentiment } from '../lib/sentiment/detectSentiment';
 import { useSettings } from '../context/SettingsContext';
+import { AVATAR_PROFILES, DEFAULT_AVATAR_ID } from '../config/avatarProfiles';
 
 // ─── Voice state machine ──────────────────────────────────────────────────────
 export const VoiceState = {
@@ -86,7 +87,12 @@ export function useAvatarConversation({ avatarRef }) {
   const {
     audioEnabled, conciseMode,
     responseStyle, jargonMode, ariaPersonality, isCaregiversSetup, speechRate,
+    selectedAvatarId,
   } = useSettings();
+
+  // Resolve the active avatar profile so viseme weights match the loaded model.
+  const avatarProfile  = AVATAR_PROFILES[selectedAvatarId ?? DEFAULT_AVATAR_ID] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];
+  const visemeWeights  = avatarProfile.visemeWeights;
 
   const recordingRef = useRef(null);
   const abortRef     = useRef(false);  // set true when user stops mid-response
@@ -164,7 +170,7 @@ export function useAvatarConversation({ avatarRef }) {
           console.log(`[LATENCY] first_sentence_ready_ms +${pts.first_sentence - t0}`);
           pts.tts_start = Date.now();
           console.log(`[LATENCY] tts_first_request_start_ms +${pts.tts_start - t0}`);
-          const p = tts(clean, { speechRate }).then(result => {
+          const p = tts(clean, { speechRate, visemeWeights }).then(result => {
             pts.tts_ready = Date.now();
             console.log(`[LATENCY] tts_first_audio_ready_ms +${pts.tts_ready - t0}`);
             return { ...result, text: clean, emotion };
@@ -172,7 +178,7 @@ export function useAvatarConversation({ avatarRef }) {
           queue.promises.push(p);
           firstSeg = false;
         } else {
-          queue.promises.push(tts(clean, { speechRate }).then(result => ({ ...result, text: clean, emotion })));
+          queue.promises.push(tts(clean, { speechRate, visemeWeights }).then(result => ({ ...result, text: clean, emotion })));
         }
         wake();
       };

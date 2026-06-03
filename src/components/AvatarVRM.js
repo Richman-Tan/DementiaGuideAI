@@ -217,6 +217,10 @@ const V_TAU = 0.030;
 // Speech emotion — set at audio start, drives subtle expression layer over base speaking animation
 let speechEmotion      = 'neutral'; // 'positive' | 'warm' | 'concern' | 'question' | 'neutral'
 let speechEmotionBlend = 0;         // 0→1 lerps in when audio plays, out when silent
+// Whether the loaded model has viseme_sil (Oculus silence/rest shape).
+// Present on RPM models — must be driven inversely to mouth activity so the mouth
+// closes properly at rest instead of staying in a neutral-open position.
+let hasVisemeSil = false;
 let lastTs = null;
 let elapsed = 0;
 // State blends — each lerps 0→1 as the matching state becomes active
@@ -752,6 +756,11 @@ function patchExprMap() {
     ];
     window._dbg('Visemes remapped to weighted ARKit shapes');
   }
+
+  // Detect Oculus silence shape — present on RPM models.
+  // When found, animate() will drive it inversely to mouth activity.
+  hasVisemeSil = ('viseme_sil' in dict);
+  if (hasVisemeSil) window._dbg('viseme_sil detected — Oculus silence shape will be managed');
 
   window._dbg('EXPR_MAP.aa=' + EXPR_MAP.aa + ' blinkLeft=' + EXPR_MAP.blinkLeft);
 }
@@ -1309,6 +1318,16 @@ function animate(ts) {
             setExpression(ALL_VISEME_KEYS[vi], vSmooth[ALL_VISEME_KEYS[vi]]);
           }
         }
+      }
+
+      // ─── OCULUS SILENCE SHAPE (RPM only) ────────────────────────────────────
+      // viseme_sil is the Oculus rest/closed-mouth shape. It must be driven
+      // inversely to mouth activity: 1.0 at rest (closed), 0.0 during peak speech.
+      // Without this, RPM's neutral pose has a slightly open mouth that never closes.
+      if (hasVisemeSil && headMesh) {
+        const silW = Math.max(0, 1.0 - mouthCurrent * 2.2);
+        setMorphTarget(headMesh,  'viseme_sil', silW);
+        if (teethMesh) setMorphTarget(teethMesh, 'viseme_sil', silW);
       }
 
       // ─── DEBUG VISEME OVERLAY ─────────────────────────────────────────────

@@ -33,6 +33,7 @@ DementiaGuide AI is designed for caregivers, family members, and healthcare prof
 | Framework | React Native (Expo SDK 54) |
 | Navigation | React Navigation 7 (Bottom Tabs + Native Stack) |
 | AI / RAG | OpenAI `gpt-4o-mini` + `text-embedding-3-small` |
+| Vector DB | Supabase (pgvector) — cloud-hosted knowledge base with `match_chunks` RPC |
 | STT | OpenAI Whisper (`whisper-1`) via `expo-av` audio recording |
 | TTS | ElevenLabs `eleven_turbo_v2_5` (primary) · OpenAI `tts-1` (fallback) |
 | Lip Sync | ElevenLabs character-level alignment → viseme timeline → 5 VRM blend shapes |
@@ -61,11 +62,16 @@ DementiaGuide AI is designed for caregivers, family members, and healthcare prof
 ## Project Structure
 
 ```
-DementiaGuideAi/
+DementiaGuideAI/
 ├── App.js
 ├── babel.config.js
 ├── app.json                          # Expo config
+├── .env                              # API keys (git-ignored)
+├── .env.example                      # Template for required env vars
 ├── scripts/
+│   ├── ingest.mjs                    # Add content from URLs or PDFs → Supabase
+│   ├── migrate-to-supabase.mjs       # One-time migration: knowledgeBase.js → Supabase
+│   ├── supabase-setup.sql            # pgvector schema + match_chunks RPC (run once in Supabase)
 │   └── test-responses.mjs            # CLI tool to test RAG output against sample questions
 └── src/
     ├── navigation/
@@ -97,11 +103,12 @@ DementiaGuideAi/
     │   ├── typography.js
     │   └── data.js                   # Categories, resources, sample messages
     ├── data/
-    │   └── knowledgeBase.js          # 42 dementia care knowledge chunks (7 per category)
+    │   └── knowledgeBase.js          # Legacy local KB (superseded by Supabase)
     └── services/
-        ├── openaiService.js          # Full RAG pipeline (embeddings, semantic search, streaming chat, Whisper STT)
-        ├── aceService.js             # NVIDIA ACE stub (used by VoiceScreen mock)
-        └── knowledgeService.js       # Knowledge base search (used by LibraryScreen)
+        ├── supabaseService.js        # Supabase anon client for the mobile app
+        ├── openaiService.js          # RAG pipeline (embed query → Supabase match_chunks → streaming chat)
+        ├── knowledgeService.js       # Knowledge base queries for Library screen (Supabase)
+          └── aceService.js             # NVIDIA ACE stub (used by VoiceScreen mock)
 ```
 
 ---
@@ -114,17 +121,47 @@ DementiaGuideAi/
 - Expo CLI
 - Xcode (for iOS Simulator) or Expo Go on a physical device
 - An OpenAI API key
+- A Supabase project (free tier) with pgvector enabled
 - An ElevenLabs API key (optional — enables vowel-accurate lip sync; falls back to amplitude-based sync without it)
 
 ### Install
 
 ```bash
 git clone <repo-url>
-cd DementiaGuideAi
+cd DementiaGuideAI
 npm install
 ```
 
-### Run
+### Environment setup
+
+Copy `.env.example` to `.env` and fill in your keys:
+
+```bash
+cp .env.example .env
+```
+
+```env
+# Mobile app (Expo) — anon key is safe to use client-side
+EXPO_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon_key>
+
+# Scripts — service role key (never expose to clients)
+SUPABASE_URL=https://<your-project>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service_role_key>
+OPENAI_API_KEY=sk-...
+```
+
+### Supabase setup (first time only)
+
+Run `scripts/supabase-setup.sql` in the Supabase SQL Editor to create the `knowledge_chunks` table, the pgvector index, and the `match_chunks` RPC function.
+
+Then seed the knowledge base:
+
+```bash
+node scripts/migrate-to-supabase.mjs
+```
+
+### Run the mobile app
 
 ```bash
 # iOS Simulator
@@ -137,7 +174,7 @@ npx expo start --android
 npx expo start --ios --clear
 ```
 
-### API Key Setup
+### API Key Setup (mobile app)
 
 Enter your API keys in the app under **Settings → AI Configuration**:
 - **OpenAI key** — required for chat, STT (Whisper), and fallback TTS
@@ -218,18 +255,50 @@ avatarRef.current.stopAudio();
 
 ## RAG Pipeline
 
-The chat is powered by a fully client-side RAG pipeline in `src/services/openaiService.js`.
+The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI.
 
 | Setting | Value |
 |---|---|
 | Embedding model | `text-embedding-3-small` (1536 dims) |
 | Chat model | `gpt-4o-mini` |
+| Vector DB | Supabase `knowledge_chunks` table (pgvector `vector(1536)`) |
+| Retrieval | Top-5 chunks via `match_chunks` RPC, min cosine similarity 0.25 |
 | Context window | Last 6 messages |
-| Retrieval | Top-5 chunks, min similarity 0.25 |
-| Embedding cache | AsyncStorage key `kb_embeddings_v2` |
-| Message history | AsyncStorage key `chat_messages_v1` (max 100) |
+| Chunk size | ~500 words with ~50-word overlap |
+| Auto-tagging | GPT-4o-mini assigns 5–8 specific tags per chunk at ingestion time |
 
-The knowledge base (`src/data/knowledgeBase.js`) contains 42 curated dementia care chunks across 6 categories: caregiving, clinical, behavioral best practices, home safety, wellbeing, and communication.
+**Flow:**
+
+```
+User query
+  → embed via text-embedding-3-small
+  → Supabase match_chunks RPC (server-side cosine similarity)
+  → top-5 chunks injected as context
+  → gpt-4o-mini streaming response with source attribution
+```
+
+### Adding content to the knowledge base
+
+Use the CLI ingestion script:
+
+```bash
+# From a URL
+node scripts/ingest.mjs \
+  --source "https://www.alzheimers.org.uk/some-article" \
+  --category clinical \
+  --org "Alzheimer's Society UK"
+
+# From a local PDF
+node scripts/ingest.mjs \
+  --source "./documents/care-guide.pdf" \
+  --category caregiving \
+  --org "Dementia Australia"
+
+# Preview without uploading
+node scripts/ingest.mjs --source <url> --category <slug> --org <name> --dry-run
+```
+
+Valid categories: `caregiving` · `clinical` · `communication` · `prevention` · `best-practices` · `home-safety` · `well-being`
 
 ### Testing RAG output
 
@@ -237,7 +306,7 @@ The knowledge base (`src/data/knowledgeBase.js`) contains 42 curated dementia ca
 OPENAI_API_KEY=sk-... node scripts/test-responses.mjs
 ```
 
-Runs a set of sample questions through the full pipeline and prints each response alongside the retrieved knowledge base chunks and their similarity scores. Edit the `QUESTIONS` array in the script to test specific queries.
+Runs a set of sample questions through the full pipeline and prints each response alongside the retrieved chunks and their similarity scores.
 
 ---
 

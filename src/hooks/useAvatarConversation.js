@@ -44,6 +44,14 @@ const WHISPER_RECORDING_OPTIONS = {
 // responses before the first .!? boundary arrives.
 const EARLY_CHUNK_CHARS = 150;
 
+// Keep inline citations in stored/displayed message text, but remove them from
+// spoken output so TTS does not read markers like "bracket one".
+const stripInlineCitationsForSpeech = (text) =>
+  text
+    .replace(/\s*\[(\d+)\]/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
 // Shared AsyncStorage key with ChatScreen — both read/write the same array.
 const MESSAGES_KEY = 'chat_messages_v1';
 const MAX_PERSISTED = 100;
@@ -153,20 +161,23 @@ export function useAvatarConversation({ avatarRef }) {
         const clean = text.trim();
         if (!clean || !audioEnabled) return;
 
+        const spokenText = stripInlineCitationsForSpeech(clean);
+        if (!spokenText) return;
+
         if (firstSeg) {
           pts.first_sentence = Date.now();
           console.log(`[LATENCY] first_sentence_ready_ms +${pts.first_sentence - t0}`);
           pts.tts_start = Date.now();
           console.log(`[LATENCY] tts_first_request_start_ms +${pts.tts_start - t0}`);
-          const p = tts(clean).then(result => {
+          const p = tts(spokenText).then(result => {
             pts.tts_ready = Date.now();
             console.log(`[LATENCY] tts_first_audio_ready_ms +${pts.tts_ready - t0}`);
-            return { ...result, text: clean };
+            return { ...result, text: spokenText };
           });
           queue.promises.push(p);
           firstSeg = false;
         } else {
-          queue.promises.push(tts(clean).then(result => ({ ...result, text: clean })));
+          queue.promises.push(tts(spokenText).then(result => ({ ...result, text: spokenText })));
         }
         wake();
       };
@@ -229,7 +240,9 @@ export function useAvatarConversation({ avatarRef }) {
           const existing = raw ? JSON.parse(raw) : [];
           const now = Date.now();
           const userEntry = { id: `v_${now}`, role: 'user', text: userText, sources: [], timestamp: new Date().toISOString() };
-          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: [], timestamp: new Date().toISOString() };
+          // Resolve inline citations from the completed stream
+          const { citations } = openaiService.resolveStreamCitations(fullText);
+          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: citations, timestamp: new Date().toISOString() };
           const updated = [...existing, userEntry, assistantEntry].slice(-MAX_PERSISTED);
           await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(updated));
         } catch { /* non-critical */ }

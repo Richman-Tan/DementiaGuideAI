@@ -19,6 +19,13 @@ class OpenAIRateLimitError extends Error {
 class OpenAIService {
   constructor() {
     this._cachedKey = null;
+    this._lastChunkMap = {};
+  }
+
+  // Public wrapper — call this after chatStream finishes to get resolved citations.
+  // Pass the full accumulated text from the stream.
+  resolveStreamCitations(fullText) {
+    return this._parseCitations(fullText, this._lastChunkMap);
   }
 
   // ─── API Key ────────────────────────────────────────────────────────────────
@@ -104,9 +111,7 @@ class OpenAIService {
 
     const chunks = await this.search(userMessage, TOP_K);
     timingCbs?.onRagDone?.();
-    const contextBlock = chunks.length > 0
-      ? `[CONTEXT]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/CONTEXT]`
-      : '[CONTEXT]\nNo specific knowledge base entries matched this query.\n[/CONTEXT]';
+    const { contextBlock, chunkMap } = this._buildContextBlock(chunks);
 
     const recentHistory = conversationHistory.slice(-MAX_HISTORY).map(m => ({
       role: m.role,
@@ -118,6 +123,10 @@ class OpenAIService {
       ...recentHistory,
       { role: 'user', content: `${contextBlock}\n\nUser question: ${userMessage}` },
     ];
+
+    // Store chunkMap on the generator so the caller can resolve citations
+    // after streaming completes. We expose it as a property on the generator.
+    this._lastChunkMap = chunkMap;
 
     const body = JSON.stringify({
       model: CHAT_MODEL,
@@ -252,27 +261,73 @@ class OpenAIService {
     return `You are Aria, a compassionate and knowledgeable AI assistant created to support family caregivers, healthcare workers, and families caring for people with dementia. You work like a specialised library — every answer you give is grounded in the curated knowledge passages provided to you.
 
 IMPORTANT RULES:
-1. Base your response ONLY on the context passages provided. Do not draw on outside knowledge.
-2. If the context passages do not contain enough information to answer the question, say so honestly: "I don't have specific information about that in my knowledge base, but I recommend speaking with your GP or Dementia Australia (1800 100 500)."
-3. Be warm, empathetic, and emotionally supportive — caregiving is hard, and the person reading your response may be exhausted or distressed.
-4. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
-5. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
-6. After your response, on a new line, write "Sources:" followed by a bullet list of the knowledge base titles you drew from (one per line, starting with "·"). Only list sources you actually used.
-7. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.`;
+1. Base your response ONLY on the numbered context passages provided. Do not draw on outside knowledge.
+2. Whenever you use information from a passage, place its number in square brackets immediately after the relevant sentence — e.g. "Alzheimer's disease affects 2 in 3 people with dementia [1]." Use the number that matches the passage header (--- Source [N] ---).
+3. You may cite the same source multiple times, and you may cite multiple sources in one sentence: [1][3].
+4. If the context passages do not contain enough information to answer the question, say so honestly: "I don't have specific information about that in my knowledge base, but I recommend speaking with your GP or Dementia Australia (1800 100 500)."
+5. Be warm, empathetic, and emotionally supportive — caregiving is hard, and the person reading your response may be exhausted or distressed.
+6. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
+7. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
+8. Do NOT add a Sources section at the end. Citations are inline only.
+9. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.`;
+  }
+
+  // Build a numbered context block from retrieved chunks and return both
+  // the formatted string and the index→chunk map for citation resolution.
+  _buildContextBlock(chunks) {
+    if (chunks.length === 0) {
+      return {
+        contextBlock: '[CONTEXT]\nNo specific knowledge base entries matched this query.\n[/CONTEXT]',
+        chunkMap: {},
+      };
+    }
+    const lines = chunks.map((c, i) =>
+      `--- Source [${i + 1}] | ${c.title} ---\n${c.content}`
+    );
+    return {
+      contextBlock: `[CONTEXT]\n${lines.join('\n\n')}\n[/CONTEXT]`,
+      chunkMap: Object.fromEntries(chunks.map((c, i) => [i + 1, c])),
+    };
+  }
+
+  // Parse inline [N] citation markers out of the model's response text.
+  // Returns { cleanText, citations } where citations is an array of unique
+  // source objects in the order they first appear.
+  _parseCitations(rawText, chunkMap) {
+    const usedNums = [];
+    // Collect citation numbers in order of first appearance
+    rawText.replace(/\[(\d+)\]/g, (_, n) => {
+      const num = parseInt(n, 10);
+      if (chunkMap[num] && !usedNums.includes(num)) usedNums.push(num);
+    });
+
+    // Build source objects with a short excerpt from the chunk
+    const citations = usedNums.map(num => {
+      const c = chunkMap[num];
+      const excerpt = c.content
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 180)
+        .replace(/\s\S*$/, '') + '…';
+      return {
+        num,
+        title:   c.title,
+        org:     c.source_org ?? null,
+        url:     c.source_url ?? null,
+        excerpt,
+      };
+    });
+
+    // Leave [N] markers in the text — the UI will render them as chips
+    return { cleanText: rawText, citations };
   }
 
   // ─── RAG Chat ───────────────────────────────────────────────────────────────
 
   async chat(userMessage, conversationHistory = []) {
-    // Retrieve relevant chunks
     const chunks = await this.search(userMessage, TOP_K);
+    const { contextBlock, chunkMap } = this._buildContextBlock(chunks);
 
-    // Build context block
-    const contextBlock = chunks.length > 0
-      ? `[CONTEXT]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/CONTEXT]`
-      : '[CONTEXT]\nNo specific knowledge base entries matched this query.\n[/CONTEXT]';
-
-    // Build messages — last MAX_HISTORY items from conversation history
     const recentHistory = conversationHistory.slice(-MAX_HISTORY).map(m => ({
       role: m.role,
       content: m.content,
@@ -281,10 +336,7 @@ IMPORTANT RULES:
     const messages = [
       { role: 'system', content: this._buildSystemPrompt() },
       ...recentHistory,
-      {
-        role: 'user',
-        content: `${contextBlock}\n\nUser question: ${userMessage}`,
-      },
+      { role: 'user', content: `${contextBlock}\n\nUser question: ${userMessage}` },
     ];
 
     const data = await this._callOpenAI('/chat/completions', {
@@ -295,34 +347,8 @@ IMPORTANT RULES:
     });
 
     const rawText = data.choices[0].message.content.trim();
-
-    // Parse out Sources section if the model included it
-    const sourcesMatch = rawText.match(/Sources:\s*([\s\S]+?)(?:\n\n|$)/i);
-    let responseText = rawText;
-    let sourceTitles = [];
-
-    if (sourcesMatch) {
-      responseText = rawText.slice(0, rawText.indexOf(sourcesMatch[0])).trim();
-      sourceTitles = sourcesMatch[1]
-        .split('\n')
-        .map(s => s.replace(/^[·\-\*•]\s*/, '').trim())
-        .filter(Boolean);
-    }
-
-    // Fall back to retrieved chunk titles if model didn't list sources
-    if (sourceTitles.length === 0 && chunks.length > 0) {
-      sourceTitles = chunks.slice(0, 3).map(c => c.title);
-    }
-
-    // Enrich titles with source_url and source_org from matched chunks
-    const chunkByTitle = new Map(chunks.map(c => [c.title, c]));
-    const sources = sourceTitles.map(title => ({
-      title,
-      url: chunkByTitle.get(title)?.source_url ?? null,
-      org: chunkByTitle.get(title)?.source_org ?? null,
-    }));
-
-    return { text: responseText, sources };
+    const { cleanText, citations } = this._parseCitations(rawText, chunkMap);
+    return { text: cleanText, sources: citations };
   }
 }
 

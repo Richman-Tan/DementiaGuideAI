@@ -5,8 +5,9 @@ import { WebView } from 'react-native-webview';
 export const DEFAULT_VRM_MODEL_URL =
   'https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/beta/HairSample_Male.vrm';
 
-function buildHTML(modelUrl) {
+function buildHTML(modelUrl, backdropUrl = null) {
   const safeUrl = modelUrl.replace(/'/g, '%27');
+  const safeBackdropUrl = backdropUrl ? backdropUrl.replace(/'/g, '%27') : '';
 
   return `<!DOCTYPE html>
 <html>
@@ -25,7 +26,7 @@ function buildHTML(modelUrl) {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #0D0D1A;
+    background: #100C1E;
   }
 
   canvas {
@@ -47,6 +48,21 @@ function buildHTML(modelUrl) {
     pointer-events: none;
     text-shadow: 0 1px 4px rgba(0,0,0,0.8);
     z-index: 10;
+  }
+
+  #viseme-dbg {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.65);
+    color: #00ff88;
+    font: 11px/1.5 monospace;
+    padding: 5px 9px;
+    border-radius: 5px;
+    pointer-events: none;
+    display: none;
+    white-space: pre;
+    z-index: 20;
   }
 </style>
 
@@ -86,17 +102,24 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 window._dbg('Page loaded, waiting for module...');
+
+window.setDebugMode = function(on) {
+  var el = document.getElementById('viseme-dbg');
+  if (el) el.style.display = on ? 'block' : 'none';
+};
 <\/script>
 </head>
 
 <body>
 <div id="status">Loading avatar…</div>
+<div id="viseme-dbg"></div>
 
 <script type="module">
 window._dbg('Module script started');
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 window._dbg('Imports loaded: THREE r' + THREE.REVISION);
 
@@ -111,9 +134,9 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.setClearColor(0x0D0D1A, 1.0);
+renderer.setClearColor(0x100C1E, 1.0);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.85;
+renderer.toneMappingExposure = 1.05;
 
 document.body.appendChild(renderer.domElement);
 
@@ -133,6 +156,7 @@ renderer.domElement.addEventListener('webglcontextrestored', function() {
 });
 
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x100C1E);
 
 const camera = new THREE.PerspectiveCamera(
   35,
@@ -145,10 +169,10 @@ camera.position.set(0, 1.25, 2.5);
 camera.lookAt(0, 1.25, 0);
 
 // Bright warm neutral ambient — lifts shadow floor so eye sockets are not dark
-scene.add(new THREE.AmbientLight(0xD0C8C0, 0.70));
+scene.add(new THREE.AmbientLight(0xEADDD0, 0.90));
 
 // Key light — reduced intensity, moved forward (+Z) to fill the face frontally
-const keyLight = new THREE.DirectionalLight(0xFFF5E8, 1.3);
+const keyLight = new THREE.DirectionalLight(0xFFF5E8, 1.55);
 keyLight.position.set(-0.8, 2.0, 3.5);
 scene.add(keyLight);
 
@@ -161,6 +185,18 @@ scene.add(fillLight);
 const rimLight = new THREE.DirectionalLight(0xFFD090, 0.15);
 rimLight.position.set(0.0, 3.0, -2.0);
 scene.add(rimLight);
+
+// ─── BACKDROP CONFIG ──────────────────────────────────────────────────────────
+// Tune these values to reposition or resize the living-room backdrop.
+// dimAmount: 1.0 = original baked brightness; lower = darker/more recessed.
+// Increase position[1] (Y) to raise the room; more negative Z = further back.
+const BACKDROP_CONFIG = {
+  url:       '${safeBackdropUrl}',
+  position:  [0, -1.0, -5.0],
+  rotation:  [0, 0, 0],
+  scale:     [1.8, 1.8, 1.8],
+  dimAmount: 0.80,
+};
 
 // GLB model references
 let model     = null;   // gltf.scene — the root Object3D
@@ -175,7 +211,12 @@ let mouthCurrent = 0;
 const ALL_VISEME_KEYS = ['aa','ih','ou','ee','oh','v_pp','v_ff','v_th','v_dd','v_kk','v_ch','v_ss','v_nn','v_rr'];
 // Per-channel smoothed weights — lerped each frame so transitions feel organic
 const vSmooth = { aa:0, ih:0, ou:0, ee:0, oh:0, v_pp:0, v_ff:0, v_th:0, v_dd:0, v_kk:0, v_ch:0, v_ss:0, v_nn:0, v_rr:0 };
-const V_LERP = 0.55;
+// Time constant for viseme smoothing (seconds). Frame-rate-independent: factor = 1 - exp(-dt/V_TAU).
+// Lower → crisper/faster response; higher → smoother/slower.
+const V_TAU = 0.030;
+// Speech emotion — set at audio start, drives subtle expression layer over base speaking animation
+let speechEmotion      = 'neutral'; // 'positive' | 'warm' | 'concern' | 'question' | 'neutral'
+let speechEmotionBlend = 0;         // 0→1 lerps in when audio plays, out when silent
 let lastTs = null;
 let elapsed = 0;
 // State blends — each lerps 0→1 as the matching state becomes active
@@ -256,10 +297,10 @@ function frameCamera(modelScene) {
 
   const height = size.y || 1.6;
 
-  // Waist-up framing: show top 45% of avatar (head down to just above the hips).
-  // Extra headroom above (+0.10) keeps the face from sitting at the very top.
-  const visibleBottom = box.min.y + height * 0.55;
-  const visibleTop    = box.max.y + height * 0.10;
+  // Face framing: show top 28% of avatar (head down to mid-chest).
+  // Extra headroom above (+0.07) keeps the crown from sitting at the very top.
+  const visibleBottom = box.min.y + height * 0.72;
+  const visibleTop    = box.max.y + height * 0.07;
   const visibleCenterY = (visibleBottom + visibleTop) / 2;
   const visibleHeight  = visibleTop - visibleBottom;
 
@@ -813,6 +854,22 @@ function loadModel() {
       if (teethMesh) window._dbg('Teeth mesh: ' + teethMesh.name);
 
       patchExprMap();
+
+      // ── Morph target runtime inspector ──────────────────────────────────────
+      // Logs every morph target with its index and detected convention so that
+      // viseme mapping issues can be diagnosed without guessing.
+      if (headMesh && headMesh.morphTargetDictionary) {
+        var mdict = headMesh.morphTargetDictionary;
+        var mnames = Object.keys(mdict).sort(function(a,b){ return mdict[a]-mdict[b]; });
+        var isOculusV = function(n){ return /^viseme_/i.test(n) || /^(aa|ih|ou|ee|oh|PP|FF|TH|DD|kk|CH|SS|nn|RR)$/.test(n); };
+        var isARKitV  = function(n){ return /^(jaw|mouth|eye|brow|cheek|nose)/i.test(n); };
+        var rows = mnames.map(function(n){
+          var kind = isOculusV(n) ? 'OCULUS' : isARKitV(n) ? 'ARKIT' : 'CUSTOM';
+          return String(mdict[n]).padStart(3,' ') + ' [' + kind + '] ' + n;
+        });
+        window._dbg('MORPHS on ' + headMesh.name + ' (' + mnames.length + '):\\n' + rows.join('\\n'));
+      }
+
       buildBoneMap();
 
       baseRotationY = model.rotation.y;
@@ -843,6 +900,76 @@ function loadModel() {
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'error', message: msg }));
       }
+    }
+  );
+}
+
+// ─── BACKDROP LOADER ──────────────────────────────────────────────────────────
+// GLTFLoader uses XHR internally. Mobile WebView (iOS WKWebView) rejects XHR
+// requests against very large data: URIs. We convert the data URI to a Blob URL
+// first — the Blob URL is short and sidesteps the XHR size limit entirely.
+async function loadBackdrop() {
+  if (!BACKDROP_CONFIG.url) {
+    window._dbg('Backdrop: no URL — skipping');
+    return;
+  }
+
+  window._dbg('Backdrop: converting ' + Math.round(BACKDROP_CONFIG.url.length / 1024 / 1024) + ' MB data URI to Blob...');
+
+  let blobUrl;
+  try {
+    const res = await fetch(BACKDROP_CONFIG.url);
+    const blob = await res.blob();
+    blobUrl = URL.createObjectURL(blob);
+    window._dbg('Backdrop: Blob ready (' + Math.round(blob.size / 1024 / 1024) + ' MB), loading GLB...');
+  } catch (e) {
+    window._dbg('Backdrop: Blob conversion failed — ' + (e && e.message ? e.message : String(e)));
+    return;
+  }
+
+  const backdropLoader = new GLTFLoader();
+  backdropLoader.crossOrigin = 'anonymous';
+  backdropLoader.setMeshoptDecoder(MeshoptDecoder);
+
+  backdropLoader.load(
+    blobUrl,
+    (gltf) => {
+      URL.revokeObjectURL(blobUrl);
+      window._dbg('Backdrop: GLB parsed, building scene...');
+      const backdrop = gltf.scene;
+
+      backdrop.position.set(...BACKDROP_CONFIG.position);
+      backdrop.rotation.set(...BACKDROP_CONFIG.rotation);
+      backdrop.scale.set(...BACKDROP_CONFIG.scale);
+
+      backdrop.traverse((obj) => {
+        if (!obj.isMesh) return;
+        obj.frustumCulled = false;
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach((mat) => {
+          // DoubleSide ensures interior surfaces are visible regardless of camera position
+          mat.side = THREE.DoubleSide;
+          mat.color.multiplyScalar(BACKDROP_CONFIG.dimAmount);
+          mat.needsUpdate = true;
+        });
+      });
+
+      scene.add(backdrop);
+      scene.background = null;
+      window._dbg('Backdrop: added to scene');
+    },
+    (xhr) => {
+      if (xhr.total) {
+        const pct = Math.round((xhr.loaded / xhr.total) * 100);
+        if (pct === 25 || pct === 50 || pct === 75 || pct === 100) {
+          window._dbg('Backdrop loading: ' + pct + '%');
+        }
+      }
+    },
+    (err) => {
+      URL.revokeObjectURL(blobUrl);
+      const msg = err && err.message ? err.message : String(err);
+      window._dbg('Backdrop load failed: ' + msg);
     }
   );
 }
@@ -1116,61 +1243,119 @@ function animate(ts) {
       }
 
       // ─── MOUTH / LIP SYNC ─────────────────────────────────────────────────
+      // Frame-rate-independent lerp factor — same perceived smoothness at any fps.
+      const vLerp = 1.0 - Math.exp(-dt / V_TAU);
+
       if (visemeMode && lipSyncActive) {
-        // Drive all 14 viseme channels with per-channel smoothing.
+        // Drive all 14 viseme channels with per-channel time-based smoothing.
         const w = LipSyncController.getVisemeWeights();
         let maxV = 0;
         for (let vi = 0; vi < ALL_VISEME_KEYS.length; vi++) {
           const k = ALL_VISEME_KEYS[vi];
-          vSmooth[k] = lerp(vSmooth[k], w[k] || 0, V_LERP);
+          vSmooth[k] = lerp(vSmooth[k], w[k] || 0, vLerp);
           setExpression(k, vSmooth[k]);
           if (vSmooth[k] > maxV) maxV = vSmooth[k];
         }
         mouthCurrent = maxV;
+
+        // Subtle secondary jaw oscillation during speech — SET each frame, never additive,
+        // to prevent accumulation on models that have jawOpen but don't use it for visemes.
+        if (headMesh && headMesh.morphTargetDictionary && 'jawOpen' in headMesh.morphTargetDictionary) {
+          const jawIdx = headMesh.morphTargetDictionary.jawOpen;
+          const jawOsc = Math.max(0, mouthCurrent - 0.05) *
+                         (0.06 + 0.04 * Math.abs(Math.sin(elapsed * 8.5)));
+          headMesh.morphTargetInfluences[jawIdx] = jawOsc * 0.15;
+        }
       } else {
         // Decay all viseme channels so the mouth closes smoothly when audio ends.
         for (let vi = 0; vi < ALL_VISEME_KEYS.length; vi++) {
-          vSmooth[ALL_VISEME_KEYS[vi]] = lerp(vSmooth[ALL_VISEME_KEYS[vi]], 0, V_LERP);
+          vSmooth[ALL_VISEME_KEYS[vi]] = lerp(vSmooth[ALL_VISEME_KEYS[vi]], 0, vLerp);
         }
 
-        // RMS fallback path — amplitude drives 'aa' only.
+        // RMS fallback path — frequency-band analysis drives multiple shapes.
         let mouthTarget = 0;
         if (lipSyncActive && lipSyncAnalyser && lipSyncBuf) {
-          lipSyncAnalyser.getByteTimeDomainData(lipSyncBuf);
-          let sumSq = 0;
-          for (let i = 0; i < lipSyncBuf.length; i++) {
-            const x = (lipSyncBuf[i] / 128.0) - 1.0;
-            sumSq += x * x;
+          lipSyncAnalyser.getByteFrequencyData(lipSyncBuf);
+          let lowEnergy = 0, highEnergy = 0;
+          const binCount = lipSyncBuf.length;
+          for (let i = 0; i < binCount; i++) {
+            if (i < binCount * 0.2) lowEnergy  += lipSyncBuf[i];
+            else                    highEnergy += lipSyncBuf[i];
           }
-          const rms = Math.sqrt(sumSq / lipSyncBuf.length);
-          mouthTarget = Math.min(1.0, rms * 15.0);
+          const lowAmp  = Math.min(1, (lowEnergy  / (binCount * 0.2))  / 200);
+          const highAmp = Math.min(1, (highEnergy / (binCount * 0.8)) / 160);
+          mouthTarget = lowAmp;
+          // Drive vowel-like shapes from low-band energy and sibilant from high-band.
+          setExpression('aa',   lowAmp  * 0.90);
+          setExpression('oh',   lowAmp  * 0.40);
+          setExpression('v_ss', highAmp * 0.55);
         } else if (speaking) {
           mouthTarget = 0.2 + Math.abs(Math.sin(elapsed * 7)) * 0.45;
+          setExpression('aa', mouthTarget);
         }
         mouthCurrent = lerp(mouthCurrent, mouthTarget, lipSyncActive ? 0.5 : 0.2);
-        // 'aa' blends RMS-driven value with any decaying viseme weight for a smooth hand-off.
-        setExpression('aa', Math.max(mouthCurrent, vSmooth.aa));
-        for (let vi = 1; vi < ALL_VISEME_KEYS.length; vi++) {
-          setExpression(ALL_VISEME_KEYS[vi], vSmooth[ALL_VISEME_KEYS[vi]]);
+        // In non-RMS paths, aa still blends with any decaying viseme weight for a smooth hand-off.
+        if (!lipSyncActive) {
+          setExpression('aa', Math.max(mouthCurrent, vSmooth.aa));
+          for (let vi = 1; vi < ALL_VISEME_KEYS.length; vi++) {
+            setExpression(ALL_VISEME_KEYS[vi], vSmooth[ALL_VISEME_KEYS[vi]]);
+          }
         }
       }
 
+      // ─── DEBUG VISEME OVERLAY ─────────────────────────────────────────────
+      const dbgEl = document.getElementById('viseme-dbg');
+      if (dbgEl && dbgEl.style.display !== 'none') {
+        const af = LipSyncController.lastActiveFrame;
+        const activeLabel = af ? af.viseme + ' w:' + af.weight.toFixed(2) : 'none';
+        const activeWeights = ALL_VISEME_KEYS
+          .filter(k => vSmooth[k] > 0.01)
+          .map(k => k + ':' + vSmooth[k].toFixed(2))
+          .join('  ');
+        dbgEl.textContent = 'viseme: ' + activeLabel + '\\n' + (activeWeights || '(silent)');
+      }
+
       // ─── FACIAL EXPRESSIONS ───────────────────────────────────────────────
-      // Eyebrows: each state has a distinct shape; setExpression silently no-ops
-      // if the morph target doesn't exist in this particular model export.
-      const browInner = listenBlend  * ANIM.LISTEN_BROW_INNER
-                      + empathyBlend * ANIM.EMPATHY_BROW_INNER;
-      const browDown  = thinkBlend   * ANIM.THINK_BROW_DOWN;
-      setExpression('browInnerUp', browInner);
-      setExpression('browDown',    browDown);
+      // Emotion blend fades in when audio is playing and out when silent.
+      speechEmotionBlend = lerp(speechEmotionBlend, lipSyncActive ? 1.0 : 0.0, dt * 2.5);
+      const eb = speechEmotionBlend * speakBlend; // only active while speaking
+
+      // Base brow values from avatar state
+      let browInner = listenBlend  * ANIM.LISTEN_BROW_INNER
+                    + empathyBlend * ANIM.EMPATHY_BROW_INNER;
+      let browDown  = thinkBlend   * ANIM.THINK_BROW_DOWN;
+      let browOuter = 0;
+      let smileLift = 0;
+      let relaxLift = 0;
+
+      // Sentence-level emotion layer — subtle shifts that match the spoken content
+      if (eb > 0.01) {
+        if (speechEmotion === 'positive') {
+          smileLift = 0.20 * eb;
+          relaxLift = 0.12 * eb;
+        } else if (speechEmotion === 'warm') {
+          browInner += 0.10 * eb;
+          relaxLift  = 0.16 * eb;
+        } else if (speechEmotion === 'concern') {
+          browInner += 0.13 * eb;
+          browDown  += 0.07 * eb;
+        } else if (speechEmotion === 'question') {
+          browOuter  = 0.13 * eb;
+          browInner += 0.05 * eb;
+        }
+      }
+
+      setExpression('browInnerUp', Math.min(1, browInner));
+      setExpression('browDown',    Math.min(1, browDown));
+      setExpression('browOuterUp', Math.min(1, browOuter));
 
       // Attentive wide-eye on listening
       setExpression('surprised', listenBlend * ANIM.LISTEN_SURPRISE);
 
       // Warm smile: baseline never fully disappears; occasional idle moments peak higher.
       const smileTarget = lerp(ANIM.ACTIVE_SMILE_MIN, ANIM.IDLE_SMILE, 1 - activeBlend * 0.75);
-      setExpression('happy',   Math.max(smileTarget, idleSmileOutput));
-      setExpression('relaxed', lerp(0.04, ANIM.IDLE_RELAX, 1 - speakBlend));
+      setExpression('happy',   Math.min(1, Math.max(smileTarget, idleSmileOutput) + smileLift));
+      setExpression('relaxed', Math.min(1, lerp(0.04, ANIM.IDLE_RELAX, 1 - speakBlend) + relaxLift));
 
       // ─── BLINK STATE MACHINE ──────────────────────────────────────────────
       // Natural eyelid kinematics: fast close (~75 ms), brief hold, slow open (~180 ms).
@@ -1293,9 +1478,13 @@ let audioStartTime = null;   // AudioContext.currentTime at the moment source.st
 //   duration. Adding setExpression(lerp(prev, target, 0.5)) would add a second
 //   smoothing layer, causing the viseme to "lag" past the audio cue it maps to.
 const LipSyncController = {
+  // Expose the last active frame so the debug overlay can read it.
+  lastActiveFrame: null,
+
   getVisemeWeights: function() {
     const result = { aa:0, ih:0, ou:0, ee:0, oh:0, v_pp:0, v_ff:0, v_th:0, v_dd:0, v_kk:0, v_ch:0, v_ss:0, v_nn:0, v_rr:0 };
     if (!visemeMode || !visemeTimeline || audioStartTime === null || !lipSyncCtx) {
+      LipSyncController.lastActiveFrame = null;
       return result;
     }
 
@@ -1313,20 +1502,29 @@ const LipSyncController = {
     if (activeIdx < 0) return result;
 
     const active   = frames[activeIdx];
+    LipSyncController.lastActiveFrame = active;
     const progress = Math.min((now - active.time) / Math.max(active.duration, 0.001), 1.0);
 
-    // Cross-fade: last 20% of the current frame overlaps into the next frame.
-    const FADE_START = 0.80;
+    // 3-phase envelope per frame:
+    //   Attack  0%–15%  : smoothstep ramp (skipped for frames < 50ms — fast speech needs instant articulation)
+    //   Hold   15%–75%  : full weight (articulation held)
+    //   Release 75%–100%: smoothstep crossfade into next viseme (coarticulation anticipation)
+    const ATTACK_END = 0.15;
+    const FADE_START = 0.75;
     let currentWeight = active.weight;
     let nextViseme    = null;
     let nextWeight    = 0;
 
-    if (progress > FADE_START && activeIdx + 1 < frames.length) {
-      const blendT = (progress - FADE_START) / (1.0 - FADE_START); // 0 → 1
-      const next   = frames[activeIdx + 1];
-      currentWeight = active.weight * (1.0 - blendT);
+    if (active.duration >= 0.050 && progress < ATTACK_END) {
+      const t = progress / ATTACK_END;
+      currentWeight = active.weight * (t * t * (3.0 - 2.0 * t)); // smoothstep ease-in
+    } else if (progress > FADE_START && activeIdx + 1 < frames.length) {
+      const blendT  = (progress - FADE_START) / (1.0 - FADE_START); // 0 → 1
+      const eased   = blendT * blendT * (3.0 - 2.0 * blendT);       // smoothstep
+      const next    = frames[activeIdx + 1];
+      currentWeight = active.weight * (1.0 - eased);
       nextViseme    = next.viseme;
-      nextWeight    = next.weight * blendT;
+      nextWeight    = next.weight * eased * (1.0 - ATTACK_END);      // next starts sub-peak
     }
 
     if (active.viseme !== 'neutral' && result[active.viseme] !== undefined) {
@@ -1394,8 +1592,8 @@ window.playAudioWithLipSync = async function(dataUri) {
   try {
     const decoded   = await _decodeAndPlay(dataUri);
     lipSyncAnalyser = lipSyncCtx.createAnalyser();
-    lipSyncAnalyser.fftSize = 256;
-    lipSyncBuf = new Uint8Array(lipSyncAnalyser.frequencyBinCount);
+    lipSyncAnalyser.fftSize = 512; // higher resolution for frequency-band analysis
+    lipSyncBuf = new Uint8Array(lipSyncAnalyser.frequencyBinCount); // frequencyBinCount = fftSize/2
 
     lipSyncSource = lipSyncCtx.createBufferSource();
     lipSyncSource.buffer = decoded;
@@ -1423,10 +1621,11 @@ window.playAudioWithLipSync = async function(dataUri) {
 // To swap the TTS provider: implement ttsWithAlignment() in a new service class
 // and update ttsService.js. The visemeTimeline shape must match VisemeTimeline:
 //   { frames: [{time, viseme, duration, weight}], totalDuration }
-window.playAudioWithVisemeTimeline = async function(dataUri, timeline) {
+window.playAudioWithVisemeTimeline = async function(dataUri, timeline, emotion) {
   _stopCurrent();
   visemeMode     = true;
   visemeTimeline = timeline;
+  speechEmotion  = emotion || 'neutral';
   try {
     const decoded = await _decodeAndPlay(dataUri);
     lipSyncSource = lipSyncCtx.createBufferSource();
@@ -1436,11 +1635,14 @@ window.playAudioWithVisemeTimeline = async function(dataUri, timeline) {
 
     lipSyncSource.onended = () => _onAudioEnded(null);
     if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
-    audioStartTime = lipSyncCtx.currentTime; // anchor after resume so timing is accurate
+    // Schedule 10ms ahead so the anchor matches actual sample playback; this absorbs
+    // the JS execution gap between audioStartTime capture and source.start().
+    const startAt  = lipSyncCtx.currentTime + 0.010;
+    audioStartTime = startAt;
+    lipSyncSource.start(startAt);
     if (window.ReactNativeWebView) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioStart' }));
     }
-    lipSyncSource.start(0);
   } catch(err) {
     _onAudioEnded(String(err));
   }
@@ -1451,6 +1653,7 @@ window.stopAudioLipSync = function() {
   _stopCurrent();
 };
 
+loadBackdrop();
 requestAnimationFrame(animate);
 <\/script>
 </body>
@@ -1459,6 +1662,7 @@ requestAnimationFrame(animate);
 
 export const AvatarVRM = forwardRef(({
   modelUrl = DEFAULT_VRM_MODEL_URL,
+  backdropUrl = null,
   width,
   height,
   isListening   = false,
@@ -1504,11 +1708,11 @@ export const AvatarVRM = forwardRef(({
           `window.playAudioWithLipSync(${JSON.stringify(payload)});true;`
         );
       } else {
-        // ElevenLabs path: pass audio + viseme timeline into the WebView
-        const { audio, visemeTimeline } = payload;
+        // ElevenLabs path: pass audio + viseme timeline + sentence emotion into the WebView
+        const { audio, visemeTimeline, emotion } = payload;
         if (visemeTimeline) {
           webRef.current?.injectJavaScript(
-            `window.playAudioWithVisemeTimeline(${JSON.stringify(audio)}, ${JSON.stringify(visemeTimeline)});true;`
+            `window.playAudioWithVisemeTimeline(${JSON.stringify(audio)}, ${JSON.stringify(visemeTimeline)}, ${JSON.stringify(emotion || 'neutral')});true;`
           );
         } else {
           // Object payload but no timeline — use RMS fallback with the audio URI
@@ -1524,14 +1728,22 @@ export const AvatarVRM = forwardRef(({
       webRef.current?.injectJavaScript(`window.stopAudioLipSync();true;`);
     },
     setOnAudioStart: (cb) => { audioStartCbRef.current = cb; },
+    /**
+     * Toggle the developer viseme overlay inside the WebView.
+     * Shows current active viseme, per-channel weights, and audio timing.
+     * Usage: avatarRef.current.setDebugMode(true)
+     */
+    setDebugMode: (on) => {
+      webRef.current?.injectJavaScript(`window.setDebugMode(${on ? 'true' : 'false'});true;`);
+    },
   }));
 
   const source = useMemo(
     () => ({
-      html: buildHTML(modelUrl),
+      html: buildHTML(modelUrl, backdropUrl),
       baseUrl: 'https://localhost/',
     }),
-    [modelUrl]
+    [modelUrl, backdropUrl]
   );
 
   const recoverWebView = useCallback((reason) => {
@@ -1619,7 +1831,7 @@ export const AvatarVRM = forwardRef(({
         ref={webRef}
         source={source}
         style={styles.webview}
-        backgroundColor="#0D0D1A"
+        backgroundColor="#100C1E"
         containerStyle={styles.webviewContainer}
         onLoadStart={() => {
           setLoading(true);
@@ -1694,14 +1906,14 @@ export const AvatarVRM = forwardRef(({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    backgroundColor: '#0D0D1A',
+    backgroundColor: '#100C1E',
   },
   webviewContainer: {
-    backgroundColor: '#0D0D1A',
+    backgroundColor: '#100C1E',
   },
   webview: {
     flex: 1,
-    backgroundColor: '#0D0D1A',
+    backgroundColor: '#100C1E',
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

@@ -8,9 +8,14 @@ import {
   StatusBar,
   ScrollView,
   TextInput,
+  Modal,
+  Pressable,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -22,6 +27,8 @@ import { useSettings } from '../context/SettingsContext';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ZHENJA_ASSET = require('../../assets/avatar2/model.glb');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const COZY_ROOM_ASSET = require('../../assets/cozy_living_room_baked_small.glb');
 
 const QUICK_CHIPS = [
   'Morning routine',
@@ -35,27 +42,52 @@ const QUICK_CHIPS = [
 export const VoiceScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState('');
   const [modelUri, setModelUri] = useState(null);
+  const [backdropUri, setBackdropUri] = useState(null);
+  const [menuVisible, setMenuVisible] = useState(false);
   const { textScale, avatarEnabled, subtitlesEnabled, audioEnabled, updateSetting } = useSettings();
-  const avatarRef  = useRef(null);
-  const micPulse   = useRef(new Animated.Value(1)).current;
-  const insets     = useSafeAreaInsets();
+  const avatarRef   = useRef(null);
+  const micPulse    = useRef(new Animated.Value(1)).current;
+  const menuAnim    = useRef(new Animated.Value(0)).current;
+  const insets      = useSafeAreaInsets();
 
-  // Load the RPM GLB from the app bundle as a base64 data URI so the WebView can fetch it.
+  const openMenu = useCallback(() => {
+    setMenuVisible(true);
+    Animated.spring(menuAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 120,
+      friction: 10,
+    }).start();
+  }, [menuAnim]);
+
+  const closeMenu = useCallback(() => {
+    Animated.timing(menuAnim, {
+      toValue: 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start(() => setMenuVisible(false));
+  }, [menuAnim]);
+
+  // Load the avatar GLB and living-room backdrop in parallel from the app bundle.
+  // Both are converted to base64 data URIs so the WebView GLTFLoader can fetch them.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const asset = Asset.fromModule(ZHENJA_ASSET);
-        await asset.downloadAsync();
-        const localUri = asset.localUri;
-        const base64 = await FileSystem.readAsStringAsync(localUri, {
-          encoding: 'base64',
-        });
+        const [avatarAsset, backdropAsset] = await Promise.all([
+          Asset.fromModule(ZHENJA_ASSET).downloadAsync(),
+          Asset.fromModule(COZY_ROOM_ASSET).downloadAsync(),
+        ]);
+        const [avatarBase64, backdropBase64] = await Promise.all([
+          FileSystem.readAsStringAsync(avatarAsset.localUri, { encoding: 'base64' }),
+          FileSystem.readAsStringAsync(backdropAsset.localUri, { encoding: 'base64' }),
+        ]);
         if (!cancelled) {
-          setModelUri('data:model/gltf-binary;base64,' + base64);
+          setModelUri('data:model/gltf-binary;base64,' + avatarBase64);
+          setBackdropUri('data:model/gltf-binary;base64,' + backdropBase64);
         }
       } catch (e) {
-        console.warn('[VoiceScreen] Failed to load zhenja.glb:', e);
+        console.warn('[VoiceScreen] Failed to load assets:', e);
       }
     })();
     return () => { cancelled = true; };
@@ -112,7 +144,7 @@ export const VoiceScreen = ({ navigation }) => {
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       <LinearGradient
-        colors={['#080B14', '#0E1525', '#0D1B2A', '#0A1A20']}
+        colors={['#100C1E', '#16102E', '#120E22', '#0D0A18']}
         locations={[0, 0.4, 0.75, 1]}
         start={{ x: 0.3, y: 0 }}
         end={{ x: 0.7, y: 1 }}
@@ -128,7 +160,88 @@ export const VoiceScreen = ({ navigation }) => {
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color="rgba(255,255,255,0.9)" />
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.topIconBtn}
+          onPress={openMenu}
+          accessibilityLabel="Open menu"
+        >
+          <MaterialCommunityIcons name="menu" size={24} color="rgba(255,255,255,0.9)" />
+        </TouchableOpacity>
       </View>
+
+      {/* Hamburger dropdown menu */}
+      {menuVisible && (
+        <Modal transparent animationType="none" onRequestClose={closeMenu}>
+          <Pressable style={styles.menuOverlay} onPress={closeMenu}>
+            <Animated.View
+              style={[
+                styles.menuDropdown,
+                {
+                  top: insets.top + 58,
+                  opacity: menuAnim,
+                  transform: [
+                    {
+                      translateY: menuAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-12, 0],
+                      }),
+                    },
+                    {
+                      scaleY: menuAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.92, 1],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <BlurView
+                intensity={Platform.OS === 'ios' ? 70 : 40}
+                tint="dark"
+                style={styles.menuBlur}
+              >
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    closeMenu();
+                    Alert.alert('Change Persona', 'Persona selection coming soon.');
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.menuItemIcon}>
+                    <MaterialCommunityIcons name="account-switch-outline" size={20} color="rgba(255,255,255,0.9)" />
+                  </View>
+                  <Text style={styles.menuItemText}>Change Persona</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.35)" />
+                </TouchableOpacity>
+
+                <View style={styles.menuDivider} />
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    closeMenu();
+                    Alert.alert(
+                      'About DementiaGuide AI',
+                      'DementiaGuide AI is your compassionate assistant for dementia care support — providing guidance, resources, and a friendly presence for caregivers and families.',
+                      [{ text: 'Got it' }]
+                    );
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.menuItemIcon}>
+                    <MaterialCommunityIcons name="information-outline" size={20} color="rgba(255,255,255,0.9)" />
+                  </View>
+                  <Text style={styles.menuItemText}>About / Help</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.35)" />
+                </TouchableOpacity>
+              </BlurView>
+            </Animated.View>
+          </Pressable>
+        </Modal>
+      )}
 
       {/* Avatar */}
       <View style={styles.avatarArea}>
@@ -136,6 +249,7 @@ export const VoiceScreen = ({ navigation }) => {
           <AvatarVRM
             ref={avatarRef}
             modelUrl={modelUri}
+            backdropUrl={backdropUri}
             isListening={voiceState === VoiceState.LISTENING}
             isSpeaking={voiceState === VoiceState.SPEAKING}
             isThinking={voiceState === VoiceState.PROCESSING}
@@ -276,7 +390,7 @@ export const VoiceScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#0D0D1A',
+    backgroundColor: '#100C1E',
   },
   topBar: {
     flexDirection: 'row',
@@ -484,5 +598,53 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  menuDropdown: {
+    position: 'absolute',
+    right: 16,
+    width: 220,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 24,
+    elevation: 16,
+  },
+  menuBlur: {
+    paddingVertical: 6,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  menuItemIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuItemText: {
+    flex: 1,
+    color: 'rgba(255,255,255,0.92)',
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: 0.1,
+  },
+  menuDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginHorizontal: 12,
   },
 });

@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import { openaiService } from '../services/openaiService';
 import { tts } from '../lib/tts/ttsService';
+import { detectSentiment } from '../lib/sentiment/detectSentiment';
 import { useSettings } from '../context/SettingsContext';
 
 // ─── Voice state machine ──────────────────────────────────────────────────────
@@ -156,6 +157,8 @@ export function useAvatarConversation({ avatarRef }) {
         const clean = text.trim();
         if (!clean || !audioEnabled) return;
 
+        const emotion = detectSentiment(clean);
+
         if (firstSeg) {
           pts.first_sentence = Date.now();
           console.log(`[LATENCY] first_sentence_ready_ms +${pts.first_sentence - t0}`);
@@ -164,12 +167,12 @@ export function useAvatarConversation({ avatarRef }) {
           const p = tts(clean, { speechRate }).then(result => {
             pts.tts_ready = Date.now();
             console.log(`[LATENCY] tts_first_audio_ready_ms +${pts.tts_ready - t0}`);
-            return { ...result, text: clean };
+            return { ...result, text: clean, emotion };
           });
           queue.promises.push(p);
           firstSeg = false;
         } else {
-          queue.promises.push(tts(clean, { speechRate }).then(result => ({ ...result, text: clean })));
+          queue.promises.push(tts(clean, { speechRate }).then(result => ({ ...result, text: clean, emotion })));
         }
         wake();
       };

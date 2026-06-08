@@ -5,8 +5,8 @@ const SECURE_KEY = 'openai_api_key';
 const OPENAI_BASE = 'https://api.openai.com/v1';
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const CHAT_MODEL = 'gpt-4o-mini';
-const MIN_SIMILARITY = 0.25;
-const TOP_K = 5;
+const MIN_SIMILARITY = 0.35;
+const TOP_K = 8;
 const MAX_HISTORY = 6;
 
 class OpenAIAuthError extends Error {
@@ -94,6 +94,7 @@ class OpenAIService {
     const queryEmbedding = await this._embedQuery(query);
     const { data, error } = await supabase.rpc('match_chunks', {
       query_embedding: queryEmbedding,
+      query_text: query,
       match_count: topK,
       min_similarity: MIN_SIMILARITY,
     });

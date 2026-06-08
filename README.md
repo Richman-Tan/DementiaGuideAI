@@ -262,7 +262,7 @@ The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI.
 | Embedding model | `text-embedding-3-small` (1536 dims) |
 | Chat model | `gpt-4o-mini` |
 | Vector DB | Supabase `knowledge_chunks` table (pgvector `vector(1536)`) |
-| Retrieval | Top-5 chunks via `match_chunks` RPC, min cosine similarity 0.25 |
+| Retrieval | Hybrid Supabase `match_chunks` RPC (semantic + keyword scoring), top-8 chunks, min similarity 0.35 |
 | Context window | Last 6 messages |
 | Chunk size | ~500 words with ~50-word overlap |
 | Auto-tagging | GPT-4o-mini assigns 5–8 specific tags per chunk at ingestion time |
@@ -303,10 +303,29 @@ Valid categories: `caregiving` · `clinical` · `communication` · `prevention` 
 ### Testing RAG output
 
 ```bash
-OPENAI_API_KEY=sk-... node scripts/test-responses.mjs
+npm run test:answers
 ```
 
 Runs a set of sample questions through the full pipeline and prints each response alongside the retrieved chunks and their similarity scores.
+
+Useful commands:
+
+```bash
+# Run the full suite directly
+node scripts/test-responses.mjs
+
+# Run one case with full output
+node scripts/test-responses.mjs --case sundowning --verbose
+
+# Force the helpline number check for all cases
+node scripts/test-responses.mjs --helpline-required
+```
+
+If you want to use npm and still pass flags through:
+
+```bash
+npm run test:answers -- --case sundowning --verbose
+```
 
 ---
 

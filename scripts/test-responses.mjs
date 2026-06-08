@@ -46,8 +46,8 @@ loadDotEnvIfPresent();
 const OPENAI_BASE = 'https://api.openai.com/v1';
 const EMBED_MODEL = 'text-embedding-3-small';
 const CHAT_MODEL = 'gpt-4o-mini';
-const MIN_SIMILARITY = 0.25;
-const TOP_K = 5;
+const MIN_SIMILARITY = 0.35;
+const TOP_K = 8;
 const MAX_TOKENS = 600;
 const TEMPERATURE = 0.4;
 
@@ -56,6 +56,13 @@ const hasFlag = (name) => args.includes(name);
 const getFlag = (name) => {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : null;
+};
+const getFlags = (name) => {
+  const vals = [];
+  for (let i = 0; i < args.length; i += 1) {
+    if (args[i] === name && args[i + 1]) vals.push(args[i + 1]);
+  }
+  return vals;
 };
 
 const verbose = hasFlag('--verbose');
@@ -119,6 +126,7 @@ async function retrieveChunks(question) {
   const queryEmbedding = await embedQuery(question);
   const { data, error } = await supabase.rpc('match_chunks', {
     query_embedding: queryEmbedding,
+    query_text: question,
     match_count: TOP_K,
     min_similarity: MIN_SIMILARITY,
   });
@@ -260,11 +268,195 @@ const TEST_CASES = [
     requireHelpline: true,
     minCitations: 0,
   },
+  {
+    id: 'night-wandering',
+    question: 'My mum keeps waking at 3am and trying to leave the house. How can I keep her safe?',
+    mustIncludeAny: ['safe', 'night', 'routine', 'door', 'wandering'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'hallucinations',
+    question: 'He says strangers are in the room when nobody is there. What should I do when this happens?',
+    mustIncludeAny: ['reassure', 'calm', 'argue', 'environment', 'doctor'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'bathroom-falls',
+    question: 'Any tips to stop bathroom falls for someone with dementia?',
+    mustIncludeAny: ['bathroom', 'fall', 'safety', 'non-slip', 'grab'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'incontinence',
+    question: 'How do I handle toileting accidents without embarrassing my dad?',
+    mustIncludeAny: ['dignity', 'toilet', 'routine', 'accident', 'skin'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'caregiver-burnout',
+    question: 'I am exhausted and feeling guilty all the time while caring for my wife. What can I do?',
+    mustIncludeAny: ['support', 'respite', 'burnout', 'help', 'health'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'diagnosis-process',
+    question: 'What happens during a dementia diagnosis appointment?',
+    mustIncludeAny: ['assessment', 'history', 'tests', 'doctor', 'memory'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'reversible-causes',
+    question: 'Could confusion be something else and not dementia?',
+    mustIncludeAny: ['reversible', 'assessment', 'medical', 'cause', 'doctor'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'legal-planning',
+    question: 'When should we sort power of attorney and future care wishes?',
+    mustIncludeAny: ['advance', 'planning', 'power of attorney', 'legal', 'early'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'younger-onset',
+    question: 'Can someone in their 50s get dementia?',
+    mustIncludeAny: ['younger onset', 'under 65', 'support', 'assessment', 'symptoms'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'prevention-risk-factors',
+    question: 'What lifestyle changes reduce dementia risk?',
+    mustIncludeAny: ['risk', 'exercise', 'blood pressure', 'hearing', 'smoking'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'sleep-disturbance',
+    question: 'Dad is up all night and sleeps all day. How can we reset his sleep routine?',
+    mustIncludeAny: ['sleep', 'routine', 'daylight', 'activity', 'night'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'swallowing-safety',
+    question: 'She coughs while eating and sometimes chokes. What should we do?',
+    mustIncludeAny: ['swallow', 'choking', 'speech', 'texture', 'doctor'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'medication-storage',
+    question: 'How can I prevent medication mix-ups at home?',
+    mustIncludeAny: ['medication', 'safe', 'storage', 'routine', 'doctor'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'kitchen-safety',
+    question: 'He forgets the stove is on. How can I make the kitchen safer?',
+    mustIncludeAny: ['kitchen', 'safety', 'stove', 'supervision', 'hazard'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'non-recognition',
+    question: 'My mum sometimes says I am a stranger. How should I respond?',
+    mustIncludeAny: ['reassure', 'calm', 'argue', 'validation', 'emotion'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'urgent-review',
+    question: 'There was a sudden big change today with confusion and agitation. When should I seek urgent medical help?',
+    mustIncludeAny: ['urgent', 'doctor', 'sudden', 'medical', 'review'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'mobility-transfers',
+    question: 'What is the safest way to help someone stand up and transfer from bed to chair?',
+    mustIncludeAny: ['transfer', 'mobility', 'safe', 'fall', 'support'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'respite-options',
+    question: 'What respite options are there if I need a short break from caring?',
+    mustIncludeAny: ['respite', 'support', 'carer', 'services', 'help'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'dementia-medication',
+    question: 'What do dementia medicines actually do and what side effects should I watch for?',
+    mustIncludeAny: ['medication', 'side effects', 'benefit', 'doctor', 'symptom'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'pain-recognition',
+    question: 'How can I tell if my dad is in pain when he cannot explain it clearly?',
+    mustIncludeAny: ['pain', 'behaviour', 'sign', 'doctor', 'comfort'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'dementia-types',
+    question: 'What is the difference between Alzheimer\'s, vascular dementia, and Lewy body dementia?',
+    mustIncludeAny: ['alzheimers', 'vascular', 'lewy', 'type', 'dementia'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'mci-expectations',
+    question: 'My mum has mild cognitive impairment. Does that mean it will turn into dementia?',
+    mustIncludeAny: ['mild cognitive impairment', 'mci', 'expect', 'assessment', 'symptom'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'verbal-communication',
+    question: 'What is the best way to talk to someone with dementia when they get upset?',
+    mustIncludeAny: ['calm', 'simple', 'validate', 'short', 'communication'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'nonverbal-communication',
+    question: 'How should I use body language and gestures to help my dad understand me?',
+    mustIncludeAny: ['body language', 'gesture', 'eye contact', 'non-verbal', 'communication'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'validation-therapy',
+    question: 'Someone with dementia keeps insisting they need to go home. Should I correct them?',
+    mustIncludeAny: ['validate', 'argue', 'feelings', 'reassure', 'emotion'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'reminiscence-therapy',
+    question: 'Are there simple activities or memory prompts that can help my mum feel more engaged?',
+    mustIncludeAny: ['reminiscence', 'memory', 'familiar', 'activity', 'life'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
 ];
 
-const casesToRun = selectedCaseId
-  ? TEST_CASES.filter(c => c.id === selectedCaseId)
-  : TEST_CASES;
+let casesToRun = TEST_CASES;
+
+if (selectedCaseId) {
+  casesToRun = TEST_CASES.filter(c => c.id === selectedCaseId);
+}
 
 if (selectedCaseId && casesToRun.length === 0) {
   console.error(`Unknown case id: ${selectedCaseId}`);

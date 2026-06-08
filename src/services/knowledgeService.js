@@ -2,6 +2,19 @@ import { supabase } from './supabaseService';
 import { openaiService } from './openaiService';
 
 class KnowledgeService {
+  async getAllResources() {
+    const { data, error } = await supabase
+      .from('knowledge_chunks')
+      .select('id, category, title, content, tags, source_url, source_org')
+      .order('id', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data ?? [];
+  }
+
   // Semantic search via RAG pipeline → Supabase pgvector.
   // Falls back to Supabase full-text keyword search if OpenAI is unavailable.
   async searchResources(query) {

@@ -6,7 +6,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  ActivityIndicator,
   Animated,
   StatusBar,
 } from 'react-native';
@@ -15,18 +15,32 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CategoryCard } from '../components/CategoryCard';
 import { Colors } from '../constants/colors';
-import { Typography, FontSize } from '../constants/typography';
+import { Typography } from '../constants/typography';
 import { KNOWLEDGE_CATEGORIES } from '../constants/data';
 import { KNOWLEDGE_BASE } from '../data/knowledgeBase';
+import { knowledgeService } from '../services/knowledgeService';
 import { useSettings } from '../context/SettingsContext';
 
 const CATEGORY_LABELS = Object.fromEntries(
   KNOWLEDGE_CATEGORIES.map(c => [c.id, c.title])
 );
 const readTime = content => `${Math.ceil(content.split(/\s+/).length / 200)} min read`;
+const CATEGORY_ALIASES = {
+  'well-being': 'wellbeing',
+  'bestpractices': 'best-practices',
+  'best_practices': 'best-practices',
+  'homesafety': 'home-safety',
+  'home_safety': 'home-safety',
+};
+
+const normalizeCategory = (value) => {
+  const key = String(value ?? '').trim().toLowerCase();
+  return CATEGORY_ALIASES[key] ?? key;
+};
 
 const ResourceItem = ({ resource, onPress }) => {
   const { textScale, colors } = useSettings();
+  const tags = Array.isArray(resource.tags) ? resource.tags : [];
   return (
   <TouchableOpacity
     style={[styles.resourceCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
@@ -50,7 +64,7 @@ const ResourceItem = ({ resource, onPress }) => {
       <Text style={styles.resourceReadTime}>{resource.readTime ?? readTime(resource.content)}</Text>
     </View>
     <View style={styles.resourceTags}>
-      {resource.tags.slice(0, 3).map(tag => (
+      {tags.slice(0, 3).map(tag => (
         <View key={tag} style={styles.tag}>
           <Text style={styles.tagText}>{tag}</Text>
         </View>
@@ -69,6 +83,8 @@ const ResourceItem = ({ resource, onPress }) => {
 export const LibraryScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [resources, setResources] = useState([]);
+  const [isLoadingResources, setIsLoadingResources] = useState(true);
   const { textScale, colors } = useSettings();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -91,12 +107,49 @@ export const LibraryScreen = ({ navigation }) => {
     }).start();
   }, [isSearchFocused]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const mapResource = (item) => ({
+      ...item,
+      category: normalizeCategory(item.category),
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      type: item.type ?? 'article',
+      readTime: item.readTime ?? readTime(item.content ?? ''),
+    });
+
+    const loadResources = async () => {
+      setIsLoadingResources(true);
+      try {
+        const liveResources = await knowledgeService.getAllResources();
+        if (!isMounted) return;
+
+        if (liveResources && liveResources.length > 0) {
+          setResources(liveResources.map(mapResource));
+        } else {
+          setResources(KNOWLEDGE_BASE.map(mapResource));
+        }
+      } catch {
+        if (!isMounted) return;
+        setResources(KNOWLEDGE_BASE.map(mapResource));
+      } finally {
+        if (isMounted) setIsLoadingResources(false);
+      }
+    };
+
+    loadResources();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const FILTERS = [
     { id: 'all', label: 'All' },
     ...KNOWLEDGE_CATEGORIES.map(c => ({ id: c.id, label: c.title })),
   ];
 
-  const filteredResources = KNOWLEDGE_BASE.filter(r => {
+  const filteredResources = resources.filter(r => {
     const q = searchQuery.toLowerCase();
     const matchesSearch =
       !searchQuery ||
@@ -106,6 +159,11 @@ export const LibraryScreen = ({ navigation }) => {
     const matchesFilter = activeFilter === 'all' || r.category === activeFilter;
     return matchesSearch && matchesFilter;
   });
+
+  const categoryCounts = resources.reduce((acc, r) => {
+    acc[r.category] = (acc[r.category] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
@@ -136,7 +194,7 @@ export const LibraryScreen = ({ navigation }) => {
             style={styles.statsBanner}
           >
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{KNOWLEDGE_BASE.length}</Text>
+              <Text style={styles.statNumber}>{resources.length}</Text>
               <Text style={styles.statLabel}>Resources</Text>
             </View>
             <View style={styles.statDivider} />
@@ -203,7 +261,7 @@ export const LibraryScreen = ({ navigation }) => {
             {KNOWLEDGE_CATEGORIES.map(cat => (
               <CategoryCard
                 key={cat.id}
-                category={cat}
+                category={{ ...cat, count: categoryCounts[cat.id] ?? 0 }}
                 onPress={(c) => setActiveFilter(c.id)}
               />
             ))}
@@ -230,7 +288,12 @@ export const LibraryScreen = ({ navigation }) => {
             )}
           </View>
 
-          {filteredResources.length === 0 ? (
+          {isLoadingResources ? (
+            <View style={styles.loadingState}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text style={[styles.emptyBody, { fontSize: 14 * textScale }]}>Loading resources...</Text>
+            </View>
+          ) : filteredResources.length === 0 ? (
             <View style={styles.emptyState}>
               <MaterialCommunityIcons name="file-search-outline" size={48} color={Colors.border} />
               <Text style={[styles.emptyTitle, { fontSize: 18 * textScale }]}>No results found</Text>
@@ -412,6 +475,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  loadingState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 28,
+    gap: 10,
   },
   sectionTitle: {
     ...Typography.titleLarge,

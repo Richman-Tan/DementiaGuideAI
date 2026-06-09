@@ -5,8 +5,9 @@ import { WebView } from 'react-native-webview';
 export const DEFAULT_VRM_MODEL_URL =
   'https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/beta/HairSample_Male.vrm';
 
-function buildHTML(modelUrl) {
+function buildHTML(modelUrl, backdropUrl = null) {
   const safeUrl = modelUrl.replace(/'/g, '%27');
+  const safeBackdropUrl = backdropUrl ? backdropUrl.replace(/'/g, '%27') : '';
 
   return `<!DOCTYPE html>
 <html>
@@ -25,7 +26,7 @@ function buildHTML(modelUrl) {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #0D0D1A;
+    background: #100C1E;
   }
 
   canvas {
@@ -48,14 +49,28 @@ function buildHTML(modelUrl) {
     text-shadow: 0 1px 4px rgba(0,0,0,0.8);
     z-index: 10;
   }
+
+  #viseme-dbg {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.65);
+    color: #00ff88;
+    font: 11px/1.5 monospace;
+    padding: 5px 9px;
+    border-radius: 5px;
+    pointer-events: none;
+    display: none;
+    white-space: pre;
+    z-index: 20;
+  }
 </style>
 
 <script type="importmap">
 {
   "imports": {
     "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
-    "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.5.2/lib/three-vrm.module.min.js"
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
   }
 }
 <\/script>
@@ -87,18 +102,25 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 window._dbg('Page loaded, waiting for module...');
+
+window.setDebugMode = function(on) {
+  var el = document.getElementById('viseme-dbg');
+  if (el) el.style.display = on ? 'block' : 'none';
+};
 <\/script>
 </head>
 
 <body>
 <div id="status">Loading avatar…</div>
+<div id="viseme-dbg"></div>
 
 <script type="module">
 window._dbg('Module script started');
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 window._dbg('Imports loaded: THREE r' + THREE.REVISION);
 
@@ -113,9 +135,9 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.setClearColor(0x0D0D1A, 1.0);
+renderer.setClearColor(0x100C1E, 1.0);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.85;
+renderer.toneMappingExposure = 1.05;
 
 document.body.appendChild(renderer.domElement);
 
@@ -135,6 +157,7 @@ renderer.domElement.addEventListener('webglcontextrestored', function() {
 });
 
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x100C1E);
 
 const camera = new THREE.PerspectiveCamera(
   35,
@@ -146,44 +169,128 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 1.25, 2.5);
 camera.lookAt(0, 1.25, 0);
 
-// Deep navy ambient — low intensity preserves shadow depth
-scene.add(new THREE.AmbientLight(0x1A2A3A, 0.9));
+// Bright warm neutral ambient — lifts shadow floor so eye sockets are not dark
+scene.add(new THREE.AmbientLight(0xEADDD0, 0.90));
 
-// Key light — warm white from front-left
-const keyLight = new THREE.DirectionalLight(0xFFEEDD, 2.2);
-keyLight.position.set(-1.5, 2.0, 2.0);
+// Key light — reduced intensity, moved forward (+Z) to fill the face frontally
+const keyLight = new THREE.DirectionalLight(0xFFF5E8, 1.55);
+keyLight.position.set(-0.8, 2.0, 3.5);
 scene.add(keyLight);
 
-// Fill light — cool blue-white from right
-const fillLight = new THREE.DirectionalLight(0xDDEEFF, 0.6);
-fillLight.position.set(2.0, 0.5, 1.0);
+// Fill light — warm front-right, even coverage, removes harsh shadows
+const fillLight = new THREE.DirectionalLight(0xFFEDD8, 0.70);
+fillLight.position.set(1.2, 1.0, 3.0);
 scene.add(fillLight);
 
-// Rim/back light — teal-cyan brand accent, separates avatar from background
-const rimLight = new THREE.DirectionalLight(0x3CC8C8, 1.8);
-rimLight.position.set(0.5, 1.0, -3.0);
+// Subtle warm-gold top rim — very low intensity, separates hair from background
+const rimLight = new THREE.DirectionalLight(0xFFD090, 0.15);
+rimLight.position.set(0.0, 3.0, -2.0);
 scene.add(rimLight);
 
-let vrm = null;
+// ─── BACKDROP CONFIG ──────────────────────────────────────────────────────────
+// Tune these values to reposition or resize the living-room backdrop.
+// dimAmount: 1.0 = original baked brightness; lower = darker/more recessed.
+// Increase position[1] (Y) to raise the room; more negative Z = further back.
+const BACKDROP_CONFIG = {
+  url:       '${safeBackdropUrl}',
+  position:  [1, -1.0, -2.0],
+  rotation:  [0, -0.5, 0],
+  scale:     [1.8, 1.8, 1.8],
+  dimAmount: 0.80,
+};
+
+// GLB model references
+let model     = null;   // gltf.scene — the root Object3D
+let headMesh  = null;   // Wolf3D_Head — drives visemes, blinks, expressions
+let teethMesh = null;   // Wolf3D_Teeth — mirrors viseme morph targets
+
 let baseRotationY = 0;
 let basePositionY = 0;
 let avatarState = 'idle';
 let mouthCurrent = 0;
+// All internal viseme keys — vowels + consonant articulators
+const ALL_VISEME_KEYS = ['aa','ih','ou','ee','oh','v_pp','v_ff','v_th','v_dd','v_kk','v_ch','v_ss','v_nn','v_rr'];
+// Per-channel smoothed weights — lerped each frame so transitions feel organic
+const vSmooth = { aa:0, ih:0, ou:0, ee:0, oh:0, v_pp:0, v_ff:0, v_th:0, v_dd:0, v_kk:0, v_ch:0, v_ss:0, v_nn:0, v_rr:0 };
+// Time constant for viseme smoothing (seconds). Frame-rate-independent: factor = 1 - exp(-dt/V_TAU).
+// Lower → crisper/faster response; higher → smoother/slower.
+const V_TAU = 0.030;
+// Speech emotion — set at audio start, drives subtle expression layer over base speaking animation
+let speechEmotion      = 'neutral'; // 'positive' | 'warm' | 'concern' | 'question' | 'neutral'
+let speechEmotionBlend = 0;         // 0→1 lerps in when audio plays, out when silent
+// Whether the loaded model has viseme_sil (Oculus silence/rest shape).
+// Present on RPM models — must be driven inversely to mouth activity so the mouth
+// closes properly at rest instead of staying in a neutral-open position.
+let hasVisemeSil = false;
 let lastTs = null;
 let elapsed = 0;
-let blinkCooldown = 2.2;
-let blinkProgress = 0;
-let blinking = false;
-let activeBlend = 0;
-let speakBlend = 0;
-let thinkBlend = 0;
-const boneRefs = {};
+// State blends — each lerps 0→1 as the matching state becomes active
+let activeBlend  = 0;
+let speakBlend   = 0;
+let thinkBlend   = 0;
+let empathyBlend = 0;
+let waitBlend    = 0;
+let listenBlend  = 0;
+
+// Blink state machine — phases: idle|closing|hold|opening|between|closing2|hold2|opening2
+let blinkPhase    = 'idle';
+let blinkTimer    = 0;
+let blinkNext     = 3.0;   // seconds until next blink trigger
+let blinkIsDouble = false;
+let blinkValue    = 0;     // 0 = eyes open, 1 = fully closed
+
+// Organic breathing rhythm variation (prevents mechanical regularity)
+let breathVarTarget  = 0;
+let breathVarCurrent = 0;
+let breathVarNext    = 4.0;
+
+// Bone map built once on load — keyed by our normalised names
+const boneMap  = {};
 const boneBase = {};
 
 // Micro-saccade state — tiny random eye fixation shifts
 let nextSaccadeTime = 0;
-let saccadeOffsetX  = 0;
-let saccadeOffsetY  = 0;
+let saccadeTargetX  = 0, saccadeTargetY  = 0;
+let saccadeCurrentX = 0, saccadeCurrentY = 0;
+
+// Phase accumulators — prevent sine discontinuities when rate changes
+let bobPhase   = 0;
+let swayPhase  = 0;
+let breathPhase = 0;
+
+// Idle smile moment state machine
+let idleSmileActive  = false;
+let idleSmileTimer   = 0;
+let idleSmileNext    = 5.0 + Math.random() * 8.0;
+let idleSmileHold    = 0;
+let idleSmileTarget  = 0;
+let idleSmileCurrent = 0;
+
+// Idle head tilt moment state machine
+let idleTiltActive  = false;
+let idleTiltTimer   = 0;
+let idleTiltNext    = 8.0 + Math.random() * 10.0;
+let idleTiltHold    = 0;
+let idleTiltTarget  = 0;
+let idleTiltCurrent = 0;
+
+// Listening nod state machine
+let nodActive  = false;
+let nodTimer   = 0;
+let nodNext    = 3.5 + Math.random() * 3.5;
+let nodHold    = 0;
+let nodTarget  = 0;
+let nodCurrent = 0;
+
+// Conversational gaze state machine
+// 'center' = looking at camera (eye contact); 'away' = natural glance break
+let gazePhase    = 'center';
+let gazeTimer    = 0;
+let gazeDuration = 1.5;   // seconds to hold current gaze phase
+let gazeTargetH  = 0;     // horizontal gaze target (0 = camera center)
+let gazeTargetV  = 0.01;  // slight upward = looking into eyes rather than forehead
+let gazeCurrentH = 0;
+let gazeCurrentV = 0;
 
 function frameCamera(modelScene) {
   const box = new THREE.Box3().setFromObject(modelScene);
@@ -195,16 +302,17 @@ function frameCamera(modelScene) {
 
   const height = size.y || 1.6;
 
-  // Chest-up framing: crop waist and below so the face dominates the view
-  const visibleBottom = box.min.y + height * 0.62;
-  const visibleTop = box.max.y + height * 0.04;
+  // Face framing: show top 28% of avatar (head down to mid-chest).
+  // Extra headroom above (+0.07) keeps the crown from sitting at the very top.
+  const visibleBottom = box.min.y + height * 0.72;
+  const visibleTop    = box.max.y + height * 0.07;
   const visibleCenterY = (visibleBottom + visibleTop) / 2;
-  const visibleHeight = visibleTop - visibleBottom;
+  const visibleHeight  = visibleTop - visibleBottom;
 
   const fovRad = THREE.MathUtils.degToRad(camera.fov);
   const distance = (visibleHeight / 2) / Math.tan(fovRad / 2);
 
-  camera.position.set(center.x, visibleCenterY, distance * 0.95);
+  camera.position.set(center.x, visibleCenterY, distance * 1.0);
   camera.lookAt(center.x, visibleCenterY, center.z);
   camera.updateProjectionMatrix();
 
@@ -233,12 +341,160 @@ function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
+// ─── ANIMATION CONFIGURATION ─────────────────────────────────────────────────
+// All animation intensities, rates, and thresholds live here — tweak freely.
+const ANIM = {
+  // Breathing
+  BREATH_RATE_IDLE:    1.5,    BREATH_RATE_SPEAK:   2.2,
+  BREATH_SPINE_AMP:    0.015,  BREATH_CHEST_AMP:    0.025,
+  BREATH_NECK_AMP:     0.008,  BREATH_ARM_AMP:      0.018,
+  BREATH_VAR_AMP:      0.003,  // organic rate modulation depth
+
+  // Body bob / sway
+  BOB_IDLE:      0.005,  BOB_ACTIVE:      0.010,
+  BOB_RATE_IDLE: 0.7,    BOB_RATE_LISTEN: 1.1,   BOB_RATE_SPEAK: 1.7,
+  SWAY_IDLE:     0.012,  SWAY_ACTIVE:     0.022,  SWAY_SPEAK:     0.030,
+  SWAY_RATE:     0.33,
+
+  // Head look-around (dual-frequency natural drift)
+  LOOK_H_AMP1: 0.09,   LOOK_H_AMP2: 0.040, LOOK_H_FREQ1: 0.25, LOOK_H_FREQ2: 0.16,
+  LOOK_V_AMP1: 0.035,  LOOK_V_AMP2: 0.011, LOOK_V_FREQ1: 0.37, LOOK_V_FREQ2: 0.22,
+  LOOK_ACTIVE_SCALE: 0.40,
+  HEAD_ROLL_AMP: 0.010, HEAD_ROLL_FREQ: 0.33,
+
+  // Micro-saccades (randomised fixation shifts)
+  SACCADE_X_AMP: 0.040, SACCADE_Y_AMP: 0.028,
+  SACCADE_MIN:   1.0,   SACCADE_MAX:   3.0,
+
+  // Conversational gaze — eye contact with natural periodic breaks
+  GAZE_HOLD_MIN:     1.4,   // minimum seconds of direct eye contact
+  GAZE_HOLD_RANGE:   2.0,   // random range on top → 1.4–3.4 s eye contact
+  GAZE_AWAY_MIN:     0.30,  // minimum seconds of looking away
+  GAZE_AWAY_RANGE:   0.70,  // random range on top → 0.30–1.0 s break
+  GAZE_AWAY_H:       0.09,  // max horizontal offset when glancing (radians)
+  GAZE_AWAY_V:       0.05,  // max vertical offset when glancing (radians)
+  GAZE_RETURN_SPEED: 4.5,   // lerp multiplier returning to center (fast, deliberate)
+  GAZE_SHIFT_SPEED:  3.0,   // lerp multiplier shifting gaze away (slightly slower)
+  GAZE_MICRO_H:      0.012, // residual horizontal head micro-movement
+  GAZE_MICRO_V:      0.007, // residual vertical head micro-movement
+
+  // Eye bone rotation — eyes lead, head follows
+  EYE_H_SCALE:   0.60,  // fraction of horizontal gaze handled by eye bones (rest = head)
+  EYE_V_SCALE:   0.65,  // fraction of vertical gaze handled by eye bones
+  EYE_SACCADE:   0.75,  // fraction of saccade offset routed to eyes vs. head
+
+  // Blinking — natural asymmetric eyelid kinematics (fast close, slow open)
+  BLINK_CLOSE_DUR:   0.075,  // fast close  (~75 ms)
+  BLINK_HOLD_DUR:    0.030,  // hold closed (~30 ms)
+  BLINK_OPEN_DUR:    0.180,  // slow open   (~180 ms)
+  BLINK_MIN:         3.0,    // minimum seconds between blinks
+  BLINK_MAX:         7.5,    // maximum seconds between blinks
+  BLINK_DOUBLE_PROB: 0.18,   // probability of a double blink
+  BLINK_DOUBLE_GAP:  0.12,   // pause between the two closures in a double blink
+
+  // State-specific head pose biases (radians)
+  THINK_GAZE_H:    0.09,  THINK_GAZE_V:    -0.06,  THINK_TILT_Z:   0.13,
+  EMPATHY_TILT_Z: -0.08,  EMPATHY_TILT_X:   0.015,
+  LISTEN_TILT_X:   0.010,
+  WAIT_TILT_Z:     0.040,  // gentle curious lean when waiting (~2.3°)
+  NOD_AMP:         0.032,  // listening nod forward-dip amplitude (~1.8°)
+  NOD_SPEED:       2.2,    // lerp speed toward/away from nod peak
+  NOD_HOLD_MIN:    0.30,   NOD_HOLD_MAX:    0.70,  // seconds to hold dipped position
+  NOD_INT_MIN:     3.5,    NOD_INT_MAX:     7.0,   // seconds between nod triggers
+
+  // Arms
+  ARM_FREQ1: 0.50, ARM_FREQ2: 0.79, ARM_AMP1: 0.050, ARM_AMP2: 0.020,
+  ARM_LOWER_FREQ: 0.86, ARM_LOWER_AMP: 0.028,
+  ARM_TWIST_FREQ: 0.61, ARM_TWIST_AMP: 0.022,
+
+  // Facial expressions
+  IDLE_SMILE:         0.28,  IDLE_RELAX:        0.18,
+  ACTIVE_SMILE_MIN:   0.10,  // floor — smile never fully disappears
+  LISTEN_SURPRISE:    0.04,  LISTEN_BROW_INNER: 0.08,
+  EMPATHY_BROW_INNER: 0.12,  THINK_BROW_DOWN:   0.08,
+
+  // Idle personality moments — gentle smile + head tilt to feel warm and alive
+  IDLE_SMILE_PEAK:         0.68,  // peak smile weight during a moment
+  IDLE_SMILE_MOMENT_SPEED: 2.8,   // lerp speed toward/away from peak
+  IDLE_SMILE_HOLD_MIN:     1.5,   IDLE_SMILE_HOLD_MAX:     3.0,
+  IDLE_SMILE_INT_MIN:      5.0,   IDLE_SMILE_INT_MAX:      12.0,
+
+  IDLE_TILT_AMP:           0.055, // max head roll (~3°)
+  IDLE_TILT_SPEED:         1.0,
+  IDLE_TILT_HOLD_MIN:      1.2,   IDLE_TILT_HOLD_MAX:      2.8,
+  IDLE_TILT_INT_MIN:       10.0,  IDLE_TILT_INT_MAX:       24.0,
+};
+
+// Smooth-step: slow-in, slow-out — more organic than linear for eyelids
+function smoothstep(t) {
+  const c = t < 0 ? 0 : t > 1 ? 1 : t;
+  return c * c * (3 - 2 * c);
+}
+function blinkCurveClose(t) { return smoothstep(t / ANIM.BLINK_CLOSE_DUR); }
+function blinkCurveOpen(t)  { return 1 - smoothstep(t / ANIM.BLINK_OPEN_DUR); }
+
 function bone(name) {
-  if (!vrm || !vrm.humanoid) return null;
-  if (!boneRefs[name]) {
-    boneRefs[name] = vrm.humanoid.getNormalizedBoneNode(name) || null;
+  return boneMap[name] || null;
+}
+
+// Normalised bone name → candidate names from known rig conventions.
+// Each array is checked in order; the first match found in the loaded model wins.
+// Covers three rigs:
+//   Mixamo  — used by RPM (Ready Player Me) exports
+//   MetaHuman — UE5 default skeleton (pelvis, spine_01…05, neck_01, clavicle_l, etc.)
+//   AvatarSDK — broadly Mixamo-compatible with minor variations
+const BONE_NAME_MAP = {
+  'hips':                    ['Hips',          'pelvis',      'root'],
+  'spine':                   ['Spine',          'spine_01'],
+  'chest':                   ['Spine2', 'Spine1', 'Chest',    'spine_03', 'spine_04', 'spine_05'],
+  'neck':                    ['Neck',            'neck_01',   'neck_02'],
+  'head':                    ['Head',            'head'],
+  'leftEye':                 ['LeftEye',         'eye_l',     'FACIAL_L_Eye'],
+  'rightEye':                ['RightEye',        'eye_r',     'FACIAL_R_Eye'],
+  'leftShoulder':            ['LeftShoulder',    'clavicle_l'],
+  'rightShoulder':           ['RightShoulder',   'clavicle_r'],
+  'leftUpperArm':            ['LeftArm',         'upperarm_l'],
+  'rightUpperArm':           ['RightArm',        'upperarm_r'],
+  'leftLowerArm':            ['LeftForeArm',     'lowerarm_l'],
+  'leftLowerArmRoll':        ['LeftForeArm1',    'lowerarm_twist_01_l'],
+  'rightLowerArm':           ['RightForeArm',    'lowerarm_r'],
+  'rightLowerArmRoll':       ['RightForeArm1',   'lowerarm_twist_01_r'],
+  'leftHand':                ['LeftHand',        'hand_l'],
+  'rightHand':               ['RightHand',       'hand_r'],
+  'leftIndexProximal':       ['LeftHandIndex1',  'index_01_l'],
+  'leftIndexIntermediate':   ['LeftHandIndex2',  'index_02_l'],
+  'leftMiddleProximal':      ['LeftHandMiddle1', 'middle_01_l'],
+  'leftMiddleIntermediate':  ['LeftHandMiddle2', 'middle_02_l'],
+  'leftRingProximal':        ['LeftHandRing1',   'ring_01_l'],
+  'leftRingIntermediate':    ['LeftHandRing2',   'ring_02_l'],
+  'leftLittleProximal':      ['LeftHandPinky1',  'pinky_01_l'],
+  'leftLittleIntermediate':  ['LeftHandPinky2',  'pinky_02_l'],
+  'leftThumbProximal':       ['LeftHandThumb1',  'thumb_01_l'],
+  'rightIndexProximal':      ['RightHandIndex1', 'index_01_r'],
+  'rightIndexIntermediate':  ['RightHandIndex2', 'index_02_r'],
+  'rightMiddleProximal':     ['RightHandMiddle1','middle_01_r'],
+  'rightMiddleIntermediate': ['RightHandMiddle2','middle_02_r'],
+  'rightRingProximal':       ['RightHandRing1',  'ring_01_r'],
+  'rightRingIntermediate':   ['RightHandRing2',  'ring_02_r'],
+  'rightLittleProximal':     ['RightHandPinky1', 'pinky_01_r'],
+  'rightLittleIntermediate': ['RightHandPinky2', 'pinky_02_r'],
+  'rightThumbProximal':      ['RightHandThumb1', 'thumb_01_r'],
+};
+
+function buildBoneMap() {
+  const reverseMap = {};
+  for (const [normalised, candidates] of Object.entries(BONE_NAME_MAP)) {
+    for (const candidate of candidates) {
+      reverseMap[candidate] = normalised;
+    }
   }
-  return boneRefs[name];
+  model.traverse((obj) => {
+    if (!obj.isBone && !obj.isSkinnedMesh) return;
+    const normalised = reverseMap[obj.name];
+    if (normalised && !boneMap[normalised]) {
+      boneMap[normalised] = obj;
+    }
+  });
 }
 
 function rememberBoneBase(name) {
@@ -292,16 +548,23 @@ function applyRelaxedPose() {
   if (neck) neck.rotation.x = 0.01;
   if (head) head.rotation.x = -0.02;
 
+  // Clavicle: slight forward-and-down set so the shoulder sits naturally on the torso
+  // rather than being pulled back or shrugged. Adjust z to push arm geometry outward.
+  const leftShoulder  = bone('leftShoulder');
+  const rightShoulder = bone('rightShoulder');
+  if (leftShoulder)  { leftShoulder.rotation.z  -= 0.16;  leftShoulder.rotation.y  += 0.05; }
+  if (rightShoulder) { rightShoulder.rotation.z += 0.16;  rightShoulder.rotation.y -= 0.05; }
+
   if (leftUpperArm) {
-    leftUpperArm.rotation.z -= -1.3;
-    leftUpperArm.rotation.x += 0.04;
-    leftUpperArm.rotation.y += 0.05;
+    leftUpperArm.rotation.z -= -1.25;
+    leftUpperArm.rotation.x += 0.1;
+    leftUpperArm.rotation.y += 1.5;
   }
 
   if (rightUpperArm) {
-    rightUpperArm.rotation.z += -1.3;
-    rightUpperArm.rotation.x += 0.04;
-    rightUpperArm.rotation.y -= 0.05;
+    rightUpperArm.rotation.z += -1.25;
+    rightUpperArm.rotation.x += 0.1;
+    rightUpperArm.rotation.y -= 1.5;
   }
 
   if (leftLowerArm) {
@@ -314,37 +577,42 @@ function applyRelaxedPose() {
     rightLowerArm.rotation.x -= 0.04;
   }
 
-  // Forearm roll: twist the palm to face the thigh (pronation).
-  // In VRM normalised space, lower-arm X is the roll axis.
-  if (leftLowerArm)  leftLowerArm.rotation.x  -= 0.5;
+  // Elbow hang angle — X only on the main forearm bone (this bone is elbow flex,
+  // not the roll axis; adding Y here swings the arm rather than twisting the palm).
+  if (leftLowerArm)  leftLowerArm.rotation.x -= 0.5;
   if (rightLowerArm) rightLowerArm.rotation.x -= 0.5;
 
-  // Wrist: slight tilt so the hand hangs relaxed rather than rigid.
-  if (leftHand)  { leftHand.rotation.y  += 0.0;  leftHand.rotation.z  += 0.18; }
-  if (rightHand) { rightHand.rotation.y -= 0.0;  rightHand.rotation.z -= 0.18; }
+  // Palm supination via the dedicated twist/roll bones (LeftForeArm1 / RightForeArm1).
+  // These start at identity T-pose and exist purely for forearm roll — Y rotation
+  // here is a clean supination with zero positional side-effect on the arm.
+  const leftLowerArmRoll  = bone('leftLowerArmRoll');
+  const rightLowerArmRoll = bone('rightLowerArmRoll');
+  if (leftLowerArmRoll)  leftLowerArmRoll.rotation.y  -= 1.4;
+  if (rightLowerArmRoll) rightLowerArmRoll.rotation.y += 1.4;
 
-  // Finger curl — proximal joints curl more, intermediate joints curl less.
-  // Left hand: positive Z curls fingers inward; right hand: negative Z.
-  const L_CURL = 0.32;
-  const R_CURL = -0.32;
+  // Wrist: tiny extension to prevent droop; palm direction set by roll bones above.
+  if (leftHand)  { leftHand.rotation.x -= 0.05;  leftHand.rotation.y += 0.0;  leftHand.rotation.z += 0.0; }
+  if (rightHand) { rightHand.rotation.x -= 0.05;  rightHand.rotation.y += 0.0;  rightHand.rotation.z += 0.0; }
+
+  // Finger curl — negative X is the curl/flexion direction in this RPM rig.
+  // T-pose starts at x≈+0.284 (slight extension); subtracting X moves into flexion.
+  // Symmetric for both hands (positive X = extension for both, from GLB data).
+  const CURL_P = 0.45;          // proximal joints
+  const CURL_I = CURL_P * 0.55; // intermediate joints curl less
   [
     'leftIndexProximal',  'leftMiddleProximal',
     'leftRingProximal',   'leftLittleProximal',
-  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += L_CURL; });
+    'rightIndexProximal', 'rightMiddleProximal',
+    'rightRingProximal',  'rightLittleProximal',
+  ].forEach(n => { const b = bone(n); if (b) b.rotation.x -= CURL_P; });
   [
     'leftIndexIntermediate',  'leftMiddleIntermediate',
     'leftRingIntermediate',   'leftLittleIntermediate',
-  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += L_CURL * 0.55; });
-  [
-    'rightIndexProximal',  'rightMiddleProximal',
-    'rightRingProximal',   'rightLittleProximal',
-  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += R_CURL; });
-  [
-    'rightIndexIntermediate',  'rightMiddleIntermediate',
-    'rightRingIntermediate',   'rightLittleIntermediate',
-  ].forEach(n => { const b = bone(n); if (b) b.rotation.z += R_CURL * 0.55; });
+    'rightIndexIntermediate', 'rightMiddleIntermediate',
+    'rightRingIntermediate',  'rightLittleIntermediate',
+  ].forEach(n => { const b = bone(n); if (b) b.rotation.x -= CURL_I; });
 
-  // Thumb: spread away from the palm slightly.
+  // Thumb: natural rest position.
   const lThumb = bone('leftThumbProximal');
   const rThumb = bone('rightThumbProximal');
   if (lThumb) lThumb.rotation.z += 0.22;
@@ -355,6 +623,10 @@ function applyRelaxedPose() {
     'chest',
     'neck',
     'head',
+    'leftEye',
+    'rightEye',
+    'leftShoulder',
+    'rightShoulder',
     'leftUpperArm',
     'rightUpperArm',
     'leftLowerArm',
@@ -372,105 +644,434 @@ function applyRelaxedPose() {
   });
 }
 
-function setExpression(name, value) {
-  if (!vrm || !vrm.expressionManager) return;
+// Maps our internal expression names to morph target names on the head mesh.
+// Defaults follow RPM/Oculus/ARKit convention. patchExprMap() rewrites entries
+// at runtime if the loaded model uses a different naming convention.
+let EXPR_MAP = {
+  // ── Vowel visemes (Oculus/RPM names by default) ───────────────────────────
+  'aa':    ['viseme_aa'],
+  'ih':    ['viseme_I'],
+  'ou':    ['viseme_U'],
+  'ee':    ['viseme_E'],
+  'oh':    [['viseme_O', 1.0], ['viseme_U', 0.32]],
+  // ── Consonant visemes ─────────────────────────────────────────────────────
+  'v_pp':  ['viseme_PP'],
+  'v_ff':  ['viseme_FF'],
+  'v_th':  ['viseme_TH'],
+  'v_dd':  ['viseme_DD'],
+  'v_kk':  ['viseme_kk'],
+  'v_ch':  ['viseme_CH'],
+  'v_ss':  ['viseme_SS'],
+  'v_nn':  ['viseme_nn'],
+  'v_rr':  ['viseme_RR'],
+  // ── Facial expressions ────────────────────────────────────────────────────
+  'blinkLeft':  ['eyeBlinkLeft'],
+  'blinkRight': ['eyeBlinkRight'],
+  'happy':      ['mouthSmileLeft', 'mouthSmileRight'],
+  'relaxed':    ['cheekSquintLeft', 'cheekSquintRight'],
+  'surprised':  ['eyeWideLeft', 'eyeWideRight'],
+  // ── Eyebrow expressions (RPM ARKit names) ────────────────────────────────
+  'browInnerUp': ['browInnerUp'],
+  'browDown':    ['browDownLeft', 'browDownRight'],
+  'browOuterUp': ['browOuterUpLeft', 'browOuterUpRight'],
+};
 
-  try {
-    vrm.expressionManager.setValue(name, value);
-  } catch (e) {}
+// Alternate blend shape names used by some ARKit/MetaPerson exports.
+const EXPR_ALTERNATES = {
+  'blinkLeft':  [['eyeBlinkLeft'], ['EyeBlink_L'], ['Blink_L']],
+  'blinkRight': [['eyeBlinkRight'], ['EyeBlink_R'], ['Blink_R']],
+  'surprised':  [['eyeWideLeft', 'eyeWideRight'], ['EyeWide_L', 'EyeWide_R']],
+  'happy':      [['mouthSmileLeft', 'mouthSmileRight'], ['mouthSmile_L', 'mouthSmile_R']],
+  'relaxed':    [['cheekSquintLeft', 'cheekSquintRight'], ['cheekSquint_L', 'cheekSquint_R']],
+  'browInnerUp': [['browInnerUp'], ['BrowInnerUp']],
+  'browDown':    [['browDownLeft', 'browDownRight'], ['BrowDown_L', 'BrowDown_R']],
+};
+
+function patchExprMap() {
+  if (!headMesh || !headMesh.morphTargetDictionary) return;
+  const dict = headMesh.morphTargetDictionary;
+
+  // Patch eye/face expression names for alternate ARKit export conventions.
+  for (const [key, variants] of Object.entries(EXPR_ALTERNATES)) {
+    for (const variant of variants) {
+      if (variant.every(name => name in dict)) {
+        EXPR_MAP[key] = variant;
+        break;
+      }
+    }
+  }
+
+  // AvatarSDK MetaPerson export — viseme shapes exist but without the "viseme_" prefix.
+  // Shape names: aa, ih, ou, oh, E (note uppercase E for the "ee" vowel).
+  // Must be checked BEFORE the jawOpen fallback because this model has both.
+  if (!('viseme_aa' in dict) && 'aa' in dict && 'ih' in dict) {
+    // Vowels
+    EXPR_MAP.aa = ['aa'];
+    EXPR_MAP.ih = ['ih'];
+    EXPR_MAP.ou = ['ou'];
+    EXPR_MAP.ee = 'E' in dict ? ['E'] : EXPR_MAP.ee;
+    EXPR_MAP.oh = [['oh', 0.85], ['ou', 0.40]];
+    // Consonant articulators (AvatarSDK exports without viseme_ prefix)
+    if ('PP' in dict) EXPR_MAP.v_pp = ['PP'];
+    if ('FF' in dict) EXPR_MAP.v_ff = ['FF'];
+    if ('TH' in dict) EXPR_MAP.v_th = ['TH'];
+    if ('DD' in dict) EXPR_MAP.v_dd = ['DD'];
+    if ('kk' in dict) EXPR_MAP.v_kk = ['kk'];
+    if ('CH' in dict) EXPR_MAP.v_ch = ['CH'];
+    if ('SS' in dict) EXPR_MAP.v_ss = ['SS'];
+    if ('nn' in dict) EXPR_MAP.v_nn = ['nn'];
+    if ('RR' in dict) EXPR_MAP.v_rr = ['RR'];
+    window._dbg('Visemes: AvatarSDK full set (vowels + consonant articulators)');
+  }
+
+  // If the model has no Oculus viseme shapes (viseme_aa etc.) but has ARKit jaw/mouth
+  // shapes, remap the five visemes onto weighted ARKit combos.
+  // Each entry is [morphName, scale] — the incoming viseme weight (0–1) is multiplied
+  // by scale so we can mix multiple shapes at different intensities.
+  else if (!('viseme_aa' in dict) && !('aa' in dict) && 'jawOpen' in dict) {
+    const has = (n) => n in dict;
+    // aa — open vowel ("father"): strong jaw drop + lower lip pull
+    EXPR_MAP.aa = [
+      ['jawOpen',            0.72],
+      ...(has('mouthLowerDownLeft')  ? [['mouthLowerDownLeft',  0.50], ['mouthLowerDownRight', 0.50]] : []),
+      ...(has('mouthRollLower')      ? [['mouthRollLower',      0.22]] : []),
+    ];
+    // ih — close front vowel ("see/bit"): nearly closed jaw, spread lips
+    // IPA: i/ɪ = Close/Near-close row — least jaw opening of all vowels
+    EXPR_MAP.ih = [
+      ['jawOpen',            0.10],
+      ...(has('mouthStretchLeft')    ? [['mouthStretchLeft',    0.78], ['mouthStretchRight',   0.78]] : []),
+      ...(has('mouthDimpleLeft')     ? [['mouthDimpleLeft',     0.18], ['mouthDimpleRight',    0.18]] : []),
+    ];
+    // ou — close back rounded vowel ("food/you"): nearly closed jaw, very pursed lips
+    // IPA: u = Close Back — same height row as i, jaw barely open, rounding is the defining feature
+    EXPR_MAP.ou = [
+      ['jawOpen',            0.20],
+      ...(has('mouthPucker')         ? [['mouthPucker',         0.88]] : []),
+      ...(has('mouthFunnel')         ? [['mouthFunnel',         0.25]] : []),
+    ];
+    // ee — close-mid/open-mid front vowel ("fade/bed"): more jaw than ih, spread lips
+    // IPA: e = Close-mid, ɛ = Open-mid — sits below i on chart, so more jaw than ih
+    EXPR_MAP.ee = [
+      ['jawOpen',            0.26],
+      ...(has('mouthStretchLeft')    ? [['mouthStretchLeft',    0.82], ['mouthStretchRight',   0.82]] : []),
+      ...(has('mouthSmileLeft')      ? [['mouthSmileLeft',      0.16], ['mouthSmileRight',     0.16]] : []),
+    ];
+    // oh — rounded vowel ("go"): less jaw than aa, funnel for rounding, pucker for pursed-lip O shape
+    EXPR_MAP.oh = [
+      ['jawOpen',            0.50],
+      ...(has('mouthFunnel')         ? [['mouthFunnel',         0.80]] : []),
+      ...(has('mouthPucker')         ? [['mouthPucker',         0.42]] : []),
+      ...(has('mouthLowerDownLeft')  ? [['mouthLowerDownLeft',  0.18], ['mouthLowerDownRight', 0.18]] : []),
+    ];
+
+    // ── Consonant visemes via ARKit shapes ────────────────────────────────────
+    // Without these, every consonant fires nothing (viseme_PP etc. don't exist
+    // on ARKit-only models). Each approximates the correct articulator position.
+
+    // v_pp — bilabial (p, b, m): lips press firmly together
+    EXPR_MAP.v_pp = [
+      ...(has('mouthClose')      ? [['mouthClose',      0.80]] : [['jawOpen', 0.05]]),
+      ...(has('mouthPressLeft')  ? [['mouthPressLeft',  0.60], ['mouthPressRight',  0.60]] : []),
+    ];
+    // v_ff — labiodental (f, v): lower lip draws up toward upper teeth
+    EXPR_MAP.v_ff = [
+      ['jawOpen',            0.12],
+      ...(has('mouthLowerDownLeft') ? [['mouthLowerDownLeft', 0.45], ['mouthLowerDownRight', 0.45]] : []),
+    ];
+    // v_th — dental (th): tongue between teeth, slight jaw and lower lip
+    EXPR_MAP.v_th = [
+      ['jawOpen',            0.18],
+      ...(has('mouthLowerDownLeft') ? [['mouthLowerDownLeft', 0.35], ['mouthLowerDownRight', 0.35]] : []),
+    ];
+    // v_dd — alveolar (d, t, n, l): tongue at ridge, brief small opening
+    EXPR_MAP.v_dd = [
+      ['jawOpen',            0.14],
+      ...(has('mouthClose')  ? [['mouthClose',  0.12]] : []),
+    ];
+    // v_kk — velar (k, g): back-of-tongue contact, mild jaw drop
+    EXPR_MAP.v_kk = [
+      ['jawOpen',            0.18],
+      ...(has('mouthShrugLower') ? [['mouthShrugLower', 0.18]] : []),
+    ];
+    // v_ch — palato-alveolar (ch, j, sh): rounded/funneled lips
+    EXPR_MAP.v_ch = [
+      ['jawOpen',            0.14],
+      ...(has('mouthFunnel') ? [['mouthFunnel', 0.50]] : []),
+      ...(has('mouthPucker') ? [['mouthPucker', 0.20]] : []),
+    ];
+    // v_ss — sibilant (s, z): teeth nearly closed, slight lateral stretch
+    EXPR_MAP.v_ss = [
+      ['jawOpen',            0.08],
+      ...(has('mouthStretchLeft') ? [['mouthStretchLeft', 0.35], ['mouthStretchRight', 0.35]] : []),
+    ];
+    // v_nn — nasal/lateral (n, l): mostly closed, small opening
+    EXPR_MAP.v_nn = [
+      ['jawOpen',            0.10],
+      ...(has('mouthClose')  ? [['mouthClose',  0.20]] : []),
+    ];
+    // v_rr — rhotic (r): slight pucker, moderate jaw
+    EXPR_MAP.v_rr = [
+      ['jawOpen',            0.14],
+      ...(has('mouthPucker') ? [['mouthPucker', 0.38]] : []),
+    ];
+
+    window._dbg('Visemes remapped to weighted ARKit shapes (vowels + consonants)');
+  }
+
+  // Detect Oculus silence shape — present on RPM models.
+  // When found, animate() will drive it inversely to mouth activity.
+  hasVisemeSil = ('viseme_sil' in dict);
+  if (hasVisemeSil) window._dbg('viseme_sil detected — Oculus silence shape will be managed');
+
+  window._dbg('EXPR_MAP.aa=' + EXPR_MAP.aa + ' blinkLeft=' + EXPR_MAP.blinkLeft);
 }
 
-function loadVRM() {
-  window._dbg('Renderer created, loading model...');
+// Viseme keys — all of these are mirrored to teethMesh when present.
+const VISEME_KEYS = new Set(ALL_VISEME_KEYS);
+
+function setMorphTarget(mesh, morphName, value) {
+  if (!mesh || !mesh.morphTargetDictionary) return;
+  const idx = mesh.morphTargetDictionary[morphName];
+  if (idx !== undefined) {
+    mesh.morphTargetInfluences[idx] = Math.max(0, Math.min(1, value));
+  }
+}
+
+function setExpression(name, value) {
+  if (!headMesh) return;
+  const targets = EXPR_MAP[name];
+  if (!targets) return;
+  const isViseme = VISEME_KEYS.has(name);
+  for (const entry of targets) {
+    // Each entry is either a plain string or a [morphName, scale] pair.
+    // Scaled entries let one logical viseme drive multiple morphs at different intensities.
+    const morphName = Array.isArray(entry) ? entry[0] : entry;
+    const scale     = Array.isArray(entry) ? entry[1] : 1.0;
+    const v = value * scale;
+    setMorphTarget(headMesh, morphName, v);
+    if (isViseme && teethMesh) setMorphTarget(teethMesh, morphName, v);
+  }
+}
+
+function loadModel() {
+  window._dbg('Renderer created, loading GLB model...');
+
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/');
 
   const loader = new GLTFLoader();
   loader.crossOrigin = 'anonymous';
+  loader.setDRACOLoader(dracoLoader);
 
-  loader.register((parser) => {
-    return new VRMLoaderPlugin(parser);
-  });
-
-  loader.load(
-    '${safeUrl}',
+  // Large models (> ~20 MB) exceed WKWebView's XHR size limit for data URIs.
+  // Convert to a Blob URL first — identical to the backdrop loading approach.
+  const rawModelUrl = '${safeUrl}';
+  function _doLoadModel(url) {
+    loader.load(
+      url,
     (gltf) => {
-      window._dbg('GLTF loaded, extracting VRM...');
+      window._dbg('GLTF loaded, setting up model...');
 
-      vrm = gltf.userData.vrm;
+      model = gltf.scene;
 
-      if (!vrm) {
-        window._dbg('No VRM data found');
-        if (statusEl) statusEl.textContent = 'No VRM data found';
-        return;
-      }
-
-      window._dbg('VRM extracted, preparing scene...');
-
-      try {
-        VRMUtils.rotateVRM0(vrm);
-      } catch (e) {
-        console.log('rotateVRM0 skipped', e);
-      }
-
-      vrm.scene.traverse((obj) => {
+      // Collect all meshes that carry morph targets for scored head/teeth detection.
+      const morphMeshes = [];
+      model.traverse((obj) => {
         obj.frustumCulled = false;
-        obj.visible = true;
+        if (!obj.isMesh) return;
+        const morphCount = obj.morphTargetDictionary ? Object.keys(obj.morphTargetDictionary).length : 0;
+        window._dbg('Mesh: ' + obj.name + (morphCount ? ' [' + morphCount + ' morphs]' : ''));
+        if (morphCount > 0) morphMeshes.push(obj);
+
+        // RPM exact names — highest priority
+        if (obj.name === 'Wolf3D_Head')  headMesh  = obj;
+        if (obj.name === 'Wolf3D_Teeth') teethMesh = obj;
       });
 
-      // MToon1 rim enhancement — edge brightening that reacts to the rim light
-      vrm.scene.traverse((obj) => {
-        if (!obj.isMesh || !obj.material) return;
-        const mat = obj.material;
-        if (!mat.isMToonMaterial) return;
-        if (mat.rimLightFactor !== undefined)  mat.rimLightFactor  = 0.5;
-        if (mat.rimFresnelPower !== undefined) mat.rimFresnelPower = 2.5;
-        if (mat.rimLiftFactor !== undefined)   mat.rimLiftFactor   = 0.3;
-      });
+      // If RPM names didn't match, resolve head mesh by scored fallback
+      if (!headMesh) {
+        // P2: name contains 'head' or 'face' (case-insensitive)
+        for (const m of morphMeshes) {
+          const nm = m.name.toLowerCase();
+          if (nm.includes('head') || nm.includes('face')) { headMesh = m; break; }
+        }
+      }
+      if (!headMesh) {
+        // P3: mesh with an eye-blink morph (reliable face-mesh marker); among matches pick the one
+        // with the most morphs so we get jaw/mouth shapes too (MetaPerson has two face meshes).
+        let p3best = null;
+        for (const m of morphMeshes) {
+          const d = m.morphTargetDictionary;
+          if ('eyeBlinkLeft' in d || 'EyeBlink_L' in d || 'Blink_L' in d) {
+            if (!p3best || Object.keys(d).length > Object.keys(p3best.morphTargetDictionary).length) {
+              p3best = m;
+            }
+          }
+        }
+        if (p3best) headMesh = p3best;
+      }
+      if (!headMesh && morphMeshes.length > 0) {
+        // P4: mesh with the most morph targets
+        morphMeshes.sort((a, b) => Object.keys(b.morphTargetDictionary).length - Object.keys(a.morphTargetDictionary).length);
+        headMesh = morphMeshes[0];
+      }
 
-      baseRotationY = vrm.scene.rotation.y;
-      basePositionY = vrm.scene.position.y;
+      // Teeth: Wolf3D_Teeth already set, else name-match, else skip
+      if (!teethMesh) {
+        for (const m of morphMeshes) {
+          if (m.name.toLowerCase().includes('teeth')) { teethMesh = m; break; }
+        }
+      }
+
+      if (headMesh) {
+        const names = Object.keys(headMesh.morphTargetDictionary).slice(0, 15).join(', ');
+        window._dbg('Head mesh: ' + headMesh.name + ', morphs: ' + names);
+      } else {
+        window._dbg('Head mesh: NOT FOUND — expressions will be inactive');
+      }
+      if (teethMesh) window._dbg('Teeth mesh: ' + teethMesh.name);
+
+      patchExprMap();
+
+      // ── Morph target runtime inspector ──────────────────────────────────────
+      // Logs every morph target with its index and detected convention so that
+      // viseme mapping issues can be diagnosed without guessing.
+      if (headMesh && headMesh.morphTargetDictionary) {
+        var mdict = headMesh.morphTargetDictionary;
+        var mnames = Object.keys(mdict).sort(function(a,b){ return mdict[a]-mdict[b]; });
+        var isOculusV = function(n){ return /^viseme_/i.test(n) || /^(aa|ih|ou|ee|oh|PP|FF|TH|DD|kk|CH|SS|nn|RR)$/.test(n); };
+        var isARKitV  = function(n){ return /^(jaw|mouth|eye|brow|cheek|nose)/i.test(n); };
+        var rows = mnames.map(function(n){
+          var kind = isOculusV(n) ? 'OCULUS' : isARKitV(n) ? 'ARKIT' : 'CUSTOM';
+          return String(mdict[n]).padStart(3,' ') + ' [' + kind + '] ' + n;
+        });
+        window._dbg('MORPHS on ' + headMesh.name + ' (' + mnames.length + '):\\n' + rows.join('\\n'));
+      }
+
+      buildBoneMap();
+
+      baseRotationY = model.rotation.y;
+      basePositionY = model.position.y;
 
       applyRelaxedPose();
 
-      scene.add(vrm.scene);
-      frameCamera(vrm.scene);
+      scene.add(model);
+      frameCamera(model);
 
-      if (statusEl) {
-        statusEl.style.display = 'none';
-      }
+      if (statusEl) statusEl.style.display = 'none';
 
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'loaded'
-        }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'loaded' }));
       }
 
       window._dbg('Avatar loaded successfully');
     },
     (xhr) => {
       const pct = xhr.total ? Math.round((xhr.loaded / xhr.total) * 100) : '?';
-
-      if (statusEl) {
-        statusEl.textContent = 'Loading ' + pct + '%';
-      }
-
-      if (pct === 100) {
-        window._dbg('Model download 100%');
-      }
+      if (statusEl) statusEl.textContent = 'Loading ' + pct + '%';
+      if (pct === 100) window._dbg('Model download 100%');
     },
     (error) => {
       const msg = error && error.message ? error.message : String(error);
       window._dbg('Model load error: ' + msg);
-
-      if (statusEl) {
-        statusEl.textContent = 'Load error';
-      }
-
+      if (statusEl) statusEl.textContent = 'Load error';
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'error',
-          message: msg
-        }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'error', message: msg }));
       }
+    }
+  );
+  }
+
+  // WKWebView blocks both XHR and fetch() on data URIs larger than ~20 MB.
+  // Bypass: decode base64 with atob() entirely in JS — no network call needed.
+  if (rawModelUrl.startsWith('data:')) {
+    window._dbg('Model: decoding ' + Math.round(rawModelUrl.length / 1024 / 1024) + ' MB data URI with atob...');
+    try {
+      var comma   = rawModelUrl.indexOf(',');
+      var b64     = rawModelUrl.substring(comma + 1);
+      var binary  = atob(b64);
+      var n       = binary.length;
+      var bytes   = new Uint8Array(n);
+      for (var i = 0; i < n; i++) bytes[i] = binary.charCodeAt(i);
+      var blob    = new Blob([bytes.buffer], { type: 'model/gltf-binary' });
+      var blobUrl = URL.createObjectURL(blob);
+      window._dbg('Model: Blob ready (' + Math.round(blob.size / 1024 / 1024) + ' MB), loading GLB...');
+      _doLoadModel(blobUrl);
+    } catch(err) {
+      window._dbg('Model: atob decode failed — ' + (err && err.message ? err.message : String(err)));
+    }
+  } else {
+    _doLoadModel(rawModelUrl);
+  }
+}
+
+// ─── BACKDROP LOADER ──────────────────────────────────────────────────────────
+// GLTFLoader uses XHR internally. Mobile WebView (iOS WKWebView) rejects XHR
+// requests against very large data: URIs. We convert the data URI to a Blob URL
+// first — the Blob URL is short and sidesteps the XHR size limit entirely.
+async function loadBackdrop() {
+  if (!BACKDROP_CONFIG.url) {
+    window._dbg('Backdrop: no URL — skipping');
+    return;
+  }
+
+  window._dbg('Backdrop: converting ' + Math.round(BACKDROP_CONFIG.url.length / 1024 / 1024) + ' MB data URI to Blob...');
+
+  let blobUrl;
+  try {
+    const res = await fetch(BACKDROP_CONFIG.url);
+    const blob = await res.blob();
+    blobUrl = URL.createObjectURL(blob);
+    window._dbg('Backdrop: Blob ready (' + Math.round(blob.size / 1024 / 1024) + ' MB), loading GLB...');
+  } catch (e) {
+    window._dbg('Backdrop: Blob conversion failed — ' + (e && e.message ? e.message : String(e)));
+    return;
+  }
+
+  const backdropLoader = new GLTFLoader();
+  backdropLoader.crossOrigin = 'anonymous';
+  backdropLoader.setMeshoptDecoder(MeshoptDecoder);
+
+  backdropLoader.load(
+    blobUrl,
+    (gltf) => {
+      URL.revokeObjectURL(blobUrl);
+      window._dbg('Backdrop: GLB parsed, building scene...');
+      const backdrop = gltf.scene;
+
+      backdrop.position.set(...BACKDROP_CONFIG.position);
+      backdrop.rotation.set(...BACKDROP_CONFIG.rotation);
+      backdrop.scale.set(...BACKDROP_CONFIG.scale);
+
+      backdrop.traverse((obj) => {
+        if (!obj.isMesh) return;
+        obj.frustumCulled = false;
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach((mat) => {
+          // DoubleSide ensures interior surfaces are visible regardless of camera position
+          mat.side = THREE.DoubleSide;
+          mat.color.multiplyScalar(BACKDROP_CONFIG.dimAmount);
+          mat.needsUpdate = true;
+        });
+      });
+
+      scene.add(backdrop);
+      scene.background = null;
+      window._dbg('Backdrop: added to scene');
+    },
+    (xhr) => {
+      if (xhr.total) {
+        const pct = Math.round((xhr.loaded / xhr.total) * 100);
+        if (pct === 25 || pct === 50 || pct === 75 || pct === 100) {
+          window._dbg('Backdrop loading: ' + pct + '%');
+        }
+      }
+    },
+    (err) => {
+      URL.revokeObjectURL(blobUrl);
+      const msg = err && err.message ? err.message : String(err);
+      window._dbg('Backdrop load failed: ' + msg);
     }
   );
 }
@@ -485,208 +1086,461 @@ function animate(ts) {
     lastTs = ts;
     elapsed += dt;
 
-    if (vrm) {
-      vrm.update(dt);
-
-      const speaking = avatarState === 'speaking';
+    if (model) {
+      // ─── STATE DETECTION ──────────────────────────────────────────────────
+      const speaking  = avatarState === 'speaking';
       const listening = avatarState === 'listening';
-      const thinking = avatarState === 'thinking';
-      const active = speaking || listening || thinking;
+      const thinking  = avatarState === 'thinking';
+      const empathy   = avatarState === 'empathy';
+      const waiting   = avatarState === 'waiting';
+      const active    = speaking || listening || thinking || empathy || waiting;
 
-      // Smooth blend values — drift toward target at ~0.04/frame (~0.6 s at 60 fps)
-      activeBlend = lerp(activeBlend, active    ? 1 : 0, 0.04);
-      speakBlend  = lerp(speakBlend,  speaking  ? 1 : 0, 0.04);
-      thinkBlend  = lerp(thinkBlend,  thinking  ? 1 : 0, 0.035);
+      // Blend values drift toward target at ~0.04/frame (~0.6 s at 60 fps)
+      activeBlend  = lerp(activeBlend,  active    ? 1 : 0, 0.04);
+      speakBlend   = lerp(speakBlend,   speaking  ? 1 : 0, 0.04);
+      thinkBlend   = lerp(thinkBlend,   thinking  ? 1 : 0, 0.035);
+      empathyBlend = lerp(empathyBlend, empathy   ? 1 : 0, 0.030);
+      waitBlend    = lerp(waitBlend,    waiting   ? 1 : 0, 0.035);
+      listenBlend  = lerp(listenBlend,  listening ? 1 : 0, 0.04);
 
-      const bobAmp = lerp(0.006, 0.012, speakBlend);
-      const bobRate = speaking ? 1.8 : listening ? 1.2 : 0.8;
+      // ─── BODY BOB & SWAY ──────────────────────────────────────────────────
+      const bobAmp  = lerp(ANIM.BOB_IDLE, ANIM.BOB_ACTIVE, speakBlend);
+      const bobRate = lerp(lerp(ANIM.BOB_RATE_IDLE, ANIM.BOB_RATE_LISTEN, listenBlend), ANIM.BOB_RATE_SPEAK, speakBlend);
+      bobPhase += dt * bobRate;
+      model.position.y = basePositionY + Math.sin(bobPhase) * bobAmp;
 
-      vrm.scene.position.y =
-        basePositionY + Math.sin(elapsed * bobRate) * bobAmp;
+      const swayAmp = lerp(ANIM.SWAY_IDLE, lerp(ANIM.SWAY_ACTIVE, ANIM.SWAY_SPEAK, speakBlend), activeBlend);
+      swayPhase += dt * ANIM.SWAY_RATE;
+      model.rotation.y = baseRotationY + Math.sin(swayPhase) * swayAmp;
 
-      const swayAmp = lerp(0.015, lerp(0.025, 0.035, speakBlend), activeBlend);
+      // ─── ORGANIC BREATHING ────────────────────────────────────────────────
+      // Modulate breath rate with a slow secondary oscillator so the rhythm
+      // never locks into a perfectly regular pattern.
+      if (elapsed > breathVarNext) {
+        breathVarTarget = (Math.random() - 0.5) * ANIM.BREATH_VAR_AMP;
+        breathVarNext   = elapsed + 3.0 + Math.random() * 5.0;
+      }
+      breathVarCurrent = lerp(breathVarCurrent, breathVarTarget, dt * 0.15);
+      const breathRate = lerp(ANIM.BREATH_RATE_IDLE, ANIM.BREATH_RATE_SPEAK, speakBlend) + breathVarCurrent;
+      breathPhase += dt * breathRate;
+      const breath = Math.sin(breathPhase);
 
-      vrm.scene.rotation.y =
-        baseRotationY + Math.sin(elapsed * 0.35) * swayAmp;
-
-      const breath = Math.sin(elapsed * (speaking ? 2.4 : 1.5));
-      const spineBase = boneBase.spine;
-      const chestBase = boneBase.chest;
-      const neckBase = boneBase.neck;
-      const headBase = boneBase.head;
-      const leftUpperArmBase = boneBase.leftUpperArm;
+      const spineBase        = boneBase.spine;
+      const chestBase        = boneBase.chest;
+      const neckBase         = boneBase.neck;
+      const headBase         = boneBase.head;
+      const leftUpperArmBase  = boneBase.leftUpperArm;
       const rightUpperArmBase = boneBase.rightUpperArm;
-      const leftLowerArmBase = boneBase.leftLowerArm;
+      const leftLowerArmBase  = boneBase.leftLowerArm;
       const rightLowerArmBase = boneBase.rightLowerArm;
 
       if (spineBase) {
-        setBoneRotation(
-          'spine',
-          spineBase.x + breath * 0.015,
-          spineBase.y,
-          spineBase.z
-        );
+        setBoneRotation('spine', spineBase.x + breath * ANIM.BREATH_SPINE_AMP, spineBase.y, spineBase.z);
       }
 
       if (chestBase) {
-        setBoneRotation(
-          'chest',
-          chestBase.x + breath * 0.025,
-          chestBase.y,
-          chestBase.z
-        );
+        setBoneRotation('chest', chestBase.x + breath * ANIM.BREATH_CHEST_AMP, chestBase.y, chestBase.z);
       }
 
-      // Compound look-around with thinking gaze bias (up-right = classic thinking direction).
-      const thinkGazeH = thinkBlend * 0.09;   // drift gaze right while thinking
-      const thinkGazeV = thinkBlend * (-0.06); // drift gaze up while thinking
-      const thinkTiltZ = thinkBlend * 0.13;    // tilt head slightly to the right
+      // ─── CONVERSATIONAL GAZE ──────────────────────────────────────────────
+      // Hold natural eye contact most of the time; take short periodic breaks
+      // just as a real person would in conversation. Thinking state overrides
+      // with its upward-right wander; idle retains gentle micro-movement.
+      const thinkTiltZ   = thinkBlend   * ANIM.THINK_TILT_Z;
+      const empathyTiltZ = empathyBlend * ANIM.EMPATHY_TILT_Z;
+      const empathyTiltX = empathyBlend * ANIM.EMPATHY_TILT_X;
+      const listenTiltX  = listenBlend  * ANIM.LISTEN_TILT_X;
 
-      const lookH =
-        Math.sin(elapsed * 0.27) * lerp(0.10, 0.04, activeBlend) +
-        Math.sin(elapsed * 0.17) * lerp(0.045, 0.02, activeBlend) +
-        thinkGazeH;
-      const lookV =
-        Math.sin(elapsed * 0.38) * lerp(0.038, 0.022, activeBlend) +
-        Math.sin(elapsed * 0.23) * 0.012 +
-        thinkGazeV;
+      gazeTimer += dt;
+      if (gazeTimer >= gazeDuration) {
+        gazeTimer = 0;
+        if (gazePhase === 'center') {
+          // Break eye contact — glance to the side or slightly up/down
+          gazePhase   = 'away';
+          gazeTargetH = (Math.random() * 2 - 1) * ANIM.GAZE_AWAY_H;
+          gazeTargetV = (Math.random() * 2 - 1) * ANIM.GAZE_AWAY_V;
+          // Speaking: shorter breaks; listening: very brief; idle: longer wanders
+          const awayScale = speaking ? 0.65 : listening ? 0.5 : 1.0;
+          gazeDuration = (ANIM.GAZE_AWAY_MIN + Math.random() * ANIM.GAZE_AWAY_RANGE) * awayScale;
+        } else {
+          // Return to eye contact
+          gazePhase   = 'center';
+          gazeTargetH = 0;
+          gazeTargetV = 0.01;  // very slight upward = looking into eyes
+          // Listening holds eye contact longest; speaking normal; idle shorter
+          const holdScale = listening ? 1.4 : speaking ? 1.0 : 0.7;
+          gazeDuration = (ANIM.GAZE_HOLD_MIN + Math.random() * ANIM.GAZE_HOLD_RANGE) * holdScale;
+        }
+      }
 
+      // Smooth the gaze — returning to center is slightly faster (decisive)
+      const gazeSpeed = gazePhase === 'center' ? ANIM.GAZE_RETURN_SPEED : ANIM.GAZE_SHIFT_SPEED;
+      gazeCurrentH = lerp(gazeCurrentH, gazeTargetH, dt * gazeSpeed);
+      gazeCurrentV = lerp(gazeCurrentV, gazeTargetV, dt * gazeSpeed);
+
+      // Tiny residual micro-movement so the head never looks frozen on a point
+      const microH = Math.sin(elapsed * ANIM.LOOK_H_FREQ1) * ANIM.GAZE_MICRO_H
+                   + Math.sin(elapsed * ANIM.LOOK_H_FREQ2) * ANIM.GAZE_MICRO_H * 0.4;
+      const microV = Math.sin(elapsed * ANIM.LOOK_V_FREQ1) * ANIM.GAZE_MICRO_V;
+
+      // Thinking state blends the gaze machine out and replaces with upward-right wander
+      const lookH = lerp(gazeCurrentH + microH, ANIM.THINK_GAZE_H, thinkBlend);
+      const lookV = lerp(gazeCurrentV + microV, ANIM.THINK_GAZE_V, thinkBlend);
+
+      // Neck follows at reduced scale — eyes carry most of the horizontal gaze
       if (neckBase) {
         setBoneRotation(
           'neck',
-          neckBase.x + breath * 0.008 + Math.sin(elapsed * 0.6) * 0.012,
-          neckBase.y + lookH * 0.38,
+          neckBase.x + breath * ANIM.BREATH_NECK_AMP + Math.sin(elapsed * 0.6) * 0.012,
+          neckBase.y + lookH * 0.38 * (1.0 - ANIM.EYE_H_SCALE),
           neckBase.z
         );
       }
 
-      // Micro-saccades: random tiny fixation shifts every 0.8–2.5 s
+      // Micro-saccades — fast tiny fixation shifts routed primarily to the eye bones
       if (elapsed > nextSaccadeTime) {
-        saccadeOffsetX = (Math.random() - 0.5) * 0.045;
-        saccadeOffsetY = (Math.random() - 0.5) * 0.030;
-        nextSaccadeTime = elapsed + 0.8 + Math.random() * 1.7;
+        saccadeTargetX  = (Math.random() - 0.5) * ANIM.SACCADE_X_AMP;
+        saccadeTargetY  = (Math.random() - 0.5) * ANIM.SACCADE_Y_AMP;
+        const saccadeMin = listenBlend > 0.5 ? 0.6 : ANIM.SACCADE_MIN;
+        const saccadeMax = listenBlend > 0.5 ? 1.8 : ANIM.SACCADE_MAX;
+        nextSaccadeTime = elapsed + saccadeMin + Math.random() * (saccadeMax - saccadeMin);
       }
+      // Saccades interpolate toward target — fast but smooth, not an instant pop
+      saccadeCurrentX = lerp(saccadeCurrentX, saccadeTargetX, dt * 18.0);
+      saccadeCurrentY = lerp(saccadeCurrentY, saccadeTargetY, dt * 18.0);
 
-      if (headBase) {
-        setBoneRotation(
-          'head',
-          headBase.x + lookV + saccadeOffsetX,
-          headBase.y + lookH * 0.62 + saccadeOffsetY,
-          headBase.z + Math.sin(elapsed * 0.35) * 0.012 + thinkTiltZ
+      // ─── IDLE PERSONALITY MOMENTS ─────────────────────────────────────────
+      // Smile and head tilt moments only fire when Aria is at rest (activeBlend low).
+      // Both fade out automatically as she becomes active.
+      const isIdleEnough = activeBlend < 0.25;
+
+      idleSmileTimer += dt;
+      if (!idleSmileActive && isIdleEnough && idleSmileTimer >= idleSmileNext) {
+        idleSmileActive = true;
+        idleSmileHold   = ANIM.IDLE_SMILE_HOLD_MIN + Math.random() * (ANIM.IDLE_SMILE_HOLD_MAX - ANIM.IDLE_SMILE_HOLD_MIN);
+        idleSmileTarget = ANIM.IDLE_SMILE_PEAK;
+        idleSmileTimer  = 0;
+      } else if (idleSmileActive && idleSmileTimer >= idleSmileHold) {
+        idleSmileActive = false;
+        idleSmileTarget = 0;
+        idleSmileTimer  = 0;
+        idleSmileNext   = ANIM.IDLE_SMILE_INT_MIN + Math.random() * (ANIM.IDLE_SMILE_INT_MAX - ANIM.IDLE_SMILE_INT_MIN);
+      }
+      idleSmileCurrent = lerp(idleSmileCurrent, idleSmileTarget, dt * ANIM.IDLE_SMILE_MOMENT_SPEED);
+
+      idleTiltTimer += dt;
+      if (!idleTiltActive && isIdleEnough && idleTiltTimer >= idleTiltNext) {
+        idleTiltActive = true;
+        idleTiltHold   = ANIM.IDLE_TILT_HOLD_MIN + Math.random() * (ANIM.IDLE_TILT_HOLD_MAX - ANIM.IDLE_TILT_HOLD_MIN);
+        idleTiltTarget = (Math.random() > 0.5 ? 1 : -1) * ANIM.IDLE_TILT_AMP * (0.6 + Math.random() * 0.4);
+        idleTiltTimer  = 0;
+      } else if (idleTiltActive && idleTiltTimer >= idleTiltHold) {
+        idleTiltActive = false;
+        idleTiltTarget = 0;
+        idleTiltTimer  = 0;
+        idleTiltNext   = ANIM.IDLE_TILT_INT_MIN + Math.random() * (ANIM.IDLE_TILT_INT_MAX - ANIM.IDLE_TILT_INT_MIN);
+      }
+      idleTiltCurrent = lerp(idleTiltCurrent, idleTiltTarget, dt * ANIM.IDLE_TILT_SPEED);
+
+      // ─── LISTENING NOD ────────────────────────────────────────────────────
+      // Gentle periodic forward head-dip to signal active listening.
+      // Only fires while listenBlend is high; fades proportionally as state leaves.
+      const isListeningEnough = listenBlend > 0.3;
+      nodTimer += dt;
+      if (!nodActive && isListeningEnough && nodTimer >= nodNext) {
+        nodActive = true;
+        nodHold   = ANIM.NOD_HOLD_MIN + Math.random() * (ANIM.NOD_HOLD_MAX - ANIM.NOD_HOLD_MIN);
+        nodTarget = ANIM.NOD_AMP;
+        nodTimer  = 0;
+      } else if (nodActive && nodTimer >= nodHold) {
+        nodActive = false;
+        nodTarget = 0;
+        nodTimer  = 0;
+        nodNext   = ANIM.NOD_INT_MIN + Math.random() * (ANIM.NOD_INT_MAX - ANIM.NOD_INT_MIN);
+      }
+      nodCurrent = lerp(nodCurrent, nodTarget, dt * ANIM.NOD_SPEED);
+      if (!isListeningEnough) nodCurrent = lerp(nodCurrent, 0, dt * ANIM.NOD_SPEED);
+
+      // Scale both idle moments out when active so transitions feel seamless
+      const idleTiltOutput  = idleTiltCurrent  * (1 - activeBlend);
+      const idleSmileOutput = idleSmileCurrent * (1 - activeBlend);
+
+      // ─── EYE BONES ────────────────────────────────────────────────────────
+      // Eyes lead the gaze direction; head follows passively at reduced scale.
+      // This creates the natural human pattern of eyes moving first, head
+      // drifting to catch up. Saccades route primarily here so they look like
+      // actual eye micro-movements rather than head twitches.
+      const leftEyeBase  = boneBase.leftEye;
+      const rightEyeBase = boneBase.rightEye;
+      const eyeH = lerp(gazeCurrentH, ANIM.THINK_GAZE_H, thinkBlend) * ANIM.EYE_H_SCALE;
+      const eyeV = lerp(gazeCurrentV, ANIM.THINK_GAZE_V, thinkBlend) * ANIM.EYE_V_SCALE;
+
+      if (leftEyeBase) {
+        setBoneRotation('leftEye',
+          leftEyeBase.x + eyeV + saccadeCurrentX * ANIM.EYE_SACCADE,
+          leftEyeBase.y + eyeH + saccadeCurrentY * ANIM.EYE_SACCADE,
+          leftEyeBase.z
+        );
+      }
+      if (rightEyeBase) {
+        setBoneRotation('rightEye',
+          rightEyeBase.x + eyeV + saccadeCurrentX * ANIM.EYE_SACCADE,
+          rightEyeBase.y + eyeH + saccadeCurrentY * ANIM.EYE_SACCADE,
+          rightEyeBase.z
         );
       }
 
-      // Arms: keep base z negative (natural hang) but swing with two
-      // frequencies and independent phases so left/right feel uncoupled.
-      const armSwingA = Math.sin(elapsed * 0.52);
-      const armSwingB = Math.sin(elapsed * 0.81);
-      const armSwingAR = Math.sin(elapsed * 0.52 + 1.1); // offset phase for right
-      const armSwingBR = Math.sin(elapsed * 0.81 + 0.7);
+      // Head carries the remaining gaze fraction — tilt/empathy offsets stay full
+      if (headBase) {
+        setBoneRotation(
+          'head',
+          headBase.x + lookV * (1.0 - ANIM.EYE_V_SCALE) + saccadeCurrentX * (1.0 - ANIM.EYE_SACCADE) + empathyTiltX + listenTiltX + nodCurrent * listenBlend,
+          headBase.y + lookH * 0.62 * (1.0 - ANIM.EYE_H_SCALE) + saccadeCurrentY * (1.0 - ANIM.EYE_SACCADE),
+          headBase.z + Math.sin(elapsed * ANIM.HEAD_ROLL_FREQ) * ANIM.HEAD_ROLL_AMP + thinkTiltZ + empathyTiltZ + waitBlend * ANIM.WAIT_TILT_Z + idleTiltOutput
+        );
+      }
+
+      // ─── ARMS ─────────────────────────────────────────────────────────────
+      // Two frequencies per arm, with independent phase offsets per side,
+      // so left and right arms never swing in perfect lockstep.
+      const armSwingA  = Math.sin(elapsed * ANIM.ARM_FREQ1);
+      const armSwingB  = Math.sin(elapsed * ANIM.ARM_FREQ2);
+      const armSwingAR = Math.sin(elapsed * ANIM.ARM_FREQ1 + 1.1);
+      const armSwingBR = Math.sin(elapsed * ANIM.ARM_FREQ2 + 0.7);
 
       if (leftUpperArmBase) {
         setBoneRotation(
           'leftUpperArm',
-          leftUpperArmBase.x + breath * 0.02,
+          leftUpperArmBase.x + breath * ANIM.BREATH_ARM_AMP,
           leftUpperArmBase.y + armSwingB * 0.018,
-          leftUpperArmBase.z + armSwingA * 0.055 + armSwingB * 0.022
+          leftUpperArmBase.z + armSwingA * ANIM.ARM_AMP1 + armSwingB * ANIM.ARM_AMP2
         );
       }
 
       if (rightUpperArmBase) {
         setBoneRotation(
           'rightUpperArm',
-          rightUpperArmBase.x + breath * 0.02,
+          rightUpperArmBase.x + breath * ANIM.BREATH_ARM_AMP,
           rightUpperArmBase.y - armSwingBR * 0.018,
-          rightUpperArmBase.z - (armSwingAR * 0.055 + armSwingBR * 0.022)
+          rightUpperArmBase.z - (armSwingAR * ANIM.ARM_AMP1 + armSwingBR * ANIM.ARM_AMP2)
         );
       }
 
       if (leftLowerArmBase) {
         setBoneRotation(
           'leftLowerArm',
-          leftLowerArmBase.x + Math.sin(elapsed * 0.88) * 0.03,
+          leftLowerArmBase.x + Math.sin(elapsed * ANIM.ARM_LOWER_FREQ) * ANIM.ARM_LOWER_AMP,
           leftLowerArmBase.y,
-          leftLowerArmBase.z + Math.sin(elapsed * 0.63) * 0.025
+          leftLowerArmBase.z + Math.sin(elapsed * ANIM.ARM_TWIST_FREQ) * ANIM.ARM_TWIST_AMP
         );
       }
 
       if (rightLowerArmBase) {
         setBoneRotation(
           'rightLowerArm',
-          rightLowerArmBase.x + Math.sin(elapsed * 0.88 + 0.9) * 0.03,
+          rightLowerArmBase.x + Math.sin(elapsed * ANIM.ARM_LOWER_FREQ + 0.9) * ANIM.ARM_LOWER_AMP,
           rightLowerArmBase.y,
-          rightLowerArmBase.z - Math.sin(elapsed * 0.63 + 0.6) * 0.025
+          rightLowerArmBase.z - Math.sin(elapsed * ANIM.ARM_TWIST_FREQ + 0.6) * ANIM.ARM_TWIST_AMP
         );
       }
 
       // ─── MOUTH / LIP SYNC ─────────────────────────────────────────────────
+      // Frame-rate-independent lerp factor — same perceived smoothness at any fps.
+      const vLerp = 1.0 - Math.exp(-dt / V_TAU);
+
       if (visemeMode && lipSyncActive) {
-        // ElevenLabs path: drive all five mouth shapes from the viseme timeline.
-        // No lerp applied here — crossfade is baked into getVisemeWeights() itself.
+        // Drive all 14 viseme channels with per-channel time-based smoothing.
         const w = LipSyncController.getVisemeWeights();
-        setExpression('aa', w.aa);
-        setExpression('ih', w.ih);
-        setExpression('ou', w.ou);
-        setExpression('ee', w.ee);
-        setExpression('oh', w.oh);
-        mouthCurrent = Math.max(w.aa, w.ih, w.ou, w.ee, w.oh);
+        let maxV = 0;
+        for (let vi = 0; vi < ALL_VISEME_KEYS.length; vi++) {
+          const k = ALL_VISEME_KEYS[vi];
+          vSmooth[k] = lerp(vSmooth[k], w[k] || 0, vLerp);
+          // Organic micro-variation: product of two incommensurable sines per channel
+          // prevents mechanical identical-weight repetition on recurring phonemes.
+          // Proportional to current weight so silent channels remain silent.
+          const organicNoise = Math.sin(elapsed * (0.71 + vi * 0.13) + vi * 2.09)
+                             * Math.sin(elapsed * (1.37 + vi * 0.08) + vi * 0.77);
+          const finalW = vSmooth[k] > 0.05
+            ? Math.max(0, Math.min(1, vSmooth[k] + organicNoise * 0.08 * vSmooth[k]))
+            : vSmooth[k];
+          setExpression(k, finalW);
+          if (finalW > maxV) maxV = finalW;
+        }
+        mouthCurrent = maxV;
+
+        // Subtle secondary jaw oscillation during speech — SET each frame, never additive,
+        // to prevent accumulation on models that have jawOpen but don't use it for visemes.
+        if (headMesh && headMesh.morphTargetDictionary && 'jawOpen' in headMesh.morphTargetDictionary) {
+          const jawIdx = headMesh.morphTargetDictionary.jawOpen;
+          const jawOsc = Math.max(0, mouthCurrent - 0.05) *
+                         (0.06 + 0.04 * Math.abs(Math.sin(elapsed * 8.5)));
+          headMesh.morphTargetInfluences[jawIdx] = jawOsc * 0.15;
+        }
       } else {
-        // RMS fallback path — original amplitude-based approach.
-        // Only 'aa' is driven; the other shapes are zeroed to avoid stale values
-        // if the mode was recently switched from viseme mode.
+        // Decay all viseme channels so the mouth closes smoothly when audio ends.
+        for (let vi = 0; vi < ALL_VISEME_KEYS.length; vi++) {
+          vSmooth[ALL_VISEME_KEYS[vi]] = lerp(vSmooth[ALL_VISEME_KEYS[vi]], 0, vLerp);
+        }
+
+        // RMS fallback path — frequency-band analysis drives multiple shapes.
         let mouthTarget = 0;
         if (lipSyncActive && lipSyncAnalyser && lipSyncBuf) {
-          lipSyncAnalyser.getByteTimeDomainData(lipSyncBuf);
-          let sumSq = 0;
-          for (let i = 0; i < lipSyncBuf.length; i++) {
-            const x = (lipSyncBuf[i] / 128.0) - 1.0;
-            sumSq += x * x;
+          lipSyncAnalyser.getByteFrequencyData(lipSyncBuf);
+          let lowEnergy = 0, highEnergy = 0;
+          const binCount = lipSyncBuf.length;
+          for (let i = 0; i < binCount; i++) {
+            if (i < binCount * 0.2) lowEnergy  += lipSyncBuf[i];
+            else                    highEnergy += lipSyncBuf[i];
           }
-          const rms = Math.sqrt(sumSq / lipSyncBuf.length);
-          mouthTarget = Math.min(1.0, rms * 15.0);
+          const lowAmp  = Math.min(1, (lowEnergy  / (binCount * 0.2))  / 200);
+          const highAmp = Math.min(1, (highEnergy / (binCount * 0.8)) / 160);
+          mouthTarget = lowAmp;
+          // Drive vowel-like shapes from low-band energy and sibilant from high-band.
+          setExpression('aa',   lowAmp  * 0.90);
+          setExpression('oh',   lowAmp  * 0.40);
+          setExpression('v_ss', highAmp * 0.55);
         } else if (speaking) {
           mouthTarget = 0.2 + Math.abs(Math.sin(elapsed * 7)) * 0.45;
+          setExpression('aa', mouthTarget);
         }
         mouthCurrent = lerp(mouthCurrent, mouthTarget, lipSyncActive ? 0.5 : 0.2);
-        setExpression('aa', mouthCurrent);
-        setExpression('ih', 0);
-        setExpression('ou', 0);
-        setExpression('ee', 0);
-        setExpression('oh', 0);
-      }
-
-      setExpression('surprised', listening ? 0.08 : 0);
-
-      // Warm idle: gentle resting smile that fades during active states
-      setExpression('happy',   lerp(0, 0.12, 1 - activeBlend));
-      setExpression('relaxed', lerp(0, 0.10, 1 - speakBlend));
-
-      blinkCooldown -= dt;
-      if (!blinking && blinkCooldown <= 0) {
-        blinking = true;
-        blinkProgress = 0;
-        blinkCooldown = Math.random() * 2.5 + 1.8;
-      }
-
-      if (blinking) {
-        blinkProgress += dt / 0.16;
-        const blinkValue = blinkProgress < 0.5
-          ? blinkProgress * 2
-          : (1 - blinkProgress) * 2;
-        const clampedBlink = Math.min(Math.max(blinkValue, 0), 1);
-        setExpression('blinkLeft', clampedBlink);
-        setExpression('blinkRight', clampedBlink);
-
-        if (blinkProgress >= 1) {
-          blinking = false;
-          setExpression('blinkLeft', 0);
-          setExpression('blinkRight', 0);
+        // In non-RMS paths, aa still blends with any decaying viseme weight for a smooth hand-off.
+        if (!lipSyncActive) {
+          setExpression('aa', Math.max(mouthCurrent, vSmooth.aa));
+          for (let vi = 1; vi < ALL_VISEME_KEYS.length; vi++) {
+            setExpression(ALL_VISEME_KEYS[vi], vSmooth[ALL_VISEME_KEYS[vi]]);
+          }
         }
       }
 
-      if (vrm.expressionManager && vrm.expressionManager.update) {
-        vrm.expressionManager.update();
+      // ─── OCULUS SILENCE SHAPE (RPM only) ────────────────────────────────────
+      // viseme_sil is the Oculus rest/closed-mouth shape. It must be driven
+      // inversely to mouth activity: 1.0 at rest (closed), 0.0 during peak speech.
+      // Without this, RPM's neutral pose has a slightly open mouth that never closes.
+      if (hasVisemeSil && headMesh) {
+        const silW = Math.max(0, 1.0 - mouthCurrent * 2.2);
+        setMorphTarget(headMesh,  'viseme_sil', silW);
+        if (teethMesh) setMorphTarget(teethMesh, 'viseme_sil', silW);
       }
+
+      // ─── DEBUG VISEME OVERLAY ─────────────────────────────────────────────
+      const dbgEl = document.getElementById('viseme-dbg');
+      if (dbgEl && dbgEl.style.display !== 'none') {
+        const af = LipSyncController.lastActiveFrame;
+        const activeLabel = af ? af.viseme + ' w:' + af.weight.toFixed(2) : 'none';
+        const activeWeights = ALL_VISEME_KEYS
+          .filter(k => vSmooth[k] > 0.01)
+          .map(k => k + ':' + vSmooth[k].toFixed(2))
+          .join('  ');
+        dbgEl.textContent = 'viseme: ' + activeLabel + '\\n' + (activeWeights || '(silent)');
+      }
+
+      // ─── FACIAL EXPRESSIONS ───────────────────────────────────────────────
+      // Emotion fades in fast when audio plays; decays slowly when silent (~1.5 s cooldown).
+      // Slow decay means the expression barely dips during the 50 ms inter-sentence gap,
+      // keeping consecutive sentences emotionally continuous.
+      speechEmotionBlend = lerp(speechEmotionBlend, lipSyncActive ? 1.0 : 0.0,
+        dt * (lipSyncActive ? 2.5 : 0.6));
+      const eb = speechEmotionBlend * speakBlend; // only active while speaking
+
+      // Base brow values from avatar state
+      let browInner = listenBlend  * ANIM.LISTEN_BROW_INNER
+                    + empathyBlend * ANIM.EMPATHY_BROW_INNER;
+      let browDown  = thinkBlend   * ANIM.THINK_BROW_DOWN;
+      let browOuter = 0;
+      let smileLift = 0;
+      let relaxLift = 0;
+
+      // Sentence-level emotion layer — subtle shifts that match the spoken content
+      if (eb > 0.01) {
+        if (speechEmotion === 'positive') {
+          smileLift = 0.20 * eb;
+          relaxLift = 0.12 * eb;
+        } else if (speechEmotion === 'warm') {
+          browInner += 0.10 * eb;
+          relaxLift  = 0.16 * eb;
+        } else if (speechEmotion === 'concern') {
+          browInner += 0.13 * eb;
+          browDown  += 0.07 * eb;
+        } else if (speechEmotion === 'question') {
+          browOuter  = 0.13 * eb;
+          browInner += 0.05 * eb;
+        }
+      }
+
+      setExpression('browInnerUp', Math.min(1, browInner));
+      setExpression('browDown',    Math.min(1, browDown));
+      setExpression('browOuterUp', Math.min(1, browOuter));
+
+      // Attentive wide-eye on listening
+      setExpression('surprised', listenBlend * ANIM.LISTEN_SURPRISE);
+
+      // Warm smile: baseline never fully disappears; occasional idle moments peak higher.
+      const smileTarget = lerp(ANIM.ACTIVE_SMILE_MIN, ANIM.IDLE_SMILE, 1 - activeBlend * 0.75);
+      setExpression('happy',   Math.min(1, Math.max(smileTarget, idleSmileOutput) + smileLift));
+      setExpression('relaxed', Math.min(1, lerp(0.04, ANIM.IDLE_RELAX, 1 - speakBlend) + relaxLift));
+
+      // ─── BLINK STATE MACHINE ──────────────────────────────────────────────
+      // Natural eyelid kinematics: fast close (~75 ms), brief hold, slow open (~180 ms).
+      // 18% of blinks are doubles — a brief re-closure shortly after the first.
+      blinkTimer += dt;
+      switch (blinkPhase) {
+        case 'idle':
+          if (blinkTimer >= blinkNext) {
+            blinkPhase    = 'closing';
+            blinkTimer    = 0;
+            blinkIsDouble = Math.random() < ANIM.BLINK_DOUBLE_PROB;
+          }
+          break;
+        case 'closing':
+          blinkValue = blinkCurveClose(blinkTimer);
+          if (blinkTimer >= ANIM.BLINK_CLOSE_DUR) { blinkPhase = 'hold'; blinkTimer = 0; }
+          break;
+        case 'hold':
+          blinkValue = 1;
+          if (blinkTimer >= ANIM.BLINK_HOLD_DUR) { blinkPhase = 'opening'; blinkTimer = 0; }
+          break;
+        case 'opening':
+          blinkValue = blinkCurveOpen(blinkTimer);
+          if (blinkTimer >= ANIM.BLINK_OPEN_DUR) {
+            blinkValue = 0;
+            if (blinkIsDouble) {
+              blinkPhase = 'between';
+              blinkTimer = 0;
+            } else {
+              blinkPhase = 'idle';
+              blinkNext  = ANIM.BLINK_MIN + Math.random() * (ANIM.BLINK_MAX - ANIM.BLINK_MIN);
+              if (speakBlend > 0.3) blinkNext *= 1.8; // people blink ~50% less while speaking
+              blinkTimer = 0;
+            }
+          }
+          break;
+        case 'between':
+          blinkValue = 0;
+          if (blinkTimer >= ANIM.BLINK_DOUBLE_GAP) { blinkPhase = 'closing2'; blinkTimer = 0; }
+          break;
+        case 'closing2':
+          blinkValue = blinkCurveClose(blinkTimer);
+          if (blinkTimer >= ANIM.BLINK_CLOSE_DUR) { blinkPhase = 'hold2'; blinkTimer = 0; }
+          break;
+        case 'hold2':
+          blinkValue = 1;
+          if (blinkTimer >= ANIM.BLINK_HOLD_DUR) { blinkPhase = 'opening2'; blinkTimer = 0; }
+          break;
+        case 'opening2':
+          blinkValue = blinkCurveOpen(blinkTimer);
+          if (blinkTimer >= ANIM.BLINK_OPEN_DUR) {
+            blinkValue = 0;
+            blinkPhase = 'idle';
+            blinkNext  = ANIM.BLINK_MIN + Math.random() * (ANIM.BLINK_MAX - ANIM.BLINK_MIN);
+            if (speakBlend > 0.3) blinkNext *= 1.8;
+            blinkTimer = 0;
+          }
+          break;
+      }
+      setExpression('blinkLeft',  blinkValue);
+      setExpression('blinkRight', blinkValue);
+
     }
 
     renderer.render(scene, camera);
@@ -708,12 +1562,12 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
-  if (vrm) {
-    frameCamera(vrm.scene);
+  if (model) {
+    frameCamera(model);
   }
 });
 
-loadVRM();
+loadModel();
 
 // ─── LIP SYNC STATE ──────────────────────────────────────────────────────────
 // Shared by both the RMS fallback path and the viseme-timeline path.
@@ -749,9 +1603,13 @@ let audioStartTime = null;   // AudioContext.currentTime at the moment source.st
 //   duration. Adding setExpression(lerp(prev, target, 0.5)) would add a second
 //   smoothing layer, causing the viseme to "lag" past the audio cue it maps to.
 const LipSyncController = {
+  // Expose the last active frame so the debug overlay can read it.
+  lastActiveFrame: null,
+
   getVisemeWeights: function() {
-    const result = { aa: 0, ih: 0, ou: 0, ee: 0, oh: 0 };
+    const result = { aa:0, ih:0, ou:0, ee:0, oh:0, v_pp:0, v_ff:0, v_th:0, v_dd:0, v_kk:0, v_ch:0, v_ss:0, v_nn:0, v_rr:0 };
     if (!visemeMode || !visemeTimeline || audioStartTime === null || !lipSyncCtx) {
+      LipSyncController.lastActiveFrame = null;
       return result;
     }
 
@@ -769,20 +1627,29 @@ const LipSyncController = {
     if (activeIdx < 0) return result;
 
     const active   = frames[activeIdx];
+    LipSyncController.lastActiveFrame = active;
     const progress = Math.min((now - active.time) / Math.max(active.duration, 0.001), 1.0);
 
-    // Cross-fade: last 20% of the current frame overlaps into the next frame.
-    const FADE_START = 0.80;
+    // 3-phase envelope per frame:
+    //   Attack  0%–15%  : smoothstep ramp (skipped for frames < 50ms — fast speech needs instant articulation)
+    //   Hold   15%–75%  : full weight (articulation held)
+    //   Release 75%–100%: smoothstep crossfade into next viseme (coarticulation anticipation)
+    const ATTACK_END = 0.15;
+    const FADE_START = 0.75;
     let currentWeight = active.weight;
     let nextViseme    = null;
     let nextWeight    = 0;
 
-    if (progress > FADE_START && activeIdx + 1 < frames.length) {
-      const blendT = (progress - FADE_START) / (1.0 - FADE_START); // 0 → 1
-      const next   = frames[activeIdx + 1];
-      currentWeight = active.weight * (1.0 - blendT);
+    if (active.duration >= 0.050 && progress < ATTACK_END) {
+      const t = progress / ATTACK_END;
+      currentWeight = active.weight * (t * t * (3.0 - 2.0 * t)); // smoothstep ease-in
+    } else if (progress > FADE_START && activeIdx + 1 < frames.length) {
+      const blendT  = (progress - FADE_START) / (1.0 - FADE_START); // 0 → 1
+      const eased   = blendT * blendT * (3.0 - 2.0 * blendT);       // smoothstep
+      const next    = frames[activeIdx + 1];
+      currentWeight = active.weight * (1.0 - eased);
       nextViseme    = next.viseme;
-      nextWeight    = next.weight * blendT;
+      nextWeight    = next.weight * eased * (1.0 - ATTACK_END);      // next starts sub-peak
     }
 
     if (active.viseme !== 'neutral' && result[active.viseme] !== undefined) {
@@ -850,8 +1717,8 @@ window.playAudioWithLipSync = async function(dataUri) {
   try {
     const decoded   = await _decodeAndPlay(dataUri);
     lipSyncAnalyser = lipSyncCtx.createAnalyser();
-    lipSyncAnalyser.fftSize = 256;
-    lipSyncBuf = new Uint8Array(lipSyncAnalyser.frequencyBinCount);
+    lipSyncAnalyser.fftSize = 512; // higher resolution for frequency-band analysis
+    lipSyncBuf = new Uint8Array(lipSyncAnalyser.frequencyBinCount); // frequencyBinCount = fftSize/2
 
     lipSyncSource = lipSyncCtx.createBufferSource();
     lipSyncSource.buffer = decoded;
@@ -879,10 +1746,11 @@ window.playAudioWithLipSync = async function(dataUri) {
 // To swap the TTS provider: implement ttsWithAlignment() in a new service class
 // and update ttsService.js. The visemeTimeline shape must match VisemeTimeline:
 //   { frames: [{time, viseme, duration, weight}], totalDuration }
-window.playAudioWithVisemeTimeline = async function(dataUri, timeline) {
+window.playAudioWithVisemeTimeline = async function(dataUri, timeline, emotion) {
   _stopCurrent();
   visemeMode     = true;
   visemeTimeline = timeline;
+  speechEmotion  = emotion || 'neutral';
   try {
     const decoded = await _decodeAndPlay(dataUri);
     lipSyncSource = lipSyncCtx.createBufferSource();
@@ -892,11 +1760,14 @@ window.playAudioWithVisemeTimeline = async function(dataUri, timeline) {
 
     lipSyncSource.onended = () => _onAudioEnded(null);
     if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
-    audioStartTime = lipSyncCtx.currentTime; // anchor after resume so timing is accurate
+    // Schedule 10ms ahead so the anchor matches actual sample playback; this absorbs
+    // the JS execution gap between audioStartTime capture and source.start().
+    const startAt  = lipSyncCtx.currentTime + 0.010;
+    audioStartTime = startAt;
+    lipSyncSource.start(startAt);
     if (window.ReactNativeWebView) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioStart' }));
     }
-    lipSyncSource.start(0);
   } catch(err) {
     _onAudioEnded(String(err));
   }
@@ -907,6 +1778,7 @@ window.stopAudioLipSync = function() {
   _stopCurrent();
 };
 
+loadBackdrop();
 requestAnimationFrame(animate);
 <\/script>
 </body>
@@ -915,11 +1787,14 @@ requestAnimationFrame(animate);
 
 export const AvatarVRM = forwardRef(({
   modelUrl = DEFAULT_VRM_MODEL_URL,
+  backdropUrl = null,
   width,
   height,
-  isListening = false,
-  isSpeaking = false,
-  isThinking = false,
+  isListening   = false,
+  isSpeaking    = false,
+  isThinking    = false,
+  isEmpathetic  = false,
+  isWaiting     = false,
   style,
 }, ref) => {
   const webRef = useRef(null);
@@ -958,11 +1833,11 @@ export const AvatarVRM = forwardRef(({
           `window.playAudioWithLipSync(${JSON.stringify(payload)});true;`
         );
       } else {
-        // ElevenLabs path: pass audio + viseme timeline into the WebView
-        const { audio, visemeTimeline } = payload;
+        // ElevenLabs path: pass audio + viseme timeline + sentence emotion into the WebView
+        const { audio, visemeTimeline, emotion } = payload;
         if (visemeTimeline) {
           webRef.current?.injectJavaScript(
-            `window.playAudioWithVisemeTimeline(${JSON.stringify(audio)}, ${JSON.stringify(visemeTimeline)});true;`
+            `window.playAudioWithVisemeTimeline(${JSON.stringify(audio)}, ${JSON.stringify(visemeTimeline)}, ${JSON.stringify(emotion || 'neutral')});true;`
           );
         } else {
           // Object payload but no timeline — use RMS fallback with the audio URI
@@ -978,14 +1853,22 @@ export const AvatarVRM = forwardRef(({
       webRef.current?.injectJavaScript(`window.stopAudioLipSync();true;`);
     },
     setOnAudioStart: (cb) => { audioStartCbRef.current = cb; },
+    /**
+     * Toggle the developer viseme overlay inside the WebView.
+     * Shows current active viseme, per-channel weights, and audio timing.
+     * Usage: avatarRef.current.setDebugMode(true)
+     */
+    setDebugMode: (on) => {
+      webRef.current?.injectJavaScript(`window.setDebugMode(${on ? 'true' : 'false'});true;`);
+    },
   }));
 
   const source = useMemo(
     () => ({
-      html: buildHTML(modelUrl),
+      html: buildHTML(modelUrl, backdropUrl),
       baseUrl: 'https://localhost/',
     }),
-    [modelUrl]
+    [modelUrl, backdropUrl]
   );
 
   const recoverWebView = useCallback((reason) => {
@@ -996,7 +1879,12 @@ export const AvatarVRM = forwardRef(({
   }, []);
 
   useEffect(() => {
-    const next = isSpeaking ? 'speaking' : isThinking ? 'thinking' : isListening ? 'listening' : 'idle';
+    const next = isSpeaking   ? 'speaking'
+               : isThinking   ? 'thinking'
+               : isEmpathetic ? 'empathy'
+               : isListening  ? 'listening'
+               : isWaiting    ? 'waiting'
+               : 'idle';
 
     if (next === stateRef.current) return;
 
@@ -1008,7 +1896,7 @@ export const AvatarVRM = forwardRef(({
       }
       true;
     `);
-  }, [isListening, isSpeaking, isThinking]);
+  }, [isListening, isSpeaking, isThinking, isEmpathetic, isWaiting]);
 
   const handleMessage = useCallback(
     (event) => {
@@ -1068,7 +1956,7 @@ export const AvatarVRM = forwardRef(({
         ref={webRef}
         source={source}
         style={styles.webview}
-        backgroundColor="#0D0D1A"
+        backgroundColor="#100C1E"
         containerStyle={styles.webviewContainer}
         onLoadStart={() => {
           setLoading(true);
@@ -1143,14 +2031,14 @@ export const AvatarVRM = forwardRef(({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    backgroundColor: '#0D0D1A',
+    backgroundColor: '#100C1E',
   },
   webviewContainer: {
-    backgroundColor: '#0D0D1A',
+    backgroundColor: '#100C1E',
   },
   webview: {
     flex: 1,
-    backgroundColor: '#0D0D1A',
+    backgroundColor: '#100C1E',
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

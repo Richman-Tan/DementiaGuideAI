@@ -20,6 +20,7 @@ import { Colors } from '../constants/colors';
 import { Typography, FontSize } from '../constants/typography';
 import { openaiService } from '../services/openaiService';
 import { elevenLabsService } from '../lib/tts/elevenLabsService';
+import { azureTtsService } from '../lib/tts/azureTtsService';
 import { useSettings } from '../context/SettingsContext';
 
 const Section = ({ title, children }) => {
@@ -112,6 +113,80 @@ const TextSizeSelector = ({ value, onChange }) => {
   );
 };
 
+// ─── Azure Credentials Row ───────────────────────────────────────────────────
+const AzureCredentialsRow = ({ apiKey, region, onSave, onClear }) => {
+  const [editing, setEditing]       = useState(false);
+  const [keyInput, setKeyInput]     = useState('');
+  const [regionInput, setRegionInput] = useState('');
+  const [hidden, setHidden]         = useState(true);
+
+  const configured  = !!(apiKey && region);
+  const canSave     = keyInput.length >= 20 && regionInput.length >= 3;
+
+  const handleCancel = () => { setEditing(false); setKeyInput(''); setRegionInput(''); };
+  const handleSave   = () => {
+    if (canSave) { onSave(keyInput, regionInput); handleCancel(); }
+  };
+
+  if (editing) {
+    return (
+      <View>
+        <View style={[styles.apiKeyEditRow, styles.settingRowBorder]}>
+          <View style={[styles.settingIcon, { backgroundColor: `${Colors.primary}18` }]}>
+            <MaterialCommunityIcons name="key-variant" size={20} color={Colors.primary} />
+          </View>
+          <TextInput
+            style={styles.apiKeyInput}
+            value={keyInput}
+            onChangeText={setKeyInput}
+            placeholder="Azure API Key"
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry={hidden}
+            placeholderTextColor={Colors.textTertiary}
+            accessibilityLabel="Azure API key input"
+          />
+          <TouchableOpacity onPress={() => setHidden(h => !h)} style={styles.eyeBtn}>
+            <MaterialCommunityIcons name={hidden ? 'eye-outline' : 'eye-off-outline'} size={20} color={Colors.textTertiary} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.apiKeyEditRow}>
+          <View style={[styles.settingIcon, { backgroundColor: `${Colors.primary}18` }]}>
+            <MaterialCommunityIcons name="earth" size={20} color={Colors.primary} />
+          </View>
+          <TextInput
+            style={styles.apiKeyInput}
+            value={regionInput}
+            onChangeText={setRegionInput}
+            placeholder="Region (e.g. australiaeast)"
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholderTextColor={Colors.textTertiary}
+            accessibilityLabel="Azure region input"
+          />
+          <TouchableOpacity style={[styles.saveKeyBtn, !canSave && styles.saveKeyBtnDisabled]} onPress={handleSave}>
+            <Text style={styles.saveKeyText}>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleCancel}>
+            <Text style={styles.cancelKeyText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <SettingRow
+      icon="microphone-outline"
+      iconColor={configured ? Colors.success : Colors.warning}
+      label="Azure Speech"
+      sublabel={configured ? `Key …${apiKey.slice(-4)} · ${region}` : 'Not configured — tap to add'}
+      onPress={() => setEditing(true)}
+      isLast={false}
+    />
+  );
+};
+
 // ─── API Key Row ──────────────────────────────────────────────────────────────
 // label defaults to "OpenAI API Key" so existing usages need no change.
 const ApiKeyRow = ({ value, onSave, onClear, label = 'OpenAI API Key', placeholder = 'sk-proj-...' }) => {
@@ -181,10 +256,12 @@ export const ProfileScreen = ({ navigation }) => {
     textSize, textScale, setTextSize,
     hapticFeedback, audioEnabled, avatarEnabled, autoPlayResponses,
     updateSetting, toggleDarkMode, triggerHaptic,
-    darkMode, highContrast, subtitlesEnabled, colors,
+    darkMode, highContrast, subtitlesEnabled, conciseMode, colors,
   } = useSettings();
   const [apiKey, setApiKey]               = useState(null);
   const [elevenLabsKey, setElevenLabsKey] = useState(null);
+  const [azureKey, setAzureKey]           = useState(null);
+  const [azureRegion, setAzureRegion]     = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -195,6 +272,10 @@ export const ProfileScreen = ({ navigation }) => {
     }).start();
     openaiService.getApiKey().then(k => setApiKey(k));
     elevenLabsService.getApiKey().then(k => setElevenLabsKey(k));
+    azureTtsService.getCredentials().then(({ key, region }) => {
+      setAzureKey(key);
+      setAzureRegion(region);
+    });
   }, []);
 
   const handleSaveApiKey = async (key) => {
@@ -213,6 +294,16 @@ export const ProfileScreen = ({ navigation }) => {
     Alert.alert(
       'ElevenLabs Key Saved',
       'Aria will now use ElevenLabs for higher-quality voice with precise lip sync.'
+    );
+  };
+
+  const handleSaveAzureCredentials = async (key, region) => {
+    await azureTtsService.saveCredentials(key, region);
+    setAzureKey(key);
+    setAzureRegion(region);
+    Alert.alert(
+      'Azure Speech Saved',
+      'Aria will now use Azure TTS with phoneme-accurate lip sync.'
     );
   };
 
@@ -419,6 +510,16 @@ export const ProfileScreen = ({ navigation }) => {
               sublabel="Automatically play audio when Aria responds"
               value={autoPlayResponses}
               onToggle={(v) => updateSetting('autoPlayResponses', v)}
+              isLast={false}
+            />
+
+            <ToggleRow
+              icon="lightning-bolt"
+              iconColor={Colors.warning}
+              label="Get to the Point"
+              sublabel="Shorter answers — no filler words or jargon"
+              value={conciseMode}
+              onToggle={(v) => updateSetting('conciseMode', v)}
               isLast
             />
           </Section>
@@ -468,6 +569,16 @@ export const ProfileScreen = ({ navigation }) => {
                 setApiKey(null);
               }}
             />
+            <AzureCredentialsRow
+              apiKey={azureKey}
+              region={azureRegion}
+              onSave={handleSaveAzureCredentials}
+              onClear={async () => {
+                await azureTtsService.clearCredentials();
+                setAzureKey(null);
+                setAzureRegion(null);
+              }}
+            />
             <ApiKeyRow
               value={elevenLabsKey}
               onSave={handleSaveElevenLabsKey}
@@ -501,7 +612,7 @@ export const ProfileScreen = ({ navigation }) => {
               icon="robot-outline"
               iconColor={Colors.textSecondary}
               label="Powered by OpenAI"
-              sublabel={elevenLabsKey ? 'GPT-4o-mini + ElevenLabs voice (precise lip sync)' : 'GPT-4o-mini with OpenAI voice'}
+              sublabel={azureKey ? 'GPT-4o-mini + Azure Speech (phoneme lip sync)' : elevenLabsKey ? 'GPT-4o-mini + ElevenLabs voice' : 'GPT-4o-mini with OpenAI voice'}
               isLast={false}
             />
             <SettingRow
@@ -518,6 +629,14 @@ export const ProfileScreen = ({ navigation }) => {
               label="Help & Support"
               sublabel="Get help using DementiaGuide AI"
               onPress={handleHelpSupport}
+              isLast={false}
+            />
+            <SettingRow
+              icon="restart"
+              iconColor={Colors.secondary}
+              label="Reset setup guide"
+              sublabel="Go through the setup steps again"
+              onPress={() => updateSetting('hasCompletedOnboarding', false)}
               isLast
             />
           </Section>

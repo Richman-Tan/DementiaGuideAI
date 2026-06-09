@@ -5,9 +5,10 @@ import * as Haptics from 'expo-haptics';
 import { getThemeColors } from '../constants/colors';
 
 const STORAGE_KEY = '@dg_settings_v1';
-const TEXT_SCALE  = { small: 0.88, medium: 1.0, large: 1.18 };
+const TEXT_SCALE  = { small: 0.88, medium: 1.0, large: 1.18, xlarge: 1.35 };
 
 const DEFAULTS = {
+  // Existing
   textSize:          'medium',
   hapticFeedback:    true,
   audioEnabled:      true,
@@ -16,12 +17,34 @@ const DEFAULTS = {
   darkMode:          false,
   highContrast:      false,
   subtitlesEnabled:  true,
+  conciseMode:       false,
+
+  // Onboarding
+  hasCompletedOnboarding: false,
+  isCaregiversSetup:      false,
+
+  // Aria personality & communication
+  ariaPersonality:   'warm',      // 'warm' | 'calm' | 'friendly' | 'practical'
+  responseStyle:     'balanced',  // 'brief' | 'balanced' | 'detailed' | 'step-by-step'
+  jargonMode:        'explain',   // 'explain' | 'avoid' | 'ok'
+  communicationMode: 'both',      // 'voice' | 'text' | 'both'
+  speechRate:        1.0,         // 0.82 | 1.0 | 1.15
+
+  // Avatar / persona selection
+  selectedAvatarId:  'aria_sdk',    // key into AVATAR_PROFILES
+
+  // Support & UI guidance
+  supportLevel:      'comfortable', // 'comfortable' | 'some-help' | 'clear' | 'guided'
+
+  // Accessibility
+  reducedMotion:     false,
 };
 
 const SettingsContext = createContext(null);
 
 export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState(DEFAULTS);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Full-screen overlay animated value — used for the dark mode cross-dissolve.
   // Fades in to 0.5 opacity at the moment the colours flip, then fades back out.
@@ -31,11 +54,13 @@ export const SettingsProvider = ({ children }) => {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then(raw => {
-        if (!raw) return;
-        const saved = JSON.parse(raw);
-        setSettings(prev => ({ ...prev, ...saved }));
+        if (raw) {
+          const saved = JSON.parse(raw);
+          setSettings(prev => ({ ...prev, ...saved }));
+        }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setIsHydrated(true));
   }, []);
 
   const persist = (next) => {
@@ -114,6 +139,10 @@ export const SettingsProvider = ({ children }) => {
   );
 
   const value = {
+    // Hydration flag — consumers wait for this before routing
+    isHydrated,
+
+    // Existing settings
     textSize:          settings.textSize,
     textScale:         TEXT_SCALE[settings.textSize] ?? 1.0,
     hapticFeedback:    settings.hapticFeedback,
@@ -123,6 +152,28 @@ export const SettingsProvider = ({ children }) => {
     darkMode:          settings.darkMode,
     highContrast:      settings.highContrast,
     subtitlesEnabled:  settings.subtitlesEnabled,
+    conciseMode:       settings.conciseMode,
+
+    // Onboarding
+    hasCompletedOnboarding: settings.hasCompletedOnboarding,
+    isCaregiversSetup:      settings.isCaregiversSetup,
+
+    // Aria personality & communication
+    ariaPersonality:   settings.ariaPersonality,
+    responseStyle:     settings.responseStyle,
+    jargonMode:        settings.jargonMode,
+    communicationMode: settings.communicationMode,
+    speechRate:        settings.speechRate,
+
+    // Avatar / persona selection
+    selectedAvatarId:  settings.selectedAvatarId,
+
+    // Support & UI guidance
+    supportLevel:      settings.supportLevel,
+
+    // Accessibility
+    reducedMotion:     settings.reducedMotion,
+
     colors,
     setTextSize,
     updateSetting,

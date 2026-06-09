@@ -22,7 +22,7 @@ export async function tts(text, options = {}) {
     try {
       const { audioBase64, visemeTimeline } = await azureTtsService.ttsWithAlignment(
         text,
-        options.speechRate ?? 1.0,
+        options.speechRate ?? 0.82,
         options.visemeWeights ?? null
       );
       console.log('[ttsService] Azure OK — viseme frames:', visemeTimeline?.frames?.length ?? 0);
@@ -38,7 +38,7 @@ export async function tts(text, options = {}) {
       const { audioBase64, visemeTimeline } = await elevenLabsService.ttsWithAlignment(
         text,
         options.voice,
-        options.speechRate ?? 1.0,
+        options.speechRate ?? 0.82,
         options.visemeWeights ?? null
       );
       return { audio: `data:audio/mpeg;base64,${audioBase64}`, visemeTimeline };

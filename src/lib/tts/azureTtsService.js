@@ -3,7 +3,7 @@ import { AZURE_VISEME_TO_KEY, AZURE_DEFAULT_WEIGHTS } from '../lipsync/azureVise
 
 const SECURE_KEY    = 'azure_speech_key';
 const SECURE_REGION = 'azure_speech_region';
-const DEFAULT_VOICE = 'en-US-AriaNeural';
+const DEFAULT_VOICE = 'en-US-JennyNeural';
 
 export class AzureAuthError extends Error {
   constructor(msg) { super(msg); this.name = 'AzureAuthError'; }

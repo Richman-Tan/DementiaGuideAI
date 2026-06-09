@@ -819,6 +819,110 @@ function patchExprMap() {
     window._dbg('Visemes remapped to weighted ARKit shapes (vowels + consonants)');
   }
 
+  // Reallusion Character Creator 4 — V_Open/V_Wide/V_Tight_O viseme shapes + Jaw_Open.
+  // CC4 ships its own phoneme viseme set instead of ARKit or Oculus names.
+  else if ('V_Open' in dict && 'Jaw_Open' in dict) {
+    const has = (n) => n in dict;
+
+    // ── Vowels ──────────────────────────────────────────────────────────────
+    // aa — open vowel ("father"): V_Open drives mouth shape, Jaw_Open adds jaw drop
+    EXPR_MAP.aa = [
+      ['V_Open',  0.85],
+      ['Jaw_Open', 0.72],
+      ...(has('Mouth_LowerLip_Depress_L') ? [['Mouth_LowerLip_Depress_L', 0.30], ['Mouth_LowerLip_Depress_R', 0.30]] : []),
+    ];
+    // ih — close front ("see/bit"): V_Lip_Open + slight V_Wide, minimal jaw
+    EXPR_MAP.ih = [
+      ['V_Lip_Open', 0.65],
+      ['V_Wide',     0.28],
+      ['Jaw_Open',   0.10],
+    ];
+    // ou — close back rounded ("food"): V_Tight_O + pursed lips, nearly closed jaw
+    EXPR_MAP.ou = [
+      ['V_Tight_O', 0.90],
+      ['Jaw_Open',  0.18],
+      ...(has('Mouth_Lips_Purse_UL') ? [
+        ['Mouth_Lips_Purse_UL', 0.25], ['Mouth_Lips_Purse_UR', 0.25],
+        ['Mouth_Lips_Purse_DL', 0.25], ['Mouth_Lips_Purse_DR', 0.25],
+      ] : []),
+    ];
+    // ee — close-mid front ("fade"): V_Wide drives the lip stretch
+    EXPR_MAP.ee = [
+      ['V_Wide',   0.85],
+      ['Jaw_Open', 0.22],
+      ...(has('Mouth_Corner_Pull_L') ? [['Mouth_Corner_Pull_L', 0.20], ['Mouth_Corner_Pull_R', 0.20]] : []),
+    ];
+    // oh — close-mid/open-mid back rounded ("go"): V_Tight_O + funnel + mid jaw
+    EXPR_MAP.oh = [
+      ['V_Tight_O', 0.72],
+      ['Jaw_Open',  0.48],
+      ...(has('Mouth_Funnel_UL') ? [
+        ['Mouth_Funnel_UL', 0.22], ['Mouth_Funnel_UR', 0.22],
+        ['Mouth_Funnel_DL', 0.22], ['Mouth_Funnel_DR', 0.22],
+      ] : []),
+    ];
+
+    // ── Consonants ───────────────────────────────────────────────────────────
+    // v_pp — bilabial (p, b, m): V_Explosive closes the lips
+    EXPR_MAP.v_pp = [
+      ['V_Explosive', 0.80],
+      ...(has('Mouth_Lips_Press_L') ? [['Mouth_Lips_Press_L', 0.45], ['Mouth_Lips_Press_R', 0.45]] : []),
+    ];
+    // v_ff — labiodental (f, v): V_Dental_Lip pulls lower lip up
+    EXPR_MAP.v_ff = [
+      ['V_Dental_Lip', 0.78],
+      ['Jaw_Open',     0.12],
+      ...(has('Mouth_LowerLip_Depress_L') ? [['Mouth_LowerLip_Depress_L', 0.28], ['Mouth_LowerLip_Depress_R', 0.28]] : []),
+    ];
+    // v_th — dental (th): V_Dental_Lip at lower intensity, tongue tip visible
+    EXPR_MAP.v_th = [
+      ['V_Dental_Lip', 0.50],
+      ['Jaw_Open',     0.15],
+    ];
+    // v_dd — alveolar (d, t, n): slight V_Lip_Open, tongue at ridge
+    EXPR_MAP.v_dd = [
+      ['V_Lip_Open', 0.40],
+      ['Jaw_Open',   0.12],
+    ];
+    // v_kk — velar (k, g): mild V_Open, back-of-tongue contact
+    EXPR_MAP.v_kk = [
+      ['V_Open',   0.30],
+      ['Jaw_Open', 0.20],
+    ];
+    // v_ch — palato-alveolar (ch, sh): V_Affricate is the CC4 shape for these
+    EXPR_MAP.v_ch = [
+      ['V_Affricate', 0.82],
+      ['Jaw_Open',    0.12],
+    ];
+    // v_ss — sibilant (s, z): V_Tight nearly closes the mouth
+    EXPR_MAP.v_ss = [
+      ['V_Tight', 0.78],
+      ['Jaw_Open', 0.08],
+    ];
+    // v_nn — nasal/lateral (n, l): slight V_Lip_Open, mostly closed
+    EXPR_MAP.v_nn = [
+      ['V_Lip_Open', 0.35],
+      ['Jaw_Open',   0.10],
+    ];
+    // v_rr — rhotic (r): slight O rounding via V_Tight_O + purse
+    EXPR_MAP.v_rr = [
+      ['V_Tight_O', 0.42],
+      ['Jaw_Open',  0.12],
+      ...(has('Mouth_Lips_Purse_UL') ? [['Mouth_Lips_Purse_UL', 0.18], ['Mouth_Lips_Purse_UR', 0.18]] : []),
+    ];
+
+    // ── Facial expressions ───────────────────────────────────────────────────
+    if (has('Eye_Blink_L'))        EXPR_MAP.blinkLeft   = ['Eye_Blink_L'];
+    if (has('Eye_Blink_R'))        EXPR_MAP.blinkRight  = ['Eye_Blink_R'];
+    if (has('Mouth_Corner_Pull_L')) EXPR_MAP.happy      = ['Mouth_Corner_Pull_L', 'Mouth_Corner_Pull_R'];
+    if (has('Eye_Widen_L'))        EXPR_MAP.surprised   = ['Eye_Widen_L', 'Eye_Widen_R'];
+    if (has('Brow_Raise_In_L'))    EXPR_MAP.browInnerUp = ['Brow_Raise_In_L', 'Brow_Raise_In_R'];
+    if (has('Brow_Down_L'))        EXPR_MAP.browDown    = ['Brow_Down_L', 'Brow_Down_R'];
+    if (has('Brow_Raise_Outer_L')) EXPR_MAP.browOuterUp = ['Brow_Raise_Outer_L', 'Brow_Raise_Outer_R'];
+
+    window._dbg('Visemes: Reallusion CC4 (V_Open/V_Wide/V_Tight_O + Jaw_Open)');
+  }
+
   // Detect Oculus silence shape — present on RPM models.
   // When found, animate() will drive it inversely to mouth activity.
   hasVisemeSil = ('viseme_sil' in dict);
@@ -863,6 +967,7 @@ function loadModel() {
   const loader = new GLTFLoader();
   loader.crossOrigin = 'anonymous';
   loader.setDRACOLoader(dracoLoader);
+  loader.setMeshoptDecoder(MeshoptDecoder);
 
   // Large models (> ~20 MB) exceed WKWebView's XHR size limit for data URIs.
   // Convert to a Blob URL first — identical to the backdrop loading approach.
@@ -903,7 +1008,7 @@ function loadModel() {
         let p3best = null;
         for (const m of morphMeshes) {
           const d = m.morphTargetDictionary;
-          if ('eyeBlinkLeft' in d || 'EyeBlink_L' in d || 'Blink_L' in d) {
+          if ('eyeBlinkLeft' in d || 'EyeBlink_L' in d || 'Blink_L' in d || 'Eye_Blink_L' in d) {
             if (!p3best || Object.keys(d).length > Object.keys(p3best.morphTargetDictionary).length) {
               p3best = m;
             }
@@ -950,6 +1055,24 @@ function loadModel() {
       }
 
       buildBoneMap();
+
+      // Reallusion CC4 eye fix — the cornea/eye mesh uses a specular-transmission
+      // material that renders as invisible in Three.js. Force it opaque so eyes appear.
+      model.traverse((obj) => {
+        if (!obj.isMesh) return;
+        const n = obj.name;
+        if (n === 'CC_Base_Eye' || n === 'CC_Base_EyeOcclusion' || n === 'CC_Base_TearLine') {
+          const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach((mat) => {
+            if (!mat) return;
+            mat.transparent   = false;
+            mat.depthWrite    = true;
+            mat.alphaTest     = 0;
+            mat.opacity       = 1.0;
+            mat.needsUpdate   = true;
+          });
+        }
+      });
 
       baseRotationY = model.rotation.y;
       basePositionY = model.position.y;

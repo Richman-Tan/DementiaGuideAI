@@ -67,9 +67,9 @@ export const AVATAR_PROFILES = {
 
   aria_metahuman: {
     id:          'aria_metahuman',
-    name:        'Aria',
-    label:       'MetaHuman',
-    description: 'High-fidelity MetaHuman avatar',
+    name:        'Ada',
+    label:       'Ada',
+    description: 'High-fidelity Reallusion character',
     modelKey:    'metahuman',
     //
     // MetaHuman ARKit shapes are professionally calibrated to anatomical range —

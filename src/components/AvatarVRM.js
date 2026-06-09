@@ -736,21 +736,24 @@ function patchExprMap() {
       ...(has('mouthLowerDownLeft')  ? [['mouthLowerDownLeft',  0.50], ['mouthLowerDownRight', 0.50]] : []),
       ...(has('mouthRollLower')      ? [['mouthRollLower',      0.22]] : []),
     ];
-    // ih — front vowel ("bit"): wide lip stretch, slight jaw
+    // ih — close front vowel ("see/bit"): nearly closed jaw, spread lips
+    // IPA: i/ɪ = Close/Near-close row — least jaw opening of all vowels
     EXPR_MAP.ih = [
-      ['jawOpen',            0.22],
+      ['jawOpen',            0.10],
       ...(has('mouthStretchLeft')    ? [['mouthStretchLeft',    0.78], ['mouthStretchRight',   0.78]] : []),
       ...(has('mouthDimpleLeft')     ? [['mouthDimpleLeft',     0.18], ['mouthDimpleRight',    0.18]] : []),
     ];
-    // ou — rounded vowel ("you"): pucker with moderate jaw
+    // ou — close back rounded vowel ("food/you"): nearly closed jaw, very pursed lips
+    // IPA: u = Close Back — same height row as i, jaw barely open, rounding is the defining feature
     EXPR_MAP.ou = [
-      ['jawOpen',            0.28],
+      ['jawOpen',            0.20],
       ...(has('mouthPucker')         ? [['mouthPucker',         0.88]] : []),
       ...(has('mouthFunnel')         ? [['mouthFunnel',         0.25]] : []),
     ];
-    // ee — high front vowel ("see"): strong stretch, near-closed jaw
+    // ee — close-mid/open-mid front vowel ("fade/bed"): more jaw than ih, spread lips
+    // IPA: e = Close-mid, ɛ = Open-mid — sits below i on chart, so more jaw than ih
     EXPR_MAP.ee = [
-      ['jawOpen',            0.12],
+      ['jawOpen',            0.26],
       ...(has('mouthStretchLeft')    ? [['mouthStretchLeft',    0.82], ['mouthStretchRight',   0.82]] : []),
       ...(has('mouthSmileLeft')      ? [['mouthSmileLeft',      0.16], ['mouthSmileRight',     0.16]] : []),
     ];

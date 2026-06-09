@@ -29,7 +29,7 @@ export const AZURE_VISEME_TO_KEY = {
 // Default weights matching the AvatarSDK (aria_sdk) profile baseline.
 // Per-avatar overrides are passed in at call time via visemeWeights.
 export const AZURE_DEFAULT_WEIGHTS = {
-  aa: 0.68, ih: 0.60, ou: 0.65, ee: 0.62, oh: 0.65,
+  aa: 0.72, ih: 0.60, ou: 0.72, ee: 0.62, oh: 0.65,
   v_pp: 0.70, v_ff: 0.58, v_th: 0.60, v_dd: 0.62,
   v_kk: 0.62, v_ch: 0.62, v_ss: 0.58, v_nn: 0.55, v_rr: 0.60,
   neutral: 0.0,

@@ -67,8 +67,8 @@ export const AVATAR_PROFILES = {
 
   aria_metahuman: {
     id:          'aria_metahuman',
-    name:        'Ada',
-    label:       'Ada',
+    name:        'Bo',
+    label:       'Bo',
     description: 'High-fidelity Reallusion character',
     modelKey:    'metahuman',
     //

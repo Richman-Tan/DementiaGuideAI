@@ -32,7 +32,7 @@ import { AVATAR_PROFILES, AVATAR_PROFILE_LIST, DEFAULT_AVATAR_ID } from '../conf
 const ASSET_MAP = {
   sdk:       require('../../assets/characters/aria/model.glb'),
   rpm:       require('../../assets/characters/zhenja/zhenja.glb'),
-  metahuman: require('../../assets/characters/ada/ada.glb'),
+  metahuman: require('../../assets/characters/bo/bo.glb'),
 };
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const COZY_ROOM_ASSET = require('../../assets/cozy_living_room_baked_small.glb');

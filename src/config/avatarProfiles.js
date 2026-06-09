@@ -35,6 +35,7 @@ export const AVATAR_PROFILES = {
     label:       'Classic',
     description: 'Warm, expressive look',
     modelKey:    'sdk',
+    voice:       'en-US-JennyNeural',
     //
     // AvatarSDK MetaPerson — blobby/blended shapes, forgiving of heuristic errors.
     // Reduce if tongue protrudes.
@@ -53,6 +54,7 @@ export const AVATAR_PROFILES = {
     label:       'New Look',
     description: 'Enhanced lip sync with Ready Player Me',
     modelKey:    'rpm',
+    voice:       'en-US-AriaNeural',
     //
     // RPM Oculus visemes — highly distinct shapes designed for audio-driven
     // phoneme detection. Low weights prevent heuristic errors looking jarring.
@@ -67,10 +69,11 @@ export const AVATAR_PROFILES = {
 
   aria_metahuman: {
     id:          'aria_metahuman',
-    name:        'Bo',
-    label:       'Bo',
+    name:        'Eric',
+    label:       'Eric',
     description: 'High-fidelity Reallusion character',
     modelKey:    'metahuman',
+    voice:       'en-US-EricNeural',
     //
     // MetaHuman ARKit shapes are professionally calibrated to anatomical range —
     // use high weights. Each viseme key drives a combo of ARKit shapes (via the

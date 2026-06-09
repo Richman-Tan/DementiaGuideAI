@@ -23,7 +23,8 @@ export async function tts(text, options = {}) {
       const { audioBase64, visemeTimeline } = await azureTtsService.ttsWithAlignment(
         text,
         options.speechRate ?? 0.82,
-        options.visemeWeights ?? null
+        options.visemeWeights ?? null,
+        options.voice ?? null
       );
       console.log('[ttsService] Azure OK — viseme frames:', visemeTimeline?.frames?.length ?? 0);
       return { audio: `data:audio/mpeg;base64,${audioBase64}`, visemeTimeline };

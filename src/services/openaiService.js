@@ -87,6 +87,7 @@ class OpenAIService {
     const queryEmbedding = await this._embedQuery(query);
     const { data, error } = await supabase.rpc('match_chunks', {
       query_embedding: queryEmbedding,
+      query_text: query,
       match_count: topK,
       min_similarity: MIN_SIMILARITY,
     });

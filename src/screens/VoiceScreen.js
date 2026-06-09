@@ -28,10 +28,12 @@ import { useSettings } from '../context/SettingsContext';
 import { AVATAR_PROFILES, AVATAR_PROFILE_LIST, DEFAULT_AVATAR_ID } from '../config/avatarProfiles';
 
 // All model assets must be required statically — Metro cannot handle dynamic require().
+// To add MetaHuman: drop the GLB at assets/metahuman/aria.glb then uncomment the line below.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ASSET_MAP = {
-  sdk: require('../../assets/avatar2/model.glb'),
-  rpm: require('../../assets/ready-player-me-female-character/source/zhenja.glb'),
+  sdk:       require('../../assets/avatar2/model.glb'),
+  rpm:       require('../../assets/ready-player-me-female-character/source/zhenja.glb'),
+  metahuman: require('../../assets/metahuman/aria.glb'),
 };
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const COZY_ROOM_ASSET = require('../../assets/cozy_living_room_baked_small.glb');

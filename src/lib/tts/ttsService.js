@@ -1,3 +1,4 @@
+import { azureTtsService } from './azureTtsService';
 import { elevenLabsService } from './elevenLabsService';
 import { openaiService } from '../../services/openaiService';
 
@@ -6,28 +7,32 @@ import { openaiService } from '../../services/openaiService';
  *
  * Returns: { audio: string, visemeTimeline: object|null }
  *
- *   audio          — data:audio/mpeg;base64,... URI ready for Web Audio API decoding.
- *   visemeTimeline — { frames, totalDuration } when ElevenLabs is active, null otherwise.
- *                    null signals AvatarVRM to fall back to RMS-based lip sync.
- *
- * Provider selection (automatic):
- *   1. If an ElevenLabs API key is stored → try ElevenLabs with-timestamps endpoint.
- *      On any failure, log a warning and fall through to OpenAI TTS.
- *   2. OpenAI TTS (tts-1) is always the fallback; it returns no alignment data, so
- *      visemeTimeline is null and the avatar uses RMS amplitude for mouth animation.
- *
- * To swap the LLM/TTS provider later:
- *   - Replace `elevenLabsService` with a different service that implements
- *     ttsWithAlignment(text, voiceId) → { audioBase64, visemeTimeline }.
- *   - Update the import above; this function's call site in useAvatarConversation
- *     does not need to change.
+ * Provider priority (automatic):
+ *   1. Azure TTS  — real phoneme viseme IDs, most accurate lip sync
+ *   2. ElevenLabs — character-level alignment, good timing
+ *   3. OpenAI TTS — no alignment data, RMS amplitude fallback in WebView
  *
  * @param {string} text
- * @param {{ voice?: string }} [options]
+ * @param {{ speechRate?: number, voice?: string, visemeWeights?: object }} [options]
  */
 export async function tts(text, options = {}) {
-  const hasElevenLabs = await elevenLabsService.hasApiKey();
+  const hasAzure = await azureTtsService.hasCredentials();
+  console.log('[ttsService] hasAzure:', hasAzure);
+  if (hasAzure) {
+    try {
+      const { audioBase64, visemeTimeline } = await azureTtsService.ttsWithAlignment(
+        text,
+        options.speechRate ?? 1.0,
+        options.visemeWeights ?? null
+      );
+      console.log('[ttsService] Azure OK — viseme frames:', visemeTimeline?.frames?.length ?? 0);
+      return { audio: `data:audio/mpeg;base64,${audioBase64}`, visemeTimeline };
+    } catch (err) {
+      console.warn('[ttsService] Azure failed, falling back to ElevenLabs:', err.message);
+    }
+  }
 
+  const hasElevenLabs = await elevenLabsService.hasApiKey();
   if (hasElevenLabs) {
     try {
       const { audioBase64, visemeTimeline } = await elevenLabsService.ttsWithAlignment(
@@ -36,17 +41,12 @@ export async function tts(text, options = {}) {
         options.speechRate ?? 1.0,
         options.visemeWeights ?? null
       );
-      return {
-        audio: `data:audio/mpeg;base64,${audioBase64}`,
-        visemeTimeline,
-      };
+      return { audio: `data:audio/mpeg;base64,${audioBase64}`, visemeTimeline };
     } catch (err) {
-      // Graceful degradation — ElevenLabs failed, use OpenAI TTS + RMS lip sync
       console.warn('[ttsService] ElevenLabs failed, falling back to OpenAI TTS:', err.message);
     }
   }
 
-  // OpenAI TTS fallback — no alignment data available
   const dataUri = await openaiService.tts(text, options.voice ?? 'nova');
   return { audio: dataUri, visemeTimeline: null };
 }

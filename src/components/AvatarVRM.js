@@ -119,6 +119,7 @@ window._dbg('Module script started');
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 window._dbg('Imports loaded: THREE r' + THREE.REVISION);
@@ -436,43 +437,48 @@ function bone(name) {
   return boneMap[name] || null;
 }
 
-// Mixamo → our normalised bone name (RPM exports use Mixamo rig)
+// Normalised bone name → candidate names from known rig conventions.
+// Each array is checked in order; the first match found in the loaded model wins.
+// Covers three rigs:
+//   Mixamo  — used by RPM (Ready Player Me) exports
+//   MetaHuman — UE5 default skeleton (pelvis, spine_01…05, neck_01, clavicle_l, etc.)
+//   AvatarSDK — broadly Mixamo-compatible with minor variations
 const BONE_NAME_MAP = {
-  'hips':                    ['Hips'],
-  'spine':                   ['Spine'],
-  'chest':                   ['Spine2', 'Spine1', 'Chest'],
-  'neck':                    ['Neck'],
-  'head':                    ['Head'],
-  'leftEye':                 ['LeftEye'],
-  'rightEye':                ['RightEye'],
-  'leftShoulder':            ['LeftShoulder'],
-  'rightShoulder':           ['RightShoulder'],
-  'leftUpperArm':            ['LeftArm'],
-  'rightUpperArm':           ['RightArm'],
-  'leftLowerArm':            ['LeftForeArm'],
-  'leftLowerArmRoll':        ['LeftForeArm1'],
-  'rightLowerArm':           ['RightForeArm'],
-  'rightLowerArmRoll':       ['RightForeArm1'],
-  'leftHand':                ['LeftHand'],
-  'rightHand':               ['RightHand'],
-  'leftIndexProximal':       ['LeftHandIndex1'],
-  'leftIndexIntermediate':   ['LeftHandIndex2'],
-  'leftMiddleProximal':      ['LeftHandMiddle1'],
-  'leftMiddleIntermediate':  ['LeftHandMiddle2'],
-  'leftRingProximal':        ['LeftHandRing1'],
-  'leftRingIntermediate':    ['LeftHandRing2'],
-  'leftLittleProximal':      ['LeftHandPinky1'],
-  'leftLittleIntermediate':  ['LeftHandPinky2'],
-  'leftThumbProximal':       ['LeftHandThumb1'],
-  'rightIndexProximal':      ['RightHandIndex1'],
-  'rightIndexIntermediate':  ['RightHandIndex2'],
-  'rightMiddleProximal':     ['RightHandMiddle1'],
-  'rightMiddleIntermediate': ['RightHandMiddle2'],
-  'rightRingProximal':       ['RightHandRing1'],
-  'rightRingIntermediate':   ['RightHandRing2'],
-  'rightLittleProximal':     ['RightHandPinky1'],
-  'rightLittleIntermediate': ['RightHandPinky2'],
-  'rightThumbProximal':      ['RightHandThumb1'],
+  'hips':                    ['Hips',          'pelvis',      'root'],
+  'spine':                   ['Spine',          'spine_01'],
+  'chest':                   ['Spine2', 'Spine1', 'Chest',    'spine_03', 'spine_04', 'spine_05'],
+  'neck':                    ['Neck',            'neck_01',   'neck_02'],
+  'head':                    ['Head',            'head'],
+  'leftEye':                 ['LeftEye',         'eye_l',     'FACIAL_L_Eye'],
+  'rightEye':                ['RightEye',        'eye_r',     'FACIAL_R_Eye'],
+  'leftShoulder':            ['LeftShoulder',    'clavicle_l'],
+  'rightShoulder':           ['RightShoulder',   'clavicle_r'],
+  'leftUpperArm':            ['LeftArm',         'upperarm_l'],
+  'rightUpperArm':           ['RightArm',        'upperarm_r'],
+  'leftLowerArm':            ['LeftForeArm',     'lowerarm_l'],
+  'leftLowerArmRoll':        ['LeftForeArm1',    'lowerarm_twist_01_l'],
+  'rightLowerArm':           ['RightForeArm',    'lowerarm_r'],
+  'rightLowerArmRoll':       ['RightForeArm1',   'lowerarm_twist_01_r'],
+  'leftHand':                ['LeftHand',        'hand_l'],
+  'rightHand':               ['RightHand',       'hand_r'],
+  'leftIndexProximal':       ['LeftHandIndex1',  'index_01_l'],
+  'leftIndexIntermediate':   ['LeftHandIndex2',  'index_02_l'],
+  'leftMiddleProximal':      ['LeftHandMiddle1', 'middle_01_l'],
+  'leftMiddleIntermediate':  ['LeftHandMiddle2', 'middle_02_l'],
+  'leftRingProximal':        ['LeftHandRing1',   'ring_01_l'],
+  'leftRingIntermediate':    ['LeftHandRing2',   'ring_02_l'],
+  'leftLittleProximal':      ['LeftHandPinky1',  'pinky_01_l'],
+  'leftLittleIntermediate':  ['LeftHandPinky2',  'pinky_02_l'],
+  'leftThumbProximal':       ['LeftHandThumb1',  'thumb_01_l'],
+  'rightIndexProximal':      ['RightHandIndex1', 'index_01_r'],
+  'rightIndexIntermediate':  ['RightHandIndex2', 'index_02_r'],
+  'rightMiddleProximal':     ['RightHandMiddle1','middle_01_r'],
+  'rightMiddleIntermediate': ['RightHandMiddle2','middle_02_r'],
+  'rightRingProximal':       ['RightHandRing1',  'ring_01_r'],
+  'rightRingIntermediate':   ['RightHandRing2',  'ring_02_r'],
+  'rightLittleProximal':     ['RightHandPinky1', 'pinky_01_r'],
+  'rightLittleIntermediate': ['RightHandPinky2', 'pinky_02_r'],
+  'rightThumbProximal':      ['RightHandThumb1', 'thumb_01_r'],
 };
 
 function buildBoneMap() {
@@ -647,7 +653,7 @@ let EXPR_MAP = {
   'ih':    ['viseme_I'],
   'ou':    ['viseme_U'],
   'ee':    ['viseme_E'],
-  'oh':    ['viseme_O'],
+  'oh':    [['viseme_O', 1.0], ['viseme_U', 0.32]],
   // ── Consonant visemes ─────────────────────────────────────────────────────
   'v_pp':  ['viseme_PP'],
   'v_ff':  ['viseme_FF'],
@@ -704,7 +710,7 @@ function patchExprMap() {
     EXPR_MAP.ih = ['ih'];
     EXPR_MAP.ou = ['ou'];
     EXPR_MAP.ee = 'E' in dict ? ['E'] : EXPR_MAP.ee;
-    EXPR_MAP.oh = ['oh'];
+    EXPR_MAP.oh = [['oh', 0.85], ['ou', 0.40]];
     // Consonant articulators (AvatarSDK exports without viseme_ prefix)
     if ('PP' in dict) EXPR_MAP.v_pp = ['PP'];
     if ('FF' in dict) EXPR_MAP.v_ff = ['FF'];
@@ -748,13 +754,66 @@ function patchExprMap() {
       ...(has('mouthStretchLeft')    ? [['mouthStretchLeft',    0.82], ['mouthStretchRight',   0.82]] : []),
       ...(has('mouthSmileLeft')      ? [['mouthSmileLeft',      0.16], ['mouthSmileRight',     0.16]] : []),
     ];
-    // oh — rounded open vowel ("go"): funnel + strong jaw drop
+    // oh — rounded vowel ("go"): less jaw than aa, funnel for rounding, pucker for pursed-lip O shape
     EXPR_MAP.oh = [
-      ['jawOpen',            0.65],
-      ...(has('mouthFunnel')         ? [['mouthFunnel',         0.78]] : []),
-      ...(has('mouthLowerDownLeft')  ? [['mouthLowerDownLeft',  0.22], ['mouthLowerDownRight', 0.22]] : []),
+      ['jawOpen',            0.50],
+      ...(has('mouthFunnel')         ? [['mouthFunnel',         0.80]] : []),
+      ...(has('mouthPucker')         ? [['mouthPucker',         0.42]] : []),
+      ...(has('mouthLowerDownLeft')  ? [['mouthLowerDownLeft',  0.18], ['mouthLowerDownRight', 0.18]] : []),
     ];
-    window._dbg('Visemes remapped to weighted ARKit shapes');
+
+    // ── Consonant visemes via ARKit shapes ────────────────────────────────────
+    // Without these, every consonant fires nothing (viseme_PP etc. don't exist
+    // on ARKit-only models). Each approximates the correct articulator position.
+
+    // v_pp — bilabial (p, b, m): lips press firmly together
+    EXPR_MAP.v_pp = [
+      ...(has('mouthClose')      ? [['mouthClose',      0.80]] : [['jawOpen', 0.05]]),
+      ...(has('mouthPressLeft')  ? [['mouthPressLeft',  0.60], ['mouthPressRight',  0.60]] : []),
+    ];
+    // v_ff — labiodental (f, v): lower lip draws up toward upper teeth
+    EXPR_MAP.v_ff = [
+      ['jawOpen',            0.12],
+      ...(has('mouthLowerDownLeft') ? [['mouthLowerDownLeft', 0.45], ['mouthLowerDownRight', 0.45]] : []),
+    ];
+    // v_th — dental (th): tongue between teeth, slight jaw and lower lip
+    EXPR_MAP.v_th = [
+      ['jawOpen',            0.18],
+      ...(has('mouthLowerDownLeft') ? [['mouthLowerDownLeft', 0.35], ['mouthLowerDownRight', 0.35]] : []),
+    ];
+    // v_dd — alveolar (d, t, n, l): tongue at ridge, brief small opening
+    EXPR_MAP.v_dd = [
+      ['jawOpen',            0.14],
+      ...(has('mouthClose')  ? [['mouthClose',  0.12]] : []),
+    ];
+    // v_kk — velar (k, g): back-of-tongue contact, mild jaw drop
+    EXPR_MAP.v_kk = [
+      ['jawOpen',            0.18],
+      ...(has('mouthShrugLower') ? [['mouthShrugLower', 0.18]] : []),
+    ];
+    // v_ch — palato-alveolar (ch, j, sh): rounded/funneled lips
+    EXPR_MAP.v_ch = [
+      ['jawOpen',            0.14],
+      ...(has('mouthFunnel') ? [['mouthFunnel', 0.50]] : []),
+      ...(has('mouthPucker') ? [['mouthPucker', 0.20]] : []),
+    ];
+    // v_ss — sibilant (s, z): teeth nearly closed, slight lateral stretch
+    EXPR_MAP.v_ss = [
+      ['jawOpen',            0.08],
+      ...(has('mouthStretchLeft') ? [['mouthStretchLeft', 0.35], ['mouthStretchRight', 0.35]] : []),
+    ];
+    // v_nn — nasal/lateral (n, l): mostly closed, small opening
+    EXPR_MAP.v_nn = [
+      ['jawOpen',            0.10],
+      ...(has('mouthClose')  ? [['mouthClose',  0.20]] : []),
+    ];
+    // v_rr — rhotic (r): slight pucker, moderate jaw
+    EXPR_MAP.v_rr = [
+      ['jawOpen',            0.14],
+      ...(has('mouthPucker') ? [['mouthPucker', 0.38]] : []),
+    ];
+
+    window._dbg('Visemes remapped to weighted ARKit shapes (vowels + consonants)');
   }
 
   // Detect Oculus silence shape — present on RPM models.
@@ -795,11 +854,19 @@ function setExpression(name, value) {
 function loadModel() {
   window._dbg('Renderer created, loading GLB model...');
 
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/');
+
   const loader = new GLTFLoader();
   loader.crossOrigin = 'anonymous';
+  loader.setDRACOLoader(dracoLoader);
 
-  loader.load(
-    '${safeUrl}',
+  // Large models (> ~20 MB) exceed WKWebView's XHR size limit for data URIs.
+  // Convert to a Blob URL first — identical to the backdrop loading approach.
+  const rawModelUrl = '${safeUrl}';
+  function _doLoadModel(url) {
+    loader.load(
+      url,
     (gltf) => {
       window._dbg('GLTF loaded, setting up model...');
 
@@ -911,6 +978,29 @@ function loadModel() {
       }
     }
   );
+  }
+
+  // WKWebView blocks both XHR and fetch() on data URIs larger than ~20 MB.
+  // Bypass: decode base64 with atob() entirely in JS — no network call needed.
+  if (rawModelUrl.startsWith('data:')) {
+    window._dbg('Model: decoding ' + Math.round(rawModelUrl.length / 1024 / 1024) + ' MB data URI with atob...');
+    try {
+      var comma   = rawModelUrl.indexOf(',');
+      var b64     = rawModelUrl.substring(comma + 1);
+      var binary  = atob(b64);
+      var n       = binary.length;
+      var bytes   = new Uint8Array(n);
+      for (var i = 0; i < n; i++) bytes[i] = binary.charCodeAt(i);
+      var blob    = new Blob([bytes.buffer], { type: 'model/gltf-binary' });
+      var blobUrl = URL.createObjectURL(blob);
+      window._dbg('Model: Blob ready (' + Math.round(blob.size / 1024 / 1024) + ' MB), loading GLB...');
+      _doLoadModel(blobUrl);
+    } catch(err) {
+      window._dbg('Model: atob decode failed — ' + (err && err.message ? err.message : String(err)));
+    }
+  } else {
+    _doLoadModel(rawModelUrl);
+  }
 }
 
 // ─── BACKDROP LOADER ──────────────────────────────────────────────────────────

@@ -35,6 +35,42 @@ const ERROR_MESSAGES = {
   network: 'Connection error — check your internet connection',
 };
 
+// ─── Inline citation renderer ─────────────────────────────────────────────────
+// Splits text like "...memory loss [1][2]..." into Text + tappable badge runs.
+const CitationText = ({ text, citations, onCiteTap, textStyle }) => {
+  if (!citations || citations.length === 0) {
+    return <Text style={textStyle}>{text}</Text>;
+  }
+  const parts = [];
+  let last = 0;
+  const re = /\[(\d+)\]/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push({ type: 'text', value: text.slice(last, m.index) });
+    parts.push({ type: 'cite', num: parseInt(m[1], 10) });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push({ type: 'text', value: text.slice(last) });
+
+  return (
+    <Text style={textStyle}>
+      {parts.map((p, i) =>
+        p.type === 'text' ? (
+          <Text key={i}>{p.value}</Text>
+        ) : (
+          <Text
+            key={i}
+            onPress={() => onCiteTap(p.num)}
+            style={styles.citeBadge}
+          >
+            {` [${p.num}]`}
+          </Text>
+        )
+      )}
+    </Text>
+  );
+};
+
 // ─── Typing indicator ─────────────────────────────────────────────────────────
 const TypingIndicator = ({ anim, bubbleStyle }) => (
   <View style={styles.typingRow}>
@@ -91,6 +127,7 @@ export const ChatScreen = ({ navigation, route }) => {
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState(null); // null | 'auth' | 'ratelimit' | 'network'
+  const [activeCitation, setActiveCitation] = useState(null); // { num, title, org, url, excerpt } | null
   const initialMessageSent = useRef(false);
   const typingAnim = useRef(new Animated.Value(0)).current;
   const soundRef = useRef(null);
@@ -279,40 +316,34 @@ export const ChatScreen = ({ navigation, route }) => {
 
   const renderMessageBubble = (message) => {
     const isUser = message.role === 'user';
-    const sources = message.sources ?? [];
+    const citations = message.sources ?? [];
     return (
       <View style={[styles.messageRow, isUser ? styles.messageRowUser : styles.messageRowAria]}>
         <View style={[styles.messageBubble, isUser ? styles.messageBubbleUser : [styles.messageBubbleAria, { backgroundColor: colors.border }]]}>
-          <Text style={[
-            styles.messageText,
-            isUser ? styles.messageTextUser : [styles.messageTextAria, { color: colors.textPrimary }],
-            { fontSize: 16 * textScale, lineHeight: 22 * textScale },
-          ]}>
-            {message.text}
-          </Text>
+          {isUser ? (
+            <Text style={[
+              styles.messageText,
+              styles.messageTextUser,
+              { fontSize: 16 * textScale, lineHeight: 22 * textScale },
+            ]}>
+              {message.text}
+            </Text>
+          ) : (
+            <CitationText
+              text={message.text}
+              citations={citations}
+              onCiteTap={num => {
+                const c = citations.find(s => s.num === num);
+                if (c) setActiveCitation(c);
+              }}
+              textStyle={[
+                styles.messageText,
+                styles.messageTextAria,
+                { color: colors.textPrimary, fontSize: 16 * textScale, lineHeight: 22 * textScale },
+              ]}
+            />
+          )}
         </View>
-
-        {!isUser && sources.length > 0 && (
-          <View style={styles.sourcesContainer}>
-            <MaterialCommunityIcons name="book-open-outline" size={12} color={Colors.primary} />
-            <View style={styles.sourcesList}>
-              {sources.map((s, i) => {
-                const isObj = typeof s === 'object' && s !== null;
-                const label = isObj ? (s.org ?? s.title) : s;
-                const url = isObj ? s.url : null;
-                return (
-                  <Text
-                    key={i}
-                    style={[styles.sourceText, url && styles.sourceLink]}
-                    onPress={url ? () => Linking.openURL(url) : undefined}
-                  >
-                    · {label}
-                  </Text>
-                );
-              })}
-            </View>
-          </View>
-        )}
       </View>
     );
   };
@@ -494,6 +525,41 @@ export const ChatScreen = ({ navigation, route }) => {
 
         {inputBar}
       </KeyboardAvoidingView>
+
+      {/* ── Citation card modal ── */}
+      {activeCitation && (
+        <TouchableOpacity
+          style={styles.citationOverlay}
+          activeOpacity={1}
+          onPress={() => setActiveCitation(null)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.citationCard}
+            onPress={() => {}} // prevent tap-through
+          >
+            <View style={styles.citationHeader}>
+              <MaterialCommunityIcons name="book-open-variant" size={16} color={Colors.primary} />
+              <Text style={styles.citationNum}>Source [{activeCitation.num}]</Text>
+              <TouchableOpacity onPress={() => setActiveCitation(null)} style={{ marginLeft: 'auto' }}>
+                <MaterialCommunityIcons name="close" size={18} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.citationTitle}>{activeCitation.title}</Text>
+            {activeCitation.org && (
+              <Text style={styles.citationOrg}>{activeCitation.org}</Text>
+            )}
+            <View style={styles.citationExcerptBox}>
+              <Text style={styles.citationExcerpt}>"{activeCitation.excerpt}"</Text>
+            </View>
+            {activeCitation.url && (
+              <TouchableOpacity onPress={() => Linking.openURL(activeCitation.url)}>
+                <Text style={styles.citationLink}>View source ↗</Text>
+              </TouchableOpacity>
+            )}
+          </TouchableOpacity>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -637,28 +703,74 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
 
-  // Sources below AI bubbles
-  sourcesContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginLeft: 4,
-    marginTop: 4,
-    marginBottom: 6,
-    gap: 5,
-    maxWidth: '80%',
-  },
-  sourcesList: {
-    flex: 1,
-    gap: 1,
-  },
-  sourceText: {
-    fontSize: 11,
+  // Inline citation badge inside message text
+  citeBadge: {
     color: Colors.primary,
-    lineHeight: 15,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // Citation card modal
+  citationOverlay: {
+    position: 'absolute',
+    inset: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+    zIndex: 100,
+  },
+  citationCard: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+    paddingBottom: 32,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  citationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  citationNum: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  citationTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+    lineHeight: 20,
+  },
+  citationOrg: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  citationExcerptBox: {
+    backgroundColor: '#f0f4ff',
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary,
+    borderRadius: 6,
+    padding: 10,
+    marginVertical: 4,
+  },
+  citationExcerpt: {
+    fontSize: 13,
+    color: '#374151',
+    lineHeight: 19,
     fontStyle: 'italic',
   },
-  sourceLink: {
+  citationLink: {
+    fontSize: 13,
+    color: Colors.primary,
     textDecorationLine: 'underline',
+    marginTop: 2,
   },
 
   // Input area

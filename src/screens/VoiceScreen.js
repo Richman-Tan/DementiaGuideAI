@@ -38,6 +38,7 @@ const ASSET_MAP = {
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const COZY_ROOM_ASSET = require('../../assets/cozy_living_room_baked_small.glb');
 
+
 const QUICK_CHIPS = [
   'Morning routine',
   'Managing sundowning',
@@ -126,6 +127,7 @@ export const VoiceScreen = ({ navigation }) => {
   } = useAvatarConversation({ avatarRef });
 
   const isActive = voiceState === VoiceState.LISTENING || voiceState === VoiceState.SPEAKING;
+
 
   // Mic pulse animation
   useEffect(() => {
@@ -813,5 +815,78 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.45)',
     fontSize: 15,
     fontWeight: '500',
+  },
+  chipTextActive: {
+    color: '#fff',
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+    paddingHorizontal: 24,
+  },
+  iconBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  micIconBtn: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: 'rgba(78,205,196,0.12)',
+    borderWidth: 2,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  input: {
+    flex: 1,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: 20,
+    color: '#fff',
+    fontSize: 15,
+  },
+  stopBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 13,
+    borderRadius: 25,
+    backgroundColor: '#fff',
+  },
+  stopIcon: {
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+    backgroundColor: '#E53935',
+  },
+  stopText: {
+    ...Typography.labelMedium,
+    color: '#1E2D3D',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  sendBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

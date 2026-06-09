@@ -44,6 +44,12 @@
  *   --url       (optional) Canonical URL to attribute as source_url.
  *                          Defaults to --source if source is a URL.
  *   --prefix    (optional) ID prefix for generated chunks (default: derived from source name)
+ *   --chunking  (optional) generic | manual (default: generic)
+ *   --country   (optional) Source jurisdiction/country metadata (e.g. NZ, global)
+ *   --source-version (optional) Source variant/version label (e.g. who-original, nz-adapted)
+ *   --audience  (optional) Intended audience metadata (e.g. carer)
+ *   --document-id (optional) Stable document identifier tag (e.g. isupport-nz)
+ *   --preserve-layout (optional) Keep line breaks to better preserve PDF structure
  *   --dry-run   (optional) Print chunks without uploading to Supabase
  *
  * -----------------------------------------------------------------------------
@@ -67,7 +73,45 @@ import { JSDOM } from 'jsdom';
 import fetch from 'node-fetch';
 
 const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
+const pdfParseModule = require('pdf-parse');
+const pdfParse =
+  typeof pdfParseModule === 'function'
+    ? pdfParseModule
+    : typeof pdfParseModule?.default === 'function'
+      ? pdfParseModule.default
+      : null;
+const PDFParseClass =
+  typeof pdfParseModule?.PDFParse === 'function'
+    ? pdfParseModule.PDFParse
+    : null;
+
+function loadDotEnvIfPresent() {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const envPath = path.join(__dirname, '../.env');
+  if (!fs.existsSync(envPath)) return;
+
+  const raw = fs.readFileSync(envPath, 'utf8');
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+
+    const eq = trimmed.indexOf('=');
+    if (eq <= 0) continue;
+
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+
+    if (!(key in process.env)) {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadDotEnvIfPresent();
 
 // ─── CLI argument parsing ─────────────────────────────────────────────────────
 
@@ -83,18 +127,31 @@ const category = getArg('category');
 const org      = getArg('org');
 const urlArg   = getArg('url');
 const prefix   = getArg('prefix');
+const chunkingMode = (getArg('chunking') ?? 'generic').toLowerCase();
+const preserveLayout = args.includes('--preserve-layout');
+const keepFrontMatter = args.includes('--keep-front-matter');
+const skipTags = args.includes('--skip-tags');
+const country = getArg('country');
+const sourceVersion = getArg('source-version');
+const audience = getArg('audience');
+const documentId = getArg('document-id');
 
 const VALID_CATEGORIES = ['caregiving', 'clinical', 'communication', 'prevention', 'best-practices', 'home-safety', 'well-being'];
 
 if (!source || !category || !org) {
   console.error(
-    'Usage: node scripts/ingest.mjs --source <path|url> --category <slug> --org <name> [--url <url>] [--prefix <id_prefix>] [--dry-run]'
+    'Usage: node scripts/ingest.mjs --source <path|url> --category <slug> --org <name> [--url <url>] [--prefix <id_prefix>] [--country <name>] [--source-version <label>] [--audience <name>] [--document-id <id>] [--chunking generic|manual] [--preserve-layout] [--dry-run]'
   );
   process.exit(1);
 }
 
 if (!VALID_CATEGORIES.includes(category)) {
   console.error(`Invalid category "${category}". Must be one of: ${VALID_CATEGORIES.join(' | ')}`);
+  process.exit(1);
+}
+
+if (!['generic', 'manual'].includes(chunkingMode)) {
+  console.error('Invalid --chunking mode. Use "generic" or "manual".');
   process.exit(1);
 }
 
@@ -117,6 +174,23 @@ const OVERLAP_WORDS    = 50;
 const MIN_CHUNK_WORDS  = 40;
 const BATCH_SIZE       = 20;
 
+const SECTION_MARKERS = [
+  { regex: /^learning objectives?\b[:\s-]*/i, type: 'learning-objectives' },
+  { regex: /^case vignette\b[:\s-]*/i, type: 'case-vignette' },
+  { regex: /^case study\b[:\s-]*/i, type: 'case-vignette' },
+  { regex: /^keep in mind\b[:\s-]*/i, type: 'keep-in-mind' },
+  { regex: /^activity\b[:\s-]*/i, type: 'activity' },
+  { regex: /^reflection\b[:\s-]*/i, type: 'activity' },
+  { regex: /^practice exercise\b[:\s-]*/i, type: 'activity' },
+];
+
+const HEADING_MARKERS = [
+  /^module\s+\d+\b/i,
+  /^session\s+\d+\b/i,
+  /^chapter\s+\d+\b/i,
+  /^unit\s+\d+\b/i,
+];
+
 // ─── Text extraction ──────────────────────────────────────────────────────────
 
 async function extractFromUrl(url) {
@@ -136,8 +210,26 @@ async function extractFromUrl(url) {
 
 async function extractFromPdf(filePath) {
   console.log(`Reading PDF: ${filePath}`);
+  if (!pdfParse && !PDFParseClass) {
+    throw new Error('pdf-parse import failed. Reinstall with: npm install pdf-parse');
+  }
   const buffer = fs.readFileSync(filePath);
-  const data   = await pdfParse(buffer);
+
+  let data;
+  if (pdfParse) {
+    data = await pdfParse(buffer);
+  } else {
+    const parser = new PDFParseClass({ data: buffer });
+    await parser.load();
+    const textResult = await parser.getText();
+    const info = await parser.getInfo();
+    await parser.destroy();
+    data = {
+      text: textResult?.text ?? '',
+      numpages: info?.total ?? 0,
+    };
+  }
+
   const title  = path.basename(filePath, path.extname(filePath)).replace(/[-_]/g, ' ');
   console.log(`Extracted ${data.numpages} pages from "${title}"`);
   return { text: data.text, title };
@@ -145,14 +237,251 @@ async function extractFromPdf(filePath) {
 
 // ─── Chunking ─────────────────────────────────────────────────────────────────
 
+function normalizeText(text, keepLayout = false) {
+  if (keepLayout) {
+    return text
+      .replace(/\r\n/g, '\n')
+      .replace(/[\t\f\v]+/g, ' ')
+      .replace(/[ ]{2,}/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  return text
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function buildMetadataTags() {
+  const out = [];
+  if (country) out.push(`country:${String(country).trim().toLowerCase()}`);
+  if (sourceVersion) out.push(`source_version:${String(sourceVersion).trim().toLowerCase()}`);
+  if (audience) out.push(`audience:${String(audience).trim().toLowerCase()}`);
+  if (documentId) out.push(`document_id:${String(documentId).trim().toLowerCase()}`);
+  return out;
+}
+
+function detectSectionType(line) {
+  for (const marker of SECTION_MARKERS) {
+    if (marker.regex.test(line.trim())) {
+      return marker.type;
+    }
+  }
+  return null;
+}
+
+function isHeadingLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  return HEADING_MARKERS.some(re => re.test(trimmed));
+}
+
+function splitLongContentByWords(content, maxWords = CHUNK_WORDS) {
+  const paragraphs = content
+    .split(/\n{2,}/)
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  const out = [];
+  let current = [];
+  let currentWords = 0;
+
+  for (const p of paragraphs) {
+    const words = p.split(/\s+/).length;
+    if (currentWords > 0 && currentWords + words > maxWords) {
+      out.push(current.join('\n\n').trim());
+      current = [p];
+      currentWords = words;
+    } else {
+      current.push(p);
+      currentWords += words;
+    }
+  }
+
+  if (current.length > 0) {
+    out.push(current.join('\n\n').trim());
+  }
+
+  return out.filter(Boolean);
+}
+
+function detectLowValueReason(content, title = '') {
+  const text = String(content ?? '').replace(/\s+/g, ' ').trim();
+  const lc = text.toLowerCase();
+  const words = lc ? lc.split(/\s+/).length : 0;
+
+  if (!text) return 'empty';
+
+  // Frequent page-number artifact from PDF extraction.
+  if (/--\s*\d+\s+of\s+\d+\s*--/i.test(text) && words <= 140) {
+    return 'page-marker';
+  }
+
+  // Keep content-focused chunks, skip front matter and legal boilerplate.
+  if (/(^|\s)(table of contents|contents)($|\s|:)/i.test(text) && words <= 220) {
+    return 'table-of-contents';
+  }
+
+  if (/(©|copyright|all rights reserved|world health organization\s+20\d{2})/i.test(text) && words <= 220) {
+    return 'copyright-disclaimer';
+  }
+
+  // Very short module-only heading fragments are not useful retrieval units.
+  if (/^module\s+\d+\b/i.test(lc) && words <= 24) {
+    return 'module-heading-fragment';
+  }
+
+  if (/^(i\s*support|isupport)\b/i.test(lc) && words <= 24) {
+    return 'cover-fragment';
+  }
+
+  const headingLike = /^([a-z0-9\- ]+\s*[:\-]?\s*){1,6}$/i.test(text);
+  if (headingLike && words <= 12) {
+    return 'short-heading-only';
+  }
+
+  return null;
+}
+
+function filterLowValueChunks(chunks, { enabled = true } = {}) {
+  if (!enabled) return chunks;
+
+  const removed = [];
+  const kept = [];
+
+  for (const chunk of chunks) {
+    const reason = detectLowValueReason(chunk.content, chunk.title);
+    if (reason) {
+      removed.push({ id: chunk.id, title: chunk.title, reason });
+      continue;
+    }
+    kept.push(chunk);
+  }
+
+  if (removed.length > 0) {
+    console.log(`\nFiltered out ${removed.length} low-value chunk(s):`);
+    for (const item of removed) {
+      console.log(`  - ${item.id} (${item.reason}) ${item.title}`);
+    }
+  }
+
+  if (kept.length === 0) {
+    throw new Error('All chunks were filtered out as low-value. Use --keep-front-matter to bypass this filter if needed.');
+  }
+
+  return kept;
+}
+
+function chunkManualText(text, sourceTitle) {
+  const clean = normalizeText(text, preserveLayout);
+  const lines = clean.split(/\n/).map(l => l.trimRight());
+  const blocks = [];
+
+  let currentHeading = sourceTitle;
+  let currentType = 'body';
+  let currentLines = [];
+
+  const flush = () => {
+    const content = currentLines.join('\n').trim();
+    if (!content) return;
+    blocks.push({
+      sectionHeading: currentHeading,
+      sectionType: currentType,
+      content,
+    });
+    currentLines = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      if (currentLines.length > 0) {
+        currentLines.push('');
+      }
+      continue;
+    }
+
+    if (isHeadingLine(line)) {
+      flush();
+      currentHeading = line;
+      currentType = 'body';
+      continue;
+    }
+
+    const sectionType = detectSectionType(line);
+    if (sectionType) {
+      flush();
+      currentType = sectionType;
+      currentLines.push(line);
+      continue;
+    }
+
+    currentLines.push(line);
+  }
+
+  flush();
+
+  const expanded = [];
+  for (const block of blocks) {
+    const wordCount = block.content.split(/\s+/).filter(Boolean).length;
+    if (wordCount <= CHUNK_WORDS) {
+      expanded.push(block);
+    } else {
+      const parts = splitLongContentByWords(block.content, CHUNK_WORDS);
+      parts.forEach((content, idx) => {
+        expanded.push({
+          ...block,
+          sectionPart: idx + 1,
+          content,
+        });
+      });
+    }
+  }
+
+  console.log(`Split into ${expanded.length} manual-aware chunks`);
+
+  const idBase = (prefix ?? path.basename(source, path.extname(source)))
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 30);
+
+  const metadataTags = buildMetadataTags();
+
+  return expanded.map((block, idx) => {
+    const label = block.sectionType === 'body'
+      ? block.sectionHeading
+      : `${block.sectionHeading} — ${block.sectionType}`;
+    const partSuffix = block.sectionPart ? ` (Part ${block.sectionPart})` : '';
+
+    return {
+      id: `${idBase}_${String(idx + 1).padStart(3, '0')}`,
+      category,
+      title: `${label}${partSuffix}`,
+      content: block.content,
+      tags: [
+        'source:manual',
+        `chunk_type:${block.sectionType}`,
+        ...metadataTags,
+      ],
+      source_url: urlArg ?? (source.startsWith('http') ? source : null),
+      source_org: org,
+      embedding: null,
+    };
+  });
+}
+
 function chunkText(text, sourceTitle) {
   // Normalise whitespace
-  const clean = text.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').trim();
+  const clean = normalizeText(text, preserveLayout);
 
   // Split on paragraph breaks first, then fall back to sentences
   const paragraphs = clean
     .split(/\n{2,}/)
-    .map(p => p.replace(/\n/g, ' ').trim())
+    .map(p => preserveLayout ? p.trim() : p.replace(/\n/g, ' ').trim())
     .filter(p => p.length > 0);
 
   const chunks = [];
@@ -201,12 +530,14 @@ function chunkText(text, sourceTitle) {
     .replace(/^_|_$/g, '')
     .slice(0, 30);
 
+  const metadataTags = buildMetadataTags();
+
   return chunks.map((content, idx) => ({
     id:         `${idBase}_${String(idx + 1).padStart(3, '0')}`,
     category,
     title:      chunks.length === 1 ? sourceTitle : `${sourceTitle} (Part ${idx + 1})`,
     content,
-    tags:       [],  // populated by autoTagChunks()
+    tags:       [...metadataTags],  // enriched by autoTagChunks()
     source_url: urlArg ?? (source.startsWith('http') ? source : null),
     source_org: org,
     embedding:  null,
@@ -228,15 +559,16 @@ async function autoTagChunks(chunks) {
       },
       body: JSON.stringify({
         model: CHAT_MODEL,
-        max_tokens: 60,
+        max_tokens: 220,
         temperature: 0,
         messages: [
           {
             role: 'system',
             content:
               'You are a specialist tagger for a dementia care knowledge base used by caregivers and clinicians. ' +
-              'Given a chunk of text, produce ONLY a JSON array of 5 to 8 lowercase tags that are SPECIFIC to the ' +
-              'exact content — not generic dementia labels. ' +
+              'Given a chunk of text, produce ONLY a JSON array of lowercase tags that are SPECIFIC to the ' +
+              'exact content — not generic dementia labels. Include as many tags as are genuinely useful for retrieval; ' +
+              'do not pad with vague or repetitive tags. ' +
               'Rules: ' +
               '(1) Tags must reflect the specific condition, symptom, technique, medication, risk factor, or situation discussed — not just "dementia" or "caregiving". ' +
               '(2) Include the specific disease type if mentioned (e.g. "alzheimer\'s disease", "vascular dementia", "lewy body dementia"). ' +
@@ -244,8 +576,9 @@ async function autoTagChunks(chunks) {
               '(4) Include specific interventions or strategies if present (e.g. "prompted toileting", "cognitive stimulation therapy", "reminiscence therapy"). ' +
               '(5) Include specific medications if named (e.g. "donepezil", "memantine", "risperidone"). ' +
               '(6) Include the target audience if clear (e.g. "family carer", "clinician", "aged care worker"). ' +
-              '(7) Use 1-3 words per tag, all lowercase. ' +
+              '(7) Use 1-5 words per tag, all lowercase. ' +
               '(8) No explanation, no markdown — return ONLY the JSON array. ' +
+              '(9) Prefer concrete terms from the text over abstract umbrella terms. ' +
               'Bad example (too generic): ["dementia","memory","caregiving","brain"] ' +
               'Good example: ["alzheimer\'s disease","amyloid plaques","tau tangles","early diagnosis","MCI","atypical alzheimer\'s","risk factors","family carer"]',
           },
@@ -263,7 +596,32 @@ async function autoTagChunks(chunks) {
     const data = await resp.json();
     const raw  = data.choices[0].message.content.trim();
     try {
-      chunk.tags = JSON.parse(raw);
+      const generated = JSON.parse(raw);
+      const sanitize = (list) => {
+        if (!Array.isArray(list)) return [];
+        const bad = new Set(['dementia', 'caregiving', 'brain', 'memory']);
+        const unique = new Set();
+        const out = [];
+
+        for (const item of list) {
+          if (typeof item !== 'string') continue;
+          const tag = item.trim().toLowerCase();
+          if (!tag) continue;
+          if (tag.length < 3 || tag.length > 60) continue;
+          if (bad.has(tag)) continue;
+          if (unique.has(tag)) continue;
+
+          unique.add(tag);
+          out.push(tag);
+
+          // Keep a high safety ceiling to avoid runaway token/noise issues.
+          if (out.length >= 40) break;
+        }
+        return out;
+      };
+
+      const combined = sanitize([...(chunk.tags ?? []), ...(generated ?? [])]);
+      chunk.tags = combined;
       console.log(`  "${chunk.title}" → [${chunk.tags.join(', ')}]`);
     } catch {
       console.warn(`  Warning: could not parse tags for "${chunk.title}": ${raw}`);
@@ -308,10 +666,16 @@ async function main() {
   }
 
   // 2. Chunk
-  const chunks = chunkText(text, title);
+  let chunks = chunkingMode === 'manual'
+    ? chunkManualText(text, title)
+    : chunkText(text, title);
 
-  // 3. Auto-tag (requires OPENAI_API_KEY even in dry-run if tags are wanted)
-  if (OPENAI_API_KEY) {
+  chunks = filterLowValueChunks(chunks, { enabled: !keepFrontMatter });
+
+  // 3. Auto-tag unless explicitly disabled
+  if (skipTags) {
+    console.log('\nSkipping auto-tagging (--skip-tags enabled)');
+  } else if (OPENAI_API_KEY) {
     await autoTagChunks(chunks);
   } else {
     console.log('\nSkipping auto-tagging (no OPENAI_API_KEY set)');

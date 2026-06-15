@@ -8,6 +8,18 @@ const CHAT_MODEL = 'gpt-4o-mini';
 const MIN_SIMILARITY = 0.35;
 const TOP_K = 8;
 const MAX_HISTORY = 6;
+const SEARCH_MULTIPLIER = 3;
+const LOW_CONFIDENCE_THRESHOLD = 0.38;
+const ROUTING_KEYWORDS = {
+  module5Behaviour: [
+    'aggression', 'hallucination', 'delusion', 'wandering', 'lost', 'repetitive',
+    'sundowning', 'behaviour', 'behavior', 'sleep', 'judgement', 'judgment', 'anxiety',
+  ],
+  module3SelfCare: [
+    'stress', 'burnout', 'exhausted', 'guilt', 'self care', 'self-care',
+    'pleasant activities', 'thinking differently', 'overwhelmed',
+  ],
+};
 
 class OpenAIAuthError extends Error {
   constructor(msg) { super(msg); this.name = 'OpenAIAuthError'; }
@@ -90,16 +102,134 @@ class OpenAIService {
 
   // ─── Semantic Search (Supabase pgvector) ────────────────────────────────────
 
+  _extractTagValue(tags = [], prefix) {
+    const hit = tags.find(t => t.startsWith(`${prefix}:`));
+    return hit ? hit.slice(prefix.length + 1) : null;
+  }
+
+  _buildRetrievalPolicy(query) {
+    const q = query.toLowerCase();
+    const prefersModule5 = ROUTING_KEYWORDS.module5Behaviour.some(k => q.includes(k));
+    const prefersModule3 = ROUTING_KEYWORDS.module3SelfCare.some(k => q.includes(k));
+
+    // Keep NZ as default for this project's current iSupport rollout.
+    const country = q.includes('aotearoa') || q.includes('new zealand') || q.includes('nz') ? 'nz' : 'nz';
+
+    return {
+      requiredTags: [
+        `country:${country}`,
+      ],
+      preferredTags: [
+        ...(prefersModule5 ? ['module:5'] : []),
+        ...(prefersModule3 ? ['module:3'] : []),
+      ],
+      prefersModule5,
+      prefersModule3,
+    };
+  }
+
+  _hasAllTags(chunk, requiredTags) {
+    if (!requiredTags || requiredTags.length === 0) return true;
+    const tagSet = new Set(chunk.tags ?? []);
+    return requiredTags.every(tag => tagSet.has(tag));
+  }
+
+  _rerankChunks(chunks, preferredTags = []) {
+    const prefSet = new Set(preferredTags);
+    return [...chunks]
+      .map(c => {
+        const tags = new Set(c.tags ?? []);
+        let boost = 0;
+        for (const tag of prefSet) {
+          if (tags.has(tag)) boost += 0.08;
+        }
+        if (tags.has('chunk_level:child')) boost += 0.04;
+        return { ...c, similarity: (Number(c.similarity) || 0) + boost };
+      })
+      .sort((a, b) => (Number(b.similarity) || 0) - (Number(a.similarity) || 0));
+  }
+
+  async _fetchParentSummaries(parentKeys = []) {
+    const unique = [...new Set(parentKeys.filter(Boolean))];
+    if (unique.length === 0) return [];
+
+    const parents = [];
+    for (const parentKey of unique) {
+      const { data, error } = await supabase
+        .from('knowledge_chunks')
+        .select('id, category, title, content, tags, source_url, source_org')
+        .contains('tags', ['chunk_level:parent', `parent_key:${parentKey}`])
+        .limit(1);
+
+      if (error) continue;
+      if (data?.[0]) {
+        parents.push({ ...data[0], similarity: 0.25 });
+      }
+    }
+
+    return parents;
+  }
+
   async search(query, topK = TOP_K) {
     const queryEmbedding = await this._embedQuery(query);
-    const { data, error } = await supabase.rpc('match_chunks', {
+    const policy = this._buildRetrievalPolicy(query);
+
+    let data;
+    let error;
+
+    // Prefer richer RPC signature when the DB function supports it.
+    ({ data, error } = await supabase.rpc('match_chunks', {
       query_embedding: queryEmbedding,
       query_text: query,
-      match_count: topK,
+      match_count: topK * SEARCH_MULTIPLIER,
       min_similarity: MIN_SIMILARITY,
-    });
+      filter_country: this._extractTagValue(policy.requiredTags, 'country'),
+      filter_source_version: null,
+      filter_document_id: null,
+      filter_module: policy.prefersModule5 ? 5 : (policy.prefersModule3 ? 3 : null),
+    }));
+
+    // Backward-compatible fallback for older SQL function signature.
+    if (error && /function match_chunks\(/i.test(error.message)) {
+      ({ data, error } = await supabase.rpc('match_chunks', {
+        query_embedding: queryEmbedding,
+        query_text: query,
+        match_count: topK * SEARCH_MULTIPLIER,
+        min_similarity: MIN_SIMILARITY,
+      }));
+    }
+
     if (error) throw new Error(`Supabase search error: ${error.message}`);
-    return data ?? [];
+
+    const base = data ?? [];
+    const stageA = base.filter(c => this._hasAllTags(c, policy.requiredTags));
+    const ranked = this._rerankChunks(stageA.length > 0 ? stageA : base, policy.preferredTags);
+    const topChildren = ranked
+      .filter(c => !(c.tags ?? []).includes('chunk_level:parent'))
+      .slice(0, topK);
+
+    const parentKeys = topChildren.map(c => this._extractTagValue(c.tags ?? [], 'parent_key')).filter(Boolean);
+    const parentSummaries = await this._fetchParentSummaries(parentKeys);
+
+    return [...parentSummaries, ...topChildren].slice(0, topK + 2);
+  }
+
+  _isLowConfidence(chunks) {
+    if (!chunks || chunks.length === 0) return true;
+    const best = Number(chunks[0]?.similarity) || 0;
+    return best < LOW_CONFIDENCE_THRESHOLD;
+  }
+
+  _buildLowConfidenceReply(question) {
+    const lower = question.toLowerCase();
+    const clarification =
+      lower.includes('sleep')
+        ? 'Could you share when the sleep change started and what has already been tried at home?'
+        : lower.includes('aggression') || lower.includes('hallucination')
+          ? 'Could you share what tends to happen right before the behaviour change, and whether there are safety risks right now?'
+          : 'Could you share a little more detail about the person\'s current symptoms and situation so I can narrow this to the most relevant guidance?';
+
+    return `I do not have strong enough matching information in the current knowledge base to answer confidently. ${clarification}\n\nThis information is for guidance only and does not replace professional medical advice. For more support, contact Dementia Australia on 1800 100 500 and consult a healthcare professional for individual decisions.`;
   }
 
   // ─── Streaming Chat ─────────────────────────────────────────────────────────
@@ -112,6 +242,13 @@ class OpenAIService {
 
     const chunks = await this.search(userMessage, TOP_K);
     timingCbs?.onRagDone?.();
+
+    if (this._isLowConfidence(chunks)) {
+      this._lastChunkMap = {};
+      yield this._buildLowConfidenceReply(userMessage);
+      return;
+    }
+
     const { contextBlock, chunkMap } = this._buildContextBlock(chunks);
 
     const recentHistory = conversationHistory.slice(-MAX_HISTORY).map(m => ({
@@ -273,6 +410,18 @@ IMPORTANT RULES:
   9. Always end every response with this exact closing sentence: "This information is for guidance only and does not replace professional medical advice. For more support, contact Dementia Australia on 1800 100 500 and consult a healthcare professional for individual decisions."`;
   }
 
+  _sourceMeta(chunk) {
+    const tags = chunk.tags ?? [];
+    return {
+      module: this._extractTagValue(tags, 'module'),
+      section: this._extractTagValue(tags, 'section'),
+      country: this._extractTagValue(tags, 'country'),
+      sourceVersion: this._extractTagValue(tags, 'source_version'),
+      documentId: this._extractTagValue(tags, 'document_id'),
+      chunkLevel: this._extractTagValue(tags, 'chunk_level'),
+    };
+  }
+
   // Build a numbered context block from retrieved chunks and return both
   // the formatted string and the index→chunk map for citation resolution.
   _buildContextBlock(chunks) {
@@ -282,9 +431,21 @@ IMPORTANT RULES:
         chunkMap: {},
       };
     }
-    const lines = chunks.map((c, i) =>
-      `--- Source [${i + 1}] | ${c.title} ---\n${c.content}`
-    );
+
+    const lines = chunks.map((c, i) => {
+      const meta = this._sourceMeta(c);
+      const labels = [
+        meta.module ? `Module ${meta.module}` : null,
+        meta.section ? `Section ${meta.section}` : null,
+        meta.country ? `Country ${meta.country.toUpperCase()}` : null,
+        meta.sourceVersion ? `Version ${meta.sourceVersion}` : null,
+        meta.chunkLevel ? `Level ${meta.chunkLevel}` : null,
+      ].filter(Boolean);
+
+      const suffix = labels.length > 0 ? ` | ${labels.join(' | ')}` : '';
+      return `--- Source [${i + 1}] | ${c.title}${suffix} ---\n${c.content}`;
+    });
+
     return {
       contextBlock: `[CONTEXT]\n${lines.join('\n\n')}\n[/CONTEXT]`,
       chunkMap: Object.fromEntries(chunks.map((c, i) => [i + 1, c])),
@@ -296,15 +457,14 @@ IMPORTANT RULES:
   // source objects in the order they first appear.
   _parseCitations(rawText, chunkMap) {
     const usedNums = [];
-    // Collect citation numbers in order of first appearance
     rawText.replace(/\[(\d+)\]/g, (_, n) => {
       const num = parseInt(n, 10);
       if (chunkMap[num] && !usedNums.includes(num)) usedNums.push(num);
     });
 
-    // Build source objects with a short excerpt from the chunk
     const citations = usedNums.map(num => {
       const c = chunkMap[num];
+      const meta = this._sourceMeta(c);
       const excerpt = c.content
         .replace(/\s+/g, ' ')
         .trim()
@@ -312,14 +472,17 @@ IMPORTANT RULES:
         .replace(/\s\S*$/, '') + '…';
       return {
         num,
-        title:   c.title,
-        org:     c.source_org ?? null,
-        url:     c.source_url ?? null,
+        title: c.title,
+        org: c.source_org ?? null,
+        url: c.source_url ?? null,
+        module: meta.module,
+        section: meta.section,
+        country: meta.country,
+        documentId: meta.documentId,
         excerpt,
       };
     });
 
-    // Leave [N] markers in the text — the UI will render them as chips
     return { cleanText: rawText, citations };
   }
 
@@ -327,6 +490,10 @@ IMPORTANT RULES:
 
   async chat(userMessage, conversationHistory = []) {
     const chunks = await this.search(userMessage, TOP_K);
+    if (this._isLowConfidence(chunks)) {
+      return { text: this._buildLowConfidenceReply(userMessage), sources: [] };
+    }
+
     const { contextBlock, chunkMap } = this._buildContextBlock(chunks);
 
     const recentHistory = conversationHistory.slice(-MAX_HISTORY).map(m => ({

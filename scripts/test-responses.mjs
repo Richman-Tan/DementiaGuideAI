@@ -450,6 +450,111 @@ const TEST_CASES = [
     requireDisclaimer: true,
     minCitations: 1,
   },
+  // ─── iSupport Module 1 — Introduction to dementia ───────────────────────────
+  {
+    id: 'isupport-types-of-dementia',
+    question: 'What are the most common types of dementia?',
+    mustIncludeAll: ['alzheimer'],
+    mustIncludeAny: ['vascular', 'lewy', 'frontotemporal', 'type', 'form'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'isupport-person-centred',
+    question: 'What does person-centred care mean for someone with dementia?',
+    mustIncludeAny: ['person-centred', 'individual', 'preferences', 'dignity', 'needs'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'isupport-future-planning',
+    question: 'How do I plan ahead for future care decisions for my family member with dementia?',
+    mustIncludeAny: ['advance', 'planning', 'wishes', 'future', 'legal'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  // ─── iSupport Module 2 — Being a carer ─────────────────────────────────────
+  {
+    id: 'isupport-communication',
+    question: 'How should I improve communication with my family member who has dementia?',
+    mustIncludeAny: ['simple', 'short', 'listen', 'calm', 'non-verbal'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'isupport-decision-making',
+    question: 'How can I support someone with dementia to make their own decisions?',
+    mustIncludeAny: ['decision', 'supported', 'autonomy', 'involve', 'choice'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  // ─── iSupport Module 3 — Caring for me ─────────────────────────────────────
+  {
+    id: 'isupport-carer-stress',
+    question: 'I feel overwhelmed and stressed from caring for someone with dementia. What should I do?',
+    mustIncludeAny: ['stress', 'self-care', 'support', 'break', 'respite'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'isupport-thinking-differently',
+    question: 'How can I change the way I think to help me cope better with caring?',
+    mustIncludeAny: ['thinking', 'thoughts', 'cope', 'attitude', 'feelings'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  // ─── iSupport Module 4 — Providing everyday care ────────────────────────────
+  {
+    id: 'isupport-mealtimes',
+    question: 'How do I make mealtimes easier and more enjoyable for someone with dementia?',
+    mustIncludeAny: ['mealtime', 'eating', 'routine', 'food', 'pleasant'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'isupport-personal-care',
+    question: 'What is the best way to help someone with dementia with personal hygiene?',
+    mustIncludeAny: ['personal care', 'hygiene', 'routine', 'dignity', 'help'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'isupport-continence',
+    question: 'How do I handle toileting and continence issues for someone with dementia?',
+    mustIncludeAny: ['toileting', 'continence', 'dignity', 'routine', 'accident'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  // ─── iSupport Module 5 — Behaviour changes ──────────────────────────────────
+  {
+    id: 'isupport-repetitive-behaviour',
+    question: 'My mother keeps repeating the same story over and over. What should I do?',
+    mustIncludeAny: ['repetitive', 'reassure', 'calm', 'routine', 'respond'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'isupport-depression-anxiety',
+    question: 'The person I care for seems depressed and withdrawn. How should I respond?',
+    mustIncludeAny: ['depression', 'anxiety', 'support', 'engage', 'activities'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'isupport-sleep-module5',
+    question: 'How do I manage difficulty sleeping and night-time restlessness in dementia?',
+    mustIncludeAny: ['sleep', 'routine', 'night', 'activity', 'restless'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
+  {
+    id: 'isupport-aggression-behaviour',
+    question: 'What do I do when someone with dementia becomes verbally or physically aggressive?',
+    mustIncludeAll: ['aggression'],
+    mustIncludeAny: ['calm', 'trigger', 'de-escalate', 'safe', 'respond'],
+    requireDisclaimer: true,
+    minCitations: 1,
+  },
 ];
 
 let casesToRun = TEST_CASES;

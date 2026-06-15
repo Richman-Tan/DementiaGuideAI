@@ -70,11 +70,20 @@ create index if not exists knowledge_chunks_search_idx
 
 -- 4. Server-side similarity search function
 --    Called by the app via supabase.rpc('match_chunks', {...})
+--
+--    Stage A (filter)  : optional tag-based pre-filter reduces irrelevant matches
+--                        filter_country, filter_source_version, filter_document_id,
+--                        filter_module can each be NULL to skip that constraint.
+--    Stage B (rank)    : hybrid cosine-similarity + ts_rank_cd over filtered candidates
 create or replace function match_chunks(
-  query_embedding vector(1536),
-  query_text     text  default '',
-  match_count     int   default 5,
-  min_similarity  float default 0.25
+  query_embedding       vector(1536),
+  query_text            text    default '',
+  match_count           int     default 5,
+  min_similarity        float   default 0.25,
+  filter_country        text    default null,
+  filter_source_version text    default null,
+  filter_document_id    text    default null,
+  filter_module         int     default null
 )
 returns table (
   id         text,
@@ -92,28 +101,39 @@ language sql stable as $$
       when query_text is null or btrim(query_text) = '' then null::tsquery
       else websearch_to_tsquery('english', query_text)
     end as tsq
+  ),
+  filtered as (
+    -- Stage A: tag-based pre-filter
+    select kc.*
+    from knowledge_chunks kc
+    where
+      (filter_country       is null or kc.tags @> array['country:'       || lower(filter_country)])
+      and (filter_source_version is null or kc.tags @> array['source_version:' || lower(filter_source_version)])
+      and (filter_document_id   is null or kc.tags @> array['document_id:'     || lower(filter_document_id)])
+      and (filter_module        is null or kc.tags @> array['module:'           || filter_module::text])
   )
+  -- Stage B: hybrid rank over filtered candidates
   select
-    kc.id,
-    kc.category,
-    kc.title,
-    kc.content,
-    kc.tags,
-    kc.source_url,
-    kc.source_org,
+    f.id,
+    f.category,
+    f.title,
+    f.content,
+    f.tags,
+    f.source_url,
+    f.source_org,
     (
-      0.7 * (1 - (kc.embedding <=> query_embedding)) +
+      0.7 * (1 - (f.embedding <=> query_embedding)) +
       0.3 * coalesce(ts_rank_cd(
-        kc.search_vector,
+        f.search_vector,
         qt.tsq
       ), 0)
     )::float as similarity
-  from knowledge_chunks kc
+  from filtered f
   cross join query_terms qt
-  where (1 - (kc.embedding <=> query_embedding)) > min_similarity
+  where (1 - (f.embedding <=> query_embedding)) > min_similarity
      or (
        qt.tsq is not null
-       and kc.search_vector @@ qt.tsq
+       and f.search_vector @@ qt.tsq
      )
   order by similarity desc
   limit match_count;

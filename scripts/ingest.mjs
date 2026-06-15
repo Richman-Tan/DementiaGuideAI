@@ -186,10 +186,21 @@ const SECTION_MARKERS = [
 
 const HEADING_MARKERS = [
   /^module\s+\d+\b/i,
+  /^section\s+\d+\b/i,
   /^session\s+\d+\b/i,
   /^chapter\s+\d+\b/i,
   /^unit\s+\d+\b/i,
 ];
+
+// Extracts module/section number tags from a heading line, e.g. "Module 3" → ["module:3"]
+function extractStructuralTags(headingLine) {
+  const tags = [];
+  const moduleMatch = headingLine.match(/^module\s+(\d+)\b/i);
+  if (moduleMatch) tags.push(`module:${moduleMatch[1]}`);
+  const sectionMatch = headingLine.match(/^section\s+(\d+)\b/i);
+  if (sectionMatch) tags.push(`section:${sectionMatch[1]}`);
+  return tags;
+}
 
 // ─── Text extraction ──────────────────────────────────────────────────────────
 
@@ -307,6 +318,37 @@ function splitLongContentByWords(content, maxWords = CHUNK_WORDS) {
   return out.filter(Boolean);
 }
 
+function slugify(text) {
+  return String(text ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+function buildExtractiveSummary(text, maxWords = 120) {
+  const clean = String(text ?? '').replace(/\s+/g, ' ').trim();
+  if (!clean) return '';
+
+  const sentences = clean
+    .split(/(?<=[.!?])\s+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const picked = [];
+  let words = 0;
+  for (const sentence of sentences) {
+    const wc = sentence.split(/\s+/).length;
+    if (words > 0 && words + wc > maxWords) break;
+    picked.push(sentence);
+    words += wc;
+    if (picked.length >= 3) break;
+  }
+
+  if (picked.length > 0) return picked.join(' ');
+  return clean.split(/\s+/).slice(0, maxWords).join(' ');
+}
+
 function detectLowValueReason(content, title = '') {
   const text = String(content ?? '').replace(/\s+/g, ' ').trim();
   const lc = text.toLowerCase();
@@ -382,13 +424,23 @@ function chunkManualText(text, sourceTitle) {
   let currentHeading = sourceTitle;
   let currentType = 'body';
   let currentLines = [];
+  let currentStructuralTags = [];
+  let lastModuleTags = [];   // carry module tags into sections that don't reset them
 
   const flush = () => {
     const content = currentLines.join('\n').trim();
     if (!content) return;
+    const mergedStructuralTags = [...new Set([...lastModuleTags, ...currentStructuralTags])];
+    const parentKeyCore = [
+      ...mergedStructuralTags.filter(t => t.startsWith('module:') || t.startsWith('section:')),
+      `heading:${slugify(currentHeading)}`,
+    ].join('|');
+
     blocks.push({
       sectionHeading: currentHeading,
       sectionType: currentType,
+      structuralTags: mergedStructuralTags,
+      parentKey: slugify(parentKeyCore),
       content,
     });
     currentLines = [];
@@ -408,6 +460,14 @@ function chunkManualText(text, sourceTitle) {
       flush();
       currentHeading = line;
       currentType = 'body';
+      const sTags = extractStructuralTags(line);
+      // Module headings reset section context; section headings inherit current module
+      if (sTags.some(t => t.startsWith('module:'))) {
+        lastModuleTags = sTags.filter(t => t.startsWith('module:'));
+        currentStructuralTags = sTags.filter(t => !t.startsWith('module:'));
+      } else {
+        currentStructuralTags = sTags;
+      }
       continue;
     }
 
@@ -424,15 +484,15 @@ function chunkManualText(text, sourceTitle) {
 
   flush();
 
-  const expanded = [];
+  const expandedChildren = [];
   for (const block of blocks) {
     const wordCount = block.content.split(/\s+/).filter(Boolean).length;
     if (wordCount <= CHUNK_WORDS) {
-      expanded.push(block);
+      expandedChildren.push(block);
     } else {
       const parts = splitLongContentByWords(block.content, CHUNK_WORDS);
       parts.forEach((content, idx) => {
-        expanded.push({
+        expandedChildren.push({
           ...block,
           sectionPart: idx + 1,
           content,
@@ -441,8 +501,6 @@ function chunkManualText(text, sourceTitle) {
     }
   }
 
-  console.log(`Split into ${expanded.length} manual-aware chunks`);
-
   const idBase = (prefix ?? path.basename(source, path.extname(source)))
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
@@ -450,21 +508,54 @@ function chunkManualText(text, sourceTitle) {
     .slice(0, 30);
 
   const metadataTags = buildMetadataTags();
+  const parentBlocks = new Map();
 
-  return expanded.map((block, idx) => {
+  for (const block of blocks) {
+    if (!block.parentKey) continue;
+    if (!parentBlocks.has(block.parentKey)) {
+      parentBlocks.set(block.parentKey, {
+        sectionHeading: block.sectionHeading,
+        structuralTags: block.structuralTags,
+        summaryText: buildExtractiveSummary(block.content),
+      });
+    }
+  }
+
+  const parentChunks = Array.from(parentBlocks.entries()).map(([parentKey, parent], idx) => ({
+    id: `${idBase}_p${String(idx + 1).padStart(3, '0')}`,
+    category,
+    title: `${parent.sectionHeading} — section summary`,
+    content: parent.summaryText,
+    tags: [
+      'source:manual',
+      'chunk_level:parent',
+      'chunk_type:section-summary',
+      `parent_key:${parentKey}`,
+      ...(parent.structuralTags ?? []),
+      ...metadataTags,
+    ],
+    source_url: urlArg ?? (source.startsWith('http') ? source : null),
+    source_org: org,
+    embedding: null,
+  }));
+
+  const childChunks = expandedChildren.map((block, idx) => {
     const label = block.sectionType === 'body'
       ? block.sectionHeading
       : `${block.sectionHeading} — ${block.sectionType}`;
     const partSuffix = block.sectionPart ? ` (Part ${block.sectionPart})` : '';
 
     return {
-      id: `${idBase}_${String(idx + 1).padStart(3, '0')}`,
+      id: `${idBase}_c${String(idx + 1).padStart(3, '0')}`,
       category,
       title: `${label}${partSuffix}`,
       content: block.content,
       tags: [
         'source:manual',
+        'chunk_level:child',
         `chunk_type:${block.sectionType}`,
+        `parent_key:${block.parentKey}`,
+        ...(block.structuralTags ?? []),
         ...metadataTags,
       ],
       source_url: urlArg ?? (source.startsWith('http') ? source : null),
@@ -472,6 +563,10 @@ function chunkManualText(text, sourceTitle) {
       embedding: null,
     };
   });
+
+  const all = [...parentChunks, ...childChunks];
+  console.log(`Split into ${childChunks.length} child chunks + ${parentChunks.length} parent summaries`);
+  return all;
 }
 
 function chunkText(text, sourceTitle) {

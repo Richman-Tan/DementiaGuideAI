@@ -379,7 +379,7 @@ function detectLowValueReason(content, title = '') {
     return 'cover-fragment';
   }
 
-  const headingLike = /^([a-z0-9\- ]+\s*[:\-]?\s*){1,6}$/i.test(text);
+  const headingLike = words <= 12 && /^[a-z0-9][a-z0-9 \-]{0,79}[:\-]?\s*$/i.test(text);
   if (headingLike && words <= 12) {
     return 'short-heading-only';
   }

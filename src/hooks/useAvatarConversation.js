@@ -77,6 +77,11 @@ const MAX_PERSISTED = 100;
  *   Update ttsService.js — this hook only calls tts(text) and receives
  *   { audio, visemeTimeline }. No changes needed here.
  *
+ * How to swap the renderer (Three.js vs Unity):
+ *   The avatarRef.current API is renderer-agnostic (AvatarBridgeProtocol).
+ *   Both AvatarVRM and AvatarUnity expose playAudio/stopAudio/setOnAudioStart.
+ *   This hook does not need to know which renderer is active.
+ *
  * @param {{ avatarRef: React.RefObject }} options
  */
 export function useAvatarConversation({ avatarRef }) {

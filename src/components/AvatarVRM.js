@@ -274,6 +274,15 @@ let idleTiltHold    = 0;
 let idleTiltTarget  = 0;
 let idleTiltCurrent = 0;
 
+// Idle brow moment state machine — occasional inner/outer raise for expressiveness
+let idleBrowActive  = false;
+let idleBrowTimer   = 0;
+let idleBrowNext    = 4.0 + Math.random() * 7.0;
+let idleBrowHold    = 0;
+let idleBrowTarget  = 0;
+let idleBrowCurrent = 0;
+let idleBrowIsOuter = false; // alternates inner/outer raise
+
 // Listening nod state machine
 let nodActive  = false;
 let nodTimer   = 0;
@@ -288,7 +297,7 @@ let gazePhase    = 'center';
 let gazeTimer    = 0;
 let gazeDuration = 1.5;   // seconds to hold current gaze phase
 let gazeTargetH  = 0;     // horizontal gaze target (0 = camera center)
-let gazeTargetV  = 0.01;  // slight upward = looking into eyes rather than forehead
+let gazeTargetV  = 0.0;   // 0 = straight at camera (eye bones zeroed in applyRelaxedPose)
 let gazeCurrentH = 0;
 let gazeCurrentV = 0;
 
@@ -351,7 +360,7 @@ const ANIM = {
   BREATH_VAR_AMP:      0.003,  // organic rate modulation depth
 
   // Body bob / sway
-  BOB_IDLE:      0.005,  BOB_ACTIVE:      0.010,
+  BOB_IDLE:      0.0,    BOB_ACTIVE:      0.0,
   BOB_RATE_IDLE: 0.7,    BOB_RATE_LISTEN: 1.1,   BOB_RATE_SPEAK: 1.7,
   SWAY_IDLE:     0.012,  SWAY_ACTIVE:     0.022,  SWAY_SPEAK:     0.030,
   SWAY_RATE:     0.33,
@@ -369,14 +378,22 @@ const ANIM = {
   // Conversational gaze — eye contact with natural periodic breaks
   GAZE_HOLD_MIN:     1.4,   // minimum seconds of direct eye contact
   GAZE_HOLD_RANGE:   2.0,   // random range on top → 1.4–3.4 s eye contact
-  GAZE_AWAY_MIN:     0.30,  // minimum seconds of looking away
-  GAZE_AWAY_RANGE:   0.70,  // random range on top → 0.30–1.0 s break
-  GAZE_AWAY_H:       0.09,  // max horizontal offset when glancing (radians)
-  GAZE_AWAY_V:       0.05,  // max vertical offset when glancing (radians)
-  GAZE_RETURN_SPEED: 4.5,   // lerp multiplier returning to center (fast, deliberate)
-  GAZE_SHIFT_SPEED:  3.0,   // lerp multiplier shifting gaze away (slightly slower)
+  GAZE_AWAY_MIN:     0.55,  // minimum seconds of looking away
+  GAZE_AWAY_RANGE:   1.10,  // random range on top → 0.55–1.65 s break
+  GAZE_AWAY_H:       0.18,  // max horizontal offset when glancing (radians, ~10°)
+  GAZE_AWAY_V:       0.10,  // max vertical offset when glancing (radians, ~6°)
+  GAZE_RETURN_SPEED: 1.1,   // lerp multiplier returning to center — slow drift, not a snap
+  GAZE_SHIFT_SPEED:  2.5,   // lerp multiplier shifting gaze away
   GAZE_MICRO_H:      0.012, // residual horizontal head micro-movement
   GAZE_MICRO_V:      0.007, // residual vertical head micro-movement
+  // Wander glances — larger excursions (looking around the room)
+  GAZE_WANDER_PROB:  0.30,  // 30% of breaks become wide wanders
+  GAZE_WANDER_H:     0.30,  // max horizontal wander (~17°)
+  GAZE_WANDER_V:     0.20,  // max vertical wander (~11°) — enough to engage forehead
+  // Gaze-driven expression coupling
+  GAZE_BROW_UP:      0.65,  // brow raise amplitude when looking up
+  GAZE_BROW_DOWN:    0.28,  // brow compression when looking down
+  GAZE_SQUINT:       0.40,  // eye squint amplitude on strong lateral gaze
 
   // Eye bone rotation — eyes lead, head follows
   EYE_H_SCALE:   0.60,  // fraction of horizontal gaze handled by eye bones (rest = head)
@@ -412,6 +429,9 @@ const ANIM = {
   ACTIVE_SMILE_MIN:   0.10,  // floor — smile never fully disappears
   LISTEN_SURPRISE:    0.04,  LISTEN_BROW_INNER: 0.08,
   EMPATHY_BROW_INNER: 0.12,  THINK_BROW_DOWN:   0.08,
+  // Scale factor applied to all emotion-driven expression deltas.
+  // patchExprMap can boost this for high-fidelity models (e.g. CC4 = 1.8).
+  EMOTION_SCALE:      1.0,
 
   // Idle personality moments — gentle smile + head tilt to feel warm and alive
   IDLE_SMILE_PEAK:         0.68,  // peak smile weight during a moment
@@ -423,6 +443,12 @@ const ANIM = {
   IDLE_TILT_SPEED:         1.0,
   IDLE_TILT_HOLD_MIN:      1.2,   IDLE_TILT_HOLD_MAX:      2.8,
   IDLE_TILT_INT_MIN:       10.0,  IDLE_TILT_INT_MAX:       24.0,
+
+  // Idle brow moments — occasional inner or outer brow raise for expressiveness
+  IDLE_BROW_PEAK:          0.32,
+  IDLE_BROW_SPEED:         2.2,
+  IDLE_BROW_HOLD_MIN:      0.7,   IDLE_BROW_HOLD_MAX:      1.8,
+  IDLE_BROW_INT_MIN:       4.0,   IDLE_BROW_INT_MAX:       11.0,
 };
 
 // Smooth-step: slow-in, slow-out — more organic than linear for eyelids
@@ -618,6 +644,14 @@ function applyRelaxedPose() {
   if (lThumb) lThumb.rotation.z += 0.22;
   if (rThumb) rThumb.rotation.z -= 0.22;
 
+  // Reset eye bones to forward-looking before capturing the base pose.
+  // GLB rest poses often bake in a slight downward pitch; zeroing X here means
+  // the gaze system treats 0 as "looking straight at camera" not "looking at floor".
+  const leftEyeBone  = bone('leftEye');
+  const rightEyeBone = bone('rightEye');
+  if (leftEyeBone)  leftEyeBone.rotation.x  = 0;
+  if (rightEyeBone) rightEyeBone.rotation.x = 0;
+
   [
     'spine',
     'chest',
@@ -665,11 +699,13 @@ let EXPR_MAP = {
   'v_nn':  ['viseme_nn'],
   'v_rr':  ['viseme_RR'],
   // ── Facial expressions ────────────────────────────────────────────────────
-  'blinkLeft':  ['eyeBlinkLeft'],
-  'blinkRight': ['eyeBlinkRight'],
-  'happy':      ['mouthSmileLeft', 'mouthSmileRight'],
-  'relaxed':    ['cheekSquintLeft', 'cheekSquintRight'],
-  'surprised':  ['eyeWideLeft', 'eyeWideRight'],
+  'blinkLeft':   ['eyeBlinkLeft'],
+  'blinkRight':  ['eyeBlinkRight'],
+  'happy':       ['mouthSmileLeft', 'mouthSmileRight'],
+  'relaxed':     ['cheekSquintLeft', 'cheekSquintRight'],
+  'surprised':   ['eyeWideLeft', 'eyeWideRight'],
+  'squintLeft':  ['eyeSquintLeft'],
+  'squintRight': ['eyeSquintRight'],
   // ── Eyebrow expressions (RPM ARKit names) ────────────────────────────────
   'browInnerUp': ['browInnerUp'],
   'browDown':    ['browDownLeft', 'browDownRight'],
@@ -678,11 +714,13 @@ let EXPR_MAP = {
 
 // Alternate blend shape names used by some ARKit/MetaPerson exports.
 const EXPR_ALTERNATES = {
-  'blinkLeft':  [['eyeBlinkLeft'], ['EyeBlink_L'], ['Blink_L']],
-  'blinkRight': [['eyeBlinkRight'], ['EyeBlink_R'], ['Blink_R']],
-  'surprised':  [['eyeWideLeft', 'eyeWideRight'], ['EyeWide_L', 'EyeWide_R']],
-  'happy':      [['mouthSmileLeft', 'mouthSmileRight'], ['mouthSmile_L', 'mouthSmile_R']],
-  'relaxed':    [['cheekSquintLeft', 'cheekSquintRight'], ['cheekSquint_L', 'cheekSquint_R']],
+  'blinkLeft':   [['eyeBlinkLeft'],  ['EyeBlink_L'],  ['Blink_L']],
+  'blinkRight':  [['eyeBlinkRight'], ['EyeBlink_R'],  ['Blink_R']],
+  'surprised':   [['eyeWideLeft', 'eyeWideRight'], ['EyeWide_L', 'EyeWide_R']],
+  'happy':       [['mouthSmileLeft', 'mouthSmileRight'], ['mouthSmile_L', 'mouthSmile_R']],
+  'relaxed':     [['cheekSquintLeft', 'cheekSquintRight'], ['cheekSquint_L', 'cheekSquint_R']],
+  'squintLeft':  [['eyeSquintLeft'],  ['Eye_SquintH_L'], ['Eye_Squint_L']],
+  'squintRight': [['eyeSquintRight'], ['Eye_SquintH_R'], ['Eye_Squint_R']],
   'browInnerUp': [['browInnerUp'], ['BrowInnerUp']],
   'browDown':    [['browDownLeft', 'browDownRight'], ['BrowDown_L', 'BrowDown_R']],
 };
@@ -705,11 +743,18 @@ function patchExprMap() {
   // Shape names: aa, ih, ou, oh, E (note uppercase E for the "ee" vowel).
   // Must be checked BEFORE the jawOpen fallback because this model has both.
   if (!('viseme_aa' in dict) && 'aa' in dict && 'ih' in dict) {
+    const has = (n) => n in dict;
     // Vowels
     EXPR_MAP.aa = ['aa'];
     EXPR_MAP.ih = ['ih'];
     EXPR_MAP.ou = ['ou'];
-    EXPR_MAP.ee = 'E' in dict ? ['E'] : EXPR_MAP.ee;
+    // Some AvatarSDK exports use uppercase E; others (e.g. Eric) omit it and rely
+    // on ARKit shapes instead — fall back to a jawOpen+stretch combo in that case.
+    EXPR_MAP.ee = has('E') ? ['E'] : (has('jawOpen') ? [
+      ['jawOpen',           0.26],
+      ...(has('mouthStretchLeft') ? [['mouthStretchLeft', 0.82], ['mouthStretchRight', 0.82]] : []),
+      ...(has('mouthSmileLeft')   ? [['mouthSmileLeft',   0.16], ['mouthSmileRight',   0.16]] : []),
+    ] : EXPR_MAP.ee);
     EXPR_MAP.oh = [['oh', 0.85], ['ou', 0.40]];
     // Consonant articulators (AvatarSDK exports without viseme_ prefix)
     if ('PP' in dict) EXPR_MAP.v_pp = ['PP'];
@@ -912,13 +957,30 @@ function patchExprMap() {
     ];
 
     // ── Facial expressions ───────────────────────────────────────────────────
-    if (has('Eye_Blink_L'))        EXPR_MAP.blinkLeft   = ['Eye_Blink_L'];
-    if (has('Eye_Blink_R'))        EXPR_MAP.blinkRight  = ['Eye_Blink_R'];
-    if (has('Mouth_Corner_Pull_L')) EXPR_MAP.happy      = ['Mouth_Corner_Pull_L', 'Mouth_Corner_Pull_R'];
-    if (has('Eye_Widen_L'))        EXPR_MAP.surprised   = ['Eye_Widen_L', 'Eye_Widen_R'];
-    if (has('Brow_Raise_In_L'))    EXPR_MAP.browInnerUp = ['Brow_Raise_In_L', 'Brow_Raise_In_R'];
-    if (has('Brow_Down_L'))        EXPR_MAP.browDown    = ['Brow_Down_L', 'Brow_Down_R'];
-    if (has('Brow_Raise_Outer_L')) EXPR_MAP.browOuterUp = ['Brow_Raise_Outer_L', 'Brow_Raise_Outer_R'];
+    if (has('Eye_Blink_L'))         EXPR_MAP.blinkLeft   = ['Eye_Blink_L'];
+    if (has('Eye_Blink_R'))         EXPR_MAP.blinkRight  = ['Eye_Blink_R'];
+    if (has('Mouth_Corner_Pull_L')) EXPR_MAP.happy       = ['Mouth_Corner_Pull_L', 'Mouth_Corner_Pull_R'];
+    if (has('Eye_Widen_L'))         EXPR_MAP.surprised   = ['Eye_Widen_L', 'Eye_Widen_R'];
+    if (has('Brow_Raise_In_L'))     EXPR_MAP.browInnerUp = ['Brow_Raise_In_L', 'Brow_Raise_In_R'];
+    if (has('Brow_Down_L'))         EXPR_MAP.browDown    = ['Brow_Down_L', 'Brow_Down_R'];
+    if (has('Brow_Raise_Outer_L'))  EXPR_MAP.browOuterUp = ['Brow_Raise_Outer_L', 'Brow_Raise_Outer_R'];
+    // CC4 cheek raise = relaxed/squint (default mapped to cheekSquintLeft which CC4 lacks)
+    if (has('Cheek_Raise_L'))       EXPR_MAP.relaxed     = ['Cheek_Raise_L', 'Cheek_Raise_R'];
+
+    // CC4 morphs are fully calibrated to anatomical range — boost all expression
+    // amplitudes so brows, smile and emotion responses are clearly visible.
+    ANIM.IDLE_SMILE           = 0.42;
+    ANIM.IDLE_SMILE_PEAK      = 0.85;
+    ANIM.IDLE_RELAX           = 0.30;
+    ANIM.ACTIVE_SMILE_MIN     = 0.14;
+    ANIM.IDLE_SMILE_INT_MIN   = 3.0;
+    ANIM.IDLE_SMILE_INT_MAX   = 8.0;
+    ANIM.EMPATHY_BROW_INNER   = 0.28;
+    ANIM.THINK_BROW_DOWN      = 0.20;
+    ANIM.LISTEN_BROW_INNER    = 0.20;
+    ANIM.LISTEN_SURPRISE      = 0.16;
+    ANIM.EMOTION_SCALE        = 1.8;
+    ANIM.IDLE_BROW_PEAK       = 0.45;
 
     window._dbg('Visemes: Reallusion CC4 (V_Open/V_Wide/V_Tight_O + Jaw_Open)');
   }
@@ -1278,18 +1340,22 @@ function animate(ts) {
       if (gazeTimer >= gazeDuration) {
         gazeTimer = 0;
         if (gazePhase === 'center') {
-          // Break eye contact — glance to the side or slightly up/down
+          // Break eye contact — normal glance or occasional wide wander (look around)
+          const isWander = Math.random() < ANIM.GAZE_WANDER_PROB;
+          const awayH = isWander ? ANIM.GAZE_WANDER_H : ANIM.GAZE_AWAY_H;
+          const awayV = isWander ? ANIM.GAZE_WANDER_V : ANIM.GAZE_AWAY_V;
           gazePhase   = 'away';
-          gazeTargetH = (Math.random() * 2 - 1) * ANIM.GAZE_AWAY_H;
-          gazeTargetV = (Math.random() * 2 - 1) * ANIM.GAZE_AWAY_V;
+          gazeTargetH = (Math.random() * 2 - 1) * awayH;
+          gazeTargetV = (Math.random() * 2 - 1) * awayV;
           // Speaking: shorter breaks; listening: very brief; idle: longer wanders
           const awayScale = speaking ? 0.65 : listening ? 0.5 : 1.0;
-          gazeDuration = (ANIM.GAZE_AWAY_MIN + Math.random() * ANIM.GAZE_AWAY_RANGE) * awayScale;
+          const awayRange = isWander ? ANIM.GAZE_AWAY_RANGE * 1.6 : ANIM.GAZE_AWAY_RANGE;
+          gazeDuration = (ANIM.GAZE_AWAY_MIN + Math.random() * awayRange) * awayScale;
         } else {
           // Return to eye contact
           gazePhase   = 'center';
           gazeTargetH = 0;
-          gazeTargetV = 0.01;  // very slight upward = looking into eyes
+          gazeTargetV = 0.0;   // straight at camera
           // Listening holds eye contact longest; speaking normal; idle shorter
           const holdScale = listening ? 1.4 : speaking ? 1.0 : 0.7;
           gazeDuration = (ANIM.GAZE_HOLD_MIN + Math.random() * ANIM.GAZE_HOLD_RANGE) * holdScale;
@@ -1365,6 +1431,21 @@ function animate(ts) {
       }
       idleTiltCurrent = lerp(idleTiltCurrent, idleTiltTarget, dt * ANIM.IDLE_TILT_SPEED);
 
+      idleBrowTimer += dt;
+      if (!idleBrowActive && idleBrowTimer >= idleBrowNext) {
+        idleBrowActive  = true;
+        idleBrowIsOuter = Math.random() > 0.55;
+        idleBrowHold    = ANIM.IDLE_BROW_HOLD_MIN + Math.random() * (ANIM.IDLE_BROW_HOLD_MAX - ANIM.IDLE_BROW_HOLD_MIN);
+        idleBrowTarget  = ANIM.IDLE_BROW_PEAK * (0.5 + Math.random() * 0.5);
+        idleBrowTimer   = 0;
+      } else if (idleBrowActive && idleBrowTimer >= idleBrowHold) {
+        idleBrowActive = false;
+        idleBrowTarget = 0;
+        idleBrowTimer  = 0;
+        idleBrowNext   = ANIM.IDLE_BROW_INT_MIN + Math.random() * (ANIM.IDLE_BROW_INT_MAX - ANIM.IDLE_BROW_INT_MIN);
+      }
+      idleBrowCurrent = lerp(idleBrowCurrent, idleBrowTarget, dt * ANIM.IDLE_BROW_SPEED);
+
       // ─── LISTENING NOD ────────────────────────────────────────────────────
       // Gentle periodic forward head-dip to signal active listening.
       // Only fires while listenBlend is high; fades proportionally as state leaves.
@@ -1384,7 +1465,7 @@ function animate(ts) {
       nodCurrent = lerp(nodCurrent, nodTarget, dt * ANIM.NOD_SPEED);
       if (!isListeningEnough) nodCurrent = lerp(nodCurrent, 0, dt * ANIM.NOD_SPEED);
 
-      // Scale both idle moments out when active so transitions feel seamless
+      // Scale idle moments out when active so transitions feel seamless
       const idleTiltOutput  = idleTiltCurrent  * (1 - activeBlend);
       const idleSmileOutput = idleSmileCurrent * (1 - activeBlend);
 
@@ -1575,25 +1656,39 @@ function animate(ts) {
       let relaxLift = 0;
 
       // Sentence-level emotion layer — subtle shifts that match the spoken content
+      const es = ANIM.EMOTION_SCALE;
       if (eb > 0.01) {
         if (speechEmotion === 'positive') {
-          smileLift = 0.20 * eb;
-          relaxLift = 0.12 * eb;
+          smileLift = 0.20 * eb * es;
+          relaxLift = 0.12 * eb * es;
         } else if (speechEmotion === 'warm') {
-          browInner += 0.10 * eb;
-          relaxLift  = 0.16 * eb;
+          browInner += 0.10 * eb * es;
+          relaxLift  = 0.16 * eb * es;
         } else if (speechEmotion === 'concern') {
-          browInner += 0.13 * eb;
-          browDown  += 0.07 * eb;
+          browInner += 0.13 * eb * es;
+          browDown  += 0.07 * eb * es;
         } else if (speechEmotion === 'question') {
-          browOuter  = 0.13 * eb;
-          browInner += 0.05 * eb;
+          browOuter  = 0.13 * eb * es;
+          browInner += 0.05 * eb * es;
         }
       }
 
-      setExpression('browInnerUp', Math.min(1, browInner));
-      setExpression('browDown',    Math.min(1, browDown));
-      setExpression('browOuterUp', Math.min(1, browOuter));
+      // Idle brow moments — fade to ~40% during speech so emotion brows take over
+      const idleBrowOutput = idleBrowCurrent * Math.max(0, 1 - speakBlend * 0.6);
+
+      // Gaze-driven facial coupling — brows and squint follow eye direction naturally
+      // negative lookV = looking up (THINK_GAZE_V=-0.06 confirms: negative = up)
+      // positive lookV = looking down
+      // |lookH| large = strong lateral gaze → mild eye squint on both sides
+      const gazeBrowUp   = Math.max(0, -lookV) * ANIM.GAZE_BROW_UP;
+      const gazeBrowDown = Math.max(0,  lookV) * ANIM.GAZE_BROW_DOWN;
+      const gazeSquint   = Math.max(0, Math.abs(lookH) - 0.08) * ANIM.GAZE_SQUINT;
+
+      setExpression('browInnerUp', Math.min(1, browInner + (!idleBrowIsOuter ? idleBrowOutput : 0) + gazeBrowUp));
+      setExpression('browDown',    Math.min(1, browDown  + gazeBrowDown));
+      setExpression('browOuterUp', Math.min(1, browOuter + (idleBrowIsOuter  ? idleBrowOutput : 0) + gazeBrowUp * 0.75));
+      setExpression('squintLeft',  Math.min(1, gazeSquint));
+      setExpression('squintRight', Math.min(1, gazeSquint));
 
       // Attentive wide-eye on listening
       setExpression('surprised', listenBlend * ANIM.LISTEN_SURPRISE);

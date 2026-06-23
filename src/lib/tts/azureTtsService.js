@@ -42,15 +42,17 @@ class AzureTtsService {
     return !!(key && key.length > 10 && region && region.length > 2);
   }
 
-  async ttsWithAlignment(text, speechRate = 1.0, visemeWeights = null) {
+  async ttsWithAlignment(text, speechRate = 1.0, visemeWeights = null, voice = null) {
     const { key, region } = await this.getCredentials();
     if (!key || !region) throw new AzureAuthError('No Azure credentials configured');
+
+    const resolvedVoice = voice || DEFAULT_VOICE;
 
     // Lazy require so a missing package doesn't crash the app on startup.
     const sdk = require('microsoft-cognitiveservices-speech-sdk');
 
     const speechConfig = sdk.SpeechConfig.fromSubscription(key, region);
-    speechConfig.speechSynthesisVoiceName = DEFAULT_VOICE;
+    speechConfig.speechSynthesisVoiceName = resolvedVoice;
     speechConfig.speechSynthesisOutputFormat =
       sdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3;
 
@@ -70,7 +72,7 @@ class AzureTtsService {
     // SSML rate: Azure prosody rate uses percentage strings (+10%, -20%, +0%)
     const ratePercent = Math.round((speechRate - 1.0) * 100);
     const rateStr     = ratePercent >= 0 ? `+${ratePercent}%` : `${ratePercent}%`;
-    const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US"><voice name="${DEFAULT_VOICE}"><prosody rate="${rateStr}">${_escapeXml(text)}</prosody></voice></speak>`;
+    const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US"><voice name="${resolvedVoice}"><mstts:express-as style="chat"><prosody rate="${rateStr}">${_escapeXml(text)}</prosody></mstts:express-as></voice></speak>`;
 
     return new Promise((resolve, reject) => {
       synthesizer.speakSsmlAsync(

@@ -28,7 +28,7 @@ const DEFAULTS = {
   responseStyle:     'balanced',  // 'brief' | 'balanced' | 'detailed' | 'step-by-step'
   jargonMode:        'explain',   // 'explain' | 'avoid' | 'ok'
   communicationMode: 'both',      // 'voice' | 'text' | 'both'
-  speechRate:        1.0,         // 0.82 | 1.0 | 1.15
+  speechRate:        0.78,        // 0.78 | 1.0 | 1.15
 
   // Avatar / persona selection
   selectedAvatarId:  'aria_sdk',    // key into AVATAR_PROFILES

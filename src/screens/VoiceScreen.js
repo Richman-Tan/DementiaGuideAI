@@ -28,12 +28,11 @@ import { useSettings } from '../context/SettingsContext';
 import { AVATAR_PROFILES, AVATAR_PROFILE_LIST, DEFAULT_AVATAR_ID } from '../config/avatarProfiles';
 
 // All model assets must be required statically — Metro cannot handle dynamic require().
-// To add MetaHuman: drop the GLB at assets/metahuman/aria.glb then uncomment the line below.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ASSET_MAP = {
-  sdk:       require('../../assets/avatar2/model.glb'),
-  rpm:       require('../../assets/ready-player-me-female-character/source/zhenja.glb'),
-  metahuman: require('../../assets/metahuman/aria.glb'),
+  sdk:       require('../../assets/characters/aria/model.glb'),
+  rpm:       require('../../assets/characters/zhenja/zhenja.glb'),
+  metahuman: require('../../assets/characters/eric/eric.glb'),
 };
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const COZY_ROOM_ASSET = require('../../assets/cozy_living_room_baked_small.glb');
@@ -193,10 +192,10 @@ export const VoiceScreen = ({ navigation }) => {
       {/* Single menu Modal — switches between 'main' and 'persona' steps internally
           so iOS never has to present two Modals simultaneously. */}
       {menuVisible && (
-        <Modal transparent animationType="none" onRequestClose={closeMenu}>
+        <Modal transparent animationType="none" onRequestClose={() => closeMenu()}>
           {menuStep === 'main' ? (
             /* ── Main dropdown ── */
-            <Pressable style={styles.menuOverlay} onPress={closeMenu}>
+            <Pressable style={styles.menuOverlay} onPress={() => closeMenu()}>
               <Animated.View
                 style={[
                   styles.menuDropdown,
@@ -294,7 +293,7 @@ export const VoiceScreen = ({ navigation }) => {
                   })}
                 </View>
 
-                <TouchableOpacity style={styles.personaCancelBtn} onPress={closeMenu}>
+                <TouchableOpacity style={styles.personaCancelBtn} onPress={() => closeMenu()}>
                   <Text style={styles.personaCancelText}>Cancel</Text>
                 </TouchableOpacity>
               </Pressable>

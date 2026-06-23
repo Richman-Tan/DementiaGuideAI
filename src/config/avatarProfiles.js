@@ -35,6 +35,7 @@ export const AVATAR_PROFILES = {
     label:       'Classic',
     description: 'Warm, expressive look',
     modelKey:    'sdk',
+    voice:       'en-US-JennyNeural',
     //
     // AvatarSDK MetaPerson — blobby/blended shapes, forgiving of heuristic errors.
     // Reduce if tongue protrudes.
@@ -53,6 +54,7 @@ export const AVATAR_PROFILES = {
     label:       'New Look',
     description: 'Enhanced lip sync with Ready Player Me',
     modelKey:    'rpm',
+    voice:       'en-US-AriaNeural',
     //
     // RPM Oculus visemes — highly distinct shapes designed for audio-driven
     // phoneme detection. Low weights prevent heuristic errors looking jarring.
@@ -67,22 +69,21 @@ export const AVATAR_PROFILES = {
 
   aria_metahuman: {
     id:          'aria_metahuman',
-    name:        'Aria',
-    label:       'MetaHuman',
-    description: 'High-fidelity MetaHuman avatar',
+    name:        'Eric',
+    label:       'Eric',
+    description: 'High-fidelity AvatarSDK character',
     modelKey:    'metahuman',
+    voice:       'en-US-EricNeural',
     //
-    // MetaHuman ARKit shapes are professionally calibrated to anatomical range —
-    // use high weights. Each viseme key drives a combo of ARKit shapes (via the
-    // ARKit fallback in patchExprMap) where the inner combo scale factors are
-    // already conservative (jawOpen 0.12–0.72 per vowel). The outer profile
-    // weight is a multiplier on top, so it needs to be high (0.85–1.0) for
-    // visible mouth movement.
+    // AvatarSDK MetaPerson export — same model type as aria_sdk.
+    // Viseme shapes (aa, ih, ou, oh, PP, FF…) are direct morph targets.
+    // Slightly higher than aria_sdk because Eric has a fuller ARKit set
+    // (jawOpen combos for ee/oh) so blending is smoother.
     //
     visemeWeights: {
-      aa: 1.00, ih: 0.88, ou: 0.92, ee: 0.88, oh: 0.95,
-      v_pp: 0.95, v_ff: 0.82, v_th: 0.85, v_dd: 0.88,
-      v_kk: 0.88, v_ch: 0.88, v_ss: 0.82, v_nn: 0.78, v_rr: 0.85,
+      aa: 0.70, ih: 0.62, ou: 0.67, ee: 0.64, oh: 0.68,
+      v_pp: 0.72, v_ff: 0.60, v_th: 0.62, v_dd: 0.64,
+      v_kk: 0.64, v_ch: 0.64, v_ss: 0.60, v_nn: 0.57, v_rr: 0.62,
       neutral: 0.0,
     },
   },

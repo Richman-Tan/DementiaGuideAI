@@ -15,7 +15,8 @@
  * @property {function(payload: string|AvatarAudioPayload): Promise<void>} playAudio
  *   Play an audio segment with lip-sync animation.
  *   - string: data URI (legacy / OpenAI RMS fallback)
- *   - AvatarAudioPayload: { audio, visemeTimeline, emotion, text }
+ *   - AvatarAudioPayload: { audio, visemeTimeline, emotion, text } (WebView path)
+ *   - CC4AudioPayload:    { audio, blendshapes, emotion, text }    (Unity path)
  *   Resolves when the audio segment finishes playing.
  *
  * @property {function(): void} stopAudio
@@ -37,19 +38,21 @@
  */
 
 /**
- * @typedef {Object} ArkitAudioPayload
- * Used by the Unity renderer. Produced by blendshapeTranslator.segmentToArkitPayload().
+ * @typedef {Object} CC4AudioPayload
+ * Used by the Unity renderer. Produced by blendshapeTranslator.segmentToCC4Payload().
  *
- * @property {string}                  audio       - data:audio/mpeg;base64,... URI
- * @property {ArkitBlendshapeFrame[]}  blendshapes - ARKit 52 timeline
- * @property {string}                  emotion     - neutral|positive|warm|concern|question
- * @property {string}                  [text]      - sentence text
+ * @property {string}               audio       - data:audio/mpeg;base64,... URI
+ * @property {CC4BlendshapeFrame[]} blendshapes - CC4 blendshape timeline
+ * @property {string}               emotion     - neutral|positive|warm|concern|question
+ * @property {string}               [text]      - sentence text
  */
 
 /**
- * @typedef {Object} ArkitBlendshapeFrame
+ * @typedef {Object} CC4BlendshapeFrame
  * @property {number} time    - seconds from start of this audio segment
- * @property {Object} weights - map of ARKit blendshape name → value (0.0–1.0)
+ * @property {Object} weights - map of CC4 blendshape name → value (0.0–1.0)
+ *                              See VISEME_TO_CC4 in blendshapeTranslator.js for the
+ *                              full list of valid shape names.
  */
 
 export {};

@@ -40,3 +40,15 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Unity
+unity-avatar/UnityAvatarProject/Library/
+unity-avatar/UnityAvatarProject/Temp/
+unity-avatar/UnityAvatarProject/Obj/
+unity-avatar/UnityAvatarProject/Build/
+unity-avatar/UnityAvatarProject/Logs/
+unity-avatar/UnityAvatarProject/UserSettings/
+unity-avatar/UnityAvatarProject/*.csproj
+unity-avatar/UnityAvatarProject/*.sln
+unity-avatar/UnityAvatarProject/*.suo
+unity-avatar/uaal-export/

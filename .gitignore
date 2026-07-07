@@ -51,4 +51,6 @@ unity-avatar/UnityAvatarProject/UserSettings/
 unity-avatar/UnityAvatarProject/*.csproj
 unity-avatar/UnityAvatarProject/*.sln
 unity-avatar/UnityAvatarProject/*.suo
-unity-avatar/uaal-export/
+# Note: uaal-export/ actually lands inside the UnityAvatarProject submodule
+# (its own .gitignore excludes it there) — this parent .gitignore can't see
+# into a submodule's working tree anyway, so there's nothing to add here.

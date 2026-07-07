@@ -9,11 +9,16 @@ const {
 const { mergeContents } = require('@expo/config-plugins/build/utils/generateCode');
 
 // Phase 5 Step 1 (manual, in the Unity Editor) exports the Xcode project
-// containing the UnityFramework target here. See the Phase 5 plan for the
-// exact File > Build Settings > iOS > Export Project steps.
-const UNITY_EXPORT_DIR = path.join(__dirname, '..', 'unity-avatar', 'uaal-export', 'ios');
+// here via File > Build Settings > iOS > Export Project. It lands inside the
+// UnityAvatarProject submodule itself (matching where Library/Temp/Builds
+// already live per that submodule's own .gitignore), not as a sibling of it.
+const UNITY_EXPORT_DIR = path.join(__dirname, '..', 'unity-avatar', 'UnityAvatarProject', 'uaal-export');
 const UNITY_LIBRARY_DIR_NAME = 'UnityLibrary';
-const UNITY_FRAMEWORK_PROJECT_NAME = 'UnityFramework.xcodeproj';
+// Unity's iOS export is one umbrella project containing multiple targets
+// (Unity-iPhone, Unity-iPhone Tests, GameAssembly, UnityFramework) — NOT a
+// standalone UnityFramework.xcodeproj. Confirmed against a real export
+// (Unity 6000.5.0f1) via its project.pbxproj PBXNativeTarget section.
+const UNITY_FRAMEWORK_PROJECT_NAME = 'Unity-iPhone.xcodeproj';
 const UNITY_FRAMEWORK_TARGET_NAME = 'UnityFramework';
 
 function copyDirSync(src, dest) {
@@ -61,7 +66,8 @@ function withUnityLibraryCopy(config) {
 }
 
 /**
- * Wires UnityLibrary/UnityFramework.xcodeproj into the main app's Xcode
+ * Wires UnityLibrary/Unity-iPhone.xcodeproj (containing the UnityFramework
+ * target) into the main app's Xcode
  * project: adds it as a subproject reference, links + embeds the resulting
  * UnityFramework.framework on the main target, and adds a build phase to
  * copy Unity's Data/ asset bundle into the app bundle.
@@ -89,6 +95,23 @@ function withUnityXcodeProject(config) {
       return config;
     }
 
+    // The container-item-proxy needs the UnityFramework target's actual GUID
+    // from *its own* pbxproj, not a readable name — read it directly rather
+    // than assume it's stable across Unity versions/exports.
+    const unityPbxprojPath = path.join(unityProjectPath, 'project.pbxproj');
+    const unityPbxprojContents = fs.readFileSync(unityPbxprojPath, 'utf8');
+    const targetUuidMatch = unityPbxprojContents.match(
+      new RegExp(`([0-9A-F]{24}) /\\* ${UNITY_FRAMEWORK_TARGET_NAME} \\*/ = \\{\\s*isa = PBXNativeTarget;`)
+    );
+    if (!targetUuidMatch) {
+      console.warn(
+        `[withUnityFramework] Could not find the ${UNITY_FRAMEWORK_TARGET_NAME} target's GUID in ` +
+        `${unityPbxprojPath} — skipping Xcode project wiring this prebuild.`
+      );
+      return config;
+    }
+    const unityFrameworkTargetUuid = targetUuidMatch[1];
+
     const mainTarget = project.getFirstTarget().firstTarget;
     const groupKey = project.findPBXGroupKey({ name: UNITY_LIBRARY_DIR_NAME })
       ?? project.addPbxGroup([], UNITY_LIBRARY_DIR_NAME, UNITY_LIBRARY_DIR_NAME).uuid;
@@ -108,7 +131,7 @@ function withUnityXcodeProject(config) {
           fileRef: fileRef.fileRef,
           basename: UNITY_FRAMEWORK_PROJECT_NAME,
           proxyType: 2,
-          remoteGlobalIDString: UNITY_FRAMEWORK_TARGET_NAME,
+          remoteGlobalIDString: unityFrameworkTargetUuid,
         });
       }
     }

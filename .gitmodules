@@ -1,0 +1,3 @@
+[submodule "unity-avatar/UnityAvatarProject"]
+	path = unity-avatar/UnityAvatarProject
+	url = https://github.com/Richman-Tan/UnityAvatarProject.git

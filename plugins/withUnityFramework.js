@@ -8,18 +8,19 @@ const {
 } = require('@expo/config-plugins');
 const { mergeContents } = require('@expo/config-plugins/build/utils/generateCode');
 
-// Phase 5 Step 1 (manual, in the Unity Editor) exports the Xcode project
-// here via File > Build Settings > iOS > Export Project. It lands inside the
-// UnityAvatarProject submodule itself (matching where Library/Temp/Builds
-// already live per that submodule's own .gitignore), not as a sibling of it.
-const UNITY_EXPORT_DIR = path.join(__dirname, '..', 'unity-avatar', 'UnityAvatarProject', 'uaal-export');
+// Committed, prebuilt UaaL artifact (Phase 5) — NOT the raw Unity export.
+// Building UnityFramework.framework from the raw Unity-iPhone.xcodeproj
+// export requires manually hand-constructing PBXContainerItemProxy/
+// PBXReferenceProxy objects to reference a target across project files,
+// which the `xcode` npm package (wrapped by @expo/config-plugins) has no
+// supported helper for. Simpler and well-supported: build the UnityFramework
+// scheme once (xcodebuild -scheme UnityFramework -sdk iphoneos), commit the
+// resulting UnityFramework.framework + Data/ + a tiny vendored_frameworks
+// podspec here, and let CocoaPods do all the Xcode wiring via `pod install`.
+// Rebuild this folder's contents whenever Unity-side scripts/assets/scene
+// change — see the Phase 5 plan for the exact rebuild steps.
+const UNITY_LIBRARY_SOURCE_DIR = path.join(__dirname, '..', 'unity-avatar', 'UnityAvatarProject', 'UnityLibrary');
 const UNITY_LIBRARY_DIR_NAME = 'UnityLibrary';
-// Unity's iOS export is one umbrella project containing multiple targets
-// (Unity-iPhone, Unity-iPhone Tests, GameAssembly, UnityFramework) — NOT a
-// standalone UnityFramework.xcodeproj. Confirmed against a real export
-// (Unity 6000.5.0f1) via its project.pbxproj PBXNativeTarget section.
-const UNITY_FRAMEWORK_PROJECT_NAME = 'Unity-iPhone.xcodeproj';
-const UNITY_FRAMEWORK_TARGET_NAME = 'UnityFramework';
 
 function copyDirSync(src, dest) {
   fs.mkdirSync(dest, { recursive: true });
@@ -37,10 +38,9 @@ function copyDirSync(src, dest) {
 }
 
 /**
- * Copies the Unity iOS export into ios/UnityLibrary/ before pod install, so
- * the Xcode project mod below has something to reference. No-ops (with a
- * warning) if the export doesn't exist yet — lets `expo prebuild` still
- * succeed before Phase 5 Step 1 has been run once, rather than hard-failing.
+ * Copies the committed UnityLibrary/ (framework + Data + podspec) into
+ * ios/UnityLibrary/ before pod install. No-ops (with a warning) if it's
+ * missing, rather than hard-failing `expo prebuild`.
  */
 function withUnityLibraryCopy(config) {
   return withDangerousMod(config, [
@@ -49,146 +49,32 @@ function withUnityLibraryCopy(config) {
       const iosRoot = config.modRequest.platformProjectRoot;
       const dest = path.join(iosRoot, UNITY_LIBRARY_DIR_NAME);
 
-      if (!fs.existsSync(UNITY_EXPORT_DIR)) {
+      if (!fs.existsSync(UNITY_LIBRARY_SOURCE_DIR)) {
         console.warn(
-          `[withUnityFramework] No Unity export found at ${UNITY_EXPORT_DIR} — ` +
-          'skipping UnityLibrary copy this prebuild. Run the Unity iOS export ' +
-          '(Phase 5 plan, Step 1) first, then re-run `expo prebuild`.'
+          `[withUnityFramework] No committed UnityLibrary found at ${UNITY_LIBRARY_SOURCE_DIR} — ` +
+          'skipping copy this prebuild. See the Phase 5 plan for how to build it.'
         );
         return config;
       }
 
       fs.rmSync(dest, { recursive: true, force: true });
-      copyDirSync(UNITY_EXPORT_DIR, dest);
+      copyDirSync(UNITY_LIBRARY_SOURCE_DIR, dest);
       return config;
     },
   ]);
 }
 
-/**
- * Wires UnityLibrary/Unity-iPhone.xcodeproj (containing the UnityFramework
- * target) into the main app's Xcode
- * project: adds it as a subproject reference, links + embeds the resulting
- * UnityFramework.framework on the main target, and adds a build phase to
- * copy Unity's Data/ asset bundle into the app bundle.
- *
- * This is the highest-risk part of the whole integration — the `xcode` npm
- * package (which @expo/config-plugins wraps) has solid support for simple
- * framework linking but only partial support for subproject references.
- * Verify the resulting ios/DementiaGuideAi.xcodeproj/project.pbxproj in Xcode
- * after the first `expo prebuild`; manual correction in the Xcode GUI
- * (dragging in the subproject once, then re-running prebuild to confirm it
- * sticks) may be needed the first time.
- */
-function withUnityXcodeProject(config) {
-  return withXcodeProject(config, (config) => {
-    const project = config.modResults;
-    const iosRoot = config.modRequest.platformProjectRoot;
-    const unityLibraryPath = path.join(iosRoot, UNITY_LIBRARY_DIR_NAME);
-    const unityProjectPath = path.join(unityLibraryPath, UNITY_FRAMEWORK_PROJECT_NAME);
-
-    if (!fs.existsSync(unityProjectPath)) {
-      console.warn(
-        `[withUnityFramework] ${unityProjectPath} not present — skipping Xcode ` +
-        'project wiring this prebuild.'
-      );
-      return config;
-    }
-
-    // The container-item-proxy needs the UnityFramework target's actual GUID
-    // from *its own* pbxproj, not a readable name — read it directly rather
-    // than assume it's stable across Unity versions/exports.
-    const unityPbxprojPath = path.join(unityProjectPath, 'project.pbxproj');
-    const unityPbxprojContents = fs.readFileSync(unityPbxprojPath, 'utf8');
-    const targetUuidMatch = unityPbxprojContents.match(
-      new RegExp(`([0-9A-F]{24}) /\\* ${UNITY_FRAMEWORK_TARGET_NAME} \\*/ = \\{\\s*isa = PBXNativeTarget;`)
-    );
-    if (!targetUuidMatch) {
-      console.warn(
-        `[withUnityFramework] Could not find the ${UNITY_FRAMEWORK_TARGET_NAME} target's GUID in ` +
-        `${unityPbxprojPath} — skipping Xcode project wiring this prebuild.`
-      );
-      return config;
-    }
-    const unityFrameworkTargetUuid = targetUuidMatch[1];
-
-    const mainTarget = project.getFirstTarget().firstTarget;
-    const groupKey = project.findPBXGroupKey({ name: UNITY_LIBRARY_DIR_NAME })
-      ?? project.addPbxGroup([], UNITY_LIBRARY_DIR_NAME, UNITY_LIBRARY_DIR_NAME).uuid;
-
-    // Add the subproject file reference (skip if a prior prebuild already added it).
-    const alreadyAdded = Object.values(project.hash.project.objects.PBXFileReference || {}).some(
-      (ref) => ref && ref.path === UNITY_FRAMEWORK_PROJECT_NAME
-    );
-    if (!alreadyAdded) {
-      const fileRef = project.addFile(
-        path.join(UNITY_LIBRARY_DIR_NAME, UNITY_FRAMEWORK_PROJECT_NAME),
-        groupKey,
-        { lastKnownFileType: 'wrapper.pb-project', sourceTree: '"<group>"' }
-      );
-      if (fileRef) {
-        project.addToPbxProjectSection({
-          fileRef: fileRef.fileRef,
-          basename: UNITY_FRAMEWORK_PROJECT_NAME,
-          proxyType: 2,
-          remoteGlobalIDString: unityFrameworkTargetUuid,
-        });
-      }
-    }
-
-    // Link + embed the framework product on the main app target.
-    if (!project.pbxFrameworksBuildPhaseObj(mainTarget).files.some((f) => f.comment?.includes('UnityFramework'))) {
-      project.addFramework('UnityFramework.framework', {
-        customFramework: true,
-        embed: true,
-        link: true,
-        sign: true,
-        target: mainTarget,
-      });
-    }
-
-    // Copy Unity's Data/ bundle into the app so runEmbedded() can find its assets.
-    const copyPhaseName = 'Copy Unity Data';
-    const hasCopyPhase = project.buildPhaseObject(copyPhaseName, 'PBXShellScriptBuildPhase', mainTarget) != null;
-    if (!hasCopyPhase) {
-      project.addBuildPhase(
-        [],
-        'PBXShellScriptBuildPhase',
-        copyPhaseName,
-        mainTarget,
-        {
-          shellPath: '/bin/sh',
-          shellScript:
-            'ditto "${SRCROOT}/UnityLibrary/Data" "${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Data"',
-        }
-      );
-    }
-
-    // Unity's iOS export requires bitcode off (also set in the Podfile mod below,
-    // belt-and-suspenders since some configs read one or the other).
-    project.updateBuildProperty('ENABLE_BITCODE', 'NO');
-
-    return config;
-  });
-}
-
-/** Disables bitcode across all Pods targets — required by Unity's iOS export. */
-function withUnityBitcodeDisabled(config) {
+/** Adds `pod 'UnityFramework', :path => 'UnityLibrary'` inside the main app target. */
+function withUnityPodfilePod(config) {
   return withPodfile(config, (config) => {
-    if (config.modResults.contents.includes('unity-framework-bitcode')) {
+    if (config.modResults.contents.includes('unity-framework-pod')) {
       return config;
     }
     config.modResults.contents = mergeContents({
-      tag: 'unity-framework-bitcode',
+      tag: 'unity-framework-pod',
       src: config.modResults.contents,
-      newSrc: [
-        '  installer.pods_project.targets.each do |target|',
-        "    target.build_configurations.each do |bc|",
-        "      bc.build_settings['ENABLE_BITCODE'] = 'NO'",
-        '    end',
-        '  end',
-      ].join('\n'),
-      anchor: /post_install do \|installer\|/,
+      newSrc: "  pod 'UnityFramework', :path => 'UnityLibrary'",
+      anchor: /use_expo_modules!/,
       offset: 1,
       comment: '#',
     }).contents;
@@ -197,12 +83,47 @@ function withUnityBitcodeDisabled(config) {
 }
 
 /**
+ * Adds a build phase on the main app target (not a cross-project reference —
+ * this part is safely supported by the `xcode` package) to copy Unity's
+ * Data/ asset bundle into the app so UnityFramework can find it at runtime.
+ */
+function withUnityDataCopyPhase(config) {
+  return withXcodeProject(config, (config) => {
+    const project = config.modResults;
+    const mainTargetUuid = project.getFirstTarget().uuid;
+
+    const copyPhaseName = 'Copy Unity Data';
+    const hasCopyPhase = project.buildPhaseObject('PBXShellScriptBuildPhase', copyPhaseName, mainTargetUuid) != null;
+    if (!hasCopyPhase) {
+      project.addBuildPhase(
+        [],
+        'PBXShellScriptBuildPhase',
+        copyPhaseName,
+        mainTargetUuid,
+        {
+          shellPath: '/bin/sh',
+          shellScript:
+            'ditto "${SRCROOT}/UnityLibrary/Data" "${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Data"',
+        }
+      );
+    }
+
+    return config;
+  });
+}
+
+/**
  * Forwards UIApplicationDelegate lifecycle callbacks to Unity so its
- * render/audio loop pauses and resumes correctly across backgrounding. Added
- * as a separate AppDelegate extension (not inside the class body) to avoid
- * touching Expo's generated `didFinishLaunchingWithOptions` at all — Unity
- * itself still only boots lazily from JS (UnityAvatarModule.initialize()),
- * never here.
+ * render/audio loop pauses and resumes correctly across backgrounding.
+ *
+ * Inserted directly into the AppDelegate class body (not a trailing
+ * extension) with `override` — ExpoAppDelegate's superclass chain already
+ * implements these UIApplicationDelegate methods as regular (non-dynamic)
+ * Swift methods, and Swift disallows overriding those from an extension
+ * (confirmed via a real xcodebuild failure: "cannot override a non-dynamic
+ * class declaration from an extension"). Unity itself still only boots
+ * lazily from JS (UnityAvatarModule.initialize()), never from here —
+ * Expo's generated `didFinishLaunchingWithOptions` is untouched.
  */
 function withUnityAppDelegateLifecycle(config) {
   return withAppDelegate(config, (config) => {
@@ -213,32 +134,50 @@ function withUnityAppDelegateLifecycle(config) {
     if (config.modResults.contents.includes('unity-lifecycle-forward')) {
       return config;
     }
+
+    // UnityBridgeManager lives in the UnityAvatarModule pod target, a
+    // different Swift module than the main app target AppDelegate.swift
+    // belongs to — needs an explicit import (confirmed via a real
+    // xcodebuild failure: "cannot find 'UnityBridgeManager' in scope").
+    config.modResults.contents = mergeContents({
+      tag: 'unity-lifecycle-import',
+      src: config.modResults.contents,
+      newSrc: 'import UnityAvatarModule',
+      anchor: /import ReactAppDependencyProvider/,
+      offset: 1,
+      comment: '//',
+    }).contents;
+
     config.modResults.contents = mergeContents({
       tag: 'unity-lifecycle-forward',
       src: config.modResults.contents,
       newSrc: [
-        '// Forwards app lifecycle events to Unity (no-op until UnityBridgeManager',
-        '// has actually booted Unity at least once). See UnityBridgeManager.swift.',
-        'extension AppDelegate {',
-        '  public func applicationWillResignActive(_ application: UIApplication) {',
+        '  // Forwards app lifecycle events to Unity (no-op until UnityBridgeManager',
+        '  // has actually booted Unity at least once). See UnityBridgeManager.swift.',
+        '  public override func applicationWillResignActive(_ application: UIApplication) {',
         '    UnityBridgeManager.shared.appWillResignActive()',
         '  }',
         '',
-        '  public func applicationDidEnterBackground(_ application: UIApplication) {',
+        '  public override func applicationDidEnterBackground(_ application: UIApplication) {',
         '    UnityBridgeManager.shared.appDidEnterBackground()',
         '  }',
         '',
-        '  public func applicationWillEnterForeground(_ application: UIApplication) {',
+        '  public override func applicationWillEnterForeground(_ application: UIApplication) {',
         '    UnityBridgeManager.shared.appWillEnterForeground()',
         '  }',
         '',
-        '  public func applicationDidBecomeActive(_ application: UIApplication) {',
+        '  public override func applicationDidBecomeActive(_ application: UIApplication) {',
         '    UnityBridgeManager.shared.appDidBecomeActive()',
         '  }',
-        '}',
       ].join('\n'),
-      anchor: /class ReactNativeDelegate/,
-      offset: 0,
+      // Anchors on the last line of AppDelegate's final method (continue
+      // userActivity/restorationHandler); offset 2 skips past both that
+      // return statement AND the method's own closing brace, landing the
+      // new methods as class-body siblings — offset 1 (verified via a real
+      // build) instead nests them inside that method's body, which fails to
+      // compile since local funcs can't have `override`/`public`.
+      anchor: /return super\.application\(application, continue: userActivity, restorationHandler: restorationHandler\) \|\| result/,
+      offset: 2,
       comment: '//',
     }).contents;
     return config;
@@ -247,8 +186,8 @@ function withUnityAppDelegateLifecycle(config) {
 
 const withUnityFramework = (config) => {
   config = withUnityLibraryCopy(config);
-  config = withUnityXcodeProject(config);
-  config = withUnityBitcodeDisabled(config);
+  config = withUnityPodfilePod(config);
+  config = withUnityDataCopyPhase(config);
   config = withUnityAppDelegateLifecycle(config);
   return config;
 };

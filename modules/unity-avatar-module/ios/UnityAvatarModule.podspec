@@ -16,11 +16,13 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
-  # NOT a CocoaPods dependency: plugins/withUnityFramework.js links
-  # UnityFramework.framework directly at the Xcode-project level (subproject
-  # reference + Link/Embed Frameworks build phases on the main app target),
-  # not via a pod. `import UnityFramework` in the Swift files below resolves
-  # through Xcode's framework search paths once that plugin has run.
+  # UnityFramework is a vendored_frameworks CocoaPods pod (see
+  # unity-avatar/UnityAvatarProject/UnityLibrary/UnityFramework.podspec,
+  # referenced via :path in the Podfile by plugins/withUnityFramework.js).
+  # Needed for `import UnityFramework` to resolve in the Swift files below —
+  # confirmed via a real xcodebuild failure ("no such module 'UnityFramework'")
+  # without this declared.
+  s.dependency 'UnityFramework'
 
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',

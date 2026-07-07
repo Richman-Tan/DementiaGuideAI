@@ -8,10 +8,15 @@ import UnityFramework
 ///
 /// Lives inside the module (not ios/DementiaGuideAi/) so it survives a clean
 /// `expo prebuild`, which regenerates the ios/ folder from scratch.
-final class UnityBridgeManager: NSObject {
-    static let shared = UnityBridgeManager()
+public final class UnityBridgeManager: NSObject {
+    // `public` throughout this class: AppDelegate.swift (inserted by
+    // plugins/withUnityFramework.js) lives in the main app target, a
+    // different Swift module than this pod — confirmed via a real
+    // xcodebuild failure ("cannot find 'UnityBridgeManager' in scope")
+    // without it.
+    public static let shared = UnityBridgeManager()
 
-    private(set) var isStarted = false
+    public private(set) var isStarted = false
     private var unityFramework: UnityFramework?
 
     private override init() {
@@ -21,7 +26,7 @@ final class UnityBridgeManager: NSObject {
     /// Boots Unity if it hasn't been already. Safe to call repeatedly.
     /// Returns the root UIView Unity renders into, for UnityAvatarView to embed.
     @discardableResult
-    func start() -> UIView? {
+    public func start() -> UIView? {
         if isStarted {
             return unityFramework?.appController()?.rootView
         }
@@ -50,26 +55,26 @@ final class UnityBridgeManager: NSObject {
     // (its withAppDelegate mod) — no-ops if Unity was never started, which is
     // the common case for users who never open the avatar screen.
 
-    func appWillResignActive() {
+    public func appWillResignActive() {
         unityFramework?.appController()?.applicationWillResignActive(UIApplication.shared)
     }
 
-    func appDidEnterBackground() {
+    public func appDidEnterBackground() {
         unityFramework?.appController()?.applicationDidEnterBackground(UIApplication.shared)
     }
 
-    func appWillEnterForeground() {
+    public func appWillEnterForeground() {
         unityFramework?.appController()?.applicationWillEnterForeground(UIApplication.shared)
     }
 
-    func appDidBecomeActive() {
+    public func appDidBecomeActive() {
         unityFramework?.appController()?.applicationDidBecomeActive(UIApplication.shared)
     }
 
     /// Forwards a JSON message to a GameObject in the running Unity scene.
     /// `HD_Aaron` hosts AvatarController / NativeBridgeReceiver (see
     /// unity-avatar/UnityAvatarProject/Assets/Scripts/NativeBridgeReceiver.cs).
-    func sendMessage(json: String, goName: String = "HD_Aaron", methodName: String = "ReceiveBridgeMessage") {
+    public func sendMessage(json: String, goName: String = "HD_Aaron", methodName: String = "ReceiveBridgeMessage") {
         guard isStarted else {
             NSLog("[UnityBridgeManager] sendMessage called before start() — dropping message.")
             return
@@ -82,7 +87,7 @@ final class UnityBridgeManager: NSObject {
 // lifecycle callbacks (e.g. app-quit requests from the Unity side). No-ops for
 // v1 — this app never unloads Unity mid-session.
 extension UnityBridgeManager: UnityFrameworkListener {
-    func unityDidUnload(_ notification: Notification!) {
+    public func unityDidUnload(_ notification: Notification!) {
         isStarted = false
         unityFramework = nil
     }

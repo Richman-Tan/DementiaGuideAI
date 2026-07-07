@@ -1,25 +1,21 @@
 import React, { useImperativeHandle, forwardRef } from 'react';
-import { View } from 'react-native';
-import { UNITY_BRIDGE_STUB } from '../services/avatarBridge/UnityAvatarBridge';
+import { UnityAvatarBridge } from '../services/avatarBridge/UnityAvatarBridge';
+import { UnityAvatarNativeView } from '../../modules/unity-avatar-module/src';
 
 /**
- * AvatarUnity — Phase 3 stub.
+ * AvatarUnity — Phase 5.
  *
- * Satisfies the AvatarBridgeProtocol with no-op methods so VoiceScreen can
- * conditionally render this in place of AvatarVRM for renderer:'unity' profiles
- * without crashing. Renders nothing — a placeholder will be shown by VoiceScreen.
- *
- * Phase 5: this component mounts the native UnityAvatarView (expo-modules-core
- * Fabric component) and wires up the full UaaL bridge.
+ * Mounts the native UnityAvatarView (expo-modules-core Fabric component) and
+ * wires the ref up to the real UnityAvatarBridge. Unity itself boots lazily on
+ * the native side, on the first playAudio()/initialize() call — not here.
  */
-export const AvatarUnity = forwardRef(function AvatarUnity(_props, ref) {
+export const AvatarUnity = forwardRef(function AvatarUnity(props, ref) {
   useImperativeHandle(ref, () => ({
-    playAudio:      UNITY_BRIDGE_STUB.playAudio,
-    stopAudio:      UNITY_BRIDGE_STUB.stopAudio,
-    setOnAudioStart: UNITY_BRIDGE_STUB.setOnAudioStart,
-    setDebugMode:   UNITY_BRIDGE_STUB.setDebugMode,
+    playAudio:       UnityAvatarBridge.playAudio,
+    stopAudio:       UnityAvatarBridge.stopAudio,
+    setOnAudioStart: UnityAvatarBridge.setOnAudioStart,
+    setDebugMode:    UnityAvatarBridge.setDebugMode,
   }), []);
 
-  // Renders nothing in Phase 3 — VoiceScreen shows its own placeholder for Unity profiles.
-  return <View />;
+  return <UnityAvatarNativeView style={props.style} />;
 });

@@ -90,11 +90,7 @@ export const AVATAR_PROFILES = {
       neutral: 0.0,
     },
   },
-};
 
-// Unity/CC4 profiles — not yet selectable via the persona picker (Phase 5).
-// Phase 5: move these into AVATAR_PROFILES and AVATAR_PROFILE_LIST once UaaL is integrated.
-export const CC4_PROFILES = {
   cc4_aria: {
     id:           'cc4_aria',
     name:         'Aria',
@@ -102,8 +98,9 @@ export const CC4_PROFILES = {
     description:  'Reallusion CC4 character (Unity)',
     renderer:     'unity',
     voice:        'en-US-JennyNeural',
-    // CC4 uses the full ARKit 52 blendshape set. visemeWeights is null so
-    // blendshapeTranslator uses its built-in CC4_DEFAULT_WEIGHT scalar.
+    // CC4 uses its own native blendshape set (see blendshapeTranslator.js), not
+    // ARKit. visemeWeights is null so blendshapeTranslator uses its built-in
+    // CC4_DEFAULT_WEIGHT scalar.
     visemeWeights: null,
   },
 };

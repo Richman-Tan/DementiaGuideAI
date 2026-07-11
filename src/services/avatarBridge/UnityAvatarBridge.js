@@ -76,6 +76,9 @@ async function playAudio(payload) {
         NativeUnityAvatarModule.playAudio(JSON.stringify({
           type:        'play',
           duration:    (status.durationMillis ?? 0) / 1000,
+          // Raw 14-key viseme events — preferred by Unity's co-articulation
+          // engine. blendshapes kept as the legacy fallback path.
+          visemes:     cc4Payload.visemes,
           blendshapes: cc4Payload.blendshapes,
         })).catch((err) => console.warn('[UnityAvatarBridge] native playAudio failed:', err));
       }

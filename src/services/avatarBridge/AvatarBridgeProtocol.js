@@ -16,7 +16,7 @@
  *   Play an audio segment with lip-sync animation.
  *   - string: data URI (legacy / OpenAI RMS fallback)
  *   - AvatarAudioPayload: { audio, visemeTimeline, emotion, text } (WebView path)
- *   - CC4AudioPayload:    { audio, blendshapes, emotion, text }    (Unity path)
+ *   - CC4AudioPayload:    { audio, visemes, blendshapes, emotion, text } (Unity path)
  *   Resolves when the audio segment finishes playing.
  *
  * @property {function(): void} stopAudio
@@ -42,9 +42,21 @@
  * Used by the Unity renderer. Produced by blendshapeTranslator.segmentToCC4Payload().
  *
  * @property {string}               audio       - data:audio/mpeg;base64,... URI
- * @property {CC4BlendshapeFrame[]} blendshapes - CC4 blendshape timeline
+ * @property {VisemeEvent[]}        visemes     - raw 14-key viseme events; preferred by
+ *                                                Unity's co-articulation engine
+ * @property {CC4BlendshapeFrame[]} blendshapes - pre-translated CC4 keyframes (legacy
+ *                                                fallback for older Unity builds)
  * @property {string}               emotion     - neutral|positive|warm|concern|question
  * @property {string}               [text]      - sentence text
+ */
+
+/**
+ * @typedef {Object} VisemeEvent
+ * @property {number} t - acoustic onset, seconds from segment start
+ * @property {number} d - phoneme duration in seconds
+ * @property {string} v - 14-key viseme id (aa, ih, ou, ee, oh, v_pp, v_ff, v_th,
+ *                        v_dd, v_kk, v_ch, v_ss, v_nn, v_rr, neutral)
+ * @property {number} w - peak weight 0.0–1.0
  */
 
 /**

@@ -54,3 +54,6 @@ unity-avatar/UnityAvatarProject/*.suo
 # Note: uaal-export/ actually lands inside the UnityAvatarProject submodule
 # (its own .gitignore excludes it there) — this parent .gitignore can't see
 # into a submodule's working tree anyway, so there's nothing to add here.
+
+# G2P lexicon build cache (downloaded CMUdict + frequency lists)
+unity-avatar/tools/.lexicon-cache/

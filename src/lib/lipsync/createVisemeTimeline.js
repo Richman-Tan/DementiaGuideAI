@@ -5,6 +5,12 @@ import {
   DEFAULT_CONSONANT_VISEME,
   DEFAULT_CONSONANT_WEIGHT,
 } from './phonemeMap';
+import { wordToPhonemes } from './g2p/g2p';
+import {
+  PHONE_TO_VISEME,
+  PHONE_WEIGHT_OVERRIDE,
+  phoneDurationWeight,
+} from './g2p/arpabetToViseme';
 
 // ── Digraph table ─────────────────────────────────────────────────────────────
 // Common English letter-pair patterns and their best-fit viseme.
@@ -128,10 +134,25 @@ export function createVisemeTimeline(alignment, options = {}) {
   // Pre-compute per-character word stress scale (1.0 = content word, 0.68 = function word).
   const wordScales = buildWordScales(characters);
 
+  // G2P pre-pass: for every word found in the pronunciation lexicon, build real
+  // phoneme frames distributed across the word's time span. English spelling is
+  // a poor proxy for phonetics ("one" → /w/, silent letters, soft/hard c/g), so
+  // the char/digraph heuristics below only run for out-of-vocabulary words.
+  const g2pFrames = buildG2PWordFrames(
+    characters, character_start_times_seconds, character_end_times_seconds,
+    resolvedWeights, digraphScale);
+
   const rawFrames = [];
   let i = 0;
 
   while (i < characters.length) {
+    const g2p = g2pFrames.get(i);
+    if (g2p) {
+      rawFrames.push(...g2p.frames);
+      i = g2p.nextIndex;
+      continue;
+    }
+
     const char  = characters[i];
     const start = character_start_times_seconds[i];
     const end   = character_end_times_seconds[i];
@@ -199,6 +220,69 @@ export function createVisemeTimeline(alignment, options = {}) {
   const frames        = applyFinalLowering(mergeConsecutiveSameViseme(rawFrames), totalDuration);
 
   return { frames, totalDuration };
+}
+
+/**
+ * Scans the character array for words, looks each up in the G2P lexicon, and
+ * returns a Map of wordStartIndex → { nextIndex, frames } for every word with a
+ * known pronunciation. The main loop consumes these instead of char heuristics.
+ *
+ * Timing model: a word's span runs from its first char's start time to its last
+ * char's end time (ElevenLabs char timestamps are reliable at word granularity);
+ * phonemes are distributed across that span proportionally to per-class nominal
+ * durations (vowels long, stops short — see arpabetToViseme.js).
+ */
+function buildG2PWordFrames(characters, startTimes, endTimes, resolvedWeights, digraphScale) {
+  const result = new Map();
+  let wordStart = -1;
+  let wordText  = '';
+
+  for (let i = 0; i <= characters.length; i++) {
+    const ch = i < characters.length ? characters[i] : null;
+    if (ch && /[a-zA-Z']/.test(ch)) {
+      if (wordStart < 0) wordStart = i;
+      wordText += ch;
+    } else if (wordStart >= 0) {
+      const phones = wordToPhonemes(wordText);
+      const span   = endTimes[i - 1] - startTimes[wordStart];
+      if (phones && span > 0.005) {
+        const scale = FUNCTION_WORDS.has(wordText.toLowerCase()) ? FUNCTION_WORD_SCALE : 1.0;
+        result.set(wordStart, {
+          nextIndex: i,
+          frames: phonesToFrames(phones, startTimes[wordStart], span, scale, resolvedWeights, digraphScale),
+        });
+      }
+      wordStart = -1;
+      wordText  = '';
+    }
+  }
+  return result;
+}
+
+function phonesToFrames(phones, wordStartTime, span, wordScale, resolvedWeights, digraphScale) {
+  const durWeights = phones.map(phoneDurationWeight);
+  const total      = durWeights.reduce((a, b) => a + b, 0);
+
+  const frames = [];
+  let t = wordStartTime;
+  for (let k = 0; k < phones.length; k++) {
+    const duration = span * (durWeights[k] / total);
+    const phone    = phones[k];
+    const viseme   = PHONE_TO_VISEME[phone];
+
+    if (!viseme || viseme === 'neutral') {
+      frames.push({ time: t, viseme: 'neutral', duration, weight: 0 });
+    } else {
+      // Same weight-resolution rules as the char path: per-phone overrides are
+      // absolute (scaled by profile ratio); everything else uses the profile table.
+      const baseWeight = PHONE_WEIGHT_OVERRIDE[phone] !== undefined
+        ? PHONE_WEIGHT_OVERRIDE[phone] * digraphScale
+        : resolvedWeights[viseme] ?? VISEME_WEIGHT[viseme];
+      frames.push({ time: t, viseme, duration, weight: baseWeight * wordScale });
+    }
+    t += duration;
+  }
+  return frames;
 }
 
 /**

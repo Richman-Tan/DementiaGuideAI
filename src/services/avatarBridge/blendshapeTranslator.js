@@ -184,6 +184,27 @@ export function visemeTimelineToCC4(visemeTimeline, visemeWeights) {
 }
 
 /**
+ * Convert a 14-viseme timeline to the compact raw event list consumed by the
+ * Unity-side co-articulation engine (NativeBridgeReceiver "visemes" field).
+ * Unity owns the viseme→CC4 shape mapping for this path (VisemeMap.cs), so the
+ * events carry viseme IDENTITY — required for co-articulation classes, tongue
+ * shapes and the guaranteed bilabial closure, which pre-translated blendshape
+ * keyframes cannot express.
+ *
+ * @param {{ frames: Array, totalDuration: number }} visemeTimeline
+ * @returns {Array<{ t: number, d: number, v: string, w: number }>}
+ */
+export function visemeTimelineToEvents(visemeTimeline) {
+  if (!visemeTimeline?.frames?.length) return [];
+  return visemeTimeline.frames.map(({ time, viseme, duration, weight }) => ({
+    t: time,
+    d: duration,
+    v: viseme,
+    w: weight,
+  }));
+}
+
+/**
  * Build a CC4AudioPayload from the existing TTS segment format.
  * This is the entry point called by AvatarUnity / UnityAvatarBridge in Phase 5.
  *
@@ -195,6 +216,7 @@ export function segmentToCC4Payload(segment, visemeWeights) {
   const { audio, visemeTimeline, text, emotion } = segment;
   return {
     audio,
+    visemes:     visemeTimelineToEvents(visemeTimeline),
     blendshapes: visemeTimelineToCC4(visemeTimeline, visemeWeights),
     emotion: emotion ?? 'neutral',
     text,

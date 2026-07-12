@@ -40,9 +40,21 @@ public final class UnityBridgeManager: NSObject {
         framework.setDataBundleId("com.unity3d.framework")
         framework.register(self)
 
+        // Unity's runEmbedded() spins up its OWN UIWindow and makes it key/visible,
+        // which parks a full-screen Unity window ON TOP of the React Native window
+        // and swallows every touch (mic button included). Capture the app's key
+        // window first and restore it immediately after, so RN keeps input. The
+        // avatar is display-only — Unity never needs touch events.
+        let appWindow = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+
         let argc = CommandLine.argc
         let argv = CommandLine.unsafeArgv
         framework.runEmbedded(withArgc: argc, argv: argv, appLaunchOpts: nil)
+
+        appWindow?.makeKeyAndVisible()
 
         isStarted = true
         return framework.appController()?.rootView

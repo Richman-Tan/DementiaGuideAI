@@ -22,6 +22,9 @@ class UnityAvatarView: ExpoView {
 
         rootView.translatesAutoresizingMaskIntoConstraints = true
         rootView.frame = bounds
+        // Display-only avatar: never let Unity's view intercept touches, so RN
+        // controls layered over/around the avatar area stay tappable.
+        rootView.isUserInteractionEnabled = false
         addSubview(rootView)
         unityRootView = rootView
     }

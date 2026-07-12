@@ -83,33 +83,37 @@ function withUnityPodfilePod(config) {
 }
 
 /**
- * Adds a build phase on the main app target (not a cross-project reference —
- * this part is safely supported by the `xcode` package) to copy Unity's
- * Data/ asset bundle into the app so UnityFramework can find it at runtime.
+ * Ensures Unity's il2cpp `Data/` bundle sits INSIDE the framework
+ * (UnityFramework.framework/Data), which is exactly where il2cpp resolves
+ * global-metadata.dat at runtime:
+ *   .app/Frameworks/UnityFramework.framework/Data/Managed/Metadata/global-metadata.dat
+ *
+ * Unity's raw UaaL export emits Data as a SIBLING of the framework. If the
+ * committed artifact still has that layout, fold it into the framework here so
+ * CocoaPods' "[CP] Embed Pods Frameworks" phase copies (and signs) it as part
+ * of the vendored framework. This is ordering-proof — no separate copy phase
+ * racing the framework embed (an earlier `ditto … .app/Data` phase put Data at
+ * the app root, where il2cpp does NOT look, so Unity aborted on boot).
  */
-function withUnityDataCopyPhase(config) {
-  return withXcodeProject(config, (config) => {
-    const project = config.modResults;
-    const mainTargetUuid = project.getFirstTarget().uuid;
+function withUnityDataInsideFramework(config) {
+  return withDangerousMod(config, [
+    'ios',
+    async (config) => {
+      const iosRoot = config.modRequest.platformProjectRoot;
+      const siblingData = path.join(iosRoot, UNITY_LIBRARY_DIR_NAME, 'Data');
+      const frameworkData = path.join(
+        iosRoot, UNITY_LIBRARY_DIR_NAME, 'UnityFramework.framework', 'Data');
 
-    const copyPhaseName = 'Copy Unity Data';
-    const hasCopyPhase = project.buildPhaseObject('PBXShellScriptBuildPhase', copyPhaseName, mainTargetUuid) != null;
-    if (!hasCopyPhase) {
-      project.addBuildPhase(
-        [],
-        'PBXShellScriptBuildPhase',
-        copyPhaseName,
-        mainTargetUuid,
-        {
-          shellPath: '/bin/sh',
-          shellScript:
-            'ditto "${SRCROOT}/UnityLibrary/Data" "${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Data"',
-        }
-      );
-    }
-
-    return config;
-  });
+      if (fs.existsSync(frameworkData)) return config; // already correct
+      if (!fs.existsSync(siblingData)) {
+        console.warn('[withUnityFramework] No Unity Data/ folder found — Unity will fail to boot at runtime.');
+        return config;
+      }
+      copyDirSync(siblingData, frameworkData);
+      fs.rmSync(siblingData, { recursive: true, force: true });
+      return config;
+    },
+  ]);
 }
 
 /**
@@ -186,8 +190,8 @@ function withUnityAppDelegateLifecycle(config) {
 
 const withUnityFramework = (config) => {
   config = withUnityLibraryCopy(config);
+  config = withUnityDataInsideFramework(config);
   config = withUnityPodfilePod(config);
-  config = withUnityDataCopyPhase(config);
   config = withUnityAppDelegateLifecycle(config);
   return config;
 };

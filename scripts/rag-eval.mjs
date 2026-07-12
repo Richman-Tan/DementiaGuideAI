@@ -23,7 +23,9 @@
  * knowledgeBase.js. Make sure the DB has been seeded before running.
  */
 
-import { createClient } from '@supabase/supabase-js';
+// NB: we call the Supabase PostgREST RPC endpoint directly over fetch rather than
+// via @supabase/supabase-js — the client pulls in realtime-js, which throws on
+// Node 20 ("no native WebSocket"). Direct fetch is dependency-free and Node-safe.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -64,7 +66,11 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SB_HEADERS = {
+  apikey: SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  'Content-Type': 'application/json',
+};
 
 // ─── Production "Aria" system prompt (default config, mirrors _buildSystemPrompt) ─
 const SYSTEM_PROMPT = `You are Aria, a compassionate and knowledgeable AI assistant created to support family caregivers, healthcare workers, and families caring for people with dementia. You work like a specialised library — every answer you give is grounded in the curated knowledge passages provided to you.
@@ -163,13 +169,25 @@ async function chat(question, chunks) {
 
 async function retrieve(question) {
   const queryEmbedding = await embed(question);
-  const { data, error } = await supabase.rpc('match_chunks', {
-    query_embedding: queryEmbedding,
-    match_count: TOP_K,
-    min_similarity: MIN_SIMILARITY,
+  // Mirrors the app's call (openaiService.search), including query_text.
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/match_chunks`, {
+    method: 'POST',
+    headers: SB_HEADERS,
+    body: JSON.stringify({
+      query_embedding: queryEmbedding,
+      query_text: question,
+      match_count: TOP_K,
+      min_similarity: MIN_SIMILARITY,
+    }),
   });
-  if (error) throw new Error(`Supabase match_chunks error: ${error.message}`);
-  return data ?? [];
+  const text = await r.text();
+  if (!r.ok) {
+    let msg = text.slice(0, 200);
+    try { const j = JSON.parse(text); msg = `${j.code}: ${j.message}`; } catch {}
+    // PGRST203 = ambiguous match_chunks overloads; retrieval is broken until the DB is fixed.
+    throw new Error(`match_chunks failed (HTTP ${r.status}) ${msg}`);
+  }
+  return JSON.parse(text);
 }
 
 // ─── CSV ─────────────────────────────────────────────────────────────────────

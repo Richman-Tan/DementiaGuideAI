@@ -10,6 +10,8 @@
 
 **Reporting rule:** sample sizes are below 20 per category, so report **counts, not percentages** (consistent with the protocol). State the rater and date with the results.
 
+> **Live-DB reality (verified 2026-07-13).** The deployed Supabase knowledge base holds **449 chunks**, not the 70 in `src/data/knowledgeBase.js`. All 33 expected chunk ids used below were confirmed present. However, the **caregiving** category contains 387 chunks (bulk-loaded WHO/NZ iSupport course material) versus ~10 in every other category. For the caregiving questions (A1–A6) an iSupport chunk may legitimately outrank the hand-authored `caregiving_00x` target — record that as an informative retrieval outcome, not automatically a miss. Dump the current chunk list with `node scripts/rag-eval.mjs --introspect` (writes `kb_chunks_reference.csv`) to re-check labels. **The evaluation cannot run until the `match_chunks` overload ambiguity is fixed** (see `scripts/migrations/2026-07-13_fix_match_chunks_overload.sql`); retrieval currently returns PGRST203 on every query.
+
 ---
 
 ## Set A — In-scope questions (expected chunk known)

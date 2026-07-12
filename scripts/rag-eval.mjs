@@ -17,6 +17,7 @@
  *   node scripts/rag-eval.mjs               # reads Supabase creds from ./.env
  *   node scripts/rag-eval.mjs --limit 5     # smoke test (first 5 questions)
  *   node scripts/rag-eval.mjs --out docs/report/rag_eval_results.csv
+ *   node scripts/rag-eval.mjs --introspect  # dump live chunk ids (no OpenAI key needed)
  *
  * Requires: Node 18+ (global fetch) and @supabase/supabase-js (already in node_modules).
  * NOTE: retrieval is scored against the LIVE Supabase knowledge base, not the local
@@ -53,11 +54,13 @@ function loadDotEnv(path) {
 }
 const env = { ...loadDotEnv(resolve(ROOT, '.env')), ...process.env };
 
+const WANT_INTROSPECT = process.argv.includes('--introspect');
 const OPENAI_API_KEY = env.OPENAI_API_KEY;
 const SUPABASE_URL = env.EXPO_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!OPENAI_API_KEY) {
+// --introspect only reads Supabase; the OpenAI key is only needed to run questions.
+if (!WANT_INTROSPECT && !OPENAI_API_KEY) {
   console.error('ERROR: OPENAI_API_KEY not set. Export it: export OPENAI_API_KEY=sk-...');
   process.exit(1);
 }
@@ -190,11 +193,39 @@ async function retrieve(question) {
   return JSON.parse(text);
 }
 
+// ─── Introspection (no OpenAI key needed) ────────────────────────────────────
+async function introspect() {
+  const outPath = resolve(ROOT, 'docs/report/kb_chunks_reference.csv');
+  const all = [];
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    const url = `${SUPABASE_URL}/rest/v1/knowledge_chunks`
+      + `?select=id,category,title,tags&order=category.asc,id.asc&limit=${pageSize}&offset=${offset}`;
+    const r = await fetch(url, { headers: SB_HEADERS });
+    if (!r.ok) throw new Error(`introspect failed (HTTP ${r.status}): ${(await r.text()).slice(0, 200)}`);
+    const rows = await r.json();
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  const header = ['id', 'category', 'title', 'tags'];
+  const lines = [header.map(csvCell).join(',')];
+  for (const c of all) {
+    lines.push([c.id, c.category, c.title, (c.tags || []).join('|')].map(csvCell).join(','));
+  }
+  writeFileSync(outPath, lines.join('\n') + '\n');
+  const byCat = {};
+  for (const c of all) byCat[c.category] = (byCat[c.category] || 0) + 1;
+  console.log(`Wrote ${all.length} chunks → ${outPath}`);
+  console.log('By category:', JSON.stringify(byCat));
+  console.log('Use this to re-check the expected-chunk labels in rag_eval_question_set.md.');
+}
+
 // ─── CSV ─────────────────────────────────────────────────────────────────────
 const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 const REFUSAL = /don't have specific information|do not have specific information|recommend speaking with your GP/i;
 
 async function main() {
+  if (WANT_INTROSPECT) return introspect();
   const args = process.argv.slice(2);
   const limit = args.includes('--limit') ? Number(args[args.indexOf('--limit') + 1]) : QUESTIONS.length;
   const outPath = args.includes('--out')

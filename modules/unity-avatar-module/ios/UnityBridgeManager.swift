@@ -37,7 +37,14 @@ public final class UnityBridgeManager: NSObject {
         }
         unityFramework = framework
 
-        framework.setDataBundleId("com.unity3d.framework")
+        // Tell il2cpp where Unity's Data/ bundle lives. The config plugin
+        // (plugins/withUnityFramework.js) copies Data to the MAIN app bundle root
+        // (.app/Data), not into the framework — folding it into the vendored
+        // framework breaks `pod install` (RN's new-arch hook chokes on Unity's
+        // binary plists). So point Unity at the main bundle, NOT the default
+        // "com.unity3d.framework" (which would make it look inside the framework
+        // and abort with "Could not open global-metadata.dat").
+        framework.setDataBundleId(Bundle.main.bundleIdentifier ?? "com.unity3d.framework")
         framework.register(self)
 
         // Unity's runEmbedded() spins up its OWN UIWindow and makes it key/visible,

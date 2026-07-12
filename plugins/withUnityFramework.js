@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 const {
   withDangerousMod,
   withXcodeProject,
@@ -59,9 +60,61 @@ function withUnityLibraryCopy(config) {
 
       fs.rmSync(dest, { recursive: true, force: true });
       copyDirSync(UNITY_LIBRARY_SOURCE_DIR, dest);
+
+      // xcodebuild emits the framework's Info.plist as a BINARY plist. React
+      // Native's new-arch pod post-install hook does `find ios -name Info.plist`
+      // and reads each as UTF-8 text to scan for git conflict markers — a binary
+      // plist there aborts `pod install` with "invalid byte sequence in UTF-8"
+      // (ios/UnityLibrary is not in the hook's exclude list). Convert any binary
+      // Info.plist under the copied library to XML so the text scan succeeds.
+      const fwInfoPlist = path.join(dest, 'UnityFramework.framework', 'Info.plist');
+      if (fs.existsSync(fwInfoPlist)) {
+        try {
+          execFileSync('plutil', ['-convert', 'xml1', fwInfoPlist]);
+        } catch (e) {
+          console.warn(`[withUnityFramework] Could not convert ${fwInfoPlist} to XML: ${e.message}`);
+        }
+      }
       return config;
     },
   ]);
+}
+
+/**
+ * Copies Unity's il2cpp `Data/` bundle to the app-bundle ROOT (.app/Data) at
+ * build time. Unity resolves it there because UnityBridgeManager.start() calls
+ * setDataBundleId(Bundle.main.bundleIdentifier), pointing il2cpp at the MAIN
+ * bundle's Data/ (see UnityBridgeManager.swift).
+ *
+ * Data is deliberately NOT folded into UnityFramework.framework: a vendored
+ * framework containing Unity's binary plists makes React Native's new-arch
+ * post-install hook (which scans Info.plist files for conflict markers) abort
+ * pod install with "invalid byte sequence in UTF-8". Keeping Data at the app
+ * root also sidesteps the CocoaPods "Embed Pods Frameworks" rsync --delete,
+ * which would wipe any Data placed inside the framework before embedding.
+ */
+function withUnityDataCopyPhase(config) {
+  return withXcodeProject(config, (config) => {
+    const project = config.modResults;
+    const mainTargetUuid = project.getFirstTarget().uuid;
+
+    const copyPhaseName = 'Copy Unity Data';
+    const hasCopyPhase = project.buildPhaseObject('PBXShellScriptBuildPhase', copyPhaseName, mainTargetUuid) != null;
+    if (!hasCopyPhase) {
+      project.addBuildPhase(
+        [],
+        'PBXShellScriptBuildPhase',
+        copyPhaseName,
+        mainTargetUuid,
+        {
+          shellPath: '/bin/sh',
+          shellScript:
+            'ditto "${SRCROOT}/UnityLibrary/Data" "${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Data"',
+        }
+      );
+    }
+    return config;
+  });
 }
 
 /** Adds `pod 'UnityFramework', :path => 'UnityLibrary'` inside the main app target. */
@@ -80,40 +133,6 @@ function withUnityPodfilePod(config) {
     }).contents;
     return config;
   });
-}
-
-/**
- * Ensures Unity's il2cpp `Data/` bundle sits INSIDE the framework
- * (UnityFramework.framework/Data), which is exactly where il2cpp resolves
- * global-metadata.dat at runtime:
- *   .app/Frameworks/UnityFramework.framework/Data/Managed/Metadata/global-metadata.dat
- *
- * Unity's raw UaaL export emits Data as a SIBLING of the framework. If the
- * committed artifact still has that layout, fold it into the framework here so
- * CocoaPods' "[CP] Embed Pods Frameworks" phase copies (and signs) it as part
- * of the vendored framework. This is ordering-proof — no separate copy phase
- * racing the framework embed (an earlier `ditto … .app/Data` phase put Data at
- * the app root, where il2cpp does NOT look, so Unity aborted on boot).
- */
-function withUnityDataInsideFramework(config) {
-  return withDangerousMod(config, [
-    'ios',
-    async (config) => {
-      const iosRoot = config.modRequest.platformProjectRoot;
-      const siblingData = path.join(iosRoot, UNITY_LIBRARY_DIR_NAME, 'Data');
-      const frameworkData = path.join(
-        iosRoot, UNITY_LIBRARY_DIR_NAME, 'UnityFramework.framework', 'Data');
-
-      if (fs.existsSync(frameworkData)) return config; // already correct
-      if (!fs.existsSync(siblingData)) {
-        console.warn('[withUnityFramework] No Unity Data/ folder found — Unity will fail to boot at runtime.');
-        return config;
-      }
-      copyDirSync(siblingData, frameworkData);
-      fs.rmSync(siblingData, { recursive: true, force: true });
-      return config;
-    },
-  ]);
 }
 
 /**
@@ -190,7 +209,7 @@ function withUnityAppDelegateLifecycle(config) {
 
 const withUnityFramework = (config) => {
   config = withUnityLibraryCopy(config);
-  config = withUnityDataInsideFramework(config);
+  config = withUnityDataCopyPhase(config);
   config = withUnityPodfilePod(config);
   config = withUnityAppDelegateLifecycle(config);
   return config;

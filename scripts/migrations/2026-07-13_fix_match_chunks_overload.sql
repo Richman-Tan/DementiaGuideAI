@@ -7,26 +7,27 @@
 -- -------
 -- The app calls the RPC with four named args:
 --     match_chunks(query_embedding, query_text, match_count, min_similarity)
--- but the database has TWO functions named match_chunks:
+-- but the database has THREE functions named match_chunks (confirmed via STEP 1
+-- on 2026-07-13):
+--
+--   (Z) match_chunks(query_embedding vector, match_count int,
+--                    min_similarity double precision)                    -- 3 args, legacy pure-vector
 --
 --   (A) match_chunks(query_embedding vector, query_text text,
---                    match_count int, min_similarity double precision)
+--                    match_count int, min_similarity double precision)   -- 4 args
 --
 --   (B) match_chunks(query_embedding vector, query_text text,
 --                    match_count int, min_similarity double precision,
 --                    filter_country text, filter_source_version text,
---                    filter_document_id text, filter_module int)
+--                    filter_document_id text, filter_module int)         -- 8 args (extras default)
 --
 -- Because (B)'s extra four parameters have DEFAULT values, the app's four-argument
--- call matches BOTH functions. PostgREST cannot choose and returns:
+-- call matches BOTH (A) and (B). PostgREST cannot choose and returns:
 --     PGRST203 "Could not choose the best candidate function ..."
 -- The practical effect: openaiService.search() throws on EVERY query, so RAG
 -- retrieval (and therefore the whole chat/voice response) is currently broken.
---
--- (Note: the committed scripts/supabase-setup.sql still declares an even older
--- THREE-argument, pure-vector match_chunks with no query_text. That version does
--- not match production at all; supabase-setup.sql has been updated alongside this
--- migration to reflect the hybrid design.)
+-- (Z) is the stale definition from the old committed supabase-setup.sql; it does
+-- not match the app's call but is dead clutter and is dropped too.
 --
 -- FIX
 -- ---
@@ -49,14 +50,19 @@ where p.proname = 'match_chunks'
   and n.nspname = 'public'
 order by p.pronargs;
 
--- STEP 2 — drop the redundant 4-argument overload (A), keeping the 8-arg (B).
--- Types must match the deployed signature exactly.
+-- STEP 2 — drop the two legacy overloads (Z) and (A), keeping the 8-arg (B).
+-- Types must match the deployed signatures exactly.
+drop function if exists public.match_chunks(
+  vector,            -- query_embedding
+  integer,           -- match_count
+  double precision   -- min_similarity
+);                   -- (Z) legacy pure-vector, 3 args
 drop function if exists public.match_chunks(
   vector,            -- query_embedding
   text,              -- query_text
   integer,           -- match_count
   double precision   -- min_similarity
-);
+);                   -- (A) redundant, 4 args
 
 -- STEP 3 — verify only ONE match_chunks remains (expect a single row, the 8-arg).
 select

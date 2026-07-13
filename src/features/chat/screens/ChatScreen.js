@@ -22,7 +22,7 @@ import { Colors } from '@/theme/colors';
 import { QUICK_QUESTIONS, SAMPLE_MESSAGES } from '@/constants/data';
 import { openaiService, OpenAIAuthError, OpenAIRateLimitError } from '@/lib/openaiService';
 import { useSettings } from '@/context/SettingsContext';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Audio } from 'expo-av';
 import { tts } from '@/lib/tts/ttsService';
 

@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -52,6 +53,7 @@
     "eslint-config-expo": "^57.0.0",
     "eslint-config-prettier": "^10.1.8",
     "jest-expo": "~54.0.17",
+    "patch-package": "^8.0.1",
     "prettier": "^3.9.5",
     "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"

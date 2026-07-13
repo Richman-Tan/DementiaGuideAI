@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { openaiService } from '@/lib/openaiService';
 import { tts } from '@/lib/tts/ttsService';
 import { detectSentiment } from '@/lib/sentiment/detectSentiment';

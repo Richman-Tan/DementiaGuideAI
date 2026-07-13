@@ -17,9 +17,6 @@ module.exports = [
       'react/no-unescaped-entities': 'off',
       // Dev-tools nicety, not a correctness issue; surfaced as a warning.
       'react/display-name': 'warn',
-      // expo-file-system v19 moved cacheDirectory/EncodingType to the /legacy entry.
-      // Kept as a warning so the pre-existing usage stays visible pending a follow-up fix.
-      'import/namespace': 'warn',
     },
   },
   {

@@ -12,7 +12,7 @@
  */
 
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { segmentToCC4Payload } from './blendshapeTranslator';
 import { NativeUnityAvatarModule } from '../../../../modules/unity-avatar-module/src';
 

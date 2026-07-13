@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { createVisemeTimeline } from '../lipsync/createVisemeTimeline';
+import { createVisemeTimeline } from '@/lib/lipsync/createVisemeTimeline';
 
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io';
 const SECURE_KEY_NAME = 'elevenlabs_api_key';

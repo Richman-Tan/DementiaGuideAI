@@ -34,7 +34,7 @@ import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
-// ─── Config (mirrors src/services/openaiService.js) ──────────────────────────
+// ─── Config (mirrors src/lib/openaiService.js) ──────────────────────────
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const CHAT_MODEL = 'gpt-4o-mini';
 const MIN_SIMILARITY = 0.25;

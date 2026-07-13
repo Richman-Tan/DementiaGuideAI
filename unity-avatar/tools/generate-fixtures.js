@@ -16,7 +16,7 @@
  * these sentences must not depend on the G2P heuristics under test). Timing is
  * synthesized from per-class nominal durations scaled to the app's 0.78 speech
  * rate. The legacy `blendshapes` track is produced with the real production
- * translator (src/services/avatarBridge/blendshapeTranslator.js) so baseline
+ * translator (src/features/avatar/bridge/blendshapeTranslator.js) so baseline
  * runs measure exactly what the app ships today.
  *
  * Usage: node generate-fixtures.js
@@ -29,7 +29,7 @@ const { loadModule } = require('./esm-loader');
 // Production modules — single source of truth for translation and (for the
 // g2p_pipeline fixture) the real ElevenLabs-alignment → viseme pipeline.
 const { visemeTimelineToCC4, visemeTimelineToEvents } =
-  loadModule(path.join(__dirname, '../../src/services/avatarBridge/blendshapeTranslator.js'));
+  loadModule(path.join(__dirname, '../../src/features/avatar/bridge/blendshapeTranslator.js'));
 const { createVisemeTimeline } =
   loadModule(path.join(__dirname, '../../src/lib/lipsync/createVisemeTimeline.js'));
 

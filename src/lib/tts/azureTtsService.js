@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { AZURE_VISEME_TO_KEY, AZURE_DEFAULT_WEIGHTS } from '../lipsync/azureVisemeMap';
+import { AZURE_VISEME_TO_KEY, AZURE_DEFAULT_WEIGHTS } from '@/lib/lipsync/azureVisemeMap';
 
 const SECURE_KEY    = 'azure_speech_key';
 const SECURE_REGION = 'azure_speech_region';

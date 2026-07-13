@@ -41,6 +41,27 @@ const MIN_SIMILARITY = 0.25;
 const TOP_K = 5;
 const OPENAI_BASE = 'https://api.openai.com/v1';
 const REQUEST_DELAY_MS = 300; // gentle pacing between questions
+// Mirror the production retrieval rebalance (openaiService.search): over-fetch then
+// cap the iSupport bulk source. See docs/report/rag_retrieval_rebalance_plan.md.
+const RETRIEVAL_OVERSAMPLE = 10;
+const MAX_PER_SOURCE_FAMILY = 2;
+
+function sourceFamilyOf(chunk) {
+  const tag = (chunk.tags || []).find(t => t.startsWith('document_id:'));
+  const doc = tag ? tag.split(':')[1] : 'curated';
+  return doc.startsWith('isupport') ? 'isupport' : doc;
+}
+function capBySourceFamily(rows, k, maxPerFamily) {
+  const counts = {}; const out = [];
+  for (const r of rows) {
+    const fam = sourceFamilyOf(r);
+    counts[fam] = (counts[fam] || 0) + 1;
+    if (fam === 'isupport' && counts[fam] > maxPerFamily) continue;
+    out.push(r);
+    if (out.length >= k) break;
+  }
+  return out;
+}
 
 // ─── Load env ────────────────────────────────────────────────────────────────
 function loadDotEnv(path) {
@@ -179,7 +200,7 @@ async function retrieve(question) {
     body: JSON.stringify({
       query_embedding: queryEmbedding,
       query_text: question,
-      match_count: TOP_K,
+      match_count: TOP_K * RETRIEVAL_OVERSAMPLE,
       min_similarity: MIN_SIMILARITY,
     }),
   });
@@ -190,7 +211,7 @@ async function retrieve(question) {
     // PGRST203 = ambiguous match_chunks overloads; retrieval is broken until the DB is fixed.
     throw new Error(`match_chunks failed (HTTP ${r.status}) ${msg}`);
   }
-  return JSON.parse(text);
+  return capBySourceFamily(JSON.parse(text), TOP_K, MAX_PER_SOURCE_FAMILY);
 }
 
 // ─── Introspection (no OpenAI key needed) ────────────────────────────────────

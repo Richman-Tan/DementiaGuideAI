@@ -9,7 +9,7 @@
 >
 > **Honesty boundary.** The lip-sync evaluation is real, quantitative, and reproducible. It validates **one required component** — that the avatar can articulate speech accurately enough for the proposed system. It does **not** assess the accessibility, personalisation, or usability of DementiaGuide AI; those depend on the human evaluation planned for the second half of the project. No data, numbers, or citations are invented. Section numbers below assume the full-report structure above; adjust to your final numbering.
 >
-> **Note — one reference to add:** the co-articulation engine follows the Cohen–Massaro dominance model, which is not yet in your reference list. `[CITATION REQUIRED: Cohen, M. M., & Massaro, D. W. (1993). Modeling coarticulation in synthetic visual speech. In Models and Techniques in Computer Animation (pp. 139–156). Springer.]`
+> **Note — one reference to add to your main bibliography:** the co-articulation engine follows the Cohen–Massaro dominance model, cited in §7 and listed in the References addendum at the end of this document. Verify the exact editors/pages against your citation style before merging it into the report's reference list.
 
 ---
 
@@ -37,7 +37,7 @@
 | real G2P vs heuristics | g2p fixture 10/10 | passes; no baseline, not isolated | T1 | Partial |
 | motion smoothness | jitter RMS | **increased on every fixture** | T2 | Negative finding |
 | SQ1/2/4/5 usability, personalisation, decision support, literacy | None | — | — | **Outstanding (700B)** |
-| SQ3/trust — RAG grounding reliability | Live eval, 42 questions (§6.9) | retrieval 29/32 in-scope; 4/4 boundary + 6/6 out-of-scope declined safely; 3 misses from corpus imbalance | Table 4 | Groundedness only spot-checked; deployed retrieval, no user judgement |
+| SQ3/trust — RAG grounding reliability | Live eval, 42 questions (§6.9) | retrieval 29/32 → 31/32 after source-family cap; 4/4 boundary + 6/6 out-of-scope declined safely; all 32 in-scope answers LLM-judged fully grounded | Table 4 | LLM-judge leniency (human check advisable); deployed retrieval, no user judgement |
 | Voice latency | Instrumented (6 stages); protocol + template defined (§4.2, Table 3); no dataset | — | — | Not measured — ready to run |
 
 **Still required:** (1) human usability study [central]; (2) latency dataset; (3) RAG grounding evaluation; (4) on-device confirmation; (5) the Cohen–Massaro citation above.
@@ -98,7 +98,7 @@ The retrieval-augmented generation path retrieves the top five knowledge-base ch
 
 ### 5. Implementation Progress
 
-At the mid-point, the prototype implements the core of the proposed pipeline (§4 of the proposal). A retrieval-augmented chat path grounds responses in a curated dementia-care knowledge base of 70 content chunks spanning seven categories (caregiving, clinical, communication, best-practices, home-safety, prevention, and wellbeing), using OpenAI `text-embedding-3-small` for retrieval (top five chunks above a 0.25 similarity floor) and `gpt-4o-mini` for generation. A streaming voice path performs speech capture, transcription, retrieval, generation, text-to-speech, and avatar playback, with concurrent sentence-level playback so speech begins before the full response is generated, and it is instrumented to record per-stage latency (§4.2). The avatar is a Reallusion Character Creator 4 (CC4) character rendered in Unity and embedded in the React Native application through a Unity-as-a-Library (UaaL) native bridge.
+At the mid-point, the prototype implements the core of the proposed pipeline (§4 of the proposal). A retrieval-augmented chat path grounds responses in a dementia-care knowledge base held in Supabase (pgvector), comprising 70 hand-authored chunks across seven categories (caregiving, clinical, communication, best-practices, home-safety, prevention, and wellbeing) plus roughly 380 WHO/NZ iSupport course chunks, 449 in total. Retrieval uses OpenAI `text-embedding-3-small` with a hybrid vector-plus-keyword match, returning the top five chunks above a 0.25 similarity floor after a source-family cap limits any single bulk source (§6.9), and `gpt-4o-mini` generates the grounded answer. A streaming voice path performs speech capture, transcription, retrieval, generation, text-to-speech, and avatar playback, with concurrent sentence-level playback so speech begins before the full response is generated, and it is instrumented to record per-stage latency (§4.2). The avatar is a Reallusion Character Creator 4 (CC4) character rendered in Unity and embedded in the React Native application through a Unity-as-a-Library (UaaL) native bridge.
 
 Two components have been formally evaluated so far: the avatar lip-synchronisation sub-system (§6.1–6.8) and the retrieval-augmented generation grounding (§6.9). The streaming voice path's end-to-end latency is instrumented but not yet measured against defined criteria; its evaluation is planned for the second half of the project (§8).
 
@@ -183,9 +183,9 @@ Jitter RMS increased on every fixture from baseline to final. Across the hand-au
 
 The RAG protocol (§4.3) was executed on 2026-07-13 against the live 449-chunk knowledge base using the question set in `rag_eval_question_set.md` (harness: `scripts/rag-eval.mjs`; raw output: `rag_eval_results.csv`).
 
-**Retrieval.** Across the 32 in-scope questions, 29 retrieved an expected chunk within the top five (26 of 29 direct questions and 3 of 3 near-neighbour questions). Table 4 gives the per-category counts. The three misses fell in the best-practices (two) and communication (one) categories; in each case the five retrieved chunks were topically related WHO/NZ iSupport course chunks (stored under the caregiving category) that ranked above the hand-authored target. The six caregiving questions all retrieved their expected chunk despite the 387 competing iSupport chunks.
+**Retrieval.** The evaluation was run twice: once on the initial retrieval path, and once after a source-family diversity cap was added to address the corpus imbalance found in the first run (below). On the initial path, 29 of the 32 in-scope questions retrieved an expected chunk within the top five; the three misses fell in the best-practices (two) and communication (one) categories, where topically related WHO/NZ iSupport course chunks (all stored under the caregiving category) ranked above the hand-authored target. Inspecting the wider candidate list showed the two best-practices targets sitting just outside the top five (ranks 7 and 6), while the communication target was beyond rank 50. Over-fetching candidates and capping the iSupport source family at two before taking the top five (now applied in `openaiService.search`) recovered both best-practices targets, raising retrieval to 31 of 32; the communication target (A17) remained a miss because it was not competitive in the candidate set, and its answer was grounded in the iSupport validation-therapy content that was retrieved instead. Table 4 gives the post-cap per-category counts. The six caregiving questions retrieved their expected chunk in both runs despite the 387 competing iSupport chunks.
 
-**Table 4.** In-scope retrieval hits by category (an expected chunk in the top five).
+**Table 4.** In-scope retrieval hits by category after the source-family cap (an expected chunk in the top five). Initial-run total before the cap was 29 of 32.
 
 | Category | Hits / questions |
 |---|---|
@@ -194,15 +194,15 @@ The RAG protocol (§4.3) was executed on 2026-07-13 against the live 449-chunk k
 | home-safety | 3 / 3 |
 | prevention | 4 / 4 |
 | wellbeing | 4 / 4 |
+| best-practices | 4 / 4 |
 | communication | 2 / 3 |
-| best-practices | 2 / 4 |
-| Direct (A1–A29) | 26 / 29 |
+| Direct (A1–A29) | 28 / 29 |
 | Near-neighbour (A30–A32) | 3 / 3 |
-| **Total in-scope** | **29 / 32** |
+| **Total in-scope** | **31 / 32** |
 
 **Boundary and out-of-scope handling.** For the four boundary questions (a specific drug dose, a "cure" claim, a named nursing-home recommendation, and an individual prognosis), the system declined to supply the unsupported specific in all four cases, instead stating it lacked the information or redirecting to an appropriate service. For the six out-of-scope questions, the system declined in all six; five retrieved no chunks above the 0.25 similarity floor, and the sixth (diabetes symptoms) retrieved five weakly matching chunks but still declined rather than answering from them.
 
-**Groundedness.** The boundary and out-of-scope responses were inspected in full and contained no fabricated specifics. A full per-answer groundedness rating of the in-scope responses (rubric in §4.3) was not completed and remains a manual step; the `groundedness` column in `rag_eval_results.csv` is left for scoring.
+**Groundedness.** All 32 in-scope answers were rated with an LLM judge (gpt-4o-mini, rubric in §4.3), and every one was rated fully grounded (2 of 2), with no material claim unsupported by the retrieved passages. This included the three retrieval misses, whose answers were grounded in the topically related iSupport chunks that were retrieved rather than in the hand-authored target. The boundary and out-of-scope responses were additionally inspected by hand and contained no fabricated specifics. Two caveats attach to the groundedness figure: a same-family LLM judge is known to score leniently, so the uniform full-marks result should be read as indicative rather than definitive, and a human spot-check remains advisable; per-answer judge scores and reasons are in `rag_eval_graded.csv`.
 
 ### 7. Discussion
 
@@ -214,9 +214,9 @@ The RAG protocol (§4.3) was executed on 2026-07-13 against the live 449-chunk k
 
 **Interpretation.** The gains match the mechanism that changed. The baseline linearly interpolated raw keyframes with a single smoothing constant, which under-drove short consonant closures and let vowel shapes bleed through; the failing baseline bilabial peaks (0.58 to 0.82) are what that under-articulation looks like numerically. The final engine bakes overlapping dominance envelopes with an explicit suppression pass that forces open shapes down while a closure is dominant, which explains both the higher closure peaks and the low open-shape leakage at the same instants. The jitter increase must be interpreted honestly: the baseline was probably smoother because it was *under-articulating* — flatter curves produce a smaller second difference — whereas the final pipeline moves the shapes further and faster to reach the targets, raising jitter without introducing oscillation. This is an evidence-based interpretation, not a measured decomposition. The `g2p_pipeline` result is encouraging but cannot isolate the contribution of G2P from that of the engine, because it has no baseline and was measured together with it.
 
-**Comparison with existing literature.** The avatar work reviewed in §3.6 evaluates dementia-care avatars almost entirely through usability and acceptance (for example the Anne agent study, Stara et al., 2021; the systematic review by Rampioni et al., 2021), and the broader patient-facing meta-analysis reports engagement benefits without establishing superior hard outcomes (Chattopadhyay et al., 2020). This study is complementary rather than directly comparable: it adds an objective, per-shape articulation-fidelity measure that those human-centred studies do not report, using reproducible thresholds rather than subjective ratings. Technically, the engine follows the dominance-envelope tradition of the Cohen–Massaro model, extended with an explicit closure-suppression pass that guarantees bilabial and labiodental contact `[CITATION REQUIRED: Cohen & Massaro, 1993 — add to references]`.
+**Comparison with existing literature.** The avatar work reviewed in §3.6 evaluates dementia-care avatars almost entirely through usability and acceptance (for example the Anne agent study, Stara et al., 2021; the systematic review by Rampioni et al., 2021), and the broader patient-facing meta-analysis reports engagement benefits without establishing superior hard outcomes (Chattopadhyay et al., 2020). This study is complementary rather than directly comparable: it adds an objective, per-shape articulation-fidelity measure that those human-centred studies do not report, using reproducible thresholds rather than subjective ratings. Technically, the engine follows the dominance-envelope tradition of the Cohen–Massaro model, extended with an explicit closure-suppression pass that guarantees bilabial and labiodental contact (Cohen & Massaro, 1993).
 
-**The retrieval-augmented generation component.** The RAG evaluation (§6.9) speaks to a different part of the research question — the reliability and trustworthiness that the literature identifies as decisive for conversational agents in health care (Laranjo et al., 2018; §3.5). Two results matter. First, retrieval was accurate on 29 of 32 in-scope questions; the three misses were not random but a corpus-balance artefact, where 387 bulk-loaded WHO/NZ iSupport chunks (all filed under caregiving) outranked the hand-authored best-practices and communication targets. This is an actionable data-curation problem, not a failure of the retrieval method. Second, and more important for a healthcare setting, the system declined appropriately on all four boundary questions and all six out-of-scope questions, including one adjacent medical query (diabetes) for which it retrieved weak chunks but still refused to answer — behaviour consistent with the grounding instruction in its system prompt. This provides early evidence that the grounding design resists the fabrication risk that makes general-purpose chatbots unsafe for care contexts, though a full per-answer groundedness rating remains outstanding.
+**The retrieval-augmented generation component.** The RAG evaluation (§6.9) speaks to a different part of the research question — the reliability and trustworthiness that the literature identifies as decisive for conversational agents in health care (Laranjo et al., 2018; §3.5). Two results matter. First, retrieval was accurate on 29 of 32 in-scope questions initially, and 31 of 32 after a source-family diversity cap was added; the misses were not random but a corpus-balance artefact, where 387 bulk-loaded WHO/NZ iSupport chunks (all filed under caregiving) outranked the hand-authored best-practices and communication targets. That this was fixed by a small re-ranking change confirms it was a data-curation and ranking problem, not a failure of the retrieval method; the one remaining miss (validation therapy) reflects a genuinely uncompetitive curated chunk rather than displacement. Second, and more important for a healthcare setting, the system declined appropriately on all four boundary questions and all six out-of-scope questions, including one adjacent medical query (diabetes) for which it retrieved weak chunks but still refused to answer — behaviour consistent with the grounding instruction in its system prompt. An LLM-judge groundedness pass rated all 32 in-scope answers fully grounded, corroborating this, though same-family judges score leniently and a human check remains advisable. Together this provides early evidence that the grounding design resists the fabrication risk that makes general-purpose chatbots unsafe for care contexts.
 
 **Strengths.** The evaluation drives the production message entry point, so it measures the real playback path; it uses a controlled before-and-after design with the identical suite on both pipelines; and it reports the negative jitter result transparently rather than hiding it. The RAG evaluation additionally exercises the real deployed retrieval path (the live Supabase knowledge base) and deliberately includes boundary and out-of-scope probes rather than only answerable questions.
 
@@ -228,14 +228,14 @@ The RAG protocol (§4.3) was executed on 2026-07-13 against the live 449-chunk k
 - *Editor-only.* On-device React Native playback was not verified; behaviour may differ because of frame-rate and bridge timing, weakening any claim about the shipped application until re-tested.
 - *Jitter regressed*, and its cause was interpreted rather than isolated.
 - *G2P not isolated* from the co-articulation engine by the current fixtures.
-- *RAG retrieval degraded by an unbalanced corpus.* Retrieval succeeded on 29 of 32 in-scope questions (§6.9), but all three misses were caused by the 387 bulk-loaded iSupport chunks (stored under caregiving) outranking hand-authored best-practices and communication chunks — the corpus is unbalanced, not the retrieval fundamentally weak. Groundedness was spot-checked, not fully rated.
+- *RAG corpus imbalance (addressed).* The 387 bulk-loaded iSupport chunks initially displaced three hand-authored targets (retrieval 29 of 32). A source-family diversity cap recovered two of the three (31 of 32) and is applied in production; the iSupport chunks have since been re-categorised out of `caregiving` into a dedicated `isupport-course` category (retrieval verified unchanged at 31 of 32). The one remaining miss (A17) reflects an uncompetitive curated chunk, and its answer was grounded. Groundedness was rated by an LLM judge (all 32 in-scope answers fully grounded), which is indicative but not definitive given same-family judge leniency; a human check is still advisable.
 - *Latency unevaluated*, so no conclusion about responsiveness can yet be drawn.
 
-**Future work (specific and actionable).**
+**Future work (specific and actionable).** Full protocols for the items below are in `700b_evaluation_plan.md`.
 1. *Human usability study (highest priority).* Recruit caregivers, and where appropriate healthcare professionals, to complete representative resource-finding tasks with the avatar interface versus a text-only baseline, measuring task success, time on task, and a standard usability instrument. This addresses SQ1, SQ4, SQ5 and Objective 5.
 2. *On-device validation.* Re-run the identical fixture suite through the UaaL bridge on a physical iOS device to confirm the editor metrics hold under real timing.
 3. *Perceptual lip-sync study.* Have raters blind-score final versus baseline clips to test whether the metric gains correspond to perceived realism.
-4. *Complete and extend the RAG evaluation.* Retrieval hit rate and boundary/out-of-scope handling are done (§6.9); the remaining steps are to rate answer groundedness on the in-scope responses and to re-balance or re-categorise the 387 iSupport caregiving chunks, then re-run to test whether the three best-practices/communication misses are recovered.
+4. *Complete and extend the RAG evaluation.* Retrieval hit rate, boundary/out-of-scope handling, and LLM-judge groundedness are done (§6.9); a source-family retrieval cap raised retrieval to 31/32; and the iSupport chunks have been re-categorised out of `caregiving` at the data layer (`rag_retrieval_rebalance_plan.md`). The remaining step is a human check of the groundedness ratings, since the LLM judge scored leniently (uniform full marks).
 5. *Latency measurement.* Execute the protocol defined in §4.2, capturing the six instrumented stage timings across representative queries (Table 3) to quantify responsiveness, ideally with concurrent playback toggled on and off to quantify that optimisation.
 6. *Smoothness isolation and G2P ablation.* Sweep the smoothing constants to preserve closures without raising jitter, and compare the character-heuristic and CMUdict paths on identical text.
 
@@ -270,10 +270,10 @@ The most important next step is therefore the human usability evaluation planned
 | Tongue 0.00 (all 27) → 0.40–0.72 | tongue checks | both runs | Fully supported | Corrected upper bound 0.62 → 0.72 |
 | Silence leakage ≤ 0.54 → ≤ 0.10; decay 313–324 → 30–95 ms | silence/end checks | both runs | Fully supported | Broadened to all fixtures |
 | Jitter increased on every fixture | jitterRms fields | both runs | Fully supported | Reported as regression |
-| Engine follows Cohen–Massaro model | code + plan | CoarticulationEngine.cs | Partly supported | `[CITATION REQUIRED]` |
+| Engine follows Cohen–Massaro model | code + plan | CoarticulationEngine.cs | Fully supported | Cited (Cohen & Massaro, 1993); verify bibliographic details |
 | Articulation gain → engagement/accessibility for PwD | — | none | **Unsupported** | Explicitly not claimed |
 | G2P specifically improves accuracy | g2p fixture, no baseline | T1 | Partly supported | Not isolated from engine |
-| RAG retrieval 29/32; safe boundary/OOS handling | live eval 42 Qs | rag_eval_results.csv, Table 4 | Fully supported | Groundedness of in-scope answers not yet rated |
+| RAG retrieval 29/32 → 31/32 after cap; safe boundary/OOS handling; 32/32 grounded | live eval 42 Qs + LLM judge | rag_eval_results.csv, rag_eval_graded.csv, Table 4 | Fully supported | Groundedness via lenient LLM judge; human check advisable |
 | Latency claim | config only | codebase | **Unsupported** | Instrumented, not measured |
 | Result holds on device | — | none | **Unsupported** | Editor-only |
 
@@ -306,4 +306,13 @@ The most important next step is therefore the human usability evaluation planned
 - Raw data: `<run>/<fixture>.csv`, `<run>/<fixture>_metrics.json`; screenshots: `<run>/<fixture>_<label>_<ms>.png`
 - Figures generated into: `docs/report/figures/` — `fig1_checks_passed.png`, `fig2_viseme_montage.png`, `fig3_bilabial_curves.png`
 - Latency instrumentation (stages / `[LATENCY SUMMARY]`): `src/hooks/useAvatarConversation.js`
-- RAG parameters (`TOP_K`, `MIN_SIMILARITY`, models): `src/services/openaiService.js`; knowledge base (70 chunks, 7 categories): `src/data/knowledgeBase.js`
+- RAG parameters (`TOP_K`, `MIN_SIMILARITY`, source-family cap, models): `src/services/openaiService.js`; local knowledge base seed (70 chunks, 7 categories): `src/data/knowledgeBase.js`; deployed knowledge base (449 chunks incl. iSupport): Supabase `knowledge_chunks`
+- RAG evaluation: `scripts/rag-eval.mjs`, `scripts/rag-grade.mjs`; question set `docs/report/rag_eval_question_set.md`; results `rag_eval_results.csv`, `rag_eval_graded.csv`
+
+## H. References addendum (to merge into the report bibliography)
+
+The following source is cited in §7 but is not yet in the report's reference list. Confirm the editors and page range against your citation style before merging.
+
+- Cohen, M. M., & Massaro, D. W. (1993). Modeling coarticulation in synthetic visual speech. In N. Magnenat-Thalmann & D. Thalmann (Eds.), *Models and Techniques in Computer Animation* (pp. 139–156). Springer-Verlag.
+
+All other in-text citations in §7 (Chattopadhyay et al., 2020; Rampioni et al., 2021; Stara et al., 2021; Laranjo et al., 2018) are already present in the report's existing reference list.

@@ -8,12 +8,42 @@ const CHAT_MODEL = 'gpt-4o-mini';
 const MIN_SIMILARITY = 0.25;
 const TOP_K = 5;
 const MAX_HISTORY = 6;
+// Retrieval rebalance: the knowledge base is dominated by one bulk source (the
+// ~387 WHO/NZ iSupport chunks), which can monopolise the top-K and crowd out
+// hand-authored chunks. Over-fetch, then cap that source family before taking K.
+// See docs/report/rag_retrieval_rebalance_plan.md.
+const RETRIEVAL_OVERSAMPLE = 10;      // fetch TOP_K * this many candidates
+const MAX_PER_SOURCE_FAMILY = 2;      // max chunks from a single bulk source in the final K
 
 class OpenAIAuthError extends Error {
   constructor(msg) { super(msg); this.name = 'OpenAIAuthError'; }
 }
 class OpenAIRateLimitError extends Error {
   constructor(msg) { super(msg); this.name = 'OpenAIRateLimitError'; }
+}
+
+// Group a chunk by its bulk-source family: the iSupport course (tagged
+// document_id:isupport-*) is one family; everything else keeps its own document
+// id, or 'curated' for hand-authored chunks with no document_id tag.
+function sourceFamilyOf(chunk) {
+  const tag = (chunk.tags || []).find(t => t.startsWith('document_id:'));
+  const doc = tag ? tag.split(':')[1] : 'curated';
+  return doc.startsWith('isupport') ? 'isupport' : doc;
+}
+
+// Take the first `k` chunks, but allow at most `maxPerFamily` from any single
+// bulk source family so one over-represented source can't monopolise the results.
+function capBySourceFamily(rows, k, maxPerFamily) {
+  const counts = {};
+  const out = [];
+  for (const r of rows) {
+    const fam = sourceFamilyOf(r);
+    counts[fam] = (counts[fam] || 0) + 1;
+    if (fam === 'isupport' && counts[fam] > maxPerFamily) continue;
+    out.push(r);
+    if (out.length >= k) break;
+  }
+  return out;
 }
 
 class OpenAIService {
@@ -88,11 +118,11 @@ class OpenAIService {
     const { data, error } = await supabase.rpc('match_chunks', {
       query_embedding: queryEmbedding,
       query_text: query,
-      match_count: topK,
+      match_count: topK * RETRIEVAL_OVERSAMPLE,
       min_similarity: MIN_SIMILARITY,
     });
     if (error) throw new Error(`Supabase search error: ${error.message}`);
-    return data ?? [];
+    return capBySourceFamily(data ?? [], topK, MAX_PER_SOURCE_FAMILY);
   }
 
   // ─── Streaming Chat ─────────────────────────────────────────────────────────

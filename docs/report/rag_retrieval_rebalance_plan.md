@@ -75,4 +75,6 @@ node scripts/rag-eval.mjs
 Then update §6.9 / Table 4 with the new counts.
 
 ## Status
-Draft only — not applied. Recovery of A12 and A13 by the source-family cap is verified against the live database; applying the change to `openaiService.search()` (and re-running the eval) is the next step, pending sign-off since it alters the production retrieval path.
+**Applied and verified (2026-07-13).** Option A (source-family cap, `RETRIEVAL_OVERSAMPLE = 10`, `MAX_PER_SOURCE_FAMILY = 2`) is implemented in `openaiService.search()` and mirrored in `scripts/rag-eval.mjs`. Re-running the full eval raised in-scope retrieval from 29/32 to 31/32: A12 and A13 recovered; A17 unchanged (its target is beyond the candidate set, and its answer was grounded in the iSupport content retrieved instead). Groundedness on the post-cap answers remained 32/32.
+
+Remaining (durable fix): re-categorise the iSupport corpus out of the hand-authored categories (option C) so the imbalance is addressed at the data layer, not only by re-ranking.

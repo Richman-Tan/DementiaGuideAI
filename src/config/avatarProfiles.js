@@ -34,6 +34,7 @@ export const AVATAR_PROFILES = {
     name:        'Aria',
     label:       'Classic',
     description: 'Warm, expressive look',
+    renderer:    'threejs',
     modelKey:    'sdk',
     voice:       'en-US-JennyNeural',
     //
@@ -53,6 +54,7 @@ export const AVATAR_PROFILES = {
     name:        'Aria',
     label:       'New Look',
     description: 'Enhanced lip sync with Ready Player Me',
+    renderer:    'threejs',
     modelKey:    'rpm',
     voice:       'en-US-AriaNeural',
     //
@@ -72,6 +74,7 @@ export const AVATAR_PROFILES = {
     name:        'Eric',
     label:       'Eric',
     description: 'High-fidelity AvatarSDK character',
+    renderer:    'threejs',
     modelKey:    'metahuman',
     voice:       'en-US-EricNeural',
     //
@@ -86,6 +89,19 @@ export const AVATAR_PROFILES = {
       v_kk: 0.64, v_ch: 0.64, v_ss: 0.60, v_nn: 0.57, v_rr: 0.62,
       neutral: 0.0,
     },
+  },
+
+  cc4_aria: {
+    id:           'cc4_aria',
+    name:         'Aria',
+    label:        'CC4',
+    description:  'Reallusion CC4 character (Unity)',
+    renderer:     'unity',
+    voice:        'en-US-JennyNeural',
+    // CC4 uses its own native blendshape set (see blendshapeTranslator.js), not
+    // ARKit. visemeWeights is null so blendshapeTranslator uses its built-in
+    // CC4_DEFAULT_WEIGHT scalar.
+    visemeWeights: null,
   },
 };
 

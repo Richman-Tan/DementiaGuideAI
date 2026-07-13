@@ -20,6 +20,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
 import { AvatarVRM } from '../components/AvatarVRM';
+import { AvatarUnity } from '../components/AvatarUnity';
 import { Colors } from '../constants/colors';
 import { Typography } from '../constants/typography';
 import { useAvatarConversation, VoiceState } from '../hooks/useAvatarConversation';
@@ -54,7 +55,9 @@ export const VoiceScreen = ({ navigation }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuStep, setMenuStep] = useState('main'); // 'main' | 'persona'
   const { textScale, avatarEnabled, subtitlesEnabled, audioEnabled, updateSetting, selectedAvatarId } = useSettings();
-  const activeAvatarId = selectedAvatarId ?? DEFAULT_AVATAR_ID;
+  const activeAvatarId  = selectedAvatarId ?? DEFAULT_AVATAR_ID;
+  const activeProfile   = AVATAR_PROFILES[activeAvatarId] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];
+  const isUnityRenderer = activeProfile.renderer === 'unity';
   const avatarRef   = useRef(null);
   const micPulse    = useRef(new Animated.Value(1)).current;
   const menuAnim    = useRef(new Animated.Value(0)).current;
@@ -85,11 +88,18 @@ export const VoiceScreen = ({ navigation }) => {
   // Load the avatar GLB for the selected profile + the backdrop, converting both to
   // base64 data URIs so the WebView GLTFLoader can read them without XHR size limits.
   // Re-runs whenever the user switches avatar so the WebView reloads with the new model.
+  // Skipped for Unity profiles — Unity loads its own assets via the UaaL bundle.
   useEffect(() => {
+    if (isUnityRenderer) {
+      setModelUri(null);
+      setBackdropUri(null);
+      return;
+    }
+
     let cancelled = false;
     setModelUri(null); // clear stale model while new one loads
-    const profile     = AVATAR_PROFILES[activeAvatarId] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];
-    const modelAsset  = ASSET_MAP[profile.modelKey];
+    const profile    = AVATAR_PROFILES[activeAvatarId] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];
+    const modelAsset = ASSET_MAP[profile.modelKey];
     (async () => {
       try {
         const [avatarAsset, backdropAsset] = await Promise.all([
@@ -109,7 +119,7 @@ export const VoiceScreen = ({ navigation }) => {
       }
     })();
     return () => { cancelled = true; };
-  }, [activeAvatarId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeAvatarId, isUnityRenderer]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const {
     voiceState,
@@ -304,7 +314,11 @@ export const VoiceScreen = ({ navigation }) => {
 
       {/* Avatar */}
       <View style={styles.avatarArea}>
-        {avatarEnabled && modelUri ? (
+        {avatarEnabled && isUnityRenderer ? (
+          // Unity/CC4 renderer — Phase 3: stub renders nothing, VoiceScreen shows
+          // its own placeholder. Phase 5: AvatarUnity mounts the native UaaL view.
+          <AvatarUnity ref={avatarRef} style={styles.avatarVRM} />
+        ) : avatarEnabled && modelUri ? (
           <AvatarVRM
             ref={avatarRef}
             modelUrl={modelUri}

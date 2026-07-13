@@ -1,0 +1,11 @@
+{
+  "name": "unity-avatar-tools",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test-server": "node ws-test-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

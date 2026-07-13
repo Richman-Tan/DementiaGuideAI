@@ -77,4 +77,4 @@ Then update §6.9 / Table 4 with the new counts.
 ## Status
 **Applied and verified (2026-07-13).** Option A (source-family cap, `RETRIEVAL_OVERSAMPLE = 10`, `MAX_PER_SOURCE_FAMILY = 2`) is implemented in `openaiService.search()` and mirrored in `scripts/rag-eval.mjs`. Re-running the full eval raised in-scope retrieval from 29/32 to 31/32: A12 and A13 recovered; A17 unchanged (its target is beyond the candidate set, and its answer was grounded in the iSupport content retrieved instead). Groundedness on the post-cap answers remained 32/32.
 
-Remaining (durable fix): re-categorise the iSupport corpus out of the hand-authored categories (option C) so the imbalance is addressed at the data layer, not only by re-ranking.
+**Durable fix also applied (2026-07-13):** option C run — the 377 `isupport%` chunks were moved out of `caregiving` into a dedicated `isupport-course` category (`scripts/migrations/2026-07-13_recategorise_isupport.sql`). `caregiving` is back to its 10 curated chunks. Retrieval verified unchanged at 31/32 afterwards (the cap keys off the `document_id` tag, not category).

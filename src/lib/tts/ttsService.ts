@@ -49,9 +49,18 @@ export async function tts(text: string, options: TtsOptions = {}): Promise<TtsRe
   const hasElevenLabs = await elevenLabsService.hasApiKey();
   if (hasElevenLabs) {
     try {
+      // Avatar profiles carry Azure voice names (e.g. en-US-EricNeural), which are NOT
+      // valid ElevenLabs voice IDs. Only forward a voice that looks like an ElevenLabs
+      // ID (16+ alphanumerics); otherwise use a warm, mature male voice (Brian) that
+      // matches the Aaron avatar, instead of 404-ing or landing on the female default.
+      const WARM_MALE_ELEVEN_VOICE = 'nPczCjzI2devNBz1zQrb'; // ElevenLabs "Brian"
+      const elevenVoice =
+        options.voice && /^[A-Za-z0-9]{16,}$/.test(options.voice)
+          ? options.voice
+          : WARM_MALE_ELEVEN_VOICE;
       const { audioBase64, visemeTimeline } = await elevenLabsService.ttsWithAlignment(
         text,
-        options.voice,
+        elevenVoice,
         options.speechRate ?? 0.78,
         options.visemeWeights ?? null
       );
@@ -64,6 +73,14 @@ export async function tts(text: string, options: TtsOptions = {}): Promise<TtsRe
     }
   }
 
-  const dataUri = await openaiService.tts(text, options.voice ?? 'nova');
+  // OpenAI TTS only accepts its own voice enum. options.voice may be an Azure
+  // (en-US-EricNeural) or ElevenLabs (voice-id) name from the avatar profile, which
+  // OpenAI rejects — so whitelist it and fall back to a valid voice (onyx = male,
+  // matching the current avatar) rather than passing an incompatible name through.
+  const OPENAI_VOICES = new Set([
+    'nova', 'shimmer', 'echo', 'onyx', 'fable', 'alloy', 'ash', 'sage', 'coral',
+  ]);
+  const openaiVoice = options.voice && OPENAI_VOICES.has(options.voice) ? options.voice : 'onyx';
+  const dataUri = await openaiService.tts(text, openaiVoice);
   return { audio: dataUri, visemeTimeline: null };
 }

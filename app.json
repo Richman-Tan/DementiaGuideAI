@@ -30,7 +30,8 @@
     "plugins": [
       "expo-secure-store",
       "expo-asset",
-      "./plugins/withUnityFramework"
+      "./plugins/withUnityFramework",
+      "expo-font"
     ]
   }
 }

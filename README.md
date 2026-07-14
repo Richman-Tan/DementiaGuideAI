@@ -61,55 +61,68 @@ DementiaGuide AI is designed for caregivers, family members, and healthcare prof
 
 ## Project Structure
 
+The app is organised **feature-first**: each domain owns its screens, components, hooks
+and config under `src/features/<domain>/`. Cross-cutting concerns live in a shared kernel
+(`theme/`, `context/`, `constants/`, top-level `components/`) and all external integrations
++ pure engines live in a single `lib/`. Imports use the `@/` path alias (`@/` → `src/`).
+
+Files are migrating to **TypeScript** incrementally — the shared kernel and integration
+layer are typed (`.ts`/`.tsx`); screens and the avatar/provider modules remain `.js` under
+`allowJs` and convert in later passes.
+
 ```
 DementiaGuideAI/
 ├── App.js
-├── babel.config.js
+├── tsconfig.json · babel.config.js · eslint.config.js · jest.config.js · .prettierrc
 ├── app.json                          # Expo config
-├── .env                              # API keys (git-ignored)
-├── .env.example                      # Template for required env vars
-├── scripts/
-│   ├── ingest.mjs                    # Add content from URLs or PDFs → Supabase
-│   ├── migrate-to-supabase.mjs       # One-time migration: knowledgeBase.js → Supabase
-│   ├── supabase-setup.sql            # pgvector schema + match_chunks RPC (run once in Supabase)
-│   └── test-responses.mjs            # CLI tool to test RAG output against sample questions
+├── scripts/                          # Node CLI tools (RAG eval, Supabase migration, …)
 └── src/
     ├── navigation/
-    │   └── AppNavigator.js           # Bottom tab + stack navigator
-    ├── screens/
-    │   ├── HomeScreen.js
-    │   ├── ChatScreen.js             # GiftedChat UI, calls openaiService, shows sources
-    │   ├── LibraryScreen.js
-    │   ├── ArticleDetailScreen.js    # Full article view from Library
-    │   ├── VoiceScreen.js            # Voice conversation UI (Whisper → LLM → TTS → avatar)
-    │   └── ProfileScreen.js          # AI configuration (API keys, privacy controls)
-    ├── components/
-    │   ├── AvatarVRM.js              # VRM avatar in WebView (Three.js + viseme lip sync)
-    │   ├── Avatar.js                 # Legacy animated avatar (idle/listening/speaking)
-    │   ├── MessageCard.js            # Chat bubble with sources and actions
-    │   ├── CategoryCard.js           # Library category row
-    │   └── VoiceWaveform.js          # 9-bar animated waveform
-    ├── hooks/
-    │   └── useAvatarConversation.js  # Voice pipeline orchestration (STT → LLM stream → TTS queue → playback)
-    ├── lib/
-    │   ├── tts/
-    │   │   ├── ttsService.js         # TTS provider selection (ElevenLabs primary, OpenAI fallback)
-    │   │   └── elevenLabsService.js  # ElevenLabs API wrapper (audio + character alignment)
-    │   └── lipsync/
-    │       ├── createVisemeTimeline.js  # Converts ElevenLabs alignment → viseme frame sequence
-    │       └── phonemeMap.js            # Character → VRM viseme mapping
-    ├── constants/
-    │   ├── colors.js
-    │   ├── typography.js
-    │   └── data.js                   # Categories, resources, sample messages
-    ├── data/
-    │   └── knowledgeBase.js          # Legacy local KB (superseded by Supabase)
-    └── services/
-        ├── supabaseService.js        # Supabase anon client for the mobile app
-        ├── openaiService.js          # RAG pipeline (embed query → Supabase match_chunks → streaming chat)
-        ├── knowledgeService.js       # Knowledge base queries for Library screen (Supabase)
-          └── aceService.js             # NVIDIA ACE stub (used by VoiceScreen mock)
+    │   └── AppNavigator.js           # Root bottom-tab + stack navigator (app shell)
+    ├── features/
+    │   ├── home/screens/HomeScreen.js
+    │   ├── chat/screens/ChatScreen.js
+    │   ├── voice/                     # Voice conversation (Whisper → LLM → TTS → avatar)
+    │   │   ├── screens/VoiceScreen.js
+    │   │   ├── components/VoiceWaveform.js
+    │   │   └── hooks/useAvatarConversation.js
+    │   ├── avatar/                    # Avatar rendering + Unity bridge
+    │   │   ├── components/{AvatarVRM,AvatarUnity}.js
+    │   │   ├── config/avatarProfiles.ts
+    │   │   └── bridge/{UnityAvatarBridge,blendshapeTranslator,AvatarBridgeProtocol}.js
+    │   ├── library/                   # Knowledge-base browsing
+    │   │   ├── screens/{LibraryScreen,ArticleDetailScreen}.js
+    │   │   ├── components/CategoryCard.js
+    │   │   └── data/knowledgeBase.js  # Local KB (source-of-truth backup; runtime uses Supabase)
+    │   ├── onboarding/
+    │   │   ├── navigation/OnboardingNavigator.js
+    │   │   ├── screens/*.js           # 12-step onboarding flow
+    │   │   └── components/*.js         # OnboardingLayout, OptionCard, ProgressBar, SummaryRow
+    │   └── settings/screens/ProfileScreen.js
+    ├── components/                    # Shared, cross-feature UI (Avatar, MessageCard)
+    ├── lib/                           # Integrations + pure engines
+    │   ├── openaiService.js           # RAG pipeline (embed → Supabase match_chunks → streaming chat)
+    │   ├── supabaseService.ts         # Supabase anon client
+    │   ├── knowledgeService.ts        # Library KB queries (Supabase)
+    │   ├── aceService.js              # NVIDIA ACE stub
+    │   ├── types.ts                   # Shared service-layer domain types
+    │   ├── tts/                       # ttsService.ts (provider selection) + Azure/ElevenLabs
+    │   ├── sentiment/detectSentiment.ts
+    │   └── lipsync/                   # Alignment → viseme timeline (shared with Unity test tools)
+    ├── theme/                         # colors.ts, typography.ts (design tokens)
+    ├── constants/data.js              # Categories, resources, sample messages
+    └── context/SettingsContext.tsx    # App-wide settings + theme provider
 ```
+
+### Scripts
+
+| Command | What it does |
+|---|---|
+| `npm start` | Start the Expo dev server |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint (`eslint-config-expo`) |
+| `npm run format` | Prettier write |
+| `npm test` | Jest (`jest-expo`) |
 
 ---
 

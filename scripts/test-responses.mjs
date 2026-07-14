@@ -25,7 +25,7 @@ const TEMPERATURE    = 0.4;
 // ─── Load knowledge base (ES module via raw read + eval workaround) ───────────
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const kbPath    = path.join(__dirname, '../src/data/knowledgeBase.js');
+const kbPath    = path.join(__dirname, '../src/features/library/data/knowledgeBase.js');
 const kbSrc     = readFileSync(kbPath, 'utf8')
   .replace(/^export const KNOWLEDGE_BASE/, 'const KNOWLEDGE_BASE');
 

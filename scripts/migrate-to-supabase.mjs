@@ -5,7 +5,7 @@
  *
  * PURPOSE
  * -------
- * Reads all 70 knowledge base chunks from src/data/knowledgeBase.js,
+ * Reads all 70 knowledge base chunks from src/features/library/data/knowledgeBase.js,
  * generates a vector embedding for each chunk via the OpenAI API
  * (text-embedding-3-small, 1536 dimensions), and uploads everything to the
  * Supabase `knowledge_chunks` table.
@@ -29,7 +29,7 @@
  *    This creates the table, the pgvector index, and the match_chunks function.
  *
  * 3. FILL IN YOUR APP CREDENTIALS
- *    → Open src/services/supabaseService.js
+ *    → Open src/lib/supabaseService.js
  *    → Set SUPABASE_URL  = your Project URL  (Settings → API → Project URL)
  *    → Set SUPABASE_ANON_KEY = your anon/public key  (Settings → API → anon public)
  *
@@ -60,15 +60,15 @@
  * - To add or edit articles: Supabase dashboard → Table Editor → knowledge_chunks
  *   You can edit content directly in the table. Embeddings for new/edited rows
  *   must be re-generated — re-run this script after any content changes.
- * - src/data/knowledgeBase.js is kept as a source-of-truth backup but is no
+ * - src/features/library/data/knowledgeBase.js is kept as a source-of-truth backup but is no
  *   longer imported by the running app.
  *
  * KEY FILES
  *   scripts/supabase-setup.sql      — SQL to run once in Supabase SQL Editor
  *   scripts/migrate-to-supabase.mjs — this script (run once per content change)
- *   src/services/supabaseService.js — Supabase client config (URL + anon key)
- *   src/services/openaiService.js   — search() now calls Supabase match_chunks
- *   src/services/knowledgeService.js — all queries now go to Supabase
+ *   src/lib/supabaseService.js — Supabase client config (URL + anon key)
+ *   src/lib/openaiService.js   — search() now calls Supabase match_chunks
+ *   src/lib/knowledgeService.js — all queries now go to Supabase
  * =============================================================================
  */
 
@@ -98,7 +98,7 @@ const OPENAI_BASE = 'https://api.openai.com/v1';
 // ─── Load knowledge base ─────────────────────────────────────────────────────
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const kbPath = path.join(__dirname, '../src/data/knowledgeBase.js');
+const kbPath = path.join(__dirname, '../src/features/library/data/knowledgeBase.js');
 const source = fs.readFileSync(kbPath, 'utf8');
 
 // Strip the ES module export declaration and trailing semicolon to get

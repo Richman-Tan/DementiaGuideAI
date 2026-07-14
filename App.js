@@ -4,9 +4,9 @@ import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
-import { OnboardingNavigator } from './src/screens/onboarding/OnboardingNavigator';
+import { OnboardingNavigator } from './src/features/onboarding/navigation/OnboardingNavigator';
 import { SettingsProvider, useSettings } from './src/context/SettingsContext';
-import { Colors } from './src/constants/colors';
+import { Colors } from './src/theme/colors';
 
 function RootNavigator() {
   const { isHydrated, hasCompletedOnboarding } = useSettings();

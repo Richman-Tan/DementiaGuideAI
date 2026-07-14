@@ -5,7 +5,7 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { Colors } from '../constants/colors';
+import { Colors } from '@/theme/colors';
 
 // Placeholder for NVIDIA ACE avatar integration.
 // In production, this component wraps the ACE WebRTC stream or SDK renderer.

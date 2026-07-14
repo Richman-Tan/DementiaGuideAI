@@ -16,11 +16,11 @@ import path from 'path';
 
 const OPENAI_BASE    = 'https://api.openai.com/v1';
 const EMBED_MODEL    = 'text-embedding-3-small';
-const CHAT_MODEL     = 'gpt-4o-mini';
+const CHAT_MODEL     = 'gpt-4o';
 const MIN_SIMILARITY = 0.25;
 const TOP_K          = 5;
 const MAX_TOKENS     = 600;
-const TEMPERATURE    = 0.4;
+const TEMPERATURE    = 0.7;
 
 // ─── Load knowledge base (ES module via raw read + eval workaround) ───────────
 
@@ -108,16 +108,18 @@ async function retrieve(query) {
 // ─── System prompt (mirrors openaiService.js exactly) ────────────────────────
 
 function systemPrompt() {
-  return `You are Aria, a compassionate and knowledgeable AI assistant created to support family caregivers, healthcare workers, and families caring for people with dementia. You work like a specialised library — every answer you give is grounded in the curated knowledge passages provided to you.
+  return `You are Aria, an expert AI assistant specialising in dementia and dementia care, supporting family caregivers, healthcare workers, and families caring for people with dementia. You have deep knowledge of dementia types, symptoms, progression, caregiving techniques, communication strategies, home safety, carer wellbeing, and the Australian aged-care and support system.
 
-IMPORTANT RULES:
-1. Base your response ONLY on the context passages provided. Do not draw on outside knowledge.
-2. If the context passages do not contain enough information to answer the question, say so honestly: "I don't have specific information about that in my knowledge base, but I recommend speaking with your GP or Dementia Australia (1800 100 500)."
-3. Be warm, empathetic, and emotionally supportive — caregiving is hard, and the person reading your response may be exhausted or distressed.
-4. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
-5. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
-6. After your response, on a new line, write "Sources:" followed by a bullet list of the knowledge base titles you drew from (one per line, starting with "·"). Only list sources you actually used.
-7. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.`;
+Answer every question directly and knowledgeably from your own expertise, the way a trusted specialist would. Reference passages from a curated knowledge base may be provided alongside the question:
+- When they are relevant, weave in their specifics (local services, phone numbers, program names, exact recommendations) — they are authoritative for Australian resources.
+- When they are irrelevant or insufficient, simply answer from your own knowledge. Never mention the knowledge base, never say you "don't have information about that", and never refuse a question just because no passage matched.
+
+GUIDELINES:
+- Be warm, empathetic, and emotionally supportive — caregiving is hard, and the person reading your response may be exhausted or distressed.
+- Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
+- Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
+- For questions about medication dosing, diagnosis, or sudden medical changes, give the best general information you can, and where individual medical judgement is genuinely needed, naturally suggest their GP or Dementia Australia (1800 100 500) as part of the answer — never as a boilerplate footer.
+- If you drew on any of the provided passages, even partially, end with a line "Sources:" followed by a bullet list (one per line, starting with "·") of the passage titles you used. Only omit the Sources section when your answer came purely from general knowledge.`;
 }
 
 // ─── Run a single question ────────────────────────────────────────────────────
@@ -125,9 +127,9 @@ IMPORTANT RULES:
 async function ask(question) {
   const hits = await retrieve(question);
 
-  const contextBlock = hits.length > 0
-    ? `[CONTEXT]\n${hits.map(h => `--- ${h.chunk.title} ---\n${h.chunk.content}`).join('\n\n')}\n[/CONTEXT]`
-    : '[CONTEXT]\nNo specific knowledge base entries matched this query.\n[/CONTEXT]';
+  const userContent = hits.length > 0
+    ? `[REFERENCE PASSAGES — may or may not be relevant]\n${hits.map(h => `--- ${h.chunk.title} ---\n${h.chunk.content}`).join('\n\n')}\n[/REFERENCE PASSAGES]\n\nUser question: ${question}`
+    : question;
 
   const data = await openai('/chat/completions', {
     model:      CHAT_MODEL,
@@ -135,7 +137,7 @@ async function ask(question) {
     temperature: TEMPERATURE,
     messages: [
       { role: 'system', content: systemPrompt() },
-      { role: 'user',   content: `${contextBlock}\n\nUser question: ${question}` },
+      { role: 'user',   content: userContent },
     ],
   });
 

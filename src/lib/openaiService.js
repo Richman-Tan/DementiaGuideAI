@@ -4,7 +4,7 @@ import { supabase } from './supabaseService';
 const SECURE_KEY = 'openai_api_key';
 const OPENAI_BASE = 'https://api.openai.com/v1';
 const EMBEDDING_MODEL = 'text-embedding-3-small';
-const CHAT_MODEL = 'gpt-4o-mini';
+const CHAT_MODEL = 'gpt-4o';
 const MIN_SIMILARITY = 0.25;
 const TOP_K = 5;
 const MAX_HISTORY = 6;
@@ -137,9 +137,11 @@ class OpenAIService {
 
     const chunks = await this.search(userMessage, TOP_K);
     timingCbs?.onRagDone?.();
-    const contextBlock = chunks.length > 0
-      ? `[CONTEXT]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/CONTEXT]`
-      : '[CONTEXT]\nNo specific knowledge base entries matched this query.\n[/CONTEXT]';
+    // When nothing was retrieved, send the bare question — an explicit "nothing
+    // matched" block primes the model to hedge instead of just answering.
+    const userContent = chunks.length > 0
+      ? `[REFERENCE PASSAGES — may or may not be relevant]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/REFERENCE PASSAGES]\n\nUser question: ${userMessage}`
+      : userMessage;
 
     const recentHistory = conversationHistory.slice(-MAX_HISTORY).map(m => ({
       role: m.role,
@@ -147,9 +149,10 @@ class OpenAIService {
     }));
 
     const messages = [
-      { role: 'system', content: this._buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup }) },
+      // Voice path: no Sources section — it would be spoken aloud by TTS.
+      { role: 'system', content: this._buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup, includeSources: false }) },
       ...recentHistory,
-      { role: 'user', content: `${contextBlock}\n\nUser question: ${userMessage}` },
+      { role: 'user', content: userContent },
     ];
 
     const maxTokens = conciseMode || responseStyle === 'brief' ? 300
@@ -161,7 +164,7 @@ class OpenAIService {
       model: CHAT_MODEL,
       messages,
       max_tokens: maxTokens,
-      temperature: 0.4,
+      temperature: 0.7,
       stream: true,
     });
 
@@ -292,49 +295,55 @@ class OpenAIService {
     jargonMode        = 'explain',
     ariaPersonality   = 'warm',
     isCaregiversSetup = false,
+    includeSources    = true,
   } = {}) {
     // Caregiver preamble
     const caregiverPreamble = isCaregiversSetup
       ? 'The person using this app is a family caregiver or support worker. Frame responses to support them in their caring role, not as advice to the person with dementia.\n\n'
       : '';
 
-    // Rule 3 — personality
-    const rule3 = {
-      warm:      '3. Be warm, gentle, and emotionally supportive. Validate feelings before giving information. Caregiving is hard, and the person reading your response may be exhausted or distressed.',
-      calm:      '3. Maintain a calm, steady, and reassuring tone. Be clear and measured without excessive emotional language.',
-      friendly:  '3. Be warm and encouraging — like a knowledgeable friend. Use natural, conversational language and a positive tone.',
-      practical: '3. Be direct and practical. Lead with the most useful information. Avoid lengthy emotional preambles.',
-    }[ariaPersonality] ?? '3. Be warm, empathetic, and emotionally supportive.';
+    // Personality
+    const personalityRule = {
+      warm:      '- Be warm, gentle, and emotionally supportive. Validate feelings before giving information. Caregiving is hard, and the person reading your response may be exhausted or distressed.',
+      calm:      '- Maintain a calm, steady, and reassuring tone. Be clear and measured without excessive emotional language.',
+      friendly:  '- Be warm and encouraging — like a knowledgeable friend. Use natural, conversational language and a positive tone.',
+      practical: '- Be direct and practical. Lead with the most useful information. Avoid lengthy emotional preambles.',
+    }[ariaPersonality] ?? '- Be warm, empathetic, and emotionally supportive.';
 
-    // Rule 4 — jargon
-    const rule4 = {
-      explain: "4. If you use a medical or technical word, immediately define it in plain language in parentheses — e.g. \"lewy body dementia (a type of dementia that affects movement and memory)\".",
-      avoid:   '4. Never use medical jargon or technical terms. Always use the simplest everyday word available.',
-      ok:      '4. Use plain, everyday language.',
-    }[jargonMode] ?? "4. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.";
+    // Jargon
+    const jargonRule = {
+      explain: "- If you use a medical or technical word, immediately define it in plain language in parentheses — e.g. \"lewy body dementia (a type of dementia that affects movement and memory)\".",
+      avoid:   '- Never use medical jargon or technical terms. Always use the simplest everyday word available.',
+      ok:      '- Use plain, everyday language.',
+    }[jargonMode] ?? "- Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.";
 
-    // Rule 5 — response length (conciseMode overrides responseStyle)
-    let rule5 = '5. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.';
+    // Response length (conciseMode overrides responseStyle)
+    let lengthRule = '- Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.';
     if (conciseMode) {
-      rule5 = '5. CONCISE MODE ON: Answer in 1–2 short paragraphs maximum. Lead with the direct answer immediately — no preamble, no filler phrases, no restating the question.';
+      lengthRule = '- CONCISE MODE ON: Answer in 1–2 short paragraphs maximum. Lead with the direct answer immediately — no preamble, no filler phrases, no restating the question.';
     } else if (responseStyle === 'brief') {
-      rule5 = '5. Keep responses very short — 1 to 2 sentences maximum. State the answer first, then stop.';
+      lengthRule = '- Keep responses very short — 1 to 2 sentences maximum. State the answer first, then stop.';
     } else if (responseStyle === 'detailed') {
-      rule5 = '5. Give thorough, detailed responses — 4 to 6 paragraphs if the topic warrants it. Include context, examples, and practical tips.';
+      lengthRule = '- Give thorough, detailed responses — 4 to 6 paragraphs if the topic warrants it. Include context, examples, and practical tips.';
     } else if (responseStyle === 'step-by-step') {
-      rule5 = '5. Format any instructions or processes as a numbered list. Break every process into small, clear steps. Use plain language for each step.';
+      lengthRule = '- Format any instructions or processes as a numbered list. Break every process into small, clear steps. Use plain language for each step.';
     }
 
-    return `${caregiverPreamble}You are Aria, a compassionate and knowledgeable AI assistant created to support family caregivers, healthcare workers, and families caring for people with dementia. You work like a specialised library — every answer you give is grounded in the curated knowledge passages provided to you.
+    const sourcesRule = includeSources
+      ? '\n- If you drew on any of the provided passages, even partially, end with a line "Sources:" followed by a bullet list (one per line, starting with "·") of the passage titles you used. Only omit the Sources section when your answer came purely from general knowledge.'
+      : '';
 
-IMPORTANT RULES:
-1. Base your response ONLY on the context passages provided. Do not draw on outside knowledge.
-2. If the context passages do not contain enough information to answer the question, say so honestly: "I don't have specific information about that in my knowledge base, but I recommend speaking with your GP or Dementia Australia (1800 100 500)."
-${rule3}
-${rule4}
-${rule5}
-6. After your response, on a new line, write "Sources:" followed by a bullet list of the knowledge base titles you drew from (one per line, starting with "·"). Only list sources you actually used.
-7. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.`;
+    return `${caregiverPreamble}You are Aria, an expert AI assistant specialising in dementia and dementia care, supporting family caregivers, healthcare workers, and families caring for people with dementia. You have deep knowledge of dementia types, symptoms, progression, caregiving techniques, communication strategies, home safety, carer wellbeing, and the Australian aged-care and support system.
+
+Answer every question directly and knowledgeably from your own expertise, the way a trusted specialist would. Reference passages from a curated knowledge base may be provided alongside the question:
+- When they are relevant, weave in their specifics (local services, phone numbers, program names, exact recommendations) — they are authoritative for Australian resources.
+- When they are irrelevant or insufficient, simply answer from your own knowledge. Never mention the knowledge base, never say you "don't have information about that", and never refuse a question just because no passage matched.
+
+GUIDELINES:
+${personalityRule}
+${jargonRule}
+${lengthRule}
+- For questions about medication dosing, diagnosis, or sudden medical changes, give the best general information you can, and where individual medical judgement is genuinely needed, naturally suggest their GP or Dementia Australia (1800 100 500) as part of the answer — never as a boilerplate footer.${sourcesRule}`;
   }
 
   // ─── RAG Chat ───────────────────────────────────────────────────────────────
@@ -345,10 +354,11 @@ ${rule5}
     // Retrieve relevant chunks
     const chunks = await this.search(userMessage, TOP_K);
 
-    // Build context block
-    const contextBlock = chunks.length > 0
-      ? `[CONTEXT]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/CONTEXT]`
-      : '[CONTEXT]\nNo specific knowledge base entries matched this query.\n[/CONTEXT]';
+    // When nothing was retrieved, send the bare question — an explicit "nothing
+    // matched" block primes the model to hedge instead of just answering.
+    const userContent = chunks.length > 0
+      ? `[REFERENCE PASSAGES — may or may not be relevant]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/REFERENCE PASSAGES]\n\nUser question: ${userMessage}`
+      : userMessage;
 
     // Build messages — last MAX_HISTORY items from conversation history
     const recentHistory = conversationHistory.slice(-MAX_HISTORY).map(m => ({
@@ -357,11 +367,11 @@ ${rule5}
     }));
 
     const messages = [
-      { role: 'system', content: this._buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup }) },
+      { role: 'system', content: this._buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup, includeSources: true }) },
       ...recentHistory,
       {
         role: 'user',
-        content: `${contextBlock}\n\nUser question: ${userMessage}`,
+        content: userContent,
       },
     ];
 
@@ -374,7 +384,7 @@ ${rule5}
       model: CHAT_MODEL,
       messages,
       max_tokens: maxTokens,
-      temperature: 0.4,
+      temperature: 0.7,
     });
 
     const rawText = data.choices[0].message.content.trim();
@@ -392,10 +402,8 @@ ${rule5}
         .filter(Boolean);
     }
 
-    // Fall back to retrieved chunk titles if model didn't list sources
-    if (sourceTitles.length === 0 && chunks.length > 0) {
-      sourceTitles = chunks.slice(0, 3).map(c => c.title);
-    }
+    // No fallback to retrieved chunk titles: if the model listed no sources, it
+    // answered from general knowledge and showing source chips would be misleading.
 
     // Enrich titles with source_url and source_org from matched chunks
     const chunkByTitle = new Map(chunks.map(c => [c.title, c]));

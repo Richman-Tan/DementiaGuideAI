@@ -1,5 +1,6 @@
 import { azureTtsService as azureRaw } from './azureTtsService';
 import { elevenLabsService as elevenRaw } from './elevenLabsService';
+import { normalizeSpokenText } from './normalizeSpokenText';
 import { openaiService as openaiRaw } from '@/lib/openaiService';
 import type {
   AzureTtsService,
@@ -26,6 +27,12 @@ const messageOf = (err: unknown) => (err instanceof Error ? err.message : String
  *   3. OpenAI TTS — no alignment data, RMS amplitude fallback in WebView
  */
 export async function tts(text: string, options: TtsOptions = {}): Promise<TtsResult> {
+  // Expand numbers/symbols to spoken words BEFORE any provider runs. The audio
+  // is unchanged (providers say "twenty-three" for "23" either way) but the
+  // alignment now carries real letters, so numbers drive the lips instead of
+  // freezing the mouth. See normalizeSpokenText for the rationale.
+  text = normalizeSpokenText(text);
+
   const hasAzure = await azureTtsService.hasCredentials();
   console.log('[ttsService] hasAzure:', hasAzure);
   if (hasAzure) {

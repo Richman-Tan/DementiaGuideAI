@@ -16,6 +16,7 @@ const SRC = path.join(__dirname, '../../src/lib/lipsync');
 // ── Load production modules ────────────────────────────────────────────────────
 const { wordToPhonemes }        = loadModule('g2p/g2p.js', SRC);
 const { createVisemeTimeline }  = loadModule('createVisemeTimeline.js', SRC);
+const { normalizeSpokenText }   = loadModule('../tts/normalizeSpokenText.js', SRC);
 
 let failures = 0;
 function check(label, cond, detail = '') {
@@ -88,6 +89,50 @@ check('"the" v_th frame exists at reduced weight',
 const oov = createVisemeTimeline(makeAlignment('zorblex says hi'));
 check('OOV sentence still produces active frames',
   oov.frames.some(f => f.viseme !== 'neutral' && f.time < 0.055 * 7));
+
+// ── 3. Spoken-text normalization (numbers → words, so the mouth moves) ────────
+check('"23" → "twenty-three"', normalizeSpokenText('23') === 'twenty-three',
+  normalizeSpokenText('23'));
+check('"I have 23 cats" expands the number',
+  normalizeSpokenText('I have 23 cats') === 'I have twenty-three cats',
+  normalizeSpokenText('I have 23 cats'));
+check('"3:30" → "three thirty"', normalizeSpokenText("it's 3:30") === "it's three thirty",
+  normalizeSpokenText("it's 3:30"));
+check('"3:05" → "three oh five"', normalizeSpokenText('3:05') === 'three oh five',
+  normalizeSpokenText('3:05'));
+check('"3:00" → "three o\'clock"', normalizeSpokenText('3:00') === "three o'clock",
+  normalizeSpokenText('3:00'));
+check('"3.5" → "three point five"', normalizeSpokenText('3.5') === 'three point five',
+  normalizeSpokenText('3.5'));
+check('"$5.50" → "five dollars and fifty cents"',
+  normalizeSpokenText('$5.50') === 'five dollars and fifty cents',
+  normalizeSpokenText('$5.50'));
+check('"$1" is singular dollar', normalizeSpokenText('$1') === 'one dollar',
+  normalizeSpokenText('$1'));
+check('"50%" → "fifty percent"', normalizeSpokenText('50%') === 'fifty percent',
+  normalizeSpokenText('50%'));
+check('"1,000" → "one thousand"', normalizeSpokenText('1,000') === 'one thousand',
+  normalizeSpokenText('1,000'));
+check('"A & B" ampersand → and', normalizeSpokenText('A & B') === 'A and B',
+  normalizeSpokenText('A & B'));
+check('text with no numbers is untouched',
+  normalizeSpokenText('hello there friend') === 'hello there friend');
+
+// ── 4. Normalized numbers actually produce mouth movement end-to-end ──────────
+// The whole point: pre-normalization, digits mapped to neutral/weight-0 (frozen
+// mouth). After normalization the words flow through G2P and drive visemes.
+const rawDigits = createVisemeTimeline(makeAlignment('23'));
+check('bare "23" produces NO active visemes (the bug we are fixing)',
+  rawDigits.frames.every(f => f.viseme === 'neutral' || f.weight === 0),
+  JSON.stringify(rawDigits.frames));
+
+const spoken = createVisemeTimeline(makeAlignment(normalizeSpokenText('I have 23 cats')));
+check('normalized "23 cats" sentence produces active visemes',
+  spoken.frames.some(f => f.viseme !== 'neutral' && f.weight > 0));
+
+const time330 = createVisemeTimeline(makeAlignment(normalizeSpokenText("it's 3:30")));
+check('normalized "3:30" produces active visemes',
+  time330.frames.some(f => f.viseme !== 'neutral' && f.weight > 0));
 
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURES`);
 process.exit(failures === 0 ? 0 : 1);

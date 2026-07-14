@@ -4,7 +4,7 @@
  *
  * The voice pipeline logs one JSON summary per spoken response, e.g.:
  *   [LATENCY SUMMARY] {"stt_ms":812,"rag_ms":240,"llm_to_token_ms":430,...}
- * (emitted by src/hooks/useAvatarConversation.js). Capture those lines to a file
+ * (emitted by src/features/voice/hooks/useAvatarConversation.js). Capture those lines to a file
  * — e.g. from the Metro/Expo console or a device log — then run this to get the
  * median and range per stage across all responses.
  *

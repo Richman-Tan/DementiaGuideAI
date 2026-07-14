@@ -63,7 +63,7 @@ end-to-end (§4.2, Table 3).
 1. Run the app and drive ~20 representative caregiver queries (reuse the RAG
    question set, Set A). Keep device and network fixed and stated.
 2. The pipeline logs one `[LATENCY SUMMARY] {…}` line per response
-   (`src/hooks/useAvatarConversation.js`). Capture the console/Metro output to a file.
+   (`src/features/voice/hooks/useAvatarConversation.js`). Capture the console/Metro output to a file.
 3. Parse it: `node scripts/parse-latency.mjs path/to/console.log` → writes
    `docs/report/latency_results.csv` (median + range per stage) for Table 3.
 4. Optional A/B: repeat with concurrent sentence playback disabled to quantify

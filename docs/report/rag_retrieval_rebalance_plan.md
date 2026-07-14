@@ -36,7 +36,7 @@ A17's target (`communication_003`, validation therapy) is beyond rank 50: the cu
 A re-ranking pass in `openaiService.search()` — retrieve `TOP_K * over` candidates, cap the iSupport family, return `TOP_K`. No DB change; testable via `scripts/rag-eval.mjs`.
 
 ```js
-// src/services/openaiService.js — inside search(), after the RPC returns `data`
+// src/lib/openaiService.js — inside search(), after the RPC returns `data`
 const OVERSAMPLE = 10;               // retrieve TOP_K * OVERSAMPLE candidates
 const MAX_PER_SOURCE_FAMILY = 2;     // cap bulk-source dominance in the final list
 

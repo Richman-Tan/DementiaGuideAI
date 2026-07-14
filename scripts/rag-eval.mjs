@@ -5,7 +5,7 @@
  * Runs the caregiver question set (docs/report/rag_eval_question_set.md) through the
  * SAME retrieval + generation path the app uses:
  *   query -> OpenAI text-embedding-3-small -> Supabase match_chunks RPC (TOP_K=5, MIN_SIMILARITY=0.25)
- *   -> gpt-4o-mini (temperature 0.4) with the production "Aria" system prompt.
+ *   -> gpt-4o (temperature 0.7) with the production "Aria" system prompt.
  *
  * It writes a CSV pre-filled with everything that can be measured automatically
  * (retrieval hit, chunks retrieved, top similarity, model answer, auto refusal flag)
@@ -36,7 +36,7 @@ const ROOT = resolve(__dirname, '..');
 
 // ─── Config (mirrors src/lib/openaiService.js) ──────────────────────────
 const EMBEDDING_MODEL = 'text-embedding-3-small';
-const CHAT_MODEL = 'gpt-4o-mini';
+const CHAT_MODEL = 'gpt-4o';
 const MIN_SIMILARITY = 0.25;
 const TOP_K = 5;
 const OPENAI_BASE = 'https://api.openai.com/v1';
@@ -97,16 +97,18 @@ const SB_HEADERS = {
 };
 
 // ─── Production "Aria" system prompt (default config, mirrors _buildSystemPrompt) ─
-const SYSTEM_PROMPT = `You are Aria, a compassionate and knowledgeable AI assistant created to support family caregivers, healthcare workers, and families caring for people with dementia. You work like a specialised library — every answer you give is grounded in the curated knowledge passages provided to you.
+const SYSTEM_PROMPT = `You are Aria, an expert AI assistant specialising in dementia and dementia care, supporting family caregivers, healthcare workers, and families caring for people with dementia. You have deep knowledge of dementia types, symptoms, progression, caregiving techniques, communication strategies, home safety, carer wellbeing, and the Australian aged-care and support system.
 
-IMPORTANT RULES:
-1. Base your response ONLY on the context passages provided. Do not draw on outside knowledge.
-2. If the context passages do not contain enough information to answer the question, say so honestly: "I don't have specific information about that in my knowledge base, but I recommend speaking with your GP or Dementia Australia (1800 100 500)."
-3. Be warm, gentle, and emotionally supportive. Validate feelings before giving information. Caregiving is hard, and the person reading your response may be exhausted or distressed.
-4. If you use a medical or technical word, immediately define it in plain language in parentheses — e.g. "lewy body dementia (a type of dementia that affects movement and memory)".
-5. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
-6. After your response, on a new line, write "Sources:" followed by a bullet list of the knowledge base titles you drew from (one per line, starting with "·"). Only list sources you actually used.
-7. Always end with a brief reminder that your information is for guidance only and that a healthcare professional should be consulted for individual medical decisions.`;
+Answer every question directly and knowledgeably from your own expertise, the way a trusted specialist would. Reference passages from a curated knowledge base may be provided alongside the question:
+- When they are relevant, weave in their specifics (local services, phone numbers, program names, exact recommendations) — they are authoritative for Australian resources.
+- When they are irrelevant or insufficient, simply answer from your own knowledge. Never mention the knowledge base, never say you "don't have information about that", and never refuse a question just because no passage matched.
+
+GUIDELINES:
+- Be warm, gentle, and emotionally supportive. Validate feelings before giving information. Caregiving is hard, and the person reading your response may be exhausted or distressed.
+- If you use a medical or technical word, immediately define it in plain language in parentheses — e.g. "lewy body dementia (a type of dementia that affects movement and memory)".
+- Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
+- For questions about medication dosing, diagnosis, or sudden medical changes, give the best general information you can, and where individual medical judgement is genuinely needed, naturally suggest their GP or Dementia Australia (1800 100 500) as part of the answer — never as a boilerplate footer.
+- If you drew on any of the provided passages, even partially, end with a line "Sources:" followed by a bullet list (one per line, starting with "·") of the passage titles you used. Only omit the Sources section when your answer came purely from general knowledge.`;
 
 // ─── Question set (kept in sync with docs/report/rag_eval_question_set.md) ─────
 // expected: pipe-separated chunk ids; a hit = any of them in the retrieved five.
@@ -171,9 +173,9 @@ async function embed(text) {
 }
 
 async function chat(question, chunks) {
-  const contextBlock = chunks.length > 0
-    ? `[CONTEXT]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/CONTEXT]`
-    : '[CONTEXT]\nNo specific knowledge base entries matched this query.\n[/CONTEXT]';
+  const userContent = chunks.length > 0
+    ? `[REFERENCE PASSAGES — may or may not be relevant]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/REFERENCE PASSAGES]\n\nUser question: ${question}`
+    : question;
   const r = await fetch(`${OPENAI_BASE}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` },
@@ -181,10 +183,10 @@ async function chat(question, chunks) {
       model: CHAT_MODEL,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: `${contextBlock}\n\nUser question: ${question}` },
+        { role: 'user', content: userContent },
       ],
       max_tokens: 600,
-      temperature: 0.4,
+      temperature: 0.7,
     }),
   });
   if (!r.ok) throw new Error(`Chat failed (${r.status}): ${await r.text()}`);
@@ -243,7 +245,10 @@ async function introspect() {
 
 // ─── CSV ─────────────────────────────────────────────────────────────────────
 const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-const REFUSAL = /don't have specific information|do not have specific information|recommend speaking with your GP/i;
+// A refusal is now a regression: the prompt tells the model to always answer.
+// Match only knowledge-base-style refusals, not natural "ask your GP" suggestions
+// (which the new prompt legitimately encourages for medical-judgement questions).
+const REFUSAL = /(don't|do not) have (specific )?(information|enough information)|in my knowledge base/i;
 
 async function main() {
   if (WANT_INTROSPECT) return introspect();

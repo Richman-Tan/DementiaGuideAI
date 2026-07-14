@@ -14,12 +14,6 @@ A modern iOS mobile application that acts as a digital library for dementia care
 
 ---
 
-## Video Walkthrough
-
-https://github.com/user-attachments/assets/ed2a9be7-1b46-41a0-905e-609f599734e5
-
----
-
 ## Overview
 
 DementiaGuide AI is designed for caregivers, family members, and healthcare professionals. The app provides evidence-based dementia care guidance through a calm, accessible, and emotionally supportive interface. The AI avatar — **Aria** — is a VRM model rendered in real time with natural speech, multi-shape lip-sync driven by ElevenLabs character-level alignment, and expressive idle animations.

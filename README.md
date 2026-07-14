@@ -10,13 +10,7 @@ A modern iOS mobile application that acts as a digital library for dementia care
 
 ## RAG Pipeline Workflow
 
-<img width="1536" height="1024" alt="RAGPipeline" src="https://github.com/user-attachments/assets/a19212ea-bd53-41d7-bb79-c5fcdc1e44c0" />
-
----
-
-## Video Walkthrough
-
-https://github.com/user-attachments/assets/ed2a9be7-1b46-41a0-905e-609f599734e5
+![RAG Pipeline](./assets/rag-pipeline.png)
 
 ---
 

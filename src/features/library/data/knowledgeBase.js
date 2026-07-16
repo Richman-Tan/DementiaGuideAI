@@ -198,7 +198,7 @@ Urgent signs requiring same-day medical assessment include: a sudden marked incr
 
 Keep a brief written record of what has changed and when, including the person's current medications and diagnoses. This information significantly speeds medical assessment.
 
-In New Zealand, contact your GP for urgent advice or call Healthline (0800 611 116) for free 24/7 nurse guidance. In an emergency, call 111. In Australia, call your GP, contact healthdirect (1800 022 222), or call 000 in an emergency.`,
+Contact your GP for urgent advice or call Healthline (0800 611 116) for free 24/7 nurse guidance. In an emergency, call 111.`,
     tags: ['delirium', 'urgent', 'infection', 'sudden deterioration', 'emergency', 'medical review'],
     source_url: 'https://www.nhs.uk/conditions/dementia/symptoms/',
     source_org: 'NHS UK',

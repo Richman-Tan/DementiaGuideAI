@@ -13,6 +13,11 @@ const { createHash } = require('node:crypto');
 const CHUNK_WORDS = 500;
 const OVERLAP_WORDS = 50;
 const MIN_CHUNK_WORDS = 40;
+// Sections smaller than this are merged with following sections before
+// windowing — interactive/workbook-style documents (like the WHO iSupport
+// manual) contain many short heading-led fragments that would otherwise
+// become useless 5-word chunks.
+const MIN_SECTION_WORDS = 100;
 
 // Normalise whitespace without altering wording.
 function normalise(text) {
@@ -126,11 +131,39 @@ function contentHash(title, content) {
   return createHash('sha256').update(`${normalise(title)}\n${normalise(content)}`).digest('hex');
 }
 
+// Merge undersized sections forward so every windowed unit has enough words
+// to be a useful retrieval target. The merged group keeps the FIRST heading
+// (the one that introduced the material).
+function mergeSmallSections(sections, minWords = MIN_SECTION_WORDS) {
+  const merged = [];
+  let acc = null;
+  for (const s of sections) {
+    if (!acc) {
+      acc = { heading: s.heading, text: s.text };
+    } else {
+      // Keep the first NON-NULL heading: a tiny preamble that merges into the
+      // first real section shouldn't erase that section's label.
+      acc.heading = acc.heading ?? s.heading;
+      acc.text += `\n\n${s.text}`;
+    }
+    if (acc.text.split(/\s+/).length >= minWords) {
+      merged.push(acc);
+      acc = null;
+    }
+  }
+  if (acc) {
+    // Undersized trailing group: fold into the last merged section.
+    if (merged.length > 0) merged[merged.length - 1].text += `\n\n${acc.text}`;
+    else merged.push(acc);
+  }
+  return merged;
+}
+
 // Chunk a whole document. Returns [{ id, title, content, section, contentHash }].
 // Chunk ids are content-addressed (`<idBase>_<hash8>`): stable under section
 // reordering and insertions, and duplicate passages collapse to one id.
 function chunkDocument(text, { idBase, sourceTitle, options = {} }) {
-  const sections = splitIntoSections(text);
+  const sections = mergeSmallSections(splitIntoSections(text), options.minSectionWords);
   const out = [];
   const seen = new Set();
   for (const section of sections) {
@@ -153,9 +186,11 @@ module.exports = {
   CHUNK_WORDS,
   OVERLAP_WORDS,
   MIN_CHUNK_WORDS,
+  MIN_SECTION_WORDS,
   normalise,
   isHeading,
   splitIntoSections,
+  mergeSmallSections,
   windowSplit,
   contentHash,
   chunkDocument,

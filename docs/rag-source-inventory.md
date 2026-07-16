@@ -13,8 +13,8 @@
 
 | Candidate | Org | Why | Status |
 |---|---|---|---|
-| iSupport for dementia: training and support manual (2019) | WHO | Canonical source of the current bulk corpus; CC BY-NC-SA 3.0 IGO | Fetch + licence confirmation pending (USER gate) |
-| iSupport NZ adaptation | (to identify — likely via University of Auckland / NZ dementia orgs) | NZ-specific service context | Identify official distribution + terms (USER gate) |
+| iSupport for dementia: training and support manual (2019, ISBN 978-92-4-151586-3, 275 pp) | WHO | Canonical source of the current bulk corpus | **Fetched 2026-07-17 + licence verified from the document itself: CC BY-NC-SA 3.0 IGO** (see `content/sources/MANIFEST.md`). Remaining USER gate: confirm this app's use counts as non-commercial and approve ingestion (registry entry `isupport-who-v2026`, currently `enabled: false`) |
+| iSupport NZ adaptation | University of Auckland research group (Sani, Cheung, Peri et al. — [scoping review](https://journals.sagepub.com/doi/10.1177/14713012241283860), [carer study](https://pmc.ncbi.nlm.nih.gov/articles/PMC11667949/)) | NZ-specific service context; **almost certainly the origin of the existing `isupport-nz` chunks** (this is the project owner's research context) | Not publicly distributed. USER supplies the adapted manual file + confirms terms with the research group, then registry entry `isupport-nz-v2026` is pointed at it |
 | Alzheimers NZ public guidance pages (helplines, support services) | Alzheimers New Zealand | Authoritative NZ service info (0800 004 001 verified 2026-07-16) | Candidate — check site terms before any ingestion |
 | Health NZ / Te Whatu Ora dementia + Healthline pages | Health New Zealand | Official public-health guidance; Healthline 0800 611 116 verified 2026-07-16 | Candidate — Crown copyright terms to check |
 | Dementia NZ information sheets | Dementia New Zealand | Practical caregiver guidance, regional services | Candidate — check terms |

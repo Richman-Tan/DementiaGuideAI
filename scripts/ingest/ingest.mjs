@@ -126,12 +126,15 @@ function loadCuratedJs(entry) {
 }
 
 async function loadPdf(entry) {
-  const pdfParse = require('pdf-parse');
+  const { PDFParse } = require('pdf-parse'); // v2 API
   const path = resolve(ROOT, entry.local_path);
   if (!existsSync(path)) throw new Error(`Source file missing: ${entry.local_path} (see content/sources/MANIFEST.md)`);
-  const data = await pdfParse(readFileSync(path));
+  const parser = new PDFParse({ data: readFileSync(path) });
+  const result = await parser.getText();
+  // pdf-parse v2 inserts "-- N of M --" page separators; they are layout, not content.
+  const text = result.text.replace(/^-- \d+ of \d+ --$/gm, '');
   const idBase = entry.document_id.replace(/[^a-z0-9]+/gi, '_').slice(0, 30);
-  return chunkDocument(data.text, { idBase, sourceTitle: entry.title }).map(c => ({
+  return chunkDocument(text, { idBase, sourceTitle: entry.title }).map(c => ({
     ...c,
     category: entry.category,
     tags: [],

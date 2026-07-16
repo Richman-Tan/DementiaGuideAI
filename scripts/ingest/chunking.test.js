@@ -73,11 +73,14 @@ describe('contentHash', () => {
 });
 
 describe('chunkDocument', () => {
-  const doc = `Welcome to the guide.\n\n## Understanding dementia\n\n${words(60, 'u')}\n\n## Daily care\n\n${words(600, 'd')}`;
+  const doc = `Welcome to the guide.\n\n## Understanding dementia\n\n${words(120, 'u')}\n\n## Daily care\n\n${words(600, 'd')}`;
 
   it('produces section-labelled titles and content-addressed ids', () => {
     const chunks = chunkDocument(doc, { idBase: 'guide', sourceTitle: 'Carer Guide' });
-    expect(chunks[0].title).toBe('Carer Guide'); // preamble, no section
+    // The tiny preamble merges into the first real section, which keeps its heading.
+    expect(chunks[0].section).toBe('Understanding dementia');
+    expect(chunks[0].title).toBe('Carer Guide — Understanding dementia');
+    expect(chunks[0].content.startsWith('Welcome to the guide.')).toBe(true);
     const daily = chunks.filter(c => c.section === 'Daily care');
     expect(daily.length).toBeGreaterThan(1); // 600 words → split
     expect(daily[0].title).toBe('Carer Guide — Daily care (Part 1)');
@@ -85,6 +88,14 @@ describe('chunkDocument', () => {
       expect(c.id).toMatch(/^guide_[0-9a-f]{8}$/);
       expect(c.contentHash).toHaveLength(64);
     }
+  });
+
+  it('merges undersized sections forward (workbook-style documents)', () => {
+    const workbook = `## Quiz A\n\n${words(20, 'q')}\n\n## Quiz B\n\n${words(20, 'r')}\n\n## Lesson\n\n${words(120, 'l')}`;
+    const chunks = chunkDocument(workbook, { idBase: 'w', sourceTitle: 'W' });
+    expect(chunks).toHaveLength(1); // 20+20+120 accumulate into one ≥100-word unit
+    expect(chunks[0].section).toBe('Quiz A');
+    expect(chunks[0].content).toContain('l119');
   });
 
   it('is deterministic', () => {

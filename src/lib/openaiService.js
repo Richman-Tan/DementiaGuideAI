@@ -15,9 +15,12 @@ import {
 import { buildSystemPrompt, buildUserContent } from './rag/prompt';
 import { capBySourceFamily } from './rag/retrieval';
 import { extractCitations, createMarkerStripper } from './rag/citations';
+import { recordRetrieval } from './ragTelemetry';
 
 const SECURE_KEY = 'openai_api_key';
 const OPENAI_BASE = 'https://api.openai.com/v1';
+const EMBED_CACHE_MAX = 20;   // LRU of recent query embeddings (repeat/retry queries skip a network call)
+const MIN_REQUEST_INTERVAL_MS = 750; // client-side pacing between chat requests
 
 class OpenAIAuthError extends Error {
   constructor(msg) { super(msg); this.name = 'OpenAIAuthError'; }
@@ -29,6 +32,17 @@ class OpenAIRateLimitError extends Error {
 class OpenAIService {
   constructor() {
     this._cachedKey = null;
+    this._embedCache = new Map(); // query → embedding (LRU via delete+set)
+    this._lastRequestAt = 0;
+  }
+
+  // Simple client-side pacing: space chat requests at least
+  // MIN_REQUEST_INTERVAL_MS apart so a stuck button / rapid voice loop can't
+  // burn the user's OpenAI quota.
+  async _throttle() {
+    const wait = this._lastRequestAt + MIN_REQUEST_INTERVAL_MS - Date.now();
+    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    this._lastRequestAt = Date.now();
   }
 
   // ─── API Key ────────────────────────────────────────────────────────────────
@@ -84,11 +98,24 @@ class OpenAIService {
   }
 
   async _embedQuery(text) {
+    const key = text.trim().toLowerCase();
+    if (this._embedCache.has(key)) {
+      // LRU refresh
+      const hit = this._embedCache.get(key);
+      this._embedCache.delete(key);
+      this._embedCache.set(key, hit);
+      return hit;
+    }
     const data = await this._callOpenAI('/embeddings', {
       model: EMBEDDING_MODEL,
       input: text,
     });
-    return data.data[0].embedding;
+    const embedding = data.data[0].embedding;
+    this._embedCache.set(key, embedding);
+    if (this._embedCache.size > EMBED_CACHE_MAX) {
+      this._embedCache.delete(this._embedCache.keys().next().value);
+    }
+    return embedding;
   }
 
   // ─── Semantic Search (Supabase pgvector) ────────────────────────────────────
@@ -115,8 +142,11 @@ class OpenAIService {
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new OpenAIAuthError('No API key configured');
 
+    await this._throttle();
+    const ragStart = Date.now();
     const chunks = await this.search(userMessage, TOP_K);
     timingCbs?.onRagDone?.();
+    recordRetrieval({ queryLength: userMessage.length, retrieved: chunks, ragMs: Date.now() - ragStart, path: 'voice' });
     const userContent = buildUserContent(userMessage, chunks);
 
     const recentHistory = conversationHistory.slice(-MAX_HISTORY).map(m => ({
@@ -288,7 +318,10 @@ class OpenAIService {
              { conciseMode = false, responseStyle = 'balanced', jargonMode = 'explain',
                ariaPersonality = 'warm', isCaregiversSetup = false } = {}) {
     // Retrieve relevant chunks
+    await this._throttle();
+    const ragStart = Date.now();
     const chunks = await this.search(userMessage, TOP_K);
+    recordRetrieval({ queryLength: userMessage.length, retrieved: chunks, ragMs: Date.now() - ragStart, path: 'chat' });
 
     const userContent = buildUserContent(userMessage, chunks);
 

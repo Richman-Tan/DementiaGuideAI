@@ -11,7 +11,6 @@ import {
   StatusBar,
   ScrollView,
   FlatList,
-  ActivityIndicator,
   Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -125,7 +124,6 @@ export const ChatScreen = ({ navigation, route }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState(null); // null | 'auth' | 'ratelimit' | 'network'
   const [activeCitation, setActiveCitation] = useState(null); // { num, title, org, url, excerpt } | null
   const initialMessageSent = useRef(false);
@@ -145,21 +143,6 @@ export const ChatScreen = ({ navigation, route }) => {
       const hasKey = await openaiService.hasApiKey();
       if (!hasKey) {
         setApiKeyMissing(true);
-        return;
-      }
-
-      // Init knowledge base (embeddings)
-      setIsInitializing(true);
-      try {
-        await openaiService.initKnowledgeBase();
-      } catch (e) {
-        if (e instanceof OpenAIAuthError) {
-          setApiKeyMissing(true);
-        } else {
-          setError('network');
-        }
-      } finally {
-        setIsInitializing(false);
       }
     };
     init();
@@ -185,14 +168,6 @@ export const ChatScreen = ({ navigation, route }) => {
         if (hasKey) {
           setApiKeyMissing(false);
           setError(null);
-          setIsInitializing(true);
-          try {
-            await openaiService.initKnowledgeBase();
-          } catch {
-            setError('network');
-          } finally {
-            setIsInitializing(false);
-          }
         }
       }
     });
@@ -229,7 +204,7 @@ export const ChatScreen = ({ navigation, route }) => {
   // ── Send message ──────────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (text) => {
     const trimmed = (text ?? '').trim();
-    if (!trimmed || apiKeyMissing || isInitializing) return;
+    if (!trimmed || apiKeyMissing) return;
 
     setError(null);
 
@@ -310,7 +285,7 @@ export const ChatScreen = ({ navigation, route }) => {
         setError('network');
       }
     }
-  }, [internalMessages, apiKeyMissing, isInitializing, autoPlayResponses]);
+  }, [internalMessages, apiKeyMissing, autoPlayResponses]);
 
   // ── Custom renderers ──────────────────────────────────────────────────────────
 
@@ -365,29 +340,22 @@ export const ChatScreen = ({ navigation, route }) => {
   // ── Input bar (rendered outside GiftedChat so layout is never clipped) ────────
   const inputBar = (
     <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, 8), backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-      {isInitializing ? (
-        <View style={styles.initRow}>
-          <ActivityIndicator size="small" color={Colors.primary} />
-          <Text style={styles.initText}>Preparing knowledge base…</Text>
-        </View>
-      ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chips}
-        >
-          {QUICK_QUESTIONS.slice(0, 5).map((chip, i) => (
-            <TouchableOpacity
-              key={i}
-              style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}
-              onPress={() => sendMessage(chip)}
-              accessibilityLabel={chip}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chips}
+      >
+        {QUICK_QUESTIONS.slice(0, 5).map((chip, i) => (
+          <TouchableOpacity
+            key={i}
+            style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => sendMessage(chip)}
+            accessibilityLabel={chip}
             >
               <Text style={[styles.chipText, { color: colors.primary }]}>{chip}</Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
-      )}
+      </ScrollView>
 
       {error && (
         <View style={styles.errorBanner}>
@@ -419,7 +387,7 @@ export const ChatScreen = ({ navigation, route }) => {
             placeholderTextColor="#C7C7CC"
             multiline
             maxLength={500}
-            editable={!apiKeyMissing && !isInitializing}
+            editable={!apiKeyMissing}
             onSubmitEditing={() => sendMessage(inputText)}
             accessibilityLabel="Message input"
           />
@@ -474,7 +442,7 @@ export const ChatScreen = ({ navigation, route }) => {
           <View style={styles.navMeta}>
             <Text style={[styles.navName, { color: colors.textPrimary }]}>Aria</Text>
             <Text style={[styles.navStatus, isSpeaking && { color: Colors.accent }]}>
-              {isSpeaking ? 'Speaking…' : isTyping ? 'Thinking…' : isInitializing ? 'Loading…' : 'Online'}
+              {isSpeaking ? 'Speaking…' : isTyping ? 'Thinking…' : 'Online'}
             </Text>
           </View>
         </TouchableOpacity>
@@ -781,17 +749,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingHorizontal: 12,
     gap: 8,
-  },
-  initRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 4,
-  },
-  initText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontStyle: 'italic',
   },
   chips: {
     gap: 7,

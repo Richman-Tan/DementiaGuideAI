@@ -1,0 +1,1020 @@
+{
+  "generatedAt": "2026-07-16T21:26:16.662Z",
+  "gitSha": "654b328",
+  "promptVersion": "v2-nz-safety",
+  "questionVersion": "v2",
+  "model": "gpt-4o",
+  "temperature": 0,
+  "seed": 42,
+  "methodologyNote": "Eval runs at temperature 0 + fixed seed for comparability; production runs at 0.7.",
+  "rows": [
+    {
+      "id": "A1",
+      "set": "A",
+      "category": "caregiving",
+      "question": "My mother gets agitated and confused every evening around sunset. What can I do?",
+      "retrieved": [
+        {
+          "id": "caregiving_001",
+          "similarity": 0.40602448707493
+        },
+        {
+          "id": "isupport_nz_c169",
+          "similarity": 0.371990765045506
+        },
+        {
+          "id": "isupport_nz_c171",
+          "similarity": 0.342826160059298
+        },
+        {
+          "id": "caregiving_005",
+          "similarity": 0.30517242575174
+        },
+        {
+          "id": "bestpractices_003",
+          "similarity": 0.30016868646432
+        }
+      ],
+      "answer": "I'm sorry to hear that your mother is experiencing agitation and confusion in the evenings. This is known as sundowning, a common challenge for people with dementia and their caregivers. It's understandable to feel concerned, but there are strategies that can help manage this behaviour.\n\nFirst, maintaining a consistent daily routine can be very beneficial. When the day follows a predictable pattern, it helps the brain adapt even when memory is impaired. Try to keep activities and meals at the same time each day, and plan more demanding activities for the morning when your mother is likely to be more alert [S1][S2].\n\nIn the late afternoon and evening, ensure the home is well-lit to reduce confusing shadows, and minimize background noise and stimulation. Calming activities such as listening to gentle music, taking a slow walk, or giving a hand massage can help ease the transition into nighttime. Offering a light, nutritious snack before the sundowning period can also be helpful [S1].\n\nIf your mother becomes distressed, avoid arguing or correcting her. Instead, acknowledge her feelings and gently redirect her attention to a favourite activity or a comforting environment. If sundowning is severe or poses safety risks, it might be helpful to discuss this with her doctor. Keeping a brief diary of when sundowning occurs and what precedes it can help identify personal triggers and inform discussions with healthcare professionals [S1][S5].\n\nRemember, you're not alone in this. You can reach out to Dementia NZ at 0800 004 001 or Alzheimer's NZ for local support and advice. They can provide additional resources and support tailored to your situation.",
+      "promptTokens": 2274,
+      "completionTokens": 324,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A2",
+      "set": "A",
+      "category": "caregiving",
+      "question": "She asks me the same question over and over, dozens of times an hour. How should I respond?",
+      "retrieved": [
+        {
+          "id": "caregiving_002",
+          "similarity": 0.346181398876437
+        },
+        {
+          "id": "isupport_nz_c257",
+          "similarity": 0.293718289749778
+        },
+        {
+          "id": "isupport_nz_c256",
+          "similarity": 0.293625839653508
+        }
+      ],
+      "answer": "It's understandable to feel overwhelmed when faced with repetitive questions, and it's important to remember that this behaviour is a common part of dementia. The person asking genuinely cannot remember the answer, and each time feels like the first time for them. Responding with patience and empathy can help both you and the person with dementia feel more at ease.\n\nInstead of focusing on the literal question, try to understand the underlying emotion or need. For example, if they repeatedly ask about going home, they might be feeling anxious or insecure. Offering reassurance, such as saying \"You're safe here, and I'm with you,\" can be more comforting than simply repeating factual answers [S1].\n\nDistraction and redirection can also be effective. Engaging them in a favourite activity, offering a snack, or playing familiar music can shift their focus and reduce the frequency of the questions [S2][S3]. Additionally, visual aids like a whiteboard with the day's schedule or key information can sometimes help reduce repetitive questioning.\n\nRemember to stay calm and patient, as your emotional tone is often retained longer than the words themselves. If the repetition becomes too stressful, take a moment for yourself, and consider reaching out to support services like Alzheimers New Zealand (0800 004 001) for further guidance and support.",
+      "promptTokens": 1823,
+      "completionTokens": 258,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A3",
+      "set": "A",
+      "category": "caregiving",
+      "question": "My father has stopped eating much and I'm worried he isn't drinking enough. How can I help him eat?",
+      "retrieved": [
+        {
+          "id": "isupport_nz_c181",
+          "similarity": 0.358369886613046
+        },
+        {
+          "id": "caregiving_004",
+          "similarity": 0.358268156359804
+        },
+        {
+          "id": "isupport_nz_c186",
+          "similarity": 0.357878163987474
+        },
+        {
+          "id": "bestpractices_009",
+          "similarity": 0.275363823147905
+        },
+        {
+          "id": "wellbeing_006",
+          "similarity": 0.252571986491667
+        }
+      ],
+      "answer": "I'm sorry to hear that your father is having trouble with eating and drinking. It's understandable to be concerned, as maintaining good nutrition and hydration is crucial for his health and wellbeing. Here are some strategies that might help:\n\n1. **Create a Pleasant Mealtime Atmosphere**: Encourage a calm and enjoyable environment during meals. This can help make mealtimes more appealing and encourage your father to eat. Consider involving him in meal preparation if possible, as this can stimulate interest in food [S1][S2].\n\n2. **Offer Smaller, Frequent Meals**: Large meals can be overwhelming, so try offering smaller portions more frequently throughout the day. This can help increase his overall intake without making him feel pressured [S2].\n\n3. **Use Adaptive Utensils**: If your father is having difficulty using regular cutlery, adaptive eating aids might be helpful. These are designed to be easier to handle and can make eating more manageable for him [S1].\n\n4. **Encourage Hydration**: Ensure he drinks regularly throughout the day, not just at mealtimes. Foods with high water content, like watermelon and soups, can also help with hydration. Dehydration can worsen confusion and lead to other health issues, so it's important to keep an eye on his fluid intake [S2].\n\n5. **Monitor for Swallowing Difficulties**: Watch for signs like coughing or choking during meals, which could indicate swallowing difficulties. If you notice these, consult his GP for a referral to a speech and language therapist who can provide guidance on safe eating techniques [S2].\n\nIf you're feeling overwhelmed, remember that support is available. You can reach out to Alzheimers New Zealand at 0800 004 001 for advice and support tailored to your situation.",
+      "promptTokens": 2471,
+      "completionTokens": 359,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A4",
+      "set": "A",
+      "category": "caregiving",
+      "question": "He keeps waking and wandering the house at night. How do I manage his sleep?",
+      "retrieved": [
+        {
+          "id": "caregiving_005",
+          "similarity": 0.400772600913007
+        },
+        {
+          "id": "isupport_nz_c273",
+          "similarity": 0.362405269367419
+        },
+        {
+          "id": "isupport_who_c126",
+          "similarity": 0.347667881697028
+        },
+        {
+          "id": "caregiving_001",
+          "similarity": 0.314863037243101
+        },
+        {
+          "id": "homesafety_005",
+          "similarity": 0.300126895406667
+        }
+      ],
+      "answer": "I'm sorry to hear you're dealing with this challenging situation. It's understandable to feel concerned when someone with dementia wakes and wanders at night. Here are some strategies that might help manage his sleep and reduce night-time wandering:\n\n1. **Establish a Consistent Routine**: Keeping a regular schedule for waking up, meals, and bedtime can help regulate his internal body clock. A consistent routine provides a sense of security and predictability, which can be comforting for someone with dementia [S4].\n\n2. **Encourage Daytime Activity**: Physical activity during the day, such as a morning walk or gentle exercises, can help improve sleep at night. It's also beneficial to limit daytime naps to short periods, ideally 15 to 30 minutes, to ensure he is tired enough to sleep at night [S1][S2].\n\n3. **Create a Calming Environment**: Before bedtime, engage in relaxing activities like listening to soothing music or reading. Ensure the bedroom is comfortable and conducive to sleep — some people prefer a dark room, while others might benefit from a nightlight to prevent disorientation if they wake up [S3].\n\n4. **Manage Night-Time Needs**: If he wakes up, check if he needs to use the bathroom or is thirsty, and assist him as needed. This might help him settle back to sleep more easily [S3].\n\n5. **Safety Measures**: If wandering is a safety concern, consider installing door alarms or using childproof locks to alert you if he tries to leave the house. These measures can help ensure his safety without being overly restrictive [S5].\n\nIf these strategies don't help or if his sleep disturbances are significantly affecting your wellbeing, it might be helpful to discuss the situation with his GP. They can check for any underlying medical issues that might be contributing to his sleep problems and offer further advice. Remember, your health is important too, and seeking support from family, friends, or professional carers can provide you with some much-needed respite.",
+      "promptTokens": 2835,
+      "completionTokens": 400,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A5",
+      "set": "A",
+      "category": "caregiving",
+      "question": "How do I help my wife with toileting accidents without embarrassing her?",
+      "retrieved": [
+        {
+          "id": "isupport_who_c082",
+          "similarity": 0.398959946291123
+        },
+        {
+          "id": "isupport_nz_c214",
+          "similarity": 0.397578260344888
+        },
+        {
+          "id": "caregiving_006",
+          "similarity": 0.392665289069908
+        },
+        {
+          "id": "caregiving_003",
+          "similarity": 0.335351406727872
+        },
+        {
+          "id": "homesafety_002",
+          "similarity": 0.299033601818858
+        }
+      ],
+      "answer": "It's understandable to want to support your wife with dignity and care during toileting accidents. Here are some strategies that can help manage these situations sensitively:\n\n1. **Create a Supportive Environment**: Make simple changes to the bathroom to help her find and use the toilet more easily. This can include placing a picture of a toilet on the bathroom door, using a toilet seat with a contrasting colour, and ensuring there is adequate lighting, especially at night [S1][S2].\n\n2. **Establish a Routine**: Encourage regular toilet visits by prompting her every two to three hours, after meals, and before bed. This can help prevent accidents by ensuring she has frequent opportunities to use the toilet [S3].\n\n3. **Choose Appropriate Clothing**: Opt for clothing that is easy to remove, such as pants with elastic waists, to make it easier for her to manage independently [S3].\n\n4. **Use Incontinence Products Discreetly**: If needed, use absorbent pads or underwear that are discreet and comfortable. This can help manage accidents without drawing attention to them [S3].\n\n5. **Respond Calmly**: When accidents occur, respond in a calm and matter-of-fact manner. Avoid showing frustration or embarrassment, as this can increase her distress. Instead, focus on cleaning up and reassuring her that it's okay [S3].\n\n6. **Maintain Skin Care**: Keep her skin clean and dry after any accidents to prevent irritation or breakdown, which can be uncomfortable and lead to further issues [S3].\n\nIf incontinence is becoming more frequent or difficult to manage, consider speaking with her GP for a referral to a continence nurse specialist who can provide tailored advice and support. Remember, you're doing a wonderful job by seeking ways to care for her with dignity and respect.",
+      "promptTokens": 2582,
+      "completionTokens": 366,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A6",
+      "set": "A",
+      "category": "caregiving",
+      "question": "Is there a government programme in New Zealand specifically for supporting carers?",
+      "retrieved": [
+        {
+          "id": "wellbeing_004",
+          "similarity": 0.424180963400378
+        },
+        {
+          "id": "caregiving_009",
+          "similarity": 0.415183601256964
+        },
+        {
+          "id": "isupport_nz_c038",
+          "similarity": 0.412064172845103
+        },
+        {
+          "id": "wellbeing_006",
+          "similarity": 0.405456747777479
+        },
+        {
+          "id": "isupport_nz_c037",
+          "similarity": 0.40367161041158
+        }
+      ],
+      "answer": "Yes, in New Zealand, there are several government programmes and supports specifically designed to assist carers. Work and Income NZ provides financial assistance for eligible carers, which can help alleviate some of the financial burdens associated with caregiving [S1]. Additionally, the Needs Assessment Service Co-ordination (NASC) teams play a crucial role in assessing the needs of both the person with dementia and their carers, determining eligibility for government-funded support [S5].\n\nCarers can also access various respite services, which offer temporary relief from caregiving duties. These services can include in-home support, day programmes, and facility-based respite care [S3]. For more detailed guidance and to explore local support options, carers can contact Dementia NZ (0800 004 001) or Alzheimers NZ, which provide resources and assistance in navigating available services [S4].",
+      "promptTokens": 2804,
+      "completionTokens": 172,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A7",
+      "set": "A",
+      "category": "clinical",
+      "question": "What are the different stages of dementia and what happens in each?",
+      "retrieved": [
+        {
+          "id": "clinical_001",
+          "similarity": 0.504981605285046
+        },
+        {
+          "id": "isupport_nz_c019",
+          "similarity": 0.457883818191407
+        },
+        {
+          "id": "isupport_nz_c017",
+          "similarity": 0.443972188016698
+        },
+        {
+          "id": "clinical_002",
+          "similarity": 0.408263935984104
+        },
+        {
+          "id": "alzheimers_disease_001",
+          "similarity": 0.385171432135996
+        }
+      ],
+      "answer": "Dementia generally progresses through three broad stages: mild (early), moderate (middle), and severe (late). It's important to remember that each person's experience with dementia is unique, and symptoms can vary widely depending on the type of dementia and individual factors [S1][S2].\n\nIn the mild (early) stage, individuals may experience memory lapses, difficulties with word-finding, occasional disorientation, and mild changes in personality or mood. Despite these challenges, many people can still manage daily activities independently with some support. This stage is crucial for planning, as the person can still participate in decisions about their future care and legal matters [S1].\n\nAs dementia progresses to the moderate (middle) stage, symptoms become more pronounced and wide-ranging. People often need help with daily tasks such as washing, dressing, and toileting. Communication difficulties, behavioural changes, and increased memory loss are common. This stage typically lasts the longest and can be particularly demanding for caregivers [S1][S2].\n\nIn the severe (late) stage, individuals require constant care. They may have significant difficulties with eating, drinking, and mobility. Communication becomes very limited, and the focus shifts to comfort and quality of life. The risk of infections, such as pneumonia, increases during this stage, and professional care is often necessary [S1].\n\nUnderstanding these stages can help families plan appropriate support and anticipate future needs, ensuring that important conversations about care preferences happen before a crisis arises.",
+      "promptTokens": 2609,
+      "completionTokens": 294,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A8",
+      "set": "A",
+      "category": "clinical",
+      "question": "What are the common dementia medications, and what side effects should I watch for?",
+      "retrieved": [
+        {
+          "id": "clinical_003",
+          "similarity": 0.476477878769014
+        },
+        {
+          "id": "homesafety_003",
+          "similarity": 0.384038336148415
+        },
+        {
+          "id": "clinical_002",
+          "similarity": 0.369379008097791
+        },
+        {
+          "id": "clinical_008",
+          "similarity": 0.368221934354118
+        },
+        {
+          "id": "isupport_nz_c018",
+          "similarity": 0.346654552251616
+        }
+      ],
+      "answer": "It's understandable to have concerns about medications and their side effects when caring for someone with dementia. There are several common medications used to manage dementia symptoms, though it's important to note that these do not cure the disease but may help with memory and thinking for some people.\n\n1. **Acetylcholinesterase inhibitors**: These include donepezil (Aricept), rivastigmine (Exelon), and galantamine (Reminyl). They work by preventing the breakdown of acetylcholine, a brain chemical important for memory and learning. These medications are typically used for Alzheimer's disease, dementia with Lewy bodies, and Parkinson's disease dementia. Common side effects can include nausea and appetite loss, but these often resolve within a few weeks [S1].\n\n2. **Memantine**: This medication affects the glutamate pathway and is used for moderate to severe Alzheimer's disease and Lewy body dementia. Side effects may include headaches and dizziness, but these are usually temporary [S1].\n\n3. **Antipsychotic medications**: Sometimes prescribed for severe agitation or distress, these include risperidone and haloperidol. They carry significant risks and should only be used under specialist supervision, at the lowest effective dose, and for the shortest possible duration [S1].\n\nIt's crucial to monitor for side effects and discuss any concerns with the person's GP or pharmacist. Regular medication reviews are important to ensure the treatment remains appropriate as the condition progresses. If you have any immediate concerns about medication side effects, contacting Healthline at 0800 611 116 for advice can be helpful.",
+      "promptTokens": 2226,
+      "completionTokens": 321,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A9",
+      "set": "A",
+      "category": "clinical",
+      "question": "How do I know when a sudden change means I should get him seen by a doctor urgently?",
+      "retrieved": [
+        {
+          "id": "clinical_004",
+          "similarity": 0.426340964588964
+        },
+        {
+          "id": "prevention_002",
+          "similarity": 0.271583662740254
+        },
+        {
+          "id": "isupport_nz_c295",
+          "similarity": 0.249558961178545
+        },
+        {
+          "id": "isupport_nz_c293",
+          "similarity": 0.248661053719129
+        },
+        {
+          "id": "caregiving_006",
+          "similarity": 0.230923102567414
+        }
+      ],
+      "answer": "If you notice a sudden and significant change in the person you care for, it's important to consider seeking urgent medical attention. Such changes can often indicate a treatable physical issue rather than just a progression of dementia. Here are some key signs to watch for:\n\n- A sudden increase in confusion or agitation beyond their usual behaviour.\n- New onset of fever or chills, which could suggest an infection.\n- Obvious signs of pain or discomfort that are new or unexplained.\n- A fall that raises concerns about possible injury, such as a fracture.\n- Refusal to eat or drink for more than 24 hours.\n- Signs of infection, like redness, swelling, or discharge from a wound.\n- Sudden weakness, facial drooping, or difficulty speaking, which could indicate a stroke.\n- Unexplained bruising.\n\nThese symptoms can often be due to conditions like urinary tract infections, chest infections, dehydration, constipation, uncontrolled pain, or medication side effects, which can cause delirium (a sudden state of confusion) superimposed on dementia [S1].\n\nIf you observe any of these signs, it's crucial to contact your GP for urgent advice or call Healthline at 0800 611 116 for free 24/7 nurse guidance. In an emergency, call 111 immediately. Keeping a brief written record of what has changed and when, along with current medications and diagnoses, can help speed up the medical assessment process [S1].",
+      "promptTokens": 2446,
+      "completionTokens": 291,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A10",
+      "set": "A",
+      "category": "clinical",
+      "question": "What legal documents should we sort out while she can still make decisions?",
+      "retrieved": [
+        {
+          "id": "clinical_007",
+          "similarity": 0.409363096049381
+        },
+        {
+          "id": "isupport_nz_c087",
+          "similarity": 0.345304396281534
+        },
+        {
+          "id": "prevention_006",
+          "similarity": 0.345260281220507
+        },
+        {
+          "id": "isupport_nz_c035",
+          "similarity": 0.34266136723825
+        },
+        {
+          "id": "wellbeing_004",
+          "similarity": 0.290494456511768
+        }
+      ],
+      "answer": "It's great that you're thinking ahead about legal planning. While your loved one still has the capacity to make decisions, it's important to arrange several key documents to ensure her wishes are respected in the future.\n\n1. **Enduring Power of Attorney (EPA)**: This is crucial for both financial and personal care decisions. An EPA for financial matters allows someone to manage her finances and property, while an EPA for personal care and welfare covers health and lifestyle decisions. These documents must be completed while she has full legal capacity and should be registered with the Public Trust or executed with a lawyer in New Zealand [S1][S3].\n\n2. **Advance Care Plan (ACP)**: This document outlines her values, treatment preferences, and wishes for end-of-life care. It's less formal than an EPA but equally important for guiding care decisions when she can no longer communicate her wishes. Sharing this plan with her GP and other healthcare providers ensures her preferences are known and respected [S1][S4].\n\n3. **Will**: Ensuring her will is up-to-date is also important. This document specifies how her assets should be distributed after her passing and can prevent family disputes.\n\n4. **Emergency Support Plan**: Consider creating a plan for emergencies, detailing who to contact and what steps to take if she becomes unwell or needs immediate assistance [S4].\n\nThese steps can prevent future stress and ensure her wishes are honoured. For guidance, you can contact Dementia NZ (dementia.nz) or Alzheimer's NZ (alzheimers.org.nz) for support and advice on navigating these processes.",
+      "promptTokens": 2260,
+      "completionTokens": 317,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A11",
+      "set": "A",
+      "category": "clinical",
+      "question": "Could his confusion be caused by something reversible rather than dementia?",
+      "retrieved": [
+        {
+          "id": "clinical_008",
+          "similarity": 0.446225199910653
+        },
+        {
+          "id": "clinical_004",
+          "similarity": 0.343162821579155
+        },
+        {
+          "id": "isupport_nz_c319",
+          "similarity": 0.330722910215814
+        },
+        {
+          "id": "clinical_002",
+          "similarity": 0.325389678599623
+        },
+        {
+          "id": "isupport_nz_c017",
+          "similarity": 0.321582619755317
+        }
+      ],
+      "answer": "It's entirely possible that confusion and other dementia-like symptoms could be caused by reversible conditions rather than true dementia. It's important to consider and rule out these possibilities, as treating them can lead to significant improvement or even a full return to normal cognitive function.\n\nSeveral medical conditions can mimic dementia symptoms. These include hypothyroidism (an underactive thyroid), vitamin B12 deficiency, medication side effects, depression, and infections like urinary tract infections, which can cause sudden delirium. Other conditions such as normal-pressure hydrocephalus and subdural haematoma (a type of brain bleed) can also present with similar symptoms [S1].\n\nIf the confusion has appeared suddenly or has worsened rapidly, it might be due to delirium, which is often reversible with appropriate treatment. Delirium can be triggered by infections, dehydration, or medication changes, among other factors [S2][S3]. It's crucial to seek a comprehensive medical evaluation to identify any treatable causes. This typically involves blood tests, a review of current medications, and possibly brain imaging [S1].\n\nI recommend contacting your GP for a thorough assessment. If you're in New Zealand, you can also call Healthline at 0800 611 116 for free 24/7 nurse advice. If the situation seems urgent, such as a sudden increase in confusion or other concerning symptoms, seek immediate medical attention.",
+      "promptTokens": 2429,
+      "completionTokens": 277,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A12",
+      "set": "A",
+      "category": "best-practices",
+      "question": "He's getting worked up and angry. How can I calm the situation down?",
+      "retrieved": [
+        {
+          "id": "isupport_nz_c309",
+          "similarity": 0.293675551828936
+        },
+        {
+          "id": "isupport_who_c109",
+          "similarity": 0.281609574773052
+        },
+        {
+          "id": "bestpractices_003",
+          "similarity": 0.269024930376332
+        },
+        {
+          "id": "bestpractices_001",
+          "similarity": 0.231589016314985
+        }
+      ],
+      "answer": "I'm sorry to hear that you're dealing with this challenging situation. It's important to remember that aggression in someone with dementia is often a form of communication, expressing needs or feelings like fear, confusion, or discomfort. Here are some strategies that might help calm the situation:\n\n1. **Stay Calm and Reassuring**: Use a calm, slow voice and maintain a relaxed posture. Acknowledge their feelings by saying something like, \"I can see you're upset. I'm here to help you.\"\n\n2. **Identify Triggers**: Try to identify what might have triggered the anger. Common triggers include pain, hunger, or feeling threatened during personal care tasks. If you can identify the trigger, you might be able to address it directly [S4].\n\n3. **Use Redirection**: Gently guide them away from the distressing situation or thought. This could involve suggesting a favourite activity, offering a snack, or playing a piece of music they enjoy. The goal is to shift their focus to something more positive without confrontation [S3].\n\n4. **Give Space**: If the situation allows, step back and give them some space. Sometimes, withdrawing calmly and returning after a short period can help de-escalate the situation [S4].\n\n5. **Sensory Distractions**: Introduce a sensory distraction, such as a meaningful photograph, a familiar object, or a favourite piece of music. These can be more effective than verbal persuasion in shifting attention [S3].\n\nIf these strategies don't help and the aggression continues or escalates, it might be beneficial to seek advice from a healthcare professional. You can contact their GP or reach out to Healthline at 0800 611 116 for further guidance. Remember, you're not alone, and support is available.",
+      "promptTokens": 2089,
+      "completionTokens": 357,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A13",
+      "set": "A",
+      "category": "best-practices",
+      "question": "My mum says she sees people in the house who aren't there. How should I respond?",
+      "retrieved": [
+        {
+          "id": "isupport_nz_c316",
+          "similarity": 0.391776448528255
+        },
+        {
+          "id": "isupport_nz_c317",
+          "similarity": 0.36352261820886
+        },
+        {
+          "id": "bestpractices_006",
+          "similarity": 0.327228247109633
+        },
+        {
+          "id": "bestpractices_004",
+          "similarity": 0.317144730643955
+        },
+        {
+          "id": "communication_006",
+          "similarity": 0.292885041708333
+        }
+      ],
+      "answer": "It's understandable to feel concerned when your mum experiences hallucinations, but there are supportive ways to respond that can help her feel safe. First, reassure her in a calm voice, letting her know that she is safe and you are with her. This can help reduce any fear or insecurity she might be feeling [S2].\n\nNext, consider the environment. Sometimes, shadows or reflections can contribute to these experiences. Check if there are any environmental factors, like poor lighting or patterns, that might be causing confusion, and make adjustments if necessary, such as improving lighting or removing mirrors [S2][S4].\n\nIt's important not to argue or try to convince her that what she's seeing isn't real, as this can increase distress. Instead, acknowledge her feelings and gently redirect her attention if possible. For example, you might say, \"That sounds frightening. Let's go have a cup of tea together\" [S4].\n\nIf these experiences are new or have suddenly worsened, it might be worth discussing them with her GP, as they could be related to changes in her health or medication [S2][S4]. Remember, you're not alone in this — reaching out to support services like Alzheimers New Zealand (0800 004 001) can provide additional guidance and reassurance.",
+      "promptTokens": 2543,
+      "completionTokens": 257,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A14",
+      "set": "A",
+      "category": "best-practices",
+      "question": "I'm scared he'll leave the house and get lost. How can I prevent wandering?",
+      "retrieved": [
+        {
+          "id": "bestpractices_005",
+          "similarity": 0.419186396677655
+        },
+        {
+          "id": "homesafety_005",
+          "similarity": 0.403177786861869
+        },
+        {
+          "id": "isupport_who_c135",
+          "similarity": 0.372878219981914
+        },
+        {
+          "id": "isupport_nz_c282",
+          "similarity": 0.369127796995455
+        },
+        {
+          "id": "homesafety_007",
+          "similarity": 0.290801411031735
+        }
+      ],
+      "answer": "It's completely understandable to feel worried about your loved one wandering and getting lost. This is a common concern for caregivers of people with dementia, and there are several strategies you can use to help prevent it.\n\nFirst, try to understand the reasons behind the wandering. It might be due to searching for a familiar place or person, responding to a physical need like hunger or needing the toilet, or simply following a past routine like going to work [S1]. Addressing these underlying causes can help reduce the urge to wander.\n\nTo prevent wandering, ensure that all basic needs are consistently met, and incorporate regular, supervised outdoor activities into their daily routine to reduce restlessness [S1][S4]. You can also make your home more secure by using door alarms or motion-sensor alerts that notify you when doors are opened. Camouflage techniques, such as painting exit doors the same colour as the surrounding walls, can also help [S1][S2].\n\nConsider enrolling your loved one in a safe-return support programme through Alzheimer's NZ or Dementia NZ, and ensure they carry identification, like a medic alert bracelet, at all times [S1]. Informing neighbours and having a recent photograph on hand can also be helpful if they do wander [S3][S4].\n\nCreating a safely accessible garden or outdoor area can provide the outdoor experience they might be seeking without the risk of wandering far from home [S2]. If wandering does occur, a GPS tracking device worn as a watch or pendant can provide reassurance and help locate them quickly [S1][S2].",
+      "promptTokens": 2894,
+      "completionTokens": 312,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A15",
+      "set": "A",
+      "category": "best-practices",
+      "question": "I feel completely exhausted from caring. What are the signs of burnout I should look for?",
+      "retrieved": [
+        {
+          "id": "bestpractices_007",
+          "similarity": 0.452278334975829
+        },
+        {
+          "id": "wellbeing_005",
+          "similarity": 0.327531840719857
+        },
+        {
+          "id": "isupport_who_c061",
+          "similarity": 0.298054567068771
+        },
+        {
+          "id": "wellbeing_002",
+          "similarity": 0.29790502287118
+        },
+        {
+          "id": "isupport_who_c068",
+          "similarity": 0.280976543250219
+        }
+      ],
+      "answer": "I'm sorry to hear that you're feeling exhausted. Caring for someone with dementia is incredibly demanding, and it's important to recognise the signs of burnout so you can take steps to care for yourself too.\n\nBurnout is a state of physical, emotional, and mental exhaustion that can occur when you're providing high-intensity care without adequate support. Some common signs include persistent fatigue that doesn't improve with rest, withdrawing from social activities, feeling hopeless or resentful, neglecting your own health needs, increasing irritability with the person you're caring for, and feeling that caregiving is endless with no prospect of relief [S1].\n\nIt's crucial to acknowledge these feelings and seek support. Accepting help, whether through respite care, support groups, or counselling, can make a significant difference. In New Zealand, Carers NZ offers resources and connections to local support networks that can provide guidance and relief [S1]. Remember, taking care of yourself is not only important for your wellbeing but also enables you to provide better care for your loved one.",
+      "promptTokens": 2488,
+      "completionTokens": 203,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A16",
+      "set": "A",
+      "category": "communication",
+      "question": "What's the best way to talk to someone with dementia so they understand me?",
+      "retrieved": [
+        {
+          "id": "communication_001",
+          "similarity": 0.528962005875325
+        },
+        {
+          "id": "isupport_nz_c063",
+          "similarity": 0.489707025090093
+        },
+        {
+          "id": "isupport_nz_c067",
+          "similarity": 0.469277918974234
+        },
+        {
+          "id": "communication_002",
+          "similarity": 0.449909046256953
+        },
+        {
+          "id": "communication_005",
+          "similarity": 0.438817570141688
+        }
+      ],
+      "answer": "Communicating with someone who has dementia can be challenging, but there are effective strategies to help ensure understanding and maintain a positive connection. It's important to adapt your communication style to their current abilities, as expecting them to adapt to you can lead to frustration for both parties.\n\nStart by speaking slowly and clearly in a calm, low-pitched voice. Use short, simple sentences that convey one idea at a time. This helps the person process what you're saying without becoming overwhelmed. Avoid open-ended questions, which can be confusing, and instead offer limited, concrete choices. For example, ask \"Would you like tea or coffee?\" rather than \"What would you like to drink?\" [S1][S2].\n\nFace the person directly at their eye level and use their preferred name to gain and hold their attention. This shows respect and helps them focus on the conversation. If they struggle to find words, offer gentle assistance without rushing them, which helps preserve their communication confidence and dignity [S1][S2].\n\nNon-verbal communication is also crucial. Use gestures, facial expressions, and touch to support your words. A warm, patient expression and gentle touch can convey reassurance and connection, even if the words themselves are not fully understood. Pay attention to their body language as well, as it can provide clues about how they are feeling [S4].\n\nBy making these adjustments, you can create a more supportive and effective communication environment for someone with dementia.",
+      "promptTokens": 2611,
+      "completionTokens": 288,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A17",
+      "set": "A",
+      "category": "communication",
+      "question": "She keeps saying she must pick up her kids from school, but they're grown adults. Do I correct her?",
+      "retrieved": [
+        {
+          "id": "isupport_who_c107",
+          "similarity": 0.294911148073557
+        },
+        {
+          "id": "isupport_nz_c165",
+          "similarity": 0.263541177106991
+        },
+        {
+          "id": "bestpractices_006",
+          "similarity": 0.215994368553535
+        },
+        {
+          "id": "caregiving_002",
+          "similarity": 0.215244711923909
+        }
+      ],
+      "answer": "It's understandable to feel unsure about how to respond when someone with dementia repeatedly insists on something that isn't true. In this situation, correcting her directly might not be the most effective approach, as it can lead to confusion or distress. Instead, try to understand the underlying feelings or needs behind her statement. She might be expressing a sense of responsibility or anxiety.\n\nYou can reassure her by acknowledging her feelings: \"It sounds like you're worried about the kids. They are safe and taken care of.\" This approach addresses her emotional need for reassurance rather than focusing on the factual inaccuracy. Distraction and redirection can also be helpful. You might gently shift the conversation to a different topic or engage her in an activity she enjoys, which can help ease her anxiety and redirect her attention [S4].\n\nRemember, it's important to maintain a calm and supportive tone, as the emotional tone of your response is often retained longer than the words themselves. If you find this situation challenging, reaching out to support services like Alzheimers New Zealand (0800 004 001) can provide additional guidance and support.",
+      "promptTokens": 2039,
+      "completionTokens": 219,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A18",
+      "set": "A",
+      "category": "communication",
+      "question": "My husband didn't recognise me today and it broke my heart. What do I do?",
+      "retrieved": [
+        {
+          "id": "communication_006",
+          "similarity": 0.328596867011675
+        },
+        {
+          "id": "isupport_nz_c264",
+          "similarity": 0.236525602625494
+        },
+        {
+          "id": "isupport_nz_c073",
+          "similarity": 0.236463347413966
+        },
+        {
+          "id": "bestpractices_006",
+          "similarity": 0.19852995290015
+        },
+        {
+          "id": "prevention_002",
+          "similarity": 0.19816407565749
+        }
+      ],
+      "answer": "I'm so sorry to hear that you're going through this. It's incredibly painful when someone you love doesn't recognise you, and it's important to acknowledge that your feelings of grief and sadness are completely valid. This experience is a symptom of the changes happening in your husband's brain due to dementia, and it doesn't reflect the strength or importance of your relationship [S1].\n\nWhen this happens, try to introduce yourself calmly and warmly, like saying, \"Hello, I'm [Your Name], I've come to see you.\" Focus on the quality of your interaction rather than the recognition itself. Even if he doesn't remember your name, he can still feel the warmth and love in your presence [S1].\n\nIt's also helpful to seek support for yourself. Talking to a counsellor, joining a support group, or sharing your feelings with family members who understand can be beneficial. Remember, you're not alone in this journey, and there are resources available to help you cope with these challenging moments. If you need someone to talk to, you can call or text 1737 to speak with a trained counsellor at any time.",
+      "promptTokens": 2413,
+      "completionTokens": 218,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A19",
+      "set": "A",
+      "category": "home-safety",
+      "question": "How can I make the bathroom safer to prevent falls?",
+      "retrieved": [
+        {
+          "id": "homesafety_002",
+          "similarity": 0.503257403116278
+        },
+        {
+          "id": "homesafety_007",
+          "similarity": 0.43621417999575
+        },
+        {
+          "id": "bestpractices_008",
+          "similarity": 0.361856245796242
+        },
+        {
+          "id": "isupport_who_c083",
+          "similarity": 0.336699331781111
+        },
+        {
+          "id": "isupport_nz_c214",
+          "similarity": 0.333496932262222
+        }
+      ],
+      "answer": "Making the bathroom safer for someone with dementia is crucial, as it is one of the highest-risk areas for falls. Here are some effective strategies:\n\n1. **Install Grab Rails**: Securely mount grab rails beside the toilet, inside the bath, and in or beside the shower. These provide support and stability when sitting, standing, or moving around the bathroom [S1].\n\n2. **Use Non-Slip Mats**: Place non-slip mats inside the bath or shower and use non-slip rugs on the bathroom floor. This helps prevent slipping on wet surfaces [S1].\n\n3. **Shower Chair and Handheld Showerhead**: A shower chair or bath seat allows for seated showering, reducing the risk of falls. A handheld showerhead offers more control and flexibility [S1].\n\n4. **Temperature Control**: Set the hot water thermostat to a maximum of 50°C to prevent scalding, as individuals with dementia may not recognize or react to hot water appropriately [S1].\n\n5. **Improve Lighting**: Ensure the bathroom is well-lit at all times. Install a nightlight for night-time visits to the toilet to reduce disorientation and falls [S1].\n\n6. **Clear Visual Cues**: Use clear signs on the toilet door to help the person find their way, especially at night. A raised toilet seat with arms can also make sitting and rising safer [S1].\n\n7. **Footwear**: Ensure the person wears well-fitting, closed-toe, flat shoes with non-slip soles rather than loose slippers or socks alone [S1].\n\nThese modifications can significantly reduce the risk of falls and enhance safety in the bathroom. If you need further assistance, consider arranging a home safety assessment through an occupational therapist, which can often be organised via the person's GP or Alzheimer's New Zealand.",
+      "promptTokens": 2478,
+      "completionTokens": 367,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A20",
+      "set": "A",
+      "category": "home-safety",
+      "question": "What's the safest way to store his medications so he doesn't take too much?",
+      "retrieved": [
+        {
+          "id": "homesafety_003",
+          "similarity": 0.414080697679095
+        },
+        {
+          "id": "isupport_nz_c195",
+          "similarity": 0.2670741647097
+        },
+        {
+          "id": "clinical_003",
+          "similarity": 0.242323626892018
+        },
+        {
+          "id": "isupport_nz_c188",
+          "similarity": 0.237136681769337
+        },
+        {
+          "id": "bestpractices_008",
+          "similarity": 0.236140904946213
+        }
+      ],
+      "answer": "It's important to ensure that medications are stored safely to prevent someone with dementia from accidentally taking too much or the wrong medication. Here are some key strategies:\n\n1. **Locked Storage**: Keep all medications in a locked box or cabinet. This prevents unsupervised access and reduces the risk of accidental ingestion [S1].\n\n2. **Pill Organisers**: Use a clearly labelled pill organiser, which can be filled weekly by a carer or pharmacist. This helps ensure that the correct dose is taken at the correct time. Blister-packed medication systems, where each day's doses are individually sealed, can also be helpful as they make it immediately visible if a dose has been missed or taken twice [S1].\n\n3. **Supervised Administration**: Always supervise medication administration to ensure the person takes the correct dose at the correct time. This is crucial for safety and effectiveness [S1].\n\n4. **Medication List**: Keep a current, accurate list of all medications, including the drug name, dose, frequency, and prescribing doctor. This should be easily accessible in the home and carried in the person's bag for emergencies [S1].\n\n5. **Regular Reviews**: Have the medication list reviewed at least every six months with the GP or pharmacist. This ensures that all medications remain appropriate as the dementia progresses [S1].\n\nThese steps can help manage medication safely and reduce the risk of errors. If you have any concerns about medication management, it's always a good idea to consult with a pharmacist or GP.",
+      "promptTokens": 2718,
+      "completionTokens": 303,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A21",
+      "set": "A",
+      "category": "home-safety",
+      "question": "How do I know when it's time for my dad to stop driving?",
+      "retrieved": [
+        {
+          "id": "homesafety_006",
+          "similarity": 0.427966197786687
+        },
+        {
+          "id": "isupport_nz_c294",
+          "similarity": 0.310032513839187
+        },
+        {
+          "id": "isupport_who_c140",
+          "similarity": 0.309219975641359
+        },
+        {
+          "id": "prevention_006",
+          "similarity": 0.264396969139959
+        },
+        {
+          "id": "wellbeing_006",
+          "similarity": 0.256163364298709
+        }
+      ],
+      "answer": "Deciding when it's time for your dad to stop driving can be a challenging and emotional process, as driving often represents independence and freedom. However, safety is the most important consideration. There are several signs that may indicate it's time to reassess his ability to drive safely. These include getting lost on familiar routes, difficulty navigating intersections or roundabouts, unexplained dents or scratches on the car, or confusion about road rules [S1].\n\nIt's important to have an open and empathetic conversation with your dad about your concerns. In New Zealand, you can involve his GP in this discussion, as they have obligations to report to the New Zealand Transport Agency (NZTA) if a medical condition may impair driving safety. A formal occupational therapy driving assessment can provide an objective evaluation of his driving abilities, which is more reliable than self-assessment [S1].\n\nPlanning for alternatives to driving is also crucial. Consider setting up family driving rosters, exploring local transport options, or arranging for community transport services. This helps maintain his independence and social connections even after he stops driving [S1]. Remember, this transition can be difficult, so acknowledging the emotional impact and offering support is important.",
+      "promptTokens": 2519,
+      "completionTokens": 235,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A22",
+      "set": "A",
+      "category": "wellbeing",
+      "question": "I need a break. What respite care options are there for carers?",
+      "retrieved": [
+        {
+          "id": "wellbeing_001",
+          "similarity": 0.531439736716771
+        },
+        {
+          "id": "isupport_nz_c038",
+          "similarity": 0.416592321588294
+        },
+        {
+          "id": "isupport_nz_p056",
+          "similarity": 0.396588091037456
+        },
+        {
+          "id": "bestpractices_007",
+          "similarity": 0.390855509661502
+        },
+        {
+          "id": "wellbeing_005",
+          "similarity": 0.366602074785659
+        }
+      ],
+      "answer": "It's completely understandable to feel the need for a break when caring for someone with dementia. Taking regular respite is not just beneficial but essential for maintaining your own health and wellbeing, which in turn helps you provide better care [S1].\n\nIn New Zealand, there are several respite care options available:\n\n1. **In-home respite**: A trained care worker can come to your home to look after the person with dementia, allowing you to take a break while they remain in a familiar environment. This is often the least disruptive option for the person with dementia.\n\n2. **Community day programmes**: These programmes offer structured activities, social interaction, and meals for several days a week. Many people with dementia enjoy these once they become accustomed to the routine.\n\n3. **Overnight or residential respite**: This involves the person staying in an aged care facility for a period ranging from one night to several weeks. While it can be more disruptive, it provides you with a longer break to recharge.\n\n4. **Carer support subsidy**: This financial assistance can help cover the cost of hiring a support person or accessing day centres [S2].\n\nIt's important to plan for respite care before it becomes urgently needed. Building a network of trusted relief carers and services can make it easier to access support when you need it most. For more information and assistance in finding local respite options, you can contact Dementia NZ (dementia.nz) or Carers NZ (carers.net.nz) [S1][S2].",
+      "promptTokens": 2287,
+      "completionTokens": 302,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A23",
+      "set": "A",
+      "category": "wellbeing",
+      "question": "What financial help or government support can I get as a carer?",
+      "retrieved": [
+        {
+          "id": "wellbeing_004",
+          "similarity": 0.473828917725227
+        },
+        {
+          "id": "caregiving_009",
+          "similarity": 0.407385841027818
+        },
+        {
+          "id": "wellbeing_005",
+          "similarity": 0.378321049554407
+        },
+        {
+          "id": "wellbeing_001",
+          "similarity": 0.37731475451798
+        },
+        {
+          "id": "wellbeing_006",
+          "similarity": 0.372615164377157
+        }
+      ],
+      "answer": "Caring for someone with dementia can have significant financial implications, and it's important to know what support is available to you in New Zealand. As a carer, you may be eligible for financial assistance through Work and Income NZ, which provides carer support payments and other financial assistance for those who qualify. This can help alleviate some of the financial burdens associated with caregiving [S1].\n\nAdditionally, organisations like Dementia NZ and Alzheimer's NZ can assist you in navigating the available services and identifying local support options. They can provide guidance on accessing community resources and support networks that can further aid in your caregiving journey [S1].\n\nIt's also advisable to consider arranging an Enduring Power of Attorney while the person with dementia still has legal capacity. This legal arrangement allows you to make financial management decisions on their behalf when they are no longer able to do so independently, which can be crucial for managing their affairs effectively [S1].\n\nIf you need more personalised advice or assistance, reaching out to these organisations or consulting with a licensed aged care financial adviser can be beneficial. They can help you understand the complexities of financial planning in the context of dementia care.",
+      "promptTokens": 2358,
+      "completionTokens": 228,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A24",
+      "set": "A",
+      "category": "wellbeing",
+      "question": "How do I know when it's time to move her into residential care?",
+      "retrieved": [
+        {
+          "id": "wellbeing_007",
+          "similarity": 0.439898645422036
+        },
+        {
+          "id": "homesafety_010",
+          "similarity": 0.337087368359554
+        },
+        {
+          "id": "isupport_nz_c201",
+          "similarity": 0.328976377542639
+        },
+        {
+          "id": "isupport_nz_c038",
+          "similarity": 0.326394833325144
+        },
+        {
+          "id": "wellbeing_010",
+          "similarity": 0.319057776431402
+        }
+      ],
+      "answer": "Deciding when to transition a loved one with dementia into residential care is a deeply personal and often challenging decision. It's important to consider several factors to determine if this might be the right step.\n\nFirstly, assess whether the care needs of your loved one have exceeded what can be safely managed at home. This includes evaluating if there are significant safety risks, such as frequent falls or wandering, that cannot be mitigated in the home environment. Additionally, consider if the caregiving responsibilities are impacting your own health and wellbeing, which is a common trigger for considering residential care [S1].\n\nAnother key factor is whether your loved one would benefit from the structured activities and consistent professional care that a residential facility can provide. Facilities with secure memory care units are specifically designed to support individuals with dementia, offering specialised staffing and environments that can enhance quality of life [S1].\n\nIt's also crucial to involve your loved one in the decision-making process as much as possible, respecting their wishes and ensuring they feel part of the transition. Visiting potential facilities together, if feasible, can help in making a more informed choice.\n\nRemember, transitioning to residential care is not an act of abandonment but a recognition of the level of care needed. It can be a loving decision that ensures your loved one receives the best possible support as their needs evolve. For guidance specific to New Zealand, contacting Dementia NZ or Alzheimer's NZ can provide valuable support and information on available options [S1].",
+      "promptTokens": 2710,
+      "completionTokens": 287,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A25",
+      "set": "A",
+      "category": "wellbeing",
+      "question": "How do I access funded home-care services in New Zealand?",
+      "retrieved": [
+        {
+          "id": "wellbeing_010",
+          "similarity": 0.41772921932154
+        },
+        {
+          "id": "isupport_nz_c037",
+          "similarity": 0.407289482344477
+        },
+        {
+          "id": "wellbeing_006",
+          "similarity": 0.400676327342113
+        },
+        {
+          "id": "isupport_nz_c038",
+          "similarity": 0.400416833311572
+        },
+        {
+          "id": "wellbeing_004",
+          "similarity": 0.38818649108331
+        }
+      ],
+      "answer": "Accessing funded home-care services in New Zealand involves a few key steps. First, it's important to contact your GP, who can provide guidance and refer you to the Needs Assessment Service Co-ordination (NASC) team. The NASC team will conduct an assessment to determine the type of support needed and your eligibility for government-funded services [S2].\n\nOnce the assessment is completed, the NASC team will help coordinate the appropriate services based on the needs identified. These services can include personal care, household assistance, and respite care, among others. It's beneficial to start this process early, as it can take time to arrange the necessary support.\n\nAdditionally, organisations like Dementia NZ (0800 004 001) and Alzheimers NZ can assist in identifying local home support and community services that might be available in your area [S3]. They can also provide guidance on navigating the system and accessing the support you need.",
+      "promptTokens": 2865,
+      "completionTokens": 187,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A26",
+      "set": "A",
+      "category": "prevention",
+      "question": "What are the early warning signs of dementia I should look out for?",
+      "retrieved": [
+        {
+          "id": "prevention_002",
+          "similarity": 0.492855485753961
+        },
+        {
+          "id": "clinical_002",
+          "similarity": 0.43418375788079
+        },
+        {
+          "id": "isupport_nz_c022",
+          "similarity": 0.427914074118348
+        },
+        {
+          "id": "isupport_nz_c018",
+          "similarity": 0.410058471401503
+        },
+        {
+          "id": "clinical_001",
+          "similarity": 0.401733610137808
+        }
+      ],
+      "answer": "It's understandable to be concerned about the early signs of dementia, as recognising them can lead to earlier diagnosis and support. Some common early warning signs include memory loss, particularly forgetting recent events, names, and faces. You might also notice difficulty concentrating, planning, or following familiar tasks, such as cooking a known recipe or driving a usual route. Confusion about time or place, trouble understanding visual information, and difficulty finding words in speaking or writing are also common indicators [S1].\n\nOther signs to watch for include misplacing items and being unable to retrace steps, poor or changed judgement, and withdrawal from hobbies, social activities, or work. Changes in mood or personality, such as increased anxiety, suspicion, or irritability, can also be early indicators of dementia [S1].\n\nIf you notice several of these signs in yourself or someone you care about, it's important to book an appointment with a GP for a proper assessment. In New Zealand, you can also reach out to Dementia NZ (0800 004 001) or Alzheimer's NZ for further information and guidance [S1].",
+      "promptTokens": 2137,
+      "completionTokens": 219,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A27",
+      "set": "A",
+      "category": "prevention",
+      "question": "What lifestyle changes can reduce the risk of developing dementia?",
+      "retrieved": [
+        {
+          "id": "prevention_001",
+          "similarity": 0.466425074073856
+        },
+        {
+          "id": "isupport_nz_c030",
+          "similarity": 0.455109664425071
+        },
+        {
+          "id": "isupport_nz_c027",
+          "similarity": 0.450412250079547
+        },
+        {
+          "id": "prevention_003",
+          "similarity": 0.427093709888166
+        },
+        {
+          "id": "bestpractices_002",
+          "similarity": 0.417494807197905
+        }
+      ],
+      "answer": "Reducing the risk of developing dementia involves making several lifestyle changes that support overall brain health. It's important to remember that while some risk factors like age and genetics cannot be changed, many others can be modified to help lower the risk.\n\n1. **Stay Physically Active**: Regular exercise is one of the most effective ways to protect brain health. Aim for at least 150 minutes of moderate-intensity aerobic activity per week, such as brisk walking, swimming, or cycling. Incorporating resistance training and balance exercises like tai chi or yoga can also be beneficial [S4].\n\n2. **Maintain a Healthy Diet**: Eating a balanced diet rich in fruits, vegetables, whole grains, and lean proteins supports brain health. Limiting alcohol consumption is also important. The Ministry of Health NZ recommends no more than 10 standard drinks per week for women and 15 for men, with at least two alcohol-free days each week [S2].\n\n3. **Manage Cardiovascular Health**: Keeping blood pressure, cholesterol, and diabetes under control is crucial. Regular check-ups with your GP can help manage these conditions effectively.\n\n4. **Stay Socially Connected**: Engaging in social activities and maintaining strong social networks can reduce feelings of isolation and loneliness, which are risk factors for dementia [S3].\n\n5. **Keep Mentally Active**: Engage in activities that challenge your brain, such as puzzles, reading, or learning new skills. Staying cognitively active helps maintain brain function [S2].\n\n6. **Address Hearing and Vision Loss**: Treating hearing and vision impairments promptly can reduce the risk of cognitive decline [S1].\n\n7. **Avoid Smoking**: Smoking is a significant risk factor for dementia, so quitting can greatly benefit your brain health [S3].\n\nBy incorporating these changes into your lifestyle, you can help reduce the risk of developing dementia and support overall brain health. If you have specific concerns or need personalized advice, consider discussing them with your GP.",
+      "promptTokens": 2446,
+      "completionTokens": 397,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A28",
+      "set": "A",
+      "category": "prevention",
+      "question": "My husband is only 58 and was just diagnosed. Where can younger people get support?",
+      "retrieved": [
+        {
+          "id": "prevention_005",
+          "similarity": 0.382746604639431
+        },
+        {
+          "id": "isupport_nz_c108",
+          "similarity": 0.313741955458759
+        },
+        {
+          "id": "wellbeing_003",
+          "similarity": 0.29277548548896
+        },
+        {
+          "id": "isupport_nz_c092",
+          "similarity": 0.29253324003017
+        },
+        {
+          "id": "clinical_005",
+          "similarity": 0.291311604838991
+        }
+      ],
+      "answer": "I'm sorry to hear about your husband's diagnosis. It's understandable to feel overwhelmed, but there are resources available to support both of you during this time.\n\nIn New Zealand, Dementia NZ (dementia.nz) and Alzheimer's NZ (alzheimers.org.nz) offer support specifically tailored for younger onset dementia, which is when dementia is diagnosed before the age of 65. These organisations can provide guidance, resources, and connect you with local support groups that understand the unique challenges faced by younger individuals and their families [S1].\n\nYounger onset dementia often involves different life circumstances, such as active employment, financial obligations, and children who may still be at home. It's important to seek support that addresses these specific needs. Partners and children may also benefit from psychological support to help them cope with the changes they are experiencing [S1].\n\nAdditionally, connecting with others who are in similar situations can be incredibly beneficial. Carer support groups, facilitated by organisations like Dementia NZ and Alzheimer's NZ, offer a space to share experiences, learn practical strategies, and reduce feelings of isolation [S3]. Remember, it's okay to reach out for help and take care of your own wellbeing too. If you ever need someone to talk to, you can call or text 1737 to speak with a trained counsellor.",
+      "promptTokens": 2338,
+      "completionTokens": 260,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A29",
+      "set": "A",
+      "category": "prevention",
+      "question": "The doctor said my mum has mild cognitive impairment. What does that mean?",
+      "retrieved": [
+        {
+          "id": "prevention_007",
+          "similarity": 0.472631942817919
+        },
+        {
+          "id": "clinical_001",
+          "similarity": 0.363842756347742
+        },
+        {
+          "id": "clinical_008",
+          "similarity": 0.352269493467505
+        },
+        {
+          "id": "prevention_002",
+          "similarity": 0.34917202071912
+        },
+        {
+          "id": "clinical_005",
+          "similarity": 0.332124928817281
+        }
+      ],
+      "answer": "I'm sorry to hear about your mum's diagnosis. Mild Cognitive Impairment (MCI) is a condition where there's a noticeable decline in cognitive abilities, such as memory and thinking skills, but it's not severe enough to significantly interfere with daily life. It's considered a stage between normal age-related cognitive changes and more serious conditions like dementia [S1].\n\nIt's important to know that not everyone with MCI will develop dementia. In fact, some people remain stable or even return to normal cognitive function over time. However, it's a signal to monitor her cognitive health closely and address any modifiable risk factors. This can include managing blood pressure, cholesterol, and blood glucose levels, ensuring good hearing and vision, staying physically active, maintaining good sleep quality, and engaging socially [S1].\n\nRegular check-ups with her GP are crucial to track any changes. It's also a good time to ensure that legal and financial affairs are in order while she can still participate in decision-making. For more support and information, you can reach out to Dementia NZ or Alzheimer's NZ. They can provide guidance and resources tailored to your mum's situation.",
+      "promptTokens": 2488,
+      "completionTokens": 224,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A30",
+      "set": "A-neighbour",
+      "category": "best-practices",
+      "question": "He fell twice this week. How do I stop him falling?",
+      "retrieved": [
+        {
+          "id": "bestpractices_008",
+          "similarity": 0.339785490168261
+        },
+        {
+          "id": "homesafety_007",
+          "similarity": 0.302565019088655
+        },
+        {
+          "id": "homesafety_002",
+          "similarity": 0.282583518556993
+        },
+        {
+          "id": "isupport_who_c135",
+          "similarity": 0.264153177676331
+        },
+        {
+          "id": "bestpractices_010",
+          "similarity": 0.257488871849161
+        }
+      ],
+      "answer": "I'm sorry to hear about the falls; it must be quite concerning for you. Falls are indeed a common issue for people with dementia due to changes in balance, mobility, and awareness. Here are some steps you can take to help reduce the risk of future falls:\n\n1. **Home Safety Modifications**: Ensure that the home environment is as safe as possible. Remove loose rugs and other trip hazards, ensure all areas are well-lit, and install grab rails in key areas like the bathroom and along stairways. Non-slip mats in the bathroom and secure footwear with non-slip soles are also important [S1][S3].\n\n2. **Medical and Vision Check**: Arrange for a medical review to assess any underlying health issues or medication side effects that might contribute to falls. A vision check is also crucial, as poor eyesight can increase fall risk [S1].\n\n3. **Physical Activity**: Encourage regular, supervised physical activity that focuses on strength, balance, and coordination. This can include physiotherapy-guided exercises or activities like tai chi. In New Zealand, you can contact Dementia NZ or the person's GP for referrals to community physiotherapy services [S1].\n\n4. **Professional Assessment**: Consider having an occupational therapist conduct a home safety assessment. They can provide tailored advice and recommend specific modifications or equipment to enhance safety [S2].\n\nIf a fall occurs, even without apparent injury, it's important to have a medical review to rule out any hidden injuries. Remember, you're not alone in this — reaching out to local support services can provide additional guidance and support.",
+      "promptTokens": 2793,
+      "completionTokens": 317,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A31",
+      "set": "A-neighbour",
+      "category": "home-safety",
+      "question": "How do I keep him from leaving through the front door?",
+      "retrieved": [
+        {
+          "id": "homesafety_005",
+          "similarity": 0.302157112376061
+        },
+        {
+          "id": "bestpractices_005",
+          "similarity": 0.243899494777096
+        },
+        {
+          "id": "isupport_who_c135",
+          "similarity": 0.235955877727185
+        },
+        {
+          "id": "isupport_nz_c144",
+          "similarity": 0.225743222216974
+        },
+        {
+          "id": "homesafety_007",
+          "similarity": 0.175139460278326
+        }
+      ],
+      "answer": "It's understandable to be concerned about your loved one leaving the house unsupervised, especially if they have dementia. Managing this requires a balance between ensuring their safety and respecting their dignity.\n\nOne effective approach is to use a combination of strategies to make exits less noticeable and to alert you if they attempt to leave. You can install door alarms that chime when the door is opened, which will notify you immediately. Placing childproof locks or chain locks above or below their natural eye level can also be effective, as these are often overlooked by someone with dementia [S1][S2].\n\nCamouflage techniques can help make the door less visually prominent. For example, painting the door the same colour as the surrounding walls or placing a full-length mirror over it can reduce its visibility. Additionally, a doorstop alarm placed under the door can create resistance and sound if the door is opened [S1].\n\nIt's also important to address the underlying reasons for their desire to leave. If they are anxious or restless, providing reassurance or engaging them in structured activities can help reduce this behaviour. Ensuring they have access to a safe outdoor area, like a fenced garden, can also satisfy their need for outdoor experiences without the risk of wandering [S1][S2].\n\nIf you need further support or advice, consider reaching out to Alzheimer's New Zealand or Dementia New Zealand for resources and guidance tailored to your situation.",
+      "promptTokens": 2697,
+      "completionTokens": 279,
+      "systemFingerprint": "fp_9c49562904"
+    },
+    {
+      "id": "A32",
+      "set": "A-neighbour",
+      "category": "wellbeing",
+      "question": "Where can I get specialist help when his behaviour becomes a crisis?",
+      "retrieved": [
+        {
+          "id": "wellbeing_008",
+          "similarity": 0.371328935093799
+        },
+        {
+          "id": "isupport_nz_c236",
+          "similarity": 0.363510984053638
+        },
+        {
+          "id": "isupport_nz_c307",
+          "similarity": 0.348191840575626
+        },
+        {
+          "id": "caregiving_008",
+          "similarity": 0.343189883290994
+        },
+        {
+          "id": "clinical_004",
+          "similarity": 0.324920339972849
+        }
+      ],
+      "answer": "It sounds like you're dealing with a very challenging situation, and it's important to know that support is available. In New Zealand, you can reach out to Alzheimers New Zealand or Dementia New Zealand for guidance and support. They can provide advice on managing behavioural crises and connect you with local resources that can help.\n\nIf the behaviour is severe and you're considering residential care due to its unmanageability, it might be beneficial to seek a specialist assessment. Alzheimers New Zealand offers support and can guide you through strategies to manage difficult behaviours. You can contact them through their support line at 0800 004 001 for more personalised advice.\n\nAdditionally, if there's a sudden and significant change in behaviour, it might indicate a medical issue that needs urgent attention. In such cases, contacting your GP or Healthline at 0800 611 116 for immediate advice is crucial. Remember, you're not alone in this, and there are resources and people ready to help you navigate these challenges.",
+      "promptTokens": 2454,
+      "completionTokens": 200,
+      "systemFingerprint": "fp_9c49562904"
+    }
+  ]
+}

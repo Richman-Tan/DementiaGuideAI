@@ -12,6 +12,14 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "rag:eval:retrieval": "node scripts/eval/run-retrieval.mjs",
+    "rag:eval:generation": "node scripts/eval/run-generation.mjs",
+    "rag:eval:safety": "node scripts/eval/safety-checks.mjs",
+    "rag:eval:sweep": "node scripts/eval/sweep.mjs",
+    "rag:grade": "node scripts/eval/grade-groundedness.mjs",
+    "rag:introspect": "node scripts/eval/introspect.mjs",
+    "kb:ingest": "node scripts/ingest/ingest.mjs",
+    "kb:ingest:dry": "node scripts/ingest/ingest.mjs --dry-run",
     "postinstall": "patch-package"
   },
   "dependencies": {
@@ -46,6 +54,7 @@
     "three": "^0.184.0"
   },
   "devDependencies": {
+    "@mozilla/readability": "^0.6.0",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.1.10",
@@ -54,7 +63,9 @@
     "eslint-config-expo": "^57.0.0",
     "eslint-config-prettier": "^10.1.8",
     "jest-expo": "~54.0.17",
+    "jsdom": "^29.1.1",
     "patch-package": "^8.0.1",
+    "pdf-parse": "^2.4.5",
     "prettier": "^3.9.5",
     "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"

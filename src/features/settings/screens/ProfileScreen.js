@@ -281,11 +281,7 @@ export const ProfileScreen = ({ navigation }) => {
   const handleSaveApiKey = async (key) => {
     await openaiService.saveApiKey(key);
     setApiKey(key);
-    openaiService.initKnowledgeBase().catch(() => {});
-    Alert.alert(
-      'API Key Saved',
-      'Aria will now use your OpenAI key. The knowledge base will load in the background the next time you open the chat.'
-    );
+    Alert.alert('API Key Saved', 'Aria will now use your OpenAI key.');
   };
 
   const handleSaveElevenLabsKey = async (key) => {
@@ -304,23 +300,6 @@ export const ProfileScreen = ({ navigation }) => {
     Alert.alert(
       'Azure Speech Saved',
       'Aria will now use Azure TTS with phoneme-accurate lip sync.'
-    );
-  };
-
-  const handleClearCache = () => {
-    Alert.alert(
-      'Clear AI Cache',
-      'This forces the knowledge base to re-download on next use. Continue?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear', style: 'destructive',
-          onPress: async () => {
-            await openaiService.clearCache();
-            Alert.alert('Cache cleared', 'Knowledge base will reload on next chat session.');
-          },
-        },
-      ]
     );
   };
 
@@ -538,7 +517,7 @@ export const ProfileScreen = ({ navigation }) => {
               icon="lock-outline"
               iconColor={Colors.primary}
               label="Data Security"
-              sublabel="End-to-end encrypted conversations"
+              sublabel="Conversations are stored only on this device"
               isLast={false}
             />
             <SettingRow
@@ -588,13 +567,6 @@ export const ProfileScreen = ({ navigation }) => {
               }}
               label="ElevenLabs API Key"
               placeholder="el-..."
-            />
-            <SettingRow
-              icon="database-remove-outline"
-              iconColor={Colors.error}
-              label="Clear AI Cache"
-              sublabel="Forces re-embedding of knowledge base on next use"
-              onPress={handleClearCache}
               isLast
             />
           </Section>
@@ -646,7 +618,7 @@ export const ProfileScreen = ({ navigation }) => {
         <Animated.View style={[styles.trustFooter, { opacity: fadeAnim }]}>
           <View style={styles.trustItem}>
             <MaterialCommunityIcons name="shield-check" size={16} color={Colors.success} />
-            <Text style={styles.trustText}>HIPAA-aligned design</Text>
+            <Text style={styles.trustText}>Your data stays on your device</Text>
           </View>
           <View style={styles.trustItem}>
             <MaterialCommunityIcons name="book-open-outline" size={16} color={Colors.primary} />

@@ -49,6 +49,7 @@ const EARLY_CHUNK_CHARS = 150;
 // Shared AsyncStorage key with ChatScreen — both read/write the same array.
 const MESSAGES_KEY = 'chat_messages_v1';
 const MAX_PERSISTED = 100;
+const MAX_QUERY_CHARS = 1000;
 
 /**
  * useAvatarConversation
@@ -109,11 +110,10 @@ export function useAvatarConversation({ avatarRef }) {
     historyRef.current = conversationHistory;
   }, [conversationHistory]);
 
-  // On mount: pre-warm KB embeddings and load persisted conversation history
-  // so the voice pipeline shares context with ChatScreen.
+  // On mount: load persisted conversation history so the voice pipeline
+  // shares context with ChatScreen.
   useEffect(() => {
     const init = async () => {
-      openaiService.initKnowledgeBase().catch(() => {});
       try {
         const raw = await AsyncStorage.getItem(MESSAGES_KEY);
         if (raw) {
@@ -145,6 +145,11 @@ export function useAvatarConversation({ avatarRef }) {
   // wait for the full LLM response before playing the first audio segment.
   const processQuery = useCallback(async (userText, t0 = Date.now(), sttDoneAt = null) => {
     if (!userText.trim()) return;
+    // Cap transcript length: STT can produce unbounded text (the text path caps
+    // at 500 chars), and an over-long query inflates embedding + prompt tokens.
+    if (userText.length > MAX_QUERY_CHARS) {
+      userText = userText.slice(0, MAX_QUERY_CHARS);
+    }
 
     setVoiceState(VoiceState.PROCESSING);
     abortRef.current = false;
@@ -189,6 +194,7 @@ export function useAvatarConversation({ avatarRef }) {
         wake();
       };
 
+      let citedSources = [];
       try {
         const timingCbs = {
           onRagDone: () => {
@@ -199,6 +205,9 @@ export function useAvatarConversation({ avatarRef }) {
             pts.llm_send = Date.now();
             console.log(`[LATENCY] llm_request_start_ms +${pts.llm_send - t0}`);
           },
+          // Structured, validated sources extracted from inline [S#] markers
+          // (the markers themselves are stripped before TTS).
+          onSources: (sources) => { citedSources = sources ?? []; },
         };
 
         pts.rag_start = Date.now();
@@ -248,7 +257,7 @@ export function useAvatarConversation({ avatarRef }) {
           const existing = raw ? JSON.parse(raw) : [];
           const now = Date.now();
           const userEntry = { id: `v_${now}`, role: 'user', text: userText, sources: [], timestamp: new Date().toISOString() };
-          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: [], timestamp: new Date().toISOString() };
+          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: citedSources, timestamp: new Date().toISOString() };
           const updated = [...existing, userEntry, assistantEntry].slice(-MAX_PERSISTED);
           await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(updated));
         } catch { /* non-critical */ }

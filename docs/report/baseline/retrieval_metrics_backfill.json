@@ -1,0 +1,656 @@
+{
+  "generatedAt": "2026-07-16T20:44:27.191Z",
+  "gitSha": "619f8f9",
+  "questionVersion": "audit:docs/report/baseline/rag_eval_results.audit.json",
+  "n": 32,
+  "overall": {
+    "recall@1": 0.84375,
+    "recall@1#n": 32,
+    "recall@3": 0.9375,
+    "recall@3#n": 32,
+    "recall@5": 0.96875,
+    "recall@5#n": 32,
+    "precision@5": 0.2125000000000001,
+    "precision@5#n": 32,
+    "mrr": 0.8880208333333334,
+    "mrr#n": 32,
+    "ndcg@5": 0.904241429283154,
+    "ndcg@5#n": 32
+  },
+  "perSet": {
+    "A": {
+      "recall@1": 0.8275862068965517,
+      "recall@1#n": 29,
+      "recall@3": 0.9310344827586207,
+      "recall@3#n": 29,
+      "recall@5": 0.9655172413793104,
+      "recall@5#n": 29,
+      "precision@5": 0.19310344827586215,
+      "precision@5#n": 29,
+      "mrr": 0.8764367816091955,
+      "mrr#n": 29,
+      "ndcg@5": 0.8986760797118915,
+      "ndcg@5#n": 29
+    },
+    "A-neighbour": {
+      "recall@1": 1,
+      "recall@1#n": 3,
+      "recall@3": 1,
+      "recall@3#n": 3,
+      "recall@5": 1,
+      "recall@5#n": 3,
+      "precision@5": 0.4000000000000001,
+      "precision@5#n": 3,
+      "mrr": 1,
+      "mrr#n": 3,
+      "ndcg@5": 0.9580398084720246,
+      "ndcg@5#n": 3
+    }
+  },
+  "perQuestion": [
+    {
+      "id": "A1",
+      "set": "A",
+      "category": "caregiving",
+      "retrieved": [
+        "caregiving_001",
+        "isupport_nz_c169",
+        "isupport_nz_c171",
+        "caregiving_005",
+        "bestpractices_003"
+      ],
+      "topSimilarity": 0.406017553159257,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A2",
+      "set": "A",
+      "category": "caregiving",
+      "retrieved": [
+        "caregiving_002",
+        "isupport_nz_c257",
+        "isupport_nz_c256"
+      ],
+      "topSimilarity": 0.346181398876437,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A3",
+      "set": "A",
+      "category": "caregiving",
+      "retrieved": [
+        "isupport_nz_c181",
+        "caregiving_004",
+        "isupport_nz_c186",
+        "bestpractices_009",
+        "wellbeing_006"
+      ],
+      "topSimilarity": 0.358398338516826,
+      "recall@1": 0,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 0.5,
+      "ndcg@5": 0.6309297535714575
+    },
+    {
+      "id": "A4",
+      "set": "A",
+      "category": "caregiving",
+      "retrieved": [
+        "caregiving_005",
+        "isupport_nz_c273",
+        "isupport_who_c126",
+        "caregiving_001",
+        "homesafety_005"
+      ],
+      "topSimilarity": 0.400772600913007,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A5",
+      "set": "A",
+      "category": "caregiving",
+      "retrieved": [
+        "isupport_who_c082",
+        "isupport_nz_c214",
+        "caregiving_006",
+        "caregiving_003",
+        "homesafety_002"
+      ],
+      "topSimilarity": 0.398959946291123,
+      "recall@1": 0,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 0.3333333333333333,
+      "ndcg@5": 0.5
+    },
+    {
+      "id": "A6",
+      "set": "A",
+      "category": "caregiving",
+      "retrieved": [
+        "caregiving_009",
+        "wellbeing_004",
+        "wellbeing_010",
+        "wellbeing_003",
+        "wellbeing_001"
+      ],
+      "topSimilarity": 0.484196070246135,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A7",
+      "set": "A",
+      "category": "clinical",
+      "retrieved": [
+        "clinical_001",
+        "isupport_nz_c019",
+        "isupport_nz_c017",
+        "clinical_002",
+        "alzheimers_disease_001"
+      ],
+      "topSimilarity": 0.504972647151002,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A8",
+      "set": "A",
+      "category": "clinical",
+      "retrieved": [
+        "clinical_003",
+        "homesafety_003",
+        "clinical_002",
+        "clinical_008",
+        "isupport_nz_c018"
+      ],
+      "topSimilarity": 0.476477878769014,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A9",
+      "set": "A",
+      "category": "clinical",
+      "retrieved": [
+        "clinical_004",
+        "prevention_002",
+        "isupport_nz_c295",
+        "isupport_nz_c293",
+        "caregiving_006"
+      ],
+      "topSimilarity": 0.426340964588964,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A10",
+      "set": "A",
+      "category": "clinical",
+      "retrieved": [
+        "clinical_007",
+        "isupport_nz_c087",
+        "prevention_006",
+        "isupport_nz_c035",
+        "wellbeing_004"
+      ],
+      "topSimilarity": 0.409371195576375,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A11",
+      "set": "A",
+      "category": "clinical",
+      "retrieved": [
+        "clinical_008",
+        "clinical_004",
+        "isupport_nz_c319",
+        "clinical_002",
+        "isupport_nz_c017"
+      ],
+      "topSimilarity": 0.446225199910653,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A12",
+      "set": "A",
+      "category": "best-practices",
+      "retrieved": [
+        "isupport_nz_c309",
+        "isupport_who_c109",
+        "bestpractices_003",
+        "bestpractices_001"
+      ],
+      "topSimilarity": 0.293675551828936,
+      "recall@1": 0,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 0.3333333333333333,
+      "ndcg@5": 0.5
+    },
+    {
+      "id": "A13",
+      "set": "A",
+      "category": "best-practices",
+      "retrieved": [
+        "isupport_nz_c316",
+        "isupport_nz_c317",
+        "bestpractices_006",
+        "bestpractices_004",
+        "communication_006"
+      ],
+      "topSimilarity": 0.391776448528255,
+      "recall@1": 0,
+      "recall@3": 0,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 0.25,
+      "ndcg@5": 0.43067655807339306
+    },
+    {
+      "id": "A14",
+      "set": "A",
+      "category": "best-practices",
+      "retrieved": [
+        "bestpractices_005",
+        "homesafety_005",
+        "isupport_who_c135",
+        "isupport_nz_c282",
+        "homesafety_007"
+      ],
+      "topSimilarity": 0.419203280587999,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A15",
+      "set": "A",
+      "category": "best-practices",
+      "retrieved": [
+        "bestpractices_007",
+        "wellbeing_005",
+        "isupport_who_c061",
+        "wellbeing_002",
+        "isupport_who_c068"
+      ],
+      "topSimilarity": 0.452278334975829,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A16",
+      "set": "A",
+      "category": "communication",
+      "retrieved": [
+        "communication_001",
+        "isupport_nz_c063",
+        "isupport_nz_c067",
+        "communication_002",
+        "communication_005"
+      ],
+      "topSimilarity": 0.528965617521682,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A17",
+      "set": "A",
+      "category": "communication",
+      "retrieved": [
+        "isupport_who_c107",
+        "isupport_nz_c165",
+        "bestpractices_006",
+        "caregiving_002"
+      ],
+      "topSimilarity": 0.294911148073557,
+      "recall@1": 0,
+      "recall@3": 0,
+      "recall@5": 0,
+      "precision@5": 0,
+      "mrr": 0,
+      "ndcg@5": 0
+    },
+    {
+      "id": "A18",
+      "set": "A",
+      "category": "communication",
+      "retrieved": [
+        "communication_006",
+        "isupport_nz_c264",
+        "isupport_nz_c073",
+        "bestpractices_006",
+        "prevention_002"
+      ],
+      "topSimilarity": 0.328596867011675,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A19",
+      "set": "A",
+      "category": "home-safety",
+      "retrieved": [
+        "homesafety_002",
+        "homesafety_007",
+        "bestpractices_008",
+        "isupport_who_c083",
+        "isupport_nz_c214"
+      ],
+      "topSimilarity": 0.503257403116278,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A20",
+      "set": "A",
+      "category": "home-safety",
+      "retrieved": [
+        "homesafety_003",
+        "isupport_nz_c195",
+        "clinical_003",
+        "isupport_nz_c188",
+        "bestpractices_008"
+      ],
+      "topSimilarity": 0.414080697679095,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A21",
+      "set": "A",
+      "category": "home-safety",
+      "retrieved": [
+        "homesafety_006",
+        "isupport_nz_c294",
+        "isupport_who_c140",
+        "prevention_006",
+        "wellbeing_006"
+      ],
+      "topSimilarity": 0.427966197786687,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A22",
+      "set": "A",
+      "category": "wellbeing",
+      "retrieved": [
+        "wellbeing_001",
+        "isupport_nz_c038",
+        "isupport_nz_p056",
+        "bestpractices_007",
+        "wellbeing_005"
+      ],
+      "topSimilarity": 0.531436502244539,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A23",
+      "set": "A",
+      "category": "wellbeing",
+      "retrieved": [
+        "wellbeing_004",
+        "caregiving_009",
+        "wellbeing_005",
+        "wellbeing_001",
+        "wellbeing_006"
+      ],
+      "topSimilarity": 0.473828917725227,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A24",
+      "set": "A",
+      "category": "wellbeing",
+      "retrieved": [
+        "wellbeing_007",
+        "homesafety_010",
+        "isupport_nz_c201",
+        "isupport_nz_c038",
+        "wellbeing_010"
+      ],
+      "topSimilarity": 0.439898645422036,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A25",
+      "set": "A",
+      "category": "wellbeing",
+      "retrieved": [
+        "wellbeing_010",
+        "wellbeing_004",
+        "caregiving_009",
+        "homesafety_010",
+        "wellbeing_007"
+      ],
+      "topSimilarity": 0.50168078439044,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A26",
+      "set": "A",
+      "category": "prevention",
+      "retrieved": [
+        "prevention_002",
+        "clinical_002",
+        "isupport_nz_c022",
+        "isupport_nz_c018",
+        "clinical_001"
+      ],
+      "topSimilarity": 0.492855485753961,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A27",
+      "set": "A",
+      "category": "prevention",
+      "retrieved": [
+        "prevention_001",
+        "isupport_nz_c030",
+        "isupport_nz_c027",
+        "prevention_003",
+        "bestpractices_002"
+      ],
+      "topSimilarity": 0.466397910076764,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A28",
+      "set": "A",
+      "category": "prevention",
+      "retrieved": [
+        "prevention_005",
+        "isupport_nz_c108",
+        "wellbeing_003",
+        "isupport_nz_c092",
+        "clinical_005"
+      ],
+      "topSimilarity": 0.382742543297326,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A29",
+      "set": "A",
+      "category": "prevention",
+      "retrieved": [
+        "prevention_007",
+        "clinical_001",
+        "clinical_008",
+        "prevention_002",
+        "clinical_005"
+      ],
+      "topSimilarity": 0.472606575120636,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.2,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A30",
+      "set": "A-neighbour",
+      "category": "best-practices",
+      "retrieved": [
+        "bestpractices_008",
+        "homesafety_007",
+        "homesafety_002",
+        "isupport_who_c135",
+        "bestpractices_010"
+      ],
+      "topSimilarity": 0.339785490168261,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.4,
+      "mrr": 1,
+      "ndcg@5": 0.9502344167898356
+    },
+    {
+      "id": "A31",
+      "set": "A-neighbour",
+      "category": "home-safety",
+      "retrieved": [
+        "homesafety_005",
+        "bestpractices_005",
+        "isupport_who_c135",
+        "isupport_nz_c144",
+        "homesafety_007"
+      ],
+      "topSimilarity": 0.302157112376061,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.4,
+      "mrr": 1,
+      "ndcg@5": 1
+    },
+    {
+      "id": "A32",
+      "set": "A-neighbour",
+      "category": "wellbeing",
+      "retrieved": [
+        "wellbeing_008",
+        "isupport_nz_c236",
+        "isupport_nz_c307",
+        "caregiving_008",
+        "clinical_004"
+      ],
+      "topSimilarity": 0.371323197185823,
+      "recall@1": 1,
+      "recall@3": 1,
+      "recall@5": 1,
+      "precision@5": 0.4,
+      "mrr": 1,
+      "ndcg@5": 0.9238850086262381
+    }
+  ]
+}

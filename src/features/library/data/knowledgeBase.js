@@ -16,7 +16,7 @@ Ensure the home is well-lit in the late afternoon and evening, particularly in r
 
 Calming activities approaching evening — gentle music, a slow walk, or hand massage — help transition into nighttime. A light nutritious snack before the sundowning period often helps. Avoid arguing or correcting the person if they become distressed; acknowledge their feelings and gently redirect. If sundowning is severe or creating safety risks, discuss this with the person's doctor. Keeping a brief diary of when sundowning occurs and what preceded it helps identify personal triggers.
 
-In Australia, the National Dementia Helpline (1800 100 500) provides 24/7 advice. In New Zealand, contact Dementia NZ (0800 004 001) or Alzheimer's NZ for local support.`,
+In New Zealand, the Alzheimers NZ support line (0800 004 001) offers advice and can connect you with your local Dementia NZ or Alzheimers NZ service, and Healthline (0800 611 116) gives free 24/7 nurse advice.`,
     tags: ['sundowning', 'agitation', 'evening', 'routine', 'behaviour'],
     source_url: 'https://www.dementia.org.au/information/about-dementia',
     source_org: 'Dementia Australia',
@@ -216,7 +216,7 @@ If dementia is suspected, the GP may refer to a specialist — a geriatrician, n
 
 In Australia, approximately 446,500 people are living with dementia, and dementia is now the leading cause of death for Australians. In New Zealand, tens of thousands of people live with dementia, with numbers expected to rise significantly as the population ages. Early diagnosis means earlier access to support, treatment, and the opportunity for the person to participate in planning their own care.
 
-After a diagnosis in Australia, contact Dementia Australia (dementia.org.au, 1800 100 500) for post-diagnosis navigation and local support. In New Zealand, contact Dementia NZ (dementia.nz, 0800 004 001) or Alzheimer's NZ (alzheimers.org.nz).`,
+After a diagnosis in Australia, contact Dementia Australia (dementia.org.au, 1800 100 500) for post-diagnosis navigation and local support. In New Zealand, contact Alzheimers NZ (alzheimers.org.nz, 0800 004 001) or Dementia NZ (dementia.nz).`,
     tags: ['diagnosis', 'GP', 'specialist', 'cognitive testing', 'MMSE', 'MRI', 'memory clinic'],
     source_url: 'https://www.dementia.org.au/information/about-dementia',
     source_org: 'Dementia Australia',
@@ -746,7 +746,7 @@ Accept imperfect help graciously. If someone does a task differently than you wo
 
 Consider a formal family meeting to distribute caregiving tasks fairly among siblings and other family members. Shared responsibility is more sustainable than one person carrying the full burden. Use community services — home care, day programmes, and respite — rather than trying to do everything personally.
 
-In New Zealand, Dementia NZ (dementia.nz, 0800 004 001) can help identify local home support and community services. Carers NZ (carers.net.nz) provides practical support for carers navigating what is available in their area.`,
+In New Zealand, Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) can help identify local home support and community services. Carers NZ (carers.net.nz) provides practical support for carers navigating what is available in their area.`,
     tags: ['help-seeking', 'family support', 'delegating', 'carer support', 'burnout prevention', 'community services'],
     source_url: 'https://dementia.nz/about-dementia/',
     source_org: 'Dementia NZ',
@@ -800,7 +800,7 @@ Early symptoms described by the NHS include: memory loss — particularly forget
 
 The key distinction from normal ageing: occasional forgetfulness of a name or misplacing an item, with later recall, is within normal range. Dementia-related changes are more persistent, worsen over time, and begin to meaningfully interfere with daily life.
 
-If you notice several of these signs in yourself or someone you care about, book an appointment with a GP. In New Zealand, contact Dementia NZ (dementia.nz, 0800 004 001) or Alzheimer's NZ (alzheimers.org.nz) for information and guidance. In Australia, contact Dementia Australia (dementia.org.au, 1800 100 500).`,
+If you notice several of these signs in yourself or someone you care about, book an appointment with a GP. In New Zealand, contact Alzheimers NZ (alzheimers.org.nz, 0800 004 001) or Dementia NZ (dementia.nz) for information and guidance. In Australia, contact Dementia Australia (dementia.org.au, 1800 100 500).`,
     tags: ['warning signs', 'early detection', 'memory loss', 'diagnosis', 'symptoms'],
     source_url: 'https://www.nhs.uk/conditions/dementia/symptoms/',
     source_org: 'NHS UK',
@@ -866,7 +866,7 @@ In New Zealand, Dementia NZ (dementia.nz) and Alzheimer's NZ (alzheimers.org.nz)
 
 Legal and financial planning is the most urgent priority. While the person has capacity, arrange an Enduring Power of Attorney for both financial decisions and personal care decisions. In Australia, requirements vary by state and territory. In New Zealand, consult a lawyer or the Public Trust for EPA registration. Once capacity is lost, legal processes become significantly more complex and stressful for everyone.
 
-Connect with support services promptly: Dementia Australia (dementia.org.au, 1800 100 500) and Dementia Support Australia (dementia.com.au) in Australia; Dementia NZ (dementia.nz, 0800 004 001) and Alzheimer's NZ (alzheimers.org.nz) in New Zealand. These organisations offer post-diagnosis navigation, information, and connection to local services.
+Connect with support services promptly: Dementia Australia (dementia.org.au, 1800 100 500) and Dementia Support Australia (dementia.com.au) in Australia; Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and Dementia NZ (dementia.nz) in New Zealand. These organisations offer post-diagnosis navigation, information, and connection to local services.
 
 If the person still drives, arrange a formal occupational therapy driving assessment. Ask the GP for a referral to My Aged Care (Australia) or appropriate home support services (New Zealand) to understand what funded support may be available.
 
@@ -938,7 +938,7 @@ The programme addresses the disorientation and overwhelm that characterise the f
 
 Topics covered include understanding the specific diagnosis and what it means; managing daily activities; legal and financial planning; self-care for carers; communicating with the healthcare team; planning for future care needs; and accessing community supports. The site draws on the latest clinical research and presents it in accessible, practical language without requiring medical background knowledge. It also includes personal stories from people living with dementia and their carers.
 
-For carers in Australia seeking guidance in the first year following a loved one's diagnosis, Forward with Dementia provides a valuable structured starting point alongside specialist services from Dementia Australia (dementia.org.au, 1800 100 500), Dementia Support Australia (dementia.com.au), and Carer Gateway (carergateway.gov.au). In New Zealand, complement it with Dementia NZ (dementia.nz, 0800 004 001) and Alzheimer's NZ (alzheimers.org.nz).`,
+For carers in Australia seeking guidance in the first year following a loved one's diagnosis, Forward with Dementia provides a valuable structured starting point alongside specialist services from Dementia Australia (dementia.org.au, 1800 100 500), Dementia Support Australia (dementia.com.au), and Carer Gateway (carergateway.gov.au). In New Zealand, complement it with Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and Dementia NZ (dementia.nz).`,
     tags: ['post-diagnosis', 'first year', 'Forward with Dementia', 'guidance', 'planning', 'evidence-based'],
     source_url: 'https://www.forwardwithdementia.au/',
     source_org: 'Forward with Dementia',
@@ -972,7 +972,7 @@ Rare dementias include: Posterior Cortical Atrophy (PCA), which primarily affect
 
 Diagnosis typically requires specialist neurological evaluation, detailed neuropsychological testing, and often specialised brain imaging beyond standard MRI. Some rare dementias have specific genetic components, making genetic counselling an important consideration for the person and their family — particularly where children or siblings may be at heritable risk.
 
-In Australia, Rare Dementia Support (raredementiasupport.org.au) provides dedicated support, information, and connection to specialist services for people with rare dementias and their families, recognising that standard dementia services may be unfamiliar with their specific condition. Dementia Australia (dementia.org.au, 1800 100 500) can also help navigate specialist referral pathways. In New Zealand, Dementia NZ (dementia.nz, 0800 004 001) and Alzheimer's NZ (alzheimers.org.nz) provide guidance for families facing rare dementia diagnoses.`,
+In Australia, Rare Dementia Support (raredementiasupport.org.au) provides dedicated support, information, and connection to specialist services for people with rare dementias and their families, recognising that standard dementia services may be unfamiliar with their specific condition. Dementia Australia (dementia.org.au, 1800 100 500) can also help navigate specialist referral pathways. In New Zealand, Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and Dementia NZ (dementia.nz) provide guidance for families facing rare dementia diagnoses.`,
     tags: ['rare dementia', 'PCA', 'PPA', 'PSP', 'CBS', 'Huntington\'s', 'CJD', 'specialist', 'Rare Dementia Support'],
     source_url: 'https://www.raredementiasupport.org.au/',
     source_org: 'Rare Dementia Support Australia',
@@ -1122,7 +1122,7 @@ BrainTrack is a free app designed for individuals who are concerned about their 
 
 Ask Annie is a mobile app developed to support home care workers and family carers of people with dementia. It provides practical, evidence-based guidance on common caregiving challenges — including managing agitation, supporting personal hygiene, responding to difficult behaviours, recognising warning signs that warrant medical attention, and improving communication — in a searchable, in-the-moment format. Ask Annie is designed to be consulted during care delivery, making evidence-based guidance available regardless of whether a trainer or support coordinator is present.
 
-Both tools complement — rather than replace — professional dementia support. For specialist clinical guidance, contact the National Dementia Helpline 1800 100 500 (Australia), Dementia NZ 0800 004 001 (New Zealand), or arrange a consultation with a GP or Dementia Support Australia (dementia.com.au). For ongoing carer support and skills development, Carer Gateway (carergateway.gov.au) provides free coaching, counselling, and peer connection.`,
+Both tools complement — rather than replace — professional dementia support. For specialist clinical guidance, contact the Alzheimers NZ support line (0800 004 001), Healthline (0800 611 116) for free 24/7 nurse advice, or arrange a consultation with a GP. For ongoing carer support and skills development, Carers NZ (carers.net.nz) provides guidance and peer connection.`,
     tags: ['BrainTrack', 'Ask Annie', 'digital health', 'app', 'cognitive monitoring', 'carer support', 'technology'],
     source_url: 'https://www.dementia.org.au/',
     source_org: 'Dementia Australia',
@@ -1156,7 +1156,7 @@ The Health NZ framework organises brain health actions around three interconnect
 
 The framework explicitly recognises that lifestyle changes work best when they are suited to a person's age and stage of life, enjoyable, sustainable, ideally undertaken with others, and long-term. Starting small and building gradually is encouraged — small, consistent changes accumulate into significant protection over time.
 
-This resource is freely available at healthnz.govt.nz and directly complements the work of Dementia NZ (dementia.nz, 0800 004 001) and Alzheimer's NZ (alzheimers.org.nz) in supporting New Zealanders affected by or at risk of dementia. People with specific concerns about brain health should discuss personalised risk reduction priorities with their GP.`,
+This resource is freely available at healthnz.govt.nz and directly complements the work of Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and Dementia NZ (dementia.nz) in supporting New Zealanders affected by or at risk of dementia. People with specific concerns about brain health should discuss personalised risk reduction priorities with their GP.`,
     tags: ['Health NZ', 'brain health', 'Te Whatu Ora', 'prevention', 'New Zealand', 'lifestyle', 'modifiable risk'],
     source_url: 'https://www.healthnz.govt.nz/health-topics/conditions-treatments/brain-and-nerves/dementia/brain-health-for-adults',
     source_org: 'Health New Zealand Te Whatu Ora',

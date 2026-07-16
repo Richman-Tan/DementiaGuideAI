@@ -21,7 +21,7 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { getEntry, REGISTRY } = require('./registry.js');
-const { chunkDocument, contentHash, normalise } = require('./chunking.js');
+const { chunkDocument, contentHash, normalise, stripPdfBoilerplate } = require('./chunking.js');
 const { EMBEDDING_MODEL, CATEGORIES } = require('../../src/lib/rag/ragConfig.js');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -131,8 +131,9 @@ async function loadPdf(entry) {
   if (!existsSync(path)) throw new Error(`Source file missing: ${entry.local_path} (see content/sources/MANIFEST.md)`);
   const parser = new PDFParse({ data: readFileSync(path) });
   const result = await parser.getText();
-  // pdf-parse v2 inserts "-- N of M --" page separators; they are layout, not content.
-  const text = result.text.replace(/^-- \d+ of \d+ --$/gm, '');
+  // Strip running headers/footers/logos detected across pages (also removes the
+  // pdf-parse "-- N of M --" separators). See chunking.stripPdfBoilerplate.
+  const text = stripPdfBoilerplate(result.text);
   const idBase = entry.document_id.replace(/[^a-z0-9]+/gi, '_').slice(0, 30);
   return chunkDocument(text, { idBase, sourceTitle: entry.title }).map(c => ({
     ...c,

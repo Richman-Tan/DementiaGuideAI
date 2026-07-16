@@ -24,6 +24,38 @@ function normalise(text) {
   return text.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').trim();
 }
 
+// Strip PDF running headers/footers. pdf-parse v2 emits "-- N of M --" page
+// separators; a line that repeats on more than `threshold` of the pages (and is
+// short enough to be a header, not a content paragraph) is boilerplate — a logo,
+// running title, or page furniture — that would otherwise pollute every chunk's
+// embedding and keyword vector. Deterministic and source-agnostic; content lines
+// (which rarely repeat verbatim across many pages) are preserved.
+function stripPdfBoilerplate(rawText, { threshold = 0.4, maxHeaderLen = 80 } = {}) {
+  const pages = rawText.split(/-- \d+ of \d+ --/);
+  if (pages.length < 5) return rawText.replace(/^-- \d+ of \d+ --$/gm, ''); // too few pages to infer
+
+  const pageCount = {};
+  for (const page of pages) {
+    const seen = new Set();
+    for (const raw of page.split('\n')) {
+      const line = raw.trim();
+      if (line.length < 3 || line.length > maxHeaderLen || seen.has(line)) continue;
+      seen.add(line);
+      pageCount[line] = (pageCount[line] || 0) + 1;
+    }
+  }
+  const boilerplate = new Set(
+    Object.entries(pageCount)
+      .filter(([, n]) => n / pages.length > threshold)
+      .map(([line]) => line),
+  );
+  if (boilerplate.size === 0) return rawText.replace(/^-- \d+ of \d+ --$/gm, '');
+
+  return pages
+    .map(page => page.split('\n').filter(l => !boilerplate.has(l.trim())).join('\n'))
+    .join('\n\n');
+}
+
 // A line is heading-like if it is short, has no terminal punctuation, and is
 // either a markdown heading, a numbered section ("3.", "2.1", "Module 4:"),
 // or an ALL-CAPS line.
@@ -188,6 +220,7 @@ module.exports = {
   MIN_CHUNK_WORDS,
   MIN_SECTION_WORDS,
   normalise,
+  stripPdfBoilerplate,
   isHeading,
   splitIntoSections,
   mergeSmallSections,

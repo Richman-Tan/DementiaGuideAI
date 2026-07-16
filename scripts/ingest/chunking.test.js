@@ -1,5 +1,6 @@
 const {
   normalise,
+  stripPdfBoilerplate,
   isHeading,
   splitIntoSections,
   windowSplit,
@@ -20,6 +21,30 @@ describe('isHeading', () => {
     expect(isHeading('This is a normal sentence about care.')).toBe(false);
     expect(isHeading('3. Take a deep breath and count to ten before responding to them.')).toBe(false);
     expect(isHeading(words(30))).toBe(false);
+  });
+});
+
+describe('stripPdfBoilerplate', () => {
+  // 8 pages; "iSupport Manual" repeats on every page (running header), each page
+  // has unique body text.
+  const doc = Array.from({ length: 8 }, (_, i) =>
+    `-- ${i + 1} of 8 --\niSupport Manual\nUnique body paragraph number ${i} with real content here.`,
+  ).join('\n');
+
+  it('removes lines that repeat on most pages', () => {
+    const out = stripPdfBoilerplate(doc);
+    expect(out).not.toContain('iSupport Manual');
+    expect(out).toContain('Unique body paragraph number 3');
+  });
+
+  it('preserves content lines that do not repeat across pages', () => {
+    const out = stripPdfBoilerplate(doc);
+    for (let i = 0; i < 8; i++) expect(out).toContain(`number ${i}`);
+  });
+
+  it('strips page-separator markers even when nothing else repeats', () => {
+    const unique = Array.from({ length: 6 }, (_, i) => `-- ${i + 1} of 6 --\nAll different ${i}`).join('\n');
+    expect(stripPdfBoilerplate(unique)).not.toMatch(/-- \d+ of \d+ --/);
   });
 });
 

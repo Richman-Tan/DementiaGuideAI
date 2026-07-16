@@ -37,14 +37,14 @@ const REGISTRY = [
     source_org: 'World Health Organization',
     source_url: 'https://iris.who.int/handle/10665/324794',
     country: 'GLOBAL',
-    licence: 'CC BY-NC-SA 3.0 IGO', // verify against the downloaded document before enabling
+    licence: 'CC BY-NC-SA 3.0 IGO', // verified from page 3 of the PDF (see content/sources/MANIFEST.md)
     licence_url: 'https://creativecommons.org/licenses/by-nc-sa/3.0/igo/',
     source_version: '2019',
     loader: 'pdf',
     local_path: 'content/sources/who-isupport-manual-2019.pdf',
     category: 'isupport-course',
-    enabled: false, // LICENCE GATE: user confirms terms + non-commercial status before ingestion (Stage 9)
-    notes: 'Replaces the provenance-free isupport-who chunks currently in production.',
+    enabled: true, // Licence + non-commercial use confirmed by project owner 2026-07-17.
+    notes: 'Replaces the provenance-free isupport-who chunks currently in production. Prune old isupport-who ids only after the new set passes rag:eval:retrieval.',
   },
   {
     document_id: 'isupport-nz-v2026',

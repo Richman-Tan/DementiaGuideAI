@@ -34,34 +34,23 @@ import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
-// ─── Config (mirrors src/lib/openaiService.js) ──────────────────────────
-const EMBEDDING_MODEL = 'text-embedding-3-small';
-const CHAT_MODEL = 'gpt-4o';
-const MIN_SIMILARITY = 0.25;
-const TOP_K = 5;
+// ─── Config — imported from the production modules (single source of truth) ──
+// src/lib/rag/* are CommonJS with static exports, so Node ESM named imports work.
+import {
+  EMBEDDING_MODEL,
+  CHAT_MODEL,
+  MIN_SIMILARITY,
+  TOP_K,
+  RETRIEVAL_OVERSAMPLE,
+  MAX_PER_SOURCE_FAMILY,
+  GENERATION_TEMPERATURE,
+  maxTokensForStyle,
+} from '../src/lib/rag/ragConfig.js';
+import { buildSystemPrompt, buildUserContent } from '../src/lib/rag/prompt.js';
+import { capBySourceFamily } from '../src/lib/rag/retrieval.js';
+
 const OPENAI_BASE = 'https://api.openai.com/v1';
 const REQUEST_DELAY_MS = 300; // gentle pacing between questions
-// Mirror the production retrieval rebalance (openaiService.search): over-fetch then
-// cap the iSupport bulk source. See docs/report/rag_retrieval_rebalance_plan.md.
-const RETRIEVAL_OVERSAMPLE = 10;
-const MAX_PER_SOURCE_FAMILY = 2;
-
-function sourceFamilyOf(chunk) {
-  const tag = (chunk.tags || []).find(t => t.startsWith('document_id:'));
-  const doc = tag ? tag.split(':')[1] : 'curated';
-  return doc.startsWith('isupport') ? 'isupport' : doc;
-}
-function capBySourceFamily(rows, k, maxPerFamily) {
-  const counts = {}; const out = [];
-  for (const r of rows) {
-    const fam = sourceFamilyOf(r);
-    counts[fam] = (counts[fam] || 0) + 1;
-    if (fam === 'isupport' && counts[fam] > maxPerFamily) continue;
-    out.push(r);
-    if (out.length >= k) break;
-  }
-  return out;
-}
 
 // ─── Load env ────────────────────────────────────────────────────────────────
 function loadDotEnv(path) {
@@ -96,19 +85,9 @@ const SB_HEADERS = {
   'Content-Type': 'application/json',
 };
 
-// ─── Production "Aria" system prompt (default config, mirrors _buildSystemPrompt) ─
-const SYSTEM_PROMPT = `You are Aria, an expert AI assistant specialising in dementia and dementia care, supporting family caregivers, healthcare workers, and families caring for people with dementia. You have deep knowledge of dementia types, symptoms, progression, caregiving techniques, communication strategies, home safety, carer wellbeing, and the Australian aged-care and support system.
-
-Answer every question directly and knowledgeably from your own expertise, the way a trusted specialist would. Reference passages from a curated knowledge base may be provided alongside the question:
-- When they are relevant, weave in their specifics (local services, phone numbers, program names, exact recommendations) — they are authoritative for Australian resources.
-- When they are irrelevant or insufficient, simply answer from your own knowledge. Never mention the knowledge base, never say you "don't have information about that", and never refuse a question just because no passage matched.
-
-GUIDELINES:
-- Be warm, gentle, and emotionally supportive. Validate feelings before giving information. Caregiving is hard, and the person reading your response may be exhausted or distressed.
-- If you use a medical or technical word, immediately define it in plain language in parentheses — e.g. "lewy body dementia (a type of dementia that affects movement and memory)".
-- Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
-- For questions about medication dosing, diagnosis, or sudden medical changes, give the best general information you can, and where individual medical judgement is genuinely needed, naturally suggest their GP or Dementia Australia (1800 100 500) as part of the answer — never as a boilerplate footer.
-- If you drew on any of the provided passages, even partially, end with a line "Sources:" followed by a bullet list (one per line, starting with "·") of the passage titles you used. Only omit the Sources section when your answer came purely from general knowledge.`;
+// ─── Production "Aria" system prompt — built by the shared module with the
+// app's default settings (warm personality, explain jargon, balanced length).
+const SYSTEM_PROMPT = buildSystemPrompt();
 
 // ─── Question set (kept in sync with docs/report/rag_eval_question_set.md) ─────
 // expected: pipe-separated chunk ids; a hit = any of them in the retrieved five.
@@ -173,9 +152,7 @@ async function embed(text) {
 }
 
 async function chat(question, chunks) {
-  const userContent = chunks.length > 0
-    ? `[REFERENCE PASSAGES — may or may not be relevant]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/REFERENCE PASSAGES]\n\nUser question: ${question}`
-    : question;
+  const userContent = buildUserContent(question, chunks);
   const r = await fetch(`${OPENAI_BASE}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` },
@@ -185,8 +162,8 @@ async function chat(question, chunks) {
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userContent },
       ],
-      max_tokens: 600,
-      temperature: 0.7,
+      max_tokens: maxTokensForStyle('balanced', false),
+      temperature: GENERATION_TEMPERATURE,
     }),
   });
   if (!r.ok) throw new Error(`Chat failed (${r.status}): ${await r.text()}`);

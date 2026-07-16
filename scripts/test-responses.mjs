@@ -12,15 +12,20 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
-// ─── Config ──────────────────────────────────────────────────────────────────
+// ─── Config — imported from the production modules (single source of truth) ──
 
-const OPENAI_BASE    = 'https://api.openai.com/v1';
-const EMBED_MODEL    = 'text-embedding-3-small';
-const CHAT_MODEL     = 'gpt-4o';
-const MIN_SIMILARITY = 0.25;
-const TOP_K          = 5;
-const MAX_TOKENS     = 600;
-const TEMPERATURE    = 0.7;
+import {
+  EMBEDDING_MODEL as EMBED_MODEL,
+  CHAT_MODEL,
+  MIN_SIMILARITY,
+  TOP_K,
+  GENERATION_TEMPERATURE as TEMPERATURE,
+  maxTokensForStyle,
+} from '../src/lib/rag/ragConfig.js';
+import { buildSystemPrompt, buildUserContent } from '../src/lib/rag/prompt.js';
+
+const OPENAI_BASE = 'https://api.openai.com/v1';
+const MAX_TOKENS  = maxTokensForStyle('balanced', false);
 
 // ─── Load knowledge base (ES module via raw read + eval workaround) ───────────
 
@@ -105,38 +110,19 @@ async function retrieve(query) {
     .slice(0, TOP_K);
 }
 
-// ─── System prompt (mirrors openaiService.js exactly) ────────────────────────
-
-function systemPrompt() {
-  return `You are Aria, an expert AI assistant specialising in dementia and dementia care, supporting family caregivers, healthcare workers, and families caring for people with dementia. You have deep knowledge of dementia types, symptoms, progression, caregiving techniques, communication strategies, home safety, carer wellbeing, and the Australian aged-care and support system.
-
-Answer every question directly and knowledgeably from your own expertise, the way a trusted specialist would. Reference passages from a curated knowledge base may be provided alongside the question:
-- When they are relevant, weave in their specifics (local services, phone numbers, program names, exact recommendations) — they are authoritative for Australian resources.
-- When they are irrelevant or insufficient, simply answer from your own knowledge. Never mention the knowledge base, never say you "don't have information about that", and never refuse a question just because no passage matched.
-
-GUIDELINES:
-- Be warm, empathetic, and emotionally supportive — caregiving is hard, and the person reading your response may be exhausted or distressed.
-- Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
-- Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
-- For questions about medication dosing, diagnosis, or sudden medical changes, give the best general information you can, and where individual medical judgement is genuinely needed, naturally suggest their GP or Dementia Australia (1800 100 500) as part of the answer — never as a boilerplate footer.
-- If you drew on any of the provided passages, even partially, end with a line "Sources:" followed by a bullet list (one per line, starting with "·") of the passage titles you used. Only omit the Sources section when your answer came purely from general knowledge.`;
-}
-
 // ─── Run a single question ────────────────────────────────────────────────────
+// System prompt comes from the shared production module (src/lib/rag/prompt.js).
 
 async function ask(question) {
   const hits = await retrieve(question);
-
-  const userContent = hits.length > 0
-    ? `[REFERENCE PASSAGES — may or may not be relevant]\n${hits.map(h => `--- ${h.chunk.title} ---\n${h.chunk.content}`).join('\n\n')}\n[/REFERENCE PASSAGES]\n\nUser question: ${question}`
-    : question;
+  const userContent = buildUserContent(question, hits.map(h => h.chunk));
 
   const data = await openai('/chat/completions', {
     model:      CHAT_MODEL,
     max_tokens: MAX_TOKENS,
     temperature: TEMPERATURE,
     messages: [
-      { role: 'system', content: systemPrompt() },
+      { role: 'system', content: buildSystemPrompt() },
       { role: 'user',   content: userContent },
     ],
   });

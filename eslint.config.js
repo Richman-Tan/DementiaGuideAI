@@ -20,6 +20,23 @@ module.exports = [
     },
   },
   {
+    // Jest test files (plain JS): declare the test globals so no-undef passes.
+    files: ['**/*.test.js', '**/*.test.jsx'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        jest: 'readonly',
+      },
+    },
+  },
+  {
     ignores: [
       'node_modules/**',
       'dist/**',

@@ -61,3 +61,6 @@ unity-avatar/tools/.lexicon-cache/
 # Source documents: commit only when the licence permits redistribution
 content/sources/*
 !content/sources/MANIFEST.md
+
+# pre-prune DB backups (bulky, reproducible) — keep local, do not commit
+docs/report/backup/

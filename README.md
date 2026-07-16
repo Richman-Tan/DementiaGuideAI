@@ -26,7 +26,7 @@ DementiaGuide AI is designed for caregivers, family members, and healthcare prof
 |---|---|
 | Framework | React Native (Expo SDK 54) |
 | Navigation | React Navigation 7 (Bottom Tabs + Native Stack) |
-| AI / RAG | OpenAI `gpt-4o-mini` + `text-embedding-3-small` |
+| AI / RAG | OpenAI `gpt-4o` + `text-embedding-3-small` |
 | Vector DB | Supabase (pgvector) — cloud-hosted knowledge base with `match_chunks` RPC |
 | STT | OpenAI Whisper (`whisper-1`) via `expo-av` audio recording |
 | TTS | ElevenLabs `eleven_turbo_v2_5` (primary) · OpenAI `tts-1` (fallback) |
@@ -69,7 +69,7 @@ DementiaGuideAI/
 ├── App.js
 ├── tsconfig.json · babel.config.js · eslint.config.js · jest.config.js · .prettierrc
 ├── app.json                          # Expo config
-├── scripts/                          # Node CLI tools (RAG eval, Supabase migration, …)
+├── scripts/                          # Node CLI tools: eval/ (RAG evaluation), ingest/ (KB ingestion), migrations/ (SQL)
 └── src/
     ├── navigation/
     │   └── AppNavigator.js           # Root bottom-tab + stack navigator (app shell)
@@ -96,8 +96,9 @@ DementiaGuideAI/
     ├── components/                    # Shared, cross-feature UI (Avatar, MessageCard)
     ├── lib/                           # Integrations + pure engines
     │   ├── openaiService.js           # RAG pipeline (embed → Supabase match_chunks → streaming chat)
+    │   ├── rag/                       # Shared RAG core: ragConfig, prompt, retrieval, citations (CJS — app + scripts)
+    │   ├── ragTelemetry.js            # Device-local retrieval traces (no message text)
     │   ├── supabaseService.ts         # Supabase anon client
-    │   ├── knowledgeService.ts        # Library KB queries (Supabase)
     │   ├── aceService.js              # NVIDIA ACE stub
     │   ├── types.ts                   # Shared service-layer domain types
     │   ├── tts/                       # ttsService.ts (provider selection) + Azure/ElevenLabs
@@ -160,12 +161,12 @@ OPENAI_API_KEY=sk-...
 
 ### Supabase setup (first time only)
 
-Run `scripts/supabase-setup.sql` in the Supabase SQL Editor to create the `knowledge_chunks` table, the pgvector index, and the `match_chunks` RPC function.
+Run `scripts/supabase-setup.sql` in the Supabase SQL Editor to create the `knowledge_chunks` table, the pgvector index, and the `match_chunks` RPC function, then apply any pending files from `scripts/migrations/` (see `scripts/migrations/README.md` for run order and status).
 
 Then seed the knowledge base:
 
 ```bash
-node scripts/migrate-to-supabase.mjs
+npm run kb:ingest -- --doc curated
 ```
 
 ### Run the mobile app
@@ -200,7 +201,7 @@ The Voice screen runs a fully pipelined conversation flow managed by `useAvatarC
      ↓
 [Whisper STT] → transcribed text
      ↓
-[OpenAI gpt-4o-mini stream] → tokens arrive sentence by sentence
+[OpenAI gpt-4o stream] → tokens arrive sentence by sentence
      ↓
 [ElevenLabs TTS] ← fires immediately per sentence, in parallel
      ↓
@@ -262,58 +263,45 @@ avatarRef.current.stopAudio();
 
 ## RAG Pipeline
 
-The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI.
+The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI. All prompt/retrieval configuration lives in **`src/lib/rag/`** (plain CommonJS shared by the app, Jest, and the Node scripts — change values there, never in per-script copies). Full documentation: [current-state audit](docs/rag-current-state-audit.md) · [research](docs/rag-industry-research.md) · [target architecture](docs/rag-target-architecture.md) · [source inventory](docs/rag-source-inventory.md) · [evaluation plan](docs/rag-evaluation-plan.md) · [results](docs/rag-improvement-results.md).
 
 | Setting | Value |
 |---|---|
 | Embedding model | `text-embedding-3-small` (1536 dims) |
-| Chat model | `gpt-4o-mini` |
-| Vector DB | Supabase `knowledge_chunks` table (pgvector `vector(1536)`) |
-| Retrieval | Top-5 chunks via `match_chunks` RPC, min cosine similarity 0.25 |
+| Chat model | `gpt-4o` (temp 0.7 in app; eval runs at temp 0 + seed for comparability) |
+| Vector DB | Supabase `knowledge_chunks` (pgvector `vector(1536)` + tsvector, hybrid `match_chunks` RPC) |
+| Retrieval | Oversample 50 → source-family cap (iSupport max 2) → top 5; min similarity 0.25 |
+| Prompt | `v2-nz-safety` — NZ region, 111-first emergency escalation, no dosing/diagnosis output; `PROMPT_VERSION='v1'` in `ragConfig.js` is the one-line rollback |
+| Citations | Inline `[S#]` markers validated against supplied passages (`CITATION_MODE='trailing'` rolls back) |
 | Context window | Last 6 messages |
-| Chunk size | ~500 words with ~50-word overlap |
-| Auto-tagging | GPT-4o-mini assigns 5–8 specific tags per chunk at ingestion time |
+| Telemetry | Device-local ring buffer of retrieval traces (ids/scores/latency — never message text) |
 
-**Flow:**
-
-```
-User query
-  → embed via text-embedding-3-small
-  → Supabase match_chunks RPC (server-side cosine similarity)
-  → top-5 chunks injected as context
-  → gpt-4o-mini streaming response with source attribution
-```
+**Flow:** user query → embed (LRU-cached) → `match_chunks` hybrid RPC → cap/diversity → passages injected as `[S1]…` blocks → gpt-4o → citation extraction/validation → answer + tappable sources (voice path strips markers before TTS and delivers the same structured sources).
 
 ### Adding content to the knowledge base
 
-Use the CLI ingestion script:
+Every source must be registered in `scripts/ingest/registry.js` (provenance: document_id, version, country, licence) — unregistered content cannot be ingested, and sources stay `enabled: false` until their licence is confirmed. Source files live in `content/sources/` with checksums in `MANIFEST.md`.
 
 ```bash
-# From a URL
-node scripts/ingest.mjs \
-  --source "https://www.alzheimers.org.uk/some-article" \
-  --category clinical \
-  --org "Alzheimer's Society UK"
-
-# From a local PDF
-node scripts/ingest.mjs \
-  --source "./documents/care-guide.pdf" \
-  --category caregiving \
-  --org "Dementia Australia"
-
-# Preview without uploading
-node scripts/ingest.mjs --source <url> --category <slug> --org <name> --dry-run
+npm run kb:ingest:dry -- --doc curated        # plan (hash-diff, no writes)
+npm run kb:ingest -- --doc curated            # tag+embed only new/changed chunks
+npm run kb:ingest -- --doc <id> --prune       # also remove chunks the source no longer produces
 ```
 
-Valid categories: `caregiving` · `clinical` · `communication` · `prevention` · `best-practices` · `home-safety` · `well-being`
+Ingestion is idempotent by content hash: unchanged chunks are skipped, edited chunks re-embed, and every chunk carries full provenance columns (requires `scripts/migrations/2026-07-17_a_provenance_columns.sql`).
 
-### Testing RAG output
+### Evaluating the pipeline
 
 ```bash
-OPENAI_API_KEY=sk-... node scripts/test-responses.mjs
+npm run rag:eval:retrieval                    # deterministic recall@k / MRR / nDCG vs labelled set
+npm run rag:eval:generation                   # answers for all sets (temp 0, seeded)
+npm run rag:eval:safety -- docs/report/eval/generation_<sha>_<prompt>.json   # MUST/MUST-NOT gates (exit code)
+npm run rag:grade -- docs/report/eval/generation_<sha>_<prompt>.json         # groundedness judge + human spot-check file
+npm run rag:eval:sweep                        # min_similarity × diversity-cap parameter sweep
+npm run rag:introspect                        # dump live corpus → docs/report/kb_chunks_reference.csv
 ```
 
-Runs a set of sample questions through the full pipeline and prints each response alongside the retrieved chunks and their similarity scores.
+The frozen pre-overhaul baseline lives in `docs/report/baseline/`; compare any change against it (see the [evaluation plan](docs/rag-evaluation-plan.md) for metric definitions and known limitations).
 
 ---
 

@@ -12,13 +12,14 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "rag:eval": "node scripts/rag-eval.mjs",
     "rag:eval:retrieval": "node scripts/eval/run-retrieval.mjs",
     "rag:eval:generation": "node scripts/eval/run-generation.mjs",
     "rag:eval:safety": "node scripts/eval/safety-checks.mjs",
+    "rag:eval:sweep": "node scripts/eval/sweep.mjs",
     "rag:grade": "node scripts/eval/grade-groundedness.mjs",
-    "rag:grade:legacy": "node scripts/rag-grade.mjs",
-    "rag:introspect": "node scripts/rag-eval.mjs --introspect",
+    "rag:introspect": "node scripts/eval/introspect.mjs",
+    "kb:ingest": "node scripts/ingest/ingest.mjs",
+    "kb:ingest:dry": "node scripts/ingest/ingest.mjs --dry-run",
     "postinstall": "patch-package"
   },
   "dependencies": {

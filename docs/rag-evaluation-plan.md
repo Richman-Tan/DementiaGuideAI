@@ -89,9 +89,11 @@ npm run rag:eval:safety -- docs/report/eval/generation_<sha>_<prompt>.json
 npm run rag:grade -- docs/report/eval/generation_<sha>_<prompt>.json
 # → then FILL IN the *_spotcheck.md file before citing judge numbers
 
-# legacy harness (kept until parity retirement)
-npm run rag:eval
+# live corpus snapshot (anon key only)
+npm run rag:introspect
 ```
+
+(The legacy `scripts/rag-eval.mjs` / `rag-grade.mjs` / `test-responses.mjs` harness was retired 2026-07-17 after parity was confirmed: `run-retrieval.mjs --from-audit` reproduces the frozen baseline numbers exactly, and generation/safety/groundedness are covered by the new runners. The baseline artifacts it produced remain in `docs/report/baseline/`.)
 
 Requires `.env` with `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, and `OPENAI_API_KEY` (scripts only — never shipped in the app).
 

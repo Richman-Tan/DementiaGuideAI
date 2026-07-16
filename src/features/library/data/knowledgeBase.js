@@ -659,9 +659,9 @@ Overnight or residential respite in an aged care facility gives the carer a long
 In New Zealand, respite is arranged through a NASC needs assessment (funded by Health NZ – Te Whatu Ora); the Carer Support Subsidy can help pay for a support person or day centre. Carers NZ (carers.net.nz) and your local Alzheimers NZ or Dementia NZ service can help identify local options.
 
 Plan respite before it is urgently needed. In a carer health crisis, organising respite becomes significantly harder. Building a trusted network of relief carers and services before they are needed is one of the most important things a carer can do.`,
-    tags: ['respite', 'day program', 'in-home care', 'My Aged Care', 'carer support', 'relief'],
-    source_url: 'https://www.myagedcare.gov.au/',
-    source_org: 'My Aged Care',
+    tags: ['respite', 'day program', 'in-home care', 'NASC', 'Carer Support Subsidy', 'relief'],
+    source_url: 'https://alzheimers.org.nz/',
+    source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
   },
   {
@@ -691,7 +691,7 @@ Key benefits of carer support groups include: normalising difficult emotions suc
 In New Zealand, Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) run local support programmes. Carers NZ (carers.net.nz) provides peer support, coaching, and practical assistance for family carers across the country.
 
 The right group is one where you feel safe to speak honestly. It may take trying more than one group to find the right fit — this is expected and entirely worth the effort.`,
-    tags: ['support group', 'peer support', 'Dementia Australia', 'Carer Gateway', 'isolation', 'community'],
+    tags: ['support group', 'peer support', 'Alzheimers NZ', 'Carers NZ', 'isolation', 'community'],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -705,9 +705,9 @@ The right group is one where you feel safe to speak honestly. It may take trying
 In New Zealand, financial support for carers is administered by Work and Income (workandincome.govt.nz). Carers who cannot work full-time because of their caring role may be eligible for the Supported Living Payment (carer); other assistance may apply depending on circumstances. Funded home support for the person with dementia is arranged through a NASC needs assessment (Health NZ – Te Whatu Ora), and the Carer Support Subsidy helps pay for respite. Long-term residential care may be covered by the income- and asset-tested Residential Care Subsidy, administered by Work and Income; independent financial advice before residential placement is worthwhile, as the rules are complex. Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) can help navigate what is available.
 
 Arranging an Enduring Power of Attorney while the person still has legal capacity is also essential — it enables financial management decisions to be made on their behalf when they are no longer able to act independently, and is significantly harder to put in place once capacity is lost.`,
-    tags: ['financial', 'Carer Payment', 'Carer Allowance', 'My Aged Care', 'NDIS', 'Home Care Package', 'government support'],
-    source_url: 'https://www.myagedcare.gov.au/',
-    source_org: 'My Aged Care',
+    tags: ['financial', 'Supported Living Payment', 'Carer Support Subsidy', 'Work and Income', 'Residential Care Subsidy', 'NASC', 'government support'],
+    source_url: 'https://alzheimers.org.nz/',
+    source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
   },
   {
@@ -760,8 +760,8 @@ Involve the person with dementia in the decision where they retain capacity. The
 
 Transition to residential care is not abandonment — it is a form of love that acknowledges when the level of care needed has moved beyond what one household can safely provide.`,
     tags: ['residential care', 'nursing home', 'transition', 'aged care', 'guilt', 'decision', 'placement'],
-    source_url: 'https://www.myagedcare.gov.au/',
-    source_org: 'My Aged Care',
+    source_url: 'https://alzheimers.org.nz/',
+    source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
   },
 
@@ -893,49 +893,51 @@ Ensure legal and financial affairs are in order while capacity is fully intact �
   {
     id: 'caregiving_008',
     category: 'caregiving',
-    title: 'Dementia Support Australia — Specialist In-Home Behavioural Support',
-    content: `Dementia Support Australia (DSA) provides free, specialist consultative support for people living with dementia who are experiencing behavioural and psychological symptoms that are difficult to manage. Funded by the Australian Government, DSA operates nationally through a network of specialist dementia advisers, nurses, and clinicians, and its services are available to people with dementia at home, in residential care, and to the family carers and support workers who care for them.
+    title: 'Specialist Behaviour Support for Dementia in New Zealand',
+    content: `Behavioural and psychological symptoms of dementia (BPSD) — including agitation, aggression, wandering, sleep disturbance, depression, anxiety, and hallucinations — affect most people with dementia at some point in the illness. They are among the most stressful aspects of caregiving and a common reason families consider residential care. In New Zealand, specialist help is available when these behaviours become difficult to manage at home.
 
-Behavioural and psychological symptoms of dementia (BPSD) — including agitation, aggression, wandering, sleep disturbance, depression, anxiety, and hallucinations — affect up to 90 percent of people with dementia at some point in the course of the illness. These symptoms are among the most stressful aspects of caregiving and a primary driver of premature residential placement. DSA's specialist consultants work directly with families to identify the underlying triggers of these behaviours and develop personalised, non-pharmacological management strategies.
+Start with the person's GP. The GP can review for treatable physical causes (such as infection, pain, constipation, or medication side effects, which often trigger a sudden change) and refer on to specialist services. For more complex or persistent behaviour, GPs can refer to a local Mental Health Service for Older People (sometimes called psychogeriatric or older persons' mental health services), funded by Health New Zealand – Te Whatu Ora, where specialist nurses, psychiatrists, and other clinicians assess the person and work with the family on a management plan.
 
-DSA treats behaviour as communication — asking what unmet need, physical discomfort, emotional distress, or environmental factor is driving the behaviour, and addressing that underlying cause rather than seeking to suppress the behaviour with medication. This philosophy aligns with national and international best-practice guidelines and reduces the use of antipsychotic medications, which carry significant risks including increased risk of stroke and death in older people with dementia.
+Best practice treats behaviour as communication — asking what unmet need, physical discomfort, emotional distress, or environmental factor is driving it, and addressing that underlying cause rather than suppressing the behaviour with medication. Non-pharmacological strategies come first. Antipsychotic medicines are used only with careful specialist oversight, because they carry significant risks in older people with dementia, including increased risk of stroke.
 
-To access DSA services in Australia, call the National Dementia Helpline 1800 100 500 (available 24 hours a day, seven days a week) or visit dementia.com.au. Services are free regardless of whether the person has a formal aged care package in place. DSA also provides educational resources and telephone guidance for carers dealing with acute behavioural crises. A GP referral is not required.`,
-    tags: ['Dementia Support Australia', 'behaviour support', 'BPSD', 'agitation', 'specialist', 'helpline'],
-    source_url: 'https://www.dementia.com.au/',
-    source_org: 'Dementia Support Australia',
+Before deciding on residential placement mainly because of unmanageable behaviour, ask the GP about a specialist assessment first — in many cases it leads to real improvement and restored confidence. For advice and support, contact Alzheimers NZ (alzheimers.org.nz, 0800 004 001), your local Dementia NZ service (dementia.nz), or Healthline (0800 611 116) for free 24/7 nurse advice.`,
+    tags: ['behaviour support', 'BPSD', 'agitation', 'specialist', 'GP referral', 'mental health services for older people'],
+    source_url: 'https://alzheimers.org.nz/',
+    source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
   },
   {
     id: 'caregiving_009',
     category: 'caregiving',
-    title: 'Carer Gateway — Australia\'s Dedicated Support Programme for Carers',
-    content: `Carer Gateway (carergateway.gov.au) is an Australian Government programme providing free, coordinated services and emotional and practical support specifically for people in a caring role. For dementia carers — who face sustained, intensive demands and are at significantly elevated risk of physical and mental health deterioration — Carer Gateway is a critical and often underutilised resource.
+    title: 'Support for Family Carers in New Zealand',
+    content: `Dementia carers face sustained, intensive demands and are at significantly elevated risk of physical and mental health deterioration. New Zealand has several sources of coordinated support, and they are often underused — knowing what is available early makes caring more sustainable.
 
-Services available through Carer Gateway include tailored support packages that fund practical assistance such as cleaning, meal preparation, home maintenance, or transport for the carer; professional counselling for carers experiencing emotional difficulty, anxiety, or depression; planned and emergency respite so that carers have reliable relief when needed; structured coaching from trained carer coaches to help carers develop sustainable strategies; and online skills courses covering topics from managing carer stress to navigating the aged care system.
+Carers NZ (carers.net.nz) is the national body for family carers. It provides information, guidance, a carer support line, and connection to local carer resources and peer networks, plus practical tools for navigating the health and support system. Peer connection — talking with others who understand caring — is consistently one of the most valued and effective supports, reducing isolation and building resilience over time.
 
-Carer Gateway also connects carers to peer support groups — both in-person and online — facilitated by people with lived experience of caring. Research consistently identifies peer connection as among the most valued and effective supports for dementia carers, reducing isolation and building resilience over the long term.
+Practical and financial support flows through two main channels. A NASC needs assessment (funded by Health New Zealand – Te Whatu Ora) can arrange in-home support and respite for the person with dementia, and the Carer Support Subsidy helps pay for a support person or day centre so the carer can take a break. Work and Income (workandincome.govt.nz) administers financial assistance for eligible carers, such as the Supported Living Payment for those unable to work full-time because of their caring role.
 
-To access Carer Gateway services, call 1800 422 737 (Monday to Friday, 8am to 5pm Australian Eastern Standard Time) or use the eligibility checker at carergateway.gov.au. Services are available for carers of any age caring for a person with any long-term illness, disability, or dementia-related condition. Access is also available through My Aged Care (myagedcare.gov.au). Translated resources for carers from non-English-speaking backgrounds are available through the website.`,
-    tags: ['Carer Gateway', 'respite', 'counselling', 'carer support', 'coaching', 'practical support', 'Australia'],
-    source_url: 'https://www.carergateway.gov.au/',
-    source_org: 'Carer Gateway',
+Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) run carer education, support groups, and coaching, and can help you find local options. If you are feeling overwhelmed or distressed, you can call or text 1737 any time to talk with a trained counsellor.`,
+    tags: ['carer support', 'respite', 'Carer Support Subsidy', 'counselling', 'Carers NZ', 'NASC', 'Work and Income'],
+    source_url: 'https://carers.net.nz/',
+    source_org: 'Carers NZ',
     embedding: null,
   },
   {
     id: 'caregiving_010',
     category: 'caregiving',
-    title: 'Forward with Dementia — Evidence-Based Guidance for the Year After Diagnosis',
-    content: `Forward with Dementia (forwardwithdementia.au) is an internationally developed, evidence-based programme and website designed specifically for people in the first year following a dementia diagnosis and those who support them. It was created by a research consortium spanning universities in Australia (UNSW, University of Sydney, University of Wollongong), Canada, the United Kingdom, the Netherlands, and Poland, in partnership with Dementia Alliance International.
+    title: 'The First Year After Diagnosis — Getting Support in New Zealand',
+    content: `The first year after a dementia diagnosis is often disorienting and overwhelming. Working through a few priorities in a deliberate order — rather than all at once — makes an enormous difference to wellbeing for both the person and their whānau, and much of it is easier while the person still has full legal capacity.
 
-The programme addresses the disorientation and overwhelm that characterise the first year after diagnosis by providing structured, clinician-reviewed guidance on what to expect, what decisions need to be made early, and how to prioritise next steps. Content is developed for three distinct audiences: people living with dementia, family carers, and healthcare professionals — each of whom has different information needs and concerns in the immediate post-diagnosis period.
+Understand the diagnosis. Ask the GP or specialist which type of dementia it is and what to expect, and write down questions as they arise. Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) provide clear, practical information and post-diagnosis navigation.
 
-Topics covered include understanding the specific diagnosis and what it means; managing daily activities; legal and financial planning; self-care for carers; communicating with the healthcare team; planning for future care needs; and accessing community supports. The site draws on the latest clinical research and presents it in accessible, practical language without requiring medical background knowledge. It also includes personal stories from people living with dementia and their carers.
+Sort out legal and financial planning early. While the person has capacity, set up Enduring Powers of Attorney for both property and personal care and welfare, with a lawyer or the Public Trust. Review the will. Once capacity is lost, these become much harder to arrange.
 
-For carers in Australia seeking guidance in the first year following a loved one's diagnosis, Forward with Dementia provides a valuable structured starting point alongside specialist services from Dementia Australia (dementia.org.au, 1800 100 500), Dementia Support Australia (dementia.com.au), and Carer Gateway (carergateway.gov.au). In New Zealand, complement it with Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and Dementia NZ (dementia.nz).`,
-    tags: ['post-diagnosis', 'first year', 'Forward with Dementia', 'guidance', 'planning', 'evidence-based'],
-    source_url: 'https://www.forwardwithdementia.au/',
-    source_org: 'Forward with Dementia',
+Arrange practical support and look after the carer. Ask the GP for referral to your local NASC (Needs Assessment and Service Coordination) service to find out what funded home support and respite may be available, and about the Carer Support Subsidy. Connect with a support group through Alzheimers NZ or Carers NZ (carers.net.nz). If the person is under 65, the Younger Onset Dementia Aotearoa Trust (yodat.org.nz) offers tailored support.
+
+A diagnosis does not end a person's life — many people live well with dementia for years. Focus on what the person can still do and enjoy, and involve them in decisions about their care for as long as possible.`,
+    tags: ['post-diagnosis', 'first year', 'planning', 'navigation', 'EPA', 'NASC', 'Alzheimers NZ', 'YODAT'],
+    source_url: 'https://alzheimers.org.nz/',
+    source_org: 'Alzheimers NZ',
     embedding: null,
   },
 
@@ -967,25 +969,25 @@ Rare dementias include: Posterior Cortical Atrophy (PCA), which primarily affect
 Diagnosis typically requires specialist neurological evaluation, detailed neuropsychological testing, and often specialised brain imaging beyond standard MRI. Some rare dementias have specific genetic components, making genetic counselling an important consideration for the person and their family — particularly where children or siblings may be at heritable risk.
 
 In New Zealand, ask the GP for referral to a neurologist or memory service for specialist diagnosis of a suspected rare dementia. Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) provide guidance and support for families facing rare dementia diagnoses, and can help navigate specialist referral pathways.`,
-    tags: ['rare dementia', 'PCA', 'PPA', 'PSP', 'CBS', 'Huntington\'s', 'CJD', 'specialist', 'Rare Dementia Support'],
-    source_url: 'https://www.raredementiasupport.org.au/',
-    source_org: 'Rare Dementia Support Australia',
+    tags: ['rare dementia', 'PCA', 'PPA', 'PSP', 'CBS', 'Huntington\'s', 'CJD', 'specialist', 'specialist referral'],
+    source_url: 'https://alzheimers.org.nz/',
+    source_org: 'Alzheimers NZ',
     embedding: null,
   },
   {
     id: 'clinical_010',
     category: 'clinical',
-    title: 'The Wicking Dementia Research and Education Centre — Free Courses for All',
-    content: `The Wicking Dementia Research and Education Centre at the University of Tasmania is one of Australia's foremost dementia research and education institutions. Established through a significant philanthropic gift, the Wicking Centre integrates biomedical research with population health approaches and a deep commitment to accessible public education about dementia.
+    title: 'Dementia Education and Research in New Zealand',
+    content: `Understanding dementia well helps carers provide better care with more confidence, and New Zealand has good education and research resources for families and health professionals.
 
-One of the Wicking Centre's most impactful contributions is the Understanding Dementia Massive Open Online Course (MOOC), which has been accessed by hundreds of thousands of people worldwide. The course runs approximately ten weeks, is available free online, and provides a rigorous, evidence-based foundation in dementia — its biology, its progression, its management, and its human and social impact. A companion course, Preventing Dementia, covers the evidence on modifiable risk factors and protective lifestyle strategies. Both are appropriate for family carers, healthcare workers, community members, and people recently diagnosed with dementia or MCI.
+For learning about dementia, Alzheimers NZ (alzheimers.org.nz) and Dementia NZ (dementia.nz) offer carer education, information sheets, webinars, and courses covering what dementia is, how it progresses, communication, daily care, and looking after yourself as a carer. Your local Alzheimers NZ or Dementia NZ service can advise on programmes near you. Free, reputable online courses (such as university-run "massive open online courses" on understanding and preventing dementia) are also open to anyone in New Zealand and can be a helpful, in-depth foundation for carers and health workers.
 
-The Wicking Centre also conducts peer-reviewed research across dementia prevention, care quality, end-of-life care in dementia, and the experiences of people living with dementia and their carers. It produces findings specifically relevant to Australian and Pacific populations, complementing the predominantly European and North American research literature that currently dominates the field.
+New Zealand also has active dementia research. Brain Research New Zealand (brainresearch.co.nz), a national Centre of Research Excellence, runs the Dementia Prevention Research Clinics in Auckland, Dunedin, and Christchurch, studying the factors that influence how dementia develops and progresses in New Zealanders — including work relevant to Māori and Pacific communities, who are under-represented in international research.
 
-For carers, family members, and health professionals seeking a deep, scientifically grounded understanding of dementia, the Wicking Centre's free online courses (available at utas.edu.au/wicking) are among the highest quality and most accessible resources available globally. Completion of the Understanding Dementia course is associated with increased carer confidence, improved care quality, and better understanding of what to expect as the condition progresses.`,
-    tags: ['Wicking Dementia Centre', 'UTAS', 'MOOC', 'Understanding Dementia', 'education', 'research', 'free course'],
-    source_url: 'https://www.utas.edu.au/wicking',
-    source_org: 'Wicking Dementia Research and Education Centre',
+Completing a good dementia education course is associated with increased carer confidence, improved care quality, and a better understanding of what to expect as the condition progresses. Ask your GP or local Alzheimers NZ service for guidance on where to start.`,
+    tags: ['education', 'research', 'Brain Research NZ', 'Dementia Prevention Research Clinics', 'carer education', 'courses'],
+    source_url: 'https://www.brainresearch.co.nz/',
+    source_org: 'Brain Research New Zealand',
     embedding: null,
   },
 
@@ -1059,15 +1061,15 @@ For Chinese New Zealanders affected by dementia, chinesedementia.org.nz provides
   {
     id: 'communication_009',
     category: 'communication',
-    title: 'Talk with Ted — AI-Assisted Communication Practice for Carers',
-    content: `Talk with Ted is an AI-powered interactive learning tool developed by Dementia Australia to help family carers and care workers develop and practise communication skills with a person with dementia in a safe, consequence-free environment. Ted is an avatar — a virtual representation of a person living with dementia — that responds to the carer's communication attempts in realistic and nuanced ways, enabling deliberate skill development before applying techniques in real care situations.
+    title: 'Building Communication Skills as a Carer',
+    content: `Communication with a person with dementia is a skill that improves with practice. As the condition progresses, the words matter less than the calm, warmth, and patience behind them — and carers who deliberately build these skills find daily interactions less stressful for everyone.
 
-The core value of Talk with Ted is experiential learning through safe practice. Carers can attempt different approaches to challenging scenarios — including managing agitation, responding to repetitive questioning, delivering unwelcome information, or supporting a distressed person — and receive immediate feedback on what worked, what escalated the situation, and what to try differently. This cycle of practice, feedback, and reflection is significantly more effective for skill development than learning communication theory without practical application.
+Practise the core techniques (covered in the communication guidance in this library): speak slowly in a calm, low voice; use short sentences and one idea at a time; offer limited choices rather than open questions; approach from the front at eye level; and never argue with or correct a distressed person — acknowledge the feeling and gently redirect. Rehearsing a specific upcoming situation — a difficult conversation, a resisted care task — before it happens genuinely helps.
 
-Talk with Ted is particularly valuable for new carers who have not yet had opportunity to build confidence through real experience, and for experienced carers encountering unfamiliar or escalating situations. Its availability outside clinic hours and without requiring a trained facilitator makes it accessible to carers at the moment they need support — not only during scheduled appointments or training courses.
+Learning works best with feedback and repetition. Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) run carer education sessions and support groups where you can learn techniques, role-play situations, and hear what has worked for others facing the same challenges. Carers NZ (carers.net.nz) also offers guidance and peer connection.
 
-The tool reflects a broader move toward AI-assisted education in dementia care that extends learning beyond formal training contexts. It is used alongside — not instead of — face-to-face carer education programmes from Dementia Australia (dementia.org.au), Dementia Training Australia (dta.com.au), and Carer Gateway (carergateway.gov.au). For carers wanting to build confidence for a specific upcoming challenge or difficult conversation, Talk with Ted provides a uniquely accessible and low-risk practice environment.`,
-    tags: ['Talk with Ted', 'AI avatar', 'communication practice', 'simulation', 'Dementia Australia', 'carer training', 'digital tool'],
+New tools are emerging — including interactive and AI-assisted practice apps — that let carers rehearse conversations in a safe, low-pressure way. These complement, rather than replace, face-to-face education and real experience. Whatever the format, the goal is the same: enough confidence and practised habit that you can stay calm and connected in the moment, even when a situation is escalating.`,
+    tags: ['communication practice', 'carer education', 'skills', 'confidence', 'role-play', 'Alzheimers NZ'],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -1083,7 +1085,7 @@ The Alzheimer's Society and dementia specialists emphasise the importance of rec
 Where bilingual carers are unavailable, professional interpreting services are the appropriate resource for medical appointments and clinical discussions. In New Zealand, ask the GP, hospital, or health service to arrange a professional interpreter — public health services can book interpreters, and Language Line provides free phone interpreting in many languages for many government services. Plan for this in advance, and avoid using family members as interpreters in clinical settings — they may be emotionally affected by what is being discussed and may not accurately convey clinical information in either direction.
 
 Non-verbal cultural connection through music from the person's country of origin, culturally significant foods, familiar cultural objects, and family photographs is valuable for all people with dementia but particularly for those whose verbal communication has become unreliable. For Chinese communities in New Zealand, chinesedementia.org.nz provides bilingual resources. For Pacific communities and all New Zealanders, Dementia NZ (dementia.nz) and Alzheimer's NZ (alzheimers.org.nz) can connect families to appropriate support.`,
-    tags: ['CALD', 'culturally diverse', 'first language', 'interpreter', 'TIS National', 'multilingual', 'Pacific communities'],
+    tags: ['CALD', 'culturally diverse', 'first language', 'interpreter', 'Language Line', 'multilingual', 'Pacific communities'],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -1093,17 +1095,17 @@ Non-verbal cultural connection through music from the person's country of origin
   {
     id: 'wellbeing_008',
     category: 'wellbeing',
-    title: 'Dementia Support Australia — Free Specialist Support for Behavioural Crises',
-    content: `Dementia Support Australia (DSA) is an Australian Government-funded national service providing free specialist support for people with dementia experiencing behavioural and psychological symptoms of dementia (BPSD) — the most common and most stressful category of dementia-related difficulty for family carers. DSA is available to people with dementia living at home or in residential aged care, and the service is free at the point of access without requiring a GP referral.
+    title: 'Getting Specialist Help When Behaviour Becomes a Crisis (New Zealand)',
+    content: `Many carers reach a point where behaviours they previously managed — agitation, aggression, night-time wandering, distressed calling, refusal of personal care — become unmanageable without specialist input. Behavioural and psychological symptoms of dementia (BPSD) are the most common and most stressful category of dementia-related difficulty for family carers, but specialist help is available in New Zealand.
 
-Many carers reach a point where behaviours they previously managed — agitation, aggression, night-time wandering, distressed calling, refusal of personal care — become unmanageable without specialist input. DSA's clinical consultants conduct face-to-face assessments in the home or care setting, complete a thorough review of the person's history and circumstances, and develop an individualised management plan grounded in person-centred, non-pharmacological approaches.
+First, see the person's GP promptly. A sudden change in behaviour often has a treatable physical cause — a urinary or chest infection, pain, constipation, or a medication effect — that the GP can check for. The GP can also refer the person to a local Mental Health Service for Older People (older persons' mental health / psychogeriatric service), funded by Health New Zealand – Te Whatu Ora, whose clinicians assess the person in their home or care setting and develop an individualised, person-centred management plan.
 
-The DSA approach treats behaviour as communication of an unmet need, physical discomfort, emotional distress, or environmental factor. The focus is on identifying and addressing that underlying cause rather than suppressing the behaviour with medication. This aligns with national and international best-practice guidelines and reduces the use of antipsychotic medications, which carry significant risks in older people with dementia including increased risk of stroke and falls.
+The approach treats behaviour as communication of an unmet need, physical discomfort, emotional distress, or environmental factor — identifying and addressing that underlying cause rather than suppressing the behaviour with medication. This aligns with best-practice guidelines and reduces the use of antipsychotic medicines, which carry significant risks in older people with dementia, including increased risk of stroke and falls.
 
-For families who have been told nothing more can be done, or who are considering residential placement primarily because of unmanageable behaviour, a DSA consultation should be sought before that decision is made. In many cases, specialist assessment leads to significant improvement in behaviour and restored carer confidence. To access DSA services, call the National Dementia Helpline 1800 100 500 (24 hours a day, 7 days a week) or visit dementia.com.au.`,
-    tags: ['Dementia Support Australia', 'DSA', 'BPSD', 'specialist support', 'behaviour management', 'non-pharmacological', 'helpline'],
-    source_url: 'https://www.dementia.com.au/',
-    source_org: 'Dementia Support Australia',
+For families who have been told nothing more can be done, or who are considering residential placement primarily because of unmanageable behaviour, seek a specialist assessment before that decision is made — it often leads to significant improvement and restored confidence. For advice at any time, call Healthline (0800 611 116, free 24/7 nurse advice) or the Alzheimers NZ support line (0800 004 001); in an emergency, or if there is risk of harm, call 111.`,
+    tags: ['behaviour crisis', 'BPSD', 'specialist support', 'behaviour management', 'non-pharmacological', 'mental health services for older people'],
+    source_url: 'https://alzheimers.org.nz/',
+    source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
   },
   {
@@ -1159,17 +1161,17 @@ This resource is freely available at healthnz.govt.nz and directly complements t
   {
     id: 'prevention_009',
     category: 'prevention',
-    title: 'StepUp for Dementia Research — Volunteering for a Future Without Dementia',
-    content: `StepUp for Dementia Research (stepupfordementiaresearch.org.au) is Australia's national dementia research registry, connecting people interested in participating in dementia and brain ageing studies with researchers seeking volunteers. It was developed by the University of Sydney in partnership with the University of Exeter and University College London, with initial funding from the Australian Government Department of Health, and supports a broad portfolio of dementia and ageing research across Australia.
+    title: 'Volunteering for Dementia Research in New Zealand',
+    content: `Research depends on volunteers. Without participants, even the best-designed prevention and treatment studies cannot progress — and New Zealand-based research matters, because most of the international evidence comes from European and North American populations that do not reflect Aotearoa, particularly Māori and Pacific communities.
 
-Without research participants, even the most well-designed prevention and treatment studies cannot progress. StepUp matches registered volunteers to studies based on their individual profile, health status, age, and interests — and registration does not commit anyone to any specific study. After registration, volunteers receive information about relevant studies they may be eligible for, and can decide independently whether to participate in each.
+In New Zealand, the Dementia Prevention Research Clinics — run by Brain Research New Zealand (a national Centre of Research Excellence) in Auckland, Dunedin, and Christchurch — study the blood and brain markers, cognitive characteristics, and health and lifestyle factors that influence how dementia develops and progresses in New Zealanders. The clinics recruit both people with memory concerns and healthy volunteers.
 
-Crucially, healthy volunteers are as valuable as those with dementia or cognitive impairment — many prevention and early detection studies specifically require cognitively healthy older adults as comparison groups. Family carers, people with MCI, people with a family history of dementia, and people who have received a dementia diagnosis are all encouraged to register. Participation options are diverse: some studies involve online surveys only; others involve cognitive assessments, blood tests, brain imaging, or lifestyle interventions.
+Participation is voluntary and for research purposes only; it is free and does not affect the person's usual medical care. Healthy volunteers are as valuable as those with memory concerns, because many prevention and early-detection studies need cognitively healthy older adults as comparison groups. Involvement can include cognitive assessments, lifestyle and health evaluations, brain imaging, and blood tests, usually repeated every couple of years.
 
-Registering with StepUp for Dementia Research is free, takes approximately 15 minutes, and can be completed entirely online at stepupfordementiaresearch.org.au. For people who want to contribute to dementia prevention and treatment beyond their own health behaviours, participation in well-designed research is one of the most direct and meaningful contributions available.`,
-    tags: ['StepUp', 'dementia research', 'clinical trials', 'research participation', 'prevention research', 'Australia', 'University of Sydney'],
-    source_url: 'https://www.stepupfordementiaresearch.org.au/',
-    source_org: 'StepUp for Dementia Research',
+To find out more or to volunteer, visit brainresearch.co.nz or ask your GP about current dementia and brain-ageing studies. For people who want to contribute to a future with less dementia beyond their own health choices, taking part in well-designed research is one of the most direct and meaningful contributions available.`,
+    tags: ['dementia research', 'research participation', 'Brain Research NZ', 'Dementia Prevention Research Clinics', 'prevention research', 'volunteer'],
+    source_url: 'https://www.brainresearch.co.nz/clinics/',
+    source_org: 'Brain Research New Zealand',
     embedding: null,
   },
   {
@@ -1233,7 +1235,7 @@ A formal occupational therapy (OT) home assessment is the gold standard. OTs who
 Carers who want to begin an assessment themselves can use checklists published by Alzheimers NZ as a starting framework. Key areas include: entry and exit security; fall hazards in bathrooms, bedrooms, hallways, stairs, and outdoor areas; kitchen safety including appliances, cleaning products, and sharp items; fire safety including smoke alarms, stove guards, and heater placement; medication security; lighting adequacy including nightlights; and garden and outdoor safety.
 
 Prioritise modifications based on the person's specific current and near-term risks — a phased approach spread over several months is manageable and sustainable. Keep a written record of what has been modified and when, so that future reassessments can track progress and identify gaps. For carers who find the process overwhelming, Alzheimers NZ (0800 004 001) or the person's GP can help identify occupational therapy or specialist support.`,
-    tags: ['home safety assessment', 'occupational therapist', 'OT', 'home modification', 'checklist', 'proactive', 'Dementia Australia'],
+    tags: ['home safety assessment', 'occupational therapist', 'OT', 'home modification', 'checklist', 'proactive', 'Alzheimers NZ'],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,

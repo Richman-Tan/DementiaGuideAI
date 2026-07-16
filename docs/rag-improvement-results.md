@@ -48,7 +48,7 @@ Original = frozen baseline (2026-07-16, pre-change system, v1 prompt). Updated =
 
 ## Remaining production risks
 
-1. Production `match_chunks` body still lives only in the live DB (audit F-14) — highest remaining reproducibility risk; snapshot request awaits the user.
+1. ~~Production `match_chunks` only in the live DB (F-14)~~ **RESOLVED 2026-07-17** — captured, committed, canonical migration run and verified byte-identical.
 2. Curated corpus still Australia-flavoured (prompt suppresses it in answers, but retrieval passages can carry AU service names into context) — user-gated NZ rewrite.
 3. ~377 iSupport chunks remain provenance-free until the licence-gated re-ingestion replaces them.
 4. Groundedness judge scores unvalidated until the human spot-check file is completed.
@@ -67,6 +67,7 @@ Original = frozen baseline (2026-07-16, pre-change system, v1 prompt). Updated =
 | 2026-07-17 | 10 | Parameter sweep (5 thresholds × 3 caps, n=32): `min_similarity` inert across 0.15–0.30 (identical metrics; 0.35 slightly worse precision). cap=1 shows +0.031 recall@3 / +0.013 MRR over cap=2, but all labelled-relevant chunks are curated, so tighter iSupport caps mechanically flatter the metric — **no change adopted** (kept 0.25 / cap 2); re-run after the re-labelled NZ corpus lands. NB sweep uses v2 question wording (A6/A25 NZ rewrites), which explains small deltas vs the v1-wording baseline. | `docs/report/eval/sweep_ae464a6.json` |
 | 2026-07-17 | 11+12 | Inline validated citations (UI now live; voice sources populated; 30/30 markers valid on live check) + telemetry/cache/pacing. | commits `6d12b5c`, `883ea44` |
 | 2026-07-17 | 13 | Final validation: live v1-wording retrieval reproduces baseline exactly; 32/32 in-scope safety pass; 133/133 citation markers valid; strict-judge groundedness 23×2/9×1/0×0 (spot-check pending); legacy harness retired; README ops section. | `docs/report/eval/{retrieval,safety,groundedness}_654b328_*`, commit `654b328` |
+| 2026-07-17 | 7 | Production `match_chunks` captured (weighted-sum 0.7/0.3, not RRF) — F-14 resolved; caught 3 schema drifts (search_vector trigger incl. tags; ivfflat lists=10; GIN index name). **Migrations A+B run by user.** Canonical function verified behaviour-identical: all 32 labelled questions byte-identical to baseline. Diversity cap switched from tag-parsing to the `document_id` column. | commit `361c8fc`; `scripts/migrations/2026-07-16_production_snapshot.sql` |
 
 ## User-gated next steps (in order)
 

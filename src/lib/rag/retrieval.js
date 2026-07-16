@@ -1,12 +1,17 @@
 // Post-retrieval candidate filtering shared by the app and the eval scripts.
 // Plain CommonJS — no React Native imports (see ragConfig.js header).
 
-// Group a chunk by its bulk-source family: the iSupport course (tagged
-// document_id:isupport-*) is one family; everything else keeps its own document
-// id, or 'curated' for hand-authored chunks with no document_id tag.
+// Group a chunk by its bulk-source family: the iSupport course is one family;
+// everything else keeps its own document id, or 'curated' for hand-authored
+// chunks. Prefers the document_id COLUMN (returned by the canonical
+// match_chunks since 2026-07-17_b), falling back to the legacy
+// `document_id:<value>` tag for any pre-migration caller.
 function sourceFamilyOf(chunk) {
-  const tag = (chunk.tags || []).find(t => t.startsWith('document_id:'));
-  const doc = tag ? tag.split(':')[1] : 'curated';
+  let doc = chunk.document_id;
+  if (!doc) {
+    const tag = (chunk.tags || []).find(t => t.startsWith('document_id:'));
+    doc = tag ? tag.split(':')[1] : 'curated';
+  }
   return doc.startsWith('isupport') ? 'isupport' : doc;
 }
 

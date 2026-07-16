@@ -6,7 +6,7 @@ const curated = (id) => ({ id, tags: ['caregiving', 'routine'] });
 const otherDoc = (id) => ({ id, tags: ['document_id:nzguide'] });
 
 describe('sourceFamilyOf', () => {
-  it('collapses all isupport document ids into one family', () => {
+  it('collapses all isupport document ids into one family (via tag fallback)', () => {
     expect(sourceFamilyOf(isupport('a'))).toBe('isupport');
     expect(sourceFamilyOf(isupportWho('b'))).toBe('isupport');
   });
@@ -15,9 +15,15 @@ describe('sourceFamilyOf', () => {
     expect(sourceFamilyOf(otherDoc('c'))).toBe('nzguide');
   });
 
-  it('falls back to curated when no document_id tag exists', () => {
+  it('falls back to curated when no document_id column or tag exists', () => {
     expect(sourceFamilyOf(curated('d'))).toBe('curated');
     expect(sourceFamilyOf({ id: 'e' })).toBe('curated');
+  });
+
+  it('prefers the document_id COLUMN over tags when present', () => {
+    // Canonical match_chunks returns document_id directly; the column wins.
+    expect(sourceFamilyOf({ id: 'f', document_id: 'isupport-nz', tags: [] })).toBe('isupport');
+    expect(sourceFamilyOf({ id: 'g', document_id: 'curated', tags: ['document_id:isupport-who'] })).toBe('curated');
   });
 });
 

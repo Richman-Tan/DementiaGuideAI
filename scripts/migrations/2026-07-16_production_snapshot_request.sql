@@ -58,7 +58,7 @@ where tablename = 'knowledge_chunks'
 union all
 select 'policy',
        polname,
-       polcmd || ' USING ' || coalesce(pg_get_expr(polqual, polrelid), '(none)')
+       polcmd::text || ' USING ' || coalesce(pg_get_expr(polqual, polrelid), '(none)')
 from pg_policy
 where polrelid = 'knowledge_chunks'::regclass
 

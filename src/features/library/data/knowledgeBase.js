@@ -990,6 +990,38 @@ Completing a good dementia education course is associated with increased carer c
     source_org: 'Brain Research New Zealand',
     embedding: null,
   },
+  {
+    id: 'alzheimers_disease_001',
+    category: 'clinical',
+    title: 'What is Alzheimer\'s Disease? (Part 1)',
+    content: `Around two out of three people living with dementia have Alzheimer's disease. It is a physical illness which, as it progresses, damages a person's brain. It starts many years before symptoms show. Eventually, Alzheimer's causes enough damage that the person develops dementia — their thinking skills, memory, and ability to carry out everyday tasks are reduced.
+
+Age is the biggest risk factor for Alzheimer's, as it is for most types of dementia: above the age of 65, a person's risk of developing Alzheimer's roughly doubles every five years.
+
+Alzheimer's affects everyone differently. For most people it starts in and around the part of the brain involved in memory. In some rarer forms the disease starts in a different part of the brain and causes a different set of symptoms — this is called 'atypical Alzheimer's'. The most common early symptoms include memory problems, thinking and reasoning difficulties, language problems, changes to how a person sees and hears things, and changes in mood. Early symptoms are mild and do not prevent someone from doing everyday activities by themselves; at this stage it is often not possible to say for certain that the symptoms are caused by Alzheimer's, as there can be many other causes.
+
+The causes of Alzheimer's are complex, but one key part is the build-up of two substances in the brain called amyloid and tau, which clump together to form tiny structures called plaques and tangles that make it harder for the brain to work properly. Over time the disease shrinks certain parts of the brain and reduces the chemicals needed to send messages around it. When the resulting problems with memory and thinking make everyday tasks difficult, this is called dementia. If you or someone you care for has worsening memory or thinking problems, see your GP.`,
+    tags: ['alzheimer\'s disease', 'dementia', 'amyloid', 'tau', 'cognitive decline', 'memory loss'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/types-dementia/alzheimers-disease',
+    source_org: 'Alzheimer\'s Society UK',
+    embedding: null,
+  },
+  {
+    id: 'alzheimers_disease_002',
+    category: 'clinical',
+    title: 'What is Alzheimer\'s Disease? (Part 2)',
+    content: `Getting a diagnosis of Alzheimer's disease usually begins with the GP. It is important for anyone with worsening problems with memory or thinking to be assessed by a health professional — most often their GP — who, if they think the symptoms may be caused by dementia, will refer the person to a local memory service for more detailed assessment. Alzheimer's is usually diagnosed by a specialist. Getting an early diagnosis has many benefits, giving the person and family time to adjust and to arrange the support they need.
+
+There are some less common, 'atypical' types of Alzheimer's that do not cause memory problems at first. Four main types have different early symptoms: one mostly affecting language (logopenic aphasia); one causing problems with vision and judging where things are (posterior cortical atrophy); one affecting behaviour and/or thinking (frontal-variant Alzheimer's disease); and one causing problems with movement and sensation as well as thinking, perception, and language (corticobasal syndrome).
+
+Many things can increase a person's chance of developing Alzheimer's — known as risk factors. Age and genes are the biggest and cannot be changed, but many others can: people can still reduce their risk through positive changes to their health and lifestyle.
+
+There are many ways to help someone live as well as possible with Alzheimer's disease. For advice and support in New Zealand, contact Alzheimers NZ (alzheimers.org.nz, 0800 004 001) or your local Dementia NZ service (dementia.nz), or call Healthline (0800 611 116) for free 24/7 nurse advice.`,
+    tags: ['alzheimer\'s disease', 'diagnosis', 'memory service', 'atypical alzheimer\'s', 'risk factors', 'GP'],
+    source_url: 'https://www.alzheimers.org.uk/about-dementia/types-dementia/alzheimers-disease',
+    source_org: 'Alzheimer\'s Society UK',
+    embedding: null,
+  },
 
   // ─── BEST PRACTICES (extended: 008–010) ──────────────────────────────────────
   {

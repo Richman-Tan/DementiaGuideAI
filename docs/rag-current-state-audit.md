@@ -52,7 +52,7 @@ These are genuinely good and should be preserved:
 - **A labelled eval set exists** (42 questions with expected chunk ids, boundary and out-of-scope sets) — most projects this size have nothing.
 - **Security separation is clean**: anon key client-side with RLS SELECT-only; service-role key confined to scripts via env; OpenAI key per-user in expo-secure-store; no user text in console logs.
 - **The augmentation prompt philosophy** (2026-07-15) eliminated a documented failure mode: canned refusals when retrieval missed, on questions the model could answer well.
-- **Correct pgvector fundamentals**: vector(1536) matches the embedding model; cosine ops; generated tsvector column with GIN index; ivfflat `lists=20` ≈ √449 per the pgvector heuristic.
+- **Correct pgvector fundamentals**: vector(1536) matches the embedding model; cosine ops; tsvector column with GIN index; ivfflat `lists=20` ≈ √449 per the pgvector heuristic.
 - **Streaming voice pipeline** with sentence-level TTS and stage-latency instrumentation (`[LATENCY]`).
 
 ---

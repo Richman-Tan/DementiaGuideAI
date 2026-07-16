@@ -21,6 +21,15 @@ create extension if not exists vector;
 -- 2. Knowledge base table
 --    embedding is vector(1536) to match text-embedding-3-small output.
 --    search_vector powers the keyword half of hybrid retrieval.
+--
+--    ⚠️  KNOWN DIVERGENCE (verified 2026-07-17): production declares
+--    search_vector as a PLAIN tsvector column (information_schema reports
+--    is_generated = NEVER), not GENERATED ALWAYS as written below, and
+--    maintains it by other means (trigger presumed — confirm via
+--    scripts/migrations/2026-07-16_production_snapshot_request.sql). The stored
+--    VALUES do match this expression: title lexemes occupy positions 1..n
+--    followed by content. Fresh databases created from this file get the
+--    generated column, which is equivalent for reads but NOT identical DDL.
 create table if not exists knowledge_chunks (
   id             text primary key,
   category       text        not null,

@@ -28,7 +28,7 @@ Binding product decisions this design implements:
    │   source_url, source_org,                                               │
    │   document_id, source_version, country, module, chunk_level,           │
    │   content_hash, embedded_at, licence,          ← provenance columns     │
-   │   embedding vector(1536), search_vector tsvector generated)            │
+   │   embedding vector(1536), search_vector tsvector (trigger-maintained))  │
    │ ivfflat(cosine) + GIN(search_vector) + btree(document_id, country)     │
    │ match_chunks(…8 args) — SINGLE canonical hybrid function, committed    │
    │ RLS: anon SELECT only; writes via service_role in scripts only          │

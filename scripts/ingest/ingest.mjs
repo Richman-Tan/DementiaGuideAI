@@ -232,6 +232,34 @@ async function upsert(rows) {
   }
 }
 
+// `search_vector` powers the keyword half of hybrid retrieval. Production
+// reports is_generated = NEVER (unlike the committed supabase-setup.sql, which
+// declares it GENERATED ALWAYS), so it must be maintained by a trigger. If that
+// trigger is ever missing, inserts silently land with a NULL search_vector and
+// the chunk becomes invisible to keyword search while still looking fine in the
+// table — exactly the kind of silent corruption that is worth one extra query.
+async function assertSearchVectorPopulated(ids) {
+  const sample = ids.slice(0, 50);
+  const list = sample.map(id => `"${id}"`).join(',');
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/knowledge_chunks?id=in.(${encodeURIComponent(list)})&search_vector=is.null&select=id`,
+    { headers: sbHeaders({}, { write: false }) },
+  );
+  if (!r.ok) {
+    console.warn(`  (could not verify search_vector: HTTP ${r.status})`);
+    return;
+  }
+  const nulls = await r.json();
+  if (nulls.length > 0) {
+    throw new Error(
+      `${nulls.length} of ${sample.length} checked chunks have a NULL search_vector (e.g. ${nulls[0].id}).\n` +
+      'Keyword retrieval will silently miss them. The trigger that maintains search_vector is missing —\n' +
+      'inspect it with scripts/migrations/2026-07-16_production_snapshot_request.sql and restore it before re-ingesting.',
+    );
+  }
+  console.log(`Verified search_vector populated on ${sample.length} written chunk(s).`);
+}
+
 async function deleteIds(ids) {
   for (let i = 0; i < ids.length; i += 50) {
     const list = ids.slice(i, i + 50).map(id => `"${id}"`).join(',');
@@ -312,6 +340,7 @@ async function main() {
       licence: entry.licence,
     })));
     console.log(`Upserted ${toWrite.length} chunks.`);
+    await assertSearchVectorPopulated(toWrite.map(c => c.id));
   }
 
   if (PRUNE && orphans.length > 0) {

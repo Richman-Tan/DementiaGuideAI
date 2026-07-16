@@ -12,6 +12,9 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "rag:eval": "node scripts/rag-eval.mjs",
+    "rag:grade": "node scripts/rag-grade.mjs",
+    "rag:introspect": "node scripts/rag-eval.mjs --introspect",
     "postinstall": "patch-package"
   },
   "dependencies": {

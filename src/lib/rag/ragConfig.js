@@ -20,7 +20,7 @@ const MAX_PER_SOURCE_FAMILY = 2; // max chunks from a single bulk source in the 
 
 // Prompt/pipeline behaviour flags. Flipping PROMPT_VERSION back to 'v1' is the
 // one-line rollback for the NZ/safety prompt.
-const PROMPT_VERSION = 'v1';
+const PROMPT_VERSION = 'v2-nz-safety';
 const CITATION_MODE = 'trailing'; // 'trailing' (Sources: list) | 'inline' ([S1] markers)
 const RERANK_MODE = 'none'; // 'none' | 'llm' (experimental, eval-gated)
 

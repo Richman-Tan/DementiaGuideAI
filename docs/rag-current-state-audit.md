@@ -129,10 +129,9 @@ User effect: no way to verify, update, correct, or legally account for 85% of wh
 Fix: source registry + licence-gated re-ingestion of official WHO iSupport / iSupport NZ materials with full provenance columns (Stages 7–9). Effort: large (the single largest work item).
 Measured by: source inventory complete; every live chunk carries document_id, source_version, licence, content_hash.
 
-**F-14 · High — The load-bearing retrieval function exists only in the production database.**
-Evidence: `supabase-setup.sql:51-62` explicitly warns that the committed `match_chunks` is a vector-only placeholder and the production 8-arg hybrid must be dumped with `pg_get_functiondef()`. The exact hybrid scoring formula (weights, rank function, fusion method) is therefore unknown and unreproducible; running the committed setup file against production would silently destroy hybrid search.
-User effect: retrieval behaviour cannot be reasoned about, tested locally, tuned, or restored after an incident. A prior incident (PGRST203 overload ambiguity, 2026-07-13) already took retrieval down entirely.
-Fix: Stage 0 snapshot (user runs `scripts/migrations/2026-07-16_production_snapshot_request.sql`), commit verbatim, then keep the function under version control permanently. Effort: small, user-gated.
+**F-14 · High — The load-bearing retrieval function existed only in the production database. RESOLVED 2026-07-17.**
+Evidence (original): the committed `match_chunks` was a vector-only placeholder; the production 8-arg hybrid was undumped, so its scoring formula was unknown and unreproducible, and running the committed setup file against production would silently destroy hybrid search. A prior incident (PGRST203 overload ambiguity, 2026-07-13) had already taken retrieval down entirely.
+Resolution: production dumped and committed verbatim in `scripts/migrations/2026-07-16_production_snapshot.sql`. The formula is a **weighted-sum hybrid** — `0.7 * (1 − cosine_distance) + 0.3 * ts_rank_cd(search_vector, websearch_to_tsquery(query))` — with a tag-based pre-filter and a `search_vector` **trigger** (not a generated column; the trigger also indexes `tags`, which the committed schema omitted). The same dump corrected two further silent drifts: ivfflat `lists=10` (committed said 20) and GIN index name `knowledge_chunks_search_idx` (committed said `_search_vector_idx`). `supabase-setup.sql` now reproduces production 1:1; Migration B keeps the function under version control (scoring unchanged, filters moved to provenance columns). Remaining user-gated step: run Migrations A+B.
 
 **F-15 · Medium — No review/refresh process for sources.** No publication/review dates stored, no retirement process, no schedule. Curated chunks paraphrase third-party bodies (Dementia Australia, NHS, Alzheimer's Society) without a recorded review date or reviewer. Fix: registry fields + inventory verdicts (retain/update/remove) in Stage 9.
 
@@ -200,7 +199,7 @@ See [rag-industry-research.md](rag-industry-research.md) for sources and reasoni
 
 | Area | Common production practice | This system | Verdict |
 |---|---|---|---|
-| Hybrid retrieval | Vector + lexical, fused by RRF or tuned weights | Hybrid, but formula unknown/uncommitted | Right idea, unauditable (F-14) |
+| Hybrid retrieval | Vector + lexical, fused by RRF or tuned weights | Weighted-sum 0.7/0.3 (now captured); untuned, scale-mismatched | Right idea; RRF is a measured Stage-10 experiment (F-14 resolved) |
 | Chunking | Structure-aware, token-sized, with overlap | Word-based 500/50, paragraph-aware, no headings | Adequate; improve at re-ingestion |
 | Embeddings | text-embedding-3-small is the standard cost/quality point at this scale | Same | Keep; larger model only via controlled comparison |
 | Metadata | First-class columns, filterable, versioned | Crammed into tags[] | Below practice (F-13) |

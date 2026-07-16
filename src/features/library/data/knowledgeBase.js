@@ -1131,17 +1131,17 @@ Both tools complement — rather than replace — professional dementia support.
   {
     id: 'wellbeing_010',
     category: 'wellbeing',
-    title: 'My Aged Care — Australia\'s Gateway to Funded Home and Residential Care',
-    content: `My Aged Care (myagedcare.gov.au) is the Australian Government's central access point for funded aged care services. For dementia carers, understanding the My Aged Care pathway is essential for securing funded support that can significantly improve quality of life and delay premature residential placement — but the system is complex and early engagement produces far better outcomes than last-minute crisis navigation.
+    title: 'NASC — New Zealand\'s Gateway to Funded Home and Residential Care',
+    content: `In New Zealand, publicly funded home and community support for people with dementia is arranged through a Needs Assessment and Service Coordination service (NASC), funded by Health New Zealand – Te Whatu Ora. For dementia carers, understanding the NASC pathway is essential for securing funded support that can improve quality of life and delay premature residential placement — and early engagement produces far better outcomes than last-minute crisis navigation.
 
-The process begins with an eligibility assessment, initiated by calling My Aged Care on 1800 200 422 or registering online. A Regional Assessment Service (RAS) assessor determines eligibility for the Commonwealth Home Support Programme (CHSP) — entry-level services including domestic assistance, personal care, meals, transport, and social support provided on a co-contribution basis. For people with higher or more complex care needs, an Aged Care Assessment Team (ACAT) assessment determines eligibility for a Home Care Package (HCP), ranging from Level 1 (basic care needs) to Level 4 (high care needs, approximately $60,000 per year in funded support). For dementia, Level 3 or Level 4 packages are typically needed as the condition progresses.
+The process usually begins with your GP, who can refer the person to the local NASC. A NASC assessor — often a nurse, social worker, or occupational therapist — visits the person and whānau at home or in hospital to work out how much support is needed and what publicly funded services the person is eligible for. Support coordinated through NASC can include personal care (help with washing, dressing, and toileting), household assistance, day programmes, and respite care. Services may combine publicly funded support with user-pays options and help from whānau and friends.
 
-Wait times for higher-level Home Care Packages can be significant. Applying as soon as care needs begin to increase — well before a crisis — prevents the gap between need and support from becoming unmanageable. Interim CHSP services can usually be arranged while waiting for a higher-level package.
+Start the process early: needs can change quickly with dementia, and arranging support before a crisis prevents the gap between need and help from becoming unmanageable. If needs increase, ask the NASC for a reassessment rather than waiting.
 
-For residential aged care, the ACAT assessment is also required. My Aged Care's service finder allows comparison of residential providers, understanding of fee structures, and identification of facilities with specific dementia expertise or secure memory care units. Dementia Australia (dementia.org.au, 1800 100 500) provides guidance specifically for families navigating My Aged Care for the first time, including self-advocacy and provider selection.`,
-    tags: ['My Aged Care', 'Home Care Package', 'CHSP', 'ACAT', 'aged care', 'Australia', 'residential care', 'funding'],
-    source_url: 'https://www.myagedcare.gov.au/',
-    source_org: 'My Aged Care',
+When care needs progress to rest-home or hospital-level care, the NASC assessment also determines eligibility for residential care. The cost of long-term residential care may be covered by the Residential Care Subsidy, which is income- and asset-tested and administered by Work and Income (see the separate guidance on residential care and financial support). Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) can help families navigate the NASC process, choose a provider, and self-advocate. More information on needs assessments is at govt.nz.`,
+    tags: ['NASC', 'needs assessment', 'home support', 'Health NZ', 'Te Whatu Ora', 'residential care', 'Residential Care Subsidy', 'funding'],
+    source_url: 'https://www.govt.nz/browse/health/help-in-your-home/needs-assessment/',
+    source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
   },
 

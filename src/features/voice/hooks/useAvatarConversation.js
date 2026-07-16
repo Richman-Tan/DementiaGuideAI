@@ -49,6 +49,7 @@ const EARLY_CHUNK_CHARS = 150;
 // Shared AsyncStorage key with ChatScreen — both read/write the same array.
 const MESSAGES_KEY = 'chat_messages_v1';
 const MAX_PERSISTED = 100;
+const MAX_QUERY_CHARS = 1000;
 
 /**
  * useAvatarConversation
@@ -109,11 +110,10 @@ export function useAvatarConversation({ avatarRef }) {
     historyRef.current = conversationHistory;
   }, [conversationHistory]);
 
-  // On mount: pre-warm KB embeddings and load persisted conversation history
-  // so the voice pipeline shares context with ChatScreen.
+  // On mount: load persisted conversation history so the voice pipeline
+  // shares context with ChatScreen.
   useEffect(() => {
     const init = async () => {
-      openaiService.initKnowledgeBase().catch(() => {});
       try {
         const raw = await AsyncStorage.getItem(MESSAGES_KEY);
         if (raw) {
@@ -145,6 +145,11 @@ export function useAvatarConversation({ avatarRef }) {
   // wait for the full LLM response before playing the first audio segment.
   const processQuery = useCallback(async (userText, t0 = Date.now(), sttDoneAt = null) => {
     if (!userText.trim()) return;
+    // Cap transcript length: STT can produce unbounded text (the text path caps
+    // at 500 chars), and an over-long query inflates embedding + prompt tokens.
+    if (userText.length > MAX_QUERY_CHARS) {
+      userText = userText.slice(0, MAX_QUERY_CHARS);
+    }
 
     setVoiceState(VoiceState.PROCESSING);
     abortRef.current = false;

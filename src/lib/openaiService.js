@@ -137,8 +137,6 @@ class OpenAIService {
 
     const chunks = await this.search(userMessage, TOP_K);
     timingCbs?.onRagDone?.();
-    // When nothing was retrieved, send the bare question — an explicit "nothing
-    // matched" block primes the model to hedge instead of just answering.
     const userContent = chunks.length > 0
       ? `[REFERENCE PASSAGES — may or may not be relevant]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/REFERENCE PASSAGES]\n\nUser question: ${userMessage}`
       : userMessage;
@@ -354,8 +352,6 @@ ${lengthRule}
     // Retrieve relevant chunks
     const chunks = await this.search(userMessage, TOP_K);
 
-    // When nothing was retrieved, send the bare question — an explicit "nothing
-    // matched" block primes the model to hedge instead of just answering.
     const userContent = chunks.length > 0
       ? `[REFERENCE PASSAGES — may or may not be relevant]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/REFERENCE PASSAGES]\n\nUser question: ${userMessage}`
       : userMessage;

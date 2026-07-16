@@ -93,7 +93,7 @@ describe('buildSystemPrompt (style plumbing, both versions)', () => {
 
 describe('buildUserContent', () => {
   const chunks = [
-    { title: 'Chunk One', content: 'Alpha content.' },
+    { title: 'Chunk One', content: 'Alpha content.', source_org: 'WHO' },
     { title: 'Chunk Two', content: 'Beta content.' },
   ];
 
@@ -102,8 +102,19 @@ describe('buildUserContent', () => {
     expect(buildUserContent('How are you?', null)).toBe('How are you?');
   });
 
-  it('wraps passages in the delimited block with titles', () => {
+  it('labels passages with [S#] markers in inline mode (active default)', () => {
     const c = buildUserContent('What helps with sundowning?', chunks);
+    expect(c).toBe(
+      '[REFERENCE PASSAGES — may or may not be relevant]\n' +
+      '[S1] Chunk One — WHO\nAlpha content.\n\n' +
+      '[S2] Chunk Two\nBeta content.\n' +
+      '[/REFERENCE PASSAGES]\n\n' +
+      'User question: What helps with sundowning?'
+    );
+  });
+
+  it('reproduces the legacy format in trailing mode (rollback path)', () => {
+    const c = buildUserContent('What helps with sundowning?', chunks, 'trailing');
     expect(c).toBe(
       '[REFERENCE PASSAGES — may or may not be relevant]\n' +
       '--- Chunk One ---\nAlpha content.\n\n' +

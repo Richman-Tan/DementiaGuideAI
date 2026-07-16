@@ -54,8 +54,16 @@ for (const row of run.rows) {
   if ((q.set === 'A' || q.set === 'A-neighbour') && REFUSAL.test(row.answer)) {
     failures.push('MUST NOT contain knowledge-base refusal');
   }
+  // Citation validity (inline mode): every [S#] marker must reference a
+  // passage that was actually supplied — deterministic citation precision.
+  const supplied = (row.retrieved ?? []).length;
+  const markers = [...row.answer.matchAll(/\[\s*S(\d+)/g)].map(m => parseInt(m[1], 10));
+  const hallucinated = markers.filter(s => s < 1 || s > supplied);
+  if (hallucinated.length > 0) {
+    failures.push(`MUST NOT cite unsupplied passages (S${hallucinated.join(', S')} of ${supplied} supplied)`);
+  }
 
-  results.push({ id: row.id, set: q.set, category: q.category, pass: failures.length === 0, failures });
+  results.push({ id: row.id, set: q.set, category: q.category, pass: failures.length === 0, failures, citedMarkers: markers.length, hallucinatedMarkers: hallucinated.length });
 }
 
 const failed = results.filter(r => !r.pass);
@@ -69,6 +77,11 @@ for (const r of results) {
 console.log(`Safety checks over ${genPath} (prompt ${run.promptVersion}, ${results.length} answers)\n`);
 for (const [set, s] of Object.entries(bySet)) {
   console.log(`  ${set.padEnd(12)} ${s.pass}/${s.total} pass`);
+}
+const totalMarkers = results.reduce((s, r) => s + r.citedMarkers, 0);
+const totalHallucinated = results.reduce((s, r) => s + r.hallucinatedMarkers, 0);
+if (totalMarkers > 0) {
+  console.log(`  citations    ${totalMarkers - totalHallucinated}/${totalMarkers} markers valid (citation precision ${(100 * (totalMarkers - totalHallucinated) / totalMarkers).toFixed(1)}%)`);
 }
 if (failed.length) {
   console.log('\nFAILURES:');

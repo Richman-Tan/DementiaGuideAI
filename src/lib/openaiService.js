@@ -9,10 +9,12 @@ import {
   RETRIEVAL_OVERSAMPLE,
   MAX_PER_SOURCE_FAMILY,
   GENERATION_TEMPERATURE,
+  CITATION_MODE,
   maxTokensForStyle,
 } from './rag/ragConfig';
 import { buildSystemPrompt, buildUserContent } from './rag/prompt';
 import { capBySourceFamily } from './rag/retrieval';
+import { extractCitations, createMarkerStripper } from './rag/citations';
 
 const SECURE_KEY = 'openai_api_key';
 const OPENAI_BASE = 'https://api.openai.com/v1';
@@ -122,9 +124,13 @@ class OpenAIService {
       content: m.content,
     }));
 
+    // Inline mode: markers are stripped from the stream before TTS and the
+    // structured sources are delivered via timingCbs.onSources at stream end.
+    // Trailing mode keeps includeSources:false (a "Sources:" list would be
+    // spoken aloud).
+    const inlineCitations = CITATION_MODE === 'inline';
     const messages = [
-      // Voice path: no Sources section — it would be spoken aloud by TTS.
-      { role: 'system', content: buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup, includeSources: false }) },
+      { role: 'system', content: buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup, includeSources: inlineCitations }) },
       ...recentHistory,
       { role: 'user', content: userContent },
     ];
@@ -185,10 +191,28 @@ class OpenAIService {
     xhr.send(body);
     timingCbs?.onLlmSend?.();
 
+    const stripper = inlineCitations ? createMarkerStripper() : null;
+    let rawFull = '';
+
     while (true) {
-      while (pending.length > 0) yield pending.shift();
+      while (pending.length > 0) {
+        const piece = pending.shift();
+        if (stripper) {
+          rawFull += piece;
+          const cleanPiece = stripper.write(piece);
+          if (cleanPiece) yield cleanPiece;
+        } else {
+          yield piece;
+        }
+      }
       if (finished) break;
       await new Promise(r => { notify = r; });
+    }
+
+    if (stripper) {
+      const tail = stripper.flush();
+      if (tail) yield tail;
+      timingCbs?.onSources?.(extractCitations(rawFull, chunks).sources);
     }
 
     if (streamError) throw streamError;
@@ -292,7 +316,14 @@ class OpenAIService {
 
     const rawText = data.choices[0].message.content.trim();
 
-    // Parse out Sources section if the model included it
+    if (CITATION_MODE === 'inline') {
+      // Validated inline citations: [S#] markers are checked against the
+      // passages actually supplied, renumbered to [1..n] for the tappable
+      // badges in ChatScreen, and hallucinated markers are stripped.
+      return extractCitations(rawText, chunks);
+    }
+
+    // Legacy trailing-"Sources:" mode (CITATION_MODE='trailing' rollback).
     const sourcesMatch = rawText.match(/Sources:\s*([\s\S]+?)(?:\n\n|$)/i);
     let responseText = rawText;
     let sourceTitles = [];

@@ -11,7 +11,7 @@
 //                   own knowledge and never refuses because retrieval missed.
 // The active version is ragConfig.PROMPT_VERSION; buildSystemPrompt() dispatches.
 
-const { PROMPT_VERSION } = require('./ragConfig');
+const { PROMPT_VERSION, CITATION_MODE } = require('./ragConfig');
 
 function buildSystemPromptV1({
   conciseMode       = false,
@@ -84,6 +84,7 @@ function buildSystemPromptV2({
   ariaPersonality   = 'warm',
   isCaregiversSetup = false,
   includeSources    = true,
+  citationMode      = CITATION_MODE,
 } = {}) {
   const caregiverPreamble = isCaregiversSetup
     ? 'The person using this app is a family caregiver or support worker. Frame responses to support them in their caring role, not as advice to the person with dementia.\n\n'
@@ -113,9 +114,11 @@ function buildSystemPromptV2({
     lengthRule = '- Format any instructions or processes as a numbered list. Break every process into small, clear steps. Use plain language for each step.';
   }
 
-  const sourcesRule = includeSources
-    ? '\n- If you drew on any of the provided passages, even partially, end with a line "Sources:" followed by a bullet list (one per line, starting with "·") of the passage titles you used. Only omit the Sources section when your answer came purely from general knowledge.'
-    : '';
+  const sourcesRule = !includeSources
+    ? ''
+    : citationMode === 'inline'
+      ? '\n- Each reference passage is labelled with a marker like [S1]. When a specific claim in your answer comes from a passage, cite it inline immediately after the claim, e.g. "…helps reduce evening agitation [S1]." Use [S1][S3] for multiple passages. Only cite passages you actually used — never invent a citation — and do not add a trailing Sources list.'
+      : '\n- If you drew on any of the provided passages, even partially, end with a line "Sources:" followed by a bullet list (one per line, starting with "·") of the passage titles you used. Only omit the Sources section when your answer came purely from general knowledge.';
 
   return `${caregiverPreamble}You are Aria, an expert AI assistant specialising in dementia and dementia care, supporting family caregivers, healthcare workers, and families caring for people with dementia in New Zealand. You have deep knowledge of dementia types, symptoms, progression, caregiving techniques, communication strategies, home safety, carer wellbeing, and the New Zealand health, aged-care, and dementia-support system.
 
@@ -146,9 +149,14 @@ function buildSystemPrompt(opts = {}, version = PROMPT_VERSION) {
 
 // Wrap the user question with the retrieved passages. With zero chunks the
 // bare question is sent — no empty scaffolding for the model to react to.
-function buildUserContent(userMessage, chunks) {
+// Inline citation mode labels each passage with its [S#] marker (and org) so
+// the model can cite it; extractCitations() later validates those markers.
+function buildUserContent(userMessage, chunks, citationMode = CITATION_MODE) {
   if (!chunks || chunks.length === 0) return userMessage;
-  return `[REFERENCE PASSAGES — may or may not be relevant]\n${chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n')}\n[/REFERENCE PASSAGES]\n\nUser question: ${userMessage}`;
+  const passages = citationMode === 'inline'
+    ? chunks.map((c, i) => `[S${i + 1}] ${c.title}${c.source_org ? ` — ${c.source_org}` : ''}\n${c.content}`).join('\n\n')
+    : chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n');
+  return `[REFERENCE PASSAGES — may or may not be relevant]\n${passages}\n[/REFERENCE PASSAGES]\n\nUser question: ${userMessage}`;
 }
 
 module.exports = { buildSystemPrompt, buildSystemPromptV1, buildSystemPromptV2, buildUserContent };

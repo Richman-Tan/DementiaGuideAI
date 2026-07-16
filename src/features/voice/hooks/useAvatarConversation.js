@@ -194,6 +194,7 @@ export function useAvatarConversation({ avatarRef }) {
         wake();
       };
 
+      let citedSources = [];
       try {
         const timingCbs = {
           onRagDone: () => {
@@ -204,6 +205,9 @@ export function useAvatarConversation({ avatarRef }) {
             pts.llm_send = Date.now();
             console.log(`[LATENCY] llm_request_start_ms +${pts.llm_send - t0}`);
           },
+          // Structured, validated sources extracted from inline [S#] markers
+          // (the markers themselves are stripped before TTS).
+          onSources: (sources) => { citedSources = sources ?? []; },
         };
 
         pts.rag_start = Date.now();
@@ -253,7 +257,7 @@ export function useAvatarConversation({ avatarRef }) {
           const existing = raw ? JSON.parse(raw) : [];
           const now = Date.now();
           const userEntry = { id: `v_${now}`, role: 'user', text: userText, sources: [], timestamp: new Date().toISOString() };
-          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: [], timestamp: new Date().toISOString() };
+          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: citedSources, timestamp: new Date().toISOString() };
           const updated = [...existing, userEntry, assistantEntry].slice(-MAX_PERSISTED);
           await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(updated));
         } catch { /* non-critical */ }

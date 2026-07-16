@@ -33,7 +33,7 @@ Original = frozen baseline (2026-07-16, pre-change system, v1 prompt). Updated =
 | Region correctness (no Australian services in answers) | 3 failures | 0 failures | −3 | −100% | 36 | Deterministic global assertion | Curated corpus still contains Australian content (user-gated rewrite pending); the prompt now suppresses it in answers |
 | Citation precision (markers → actually-supplied passages) | not measurable (citation UI dead; free-text titles unvalidated) | **100% (133/133 markers)** | — | — | 32 | Deterministic set-membership over seeded generations | New capability, so no baseline number exists; hallucinated markers are stripped before render by construction |
 | Citation UI functional | No (format mismatch — audit F-7) | Yes (tappable badges + source cards, text + voice) | — | — | manual | Code inspection + live extraction check | — |
-| Groundedness (LLM judge 0/1/2) | 31×2, 1×1 — **lenient judge, uniform, untrusted** | 23×2, 9×1, 0×0 — strict rubric | n/a | n/a | 32 | gpt-4o-mini judge temp 0 + **pending human spot-check** (`groundedness_654b328_v2-nz-safety_spotcheck.md`) | Rubric changed, so scores are NOT comparable across columns; the new judge discriminates (old one scored everything 2). Score-1s are mostly prompt-known facts (e.g. helpline numbers) not present in passages — spot-check will adjudicate |
+| Groundedness (LLM judge 0/1/2) | 31×2, 1×1 — **lenient judge, uniform, untrusted** | 23×2, 9×1, 0×0 — strict rubric | n/a | n/a | 32 | gpt-4o-mini judge temp 0; 10-row cross-check done, **human sign-off still pending** (`groundedness_654b328_v2-nz-safety_spotcheck.md`) | Rubric changed, so scores are NOT comparable across columns; the new judge discriminates (old scored everything 2). An independent AI cross-check agreed 10/10 on the sample; both 1s were the judge correctly flagging accurate-but-passage-unsupported helpline mentions. A human review should still confirm before these are treated as validated. |
 | In-scope refusal rate | 0/32 | 0/32 | 0 | 0% | 32 | Refusal regex | The no-refusal augmentation philosophy is preserved (regression-guarded) |
 | Token use per in-scope answer | not recorded | ~2,755 tokens (88,162 / 32; ≈US$0.01–0.02 at gpt-4o list pricing) | — | — | 32 | OpenAI usage fields in generation runs | Baseline never recorded usage; treat as the first reference point |
 | Automated tests (RAG-related) | 0 | 61 (69 total in repo) | +61 | — | — | Jest | — |
@@ -51,7 +51,7 @@ Original = frozen baseline (2026-07-16, pre-change system, v1 prompt). Updated =
 1. ~~Production `match_chunks` only in the live DB (F-14)~~ **RESOLVED 2026-07-17** — captured, committed, canonical migration run and verified byte-identical.
 2. Curated corpus still Australia-flavoured (prompt suppresses it in answers, but retrieval passages can carry AU service names into context) — user-gated NZ rewrite.
 3. ~377 iSupport chunks remain provenance-free until the licence-gated re-ingestion replaces them.
-4. Groundedness judge scores unvalidated until the human spot-check file is completed.
+4. Groundedness judge cross-checked by an independent AI pass (10/10 agreement on the sample); still needs human expert sign-off before the scores are treated as validated.
 5. LLM-judge and injection assertions cover English verbatim patterns only.
 6. No backend: per-user OpenAI keys go device→OpenAI; acceptable for the research prototype, a proxy is the documented path to public release.
 

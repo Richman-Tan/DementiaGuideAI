@@ -13,7 +13,11 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "rag:eval": "node scripts/rag-eval.mjs",
-    "rag:grade": "node scripts/rag-grade.mjs",
+    "rag:eval:retrieval": "node scripts/eval/run-retrieval.mjs",
+    "rag:eval:generation": "node scripts/eval/run-generation.mjs",
+    "rag:eval:safety": "node scripts/eval/safety-checks.mjs",
+    "rag:grade": "node scripts/eval/grade-groundedness.mjs",
+    "rag:grade:legacy": "node scripts/rag-grade.mjs",
     "rag:introspect": "node scripts/rag-eval.mjs --introspect",
     "postinstall": "patch-package"
   },

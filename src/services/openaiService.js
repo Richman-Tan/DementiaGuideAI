@@ -10,6 +10,8 @@ const TOP_K = 8;
 const MAX_HISTORY = 6;
 const SEARCH_MULTIPLIER = 3;
 const LOW_CONFIDENCE_THRESHOLD = 0.38;
+const CHAT_TEMPERATURE = 0.0;
+const CHAT_MAX_TOKENS = 320;
 const ROUTING_KEYWORDS = {
   module5Behaviour: [
     'aggression', 'hallucination', 'delusion', 'wandering', 'lost', 'repetitive',
@@ -112,13 +114,12 @@ class OpenAIService {
     const prefersModule5 = ROUTING_KEYWORDS.module5Behaviour.some(k => q.includes(k));
     const prefersModule3 = ROUTING_KEYWORDS.module3SelfCare.some(k => q.includes(k));
 
-    // Keep NZ as default for this project's current iSupport rollout.
-    const country = q.includes('aotearoa') || q.includes('new zealand') || q.includes('nz') ? 'nz' : 'nz';
+    const mentionsNZ = q.includes('aotearoa') || q.includes('new zealand') || q.includes(' nz ');
+    const mentionsAU = q.includes('australia') || q.includes(' aus ') || q.includes(' au ');
+    const country = mentionsNZ ? 'nz' : (mentionsAU ? 'au' : null);
 
     return {
-      requiredTags: [
-        `country:${country}`,
-      ],
+      requiredTags: country ? [`country:${country}`] : [],
       preferredTags: [
         ...(prefersModule5 ? ['module:5'] : []),
         ...(prefersModule3 ? ['module:3'] : []),
@@ -211,17 +212,37 @@ class OpenAIService {
     const parentKeys = topChildren.map(c => this._extractTagValue(c.tags ?? [], 'parent_key')).filter(Boolean);
     const parentSummaries = await this._fetchParentSummaries(parentKeys);
 
-    return [...parentSummaries, ...topChildren].slice(0, topK + 2);
+    // Prefer precise child chunks in normal cases; only add parent summaries
+    // when retrieval is sparse and extra context is needed.
+    if (topChildren.length >= Math.max(3, Math.floor(topK / 2))) {
+      return topChildren;
+    }
+
+    return [...topChildren, ...parentSummaries].slice(0, topK);
   }
 
   _isLowConfidence(chunks) {
     if (!chunks || chunks.length === 0) return true;
-    const best = Number(chunks[0]?.similarity) || 0;
+    // Parent summary chunks are injected with a synthetic score and may be
+    // prepended, so confidence must be based on the strongest grounded chunk.
+    const best = chunks.reduce((max, c) => {
+      const tags = c?.tags ?? [];
+      const isParent = tags.includes('chunk_level:parent');
+      if (isParent) return max;
+      const score = Number(c?.similarity) || 0;
+      return score > max ? score : max;
+    }, 0);
     return best < LOW_CONFIDENCE_THRESHOLD;
   }
 
   _buildLowConfidenceReply(question) {
     const lower = question.toLowerCase();
+    const empathyLead =
+      lower.includes('exhausted') || lower.includes('burnout') || lower.includes('overwhelmed')
+        ? 'I am really glad you reached out - caregiving can be emotionally and physically exhausting.'
+        : lower.includes('aggression') || lower.includes('hallucination') || lower.includes('wandering')
+          ? 'That sounds really stressful and worrying, and your concern for safety is important.'
+          : 'Thank you for sharing this - I know these situations can be hard to manage.';
     const clarification =
       lower.includes('sleep')
         ? 'Could you share when the sleep change started and what has already been tried at home?'
@@ -229,7 +250,7 @@ class OpenAIService {
           ? 'Could you share what tends to happen right before the behaviour change, and whether there are safety risks right now?'
           : 'Could you share a little more detail about the person\'s current symptoms and situation so I can narrow this to the most relevant guidance?';
 
-    return `I do not have strong enough matching information in the current knowledge base to answer confidently. ${clarification}\n\nThis information is for guidance only and does not replace professional medical advice. For more support, contact Dementia Australia on 1800 100 500 and consult a healthcare professional for individual decisions.`;
+    return `${empathyLead} I do not have strong enough matching information in the current knowledge base to answer confidently. ${clarification}\n\nThis information is for guidance only and does not replace professional medical advice. For more support, contact Dementia Australia on 1800 100 500 and consult a healthcare professional for individual decisions.`;
   }
 
   // ─── Streaming Chat ─────────────────────────────────────────────────────────
@@ -257,7 +278,7 @@ class OpenAIService {
     }));
 
     const messages = [
-      { role: 'system', content: this._buildSystemPrompt() },
+      { role: 'system', content: this._buildSystemPrompt(userMessage) },
       ...recentHistory,
       { role: 'user', content: `${contextBlock}\n\nUser question: ${userMessage}` },
     ];
@@ -269,8 +290,8 @@ class OpenAIService {
     const body = JSON.stringify({
       model: CHAT_MODEL,
       messages,
-      max_tokens: 600,
-      temperature: 0.4,
+      max_tokens: CHAT_MAX_TOKENS,
+      temperature: CHAT_TEMPERATURE,
       stream: true,
     });
 
@@ -395,7 +416,27 @@ class OpenAIService {
 
   // ─── System Prompt ──────────────────────────────────────────────────────────
 
-  _buildSystemPrompt() {
+  _buildEmpathyGuidance(question = '') {
+    const lower = String(question).toLowerCase();
+
+    if (lower.includes('exhausted') || lower.includes('burnout') || lower.includes('guilt') || lower.includes('overwhelmed')) {
+      return 'Start your first paragraph by explicitly validating carer strain (for example: "What you are feeling is understandable"). Include one sentence that normalises seeking help and respite.';
+    }
+
+    if (lower.includes('aggression') || lower.includes('hallucination') || lower.includes('wandering') || lower.includes('sudden') || lower.includes('urgent')) {
+      return 'Start with calm reassurance and safety-focused empathy. Acknowledge distress first, then provide practical de-escalation or urgent-care steps grounded in context.';
+    }
+
+    if (lower.includes('shower') || lower.includes('toilet') || lower.includes('incontinence') || lower.includes('hygiene')) {
+      return 'Use dignity-preserving language and acknowledge that personal care can feel emotionally sensitive for both the carer and the person with dementia.';
+    }
+
+    return 'Begin with one brief validating sentence (without sounding scripted), then provide concise practical guidance.';
+  }
+
+  _buildSystemPrompt(question = '') {
+    const empathyGuidance = this._buildEmpathyGuidance(question);
+
     return `You are Aria, a compassionate and knowledgeable AI assistant created to support family caregivers, healthcare workers, and families caring for people with dementia. You work like a specialised library — every answer you give is grounded in the curated knowledge passages provided to you.
 
 IMPORTANT RULES:
@@ -404,10 +445,23 @@ IMPORTANT RULES:
 3. You may cite the same source multiple times, and you may cite multiple sources in one sentence: [1][3].
 4. If the context passages do not contain enough information to answer the question, say so honestly: "I don't have specific information about that in my knowledge base, but I recommend speaking with your GP or Dementia Australia (1800 100 500)."
 5. Be warm, empathetic, and emotionally supportive — caregiving is hard, and the person reading your response may be exhausted or distressed.
-6. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
-7. Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.
-8. Do NOT add a Sources section at the end. Citations are inline only.
-  9. Always end every response with this exact closing sentence: "This information is for guidance only and does not replace professional medical advice. For more support, contact Dementia Australia on 1800 100 500 and consult a healthcare professional for individual decisions."`;
+6. Empathy style requirement for this question: ${empathyGuidance}
+7. Keep empathy concise and human. Do not use therapy-like overreassurance, and do not sound generic or repetitive.
+8. Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.
+9. Keep the answer body concise (about 80-140 words before the closing sentence).
+10. Keep tight relevance to the question. Do not add broad background, statistics, or unrelated tips.
+11. Prefer generic caregiver guidance wording over highly specific examples, names, product suggestions, or test names unless the question explicitly asks for detail.
+12. Structure: one validating sentence, then direct practical guidance, then when to seek medical review if symptoms are new/worse/safety-related.
+13. Prefer concise action verbs and key terms often used in dementia care: reassure, validate feelings, avoid arguing, redirect, routine, safety, medical review.
+14. Use 1 to 3 inline citations from the most relevant passages only.
+15. Do NOT add a Sources section at the end. Citations are inline only.
+16. Always end every response with this exact closing sentence: "This information is for guidance only and does not replace professional medical advice. For more support, contact Dementia Australia on 1800 100 500 and consult a healthcare professional for individual decisions."
+
+STYLE EXAMPLES (shape only, still use provided context):
+- "When recognition changes, focus on reassurance rather than correction. Use a calm tone, validate feelings, avoid arguing, and gently redirect to a familiar activity [1]."
+- "For night wandering, combine safety and routine: door alerts, clear pathways, calm bedtime routine, and review triggers like pain, toileting needs, or anxiety [1][2]."
+- "Early signs can include memory changes affecting daily life, confusion about time/place, language difficulty, and planning problems. Seek medical assessment if persistent [1]."
+- "Risk reduction focuses on long-term brain and vascular health: physical activity, blood pressure control, smoking cessation, and hearing support where relevant [1][2]."`;
   }
 
   _sourceMeta(chunk) {
@@ -432,19 +486,7 @@ IMPORTANT RULES:
       };
     }
 
-    const lines = chunks.map((c, i) => {
-      const meta = this._sourceMeta(c);
-      const labels = [
-        meta.module ? `Module ${meta.module}` : null,
-        meta.section ? `Section ${meta.section}` : null,
-        meta.country ? `Country ${meta.country.toUpperCase()}` : null,
-        meta.sourceVersion ? `Version ${meta.sourceVersion}` : null,
-        meta.chunkLevel ? `Level ${meta.chunkLevel}` : null,
-      ].filter(Boolean);
-
-      const suffix = labels.length > 0 ? ` | ${labels.join(' | ')}` : '';
-      return `--- Source [${i + 1}] | ${c.title}${suffix} ---\n${c.content}`;
-    });
+    const lines = chunks.map((c, i) => `--- Source [${i + 1}] | ${c.title} ---\n${c.content}`);
 
     return {
       contextBlock: `[CONTEXT]\n${lines.join('\n\n')}\n[/CONTEXT]`,
@@ -502,7 +544,7 @@ IMPORTANT RULES:
     }));
 
     const messages = [
-      { role: 'system', content: this._buildSystemPrompt() },
+      { role: 'system', content: this._buildSystemPrompt(userMessage) },
       ...recentHistory,
       { role: 'user', content: `${contextBlock}\n\nUser question: ${userMessage}` },
     ];
@@ -510,8 +552,8 @@ IMPORTANT RULES:
     const data = await this._callOpenAI('/chat/completions', {
       model: CHAT_MODEL,
       messages,
-      max_tokens: 600,
-      temperature: 0.4,
+      max_tokens: CHAT_MAX_TOKENS,
+      temperature: CHAT_TEMPERATURE,
     });
 
     const rawText = data.choices[0].message.content.trim();

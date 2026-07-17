@@ -24,10 +24,19 @@ import {
 } from '@/lib/voice/voiceConfig';
 
 // Recognition runs under playAndRecord + measurement (see start() below),
-// which iOS plays MUCH quieter through the speaker — and the category
-// outlives the session. Hand the session back to plain playback as soon as
-// recognition finishes so the avatar's TTS comes out at full volume.
+// which iOS plays MUCH quieter through the speaker — and BOTH the category
+// and the mode outlive the session (expo-av's setAudioModeAsync resets the
+// category but leaves the session mode untouched, so 'measurement' kept
+// muting playback). Reset category AND mode explicitly, then let expo-av
+// re-sync its own audio-mode state.
 function restorePlaybackSession() {
+  try {
+    ExpoSpeechRecognitionModule.setCategoryIOS({
+      category: 'playback',
+      categoryOptions: [],
+      mode: 'default',
+    });
+  } catch { /* android / older module: nothing to restore */ }
   Audio.setAudioModeAsync({
     allowsRecordingIOS: false,
     playsInSilentModeIOS: true,
@@ -118,9 +127,20 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
     }
   }));
 
+  // Resolved when the recognizer confirms its audio tap is open — speech
+  // before this moment is simply lost, so the caller must not show
+  // "listening" until it fires (empty-transcript turns were falling back to
+  // the slow Whisper rescue because users spoke during session spin-up).
+  let audioReadyResolve = null;
+  const audioReady = new Promise((resolve) => { audioReadyResolve = resolve; });
+
   // The persisted-recording URI arrives on audiostart (iOS) / audioend.
   subs.push(ExpoSpeechRecognitionModule.addListener('audiostart', (ev) => {
     if (ev?.uri) recordedUri = ev.uri;
+    if (audioReadyResolve) { const r = audioReadyResolve; audioReadyResolve = null; r(); }
+  }));
+  subs.push(ExpoSpeechRecognitionModule.addListener('start', () => {
+    if (audioReadyResolve) { const r = audioReadyResolve; audioReadyResolve = null; r(); }
   }));
   subs.push(ExpoSpeechRecognitionModule.addListener('audioend', (ev) => {
     if (ev?.uri) recordedUri = ev.uri;
@@ -191,6 +211,13 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
     cleanup();
     throw err;
   }
+
+  // Block (briefly) until audio is actually flowing; cap the wait so a
+  // recognizer that never emits 'start' can't hang the mic button.
+  await Promise.race([
+    audioReady,
+    new Promise((resolve) => setTimeout(resolve, 1500)),
+  ]);
 
   return {
     provider: 'live',

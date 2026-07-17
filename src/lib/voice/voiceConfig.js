@@ -52,7 +52,9 @@ const WS_STALL_TIMEOUT_MS = 6000;  // no audio while input pending → REST fall
 // talking, so the embedding + vector-search round trips (250–650 ms) are
 // already done when the final transcript lands.
 const VOICE_SPECULATIVE_RAG = true;
-const SPECULATIVE_STABLE_MS = 900;      // partial unchanged this long → fire
+// 600ms: measured on device — short questions stabilize <900ms before the
+// tap-stop, so the original threshold never fired. Refires are capped at 2.
+const SPECULATIVE_STABLE_MS = 600;      // partial unchanged this long → fire
 const SPECULATIVE_MIN_WORDS = 4;        // don't fire on fragments
 const SPECULATIVE_MAX_FIRES = 2;        // cap wasted embedding tokens per turn
 const SPECULATIVE_REUSE_JACCARD = 0.8;  // token overlap needed to reuse the result

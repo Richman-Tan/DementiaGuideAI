@@ -117,6 +117,9 @@ function buildWordScales(characters) {
  * @param {object} [options.visemeWeights] - Per-avatar weight overrides (from avatarProfiles.js).
  *   When provided, these replace VISEME_WEIGHT from phonemeMap.js so each model can be tuned
  *   independently. Digraph weights are scaled proportionally via the aa weight ratio.
+ * @param {boolean} [options.streaming] - True when this alignment is a PARTIAL chunk of an
+ *   ongoing stream: skips applyFinalLowering (which would droop the mouth mid-sentence —
+ *   the stream's true end is handled by the player when the timeline runs out).
  */
 export function createVisemeTimeline(alignment, options = {}) {
   const { characters, character_start_times_seconds, character_end_times_seconds } = alignment;
@@ -217,7 +220,8 @@ export function createVisemeTimeline(alignment, options = {}) {
   }
 
   const totalDuration = character_end_times_seconds[characters.length - 1] || 0;
-  const frames        = applyFinalLowering(mergeConsecutiveSameViseme(rawFrames), totalDuration);
+  const merged        = mergeConsecutiveSameViseme(rawFrames);
+  const frames        = options.streaming ? merged : applyFinalLowering(merged, totalDuration);
 
   return { frames, totalDuration };
 }

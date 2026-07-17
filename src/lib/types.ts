@@ -27,7 +27,12 @@ export interface VisemeTimeline {
 
 export interface TtsOptions {
   speechRate?: number;
+  /** Azure voice name (e.g. en-US-JennyNeural) from the avatar profile. */
   voice?: string | null;
+  /** ElevenLabs voice ID from the avatar profile; falls back to Brian. */
+  elevenVoiceId?: string | null;
+  /** OpenAI voice enum value from the avatar profile; falls back to onyx. */
+  openaiVoice?: string | null;
   visemeWeights?: Record<string, number> | null;
 }
 

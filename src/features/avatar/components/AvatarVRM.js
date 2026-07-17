@@ -1881,13 +1881,10 @@ const LipSyncController = {
   },
 };
 
-// ─── Helper: decode a data URI and play it through AudioContext ───────────────
-async function _decodeAndPlay(dataUri) {
-  const base64 = dataUri.slice(dataUri.indexOf(',') + 1);
-  const bin    = atob(base64);
-  const ab     = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) ab[i] = bin.charCodeAt(i);
-
+// ─── AudioContext lifecycle ───────────────────────────────────────────────────
+// Created eagerly at boot (see call below) so the first playback doesn't pay
+// context spin-up; falls back to lazy creation if the boot call ever fails.
+function _ensureAudioCtx() {
   if (!lipSyncCtx) {
     lipSyncCtx = new (window.AudioContext || window.webkitAudioContext)();
     // Auto-resume if iOS suspends the context mid-playback (e.g. audio session change)
@@ -1897,6 +1894,18 @@ async function _decodeAndPlay(dataUri) {
       }
     });
   }
+  return lipSyncCtx;
+}
+try { _ensureAudioCtx().resume().catch(function() {}); } catch (e) {}
+
+// ─── Helper: decode a data URI and play it through AudioContext ───────────────
+async function _decodeAndPlay(dataUri) {
+  const base64 = dataUri.slice(dataUri.indexOf(',') + 1);
+  const bin    = atob(base64);
+  const ab     = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) ab[i] = bin.charCodeAt(i);
+
+  _ensureAudioCtx();
   if (lipSyncCtx.state === 'suspended') await lipSyncCtx.resume();
 
   return lipSyncCtx.decodeAudioData(ab.buffer);
@@ -1908,6 +1917,8 @@ function _stopCurrent() {
     try { lipSyncSource.stop(); } catch(e) {}
     lipSyncSource = null;
   }
+  // Also cancel any active streaming session (defined below; hoisted at call time).
+  if (typeof _stopStreaming === 'function') _stopStreaming();
   lipSyncActive   = false;
   lipSyncAnalyser = null;
   lipSyncBuf      = null;
@@ -1991,8 +2002,149 @@ window.playAudioWithVisemeTimeline = async function(dataUri, timeline, emotion) 
   }
 };
 
+// ─── STREAMING PLAYBACK PATH ─────────────────────────────────────────────────
+// Gapless PCM chunk scheduling for the ElevenLabs WebSocket pipeline. Audio
+// arrives as base64 16-bit mono PCM chunks with viseme frames already in
+// absolute stream time; each chunk becomes an AudioBuffer scheduled at
+// nextStartTime so playback is seamless. The existing LipSyncController works
+// unchanged: frames are appended in order and its clock
+// (ctx.currentTime - audioStartTime) IS the stream position.
+let streamSession = null; // { id, sampleRate, nextStartTime, sources, pending, endRequested, underruns, started }
+
+function _stopStreaming() {
+  if (!streamSession) return;
+  for (const src of streamSession.sources) {
+    src.onended = null;
+    try { src.stop(); } catch(e) {}
+  }
+  streamSession = null;
+}
+
+window.startStreamingPlayback = function(sessionId, sampleRate, emotion) {
+  _stopCurrent();
+  visemeMode     = true;
+  visemeTimeline = { frames: [], totalDuration: 0 };
+  speechEmotion  = emotion || 'neutral';
+  lipSyncActive  = true;
+  streamSession = {
+    id: sessionId,
+    sampleRate: sampleRate || 22050,
+    nextStartTime: 0,
+    sources: [],
+    pending: 0,        // scheduled sources that haven't ended yet
+    endRequested: false,
+    underruns: 0,
+    started: false,
+  };
+};
+
+window.appendAudioChunk = function(sessionId, base64Pcm, visemeFrames) {
+  const s = streamSession;
+  if (!s || s.id !== sessionId) return; // stale chunk after stop/new session
+  try {
+    // Frames may arrive without audio (e.g. the flushed trailing word whose
+    // sound was in an earlier chunk) — append them and skip scheduling.
+    if (!base64Pcm) {
+      if (visemeFrames && visemeFrames.length && visemeTimeline) {
+        Array.prototype.push.apply(visemeTimeline.frames, visemeFrames);
+        const last = visemeFrames[visemeFrames.length - 1];
+        visemeTimeline.totalDuration = Math.max(visemeTimeline.totalDuration, last.time + last.duration);
+      }
+      return;
+    }
+
+    _ensureAudioCtx();
+    if (lipSyncCtx.state === 'suspended') lipSyncCtx.resume().catch(function() {});
+
+    // base64 → Int16 PCM → Float32 AudioBuffer
+    const bin = atob(base64Pcm);
+    const n   = bin.length >> 1;
+    if (n === 0) return;
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const pcm = new Int16Array(bytes.buffer, 0, n);
+    const buffer = lipSyncCtx.createBuffer(1, n, s.sampleRate);
+    const ch = buffer.getChannelData(0);
+    for (let i = 0; i < n; i++) ch[i] = pcm[i] / 32768;
+
+    if (!s.started) {
+      // First chunk anchors the stream clock — same 10ms look-ahead semantics
+      // as the one-shot path.
+      audioStartTime  = lipSyncCtx.currentTime + 0.010;
+      s.nextStartTime = audioStartTime;
+      s.started = true;
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioStart' }));
+      }
+    } else if (s.nextStartTime < lipSyncCtx.currentTime) {
+      // Underrun (network stall): restart slightly ahead and shift the viseme
+      // clock anchor by the gap so frames stay aligned with the audio.
+      const newStart = lipSyncCtx.currentTime + 0.02;
+      const shift    = newStart - s.nextStartTime;
+      audioStartTime += shift;
+      s.nextStartTime = newStart;
+      s.underruns++;
+    }
+
+    const src = lipSyncCtx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(lipSyncCtx.destination);
+    src.onended = function() {
+      s.pending--;
+      const idx = s.sources.indexOf(src);
+      if (idx >= 0) s.sources.splice(idx, 1);
+      if (s.endRequested && s.pending === 0 && streamSession === s) {
+        const underruns = s.underruns;
+        streamSession = null;
+        _stopCurrent();
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioEnd', underruns: underruns }));
+        }
+      }
+    };
+    src.start(s.nextStartTime);
+    s.nextStartTime += buffer.duration;
+    s.sources.push(src);
+    s.pending++;
+
+    if (visemeFrames && visemeFrames.length && visemeTimeline) {
+      Array.prototype.push.apply(visemeTimeline.frames, visemeFrames);
+      const last = visemeFrames[visemeFrames.length - 1];
+      visemeTimeline.totalDuration = Math.max(visemeTimeline.totalDuration, last.time + last.duration);
+    }
+  } catch(err) {
+    _stopStreaming();
+    _onAudioEnded(String(err));
+  }
+};
+
+window.endStreamingPlayback = function(sessionId) {
+  const s = streamSession;
+  if (!s || s.id !== sessionId) return;
+  s.endRequested = true;
+  if (s.pending === 0) {
+    // Nothing scheduled (empty stream) or everything already finished.
+    const underruns = s.underruns;
+    const started = s.started;
+    streamSession = null;
+    _stopCurrent();
+    if (window.ReactNativeWebView) {
+      if (!started) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioStart' }));
+      }
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'audioEnd', underruns: underruns }));
+    }
+  }
+};
+
+// Per-sentence emotion updates during a stream (subtitle-synced from RN).
+window.setSpeechEmotion = function(emotion) {
+  speechEmotion = emotion || 'neutral';
+};
+
 // ─── STOP ────────────────────────────────────────────────────────────────────
 window.stopAudioLipSync = function() {
+  _stopStreaming();
   _stopCurrent();
 };
 
@@ -2066,11 +2218,45 @@ export const AvatarVRM = forwardRef(({
       }
     }),
     stopAudio: () => {
+      // Resolve any in-flight playAudio/endStreamingPlayback promise so the
+      // caller's await doesn't dangle forever after a barge-in.
+      const resolve = audioEndResolveRef.current;
       audioEndResolveRef.current = null;
       audioStartCbRef.current = null;
       webRef.current?.injectJavaScript(`window.stopAudioLipSync();true;`);
+      resolve?.();
     },
     setOnAudioStart: (cb) => { audioStartCbRef.current = cb; },
+
+    // ── Streaming playback (ElevenLabs WebSocket pipeline) ──────────────────
+    // Feature-detected by the hook via this flag; UnityAvatarBridge leaves it
+    // undefined so Unity profiles keep the whole-segment path.
+    supportsStreamingAudio: true,
+    /** Begin a streaming session. Chunks follow via appendAudioChunk. */
+    startStreamingPlayback: (sessionId, sampleRate, emotion) => {
+      webRef.current?.injectJavaScript(
+        `window.startStreamingPlayback(${JSON.stringify(sessionId)}, ${JSON.stringify(sampleRate)}, ${JSON.stringify(emotion || 'neutral')});true;`
+      );
+    },
+    /** Append a PCM chunk (base64) + viseme frames in absolute stream time. */
+    appendAudioChunk: (sessionId, base64Pcm, visemeFrames) => {
+      webRef.current?.injectJavaScript(
+        `window.appendAudioChunk(${JSON.stringify(sessionId)}, ${JSON.stringify(base64Pcm)}, ${JSON.stringify(visemeFrames ?? [])});true;`
+      );
+    },
+    /** No more chunks: resolves when the last scheduled chunk finishes. */
+    endStreamingPlayback: (sessionId) => new Promise(resolve => {
+      audioEndResolveRef.current = resolve;
+      webRef.current?.injectJavaScript(
+        `window.endStreamingPlayback(${JSON.stringify(sessionId)});true;`
+      );
+    }),
+    /** Update the speaking emotion mid-stream (per-sentence, subtitle-synced). */
+    setSpeechEmotion: (emotion) => {
+      webRef.current?.injectJavaScript(
+        `window.setSpeechEmotion(${JSON.stringify(emotion || 'neutral')});true;`
+      );
+    },
     /**
      * Toggle the developer viseme overlay inside the WebView.
      * Shows current active viseme, per-channel weights, and audio timing.

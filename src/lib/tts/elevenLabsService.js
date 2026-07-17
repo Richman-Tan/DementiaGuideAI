@@ -1,8 +1,10 @@
 import * as SecureStore from 'expo-secure-store';
 import { createVisemeTimeline } from '@/lib/lipsync/createVisemeTimeline';
+import { timeoutSignal } from '@/lib/net/withTimeout';
 
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io';
 const SECURE_KEY_NAME = 'elevenlabs_api_key';
+const REQUEST_TIMEOUT_MS = 10000; // whole-sentence synthesis; a hung call stalls the play queue
 
 // eleven_turbo_v2_5 is the low-latency model — best choice for real-time conversation.
 // Swap to 'eleven_multilingual_v2' for higher quality at the cost of ~300 ms extra latency.
@@ -68,27 +70,34 @@ class ElevenLabsService {
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new ElevenLabsAuthError('No ElevenLabs API key configured');
 
-    const resp = await fetch(
-      `${ELEVENLABS_BASE}/v1/text-to-speech/${encodeURIComponent(voiceId)}/with-timestamps`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: DEFAULT_MODEL_ID,
-          output_format: 'mp3_44100_64',
-          voice_settings: {
-            stability: 0.40,
-            similarity_boost: 0.75,
-            style: 0.20,
-            speed: speechRate,
+    const t = timeoutSignal(REQUEST_TIMEOUT_MS);
+    let resp;
+    try {
+      resp = await fetch(
+        `${ELEVENLABS_BASE}/v1/text-to-speech/${encodeURIComponent(voiceId)}/with-timestamps`,
+        {
+          method: 'POST',
+          headers: {
+            'xi-api-key': apiKey,
+            'Content-Type': 'application/json',
           },
-        }),
-      }
-    );
+          body: JSON.stringify({
+            text,
+            model_id: DEFAULT_MODEL_ID,
+            output_format: 'mp3_44100_64',
+            voice_settings: {
+              stability: 0.40,
+              similarity_boost: 0.75,
+              style: 0.20,
+              speed: speechRate,
+            },
+          }),
+          signal: t.signal,
+        }
+      );
+    } finally {
+      t.cancel();
+    }
 
     if (resp.status === 401) throw new ElevenLabsAuthError('Invalid ElevenLabs API key');
     if (resp.status === 429) throw new ElevenLabsRateLimitError('ElevenLabs rate limit reached');

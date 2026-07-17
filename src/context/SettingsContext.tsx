@@ -60,6 +60,12 @@ export interface Settings {
 
   // Accessibility
   reducedMotion: boolean;
+
+  // Voice pipeline
+  /** Hands-free conversation: auto-detect end of speech instead of tap-to-stop. */
+  handsFreeMode: boolean;
+  /** Streaming voice pipeline (faster responses); off = classic per-sentence path. */
+  fastVoiceMode: boolean;
 }
 
 const DEFAULTS: Settings = {
@@ -80,13 +86,16 @@ const DEFAULTS: Settings = {
   responseStyle: 'balanced',
   jargonMode: 'explain',
   communicationMode: 'both',
-  speechRate: 0.78,
+  speechRate: 0.9,
 
   selectedAvatarId: 'aria_sdk',
 
   supportLevel: 'comfortable',
 
   reducedMotion: false,
+
+  handsFreeMode: false,
+  fastVoiceMode: true,
 };
 
 export interface SettingsContextValue extends Settings {
@@ -117,6 +126,10 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
       .then((raw) => {
         if (raw) {
           const saved = JSON.parse(raw) as Partial<Settings>;
+          // Migration: 0.78 was the old hardcoded default and was never a
+          // selectable option (UI offers 0.82/1.0/1.15), so a stored 0.78 is
+          // the stale default, not a user choice — let the new default apply.
+          if (saved.speechRate === 0.78) delete saved.speechRate;
           setSettings((prev) => ({ ...prev, ...saved }));
         }
       })
@@ -230,6 +243,9 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     supportLevel: settings.supportLevel,
 
     reducedMotion: settings.reducedMotion,
+
+    handsFreeMode: settings.handsFreeMode,
+    fastVoiceMode: settings.fastVoiceMode,
 
     colors,
     setTextSize,

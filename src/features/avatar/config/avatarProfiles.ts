@@ -158,9 +158,10 @@ export const AVATAR_PROFILES = {
     label: 'CC4',
     description: 'Reallusion CC4 character (Unity)',
     renderer: 'unity',
-    voice: 'en-US-JennyNeural',
-    elevenVoiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella — same Aria persona
-    openaiVoice: 'nova',
+    // The CC4 character is HD_Aaron — male voices across all providers.
+    voice: 'en-US-EricNeural',
+    elevenVoiceId: 'nPczCjzI2devNBz1zQrb', // Brian — warm, mature male
+    openaiVoice: 'onyx',
     // CC4 uses its own native blendshape set (see blendshapeTranslator.js), not
     // ARKit. visemeWeights is null so blendshapeTranslator uses its built-in
     // CC4_DEFAULT_WEIGHT scalar.

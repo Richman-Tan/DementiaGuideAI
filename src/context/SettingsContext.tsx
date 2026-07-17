@@ -86,7 +86,7 @@ const DEFAULTS: Settings = {
   responseStyle: 'balanced',
   jargonMode: 'explain',
   communicationMode: 'both',
-  speechRate: 0.78,
+  speechRate: 0.9,
 
   selectedAvatarId: 'aria_sdk',
 
@@ -126,6 +126,10 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
       .then((raw) => {
         if (raw) {
           const saved = JSON.parse(raw) as Partial<Settings>;
+          // Migration: 0.78 was the old hardcoded default and was never a
+          // selectable option (UI offers 0.82/1.0/1.15), so a stored 0.78 is
+          // the stale default, not a user choice — let the new default apply.
+          if (saved.speechRate === 0.78) delete saved.speechRate;
           setSettings((prev) => ({ ...prev, ...saved }));
         }
       })

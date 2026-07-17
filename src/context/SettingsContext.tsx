@@ -60,6 +60,12 @@ export interface Settings {
 
   // Accessibility
   reducedMotion: boolean;
+
+  // Voice pipeline
+  /** Hands-free conversation: auto-detect end of speech instead of tap-to-stop. */
+  handsFreeMode: boolean;
+  /** Streaming voice pipeline (faster responses); off = classic per-sentence path. */
+  fastVoiceMode: boolean;
 }
 
 const DEFAULTS: Settings = {
@@ -87,6 +93,9 @@ const DEFAULTS: Settings = {
   supportLevel: 'comfortable',
 
   reducedMotion: false,
+
+  handsFreeMode: false,
+  fastVoiceMode: true,
 };
 
 export interface SettingsContextValue extends Settings {
@@ -230,6 +239,9 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     supportLevel: settings.supportLevel,
 
     reducedMotion: settings.reducedMotion,
+
+    handsFreeMode: settings.handsFreeMode,
+    fastVoiceMode: settings.fastVoiceMode,
 
     colors,
     setTextSize,

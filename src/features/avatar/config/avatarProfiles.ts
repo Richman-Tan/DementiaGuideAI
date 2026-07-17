@@ -39,6 +39,13 @@ export interface AvatarProfile {
   /** Static require() key resolved in VoiceScreen; absent for Unity renderers. */
   modelKey?: string;
   voice: string;
+  /**
+   * Provider-specific voices. `voice` above is the Azure voice name; ElevenLabs
+   * and OpenAI reject Azure names, so without these fields ttsService falls
+   * back to its hardcoded defaults and every avatar speaks with the same voice.
+   */
+  elevenVoiceId?: string;
+  openaiVoice?: string;
   /** Per-viseme peak weights, or null to use the renderer's built-in default. */
   visemeWeights: Record<string, number> | null;
 }
@@ -52,6 +59,8 @@ export const AVATAR_PROFILES = {
     renderer: 'threejs',
     modelKey: 'sdk',
     voice: 'en-US-JennyNeural',
+    elevenVoiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella — warm, clear female
+    openaiVoice: 'nova',
     //
     // AvatarSDK MetaPerson — blobby/blended shapes, forgiving of heuristic errors.
     // Reduce if tongue protrudes.
@@ -83,6 +92,8 @@ export const AVATAR_PROFILES = {
     renderer: 'threejs',
     modelKey: 'rpm',
     voice: 'en-US-AriaNeural',
+    elevenVoiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella — same Aria persona as aria_sdk
+    openaiVoice: 'nova',
     //
     // RPM Oculus visemes — highly distinct shapes designed for audio-driven
     // phoneme detection. Low weights prevent heuristic errors looking jarring.
@@ -114,6 +125,8 @@ export const AVATAR_PROFILES = {
     renderer: 'threejs',
     modelKey: 'metahuman',
     voice: 'en-US-EricNeural',
+    elevenVoiceId: 'nPczCjzI2devNBz1zQrb', // Brian — warm, mature male
+    openaiVoice: 'onyx',
     //
     // AvatarSDK MetaPerson export — same model type as aria_sdk.
     // Viseme shapes (aa, ih, ou, oh, PP, FF…) are direct morph targets.
@@ -146,6 +159,8 @@ export const AVATAR_PROFILES = {
     description: 'Reallusion CC4 character (Unity)',
     renderer: 'unity',
     voice: 'en-US-JennyNeural',
+    elevenVoiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella — same Aria persona
+    openaiVoice: 'nova',
     // CC4 uses its own native blendshape set (see blendshapeTranslator.js), not
     // ARKit. visemeWeights is null so blendshapeTranslator uses its built-in
     // CC4_DEFAULT_WEIGHT scalar.

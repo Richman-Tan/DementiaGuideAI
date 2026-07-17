@@ -256,7 +256,7 @@ export const ProfileScreen = ({ navigation }) => {
     textSize, textScale, setTextSize,
     hapticFeedback, audioEnabled, avatarEnabled, autoPlayResponses,
     updateSetting, toggleDarkMode, triggerHaptic,
-    darkMode, highContrast, subtitlesEnabled, conciseMode, colors,
+    darkMode, highContrast, subtitlesEnabled, conciseMode, handsFreeMode, fastVoiceMode, colors,
   } = useSettings();
   const [apiKey, setApiKey]               = useState(null);
   const [elevenLabsKey, setElevenLabsKey] = useState(null);
@@ -499,6 +499,26 @@ export const ProfileScreen = ({ navigation }) => {
               sublabel="Shorter answers — no filler words or jargon"
               value={conciseMode}
               onToggle={(v) => updateSetting('conciseMode', v)}
+              isLast={false}
+            />
+
+            <ToggleRow
+              icon="hand-back-right-outline"
+              iconColor={Colors.primary}
+              label="Hands-free Conversation"
+              sublabel="Aria notices when you finish speaking — no need to tap stop"
+              value={handsFreeMode}
+              onToggle={(v) => { triggerHaptic('light'); updateSetting('handsFreeMode', v); }}
+              isLast={false}
+            />
+
+            <ToggleRow
+              icon="run-fast"
+              iconColor={Colors.accent}
+              label="Faster Voice Responses"
+              sublabel="Aria starts speaking sooner — turn off if audio sounds choppy"
+              value={fastVoiceMode}
+              onToggle={(v) => { triggerHaptic('light'); updateSetting('fastVoiceMode', v); }}
               isLast
             />
           </Section>

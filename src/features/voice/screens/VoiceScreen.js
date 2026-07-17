@@ -25,6 +25,7 @@ import { Colors } from '@/theme/colors';
 import { Typography } from '@/theme/typography';
 import { useAvatarConversation, VoiceState } from '@/features/voice/hooks/useAvatarConversation';
 import { useSettings } from '@/context/SettingsContext';
+import { prewarmVoicePipeline } from '@/lib/voice/prewarm';
 
 import { AVATAR_PROFILES, AVATAR_PROFILE_LIST, DEFAULT_AVATAR_ID } from '@/features/avatar/config/avatarProfiles';
 
@@ -82,6 +83,12 @@ export const VoiceScreen = ({ navigation }) => {
       onClosed?.();
     });
   }, [menuAnim]);
+
+  // Warm API connections + credential caches while the user is still looking
+  // at the screen, so the first voice turn doesn't pay TLS/SecureStore costs.
+  useEffect(() => {
+    prewarmVoicePipeline();
+  }, []);
 
   // Load the avatar GLB for the selected profile + the backdrop, converting both to
   // base64 data URIs so the WebView GLTFLoader can read them without XHR size limits.

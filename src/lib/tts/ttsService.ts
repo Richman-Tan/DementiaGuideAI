@@ -65,15 +65,16 @@ export async function tts(text: string, options: TtsOptions = {}): Promise<TtsRe
 
   const hasElevenLabs = await elevenLabsService.hasApiKey();
   if (hasElevenLabs) {
-    // Avatar profiles carry Azure voice names (e.g. en-US-EricNeural), which are NOT
-    // valid ElevenLabs voice IDs. Only forward a voice that looks like an ElevenLabs
-    // ID (16+ alphanumerics); otherwise use a warm, mature male voice (Brian) that
-    // matches the Aaron avatar, instead of 404-ing or landing on the female default.
+    // Prefer the profile's explicit ElevenLabs voice ID. options.voice carries the
+    // Azure voice name (e.g. en-US-EricNeural), which is NOT a valid ElevenLabs ID —
+    // only forward it if it looks like one (16+ alphanumerics); otherwise fall back
+    // to a warm, mature male voice (Brian) instead of 404-ing.
     const WARM_MALE_ELEVEN_VOICE = 'nPczCjzI2devNBz1zQrb'; // ElevenLabs "Brian"
     const elevenVoice =
-      options.voice && /^[A-Za-z0-9]{16,}$/.test(options.voice)
+      options.elevenVoiceId ??
+      (options.voice && /^[A-Za-z0-9]{16,}$/.test(options.voice)
         ? options.voice
-        : WARM_MALE_ELEVEN_VOICE;
+        : WARM_MALE_ELEVEN_VOICE);
     const t0 = Date.now();
     try {
       const { audioBase64, visemeTimeline } = await elevenLabsService.ttsWithAlignment(
@@ -93,14 +94,15 @@ export async function tts(text: string, options: TtsOptions = {}): Promise<TtsRe
     }
   }
 
-  // OpenAI TTS only accepts its own voice enum. options.voice may be an Azure
-  // (en-US-EricNeural) or ElevenLabs (voice-id) name from the avatar profile, which
-  // OpenAI rejects — so whitelist it and fall back to a valid voice (onyx = male,
-  // matching the current avatar) rather than passing an incompatible name through.
+  // OpenAI TTS only accepts its own voice enum. Prefer the profile's explicit
+  // openaiVoice; options.voice may be an Azure (en-US-EricNeural) or ElevenLabs
+  // (voice-id) name, which OpenAI rejects — whitelist and fall back to onyx.
   const OPENAI_VOICES = new Set([
     'nova', 'shimmer', 'echo', 'onyx', 'fable', 'alloy', 'ash', 'sage', 'coral',
   ]);
-  const openaiVoice = options.voice && OPENAI_VOICES.has(options.voice) ? options.voice : 'onyx';
+  const requestedOpenaiVoice = options.openaiVoice ?? options.voice;
+  const openaiVoice =
+    requestedOpenaiVoice && OPENAI_VOICES.has(requestedOpenaiVoice) ? requestedOpenaiVoice : 'onyx';
   const t0 = Date.now();
   const dataUri = await openaiService.tts(text, openaiVoice);
   // OpenAI returns no alignment, so there is NO lip-sync on this path — the WebView

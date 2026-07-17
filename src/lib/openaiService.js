@@ -16,11 +16,21 @@ import { buildSystemPrompt, buildUserContent } from './rag/prompt';
 import { capBySourceFamily } from './rag/retrieval';
 import { extractCitations, createMarkerStripper } from './rag/citations';
 import { recordRetrieval } from './ragTelemetry';
+import { timeoutSignal } from './net/withTimeout';
 
 const SECURE_KEY = 'openai_api_key';
 const OPENAI_BASE = 'https://api.openai.com/v1';
 const EMBED_CACHE_MAX = 20;   // LRU of recent query embeddings (repeat/retry queries skip a network call)
 const MIN_REQUEST_INTERVAL_MS = 750; // client-side pacing between chat requests
+
+// Hot-path timeouts. A stalled request without one hangs the whole voice turn.
+// Embedding/search timeouts degrade to a zero-chunk answer (the v2 prompt
+// handles missing passages); the others surface as user-visible errors.
+const EMBED_TIMEOUT_MS = 5000;
+const SEARCH_TIMEOUT_MS = 4000;
+const WHISPER_TIMEOUT_MS = 15000;
+const LLM_TOTAL_TIMEOUT_MS = 60000;
+const LLM_TTFB_TIMEOUT_MS = 12000;
 
 class OpenAIAuthError extends Error {
   constructor(msg) { super(msg); this.name = 'OpenAIAuthError'; }
@@ -76,16 +86,23 @@ class OpenAIService {
 
   // ─── Raw OpenAI Calls ───────────────────────────────────────────────────────
 
-  async _callOpenAI(endpoint, body, apiKey) {
+  async _callOpenAI(endpoint, body, apiKey, { timeoutMs = null } = {}) {
     const key = apiKey ?? (await this.getApiKey());
-    const resp = await fetch(`${OPENAI_BASE}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${key}`,
-      },
-      body: JSON.stringify(body),
-    });
+    const t = timeoutMs ? timeoutSignal(timeoutMs) : null;
+    let resp;
+    try {
+      resp = await fetch(`${OPENAI_BASE}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`,
+        },
+        body: JSON.stringify(body),
+        ...(t ? { signal: t.signal } : {}),
+      });
+    } finally {
+      t?.cancel();
+    }
 
     if (resp.status === 401) throw new OpenAIAuthError('Invalid API key');
     if (resp.status === 429) throw new OpenAIRateLimitError('Rate limit reached');
@@ -109,7 +126,7 @@ class OpenAIService {
     const data = await this._callOpenAI('/embeddings', {
       model: EMBEDDING_MODEL,
       input: text,
-    });
+    }, null, { timeoutMs: EMBED_TIMEOUT_MS });
     const embedding = data.data[0].embedding;
     this._embedCache.set(key, embedding);
     if (this._embedCache.size > EMBED_CACHE_MAX) {
@@ -122,12 +139,18 @@ class OpenAIService {
 
   async search(query, topK = TOP_K) {
     const queryEmbedding = await this._embedQuery(query);
-    const { data, error } = await supabase.rpc('match_chunks', {
-      query_embedding: queryEmbedding,
-      query_text: query,
-      match_count: topK * RETRIEVAL_OVERSAMPLE,
-      min_similarity: MIN_SIMILARITY,
-    });
+    const t = timeoutSignal(SEARCH_TIMEOUT_MS);
+    let data, error;
+    try {
+      ({ data, error } = await supabase.rpc('match_chunks', {
+        query_embedding: queryEmbedding,
+        query_text: query,
+        match_count: topK * RETRIEVAL_OVERSAMPLE,
+        min_similarity: MIN_SIMILARITY,
+      }).abortSignal(t.signal));
+    } finally {
+      t.cancel();
+    }
     if (error) throw new Error(`Supabase search error: ${error.message}`);
     return capBySourceFamily(data ?? [], topK, MAX_PER_SOURCE_FAMILY);
   }
@@ -138,15 +161,43 @@ class OpenAIService {
 
   async *chatStream(userMessage, conversationHistory = [], timingCbs = null,
                     { conciseMode = false, responseStyle = 'balanced', jargonMode = 'explain',
-                      ariaPersonality = 'warm', isCaregiversSetup = false } = {}) {
+                      ariaPersonality = 'warm', isCaregiversSetup = false,
+                      skipThrottle = false, preRetrievedChunks = null } = {}) {
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new OpenAIAuthError('No API key configured');
 
-    await this._throttle();
+    // The voice pipeline is already serialized by its state machine, so pacing
+    // there is pure dead time on the hot path. Text chat keeps the throttle.
+    if (skipThrottle) {
+      this._lastRequestAt = Date.now();
+    } else {
+      await this._throttle();
+    }
+
+    // Retrieval. preRetrievedChunks (speculative retrieval fired during live
+    // STT) skips the search entirely — the chunks flow into the identical
+    // prompt construction below, so citations/safety behaviour is unchanged.
+    // Retrieval failure (timeout, Supabase outage) degrades to a zero-chunk
+    // answer instead of killing the turn — buildUserContent sends the bare
+    // question and the v2 prompt's no-passage rules take over.
     const ragStart = Date.now();
-    const chunks = await this.search(userMessage, TOP_K);
+    let chunks = [];
+    if (preRetrievedChunks) {
+      chunks = preRetrievedChunks;
+    } else {
+      try {
+        chunks = await this.search(userMessage, TOP_K);
+      } catch (err) {
+        console.warn(`[RAG] retrieval failed (${err.message ?? err}) — answering without passages`);
+      }
+    }
     timingCbs?.onRagDone?.();
-    recordRetrieval({ queryLength: userMessage.length, retrieved: chunks, ragMs: Date.now() - ragStart, path: 'voice' });
+    recordRetrieval({
+      queryLength: userMessage.length,
+      retrieved: chunks,
+      ragMs: Date.now() - ragStart,
+      path: preRetrievedChunks ? 'voice-speculative' : 'voice',
+    });
     const userContent = buildUserContent(userMessage, chunks);
 
     const recentHistory = conversationHistory.slice(-MAX_HISTORY).map(m => ({
@@ -188,7 +239,25 @@ class OpenAIService {
 
     const wake = () => { const n = notify; notify = null; n?.(); };
 
+    // Overall cap plus a time-to-first-byte watchdog: mobile radios can hold a
+    // dead socket open for minutes; 12s with zero bytes means the turn is lost.
+    xhr.timeout = LLM_TOTAL_TIMEOUT_MS;
+    xhr.ontimeout = () => {
+      streamError = streamError ?? new Error('OpenAI stream timed out');
+      finished = true;
+      wake();
+    };
+    let ttfbTimer = setTimeout(() => {
+      ttfbTimer = null;
+      streamError = new Error('OpenAI stream timed out waiting for first response');
+      finished = true;
+      try { xhr.abort(); } catch {}
+      wake();
+    }, LLM_TTFB_TIMEOUT_MS);
+    const clearTtfb = () => { if (ttfbTimer) { clearTimeout(ttfbTimer); ttfbTimer = null; } };
+
     xhr.onprogress = () => {
+      clearTtfb();
       const raw = xhr.responseText.slice(cursor);
       cursor = xhr.responseText.length;
       for (const line of raw.split('\n')) {
@@ -205,6 +274,7 @@ class OpenAIService {
     };
 
     xhr.onload = () => {
+      clearTtfb();
       if (xhr.status === 401) streamError = new OpenAIAuthError('Invalid API key');
       else if (xhr.status === 429) streamError = new OpenAIRateLimitError('Rate limit reached');
       else if (xhr.status >= 400) streamError = new Error(`OpenAI error: HTTP ${xhr.status}`);
@@ -213,7 +283,8 @@ class OpenAIService {
     };
 
     xhr.onerror = () => {
-      streamError = new Error('XHR stream failed');
+      clearTtfb();
+      streamError = streamError ?? new Error('XHR stream failed');
       finished = true;
       wake();
     };
@@ -293,11 +364,22 @@ class OpenAIService {
     formData.append('model', 'whisper-1');
     formData.append('language', 'en');
 
-    const resp = await fetch(`${OPENAI_BASE}/audio/transcriptions`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}` },
-      body: formData,
-    });
+    const t = timeoutSignal(WHISPER_TIMEOUT_MS);
+    let resp;
+    try {
+      resp = await fetch(`${OPENAI_BASE}/audio/transcriptions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body: formData,
+        signal: t.signal,
+      });
+    } catch (err) {
+      throw /abort/i.test(err?.message ?? '') || err?.name === 'AbortError'
+        ? new Error('Transcription timed out — please check your connection and try again')
+        : err;
+    } finally {
+      t.cancel();
+    }
 
     if (resp.status === 401) throw new OpenAIAuthError('Invalid API key');
     if (resp.status === 429) throw new OpenAIRateLimitError('Rate limit reached');

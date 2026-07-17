@@ -300,13 +300,46 @@ node scripts/ingest.mjs --source <url> --category <slug> --org <name> --dry-run
 
 Valid categories: `caregiving` · `clinical` · `communication` · `prevention` · `best-practices` · `home-safety` · `well-being`
 
+`scripts/reingest-isupport.mjs` re-ingests the iSupport manuals from `src/documents/` (not tracked in git — place the NZ and WHO original PDFs there manually before running it).
+
 ### Testing RAG output
 
 ```bash
+# Keyword/assertion suite (mustInclude checks + disclaimer/citation guards)
 npm run test:answers
+
+# Reference-answer suite (semantic similarity against 3-5 accepted answers per question)
+npm run test:answers:reference
+
+# Hybrid suite (semantic similarity + required safety keywords)
+npm run test:answers:hybrid
 ```
 
-Runs a set of sample questions through the full pipeline and prints each response alongside the retrieved chunks and their similarity scores.
+The evaluator supports three modes in `scripts/test-responses.mjs`:
+
+- `keywords` (default): phrase-level guards (`mustIncludeAny` / `mustIncludeAll`) plus disclaimer/helpline/citation checks.
+- `reference`: compares the model response to multiple prewritten correct answers and passes when semantic similarity exceeds the threshold.
+- `hybrid`: requires both semantic similarity and keyword safety guards.
+
+### Comparing OpenAI vs Claude
+
+`scripts/test-responses-compare.mjs` runs the same retrieved context and system prompt through both `gpt-4o-mini` (OpenAI) and Claude, then scores both against the same prewritten reference answers. Retrieval and evaluation are held constant so the comparison isolates generation quality between the two providers.
+
+```bash
+# Requires ANTHROPIC_API_KEY in .env (see .env.example) alongside the existing OpenAI/Supabase keys
+npm run test:compare
+
+# Run one case with full output from both models
+node scripts/test-responses-compare.mjs --case sundowning --verbose
+
+# Use a different Claude model (default: claude-opus-4-8)
+node scripts/test-responses-compare.mjs --claude-model claude-sonnet-5
+
+# Save the run to history for later reporting
+npm run test:compare -- --log-history --label "opus-4-8 vs gpt-4o-mini"
+```
+
+Comparison runs are appended to the same `logs/test-history.ndjson` file with `mode: "compare"`, so `npm run test:history` and `scripts/test-history.mjs export` work unchanged — each question appears as two logged cases (`<id>-openai` and `<id>-claude`) with `provider`, `bestSimilarity`, and `latencyMs` fields for side-by-side comparison.
 
 Useful commands:
 
@@ -317,6 +350,12 @@ node scripts/test-responses.mjs
 # Run one case with full output
 node scripts/test-responses.mjs --case sundowning --verbose
 
+# Run one reference case with full output
+node scripts/test-responses.mjs --mode reference --case ref-sundowning --verbose
+
+# Run hybrid checks with a stricter semantic threshold
+node scripts/test-responses.mjs --mode hybrid --reference-threshold 0.82
+
 # Force the helpline number check for all cases
 node scripts/test-responses.mjs --helpline-required
 ```
@@ -326,6 +365,54 @@ If you want to use npm and still pass flags through:
 ```bash
 npm run test:answers -- --case sundowning --verbose
 ```
+
+### Logging and viewing test history
+
+You can persist test runs to an append-only NDJSON log (one JSON object per run):
+
+```bash
+# Save a reference run to the default history file
+node scripts/test-responses.mjs --mode reference --log-history
+
+# Save with a run label
+node scripts/test-responses.mjs --mode reference --log-history --label "after reingest 2026-06-23"
+
+# Save to a custom file
+node scripts/test-responses.mjs --mode hybrid --log-history --history-file logs/hybrid-history.ndjson
+
+# Include full AI responses in the history record
+node scripts/test-responses.mjs --mode reference --log-history --log-responses
+```
+
+Default history file path:
+
+```text
+logs/test-history.ndjson
+```
+
+Quick ways to view history:
+
+```bash
+# Summary of recent runs
+npm run test:history
+
+# Full latest run JSON
+npm run test:history:latest
+
+# Full latest run in readable case-by-case format
+npm run test:history:full
+
+# Failed/error cases from latest run
+npm run test:history:failures
+
+# Show last 20 summary rows
+node scripts/test-history.mjs summary --limit 20
+
+# Use a custom history file
+node scripts/test-history.mjs summary --file logs/hybrid-history.ndjson
+```
+
+Tip: commit the script and README changes, but usually keep `logs/` out of git via `.gitignore` if you want local-only test history.
 
 ---
 

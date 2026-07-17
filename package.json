@@ -8,10 +8,18 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test:answers": "node scripts/test-responses.mjs",
+    "test:answers:reference": "node scripts/test-responses.mjs --mode reference",
+    "test:answers:hybrid": "node scripts/test-responses.mjs --mode hybrid",
+    "test:compare": "node scripts/test-responses-compare.mjs",
+    "test:history": "node scripts/test-history.mjs summary",
+    "test:history:latest": "node scripts/test-history.mjs latest",
+    "test:history:full": "node scripts/test-history.mjs full",
+    "test:history:failures": "node scripts/test-history.mjs failures",
     "ingest:isupport": "node scripts/reingest-isupport.mjs",
     "ingest:isupport:dry": "node scripts/reingest-isupport.mjs --dry-run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "@mozilla/readability": "^0.6.0",
     "@pixiv/three-vrm": "^3.5.2",
     "@react-native-async-storage/async-storage": "2.2.0",

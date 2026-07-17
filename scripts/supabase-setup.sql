@@ -144,8 +144,17 @@ $$;
 --    The service_role key used in the migration script can write.
 alter table knowledge_chunks enable row level security;
 
-create policy "Public read access"
-  on knowledge_chunks for select
-  using (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename  = 'knowledge_chunks'
+      and policyname = 'Public read access'
+  ) then
+    execute 'create policy "Public read access" on knowledge_chunks for select using (true)';
+  end if;
+end
+$$;
 
 -- No insert/update/delete policy for anon — only service_role (bypasses RLS) can write.

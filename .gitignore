@@ -40,3 +40,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# local test run output
+logs/
+
+# source PDFs used by scripts/reingest-isupport.mjs — place manually, not tracked
+src/documents/

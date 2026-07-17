@@ -64,6 +64,7 @@ const DOCUMENTS = [
   {
     label: 'iSupport WHO (original)',
     file: path.join(DOCS_DIR, 'WHO original iSupport.pdf'),
+    url: 'http://www.who.int/iris/bitstream/handle/10665/324794/9789241515863-eng.pdf',
     prefix: 'isupport_who',
     org: 'World Health Organization',
     country: 'global',
@@ -125,6 +126,7 @@ function runIngest(doc) {
   const args = [
     ingestScript,
     '--source', doc.file,
+    ...(doc.url ? ['--url', doc.url] : []),
     '--category', 'caregiving',
     '--org', doc.org,
     '--prefix', doc.prefix,

@@ -184,20 +184,33 @@ const SECTION_MARKERS = [
   { regex: /^practice exercise\b[:\s-]*/i, type: 'activity' },
 ];
 
+// In the NZ edition of this manual, a real module-divider page and a
+// running page footer both extract as "MODULE" + a page number, often
+// split across separate lines — the two are textually indistinguishable,
+// so matching on "Module N" there causes more false headings (e.g. from
+// wrapped mid-sentence references like "...refer to Module 2.") than it
+// resolves. There the module number is derived from section numbering
+// resets instead (see currentModuleNum below). The WHO original edition
+// prints "Module N. Title" cleanly and reliably, so it's safe to match
+// there. "Lesson" is the WHO edition's name for what NZ calls "Section".
 const HEADING_MARKERS = [
-  /^module\s+\d+\b/i,
+  ...(documentId === 'isupport-nz' ? [] : [/^module\s+\d+\b/i]),
   /^section\s+\d+\b/i,
+  /^lesson\s+\d+\b/i,
   /^session\s+\d+\b/i,
   /^chapter\s+\d+\b/i,
   /^unit\s+\d+\b/i,
 ];
 
-// Extracts module/section number tags from a heading line, e.g. "Module 3" → ["module:3"]
+// Extracts a section number tag from a heading line, e.g. "Section 3" → ["section:3"]
 function extractStructuralTags(headingLine) {
   const tags = [];
   const moduleMatch = headingLine.match(/^module\s+(\d+)\b/i);
   if (moduleMatch) tags.push(`module:${moduleMatch[1]}`);
-  const sectionMatch = headingLine.match(/^section\s+(\d+)\b/i);
+  // "Lesson" (the WHO original edition's term) maps onto the same
+  // section:N tag as "Section" (the NZ edition's term) for schema
+  // consistency — the two editions are otherwise structured identically.
+  const sectionMatch = headingLine.match(/^(?:section|lesson)\s+(\d+)\b/i);
   if (sectionMatch) tags.push(`section:${sectionMatch[1]}`);
   return tags;
 }
@@ -248,18 +261,60 @@ async function extractFromPdf(filePath) {
 
 // ─── Chunking ─────────────────────────────────────────────────────────────────
 
+// Strips PDF running headers/footers before chunking: page markers
+// ("-- 13 of 232 --"), bare page numbers left standalone on their own line,
+// and short lines (e.g. a running "MODULE" footer, page branding like
+// "iSupport for Dementia Aotearoa-NZ") that repeat often enough across the
+// document to be layout furniture rather than unique content. Lines that
+// match a genuine section/heading or activity/keep-in-mind marker are never
+// stripped, even if they recur legitimately throughout the document.
+function stripRunningHeaderFooterNoise(text) {
+  const lines = text.replace(/\r\n/g, '\n').split('\n');
+
+  const pageMarkerRe = /^--+\s*\d+\s+of\s+\d+\s*--+$/i;
+  const barePageNumberRe = /^\d{1,4}$/;
+
+  const isProtected = (line) =>
+    HEADING_MARKERS.some(re => re.test(line)) ||
+    SECTION_MARKERS.some(m => m.regex.test(line));
+
+  const counts = new Map();
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line || isProtected(line)) continue;
+    if (line.split(/\s+/).length > 8) continue;
+    const key = line.toLowerCase();
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const repeatedNoiseLines = new Set(
+    [...counts.entries()].filter(([, count]) => count >= 4).map(([key]) => key)
+  );
+
+  const cleaned = lines.filter(raw => {
+    const line = raw.trim();
+    if (!line) return true; // keep blank lines — they mark paragraph breaks
+    if (isProtected(line)) return true;
+    if (pageMarkerRe.test(line)) return false;
+    if (barePageNumberRe.test(line)) return false;
+    if (repeatedNoiseLines.has(line.toLowerCase())) return false;
+    return true;
+  });
+
+  return cleaned.join('\n');
+}
+
 function normalizeText(text, keepLayout = false) {
+  const denoised = stripRunningHeaderFooterNoise(text);
+
   if (keepLayout) {
-    return text
-      .replace(/\r\n/g, '\n')
+    return denoised
       .replace(/[\t\f\v]+/g, ' ')
       .replace(/[ ]{2,}/g, ' ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
   }
 
-  return text
-    .replace(/\r\n/g, '\n')
+  return denoised
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
@@ -286,7 +341,33 @@ function detectSectionType(line) {
 function isHeadingLine(line) {
   const trimmed = line.trim();
   if (!trimmed) return false;
-  return HEADING_MARKERS.some(re => re.test(trimmed));
+
+  // A genuine heading names exactly one section/module. A cross-reference
+  // sentence that got isolated onto its own wrapped line can name two
+  // ("Section 2. Memory loss and Section 3. Repetitive behaviour...") —
+  // reject those outright.
+  const totalMarkerMentions = HEADING_MARKERS.reduce(
+    (sum, re) => sum + (trimmed.match(new RegExp(re.source.replace(/^\^/, ''), 'gi')) ?? []).length,
+    0
+  );
+  if (totalMarkerMentions > 1) return false;
+
+  for (const re of HEADING_MARKERS) {
+    const match = trimmed.match(re);
+    if (!match) continue;
+
+    // A real heading either ends right after the number ("MODULE 2") or is
+    // followed by punctuation/title-case text ("Section 4. Planning for...").
+    // A table-of-contents blurb continues straight into lowercase prose
+    // ("Module 1 provides an introduction to...") — reject those so they
+    // don't get mistaken for a genuine section/module boundary.
+    const rest = trimmed.slice(match[0].length).replace(/^\s+/, '');
+    if (rest && /^[a-z]/.test(rest)) continue;
+
+    return true;
+  }
+
+  return false;
 }
 
 function splitLongContentByWords(content, maxWords = CHUNK_WORDS) {
@@ -366,8 +447,44 @@ function detectLowValueReason(content, title = '') {
     return 'table-of-contents';
   }
 
-  if (/(©|copyright|all rights reserved|world health organization\s+20\d{2})/i.test(text) && words <= 220) {
+  const copyrightMatch = text.match(/(©|copyright|all rights reserved|world health organization\s+20\d{2})/i);
+  if (copyrightMatch && (words <= 220 || copyrightMatch.index <= 40)) {
+    // Short mentions anywhere, or a match right at the top of the chunk
+    // (i.e. the chunk opens with a licence/copyright notice), are front
+    // matter regardless of how long the rest of the chunk runs on.
     return 'copyright-disclaimer';
+  }
+
+  // Staff/acknowledgement lists are pure front matter, regardless of length.
+  if (/^(who staff|acknowledgements?|administrative support|production team|editorial (team|group|support))\b/i.test(lc)) {
+    return 'acknowledgements';
+  }
+
+  // "About this manual" front matter (preface, how-it's-organized, how to
+  // use it) explains the book itself rather than giving caregiving guidance.
+  if (
+    text.slice(0, 30).match(/\bpreface\b/i) ||
+    /how to use this (i\s*support )?manual/i.test(text) ||
+    /(this |the )?manual is organi[sz]ed into/i.test(text) ||
+    // A generic walkthrough of what an Activity/tip section looks like
+    // ("here you will be asked to...", "here you will find some helpful
+    // hints...") — explains the manual's format, not real guidance.
+    (/here you will be asked/i.test(text) && /here you will find/i.test(text))
+  ) {
+    return 'manual-front-matter';
+  }
+
+  // A dense block of short, unpunctuated lines (module/section name lists,
+  // figure captions) reads as a diagram or index dump, not prose guidance.
+  if (words <= 160) {
+    const contentLines = String(content ?? '').split('\n').map(l => l.trim()).filter(Boolean);
+    if (contentLines.length >= 8) {
+      const shortLineRatio = contentLines.filter(l => l.split(/\s+/).length <= 5).length / contentLines.length;
+      const punctuatedRatio = contentLines.filter(l => /[.!?]$/.test(l)).length / contentLines.length;
+      if (shortLineRatio >= 0.85 && punctuatedRatio <= 0.1) {
+        return 'diagram-or-index-dump';
+      }
+    }
   }
 
   // Very short module-only heading fragments are not useful retrieval units.
@@ -426,10 +543,66 @@ function chunkManualText(text, sourceTitle) {
   let currentLines = [];
   let currentStructuralTags = [];
   let lastModuleTags = [];   // carry module tags into sections that don't reset them
+  let currentModuleNum = 0;  // incremented whenever a section-1 heading is reached with real content
+  let lastAppliedSectionTag = null; // guards against re-counting the same still-active section across repeated flushes
+  // The running header for a given real section isn't always printed
+  // identically — this manual sometimes drops trailing words partway
+  // through a section's own pages ("Section 1. The journey together" vs.
+  // later "Section 1. The journey"). The section *number* stays reliable
+  // even when the trailing title text doesn't, so that's what dedup keys
+  // off; the heading's non-numbered marker types fall back to text.
+  let lastCommittedSectionNum = null;
+  let lastCommittedModuleNum = null; // only set where "Module N" text itself is reliable (see isHeadingLine)
+  let lastAppliedModuleTag = null; // guards against re-counting the same still-active module across repeated flushes
+  const HEADING_DEDUP_PREFIX_LEN = 20;
+
+  // A heading is only tentative until real content is seen behind it — a
+  // module's rapid-fire index of its own section titles is all headings
+  // with nothing in between, and none of those should overwrite
+  // currentHeading (that would break dedup continuity for the *real*
+  // running header re-appearing right after the index).
+  let pendingHeading = null;
+  let pendingStructuralTags = null;
+  const commitPendingHeading = () => {
+    if (pendingHeading === null) return;
+    currentHeading = pendingHeading;
+    currentStructuralTags = pendingStructuralTags;
+    currentType = 'body';
+    const moduleTag = pendingStructuralTags.find(t => t.startsWith('module:'));
+    if (moduleTag) lastCommittedModuleNum = moduleTag.split(':')[1];
+    const sectionTag = pendingStructuralTags.find(t => t.startsWith('section:'));
+    if (sectionTag) lastCommittedSectionNum = sectionTag.split(':')[1];
+    pendingHeading = null;
+    pendingStructuralTags = null;
+  };
 
   const flush = () => {
     const content = currentLines.join('\n').trim();
     if (!content) return;
+
+    // When "Module N" text is reliable in this document (see isHeadingLine),
+    // a real module heading names the module directly — prefer that over
+    // inferring it from section resets. Both paths defer to real content:
+    // each module opens with a rapid-fire index of its own section titles
+    // (all headings back-to-back, no content between them), and those
+    // contentless headings return above and never reach here, so only a
+    // heading that actually has content behind it gets to update the
+    // module — this is what keeps it from racing ahead of the real count.
+    const moduleTagFromHeading = currentStructuralTags.find(t => t.startsWith('module:'));
+    if (moduleTagFromHeading && moduleTagFromHeading !== lastAppliedModuleTag) {
+      currentModuleNum = parseInt(moduleTagFromHeading.split(':')[1], 10);
+      lastModuleTags = [moduleTagFromHeading];
+      lastAppliedModuleTag = moduleTagFromHeading;
+      lastAppliedSectionTag = null; // a new module also resets what counts as "already applied" for its section:1
+    } else if (!moduleTagFromHeading) {
+      const sectionTag = currentStructuralTags.find(t => t.startsWith('section:'));
+      if (sectionTag && sectionTag !== lastAppliedSectionTag) {
+        if (sectionTag === 'section:1') currentModuleNum += 1;
+        if (currentModuleNum > 0) lastModuleTags = [`module:${currentModuleNum}`];
+        lastAppliedSectionTag = sectionTag;
+      }
+    }
+
     const mergedStructuralTags = [...new Set([...lastModuleTags, ...currentStructuralTags])];
     const parentKeyCore = [
       ...mergedStructuralTags.filter(t => t.startsWith('module:') || t.startsWith('section:')),
@@ -457,35 +630,60 @@ function chunkManualText(text, sourceTitle) {
     }
 
     if (isHeadingLine(line)) {
+      const moduleMatch = line.match(/^module\s+(\d+)\b/i);
+      const sectionMatch = line.match(/^(?:section|lesson)\s+(\d+)\b/i);
+      const isRepeatOfCommittedModule = moduleMatch && moduleMatch[1] === lastCommittedModuleNum;
+      const isRepeatOfCommittedSection = sectionMatch && sectionMatch[1] === lastCommittedSectionNum;
+
+      // Non-numbered heading types (session/chapter/unit) have no reliable
+      // number to key off, so fall back to comparing a leading text prefix
+      // against whichever heading is currently "in effect" (a still-pending
+      // one takes priority over the last committed one).
+      const effectiveHeading = pendingHeading ?? currentHeading;
+      const headingPrefix = line.toLowerCase().slice(0, HEADING_DEDUP_PREFIX_LEN);
+      const effectivePrefix = effectiveHeading.toLowerCase().slice(0, HEADING_DEDUP_PREFIX_LEN);
+      const isRepeatOfCommittedText = !moduleMatch && !sectionMatch && headingPrefix === effectivePrefix;
+
+      if (isRepeatOfCommittedModule || isRepeatOfCommittedSection || isRepeatOfCommittedText) continue;
+
       flush();
-      currentHeading = line;
-      currentType = 'body';
-      const sTags = extractStructuralTags(line);
-      // Module headings reset section context; section headings inherit current module
-      if (sTags.some(t => t.startsWith('module:'))) {
-        lastModuleTags = sTags.filter(t => t.startsWith('module:'));
-        currentStructuralTags = sTags.filter(t => !t.startsWith('module:'));
-      } else {
-        currentStructuralTags = sTags;
-      }
+      pendingHeading = line;
+      pendingStructuralTags = extractStructuralTags(line);
       continue;
     }
 
     const sectionType = detectSectionType(line);
     if (sectionType) {
+      commitPendingHeading();
       flush();
       currentType = sectionType;
       currentLines.push(line);
       continue;
     }
 
+    commitPendingHeading();
     currentLines.push(line);
   }
 
   flush();
 
-  const expandedChildren = [];
+  // A heading falsely detected mid-sentence (or a genuine but tiny trailing
+  // fragment) leaves behind a block of only a few words. Reattach these to
+  // the previous block rather than shipping them as their own near-empty,
+  // untaggable chunk.
+  const mergedBlocks = [];
   for (const block of blocks) {
+    const wordCount = block.content.split(/\s+/).filter(Boolean).length;
+    if (wordCount < MIN_CHUNK_WORDS && mergedBlocks.length > 0) {
+      const prev = mergedBlocks[mergedBlocks.length - 1];
+      prev.content = `${prev.content}\n\n${block.content}`.trim();
+    } else {
+      mergedBlocks.push({ ...block });
+    }
+  }
+
+  const expandedChildren = [];
+  for (const block of mergedBlocks) {
     const wordCount = block.content.split(/\s+/).filter(Boolean).length;
     if (wordCount <= CHUNK_WORDS) {
       expandedChildren.push(block);
@@ -510,7 +708,7 @@ function chunkManualText(text, sourceTitle) {
   const metadataTags = buildMetadataTags();
   const parentBlocks = new Map();
 
-  for (const block of blocks) {
+  for (const block of mergedBlocks) {
     if (!block.parentKey) continue;
     if (!parentBlocks.has(block.parentKey)) {
       parentBlocks.set(block.parentKey, {
@@ -565,8 +763,105 @@ function chunkManualText(text, sourceTitle) {
   });
 
   const all = [...parentChunks, ...childChunks];
+  applyKnownDocumentStructure(all, documentId);
   console.log(`Split into ${childChunks.length} child chunks + ${parentChunks.length} parent summaries`);
   return all;
+}
+
+// This manual's running headers and page layout are noisy enough (rapid-fire
+// per-module section indexes, inconsistent header truncation, stray
+// cross-references) that streaming inference alone can still misfire on a
+// handful of edge cases. The document's own printed contents page (verified
+// against the extracted PDF text) is ground truth, so for known documents we
+// use it to correct any block whose title unambiguously matches a known
+// section, overriding whatever module number the streaming pass guessed.
+// Fragments are kept short (but still distinctive) because this manual's
+// running headers are sometimes truncated mid-title from page to page —
+// a fragment has to survive matching against the shortest truncation seen.
+const KNOWN_DOCUMENT_STRUCTURE = {
+  'isupport-nz': [
+    [1, 'types of dementia'],
+    [1, 'optimising brain health'],
+    [1, 'person centred care'],
+    [1, 'planning for the future'],
+    [2, 'the journey'],
+    [2, 'improving communication'],
+    [2, 'supported decision'],
+    [2, 'involving others'],
+    [3, 'reducing stress'],
+    [3, 'making time for'],
+    [3, 'thinking differently'],
+    [4, 'an enjoyable day'],
+    [4, 'eating drinking and preventing'],
+    [4, 'eating and drinking'],
+    [4, 'personal care'],
+    [4, 'toileting and continence'],
+    [5, 'introduction to changes'],
+    [5, 'memory loss'],
+    [5, 'repetitive behaviour'],
+    [5, 'depression anxiety'],
+    [5, 'difficulty sleeping'],
+    [5, 'walking and getting lost'],
+    [5, 'changes in judgement'],
+    [5, 'aggression'],
+    [5, 'delusions and hallucinations'],
+    [5, 'putting it all'],
+  ],
+  // WHO original edition — same 23 sections ("lessons") as the NZ edition,
+  // just reordered within modules 4 and 5 and printed under "Lesson N."
+  // instead of "Section N.". Verified against this PDF's own CONTENTS page.
+  'isupport-who': [
+    [1, 'types of dementia'],
+    [1, 'optimising brain health'],
+    [1, 'person centred care'],
+    [1, 'planning for the future'],
+    [2, 'the journey'],
+    [2, 'improving communication'],
+    [2, 'supported decision'],
+    [2, 'involving others'],
+    [3, 'reducing stress'],
+    [3, 'making time for'],
+    [3, 'thinking differently'],
+    [4, 'an enjoyable day'],
+    [4, 'eating drinking and preventing'],
+    [4, 'eating and drinking'],
+    [4, 'personal care'],
+    [4, 'toileting and continence'],
+    [5, 'introduction to behaviour changes'],
+    [5, 'memory loss'],
+    [5, 'repetitive behaviour'],
+    [5, 'depression anxiety'],
+    [5, 'difficulty sleeping'],
+    [5, 'walking and getting lost'],
+    [5, 'changes in judgement'],
+    [5, 'aggression'],
+    [5, 'delusions and hallucinations'],
+    [5, 'putting it all'],
+  ],
+};
+
+function normalizeForMatch(text) {
+  return String(text ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function applyKnownDocumentStructure(chunks, docId) {
+  const structure = KNOWN_DOCUMENT_STRUCTURE[String(docId ?? '').toLowerCase()];
+  if (!structure) return;
+
+  for (const chunk of chunks) {
+    // Title carries the section heading text (plus a " — type"/"(Part N)"
+    // suffix for child chunks, or " — section summary" for parents); either
+    // way the heading itself is a prefix, which is all we need to match.
+    const normalizedTitle = normalizeForMatch(chunk.title);
+    const match = structure.find(([, titleFragment]) => normalizedTitle.includes(titleFragment));
+    if (!match) continue;
+
+    const [correctModule] = match;
+    chunk.tags = [
+      ...chunk.tags.filter(t => !t.startsWith('module:')),
+      `module:${correctModule}`,
+    ];
+  }
 }
 
 function chunkText(text, sourceTitle) {

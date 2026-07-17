@@ -14,6 +14,7 @@
 //   AVAudioEngine tap contend for the shared AVAudioSession on iOS.
 
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+import { Audio } from 'expo-av';
 import {
   STT_FINAL_TIMEOUT_MS,
   HANDS_FREE_SILENCE_MS,
@@ -21,6 +22,17 @@ import {
   HANDS_FREE_VOLUME_THRESHOLD,
   HANDS_FREE_VOLUME_INTERVAL_MS,
 } from '@/lib/voice/voiceConfig';
+
+// Recognition runs under playAndRecord + measurement (see start() below),
+// which iOS plays MUCH quieter through the speaker — and the category
+// outlives the session. Hand the session back to plain playback as soon as
+// recognition finishes so the avatar's TTS comes out at full volume.
+function restorePlaybackSession() {
+  Audio.setAudioModeAsync({
+    allowsRecordingIOS: false,
+    playsInSilentModeIOS: true,
+  }).catch(() => {});
+}
 
 export function isLiveRecognitionAvailable() {
   try {
@@ -83,6 +95,7 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
     const r = stopResolve;
     stopResolve = null;
     cleanup();
+    restorePlaybackSession();
     r(lastTranscript.trim());
   };
 
@@ -187,6 +200,7 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
       stopping = true;
       if (gotFinal || ended) {
         cleanup();
+        restorePlaybackSession();
         resolve(lastTranscript.trim());
         return;
       }
@@ -204,6 +218,7 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
       settled = true; // block any pending settle from resolving after cancel
       cleanup();
       try { ExpoSpeechRecognitionModule.abort(); } catch {}
+      restorePlaybackSession();
     },
   };
 }

@@ -164,6 +164,15 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
       // by the Whisper fallback (Android 13+/iOS only; null uri elsewhere).
       recordingOptions: { persist: true },
       volumeChangeEventOptions: { enabled: handsFree, intervalMillis: HANDS_FREE_VOLUME_INTERVAL_MS },
+      // playAndRecord shares the AVAudioSession with the avatar's WebView
+      // playback instead of fighting it — without this, recognition dies at
+      // start with "Audio session was interrupted" whenever the WebView's
+      // AudioContext holds the session.
+      iosCategory: {
+        category: 'playAndRecord',
+        categoryOptions: ['defaultToSpeaker', 'allowBluetooth'],
+        mode: 'measurement',
+      },
     });
   } catch (err) {
     cleanup();

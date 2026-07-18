@@ -11,7 +11,12 @@ Styling follows the IEEE single-column manuscript convention: Times New Roman,
 10 pt justified body, bold numbered headings, centred title/author block, and
 figures/tables sized to the text column.
 
-Usage:  python3 scripts/report-to-docx.py [input.md] [output.docx]
+Usage:  python3 scripts/report-to-docx.py [--uoa12] [input.md] [output.docx]
+
+--uoa12 switches from the IEEE 10 pt/letter layout to the UoA final-report
+template convention: A4 page, Times New Roman 12 pt body (tables and captions
+at 10 pt). Inline <sub>/<sup> HTML tags are rendered as true sub/superscripts
+in both modes.
 """
 import re
 import sys
@@ -22,16 +27,21 @@ from docx.enum.section import WD_SECTION
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
-from docx.shared import Inches, Pt, RGBColor
+from docx.shared import Inches, Mm, Pt, RGBColor
 
 ROOT = Path(__file__).resolve().parent.parent
-IN = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "docs/report/results-discussion-conclusion-draft.md"
-OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "docs/report/DementiaGuide_MidYear_Report.docx"
+args = [a for a in sys.argv[1:] if a != "--uoa12"]
+UOA12 = "--uoa12" in sys.argv[1:]
+IN = (Path(args[0]) if len(args) > 0 else ROOT / "docs/report/results-discussion-conclusion-draft.md").resolve()
+OUT = (Path(args[1]) if len(args) > 1 else ROOT / "docs/report/DementiaGuide_MidYear_Report.docx").resolve()
 
 FONT = "Times New Roman"
-COL_WIDTH_IN = 6.5  # letter (8.5) minus 1" margins each side
+BODY_PT = 12 if UOA12 else 10
+SMALL_PT = max(BODY_PT - 2, 9)  # tables, captions
+COL_WIDTH_IN = 6.27 if UOA12 else 6.5  # A4/letter width minus 1" margins each side
 
 INLINE = re.compile(r"(\*\*.+?\*\*|\*[^*]+?\*|`[^`]+?`)")
+SUBSUP = re.compile(r"(<sub>.*?</sub>|<sup>.*?</sup>)")
 IMG = re.compile(r"^!\[.*?\]\((.+?)\)\s*$")
 HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
 
@@ -56,19 +66,34 @@ def set_font(run, size=None, bold=None, italic=None, mono=False, color=None):
         run.font.color.rgb = color
 
 
-def add_inline(paragraph, text, size=10, base_bold=None, base_italic=None):
+def emit_runs(paragraph, text, size, bold=None, italic=None, mono=False):
+    """Emit runs for a plain-text span, honouring <sub>/<sup> HTML tags."""
+    for part in SUBSUP.split(text):
+        if not part:
+            continue
+        if part.startswith("<sub>"):
+            r = paragraph.add_run(part[5:-6]); set_font(r, size, bold=bold, italic=italic, mono=mono)
+            r.font.subscript = True
+        elif part.startswith("<sup>"):
+            r = paragraph.add_run(part[5:-6]); set_font(r, size, bold=bold, italic=italic, mono=mono)
+            r.font.superscript = True
+        else:
+            r = paragraph.add_run(part); set_font(r, size, bold=bold, italic=italic, mono=mono)
+
+
+def add_inline(paragraph, text, size=BODY_PT, base_bold=None, base_italic=None):
     """Render inline markdown (**bold**, *italic*, `code`) into a paragraph."""
     for tok in INLINE.split(text):
         if not tok:
             continue
         if tok.startswith("**") and tok.endswith("**") and len(tok) > 4:
-            r = paragraph.add_run(tok[2:-2]); set_font(r, size, bold=True, italic=base_italic)
+            emit_runs(paragraph, tok[2:-2], size, bold=True, italic=base_italic)
         elif tok.startswith("`") and tok.endswith("`") and len(tok) > 2:
-            r = paragraph.add_run(tok[1:-1]); set_font(r, size - 0.5, mono=True, italic=base_italic)
+            emit_runs(paragraph, tok[1:-1], size - 0.5, italic=base_italic, mono=True)
         elif tok.startswith("*") and tok.endswith("*") and len(tok) > 2:
-            r = paragraph.add_run(tok[1:-1]); set_font(r, size, bold=base_bold, italic=True)
+            emit_runs(paragraph, tok[1:-1], size, bold=base_bold, italic=True)
         else:
-            r = paragraph.add_run(tok); set_font(r, size, bold=base_bold, italic=base_italic)
+            emit_runs(paragraph, tok, size, bold=base_bold, italic=base_italic)
 
 
 def split_row(line):
@@ -87,8 +112,11 @@ def main():
     # Base document styling.
     normal = doc.styles["Normal"]
     normal.font.name = FONT
-    normal.font.size = Pt(10)
+    normal.font.size = Pt(BODY_PT)
     for sec in doc.sections:
+        if UOA12:
+            sec.page_width = Mm(210)
+            sec.page_height = Mm(297)
         sec.top_margin = sec.bottom_margin = Inches(1)
         sec.left_margin = sec.right_margin = Inches(1)
 
@@ -123,7 +151,7 @@ def main():
             else:
                 p.paragraph_format.space_before = Pt(10)
                 p.paragraph_format.space_after = Pt(4)
-                add_inline(p, text, size=12 if level == 2 else 11, base_bold=True)
+                add_inline(p, text, size=BODY_PT + 2 if level == 2 else BODY_PT + 1, base_bold=True)
             i += 1
             continue
 
@@ -149,7 +177,7 @@ def main():
             p.paragraph_format.left_indent = Inches(0.3)
             p.paragraph_format.right_indent = Inches(0.3)
             p.paragraph_format.space_after = Pt(6)
-            add_inline(p, text, size=9, base_italic=True)
+            add_inline(p, text, size=BODY_PT - 1, base_italic=True)
             continue
 
         # table
@@ -167,13 +195,13 @@ def main():
             for c, cell_text in enumerate(header):
                 cell = table.rows[0].cells[c]
                 cell.paragraphs[0].text = ""
-                add_inline(cell.paragraphs[0], cell_text, size=9, base_bold=True)
+                add_inline(cell.paragraphs[0], cell_text, size=SMALL_PT, base_bold=True)
             for row in rows:
                 cells = table.add_row().cells
                 for c in range(ncol):
                     cell = cells[c]
                     cell.paragraphs[0].text = ""
-                    add_inline(cell.paragraphs[0], row[c] if c < len(row) else "", size=9)
+                    add_inline(cell.paragraphs[0], row[c] if c < len(row) else "", size=SMALL_PT)
             doc.add_paragraph().paragraph_format.space_after = Pt(2)
             continue
 
@@ -184,7 +212,7 @@ def main():
                 ordered = bool(re.match(r"^\d+\.", item))
                 content = re.sub(r"^(\-|\d+\.)\s+", "", item)
                 p = doc.add_paragraph(style="List Number" if ordered else "List Bullet")
-                add_inline(p, content, size=10)
+                add_inline(p, content, size=BODY_PT)
                 i += 1
             continue
 
@@ -192,17 +220,20 @@ def main():
         p = doc.add_paragraph()
         if caption_re.match(stripped):
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            add_inline(p, stripped, size=9)
+            add_inline(p, stripped, size=SMALL_PT)
         elif in_title_block and (stripped.startswith("**Author:**") or stripped.startswith("**Report:**")):
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            add_inline(p, stripped, size=11)
+            add_inline(p, stripped, size=BODY_PT - 1)
         else:
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-            add_inline(p, stripped, size=10)
+            add_inline(p, stripped, size=BODY_PT)
         i += 1
 
     doc.save(OUT)
-    print(f"wrote {OUT.relative_to(ROOT)}")
+    try:
+        print(f"wrote {OUT.relative_to(ROOT)}")
+    except ValueError:
+        print(f"wrote {OUT}")
 
 
 if __name__ == "__main__":

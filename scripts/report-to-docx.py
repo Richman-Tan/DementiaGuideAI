@@ -113,6 +113,11 @@ def main():
     normal = doc.styles["Normal"]
     normal.font.name = FONT
     normal.font.size = Pt(BODY_PT)
+    if UOA12:
+        # Word's template default (~1.08 line spacing, 8 pt after) wastes ~15%
+        # of the page; the UoA report convention is single-spaced.
+        normal.paragraph_format.line_spacing = 1.0
+        normal.paragraph_format.space_after = Pt(6)
     for sec in doc.sections:
         if UOA12:
             sec.page_width = Mm(210)
@@ -162,7 +167,7 @@ def main():
             if path.exists():
                 p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 run = p.add_run()
-                run.add_picture(str(path), width=Inches(COL_WIDTH_IN))
+                run.add_picture(str(path), width=Inches(5.2 if UOA12 else COL_WIDTH_IN))
             i += 1
             continue
 

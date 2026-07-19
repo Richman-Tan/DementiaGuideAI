@@ -25,7 +25,8 @@ from pathlib import Path
 from docx import Document
 from docx.enum.section import WD_SECTION
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
+from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Mm, Pt, RGBColor
 
@@ -38,7 +39,7 @@ OUT = (Path(args[1]) if len(args) > 1 else ROOT / "docs/report/DementiaGuide_Mid
 FONT = "Times New Roman"
 BODY_PT = 12 if UOA12 else 10
 SMALL_PT = max(BODY_PT - 2, 9)  # tables, captions
-COL_WIDTH_IN = 6.27 if UOA12 else 6.5  # A4/letter width minus 1" margins each side
+COL_WIDTH_IN = 6.49 if UOA12 else 6.5  # UoA: 165 mm print width; IEEE: letter minus 1" margins
 
 INLINE = re.compile(r"(\*\*.+?\*\*|\*[^*]+?\*|`[^`]+?`)")
 SUBSUP = re.compile(r"(<sub>.*?</sub>|<sup>.*?</sup>)")
@@ -113,14 +114,32 @@ def main():
     normal = doc.styles["Normal"]
     normal.font.name = FONT
     normal.font.size = Pt(BODY_PT)
+    if UOA12:
+        # Word's template default (~1.08 line spacing, 8 pt after) wastes ~15%
+        # of the page; the UoA report convention is single-spaced.
+        normal.paragraph_format.line_spacing = 1.0
+        normal.paragraph_format.space_after = Pt(6)
     for sec in doc.sections:
         if UOA12:
+            # UoA template: A4, 165 mm print width (20 mm left / 25 mm right),
+            # page number bottom-right on every page except the first.
             sec.page_width = Mm(210)
             sec.page_height = Mm(297)
-        sec.top_margin = sec.bottom_margin = Inches(1)
-        sec.left_margin = sec.right_margin = Inches(1)
+            sec.left_margin = Mm(20)
+            sec.right_margin = Mm(25)
+            sec.top_margin = Mm(25)
+            sec.bottom_margin = Mm(36)
+            sec.different_first_page_header_footer = True
+            fp = sec.footer.paragraphs[0]
+            fp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            fld = OxmlElement("w:fldSimple")
+            fld.set(qn("w:instr"), "PAGE")
+            fp._p.append(fld)
+        else:
+            sec.top_margin = sec.bottom_margin = Inches(1)
+            sec.left_margin = sec.right_margin = Inches(1)
 
-    caption_re = re.compile(r"^\*\*(Figure|Table)\s")
+    caption_re = re.compile(r"^\*\*(Figure|Fig\.|Table)\s")
     i = 0
     in_title_block = True
     while i < len(lines):
@@ -149,8 +168,10 @@ def main():
                 p.paragraph_format.space_after = Pt(6)
                 add_inline(p, text, size=18, base_bold=True)
             else:
-                p.paragraph_format.space_before = Pt(10)
+                p.paragraph_format.space_before = Pt(7 if UOA12 else 10)
                 p.paragraph_format.space_after = Pt(4)
+                if UOA12 and level == 2:  # template: major headings centred
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 add_inline(p, text, size=BODY_PT + 2 if level == 2 else BODY_PT + 1, base_bold=True)
             i += 1
             continue
@@ -162,22 +183,34 @@ def main():
             if path.exists():
                 p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 run = p.add_run()
-                run.add_picture(str(path), width=Inches(COL_WIDTH_IN))
+                run.add_picture(str(path), width=Inches(4.4 if UOA12 else COL_WIDTH_IN))
             i += 1
             continue
 
-        # blockquote (possibly multi-line)
+        # blockquote (possibly multi-line); in UoA mode a blockquote ending in
+        # "(n)" is a numbered display equation: centred, number at the right.
         if stripped.startswith(">"):
             buff = []
             while i < len(lines) and lines[i].strip().startswith(">"):
                 buff.append(lines[i].strip()[1:].strip())
                 i += 1
             text = " ".join(x for x in buff if x)
-            p = doc.add_paragraph()
-            p.paragraph_format.left_indent = Inches(0.3)
-            p.paragraph_format.right_indent = Inches(0.3)
-            p.paragraph_format.space_after = Pt(6)
-            add_inline(p, text, size=BODY_PT - 1, base_italic=True)
+            eq = UOA12 and re.search(r"\((\d+)\)\s*$", text)
+            if eq:
+                p = doc.add_paragraph()
+                p.paragraph_format.space_before = Pt(6)
+                p.paragraph_format.space_after = Pt(6)
+                p.paragraph_format.tab_stops.add_tab_stop(Inches(COL_WIDTH_IN / 2), WD_TAB_ALIGNMENT.CENTER)
+                p.paragraph_format.tab_stops.add_tab_stop(Inches(COL_WIDTH_IN), WD_TAB_ALIGNMENT.RIGHT)
+                r = p.add_run("\t"); set_font(r, BODY_PT)
+                add_inline(p, text[: eq.start()].rstrip(), size=BODY_PT)
+                r = p.add_run(f"\t({eq.group(1)})"); set_font(r, BODY_PT)
+            else:
+                p = doc.add_paragraph()
+                p.paragraph_format.left_indent = Inches(0.3)
+                p.paragraph_format.right_indent = Inches(0.3)
+                p.paragraph_format.space_after = Pt(6)
+                add_inline(p, text, size=BODY_PT - 1, base_italic=True)
             continue
 
         # table
@@ -202,7 +235,15 @@ def main():
                     cell = cells[c]
                     cell.paragraphs[0].text = ""
                     add_inline(cell.paragraphs[0], row[c] if c < len(row) else "", size=SMALL_PT)
-            doc.add_paragraph().paragraph_format.space_after = Pt(2)
+            spacer = doc.add_paragraph()
+            spacer.paragraph_format.space_after = Pt(2)
+            if UOA12:  # collapse the spacer: the paragraph-mark font sets an empty line's height
+                spacer.paragraph_format.line_spacing = 1.0
+                pPr = spacer._p.get_or_add_pPr()
+                rPr = OxmlElement("w:rPr")
+                sz = OxmlElement("w:sz"); sz.set(qn("w:val"), "8")  # half-points = 4 pt
+                rPr.append(sz)
+                pPr.append(rPr)
             continue
 
         # list item(s)

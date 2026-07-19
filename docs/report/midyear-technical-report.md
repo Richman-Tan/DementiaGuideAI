@@ -23,7 +23,7 @@ where *a<sub>i</sub>* is an anticipatory onset before the acoustic onset, *p<sub
 
 > *w<sub>s</sub>*(*t*) = Σ<sub>*i*</sub> *D<sub>i</sub>*(*t*)<sup>ρ</sup> · τ<sub>*i*,*s*</sub> / max(Σ<sub>*i*</sub> *D<sub>i</sub>*(*t*)<sup>ρ</sup>, 1) (2)
 
-with sharpening exponent ρ ≥ 1 and the denominator floored at one so an isolated, partially dominant viseme yields a partial-strength shape rather than snapping to its full target. Two closure classes are special-cased because they are the most visible defect when wrong: bilabial /p b m/ (`V_Explosive`) and labiodental /f v/ (`V_Dental_Lip`). Their dominance is forced to a high minimum peak, their contact shape is combined by maximum rather than averaged — *w<sub>c</sub>*(*t*) = max(*w<sub>c</sub>*(*t*), *D<sub>c</sub>*(*t*) · τ<sub>c</sub>) — and every mouth-opening shape is attenuated by (1 − κ · *D<sub>c</sub>*(*t*)) while a closure is dominant, guaranteeing that the lips visibly meet. Curves are baked once per utterance; playback is a constant-time frame lookup. Upstream, a grapheme-to-phoneme (G2P) pipeline replaced per-character heuristics: text is normalised (numbers, currency, abbreviations), converted to ARPAbet phonemes through a lexicon with letter-to-sound rules, and mapped to the avatar's 14 visemes with per-phoneme timing.
+with sharpening exponent ρ ≥ 1 and the denominator floored at one so an isolated, partially dominant viseme yields a partial-strength shape rather than snapping to its full target. Two closure classes are special-cased because they are the most visible defect when wrong: bilabial /p b m/ (`V_Explosive`) and labiodental /f v/ (`V_Dental_Lip`). Their dominance is forced to a high minimum peak, their contact shape is combined by maximum rather than averaged — *w<sub>c</sub>*(*t*) = max(*w<sub>c</sub>*(*t*), *D<sub>c</sub>*(*t*) · τ<sub>c</sub>) — and every mouth-opening shape is attenuated by (1 − κ · *D<sub>c</sub>*(*t*)), with suppression strength κ, while a closure is dominant, guaranteeing that the lips visibly meet. Curves are baked once per utterance; playback is a constant-time frame lookup. Upstream, a grapheme-to-phoneme (G2P) pipeline replaced per-character heuristics: text is normalised (numbers, currency, abbreviations), converted to ARPAbet phonemes through a lexicon with letter-to-sound rules, and mapped to the avatar's 14 visemes with per-phoneme timing.
 
 ### 2.2 Evaluation method
 
@@ -77,7 +77,7 @@ These results are editor-only: on-device behaviour through the native bridge has
 
 ### 3.1 Retrieval formulation
 
-Retrieval is a hybrid of dense and lexical search executed in PostgreSQL. For query embedding *e<sub>q</sub>* and chunk *c* with embedding *e<sub>c</sub>* and text-search vector *v<sub>c</sub>* (title, content, and tags), the score is a weighted sum, not reciprocal-rank fusion:
+Retrieval is a hybrid of dense and lexical search executed in PostgreSQL. For query embedding *e<sub>q</sub>* and chunk *c* with embedding *e<sub>c</sub>* and text-search vector *v<sub>c</sub>* (title, content, and tags), the score is a weighted sum of the cosine similarity (1 − *d*<sub>cos</sub>) and the PostgreSQL cover-density lexical rank, not reciprocal-rank fusion:
 
 > score(*q*, *c*) = 0.7 · (1 − *d*<sub>cos</sub>(*e<sub>q</sub>*, *e<sub>c</sub>*)) + 0.3 · ts_rank_cd(*v<sub>c</sub>*, tsquery(*q*)) (3)
 
@@ -85,7 +85,7 @@ over candidates whose cosine similarity exceeds 0.25 or whose text matches the k
 
 ### 3.2 Evaluation design
 
-A 42-question caregiver set was used: 32 in-scope questions (29 direct, each labelled with an expected chunk, plus three near-neighbour phrasings), four boundary questions probing unsafe specifics (drug dosing, cure claims, facility recommendations, prognosis), and six out-of-scope questions. Retrieval was scored deterministically (expected chunk within the top five) against the live database; safety by 36 deterministic MUST/MUST-NOT regular-expression assertions over generations at temperature 0 with a fixed seed, covering emergency escalation, dosing, region correctness, crisis response, and prompt-injection resistance; groundedness by an LLM judge (`gpt-4o-mini`, 0/1/2 rubric). A parameter sweep crossed five similarity thresholds (0.15 to 0.35) with three diversity caps (one to three).
+A 42-question caregiver set was used: 32 in-scope questions (29 direct, each labelled with an expected chunk, plus three near-neighbour phrasings), four boundary questions probing unsafe specifics (drug dosing, cure claims, facility recommendations, prognosis), and six out-of-scope questions. Retrieval was scored deterministically (expected chunk within the top five) against the live database; safety by 36 deterministic checks (MUST/MUST-NOT regular-expression gates) over generations at temperature 0 with a fixed seed, covering emergency escalation, dosing, region correctness, crisis response, and prompt-injection resistance; groundedness by an LLM judge (`gpt-4o-mini`, 0/1/2 rubric). A parameter sweep crossed five similarity thresholds (0.15 to 0.35) with three diversity caps (one to three).
 
 ### 3.3 Results
 
@@ -97,10 +97,10 @@ Table 3 summarises the pre/post comparison across the July overhaul (baseline fr
 |---|---|---|
 | Retrieval recall@1 / @3 / @5 (32) | 0.844 / 0.938 / 0.969 | 0.844 / 0.938 / 0.969 |
 | MRR / nDCG@5 (32) | 0.888 / 0.904 | 0.888 / 0.907 |
-| Safety assertions passed (36) | 28 / 36 | 36 / 36 |
+| Safety checks passed (36) | 28 / 36 | 36 / 36 |
 | — emergency escalation, call 111 (4) | 0 / 4 | 4 / 4 |
 | — dosing safety, no mg numbers (4) | 2 / 4 | 4 / 4 |
-| — region correctness failures (36) | 3 | 0 |
+| — answers citing Australian services (36) | 2 | 0 |
 | Citation markers valid (32 answers) | — | 133 / 133 |
 | Groundedness, LLM judge (32) | 31×2, 1×1 (lenient rubric) | 23×2, 9×1, 0×0 (strict rubric) |
 | In-scope refusals (32) | 0 | 0 |
@@ -108,7 +108,7 @@ Table 3 summarises the pre/post comparison across the July overhaul (baseline fr
 
 **Retrieval.** On the pre-overhaul corpus, 29 of 32 in-scope questions retrieved their expected chunk; the misses were a corpus-imbalance artefact — bulk iSupport chunks outranked hand-authored targets (two at ranks 6 and 7, one beyond rank 50). The source-family cap recovered the two competitive targets, raising retrieval to 31 of 32, where it has remained through every subsequent change: the prompt and citation refactors reproduced the frozen baseline ranking exactly, and re-ingesting the corpus (449 to 551 chunks) left recall@5 at 0.969 at each step. The one persistent miss (A17, validation therapy) reflects an uncompetitive curated chunk; its answers were grounded in the related iSupport passages retrieved instead.
 
-**Safety.** The v1 prompt failed 8 of 36 assertions: all four emergency questions directed a New Zealand user to call 000 — the Australian emergency number — instead of 111; two dosing questions emitted specific milligram values; and three answers cited Australian services. The v2-nz-safety prompt passed 36 of 36, and all 32 in-scope generations passed their safety gates. All four boundary questions and all six out-of-scope questions were declined without unsupported specifics (five of the six retrieved nothing above the similarity floor; the sixth retrieved weak matches but still declined). The curated corpus was subsequently rewritten to be New Zealand-only; zero Australian references remain in production.
+**Safety.** The v1 prompt failed 8 of the 36 checks: all four emergency questions directed a New Zealand user to call 000 — the Australian emergency number — instead of 111; two dosing questions emitted specific milligram values; and two answers gave Australian services in place of the New Zealand equivalents. The v2-nz-safety prompt passed 36 of 36, and all 32 in-scope generations passed their safety gates. All four boundary questions and all six out-of-scope questions were declined without unsupported specifics (five of the six retrieved nothing above the similarity floor; the sixth retrieved weak matches but still declined). The curated corpus was subsequently rewritten to be New Zealand-only; zero Australian references remain in production.
 
 **Groundedness.** Under the strict rubric, 23 of 32 answers scored 2 (fully grounded) and nine scored 1; every score-1 case was the judge flagging an accurate helpline or service mention not literally present in the retrieved passages — none was a fabrication. The two rubric columns in Table 3 are not comparable (the lenient baseline judge scored almost everything 2). An independent AI cross-check agreed with the strict judge on 10 of 10 sampled rows, but human sign-off is pending, so these figures are indicative rather than validated.
 

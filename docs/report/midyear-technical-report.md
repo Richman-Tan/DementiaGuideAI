@@ -31,7 +31,7 @@ Articulation was evaluated with an automated test loop in the Unity Editor: a fi
 
 ### 2.3 Results
 
-The baseline pipeline passed 37 of the 85 hand-authored checks; the final pipeline passed all 85, and the `g2p_pipeline` fixture passed all 10 of its checks, giving 95 of 95 (Table 1). Every fixture improved; the largest gain was `bilabials` (6 of 17 to 17 of 17).
+The baseline pipeline passed 37 of the 85 hand-authored checks; the final pipeline passed all 85, and the `g2p_pipeline` fixture passed all 10 of its checks, giving 95 of 95 (Table 1, Fig. 1). Every fixture improved; the largest gain was `bilabials` (6 of 17 to 17 of 17).
 
 **Table 1:** Acceptance checks passed per fixture, baseline versus final pipeline. The `g2p_pipeline` fixture was introduced with the final pipeline and has no baseline.
 
@@ -47,7 +47,11 @@ The baseline pipeline passed 37 of the 85 hand-authored checks; the final pipeli
 | g2p_pipeline | — | 10 / 10 |
 | **Total** | **37 / 85** | **95 / 95** |
 
-Table 2 summarises the measured articulation values behind the pass rates. Bilabial `V_Explosive` peaks rose from a baseline range of 0.58 to 0.94 to a consistent 0.93 to 0.95, while open-shape leakage during closures fell to at most 0.08 — the combined effect of the guaranteed-contact maximum and the suppression pass. Labiodental peaks rose from a minimum of 0.525 to at least 0.94. All 27 baseline tongue checks measured exactly 0.00; on the final pipeline all passed with peaks of 0.40 to 0.72. Pause leakage fell from up to 0.54 to at most 0.10, and end-of-utterance decay fell from 313 to 324 ms down to 30 to 95 ms. Fig. 1 shows three of the resulting viseme shapes with their measured weights.
+![Fig. 1](figures/fig1_checks_passed.png)
+
+**Fig. 1.** Acceptance checks passed per fixture on the baseline and final pipelines. The light backdrop bar is the total number of checks in each fixture.
+
+Table 2 summarises the measured articulation values behind the pass rates. Bilabial `V_Explosive` peaks rose from a baseline range of 0.58 to 0.94 to a consistent 0.93 to 0.95, while open-shape leakage during closures fell to at most 0.08 — the combined effect of the guaranteed-contact maximum and the suppression pass. Labiodental peaks rose from a minimum of 0.525 to at least 0.94. All 27 baseline tongue checks measured exactly 0.00; on the final pipeline all passed with peaks of 0.40 to 0.72. Pause leakage fell from up to 0.54 to at most 0.10, and end-of-utterance decay fell from 313 to 324 ms down to 30 to 95 ms. Fig. 2 shows three of the resulting viseme shapes with their measured weights.
 
 One metric regressed: jitter RMS increased on every fixture, from a baseline range of 0.0056 to 0.0125 to a final range of 0.0115 to 0.0191 (`g2p_pipeline`: 0.0270). No oscillation was visible in the recorded curves; the baseline's lower jitter is consistent with its under-articulation (flatter curves have a smaller second difference), but this was not isolated experimentally and the regression stands.
 
@@ -63,9 +67,9 @@ One metric regressed: jitter RMS increased on every fixture, from a baseline ran
 | Segment-end decay (< 250 ms) | 313 to 324 ms | 30 to 95 ms |
 | Jitter RMS (reported, not gated) | 0.0056 to 0.0125 | 0.0115 to 0.0191 |
 
-![Fig. 1](figures/fig2_viseme_montage.png)
+![Fig. 2](figures/fig2_viseme_montage.png)
 
-**Fig. 1.** Viseme shapes produced by the final pipeline (Unity Editor capture): a bilabial closure with sealed lips, an open vowel, and a labiodental lip-to-teeth contact, each annotated with the measured blendshape weight. A like-for-like baseline capture is unavailable (the character was revised in the same change set); the quantitative comparison is carried by Tables 1 and 2.
+**Fig. 2.** Viseme shapes produced by the final pipeline (Unity Editor capture): a bilabial closure with sealed lips, an open vowel, and a labiodental lip-to-teeth contact, each annotated with the measured blendshape weight. A like-for-like baseline capture is unavailable (the character was revised in the same change set); the quantitative comparison is carried by Fig. 1 and Table 2.
 
 These results are editor-only: on-device behaviour through the native bridge has not yet been re-verified, and the fixtures are deterministic single utterances, so no variance estimate accompanies the values.
 

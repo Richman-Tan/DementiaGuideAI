@@ -183,7 +183,7 @@ def main():
             if path.exists():
                 p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 run = p.add_run()
-                run.add_picture(str(path), width=Inches(4.9 if UOA12 else COL_WIDTH_IN))
+                run.add_picture(str(path), width=Inches(4.4 if UOA12 else COL_WIDTH_IN))
             i += 1
             continue
 
@@ -235,7 +235,15 @@ def main():
                     cell = cells[c]
                     cell.paragraphs[0].text = ""
                     add_inline(cell.paragraphs[0], row[c] if c < len(row) else "", size=SMALL_PT)
-            doc.add_paragraph().paragraph_format.space_after = Pt(2)
+            spacer = doc.add_paragraph()
+            spacer.paragraph_format.space_after = Pt(2)
+            if UOA12:  # collapse the spacer: the paragraph-mark font sets an empty line's height
+                spacer.paragraph_format.line_spacing = 1.0
+                pPr = spacer._p.get_or_add_pPr()
+                rPr = OxmlElement("w:rPr")
+                sz = OxmlElement("w:sz"); sz.set(qn("w:val"), "8")  # half-points = 4 pt
+                rPr.append(sz)
+                pPr.append(rPr)
             continue
 
         # list item(s)

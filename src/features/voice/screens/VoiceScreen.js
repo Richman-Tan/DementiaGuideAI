@@ -269,8 +269,8 @@ export const VoiceScreen = ({ navigation }) => {
                   <Text style={styles.personaBackText}>Back</Text>
                 </TouchableOpacity>
 
-                <Text style={styles.personaTitle}>Choose Your Aria</Text>
-                <Text style={styles.personaSubtitle}>Each look has its own expression style</Text>
+                <Text style={styles.personaTitle}>Choose Your Avatar</Text>
+                <Text style={styles.personaSubtitle}>Each guide has their own voice and style</Text>
 
                 <View style={styles.personaGrid}>
                   {AVATAR_PROFILE_LIST.map(profile => {
@@ -322,7 +322,7 @@ export const VoiceScreen = ({ navigation }) => {
         {avatarEnabled && isUnityRenderer ? (
           // Unity/CC4 renderer — Phase 3: stub renders nothing, VoiceScreen shows
           // its own placeholder. Phase 5: AvatarUnity mounts the native UaaL view.
-          <AvatarUnity ref={avatarRef} style={styles.avatarVRM} />
+          <AvatarUnity ref={avatarRef} characterId={activeProfile.unityCharacterId} style={styles.avatarVRM} />
         ) : avatarEnabled && modelUri ? (
           <AvatarVRM
             ref={avatarRef}
@@ -348,7 +348,7 @@ export const VoiceScreen = ({ navigation }) => {
 
         <View style={styles.nameBadge}>
           <View style={[styles.nameBadgeDot, { backgroundColor: isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)' }]} />
-          <Text style={styles.nameBadgeText}>Aria</Text>
+          <Text style={styles.nameBadgeText}>{activeProfile.name}</Text>
         </View>
 
         {/* Subtitle bar — absolute overlay so it doesn't affect avatar size */}

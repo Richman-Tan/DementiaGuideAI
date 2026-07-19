@@ -1,8 +1,86 @@
 /**
  * Avatar profiles — one entry per character model.
  *
- * Each profile stores its own visemeWeights so the two models are tuned
- * independently and neither's config can bleed into the other.
+ * The active roster is Unity-only: two Reallusion CC5 characters (Aaron and
+ * Ariana) rendered through the UaaL native bridge. `unityCharacterId` is the
+ * id AvatarRouter.cs uses to activate the matching character root in the
+ * Unity scene.
+ *
+ * The retired Three.js personas (AvatarSDK/RPM/MetaHuman) live in
+ * LEGACY_AVATAR_PROFILES below — hidden from the picker but kept intact,
+ * with their per-model viseme tuning notes, so restoring one is a matter of
+ * merging it back into AVATAR_PROFILES.
+ *
+ * modelKey is resolved to an actual asset in VoiceScreen where require() calls
+ * must be static — profile objects are plain JSON-serialisable data.
+ */
+
+export type AvatarRenderer = 'threejs' | 'unity';
+export type UnityCharacterId = 'aaron' | 'ariana';
+
+export interface AvatarProfile {
+  id: string;
+  name: string;
+  label: string;
+  description: string;
+  renderer: AvatarRenderer;
+  /** Static require() key resolved in VoiceScreen; absent for Unity renderers. */
+  modelKey?: string;
+  /** AvatarRouter character id in the Unity scene; only for renderer:'unity'. */
+  unityCharacterId?: UnityCharacterId;
+  voice: string;
+  /**
+   * Provider-specific voices. `voice` above is the Azure voice name; ElevenLabs
+   * and OpenAI reject Azure names, so without these fields ttsService falls
+   * back to its hardcoded defaults and every avatar speaks with the same voice.
+   */
+  elevenVoiceId?: string;
+  openaiVoice?: string;
+  /** Per-viseme peak weights, or null to use the renderer's built-in default. */
+  visemeWeights: Record<string, number> | null;
+}
+
+export const AVATAR_PROFILES = {
+  aaron: {
+    id: 'aaron',
+    name: 'Aaron',
+    label: 'Classic',
+    description: 'Warm, mature guide',
+    renderer: 'unity',
+    unityCharacterId: 'aaron',
+    voice: 'en-US-EricNeural',
+    elevenVoiceId: 'nPczCjzI2devNBz1zQrb', // Brian — warm, mature male
+    openaiVoice: 'onyx',
+    // CC characters use their native blendshape set (see blendshapeTranslator.js),
+    // not ARKit. visemeWeights is null so blendshapeTranslator uses its built-in
+    // CC4_DEFAULT_WEIGHT scalar.
+    visemeWeights: null,
+  },
+
+  ariana: {
+    id: 'ariana',
+    name: 'Ariana',
+    label: 'New',
+    description: 'Friendly, approachable guide',
+    renderer: 'unity',
+    unityCharacterId: 'ariana',
+    voice: 'en-US-JennyNeural',
+    elevenVoiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella — warm, clear female
+    openaiVoice: 'nova',
+    visemeWeights: null,
+  },
+} satisfies Record<string, AvatarProfile>;
+
+export const DEFAULT_AVATAR_ID = 'aaron';
+export const AVATAR_PROFILE_LIST: AvatarProfile[] = Object.values(AVATAR_PROFILES);
+
+/**
+ * Retired profiles — not exported, not in the picker. Stale persisted
+ * selectedAvatarId values pointing at these fall back to DEFAULT_AVATAR_ID
+ * via the existing `?? AVATAR_PROFILES[DEFAULT_AVATAR_ID]` lookups in
+ * VoiceScreen and useAvatarConversation. To restore one, move it back into
+ * AVATAR_PROFILES (its GLB asset and the AvatarVRM render path are still in
+ * the repo).
  *
  * ── AvatarSDK (aria_sdk) ────────────────────────────────────────────────────
  * The MetaPerson model ships visemes WITHOUT the viseme_ prefix (aa, ih, ou,
@@ -23,34 +101,9 @@
  * ARKit fallback drives weighted combinations of ARKit shapes. Weights sit
  * between SDK and RPM: shapes are high-quality but still driven by heuristic
  * text mapping, so keep values moderate.
- *
- * modelKey is resolved to an actual asset in VoiceScreen where require() calls
- * must be static — profile objects are plain JSON-serialisable data.
  */
-
-export type AvatarRenderer = 'threejs' | 'unity';
-
-export interface AvatarProfile {
-  id: string;
-  name: string;
-  label: string;
-  description: string;
-  renderer: AvatarRenderer;
-  /** Static require() key resolved in VoiceScreen; absent for Unity renderers. */
-  modelKey?: string;
-  voice: string;
-  /**
-   * Provider-specific voices. `voice` above is the Azure voice name; ElevenLabs
-   * and OpenAI reject Azure names, so without these fields ttsService falls
-   * back to its hardcoded defaults and every avatar speaks with the same voice.
-   */
-  elevenVoiceId?: string;
-  openaiVoice?: string;
-  /** Per-viseme peak weights, or null to use the renderer's built-in default. */
-  visemeWeights: Record<string, number> | null;
-}
-
-export const AVATAR_PROFILES = {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const LEGACY_AVATAR_PROFILES = {
   aria_sdk: {
     id: 'aria_sdk',
     name: 'Aria',
@@ -151,23 +204,4 @@ export const AVATAR_PROFILES = {
       neutral: 0.0,
     },
   },
-
-  cc4_aria: {
-    id: 'cc4_aria',
-    name: 'Aria',
-    label: 'CC4',
-    description: 'Reallusion CC4 character (Unity)',
-    renderer: 'unity',
-    // The CC4 character is HD_Aaron — male voices across all providers.
-    voice: 'en-US-EricNeural',
-    elevenVoiceId: 'nPczCjzI2devNBz1zQrb', // Brian — warm, mature male
-    openaiVoice: 'onyx',
-    // CC4 uses its own native blendshape set (see blendshapeTranslator.js), not
-    // ARKit. visemeWeights is null so blendshapeTranslator uses its built-in
-    // CC4_DEFAULT_WEIGHT scalar.
-    visemeWeights: null,
-  },
 } satisfies Record<string, AvatarProfile>;
-
-export const DEFAULT_AVATAR_ID = 'aria_sdk';
-export const AVATAR_PROFILE_LIST: AvatarProfile[] = Object.values(AVATAR_PROFILES);

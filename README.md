@@ -10,13 +10,7 @@ A modern iOS mobile application that acts as a digital library for dementia care
 
 ## RAG Pipeline Workflow
 
-<img width="1536" height="1024" alt="RAGPipeline" src="https://github.com/user-attachments/assets/a19212ea-bd53-41d7-bb79-c5fcdc1e44c0" />
-
----
-
-## Video Walkthrough
-
-https://github.com/user-attachments/assets/ed2a9be7-1b46-41a0-905e-609f599734e5
+![RAG Pipeline](./assets/rag-pipeline.png)
 
 ---
 
@@ -32,7 +26,7 @@ DementiaGuide AI is designed for caregivers, family members, and healthcare prof
 |---|---|
 | Framework | React Native (Expo SDK 54) |
 | Navigation | React Navigation 7 (Bottom Tabs + Native Stack) |
-| AI / RAG | OpenAI `gpt-4o-mini` + `text-embedding-3-small` |
+| AI / RAG | OpenAI `gpt-4o` + `text-embedding-3-small` |
 | Vector DB | Supabase (pgvector) — cloud-hosted knowledge base with `match_chunks` RPC |
 | STT | OpenAI Whisper (`whisper-1`) via `expo-av` audio recording |
 | TTS | ElevenLabs `eleven_turbo_v2_5` (primary) · OpenAI `tts-1` (fallback) |
@@ -61,55 +55,69 @@ DementiaGuide AI is designed for caregivers, family members, and healthcare prof
 
 ## Project Structure
 
+The app is organised **feature-first**: each domain owns its screens, components, hooks
+and config under `src/features/<domain>/`. Cross-cutting concerns live in a shared kernel
+(`theme/`, `context/`, `constants/`, top-level `components/`) and all external integrations
++ pure engines live in a single `lib/`. Imports use the `@/` path alias (`@/` → `src/`).
+
+Files are migrating to **TypeScript** incrementally — the shared kernel and integration
+layer are typed (`.ts`/`.tsx`); screens and the avatar/provider modules remain `.js` under
+`allowJs` and convert in later passes.
+
 ```
 DementiaGuideAI/
 ├── App.js
-├── babel.config.js
+├── tsconfig.json · babel.config.js · eslint.config.js · jest.config.js · .prettierrc
 ├── app.json                          # Expo config
-├── .env                              # API keys (git-ignored)
-├── .env.example                      # Template for required env vars
-├── scripts/
-│   ├── ingest.mjs                    # Add content from URLs or PDFs → Supabase
-│   ├── migrate-to-supabase.mjs       # One-time migration: knowledgeBase.js → Supabase
-│   ├── supabase-setup.sql            # pgvector schema + match_chunks RPC (run once in Supabase)
-│   └── test-responses.mjs            # CLI tool to test RAG output against sample questions
+├── scripts/                          # Node CLI tools: eval/ (RAG evaluation), ingest/ (KB ingestion), migrations/ (SQL)
 └── src/
     ├── navigation/
-    │   └── AppNavigator.js           # Bottom tab + stack navigator
-    ├── screens/
-    │   ├── HomeScreen.js
-    │   ├── ChatScreen.js             # GiftedChat UI, calls openaiService, shows sources
-    │   ├── LibraryScreen.js
-    │   ├── ArticleDetailScreen.js    # Full article view from Library
-    │   ├── VoiceScreen.js            # Voice conversation UI (Whisper → LLM → TTS → avatar)
-    │   └── ProfileScreen.js          # AI configuration (API keys, privacy controls)
-    ├── components/
-    │   ├── AvatarVRM.js              # VRM avatar in WebView (Three.js + viseme lip sync)
-    │   ├── Avatar.js                 # Legacy animated avatar (idle/listening/speaking)
-    │   ├── MessageCard.js            # Chat bubble with sources and actions
-    │   ├── CategoryCard.js           # Library category row
-    │   └── VoiceWaveform.js          # 9-bar animated waveform
-    ├── hooks/
-    │   └── useAvatarConversation.js  # Voice pipeline orchestration (STT → LLM stream → TTS queue → playback)
-    ├── lib/
-    │   ├── tts/
-    │   │   ├── ttsService.js         # TTS provider selection (ElevenLabs primary, OpenAI fallback)
-    │   │   └── elevenLabsService.js  # ElevenLabs API wrapper (audio + character alignment)
-    │   └── lipsync/
-    │       ├── createVisemeTimeline.js  # Converts ElevenLabs alignment → viseme frame sequence
-    │       └── phonemeMap.js            # Character → VRM viseme mapping
-    ├── constants/
-    │   ├── colors.js
-    │   ├── typography.js
-    │   └── data.js                   # Categories, resources, sample messages
-    ├── data/
-    │   └── knowledgeBase.js          # Legacy local KB (superseded by Supabase)
-    └── services/
-        ├── supabaseService.js        # Supabase anon client for the mobile app
-        ├── openaiService.js          # RAG pipeline (embed query → Supabase match_chunks → streaming chat)
-        ├── knowledgeService.js       # Knowledge base queries for Library screen (Supabase)
-          └── aceService.js             # NVIDIA ACE stub (used by VoiceScreen mock)
+    │   └── AppNavigator.js           # Root bottom-tab + stack navigator (app shell)
+    ├── features/
+    │   ├── home/screens/HomeScreen.js
+    │   ├── chat/screens/ChatScreen.js
+    │   ├── voice/                     # Voice conversation (Whisper → LLM → TTS → avatar)
+    │   │   ├── screens/VoiceScreen.js
+    │   │   ├── components/VoiceWaveform.js
+    │   │   └── hooks/useAvatarConversation.js
+    │   ├── avatar/                    # Avatar rendering + Unity bridge
+    │   │   ├── components/{AvatarVRM,AvatarUnity}.js
+    │   │   ├── config/avatarProfiles.ts
+    │   │   └── bridge/{UnityAvatarBridge,blendshapeTranslator,AvatarBridgeProtocol}.js
+    │   ├── library/                   # Knowledge-base browsing
+    │   │   ├── screens/{LibraryScreen,ArticleDetailScreen}.js
+    │   │   ├── components/CategoryCard.js
+    │   │   └── data/knowledgeBase.js  # Local KB (source-of-truth backup; runtime uses Supabase)
+    │   ├── onboarding/
+    │   │   ├── navigation/OnboardingNavigator.js
+    │   │   ├── screens/*.js           # 12-step onboarding flow
+    │   │   └── components/*.js         # OnboardingLayout, OptionCard, ProgressBar, SummaryRow
+    │   └── settings/screens/ProfileScreen.js
+    ├── components/                    # Shared, cross-feature UI (Avatar, MessageCard)
+    ├── lib/                           # Integrations + pure engines
+    │   ├── openaiService.js           # RAG pipeline (embed → Supabase match_chunks → streaming chat)
+    │   ├── rag/                       # Shared RAG core: ragConfig, prompt, retrieval, citations (CJS — app + scripts)
+    │   ├── ragTelemetry.js            # Device-local retrieval traces (no message text)
+    │   ├── supabaseService.ts         # Supabase anon client
+    │   ├── aceService.js              # NVIDIA ACE stub
+    │   ├── types.ts                   # Shared service-layer domain types
+    │   ├── tts/                       # ttsService.ts (provider selection) + Azure/ElevenLabs
+    │   ├── sentiment/detectSentiment.ts
+    │   └── lipsync/                   # Alignment → viseme timeline (shared with Unity test tools)
+    ├── theme/                         # colors.ts, typography.ts (design tokens)
+    ├── constants/data.js              # Categories, resources, sample messages
+    └── context/SettingsContext.tsx    # App-wide settings + theme provider
 ```
+
+### Scripts
+
+| Command | What it does |
+|---|---|
+| `npm start` | Start the Expo dev server |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint (`eslint-config-expo`) |
+| `npm run format` | Prettier write |
+| `npm test` | Jest (`jest-expo`) |
 
 ---
 
@@ -153,12 +161,12 @@ OPENAI_API_KEY=sk-...
 
 ### Supabase setup (first time only)
 
-Run `scripts/supabase-setup.sql` in the Supabase SQL Editor to create the `knowledge_chunks` table, the pgvector index, and the `match_chunks` RPC function.
+Run `scripts/supabase-setup.sql` in the Supabase SQL Editor to create the `knowledge_chunks` table, the pgvector index, and the `match_chunks` RPC function, then apply any pending files from `scripts/migrations/` (see `scripts/migrations/README.md` for run order and status).
 
 Then seed the knowledge base:
 
 ```bash
-node scripts/migrate-to-supabase.mjs
+npm run kb:ingest -- --doc curated
 ```
 
 ### Run the mobile app
@@ -193,7 +201,7 @@ The Voice screen runs a fully pipelined conversation flow managed by `useAvatarC
      ↓
 [Whisper STT] → transcribed text
      ↓
-[OpenAI gpt-4o-mini stream] → tokens arrive sentence by sentence
+[OpenAI gpt-4o stream] → tokens arrive sentence by sentence
      ↓
 [ElevenLabs TTS] ← fires immediately per sentence, in parallel
      ↓
@@ -255,164 +263,45 @@ avatarRef.current.stopAudio();
 
 ## RAG Pipeline
 
-The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI.
+The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI. All prompt/retrieval configuration lives in **`src/lib/rag/`** (plain CommonJS shared by the app, Jest, and the Node scripts — change values there, never in per-script copies). Full documentation: [current-state audit](docs/rag-current-state-audit.md) · [research](docs/rag-industry-research.md) · [target architecture](docs/rag-target-architecture.md) · [source inventory](docs/rag-source-inventory.md) · [evaluation plan](docs/rag-evaluation-plan.md) · [results](docs/rag-improvement-results.md).
 
 | Setting | Value |
 |---|---|
 | Embedding model | `text-embedding-3-small` (1536 dims) |
-| Chat model | `gpt-4o-mini` |
-| Vector DB | Supabase `knowledge_chunks` table (pgvector `vector(1536)`) |
-| Retrieval | Hybrid Supabase `match_chunks` RPC (semantic + keyword scoring), top-8 chunks, min similarity 0.35 |
+| Chat model | `gpt-4o` (temp 0.7 in app; eval runs at temp 0 + seed for comparability) |
+| Vector DB | Supabase `knowledge_chunks` (pgvector `vector(1536)` + tsvector, hybrid `match_chunks` RPC) |
+| Retrieval | Oversample 50 → source-family cap (iSupport max 2) → top 5; min similarity 0.25 |
+| Prompt | `v2-nz-safety` — NZ region, 111-first emergency escalation, no dosing/diagnosis output; `PROMPT_VERSION='v1'` in `ragConfig.js` is the one-line rollback |
+| Citations | Inline `[S#]` markers validated against supplied passages (`CITATION_MODE='trailing'` rolls back) |
 | Context window | Last 6 messages |
-| Chunk size | ~500 words with ~50-word overlap |
-| Auto-tagging | GPT-4o-mini assigns 5–8 specific tags per chunk at ingestion time |
+| Telemetry | Device-local ring buffer of retrieval traces (ids/scores/latency — never message text) |
 
-**Flow:**
-
-```
-User query
-  → embed via text-embedding-3-small
-  → Supabase match_chunks RPC (server-side cosine similarity)
-  → top-5 chunks injected as context
-  → gpt-4o-mini streaming response with source attribution
-```
+**Flow:** user query → embed (LRU-cached) → `match_chunks` hybrid RPC → cap/diversity → passages injected as `[S1]…` blocks → gpt-4o → citation extraction/validation → answer + tappable sources (voice path strips markers before TTS and delivers the same structured sources).
 
 ### Adding content to the knowledge base
 
-Use the CLI ingestion script:
+Every source must be registered in `scripts/ingest/registry.js` (provenance: document_id, version, country, licence) — unregistered content cannot be ingested, and sources stay `enabled: false` until their licence is confirmed. Source files live in `content/sources/` with checksums in `MANIFEST.md`.
 
 ```bash
-# From a URL
-node scripts/ingest.mjs \
-  --source "https://www.alzheimers.org.uk/some-article" \
-  --category clinical \
-  --org "Alzheimer's Society UK"
-
-# From a local PDF
-node scripts/ingest.mjs \
-  --source "./documents/care-guide.pdf" \
-  --category caregiving \
-  --org "Dementia Australia"
-
-# Preview without uploading
-node scripts/ingest.mjs --source <url> --category <slug> --org <name> --dry-run
+npm run kb:ingest:dry -- --doc curated        # plan (hash-diff, no writes)
+npm run kb:ingest -- --doc curated            # tag+embed only new/changed chunks
+npm run kb:ingest -- --doc <id> --prune       # also remove chunks the source no longer produces
 ```
 
-Valid categories: `caregiving` · `clinical` · `communication` · `prevention` · `best-practices` · `home-safety` · `well-being`
+Ingestion is idempotent by content hash: unchanged chunks are skipped, edited chunks re-embed, and every chunk carries full provenance columns (requires `scripts/migrations/2026-07-17_a_provenance_columns.sql`).
 
-`scripts/reingest-isupport.mjs` re-ingests the iSupport manuals from `src/documents/` (not tracked in git — place the NZ and WHO original PDFs there manually before running it).
-
-### Testing RAG output
+### Evaluating the pipeline
 
 ```bash
-# Keyword/assertion suite (mustInclude checks + disclaimer/citation guards)
-npm run test:answers
-
-# Reference-answer suite (semantic similarity against 3-5 accepted answers per question)
-npm run test:answers:reference
-
-# Hybrid suite (semantic similarity + required safety keywords)
-npm run test:answers:hybrid
+npm run rag:eval:retrieval                    # deterministic recall@k / MRR / nDCG vs labelled set
+npm run rag:eval:generation                   # answers for all sets (temp 0, seeded)
+npm run rag:eval:safety -- docs/report/eval/generation_<sha>_<prompt>.json   # MUST/MUST-NOT gates (exit code)
+npm run rag:grade -- docs/report/eval/generation_<sha>_<prompt>.json         # groundedness judge + human spot-check file
+npm run rag:eval:sweep                        # min_similarity × diversity-cap parameter sweep
+npm run rag:introspect                        # dump live corpus → docs/report/kb_chunks_reference.csv
 ```
 
-The evaluator supports three modes in `scripts/test-responses.mjs`:
-
-- `keywords` (default): phrase-level guards (`mustIncludeAny` / `mustIncludeAll`) plus disclaimer/helpline/citation checks.
-- `reference`: compares the model response to multiple prewritten correct answers and passes when semantic similarity exceeds the threshold.
-- `hybrid`: requires both semantic similarity and keyword safety guards.
-
-### Comparing OpenAI vs Claude
-
-`scripts/test-responses-compare.mjs` runs the same retrieved context and system prompt through both `gpt-4o-mini` (OpenAI) and Claude, then scores both against the same prewritten reference answers. Retrieval and evaluation are held constant so the comparison isolates generation quality between the two providers.
-
-```bash
-# Requires ANTHROPIC_API_KEY in .env (see .env.example) alongside the existing OpenAI/Supabase keys
-npm run test:compare
-
-# Run one case with full output from both models
-node scripts/test-responses-compare.mjs --case sundowning --verbose
-
-# Use a different Claude model (default: claude-opus-4-8)
-node scripts/test-responses-compare.mjs --claude-model claude-sonnet-5
-
-# Save the run to history for later reporting
-npm run test:compare -- --log-history --label "opus-4-8 vs gpt-4o-mini"
-```
-
-Comparison runs are appended to the same `logs/test-history.ndjson` file with `mode: "compare"`, so `npm run test:history` and `scripts/test-history.mjs export` work unchanged — each question appears as two logged cases (`<id>-openai` and `<id>-claude`) with `provider`, `bestSimilarity`, and `latencyMs` fields for side-by-side comparison.
-
-Useful commands:
-
-```bash
-# Run the full suite directly
-node scripts/test-responses.mjs
-
-# Run one case with full output
-node scripts/test-responses.mjs --case sundowning --verbose
-
-# Run one reference case with full output
-node scripts/test-responses.mjs --mode reference --case ref-sundowning --verbose
-
-# Run hybrid checks with a stricter semantic threshold
-node scripts/test-responses.mjs --mode hybrid --reference-threshold 0.82
-
-# Force the helpline number check for all cases
-node scripts/test-responses.mjs --helpline-required
-```
-
-If you want to use npm and still pass flags through:
-
-```bash
-npm run test:answers -- --case sundowning --verbose
-```
-
-### Logging and viewing test history
-
-You can persist test runs to an append-only NDJSON log (one JSON object per run):
-
-```bash
-# Save a reference run to the default history file
-node scripts/test-responses.mjs --mode reference --log-history
-
-# Save with a run label
-node scripts/test-responses.mjs --mode reference --log-history --label "after reingest 2026-06-23"
-
-# Save to a custom file
-node scripts/test-responses.mjs --mode hybrid --log-history --history-file logs/hybrid-history.ndjson
-
-# Include full AI responses in the history record
-node scripts/test-responses.mjs --mode reference --log-history --log-responses
-```
-
-Default history file path:
-
-```text
-logs/test-history.ndjson
-```
-
-Quick ways to view history:
-
-```bash
-# Summary of recent runs
-npm run test:history
-
-# Full latest run JSON
-npm run test:history:latest
-
-# Full latest run in readable case-by-case format
-npm run test:history:full
-
-# Failed/error cases from latest run
-npm run test:history:failures
-
-# Show last 20 summary rows
-node scripts/test-history.mjs summary --limit 20
-
-# Use a custom history file
-node scripts/test-history.mjs summary --file logs/hybrid-history.ndjson
-```
-
-Tip: commit the script and README changes, but usually keep `logs/` out of git via `.gitignore` if you want local-only test history.
+The frozen pre-overhaul baseline lives in `docs/report/baseline/`; compare any change against it (see the [evaluation plan](docs/rag-evaluation-plan.md) for metric definitions and known limitations).
 
 ---
 

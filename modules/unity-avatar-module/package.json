@@ -1,0 +1,8 @@
+{
+  "name": "unity-avatar-module",
+  "version": "0.1.0",
+  "description": "Native bridge to the embedded Unity CC4 avatar (UaaL). iOS only.",
+  "main": "src/index.ts",
+  "license": "UNLICENSED",
+  "private": true
+}

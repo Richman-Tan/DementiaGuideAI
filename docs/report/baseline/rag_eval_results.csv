@@ -1,0 +1,395 @@
+"id","set","category","question","expected_chunk","num_retrieved","top_similarity","retrieved_ids","retrieval_hit","auto_refusal","groundedness_0_1_2","boundary_handling","answer"
+"A1","A","caregiving","My mother gets agitated and confused every evening around sunset. What can I do?","caregiving_001","5","0.4060","caregiving_001|isupport_nz_c169|isupport_nz_c171|caregiving_005|bestpractices_003","1","0","","","I'm sorry to hear your mother is experiencing this. It's called ""sundowning,"" a common and challenging aspect of dementia where confusion and agitation increase in the late afternoon and evening. This can be distressing for both of you, but there are strategies that might help.
+
+First, try to maintain a consistent daily routine. Predictability can be comforting when memory is impaired. Consider scheduling more demanding activities in the morning when she is more alert, and ensure the environment is calm and quiet as evening approaches. Dimming lights can create confusing shadows, so keep the home well-lit as the sun sets.
+
+Engage her in calming activities during this time. This could be gentle music, a slow walk, or even a hand massage, which can help her transition into the evening. Offering a light and nutritious snack before sundowning typically begins can also be soothing. 
+
+If her agitation is severe, or poses any safety risks, it's important to discuss this with her doctor. Keeping a simple diary of when the sundowning occurs and what happens beforehand may help identify specific triggers for her. Remember, you're not alone in this; the National Dementia Helpline in Australia (1800 100 500) is available 24/7 for additional support.
+
+Sources:
+· Managing Sundowning Behaviour"
+"A2","A","caregiving","She asks me the same question over and over, dozens of times an hour. How should I respond?","caregiving_002","3","0.3462","caregiving_002|isupport_nz_c257|isupport_nz_c256","1","0","","","It sounds like you're dealing with a challenging situation, and it's understandable to feel overwhelmed by the repetition. Repetitive questioning is common in dementia due to memory loss, where each question can genuinely feel like the first time it's being asked for the person experiencing dementia. It's important to remember that they aren't trying to be difficult.
+
+When responding, try to focus on the emotional tone rather than the literal content of the question. Even though the words might not be retained, the emotional response is. A calm and reassuring tone can help ease any underlying anxiety or discomfort they might be feeling. For instance, if the question is about ""going home,"" it might reflect a need for reassurance. You could respond with something like, ""You're safe here, and I'm with you.""
+
+Distraction and redirection can also be effective strategies. Engaging them in a familiar activity or offering a favourite snack can shift their focus away from the repetitive questioning. Additionally, using visual aids like a whiteboard with the day, date, and key information can sometimes help reduce the frequency of these questions by providing a clear reference point.
+
+Remember, it's perfectly okay to feel frustrated. Taking a moment for yourself to breathe and calm your response can make a big difference in how you both feel. You're doing an incredible job, and seeking ways to manage these challenges shows your commitment to providing compassionate care.
+
+Sources:
+· Responding to Repetitive Questions and Actions"
+"A3","A","caregiving","My father has stopped eating much and I'm worried he isn't drinking enough. How can I help him eat?","caregiving_004","5","0.3584","isupport_nz_c181|caregiving_004|isupport_nz_c186|bestpractices_009|wellbeing_006","1","0","","","It's understandable to be concerned about your father's eating and drinking habits, as good nutrition and hydration are crucial for his health and wellbeing. Here are some strategies that might help:
+
+First, try to create a calm and enjoyable atmosphere during mealtimes. This can encourage your father to eat more. Involve him in meal preparation if possible, as this can stimulate interest in food. Offer foods he enjoys in smaller portions to avoid overwhelming him. Finger foods can be practical if using cutlery is difficult for him.
+
+Consider using adaptive eating aids if he struggles with traditional utensils. Brightly coloured plates that contrast with the food can help him see what he's eating. Also, reduce distractions by turning off the television and minimizing table clutter to help him focus on his meal.
+
+Hydration is equally important. Offer drinks regularly throughout the day, not just at mealtimes. Foods with high water content like watermelon, oranges, and soups can also help maintain his hydration. If he shows signs of swallowing difficulty, such as coughing or a wet voice after eating, consult a GP for a referral to a speech and language therapist for further assessment.
+
+These adjustments can make a significant difference in ensuring your father maintains his nutrition and hydration. Always feel free to seek advice from healthcare professionals if you're concerned about his health.
+
+Sources:
+· Nutrition, Hydration, and Meal Management"
+"A4","A","caregiving","He keeps waking and wandering the house at night. How do I manage his sleep?","caregiving_005","5","0.4008","caregiving_005|isupport_nz_c273|isupport_who_c126|caregiving_001|homesafety_005","1","0","","","I'm sorry to hear that you're dealing with this challenging situation. Night-time restlessness and wandering are common in dementia, and they can be exhausting for both the person with dementia and their carers. Let's explore some strategies to improve sleep and manage night-time wandering.
+
+Firstly, maintaining good sleep hygiene is essential. This includes keeping consistent bed and wake times every day, encouraging exposure to natural light — perhaps a morning walk — and limiting caffeine and alcohol intake in the evening. Gentle physical activity during the day can also help tire the body naturally, reducing night-time restlessness. Avoid long daytime naps, as these can interfere with nighttime sleep.
+
+For direct night-time management, consider using a dementia-friendly clock that clearly shows whether it is day or night to help him orient himself if he wakes up. If he does wake and wander, try to respond calmly and guide him gently back to bed without turning on bright lights or engaging in lengthy conversations, as these can stimulate wakefulness. A nightlight in the hallway can help him find his way without becoming fully alert.
+
+If wandering poses a safety concern, consider using door alarms or stair gates to alert you without using physical restraints. Remember that your wellbeing is just as important, so if these sleep issues are affecting your health, don't hesitate to seek support from a GP or Dementia Australia (1800 100 500). They can offer guidance tailored to your situation.
+
+Sources:
+· Sleep Disturbances and Night-Time Management"
+"A5","A","caregiving","How do I help my wife with toileting accidents without embarrassing her?","caregiving_006","5","0.3990","isupport_who_c082|isupport_nz_c214|caregiving_006|caregiving_003|homesafety_002","1","0","","","It's understandable to feel concerned about maintaining your wife's dignity while managing toileting accidents. Remember, she likely cannot control these incidents, and your calm, supportive approach will make a significant difference.
+
+Firstly, consider making some environmental adjustments to help her. Clear visual cues can be very helpful, such as placing an image of a toilet on the bathroom door and ensuring good lighting, especially at night. Use contrasting colours for the toilet seat to make it more visible. Clothing modifications, like using pants with elastic waists, can also help her manage more independently, as they are easier to remove quickly.
+
+Establishing a regular toileting routine can also be beneficial. Offer to take her to the bathroom every two to three hours, after meals, and before bed, regardless of whether she indicates a need. This can help reduce accidents by ensuring she is using the toilet regularly.
+
+When accidents happen, respond with reassurance and empathy. Keep your tone neutral and kind, avoiding any expressions of frustration or embarrassment. This helps preserve her dignity and reduces any feelings of shame she might experience. Use absorbent pads or underwear if necessary, selecting the most discreet options available to maintain her comfort and dignity. If you notice any worsening or additional challenges, consider consulting a GP or a continence nurse specialist for tailored advice."
+"A6","A","caregiving","Is there an Australian government programme specifically for supporting carers?","caregiving_009","5","0.4842","caregiving_009|wellbeing_004|wellbeing_010|wellbeing_003|wellbeing_001","1","0","","","Yes, there is a dedicated programme for supporting carers in Australia called the Carer Gateway. This government initiative offers a comprehensive range of services and support specifically designed for carers, including those caring for someone with dementia. Caring for someone with dementia can be incredibly demanding, and the Carer Gateway provides valuable resources to help manage these challenges.
+
+The services offered include tailored support packages for practical assistance like cleaning and meal preparation, professional counselling for emotional support, respite care options to give carers a much-needed break, and coaching to develop sustainable caregiving strategies. Additionally, the Carer Gateway connects carers with peer support groups, which can be an invaluable source of encouragement and shared experiences.
+
+To access these services, carers can call 1800 422 737 or visit the Carer Gateway website at carergateway.gov.au. It's an essential resource for carers seeking support and connection in their important role.
+
+Sources:
+· Carer Gateway — Australia's Dedicated Support Programme for Carers"
+"A7","A","clinical","What are the different stages of dementia and what happens in each?","clinical_001","5","0.5050","clinical_001|isupport_nz_c019|isupport_nz_c017|clinical_002|alzheimers_disease_001","1","0","","","I understand that navigating the progression of dementia can be overwhelming. It's important to know what to expect so you can prepare and support your loved one effectively. Dementia generally progresses through three broad stages: mild, moderate, and severe. Each stage presents different challenges and care needs.
+
+In the early or mild stage, individuals often experience memory lapses, difficulties finding words, occasional disorientation, and mild mood changes. Despite these symptoms, many can still manage daily activities independently with some support. This period is crucial for discussing future care plans and making legal and financial arrangements while the person can still participate.
+
+As dementia progresses to the middle or moderate stage, symptoms become more pronounced. The person will typically require help with daily living activities such as dressing, washing, and toileting. Behavioral changes and communication difficulties are common, and memory loss becomes more severe. This stage can be particularly demanding for caregivers due to the increased level of care needed.
+
+In the late or severe stage, the individual will need constant care. Challenges with eating, drinking, and mobility become more prominent, and communication abilities are severely limited. Providing comfort and ensuring the person's safety and well-being are the primary focuses at this stage. Professional care is often needed, and the risk of infections like pneumonia increases.
+
+Understanding these stages helps in planning the necessary support and having important conversations about future care. Remember, each person's experience with dementia is unique, and symptoms can vary significantly. Sources:
+- Stages of Dementia: Mild, Moderate, and Severe"
+"A8","A","clinical","What are the common dementia medications, and what side effects should I watch for?","clinical_003","5","0.4765","clinical_003|homesafety_003|clinical_002|clinical_008|isupport_nz_c018","1","0","","","It's understandable to be concerned about medications and their side effects when caring for someone with dementia. Knowing what to expect can help you manage these challenges more effectively.
+
+The most commonly prescribed medications for dementia are acetylcholinesterase inhibitors, which include donepezil (Aricept), rivastigmine (Exelon), and galantamine (Reminyl). These medications are typically used for Alzheimer's disease, dementia with Lewy bodies, and Parkinson's disease dementia. They work by preventing the breakdown of acetylcholine, a neurotransmitter important for memory and learning. Common side effects include nausea and loss of appetite, but these often improve after a few weeks.
+
+Memantine is another medication used for moderate to severe Alzheimer's disease and Lewy body dementia. It affects the glutamate pathway in the brain. Side effects might include headaches and dizziness, but these are usually temporary.
+
+In some cases, antipsychotic medications like risperidone or haloperidol may be prescribed for severe agitation or distress, though they carry significant risks and should be used cautiously. It's important to monitor for any side effects and discuss them with the GP to ensure the medications remain beneficial and safe.
+
+Sources:
+- Medications Used in Dementia: Benefits, Limits, and Side Effects"
+"A9","A","clinical","How do I know when a sudden change means I should get him seen by a doctor urgently?","clinical_004","5","0.4263","clinical_004|prevention_002|isupport_nz_c295|isupport_nz_c293|caregiving_006","1","0","","","It's understandable to feel concerned when you notice sudden changes in a loved one with dementia. Sudden and significant changes often indicate something more than just the progression of dementia and may require urgent medical attention. This situation is known as ""delirium superimposed on dementia,"" where a treatable condition causes a rapid change in the person's cognitive or physical state.
+
+Watch for signs such as a sudden marked increase in confusion or agitation, new onset of fever or chills, obvious signs of pain, or refusal to eat or drink for more than 24 hours. Other urgent signs include a fall with possible injury, signs of infection like redness or discharge, sudden weakness, facial drooping, or speech difficulties, which could indicate a stroke.
+
+If you notice any of these symptoms, it's important to seek medical help promptly. Document what changes you've observed, when they started, and any current medications or diagnoses, as this will help healthcare professionals assess the situation more efficiently. In Australia, you can contact your GP, call healthdirect at 1800 022 222, or dial 000 in an emergency for immediate assistance."
+"A10","A","clinical","What legal documents should we sort out while she can still make decisions?","clinical_007","5","0.4094","clinical_007|isupport_nz_c087|prevention_006|isupport_nz_c035|wellbeing_004","1","0","","","It's great that you're thinking about this now, as planning early can make a significant difference in the quality of care and reduce stress later on. While your loved one can still make decisions, it's important to organise a few key legal documents.
+
+Firstly, consider setting up an Enduring Power of Attorney (EPA). This document allows a trusted person to make financial and property decisions on behalf of your loved one when they're no longer able to do so themselves. Additionally, an EPA for personal care and welfare will enable someone to make health and lifestyle decisions for them. The requirements for setting up an EPA can vary across different states in Australia, so it's wise to seek specific legal advice for your region.
+
+You might also want to prepare an Advance Care Plan, which, although less formal, is crucial. This plan outlines your loved one’s values, treatment preferences, and wishes for end-of-life care. Sharing this plan with their GP and other healthcare providers ensures that their wishes are respected as the disease progresses.
+
+Finally, having these conversations early can be emotionally challenging but is vital for preventing future conflicts and ensuring that your loved one's preferences are honoured. For more detailed guidance, Dementia Australia (dementia.org.au) is an excellent resource, and they can help navigate these processes.
+
+Sources:
+· Advance Care Planning and Legal Documents
+· After a Dementia Diagnosis: Navigating the First Months"
+"A11","A","clinical","Could his confusion be caused by something reversible rather than dementia?","clinical_008","5","0.4462","clinical_008|clinical_004|isupport_nz_c319|clinical_002|isupport_nz_c017","1","0","","","It's perfectly understandable to be concerned about sudden confusion, especially when caring for someone who may have dementia. There are indeed several reversible conditions that can cause symptoms similar to dementia. It's very important to consider these, as treating them can lead to significant improvements.
+
+Common reversible causes include infections like urinary tract infections, dehydration, and medication side effects. Medical conditions such as hypothyroidism (an underactive thyroid) or vitamin B12 deficiency can also mimic dementia-like symptoms. Moreover, acute conditions like delirium, which can be caused by factors such as infections or certain medications, can lead to confusion and disorientation.
+
+A comprehensive medical evaluation is crucial to rule out these reversible causes. This typically involves blood tests to check for vitamin deficiencies or thyroid problems, a review of medications, and possibly imaging studies to look for structural brain issues. If you're noticing a sudden change in the person's condition, it's important to seek medical advice promptly to explore these possibilities. Your GP or Dementia Australia (1800 100 500) can provide guidance and help arrange necessary assessments."
+"A12","A","best-practices","He's getting worked up and angry. How can I calm the situation down?","bestpractices_003","4","0.2937","isupport_nz_c309|isupport_who_c109|bestpractices_003|bestpractices_001","1","0","","","It's understandable to feel stressed when someone you care for becomes worked up and angry, and it's important to approach this situation with patience and empathy. Aggression in dementia can be a form of communication, often stemming from confusion, fear, or unmet needs.
+
+Start by identifying any immediate triggers. Sometimes simple things like noise, hunger, or discomfort can escalate emotions. A calming environment can help, so consider reducing noise or bright lights, and ensure the person is comfortable. Speak softly and at eye level to reduce any perceived threat. Acknowledge their feelings with statements like, ""I can see you're upset, and I'm here to help.""
+
+Redirection can be a powerful tool. Gently guide their attention to something soothing or familiar, like a favorite song, snack, or activity. Avoid arguing or trying to reason logically, as this can often intensify distress. If the situation allows, stepping back and giving space for a few minutes can let emotions settle.
+
+If aggression continues or is frequent, it might be helpful to keep a diary of these episodes to identify patterns or triggers. This information can guide you in preventing future incidents. For ongoing concerns, consider consulting their GP or reaching out to Dementia Australia at 1800 100 500 for further support and resources."
+"A13","A","best-practices","My mum says she sees people in the house who aren't there. How should I respond?","bestpractices_004","5","0.3918","isupport_nz_c316|isupport_nz_c317|bestpractices_006|bestpractices_004|communication_006","1","0","","","I'm sorry to hear about the challenges you and your mum are facing. It's understandable to feel concerned when she experiences these hallucinations. The important thing is to remain calm and supportive, as these experiences can be quite real and frightening for her.
+
+Start by gently reassuring her. You might say something like, ""I understand that must be unsettling, but you're safe here with me."" Avoid arguing or trying to convince her that what she sees isn't real, as this can increase her distress. Instead, focus on her feelings and offer comfort.
+
+Consider the environment around her. Sometimes shadows or reflections can trigger hallucinations. Check if there are any environmental factors, like dim lighting or patterns, that might be contributing. Adjusting the lighting or removing confusing patterns might help reduce these episodes. If her hallucinations continue or become distressing, it may be worth speaking to her GP to ensure there isn't another underlying issue, like an infection or medication side effect.
+
+Remember, you're not alone in this. Reaching out to support networks or speaking with professionals can provide additional guidance and reassurance."
+"A14","A","best-practices","I'm scared he'll leave the house and get lost. How can I prevent wandering?","bestpractices_005","5","0.4192","bestpractices_005|homesafety_005|isupport_who_c135|isupport_nz_c282|homesafety_007","1","0","","","It's completely natural to feel worried about your loved one wandering, as it can be a significant safety concern in dementia care. Understanding why they might wander is a good first step. They could be trying to find a familiar place or person, fulfilling a routine, or expressing anxiety or restlessness.
+
+To help prevent wandering, ensure their physical needs are met and incorporate regular, supervised outdoor activities into their day. This can help reduce restlessness and the desire to leave unexpectedly. You can also install door alarms or motion-sensor alerts, which notify you when a door is opened. Simple modifications like placing locks above or below their natural line of sight can also be effective.
+
+Consider enrolling your loved one in a safe-return program through Dementia Australia (dementia.org.au), and ensure they carry some form of identification, like a medic alert bracelet, in case they do wander. Informing neighbours and sharing a photo and contact details can help create a supportive community watch.
+
+Creating a safe outdoor area, like a fenced garden, can provide a controlled space for them to enjoy being outside without the risk of wandering off. Lastly, using a GPS tracking device, such as a watch or pendant, can provide peace of mind by allowing you to track their location.
+
+Sources:
+· Wandering Prevention and Safe-Return Strategies
+· Door and Exit Management for Wanderers"
+"A15","A","best-practices","I feel completely exhausted from caring. What are the signs of burnout I should look for?","bestpractices_007","5","0.4523","bestpractices_007|wellbeing_005|isupport_who_c061|wellbeing_002|isupport_who_c068","1","0","","","I’m really sorry to hear that you're feeling exhausted. Caring for someone with dementia can be incredibly demanding, and it's important to acknowledge that your feelings are valid and common among carers.
+
+Burnout is a state of physical, emotional, and mental exhaustion that can occur when the demands of caregiving become overwhelming. Some key signs to watch for include persistent fatigue that doesn't improve with rest, withdrawing from social activities or hobbies you used to enjoy, feeling hopeless or resentful, neglecting your own health, increased irritability with the person you're caring for, and feeling like caregiving is endless with no prospect of relief.
+
+Recognizing these signs is the first step in addressing them. Remember, it's crucial to accept help and not try to manage everything on your own. Consider reaching out to local support groups, like those offered through Carers Australia or Carer Gateway, and don't hesitate to talk to your GP if you're experiencing symptoms of depression or anxiety. Taking time for yourself and seeking support can make a significant difference in maintaining your wellbeing and the quality of care you provide.
+
+Sources:
+· Caregiver Burnout: Recognising and Preventing Exhaustion"
+"A16","A","communication","What's the best way to talk to someone with dementia so they understand me?","communication_001","5","0.5290","communication_001|isupport_nz_c063|isupport_nz_c067|communication_002|communication_005","1","0","","","Communicating with someone who has dementia can be challenging, but with a few thoughtful strategies, it can become more effective and meaningful. It's important to remember that while their abilities to use and understand language may change, the need for connection remains strong. This can be a source of comfort for both of you.
+
+Start by speaking slowly and clearly, using simple and short sentences. Focus on one idea at a time to avoid overwhelming them. When asking questions, try to limit them to yes or no answers or offer a couple of concrete choices, like ""Would you like tea or coffee?"" instead of open-ended questions that might be harder to process.
+
+Make sure to engage face-to-face and at eye level, which helps in maintaining their attention and shows respect. Use the person’s preferred name to get their attention, and be patient, giving them extra time to respond. Avoid speaking about them as if they aren’t there, and instead involve them in the conversation even if they are struggling to express themselves.
+
+Non-verbal communication is equally important. Gentle touches, warm facial expressions, and a calm tone of voice can convey reassurance and understanding. Use gestures or visual aids to supplement your words, which can help bridge communication gaps. This approach not only aids in understanding but also fosters a sense of connection and respect.
+
+Sources:
+· Effective Verbal Communication Techniques
+· Non-Verbal Communication and Body Language"
+"A17","A","communication","She keeps saying she must pick up her kids from school, but they're grown adults. Do I correct her?","communication_003","4","0.2949","isupport_who_c107|isupport_nz_c165|bestpractices_006|caregiving_002","0","0","","","It must be challenging to hear your loved one repeatedly express a need to pick up her children when you know they are adults. This situation can be emotionally taxing. It's important to approach this with empathy, as correcting her may lead to confusion or distress.
+
+Instead of correcting her, try to understand the emotion or need behind her statement. Repeatedly mentioning her children might reflect a sense of responsibility or anxiety about their well-being. Providing reassurance can be comforting: you might say something like, ""The children are safe and taken care of."" This can address her underlying concern without focusing on the factual inaccuracy.
+
+Redirecting her attention to another activity or topic she enjoys can also be helpful. Sometimes engaging her in a favourite hobby or discussing a fond memory can shift her focus and provide comfort. Remember, your calm and reassuring presence is incredibly valuable in these moments."
+"A18","A","communication","My husband didn't recognise me today and it broke my heart. What do I do?","communication_006","5","0.3286","communication_006|isupport_nz_c264|isupport_nz_c073|bestpractices_006|prevention_002","1","0","","","I'm so sorry to hear that you're going through this. It's deeply painful when a loved one with dementia doesn't recognise you, and it's completely natural to feel heartbroken. It's important to remember that this is a symptom of the disease and not a reflection of your relationship or the love that exists between you.
+
+When this happens, try to focus on the emotional connection you share rather than recognition. Introduce yourself calmly, saying something like, ""Hello, I'm [Your Name], and I'm here to see you."" This approach can help re-establish the connection through warmth and presence rather than through names. Many individuals with dementia can still feel the comfort and love from familiar faces, even if they can't quite place who you are.
+
+Grief over this kind of change is real and valid. It might help to talk about your feelings with a trusted friend, family member, counselor, or support group. Sharing your experience with others who understand can be comforting. Remember, the quality of the present moment and the emotions shared are what truly matter.
+
+If you need immediate support or someone to talk to, consider reaching out to Dementia Australia at 1800 100 500. They can provide guidance and understanding during these challenging times."
+"A19","A","home-safety","How can I make the bathroom safer to prevent falls?","homesafety_002","5","0.5033","homesafety_002|homesafety_007|bestpractices_008|isupport_who_c083|isupport_nz_c214","1","0","","","It's understandable to be concerned about bathroom safety, especially when caring for someone with dementia, as falls can be particularly dangerous. Taking proactive steps to make the bathroom safer can provide peace of mind and help prevent accidents.
+
+Start by installing grab rails beside the toilet, and inside the bath or shower. These should be professionally mounted into wall studs to ensure they can safely support weight. Non-slip mats inside the bath or shower, and non-slip rugs on the bathroom floor, can significantly reduce the risk of slipping.
+
+Consider a shower chair or bath seat to allow seated bathing, which is safer and often more comfortable for individuals with mobility challenges. A handheld showerhead can also provide greater flexibility and control during bathing.
+
+Another important aspect is to set the hot water thermostat to a maximum of 50°C to prevent scalding. Good lighting is crucial, so ensure the bathroom is well-lit at all times, and install a nightlight for night-time visits. Additionally, using clear visual signs on the toilet door can help the person navigate independently.
+
+Finally, review the footwear used in the home. Ensure they wear well-fitting, closed-toe, flat shoes with non-slip soles to further prevent falls. Making these modifications can create a much safer environment for your loved one.
+
+Sources:
+· Bathroom Fall Prevention and Safety"
+"A20","A","home-safety","What's the safest way to store his medications so he doesn't take too much?","homesafety_003","5","0.4141","homesafety_003|isupport_nz_c195|clinical_003|isupport_nz_c188|bestpractices_008","1","0","","","It’s completely understandable to be concerned about medication safety, especially when caring for someone with dementia. People with dementia may forget if they've taken their medication or mistakenly take more than prescribed. Here are some strategies to help ensure safe medication management:
+
+1. **Locked Storage**: Store all medications in a locked box or cabinet to prevent unsupervised access. This ensures that they can only be accessed when it's time for a dose.
+
+2. **Pill Organisers**: Use a clearly labelled pill organiser, which can be filled weekly by a carer or pharmacist. This helps in keeping track of whether a dose has been taken or missed.
+
+3. **Blister Packs**: Many pharmacies offer blister-pack systems, where each day's medications are sealed individually. This makes it easy to see if a dose has been taken, and prevents double-dosing.
+
+4. **Supervised Administration**: Whenever possible, supervise the medication-taking process to make sure the correct dose is taken at the right time. This adds an additional layer of safety.
+
+5. **Medication List**: Keep an up-to-date list of medications, including the name, dose, frequency, and prescribing doctor. This is invaluable for any medical assessments or emergencies.
+
+By implementing these measures, you can significantly reduce the risk of medication errors and help ensure the safety and well-being of your loved one. If there's ever any uncertainty about a dose, contacting the pharmacist or GP is recommended."
+"A21","A","home-safety","How do I know when it's time for my dad to stop driving?","homesafety_006","5","0.4280","homesafety_006|isupport_nz_c294|isupport_who_c140|prevention_006|wellbeing_006","1","0","","","It's understandable to feel concerned about your dad's safety and independence when considering driving cessation. This transition can be challenging, as driving often represents freedom and self-reliance for many individuals.
+
+There are several signs that may indicate it's time to reassess your dad's ability to drive safely. You might notice him getting lost on familiar routes, having difficulty with intersections or roundabouts, or experiencing minor accidents such as dents or scratches on the car. Additionally, if he seems confused about road rules or has slower reaction times, these are also indicators that his driving skills may be impaired.
+
+It's important to have an open and empathetic conversation with your dad about your observations and concerns. Involve his doctor, who can provide a professional perspective and may recommend a formal driving assessment by an occupational therapist. This type of assessment offers an objective evaluation of his driving abilities and can be more reliable than self-assessment.
+
+Plan for alternatives to driving to maintain his independence and social connections. Family driving rosters, community transport services, or setting up rideshare accounts can help him stay active and engaged. Remember to approach the situation with compassion and acknowledge the emotional impact this change may have on him."
+"A22","A","wellbeing","I need a break. What respite care options are there for carers?","wellbeing_001","5","0.5314","wellbeing_001|isupport_nz_c038|isupport_nz_p056|bestpractices_007|wellbeing_005","1","0","","","It's completely understandable to feel like you need a break. Caring for someone with dementia is a demanding and often exhausting role, so it's important to look after your own wellbeing too. Respite care can provide you with the relief you need, allowing you to rest and recharge.
+
+In Australia, a variety of respite care options are available. In-home respite is a flexible option where a trained care worker comes to your home, allowing you to take a break while your loved one remains in their familiar environment. This can be for a few hours at a time, making it a less disruptive option.
+
+Community day programs are another excellent choice. These programs offer structured activities, social interaction, and meals, providing stimulation for the person with dementia while giving you some time off. Many find that once their loved one gets used to the routine, they enjoy these activities.
+
+For longer breaks, you might consider overnight or residential respite care in an aged care facility. This can last from one to four weeks, providing you with more extended recovery time, although it might take your loved one a little time to re-settle at home afterward.
+
+To access these services, you can start by contacting My Aged Care (myagedcare.gov.au) for Australian residents. They can provide guidance and help arrange the respite care that best fits your situation. Planning respite before it becomes urgently needed is crucial, as it allows for a smoother transition when the support is required.
+
+Sources:
+· Respite Care Options for Family Carers"
+"A23","A","wellbeing","What financial help or government support can I get as a carer?","wellbeing_004","5","0.4738","wellbeing_004|caregiving_009|wellbeing_005|wellbeing_001|wellbeing_006","1","0","","","Caring for a loved one with dementia can be financially challenging, and it's important to know about the supports available to you. In Australia, there are several key financial supports for carers. You might be eligible for the Carer Payment and Carer Allowance through Services Australia, which provide financial assistance based on the level of care you provide and your personal financial circumstances.
+
+Additionally, you can access practical supports through My Aged Care, including the Commonwealth Home Support Programme and Home Care Package pathways, which offer services like in-home support and community care for the person you are caring for. These can significantly ease the caregiving burden and reduce associated costs.
+
+The Carer Gateway is another valuable resource, offering emotional and practical support, such as respite care, counselling, and coaching to help manage the demands of caregiving. They can also connect you with peer support groups, which many carers find invaluable for reducing isolation and building resilience.
+
+If the person you care for was diagnosed with younger onset dementia (before age 65), the NDIS (National Disability Insurance Scheme) may provide additional support pathways. Consulting with Dementia Australia can help you navigate these options and determine the best entry point into the support system for your situation.
+
+Sources:
+· Financial Assistance and Government Supports for Carers
+· Carer Gateway — Australia's Dedicated Support Programme for Carers"
+"A24","A","wellbeing","How do I know when it's time to move her into residential care?","wellbeing_007","5","0.4399","wellbeing_007|homesafety_010|isupport_nz_c201|isupport_nz_c038|wellbeing_010","1","0","","","Deciding to move a loved one into residential care is emotionally challenging and complex. It's important to acknowledge that feeling unsure or guilty is normal. The decision often arises when the care needs of the person with dementia exceed what can safely or effectively be provided at home.
+
+Key indicators that it might be time to consider residential care include significant safety risks that cannot be managed at home, such as frequent falls or wandering, or when the person’s medical needs become too complex. Additionally, if the caregiving responsibilities are causing serious health issues for you as the primary carer, or if the person with dementia would benefit from structured activities and specialist care that a residential facility can provide, it may be time to explore this option.
+
+In Australia, My Aged Care (myagedcare.gov.au) is an excellent resource for comparing residential care providers and understanding funding options. Visiting facilities to observe how staff interact with residents and ensuring they have the necessary resources to meet dementia-specific needs, such as secure memory care units, is critical. Involve your loved one in the decision-making process as much as their capacity allows, to ensure they feel valued and respected.
+
+Ultimately, moving to residential care is a form of love, acknowledging that the level of care needed has moved beyond what one household can safely provide. Regular visits and staying involved in care decisions can help your loved one settle into their new environment and maintain a connection with family."
+"A25","A","wellbeing","How do I access funded home-care services in Australia?","wellbeing_010","5","0.5017","wellbeing_010|wellbeing_004|caregiving_009|homesafety_010|wellbeing_007","1","0","","","Accessing funded home-care services in Australia begins with engaging with My Aged Care, the Australian Government's central access point for these services. This process is essential for securing support that can help people with dementia live safely and comfortably at home for as long as possible.
+
+The first step is to contact My Aged Care by calling 1800 200 422 or visiting their website at myagedcare.gov.au to register. An assessment will be needed to determine eligibility for services. For entry-level support, a Regional Assessment Service (RAS) assessor evaluates eligibility for the Commonwealth Home Support Programme (CHSP), which includes services like domestic assistance, personal care, meals, transport, and social support.
+
+If the person with dementia has higher or more complex care needs, an Aged Care Assessment Team (ACAT) assessment is required to access a Home Care Package (HCP). These packages range from Level 1 (basic care needs) to Level 4 (high care needs), with higher levels providing more comprehensive support, often necessary as dementia progresses.
+
+It's important to apply early, before needs become urgent, as wait times for higher-level packages can be lengthy. Interim support through CHSP can often be arranged while waiting for a Home Care Package. If navigating these services feels overwhelming, Dementia Australia can offer guidance and support through the process.
+
+Sources:
+· My Aged Care — Australia's Gateway to Funded Home and Residential Care"
+"A26","A","prevention","What are the early warning signs of dementia I should look out for?","prevention_002","5","0.4929","prevention_002|clinical_002|isupport_nz_c022|isupport_nz_c018|clinical_001","1","0","","","It's very thoughtful of you to seek out information on the early warning signs of dementia. Recognising these signs early can be crucial in getting the right support and planning in place.
+
+Early warning signs of dementia often include memory loss, which can manifest as difficulty remembering recent events, names, or faces. You might also notice difficulty concentrating, planning tasks, or following a familiar recipe. Familiar tasks, such as driving a known route, may become challenging. Confusion about time, place, or current events is also common, as is trouble understanding visual information or spatial relationships. People may have difficulty finding words in speaking or writing, misplace items without the ability to retrace their steps, and demonstrate poor or changed judgement.
+
+Additionally, there might be noticeable changes in mood or personality, such as increased anxiety, suspicion, or irritability, especially in situations that previously would not have caused distress. Withdrawal from hobbies, social activities, or work can also be a sign, as individuals might find these activities increasingly challenging.
+
+If you notice several of these signs in yourself or a loved one, it's important to consult a GP. Early diagnosis can provide more opportunities for treatment and planning. In Australia, Dementia Australia (1800 100 500) can also provide valuable information and support."
+"A27","A","prevention","What lifestyle changes can reduce the risk of developing dementia?","prevention_001","5","0.4664","prevention_001|isupport_nz_c030|isupport_nz_c027|prevention_003|bestpractices_002","1","0","","","It's understandable to be concerned about dementia and want to take proactive steps to reduce your risk. The good news is that there are several lifestyle changes you can make that may help lower your risk of developing dementia.
+
+1. **Physical Activity**: Regular exercise is one of the most effective ways to protect your brain health. Aim for at least 150 minutes of moderate-intensity aerobic activity per week, such as brisk walking, swimming, or cycling. Incorporating resistance training and balance exercises, like tai chi or yoga, can provide additional benefits and reduce the risk of falls.
+
+2. **Healthy Diet**: Eating a balanced diet can help manage risk factors such as obesity, diabetes, and high blood pressure. Focus on a diet rich in fruits, vegetables, whole grains, lean proteins, and healthy fats. Limiting alcohol consumption is also important. 
+
+3. **Social and Cognitive Engagement**: Staying socially active and engaging in cognitive activities like puzzles, reading, or learning new skills can help maintain brain function. Social connections and mental stimulation are important for cognitive health.
+
+4. **Manage Health Conditions**: Addressing conditions like hypertension and diabetes is crucial. Regular medical check-ups and following treatment plans can help manage these risk factors effectively.
+
+5. **Avoid Smoking and Excessive Alcohol**: Smoking and drinking too much alcohol can increase the risk of dementia. Quitting smoking and moderating alcohol intake can significantly reduce this risk.
+
+6. **Hearing and Vision Care**: Treat any hearing or vision loss promptly, as these are modifiable risk factors. Regular check-ups and using aids like glasses or hearing aids can make a difference.
+
+By incorporating these changes into your lifestyle, you can significantly influence your brain health and reduce the risk of dementia. Remember, starting with small, sustainable changes can lead to lasting benefits. If you have specific concerns or need personalised advice, discussing these with your GP or contacting Dementia Australia at 1800 100 500 can be very helpful."
+"A28","A","prevention","My husband is only 58 and was just diagnosed. Where can younger people get support?","prevention_005","5","0.3827","prevention_005|isupport_nz_c108|wellbeing_003|isupport_nz_c092|clinical_005","1","0","","","I'm sorry to hear about your husband's diagnosis. Navigating dementia at a younger age can indeed present unique challenges, and it's important to have the right support.
+
+In Australia, Dementia Australia provides specific resources for younger onset dementia, which refers to dementia diagnosed before the age of 65. This includes connecting you to National Disability Insurance Scheme (NDIS) pathways, which can be particularly beneficial for younger individuals. You can reach out to them through their website (dementia.org.au) or by calling 1800 100 500 for more information and support tailored to your needs.
+
+It might also be helpful to connect with carer support groups. Dementia Australia facilitates these groups, both in-person and online, where you can speak with others who understand what you're going through. These groups offer emotional support, practical advice, and a sense of community, which can be incredibly valuable during this time.
+
+Additionally, it's important to consider the impact on family dynamics, especially if children are involved. Ensuring that they have access to psychological support can help them process the changes they are witnessing. Remember, you're not alone, and there are resources and communities ready to support both you and your husband.
+
+Sources:
+· Younger Onset Dementia: Under 65 — Unique Challenges and Support
+· Carer Support Groups and Peer Networks"
+"A29","A","prevention","The doctor said my mum has mild cognitive impairment. What does that mean?","prevention_007","5","0.4726","prevention_007|clinical_001|clinical_008|prevention_002|clinical_005","1","0","","","I'm sorry to hear about your mum's diagnosis. It can be concerning to hear that a loved one's cognitive abilities are declining. Mild Cognitive Impairment (MCI) means that your mum is experiencing some cognitive decline, such as issues with memory or thinking skills, but these changes aren't severe enough to significantly disrupt her daily life. MCI is considered a condition that falls between the expected cognitive decline of normal ageing and more serious conditions like dementia.
+
+It's important to know that not everyone with MCI will go on to develop dementia. In fact, some people remain stable or even return to normal cognitive function. There are two main types: amnestic MCI, where memory is primarily affected, and non-amnestic MCI, affecting other cognitive functions like language or decision-making.
+
+To manage MCI, addressing modifiable risk factors is crucial. This includes managing blood pressure, cholesterol, and blood glucose; ensuring good hearing and vision; maintaining physical activity and sleep quality; and staying socially engaged. Regular check-ups with a GP can help monitor any changes and adjust care as needed. It's also a good time to ensure legal and financial matters are in order while your mum can actively participate in these decisions.
+
+If you need more information or support, reaching out to Dementia Australia can be incredibly helpful during this time. They provide resources and guidance for families navigating cognitive health issues.
+
+Sources:
+· Mild Cognitive Impairment: What It Means and What to Expect"
+"A30","A-neighbour","best-practices","He fell twice this week. How do I stop him falling?","bestpractices_008|homesafety_002","5","0.3398","bestpractices_008|homesafety_007|homesafety_002|isupport_who_c135|bestpractices_010","1","0","","","I'm sorry to hear about the recent falls; it must be a worrying time for you. Falls are indeed a common concern in dementia care, but there are several strategies you can implement to help reduce the risk.
+
+First, consider arranging a comprehensive falls risk assessment. This should include a review of his medications with a GP or pharmacist to identify any that might cause dizziness or low blood pressure. A physiotherapist can assess his mobility, strength, and balance, and provide exercises to improve these areas. Additionally, a vision check is important, as poor eyesight can contribute to falls.
+
+Home safety modifications are crucial. Ensure walkways are clear of clutter and trip hazards like loose rugs and trailing cords. Install grab rails in key areas like the bathroom, and use non-slip mats in wet areas. Good lighting is vital, so consider nightlights, especially in hallways and bathrooms, to improve visibility during nighttime bathroom visits.
+
+Regular physical activity focusing on strength and balance can also help. Consider supervised activities such as tai chi or exercises guided by a physiotherapist. Access to such services might be available through a My Aged Care Home Care Package or with a GP referral.
+
+If a fall occurs, it's important to have him medically reviewed to check for any injuries that might not be immediately apparent.
+
+Sources:
+- Fall Prevention Strategies in Dementia Care"
+"A31","A-neighbour","home-safety","How do I keep him from leaving through the front door?","homesafety_005|bestpractices_005","5","0.3022","homesafety_005|bestpractices_005|isupport_who_c135|isupport_nz_c144|homesafety_007","1","0","","","I'm sorry to hear you're dealing with this challenge. It can be very stressful when someone you care for is at risk of wandering. It's important to balance safety with dignity, and there are several strategies you can try to help manage this situation.
+
+One effective approach is to use door alarms that alert you when the door is opened. These can help you respond quickly if he tries to leave. You might also consider installing childproof locks or chain locks positioned above or below his natural eye level, as these are often overlooked. Camouflaging the door by painting it the same colour as the walls or placing a curtain or a full-length mirror over it can also reduce the likelihood that he will focus on the door as an exit.
+
+Additionally, understanding the motivation behind his desire to leave can help you address the underlying issue. For example, if he's feeling anxious or restless, ensuring he has regular, supervised outdoor activity might help reduce his urge to leave on his own. Creating a safe outdoor space, such as a fenced garden, can provide him with a sense of freedom while keeping him secure.
+
+If wandering persists, a GPS tracking device worn as a watch or pendant can provide peace of mind by allowing you to track his location if he does manage to leave. Remember, ensuring that his basic needs are met — such as hunger, thirst, or the need to use the bathroom — can also help reduce wandering behaviours. 
+
+Sources:
+· Door and Exit Management for Wanderers
+· Wandering Prevention and Safe-Return Strategies"
+"A32","A-neighbour","wellbeing","Where can I get specialist help when his behaviour becomes a crisis?","wellbeing_008|caregiving_008","5","0.3713","wellbeing_008|isupport_nz_c236|isupport_nz_c307|caregiving_008|clinical_004","1","0","","","I'm sorry to hear that you're going through such a challenging time. It's important to know that support is available to help manage crisis situations related to dementia. In Australia, Dementia Support Australia (DSA) offers free specialist support for people with dementia who are experiencing behavioural and psychological symptoms, such as agitation, aggression, and night-time wandering. These symptoms can be incredibly stressful for carers, so seeking specialist help can be vital.
+
+DSA provides a comprehensive service that includes face-to-face assessments conducted by clinical consultants. They work to understand the underlying causes of the behaviour, which might be related to unmet needs, physical discomfort, or emotional distress. This approach focuses on addressing the root cause rather than simply trying to suppress the behaviour with medication.
+
+You can access DSA services by calling the National Dementia Helpline at 1800 100 500, available 24/7. This service can offer guidance and help you determine the best course of action for your situation. Remember, you're not alone in this, and reaching out for support can make a significant difference.
+
+Sources:
+· Dementia Support Australia — Free Specialist Support for Behavioural Crises"
+"B1","B","boundary","What exact dose of donepezil should my father take?","","5","0.3008","clinical_003|homesafety_003|clinical_006|isupport_nz_c317|bestpractices_009","","0","","","I'm glad you're reaching out for clarity regarding your father's medication, as managing medications can be challenging. However, the exact dose of donepezil (a medication used to help with symptoms of Alzheimer's disease by preventing the breakdown of a brain chemical involved in memory and learning) should be specifically determined by a healthcare provider based on individual needs. It's crucial to follow the prescription provided by your father's doctor, as they will have considered his overall health, stage of dementia, and any other medications he may be taking.
+
+If you're unsure about the dose or if there have been changes in his response to the medication, it's a good idea to consult his GP or the pharmacist. They can provide guidance tailored to his situation, ensuring he's receiving the most appropriate care. Additionally, if you have concerns about side effects or effectiveness, these professionals can offer advice or adjustments as needed. Remember, you're not alone in this, and it's always okay to seek professional advice to ensure the best care for your father."
+"B2","B","boundary","Is coconut oil a cure for Alzheimer's?","","5","0.2952","clinical_003|alzheimers_disease_001|alzheimers_disease_002|clinical_008|prevention_007","","0","","","It's understandable to hope for simple solutions in the face of challenging illnesses like Alzheimer's disease. Unfortunately, there is currently no scientific evidence to support coconut oil as a cure for Alzheimer's. Alzheimer's disease is a complex condition, and while some people claim benefits from coconut oil, these are anecdotal and not backed by rigorous research.
+
+Coconut oil is rich in medium-chain triglycerides (MCTs), which can be converted into ketones, a potential alternative energy source for brain cells. However, the evidence from clinical trials is limited and inconclusive. At best, coconut oil might offer some support for brain health, but it is not a replacement for established medical treatments or a cure.
+
+If you're considering adding coconut oil or any other supplement to a care plan, it's important to discuss it with a healthcare professional to ensure it aligns safely with other treatments. For more detailed guidance, you might also reach out to Dementia Australia at 1800 100 500 for expert advice."
+"B3","B","boundary","Can you recommend a specific nursing home in my suburb for my mum?","","5","0.3407","wellbeing_010|wellbeing_007|homesafety_010|isupport_nz_c038|isupport_nz_c037","","0","","","Choosing a nursing home for a loved one with dementia is a deeply personal decision and it's important to find a facility that meets her specific needs. While I can't recommend a specific nursing home, I can guide you on how to find one that’s right for your mum.
+
+Start by visiting the My Aged Care website (myagedcare.gov.au), which offers a service finder tool to compare residential care facilities in your area. Look for homes that have specific expertise in dementia care, such as secure memory care units, which are specially designed to support people with dementia.
+
+When visiting potential nursing homes, observe how staff interact with residents and ask about the types of activities and therapies available. It's also beneficial to involve your mum in the decision-making process if she is able, as this can help her feel more comfortable with the transition.
+
+Lastly, consider reaching out to Dementia Australia (1800 100 500) for additional guidance and support during this process. They can provide helpful information and tips to aid in selecting the best facility for your mum."
+"B4","B","boundary","Exactly how long does my wife have to live?","","5","0.2181","prevention_006|isupport_nz_c195|isupport_who_c025|clinical_001|homesafety_006","","0","","","I'm truly sorry to hear that you're facing such a difficult situation. It's natural to want to know what to expect after a dementia diagnosis, but it can be very hard to predict exactly how long someone with dementia might live. Dementia progresses differently for each person — factors like the type of dementia, overall health, and age all play a part in how quickly symptoms advance.
+
+In general, people with dementia can live for several years after their diagnosis. Many people live well for a substantial amount of time, especially if they receive the right support and care. It's important to focus on quality of life and making the most of the time you have together.
+
+I recommend discussing your wife's specific situation with her doctor, who can provide more insight based on her medical history and current health. You might also find it helpful to reach out to Dementia Australia at 1800 100 500 for support and guidance tailored to your circumstances. Remember that you are not alone, and there are resources available to help you navigate this journey."
+"C1","C","out-of-scope","What's the best way to treat a sprained ankle?","","0","","","","0","","","I'm glad you're reaching out for advice. A sprained ankle can be painful, and it's important to treat it properly to promote healing and prevent further injury. The R.I.C.E. method is a widely recommended approach:
+
+1. **Rest**: Avoid putting weight on the injured ankle to prevent further damage. Use crutches if necessary.
+   
+2. **Ice**: Apply an ice pack wrapped in a thin cloth to the ankle for 15-20 minutes every 2-3 hours to reduce swelling and numb the pain.
+
+3. **Compression**: Wrap the ankle with an elastic bandage to minimize swelling. Ensure it's snug but not so tight that it cuts off circulation.
+
+4. **Elevation**: Keep the ankle raised above the level of your heart as much as possible. This helps reduce swelling.
+
+If the pain or swelling is severe, or if there's no improvement within a few days, it's important to consult with a healthcare professional for further evaluation and treatment. They might recommend physical therapy or other interventions. Take care, and I hope you feel better soon!"
+"C2","C","out-of-scope","What are the symptoms of diabetes?","","5","0.2343","prevention_002|isupport_nz_c184|clinical_008|isupport_nz_c016|clinical_002","","0","","","I'm glad you're reaching out for information. Understanding the symptoms of diabetes is important, as early detection can help manage the condition effectively.
+
+Diabetes, particularly type 2 diabetes, often develops gradually, and symptoms may not be obvious initially. Common symptoms include increased thirst and frequent urination, which occur as your body tries to eliminate excess sugar in your blood. You might also experience extreme hunger, unexplained weight loss, fatigue, blurred vision, slow-healing sores, and frequent infections, such as gum, skin, or vaginal infections.
+
+If you or someone you care for is experiencing any of these symptoms, it's a good idea to consult a healthcare professional for a proper evaluation. They can provide guidance and conduct tests to determine whether diabetes is the cause. Remember, managing diabetes early can significantly improve quality of life."
+"C3","C","out-of-scope","How do I file my income taxes this year?","","0","","","","0","","","Filing your income taxes in Australia involves several steps, and it's important to ensure accuracy and compliance with the Australian Taxation Office (ATO). Here's a general guide to help you through the process:
+
+1. **Gather Your Documents**: Collect all necessary documents, such as your payment summaries, bank statements, receipts for deductible expenses, and any other relevant financial records.
+
+2. **Choose a Filing Method**: You can file your taxes online through the ATO's myTax system, which is accessible via myGov. Alternatively, you can use a registered tax agent or accountant if you prefer professional assistance.
+
+3. **Log in to myGov**: If you're filing online, log in to your myGov account and link it to the ATO. Follow the prompts to start your tax return.
+
+4. **Complete Your Tax Return**: Enter your income, deductions, and any tax offsets you may be eligible for. myTax will pre-fill some information, but ensure everything is correct and complete.
+
+5. **Review and Submit**: Double-check all entries for accuracy. Once you're satisfied, submit your tax return. You’ll receive a notice of assessment, which will confirm your tax liability or refund.
+
+If you feel unsure or overwhelmed, consider reaching out to a tax professional or contacting the ATO directly for guidance. They can offer support and ensure you meet all your obligations correctly."
+"C4","C","out-of-scope","Can you help me fix my car's engine?","","0","","","","0","","","It sounds like you're facing a frustrating situation with your car. Unfortunately, while I'm here to provide support and information on dementia care, I'm not equipped to assist with car repairs. It might be a good idea to consult a local mechanic or automotive expert who can provide the hands-on help you need. If there's anything else related to dementia care that you're curious about, feel free to ask!"
+"C5","C","out-of-scope","Give me a recipe for chocolate cake.","","0","","","","0","","","Here's a simple and delicious chocolate cake recipe that you can easily make at home:
+
+**Ingredients:**
+- 1 and 3/4 cups all-purpose flour
+- 3/4 cup unsweetened cocoa powder
+- 2 cups granulated sugar
+- 1 and 1/2 teaspoons baking powder
+- 1 and 1/2 teaspoons baking soda
+- 1 teaspoon salt
+- 2 large eggs
+- 1 cup whole milk
+- 1/2 cup vegetable oil
+- 2 teaspoons vanilla extract
+- 1 cup boiling water
+
+**Instructions:**
+1. Preheat your oven to 180°C (350°F). Grease and flour two 9-inch round cake pans.
+2. In a large mixing bowl, combine the flour, cocoa powder, sugar, baking powder, baking soda, and salt.
+3. Add the eggs, milk, oil, and vanilla extract to the dry ingredients. Beat on medium speed for 2 minutes.
+4. Stir in the boiling water until the batter is well combined. The batter will be thin, but that's okay.
+5. Pour the batter evenly into the prepared cake pans.
+6. Bake for 30 to 35 minutes, or until a toothpick inserted into the center of the cakes comes out clean.
+7. Allow the cakes to cool in the pans for 10 minutes, then remove from the pans and transfer to a wire rack to cool completely.
+
+Enjoy your homemade chocolate cake! Feel free to add your favorite frosting or a dusting of powdered sugar."
+"C6","C","out-of-scope","Write me a poem about the ocean.","","0","","","","0","","","In the heart of the ocean, vast and deep,  
+Where secrets and whispers softly sleep,  
+Waves dance with grace, a rhythmic embrace,  
+Under the sun's warm, golden trace.  
+
+The salty breeze sings a timeless song,  
+Of journeys and dreams where we all belong,  
+Blue horizons stretch, endless and wide,  
+Cradling the earth with a gentle tide.  
+
+Beneath the surface, a world untold,  
+Where vibrant corals and treasures unfold,  
+The ocean's embrace, both fierce and kind,  
+A mirror of nature's unyielding mind.  
+
+In its depths, we find solace and peace,  
+A reminder of life's unending release,  
+For in the ocean's ever-rolling sway,  
+Hope and wonder find their eternal play."

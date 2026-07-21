@@ -1,0 +1,8 @@
+[submodule "unity-avatar/UnityAvatarProject"]
+	path = unity-avatar/UnityAvatarProject
+	url = https://github.com/Richman-Tan/UnityAvatarProject.git
+	# Unity regenerates UnityLibrary/ build artifacts (Data/*, UnityFramework) on
+	# every export, which constantly dirties the submodule. "dirty" hides those
+	# working-tree changes from the parent repo's status while still surfacing
+	# intentional submodule-pointer (commit) updates.
+	ignore = dirty

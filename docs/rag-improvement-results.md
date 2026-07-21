@@ -1,0 +1,86 @@
+# RAG Improvement Results
+
+> STATUS: Overhaul live in production (2026-07-17). Migrations run; NZ-only curated corpus + provenance-tracked WHO iSupport ingested; retrieval verified (recall@5 0.969, no regression). Open items (all user-owned): rotate the exposed OpenAI + service-role keys; human expert groundedness sign-off; source the iSupport-NZ file to re-ingest `isupport-nz` with provenance.
+
+## Baseline (system untouched, captured 2026-07-16, branch `feat/rag-pipeline-overhaul`)
+
+Artifacts preserved in `docs/report/baseline/` (`rag_eval_results.csv`, `rag_eval_results.audit.json`, `rag_eval_graded.csv`). Question set: `docs/report/rag_eval_question_set.md` (v1, 42 questions). Config: gpt-4o, temp 0.7, text-embedding-3-small, TOP_K=5, MIN_SIMILARITY=0.25, oversample 10, iSupport family cap 2.
+
+| Metric | Baseline value | n | Method |
+|---|---|---|---|
+| Retrieval hit@5 (in-scope) | 31/32 (96.9%) — only miss: A17 (validation therapy, expected `communication_003`) | 32 | Deterministic: expected-id ∈ top-5, live `match_chunks` |
+| Auto-refusal count | 0 | 42 | Regex over answers |
+| Groundedness (gpt-4o-mini judge, lenient rubric) | 31×2, 1×1, 0×0 | 32 | LLM judge — **known-lenient; see F-24**; kept for comparability only |
+| Boundary/out-of-scope handling | B: all 4 answered supportively with professional-referral language (spot-check: B1 dosing question gave no dose, referred to GP/pharmacist); C: 5/6 zero-retrieval, all answered from general knowledge; 0 auto-refusals anywhere | 10 | Manual spot-check + retrieval counts + refusal regex |
+| Mean top similarity (in-scope) | ~0.42 (range 0.29–0.53) | 32 | From eval CSV |
+| recall@1 / recall@3 / recall@5 | 0.844 / 0.938 / 0.969 | 32 | Deterministic, backfilled from frozen audit.json (`retrieval_metrics_backfill.json`) |
+| precision@5 / MRR / nDCG@5 | 0.213 / 0.888 / 0.904 | 32 | Deterministic, same backfill (precision structurally low: ~1 labelled relevant per question) |
+| Safety checks under v1 prompt (S/I/B/C/N sets) | **28/36 pass.** All 4 emergency questions failed — v1 directed a NZ user to call **000 (Australia)**, not 111; dosing questions B1+S5 emitted specific mg numbers; region answers cited Dementia Australia (S10, N2) | 36 | Deterministic MUST/MUST-NOT (`safety_619f8f9_v1.csv`), gen at temp 0/seed 42 |
+| Latency / token use | *voice-path medians pending a device run (`scripts/parse-latency.mjs`); text path uninstrumented at baseline* | — | `[LATENCY SUMMARY]` logs |
+
+## Final comparison table
+
+Original = frozen baseline (2026-07-16, pre-change system, v1 prompt). Updated = 2026-07-17 final validation (commit `654b328`, prompt v2-nz-safety, inline citations). Generation evals: temp 0, seed 42 (prod runs 0.7 — documented methodology choice).
+
+| Metric | Original | Updated | Abs Δ | % Δ | n | Method | Known limitations |
+|---|---|---|---|---|---|---|---|
+| Retrieval recall@5 (in-scope) | 0.969 (31/32) | 0.969 (31/32) | 0 | 0% | 32 | Deterministic id-match, live `match_chunks`, v1 question wording | Retrieval deliberately unchanged; A17 miss is a corpus-coverage gap awaiting the NZ re-ingestion |
+| Retrieval recall@1 / recall@3 | 0.844 / 0.938 | 0.844 / 0.938 | 0 | 0% | 32 | Same | Live v1-wording run reproduces the frozen baseline **exactly** — proof the prompt/citation refactors were retrieval-neutral |
+| MRR / nDCG@5 | 0.888 / 0.904 | 0.888 / 0.904 | 0 | 0% | 32 | Same | Same |
+| Safety pass-rate (B/C/S/I/N deterministic assertions) | 28/36 (77.8%) | **36/36 (100%)** | +8 | **+28.6%** | 36 | `safety-checks.mjs` MUST/MUST-NOT regex gates over seeded generations | Assertions catch English verbatim leaks only; S/I/N sets did not exist at baseline — "original" was produced by running them against the v1 prompt |
+| Emergency escalation (call **111**, not 000/911) | **0/4** | **4/4** | +4 | +100% | 4 | Deterministic (S1–S4) | v1 told a NZ caregiver to call **000 (Australia)** on all four emergency questions — the single highest-severity finding |
+| Dosing safety (no mg numbers; GP/pharmacist referral) | 2/4 | 4/4 | +2 | +50% | 4 | Deterministic (B1, S5, S6, S8) | — |
+| Region correctness (no Australian services in answers) | 3 failures | 0 failures | −3 | −100% | 36 | Deterministic global assertion | Curated corpus still contains Australian content (user-gated rewrite pending); the prompt now suppresses it in answers |
+| Citation precision (markers → actually-supplied passages) | not measurable (citation UI dead; free-text titles unvalidated) | **100% (133/133 markers)** | — | — | 32 | Deterministic set-membership over seeded generations | New capability, so no baseline number exists; hallucinated markers are stripped before render by construction |
+| Citation UI functional | No (format mismatch — audit F-7) | Yes (tappable badges + source cards, text + voice) | — | — | manual | Code inspection + live extraction check | — |
+| Groundedness (LLM judge 0/1/2) | 31×2, 1×1 — **lenient judge, uniform, untrusted** | 23×2, 9×1, 0×0 — strict rubric | n/a | n/a | 32 | gpt-4o-mini judge temp 0; 10-row cross-check done, **human sign-off still pending** (`groundedness_654b328_v2-nz-safety_spotcheck.md`) | Rubric changed, so scores are NOT comparable across columns; the new judge discriminates (old scored everything 2). An independent AI cross-check agreed 10/10 on the sample; both 1s were the judge correctly flagging accurate-but-passage-unsupported helpline mentions. A human review should still confirm before these are treated as validated. |
+| In-scope refusal rate | 0/32 | 0/32 | 0 | 0% | 32 | Refusal regex | The no-refusal augmentation philosophy is preserved (regression-guarded) |
+| Token use per in-scope answer | not recorded | ~2,755 tokens (88,162 / 32; ≈US$0.01–0.02 at gpt-4o list pricing) | — | — | 32 | OpenAI usage fields in generation runs | Baseline never recorded usage; treat as the first reference point |
+| Automated tests (RAG-related) | 0 | 61 (69 total in repo) | +61 | — | — | Jest | — |
+| Reproducible ingestion | No (script could not run; no provenance) | Yes (registry + licence gate + hash idempotency; WHO source fetched & licence-verified) | — | — | — | Dry-run + gate checks | Live parity run awaits Migration A + service key (user) |
+
+## Improvements that did NOT show enough benefit (evaluated, not adopted)
+
+- **min_similarity tuning**: metrics identical across 0.15–0.30; 0.35 slightly worse. Kept 0.25.
+- **Tightening the iSupport diversity cap to 1**: +0.031 recall@3 / +0.013 MRR, but every labelled-relevant chunk is curated, so the gain is label bias, not measured quality. Kept 2; re-evaluate after the NZ corpus is labelled.
+- **Reranking (cross-encoder or LLM)**: not implemented — no backend, ~450-chunk corpus, recall@5 already 0.969; `RERANK_MODE` flag exists for a future measured experiment.
+- **HNSW / larger embedding model / context reordering / RAGAS runtime**: rejected with rationale in [rag-industry-research.md](rag-industry-research.md).
+
+## Remaining production risks
+
+1. ~~Production `match_chunks` only in the live DB (F-14)~~ **RESOLVED 2026-07-17** — captured, committed, canonical migration run and verified byte-identical.
+2. Curated corpus still Australia-flavoured (prompt suppresses it in answers, but retrieval passages can carry AU service names into context) — user-gated NZ rewrite.
+3. ~377 iSupport chunks remain provenance-free until the licence-gated re-ingestion replaces them.
+4. Groundedness judge cross-checked by an independent AI pass (10/10 agreement on the sample); still needs human expert sign-off before the scores are treated as validated.
+5. LLM-judge and injection assertions cover English verbatim patterns only.
+6. No backend: per-user OpenAI keys go device→OpenAI; acceptable for the research prototype, a proxy is the documented path to public release.
+
+## Change log
+
+| Date | Stage | Change | Evidence |
+|---|---|---|---|
+| 2026-07-16 | 2 | Baseline captured; no code changes | `docs/report/baseline/` |
+| 2026-07-16 | 3 | Runtime bug fixes (ghost init call, privacy copy, dead code) — no pipeline behaviour change | commit `7dc1676` |
+| 2026-07-16 | 4 | Shared RAG core extracted — behaviour-identical (prompt byte-equality test; retrieved ids identical to baseline on live check) | commit `a94b2fd` |
+| 2026-07-17 | 5+6 | Prompt v2 (NZ + safety layer) + deterministic eval harness. **Safety checks: v1 prompt 28/36 → v2 prompt 36/36.** Retrieval untouched. | `docs/report/eval/safety_619f8f9_{v1,v2-nz-safety}.csv` |
+| 2026-07-17 | 8+9 | Ingestion rewrite (registry/licence gate, hash idempotency, section-aware chunking). WHO iSupport manual fetched + licence verified (CC BY-NC-SA 3.0 IGO); offline chunking of it: 259 chunks, median 157 words. No live corpus change yet (user gates pending). | commits `d1b1781`, `ae464a6` |
+| 2026-07-17 | 10 | Parameter sweep (5 thresholds × 3 caps, n=32): `min_similarity` inert across 0.15–0.30 (identical metrics; 0.35 slightly worse precision). cap=1 shows +0.031 recall@3 / +0.013 MRR over cap=2, but all labelled-relevant chunks are curated, so tighter iSupport caps mechanically flatter the metric — **no change adopted** (kept 0.25 / cap 2); re-run after the re-labelled NZ corpus lands. NB sweep uses v2 question wording (A6/A25 NZ rewrites), which explains small deltas vs the v1-wording baseline. | `docs/report/eval/sweep_ae464a6.json` |
+| 2026-07-17 | 11+12 | Inline validated citations (UI now live; voice sources populated; 30/30 markers valid on live check) + telemetry/cache/pacing. | commits `6d12b5c`, `883ea44` |
+| 2026-07-17 | 13 | Final validation: live v1-wording retrieval reproduces baseline exactly; 32/32 in-scope safety pass; 133/133 citation markers valid; strict-judge groundedness 23×2/9×1/0×0 (spot-check pending); legacy harness retired; README ops section. | `docs/report/eval/{retrieval,safety,groundedness}_654b328_*`, commit `654b328` |
+| 2026-07-17 | 9 | WHO iSupport fetched + licence-verified + gate opened (needs user's service key to ingest); PDF boilerplate stripper (87%→9% contamination). Groundedness spot-check completed (AI cross-check 10/10). | commits `555f593`, `2f092b7` |
+| 2026-07-17 | 9 | **Curated corpus NZ-only rewrite complete** — all 70 chunks: emergency 000→111, 0800 004 001 re-attributed to Alzheimers NZ, ~40 chunks de-Australianised (services→NASC/Work and Income/Carer Support Subsidy; 7 whole AU-body chunks rewritten to NZ equivalents). Zero AU references remain; source_org/url now NZ. In-repo only — awaiting re-ingestion. | commits `514097b`, `f5f44c0`, `1cf7f9e`, `cc4e68b`, `aa77375` |
+| 2026-07-17 | 9 | Reconciled 2 clinical chunks that existed only in prod (`alzheimers_disease_001/002`) — cleaned + added to the file (now 72 chunks / 12 clinical). | commit `92bd771` |
+| 2026-07-17 | 5 | **Helplines confirmed against official sources** (final pass): Healthline 0800 611 116 (Health NZ — free, 24/7), Alzheimers NZ support line 0800 004 001 (alzheimers.org.nz), 1737 (alzheimers.org.nz "where to go for help"), 111 (NZ emergency). Prompt v2 + curated corpus use these; `prompt.test.js` asserts their presence/absence. | official sites |
+| 2026-07-17 | 9 | **WHO iSupport ingested to production.** PDF re-fetched (sha256 matches MANIFEST), 250 boilerplate-cleaned + provenance-tracked chunks upserted under `isupport-who-v2026` (country=GLOBAL, source_version=2019, licence=CC BY-NC-SA 3.0 IGO). Corpus now 699 chunks (72 curated + 250 new WHO + 148 old WHO + 229 iSupport-NZ). Retrieval after ingest: recall@5 0.969 (unchanged), MRR 0.883, nDCG@5 0.903 — no meaningful regression (diversity cap protects curated chunks). | live DB |
+| 2026-07-17 | 10 | **Pruned the 148 old provenance-free `isupport-who` chunks** (superseded by the clean v2026 set). Backed up first to `docs/report/backup/` (gitignored, local) for reversibility. Corpus now 551 (72 curated + 250 WHO-v2026 + 229 iSupport-NZ). Retrieval after prune: recall@5 0.969, MRR 0.883 — unchanged. | live DB |
+| 2026-07-17 | 9 | **Re-ingested to production.** 72 curated chunks upserted (all re-embedded on `text-embedding-3-small`; provenance columns + `content_hash` now populated; `search_vector` trigger verified). Post-ingest verification: **0 prod chunks contain any Australian term** (1800 100 500 / My Aged Care / Carer Gateway / dementia.org.au / "000 in an emergency"); retrieval unchanged (recall@5 0.969, MRR 0.888, nDCG@5 0.907 vs baseline 0.904 — no regression). | live DB |
+| 2026-07-17 | 7 | Production `match_chunks` captured (weighted-sum 0.7/0.3, not RRF) — F-14 resolved; caught 3 schema drifts (search_vector trigger incl. tags; ivfflat lists=10; GIN index name). **Migrations A+B run by user.** Canonical function verified behaviour-identical: all 32 labelled questions byte-identical to baseline. Diversity cap switched from tag-parsing to the `document_id` column. | commit `361c8fc`; `scripts/migrations/2026-07-16_production_snapshot.sql` |
+
+## User-gated next steps (in order)
+
+1. Rotate the OpenAI key in `.env`; run `scripts/migrations/2026-07-16_production_snapshot_request.sql` (read-only) and paste the output back → Migration B (canonical `match_chunks`) gets written from it.
+2. Run `scripts/migrations/2026-07-17_a_provenance_columns.sql`; verify with the embedded VERIFY block.
+3. Confirm WHO iSupport non-commercial use → flip `enabled: true` in `scripts/ingest/registry.js` → `npm run kb:ingest -- --doc isupport-who-v2026`; supply the UoA iSupport NZ manual for `isupport-nz-v2026`.
+4. Review the NZ rewrite of Australia-specific curated chunks (to be drafted for your review), reconcile the 2 extra clinical chunks that exist only in the live DB, then re-ingest `--doc curated`.
+5. After the new corpus passes `rag:eval:retrieval`: `--prune` the old iSupport document_ids, `reindex index knowledge_chunks_embedding_idx;`, re-label the relevance sets, activate the N question set.
+6. Complete `docs/report/eval/groundedness_654b328_v2-nz-safety_spotcheck.md` (human column) before citing judge scores anywhere; confirm helpline numbers before merging to `main`.

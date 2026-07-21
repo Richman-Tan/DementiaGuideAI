@@ -28,7 +28,17 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-asset",
+      "./plugins/withUnityFramework",
+      "expo-font",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone so you can talk to Aria.",
+          "speechRecognitionPermission": "Allow $(PRODUCT_NAME) to use speech recognition so Aria can understand you faster."
+        }
+      ]
     ]
   }
 }

@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Colors } from '../constants/colors';
-import { Typography, FontSize } from '../constants/typography';
+import { Colors } from '@/theme/colors';
+import { Typography, FontSize } from '@/theme/typography';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSettings } from '../context/SettingsContext';
+import { useSettings } from '@/context/SettingsContext';
 
 export const MessageCard = ({ message, onPlayAudio }) => {
   const isAssistant = message.role === 'assistant';

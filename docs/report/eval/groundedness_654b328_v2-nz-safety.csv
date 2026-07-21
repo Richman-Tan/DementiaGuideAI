@@ -1,0 +1,33 @@
+id,set,score,reason
+A1,A,2,"All specific claims made in the answer are supported by the reference passages, including the strategies for managing sundowning and the contact information for local support."
+A2,A,1,The assistant's mention of reaching out to support services like Alzheimers New Zealand (0800 004 001) is presented as a specific fact without direct support from the provided passages.
+A3,A,2,All specific claims made in the answer are supported by the reference passages.
+A4,A,2,All specific claims made in the answer are supported by the reference passages.
+A5,A,2,All specific claims made in the answer are supported by the reference passages.
+A6,A,2,All specific claims about government programs and supports for carers in New Zealand are supported by the reference passages.
+A7,A,2,All specific claims about the stages of dementia and their characteristics are supported by the reference passages.
+A8,A,1,The assistant's mention of contacting Healthline at 0800 611 116 is presented as a specific fact without support from the provided passages.
+A9,A,2,All specific claims about signs indicating the need for urgent medical attention are supported by the reference passages.
+A10,A,2,"All specific claims about legal documents, including the Enduring Power of Attorney and Advance Care Plan, are supported by the reference passages."
+A11,A,2,"The assistant accurately discusses reversible conditions that can cause confusion and dementia-like symptoms, supported by the reference passages."
+A12,A,1,The assistant's mention of contacting Healthline at 0800 611 116 is presented as a specific fact without support from the reference passages.
+A13,A,1,The assistant's mention of reaching out to support services like Alzheimers New Zealand (0800 004 001) is presented as a specific fact without support from the passages.
+A14,A,2,All specific claims made in the answer are supported by the reference passages.
+A15,A,2,All specific claims about the signs of burnout and the importance of seeking support are supported by the reference passages.
+A16,A,2,All specific claims made in the answer are supported by the reference passages.
+A17,A,1,The assistant's mention of 'Alzheimers New Zealand (0800 004 001)' is presented as a specific support service without direct support from the provided passages.
+A18,A,1,The assistant's mention of calling or texting 1737 for a trained counsellor is presented authoritatively without support from the passages.
+A19,A,2,All specific claims made in the answer are supported by the reference passages.
+A20,A,2,All specific claims about medication storage and management are supported by the reference passages.
+A21,A,2,All specific claims made in the answer are supported by the reference passages.
+A22,A,2,All specific claims about respite care options are supported by the reference passages.
+A23,A,2,All specific claims about financial assistance and support options for carers in New Zealand are supported by the reference passages.
+A24,A,2,"The assistant's answer accurately reflects the factors for considering residential care as outlined in the reference passages, without introducing unsupported specific claims."
+A25,A,2,The assistant's answer accurately reflects the process for accessing funded home-care services in New Zealand as described in the reference passages.
+A26,A,2,All specific claims about early warning signs of dementia are supported by the reference passages.
+A27,A,1,The assistant's claim about the Ministry of Health NZ recommending no more than 10 standard drinks per week for women and 15 for men is presented authoritatively without direct support from the passages.
+A28,A,1,The assistant's mention of calling or texting 1737 for a trained counsellor is presented authoritatively without support from the passages.
+A29,A,2,"The assistant accurately describes Mild Cognitive Impairment (MCI) and its implications, fully supported by the reference passages."
+A30,A-neighbour,2,All specific claims made in the answer are supported by the reference passages.
+A31,A-neighbour,2,All specific claims about strategies for preventing wandering are supported by the reference passages.
+A32,A-neighbour,1,The assistant's claim about contacting Alzheimers New Zealand at 0800 004 001 is presented authoritatively without support from the passages.

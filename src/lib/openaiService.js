@@ -313,7 +313,10 @@ class OpenAIService {
     if (stripper) {
       const tail = stripper.flush();
       if (tail) yield tail;
-      timingCbs?.onSources?.(extractCitations(rawFull, chunks).sources);
+      // citedText carries the renumbered [1]…[n] markers (same shape ChatScreen's
+      // CitationText expects) — spoken text stays marker-free via cleanPiece above.
+      const { text: citedText, sources } = extractCitations(rawFull, chunks);
+      timingCbs?.onSources?.(sources, citedText);
     }
 
     if (streamError) throw streamError;

@@ -108,6 +108,10 @@ export interface SettingsContextValue extends Settings {
   updateSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => void;
   toggleDarkMode: () => void;
   triggerHaptic: (type?: HapticType) => void;
+  /** Bumped every time clearConversation() runs — Chat/Voice screens watch this to reset their in-memory state. */
+  conversationResetSignal: number;
+  /** Wipes persisted chat history and signals live screens to reset their in-memory state to match. */
+  clearConversation: () => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -115,6 +119,7 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 export const SettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [conversationResetSignal, setConversationResetSignal] = useState(0);
 
   // Full-screen overlay animated value — used for the dark mode cross-dissolve.
   // Fades in to 0.5 opacity at the moment the colours flip, then fades back out.
@@ -193,6 +198,14 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     }, FADE_IN_MS);
   }, [themeOverlayAnim]);
 
+  // Wipes the persisted chat transcript and bumps a signal that live Chat/Voice
+  // screens watch, so their in-memory message lists reset in lockstep instead
+  // of only clearing on next app launch.
+  const clearConversation = useCallback(async () => {
+    await AsyncStorage.removeItem('chat_messages_v1').catch(() => {});
+    setConversationResetSignal((n) => n + 1);
+  }, []);
+
   const triggerHaptic = useCallback(
     (type: HapticType = 'light') => {
       if (!settings.hapticFeedback) return;
@@ -252,6 +265,8 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     updateSetting,
     toggleDarkMode,
     triggerHaptic,
+    conversationResetSignal,
+    clearConversation,
   };
 
   return (

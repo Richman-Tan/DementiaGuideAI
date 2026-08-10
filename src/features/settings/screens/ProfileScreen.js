@@ -21,7 +21,9 @@ import { Typography, FontSize } from '@/theme/typography';
 import { openaiService } from '@/lib/openaiService';
 import { elevenLabsService } from '@/lib/tts/elevenLabsService';
 import { azureTtsService } from '@/lib/tts/azureTtsService';
+import { supabase } from '@/lib/supabaseService';
 import { useSettings } from '@/context/SettingsContext';
+import { useAuth } from '@/context/AuthContext';
 
 const Section = ({ title, children }) => {
   const { textScale, colors } = useSettings();
@@ -258,10 +260,17 @@ export const ProfileScreen = ({ navigation }) => {
     updateSetting, toggleDarkMode, triggerHaptic,
     darkMode, highContrast, subtitlesEnabled, conciseMode, handsFreeMode, fastVoiceMode, colors,
   } = useSettings();
+  const { user, signOut } = useAuth();
   const [apiKey, setApiKey]               = useState(null);
   const [elevenLabsKey, setElevenLabsKey] = useState(null);
   const [azureKey, setAzureKey]           = useState(null);
   const [azureRegion, setAzureRegion]     = useState(null);
+  // Off by default: most people should never see raw key-entry fields — the
+  // signed-in account already gets the centralized/managed AI service. This
+  // just reveals the same key rows that have always existed, for anyone who
+  // wants to use their own provider account instead.
+  const [useOwnKeys, setUseOwnKeys]       = useState(false);
+  const [usageThisMonth, setUsageThisMonth] = useState(null); // null = loading/unavailable
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -270,13 +279,40 @@ export const ProfileScreen = ({ navigation }) => {
       duration: 500,
       useNativeDriver: true,
     }).start();
-    openaiService.getApiKey().then(k => setApiKey(k));
+    openaiService.getApiKey().then(k => {
+      setApiKey(k);
+      if (k) setUseOwnKeys(true);
+    });
     elevenLabsService.getApiKey().then(k => setElevenLabsKey(k));
     azureTtsService.getCredentials().then(({ key, region }) => {
       setAzureKey(key);
       setAzureRegion(region);
+      if (key) setUseOwnKeys(true);
     });
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    let isMounted = true;
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    supabase
+      .from('usage_monthly_summary')
+      .select('kind, total_units')
+      .eq('user_id', user.id)
+      .gte('month', monthStart.toISOString())
+      .then(({ data, error }) => {
+        if (!isMounted || error) return;
+        // usage_events.units for kind='chat' is total tokens per turn (see
+        // supabase/functions/chat-proxy) — summed, this is tokens used this
+        // month, not a turn count. Track-and-display only; nothing enforces
+        // a limit against this yet (see the auth_and_usage migration notes).
+        const chatTokens = data?.find(r => r.kind === 'chat')?.total_units ?? 0;
+        setUsageThisMonth(Math.round(chatTokens));
+      });
+    return () => { isMounted = false; };
+  }, [user]);
 
   const handleSaveApiKey = async (key) => {
     await openaiService.saveApiKey(key);
@@ -323,12 +359,53 @@ export const ProfileScreen = ({ navigation }) => {
     Alert.alert(
       'Privacy Policy',
       'DementiaGuide AI is designed with privacy at its core.\n\n' +
-      '• Your API keys are stored using device-level encryption and never sent to our servers.\n\n' +
-      '• Conversation history is saved locally on your device only.\n\n' +
-      '• Questions you ask are sent directly from your device to OpenAI and ElevenLabs using your own API keys — we never see them.\n\n' +
-      '• We do not collect, share, or sell any personal information.',
+      '• By default, your questions are answered through our managed AI service — this requires being signed in, and we log how much you use it (not what you say) to keep the service sustainable.\n\n' +
+      '• If you add your own OpenAI/ElevenLabs/Azure key in AI Configuration, your questions go directly from your device to that provider using your key instead, and nothing passes through our servers.\n\n' +
+      '• Conversation history is saved locally on your device only, either way.\n\n' +
+      '• We do not sell any personal information.',
       [{ text: 'OK' }]
     );
+  };
+
+  // Turning this off needs to actually stop using personal keys, not just
+  // hide the fields — openaiService/ttsService resolve BYOK-vs-proxy purely
+  // from whether a key is saved (see their "hasApiKey() ? direct : proxy"
+  // branches), so a hidden-but-still-saved key would silently keep bypassing
+  // the centralized service. Clearing on toggle-off keeps the UI truthful.
+  const hasAnyOwnKey = !!(apiKey || elevenLabsKey || (azureKey && azureRegion));
+  const handleToggleOwnKeys = (next) => {
+    if (next || !hasAnyOwnKey) {
+      setUseOwnKeys(next);
+      return;
+    }
+    Alert.alert(
+      'Stop using my own keys?',
+      "This removes your saved API keys from this device and switches back to the included AI service.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove keys', style: 'destructive', onPress: async () => {
+            await Promise.all([
+              openaiService.clearApiKey(),
+              elevenLabsService.clearApiKey(),
+              azureTtsService.clearCredentials(),
+            ]);
+            setApiKey(null);
+            setElevenLabsKey(null);
+            setAzureKey(null);
+            setAzureRegion(null);
+            setUseOwnKeys(false);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'You can sign back in any time — your conversation history stays on this device.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: () => signOut() },
+    ]);
   };
 
   const handleMedicalDisclaimer = () => {
@@ -400,6 +477,30 @@ export const ProfileScreen = ({ navigation }) => {
               <MaterialCommunityIcons name="pencil-outline" size={18} color="rgba(255,255,255,0.85)" />
             </TouchableOpacity>
           </LinearGradient>
+        </Animated.View>
+
+        {/* Account */}
+        <Animated.View style={{ opacity: fadeAnim }}>
+          <Section title="Account">
+            <SettingRow
+              icon="email-outline"
+              iconColor={Colors.primary}
+              label={user?.email ?? 'Signed in'}
+              sublabel={
+                usageThisMonth == null
+                  ? 'Managed AI service'
+                  : `~${usageThisMonth.toLocaleString()} tokens used this month`
+              }
+              isLast={false}
+            />
+            <SettingRow
+              icon="logout"
+              iconColor={Colors.error}
+              label="Sign Out"
+              onPress={handleSignOut}
+              isLast
+            />
+          </Section>
         </Animated.View>
 
         {/* Accessibility */}
@@ -560,35 +661,54 @@ export const ProfileScreen = ({ navigation }) => {
 
           {/* AI Configuration */}
           <Section title="AI Configuration">
-            <ApiKeyRow
-              value={apiKey}
-              onSave={handleSaveApiKey}
-              onClear={async () => {
-                await openaiService.clearApiKey();
-                setApiKey(null);
-              }}
+            <ToggleRow
+              icon="key-variant"
+              iconColor={Colors.primary}
+              label="Use my own API key"
+              sublabel={
+                hasAnyOwnKey
+                  ? 'Requests go directly to your provider account'
+                  : useOwnKeys
+                    ? 'Add a key below to switch off the included AI service'
+                    : "Off — you're using the included AI service"
+              }
+              value={useOwnKeys}
+              onToggle={handleToggleOwnKeys}
+              isLast={!useOwnKeys}
             />
-            <AzureCredentialsRow
-              apiKey={azureKey}
-              region={azureRegion}
-              onSave={handleSaveAzureCredentials}
-              onClear={async () => {
-                await azureTtsService.clearCredentials();
-                setAzureKey(null);
-                setAzureRegion(null);
-              }}
-            />
-            <ApiKeyRow
-              value={elevenLabsKey}
-              onSave={handleSaveElevenLabsKey}
-              onClear={async () => {
-                await elevenLabsService.clearApiKey();
-                setElevenLabsKey(null);
-              }}
-              label="ElevenLabs API Key"
-              placeholder="el-..."
-              isLast
-            />
+            {useOwnKeys && (
+              <>
+                <ApiKeyRow
+                  value={apiKey}
+                  onSave={handleSaveApiKey}
+                  onClear={async () => {
+                    await openaiService.clearApiKey();
+                    setApiKey(null);
+                  }}
+                />
+                <AzureCredentialsRow
+                  apiKey={azureKey}
+                  region={azureRegion}
+                  onSave={handleSaveAzureCredentials}
+                  onClear={async () => {
+                    await azureTtsService.clearCredentials();
+                    setAzureKey(null);
+                    setAzureRegion(null);
+                  }}
+                />
+                <ApiKeyRow
+                  value={elevenLabsKey}
+                  onSave={handleSaveElevenLabsKey}
+                  onClear={async () => {
+                    await elevenLabsService.clearApiKey();
+                    setElevenLabsKey(null);
+                  }}
+                  label="ElevenLabs API Key"
+                  placeholder="el-..."
+                  isLast
+                />
+              </>
+            )}
           </Section>
 
           {/* About */}
@@ -604,7 +724,12 @@ export const ProfileScreen = ({ navigation }) => {
               icon="robot-outline"
               iconColor={Colors.textSecondary}
               label="Powered by OpenAI"
-              sublabel={azureKey ? 'GPT-4o-mini + Azure Speech (phoneme lip sync)' : elevenLabsKey ? 'GPT-4o-mini + ElevenLabs voice' : 'GPT-4o-mini with OpenAI voice'}
+              sublabel={
+                azureKey ? 'GPT-4o-mini + Azure Speech (phoneme lip sync)'
+                : elevenLabsKey ? 'GPT-4o-mini + ElevenLabs voice'
+                : hasAnyOwnKey ? 'GPT-4o-mini with OpenAI voice'
+                : 'GPT-4o-mini via the included AI service'
+              }
               isLast={false}
             />
             <SettingRow

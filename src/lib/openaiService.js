@@ -17,6 +17,7 @@ import { capBySourceFamily } from './rag/retrieval';
 import { extractCitations, createMarkerStripper } from './rag/citations';
 import { recordRetrieval } from './ragTelemetry';
 import { timeoutSignal } from './net/withTimeout';
+import { edgeFunctionTarget } from './net/edgeFunction';
 
 const SECURE_KEY = 'openai_api_key';
 const OPENAI_BASE = 'https://api.openai.com/v1';
@@ -114,6 +115,37 @@ class OpenAIService {
     return resp.json();
   }
 
+  // Same JSON-in/JSON-out shape as _callOpenAI, but against one of our own
+  // Edge Functions (see supabase/functions/) instead of OpenAI directly —
+  // used whenever the caller has no personal key saved. The functions
+  // require auth (config.toml verify_jwt=true); edgeFunctionTarget resolves
+  // the caller's access token and throws a clear "sign in" error if there
+  // isn't one.
+  async _callProxy(functionName, body, { timeoutMs = null } = {}) {
+    const { url, headers } = await edgeFunctionTarget(functionName);
+    const t = timeoutMs ? timeoutSignal(timeoutMs) : null;
+    let resp;
+    try {
+      resp = await fetch(url, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        ...(t ? { signal: t.signal } : {}),
+      });
+    } finally {
+      t?.cancel();
+    }
+
+    if (resp.status === 401) throw new OpenAIAuthError('Session expired — please sign in again');
+    if (resp.status === 429) throw new OpenAIRateLimitError('Rate limit reached');
+    if (!resp.ok) {
+      const err = await resp.text().catch(() => `HTTP ${resp.status}`);
+      throw new Error(`AI service error: ${err}`);
+    }
+
+    return resp.json();
+  }
+
   async _embedQuery(text) {
     const key = text.trim().toLowerCase();
     if (this._embedCache.has(key)) {
@@ -123,10 +155,10 @@ class OpenAIService {
       this._embedCache.set(key, hit);
       return hit;
     }
-    const data = await this._callOpenAI('/embeddings', {
-      model: EMBEDDING_MODEL,
-      input: text,
-    }, null, { timeoutMs: EMBED_TIMEOUT_MS });
+    const hasKey = await this.hasApiKey();
+    const data = hasKey
+      ? await this._callOpenAI('/embeddings', { model: EMBEDDING_MODEL, input: text }, null, { timeoutMs: EMBED_TIMEOUT_MS })
+      : await this._callProxy('embed-proxy', { input: text }, { timeoutMs: EMBED_TIMEOUT_MS });
     const embedding = data.data[0].embedding;
     this._embedCache.set(key, embedding);
     if (this._embedCache.size > EMBED_CACHE_MAX) {
@@ -163,8 +195,13 @@ class OpenAIService {
                     { conciseMode = false, responseStyle = 'balanced', jargonMode = 'explain',
                       ariaPersonality = 'warm', isCaregiversSetup = false,
                       skipThrottle = false, preRetrievedChunks = null } = {}) {
+    // No personal key configured -> route through chat-proxy instead of
+    // OpenAI directly. edgeFunctionTarget throws a clear error if the caller
+    // isn't signed in either (the only way to reach this with neither).
     const apiKey = await this.getApiKey();
-    if (!apiKey) throw new OpenAIAuthError('No API key configured');
+    const target = apiKey
+      ? { url: `${OPENAI_BASE}/chat/completions`, headers: { Authorization: `Bearer ${apiKey}` } }
+      : await edgeFunctionTarget('chat-proxy');
 
     // The voice pipeline is already serialized by its state machine, so pacing
     // there is pure dead time on the hot path. Text chat keeps the throttle.
@@ -233,9 +270,11 @@ class OpenAIService {
     let cursor = 0;
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${OPENAI_BASE}/chat/completions`);
+    xhr.open('POST', target.url);
     xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('Authorization', `Bearer ${apiKey}`);
+    for (const [name, value] of Object.entries(target.headers)) {
+      xhr.setRequestHeader(name, value);
+    }
 
     const wake = () => { const n = notify; notify = null; n?.(); };
 
@@ -354,7 +393,9 @@ class OpenAIService {
 
   async transcribe(audioUri) {
     const apiKey = await this.getApiKey();
-    if (!apiKey) throw new OpenAIAuthError('No API key configured');
+    const target = apiKey
+      ? { url: `${OPENAI_BASE}/audio/transcriptions`, headers: { Authorization: `Bearer ${apiKey}` } }
+      : await edgeFunctionTarget('whisper-proxy');
 
     const ext = audioUri.split('.').pop()?.toLowerCase() ?? 'm4a';
     const mimeType = ext === 'wav' ? 'audio/wav' : ext === 'mp3' ? 'audio/mpeg' : 'audio/m4a';
@@ -367,9 +408,9 @@ class OpenAIService {
     const t = timeoutSignal(WHISPER_TIMEOUT_MS);
     let resp;
     try {
-      resp = await fetch(`${OPENAI_BASE}/audio/transcriptions`, {
+      resp = await fetch(target.url, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: target.headers,
         body: formData,
         signal: t.signal,
       });
@@ -422,12 +463,17 @@ class OpenAIService {
       },
     ];
 
-    const data = await this._callOpenAI('/chat/completions', {
+    const hasKey = await this.hasApiKey();
+    const chatBody = {
       model: CHAT_MODEL,
       messages,
       max_tokens: maxTokensForStyle(responseStyle, conciseMode),
       temperature: GENERATION_TEMPERATURE,
-    });
+      stream: false,
+    };
+    const data = hasKey
+      ? await this._callOpenAI('/chat/completions', chatBody)
+      : await this._callProxy('chat-proxy', chatBody);
 
     const rawText = data.choices[0].message.content.trim();
 

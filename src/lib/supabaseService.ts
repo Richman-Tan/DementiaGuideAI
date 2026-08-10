@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 
 // ─── Supabase Configuration ──────────────────────────────────────────────────
@@ -11,4 +12,16 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 // The non-null assertions preserve the original runtime behaviour: if the env
 // vars are missing, createClient throws the same "supabaseUrl is required" error
 // it always did — we simply don't force callers to null-check the client.
-export const supabase = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
+//
+// Auth config: AsyncStorage persists the session across app restarts (same
+// storage mechanism SettingsContext already uses for local preferences).
+// detectSessionInUrl is off — email/password only, no magic-link/OAuth
+// redirect to parse. If OAuth is added later, this needs revisiting.
+export const supabase = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});

@@ -1,0 +1,20 @@
+# Supabase CLI project config.
+#
+# This file only configures local `supabase functions serve` / `supabase
+# functions deploy` behaviour — it does not create or link a project.
+# Run `supabase link --project-ref <your-project-ref>` once (from the
+# Supabase dashboard → Project Settings → General) before deploying.
+
+project_id = "dementiaguideai"
+
+[functions.chat-proxy]
+verify_jwt = true
+
+[functions.embed-proxy]
+verify_jwt = true
+
+[functions.tts-proxy]
+verify_jwt = true
+
+[functions.whisper-proxy]
+verify_jwt = true

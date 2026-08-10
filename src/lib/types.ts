@@ -74,4 +74,5 @@ export interface ElevenLabsService {
 
 export interface OpenAITtsService {
   tts(text: string, voice?: string): Promise<string>;
+  hasApiKey(): Promise<boolean>;
 }

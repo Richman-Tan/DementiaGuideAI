@@ -91,14 +91,55 @@ public final class UnityBridgeManager: NSObject {
     }
 
     /// Forwards a JSON message to a GameObject in the running Unity scene.
-    /// `HD_Aaron` hosts AvatarController / NativeBridgeReceiver (see
-    /// unity-avatar/UnityAvatarProject/Assets/Scripts/NativeBridgeReceiver.cs).
-    public func sendMessage(json: String, goName: String = "HD_Aaron", methodName: String = "ReceiveBridgeMessage") {
+    /// `AvatarRouter` is the single bridge target: it handles `setCharacter`
+    /// itself and forwards every other message (play/stop) to the active
+    /// character's NativeBridgeReceiver (see
+    /// unity-avatar/UnityAvatarProject/Assets/Scripts/AvatarRouter.cs).
+    public func sendMessage(json: String, goName: String = "AvatarRouter", methodName: String = "ReceiveBridgeMessage") {
         guard isStarted else {
             NSLog("[UnityBridgeManager] sendMessage called before start() — dropping message.")
             return
         }
         unityFramework?.sendMessageToGO(withName: goName, functionName: methodName, message: json)
+    }
+
+    // ── Character selection ──────────────────────────────────────────────────
+    // UnitySendMessage silently drops messages sent between runEmbedded() and
+    // the first scene load, and there is no ready-handshake from Unity (that
+    // would need a NativeCallProxy plugin). Instead we converge idempotently:
+    // the router treats a repeated setCharacter as a no-op, so we can re-send
+    // freely — immediately, on a couple of delayed retries to cover the boot
+    // window, and before every play message via ensureCharacter().
+
+    private var desiredCharacterId: String?
+    private var characterSendGeneration = 0
+
+    /// Records the character the app wants active and pushes it to Unity.
+    /// Safe to call before Unity boots — the selection is stored and re-sent
+    /// by ensureCharacter() on the next play.
+    public func setCharacter(id: String) {
+        desiredCharacterId = id
+        characterSendGeneration += 1
+        let generation = characterSendGeneration
+        sendSetCharacter(id)
+        for delay in [1.5, 4.0] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self, self.characterSendGeneration == generation else { return }
+                self.sendSetCharacter(id)
+            }
+        }
+    }
+
+    /// Re-sends the stored selection (no-op when none). Called before every
+    /// play message so the utterance always lands on the intended character.
+    public func ensureCharacter() {
+        guard let id = desiredCharacterId else { return }
+        sendSetCharacter(id)
+    }
+
+    private func sendSetCharacter(_ id: String) {
+        guard isStarted else { return }
+        sendMessage(json: "{\"type\":\"setCharacter\",\"id\":\"\(id)\"}")
     }
 }
 

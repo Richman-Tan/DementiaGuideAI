@@ -1,6 +1,6 @@
 # DementiaGuide AI
 
-A modern iOS mobile application that acts as a digital library for dementia care information. Users can ask questions through text or voice and receive responses through a real-time 3D avatar with lip-sync driven by ElevenLabs character-level alignment.
+A modern iOS mobile application: an **avatar-based digital resource management platform for dementia care**. It helps caregivers, family members, and healthcare professionals **access, navigate, and organise** dementia-care resources — held in a searchable, categorised knowledge base — and get **grounded, cited answers** to questions asked by text or voice, delivered by a real-time 3D avatar with lip-sync driven by ElevenLabs character-level alignment.
 
 ---
 
@@ -16,7 +16,12 @@ A modern iOS mobile application that acts as a digital library for dementia care
 
 ## Overview
 
-DementiaGuide AI is designed for caregivers, family members, and healthcare professionals. The app provides evidence-based dementia care guidance through a calm, accessible, and emotionally supportive interface. The AI avatar — **Aria** — is a VRM model rendered in real time with natural speech, multi-shape lip-sync driven by ElevenLabs character-level alignment, and expressive idle animations.
+DementiaGuide AI is designed for caregivers, family members, and healthcare professionals. It brings two ways of working with care information together in one place:
+
+- a **Library** of curated, provenance-tracked resources organised into six dementia-care categories, which users can search and browse (article detail view included); and
+- a **conversational RAG assistant** that answers questions with inline citations back to that same knowledge base.
+
+Together these let users **access, navigate, and organise** evidence-based dementia care guidance, rather than only ask isolated questions. The experience is tailored through a guided 12-step onboarding flow and accessibility settings (text size, contrast, audio, subtitles, haptics). The AI avatar — **Aria** — is a VRM model rendered in real time with natural speech, multi-shape lip-sync driven by ElevenLabs character-level alignment, and expressive idle animations.
 
 ---
 

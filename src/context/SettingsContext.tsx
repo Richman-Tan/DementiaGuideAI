@@ -11,6 +11,7 @@ import { Animated, StyleSheet, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { getThemeColors, ColorScheme } from '@/theme/colors';
+import { DEFAULT_AVATAR_ID } from '@/features/avatar/config/avatarProfiles';
 
 const STORAGE_KEY = '@dg_settings_v1';
 
@@ -88,7 +89,7 @@ const DEFAULTS: Settings = {
   communicationMode: 'both',
   speechRate: 0.9,
 
-  selectedAvatarId: 'aria_sdk',
+  selectedAvatarId: DEFAULT_AVATAR_ID,
 
   supportLevel: 'comfortable',
 

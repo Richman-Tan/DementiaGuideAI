@@ -97,6 +97,19 @@ function setOnAudioStart(cb) {
   onAudioStartCb = cb;
 }
 
+/**
+ * Selects which Unity character (AvatarRouter id, e.g. 'aaron'/'ariana') is
+ * active. Stops any in-flight audio first so a mid-speech switch doesn't leave
+ * the old character's voice narrating over the new one's idle face.
+ */
+async function setCharacter(id) {
+  if (!id) return;
+  await stopAudio();
+  NativeUnityAvatarModule.setCharacter(id).catch((err) =>
+    console.warn('[UnityAvatarBridge] native setCharacter failed:', err)
+  );
+}
+
 function setDebugMode(on) {
   NativeUnityAvatarModule.setDebugMode(on).catch(() => {});
 }
@@ -105,5 +118,6 @@ export const UnityAvatarBridge = {
   playAudio,
   stopAudio,
   setOnAudioStart,
+  setCharacter,
   setDebugMode,
 };

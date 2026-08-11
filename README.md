@@ -1,6 +1,6 @@
 # DementiaGuide AI
 
-A modern iOS mobile application: an **avatar-based digital resource management platform for dementia care**. It helps caregivers, family members, and healthcare professionals **access, navigate, and organise** dementia-care resources — held in a searchable, categorised knowledge base — and get **grounded, cited answers** to questions asked by text or voice, delivered by a real-time 3D avatar with lip-sync driven by ElevenLabs character-level alignment.
+A modern cross-platform (iOS & Android) mobile application: an **avatar-based digital resource management platform for dementia care**. It helps caregivers, family members, and healthcare professionals **access, navigate, and organise** dementia-care resources — held in a searchable, categorised knowledge base — and get **grounded, cited answers** to questions asked by text or voice, delivered by a real-time 3D avatar with lip-sync driven by ElevenLabs character-level alignment.
 
 ---
 
@@ -186,6 +186,40 @@ npx expo start --android
 # Clear Metro cache if needed
 npx expo start --ios --clear
 ```
+
+> **Note:** the Unity 3D avatar only renders in full native builds (`npx expo run:ios` on a physical iPhone / `npx expo run:android`) with the committed Unity export present — see [Android (Unity avatar)](#android-unity-avatar) and `docs/android-unity.md`. Everything else (chat, voice, library) works in Expo Go / Simulator, where the avatar area shows an "unavailable on this build" fallback.
+
+### Android (Unity avatar)
+
+One-time machine setup:
+
+1. **Unity Android Build Support** for the pinned editor (6000.5.0f1), including the *Android SDK & NDK Tools* and *OpenJDK* child modules. Via Unity Hub GUI (Installs → ⚙ → Add modules), or headless:
+   ```bash
+   "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless \
+     install-modules --version 6000.5.0f1 -m android --childModules
+   ```
+2. **Android SDK env** in your shell profile (`expo run:android` needs it to write `android/local.properties`):
+   ```bash
+   export ANDROID_HOME="$HOME/Library/Android/sdk"
+   export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+   ```
+
+Build & run:
+
+```bash
+# 1. Export the Unity Android library (once per Unity-side change):
+#    Unity → Tools → UaaL → Export Android (android-export)
+#    …or pull the committed export: git submodule update --init && git -C unity-avatar/UnityAvatarProject lfs pull
+
+# 2. Generate the native project and run on a connected device:
+npx expo prebuild --platform android
+npx expo run:android
+
+# Debugging filters
+adb logcat -s Unity:V UnityAvatarModule:V UnityBridgeManager:V ReactNativeJS:V AndroidRuntime:E
+```
+
+Without the `android-export/` artifact the app still builds and runs — the config plugin logs a warning, skips the Unity wiring, and the avatar screen shows the fallback state. Full details (export internals, gradle wiring, material fallbacks): `docs/android-unity.md`.
 
 ### API Key Setup (mobile app)
 

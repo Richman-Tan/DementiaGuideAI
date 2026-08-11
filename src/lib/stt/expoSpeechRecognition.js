@@ -13,8 +13,10 @@
 //   expo-av recording in parallel — AVAudioRecorder and SFSpeechRecognizer's
 //   AVAudioEngine tap contend for the shared AVAudioSession on iOS.
 
+import { Platform } from 'react-native';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 import { Audio } from 'expo-av';
+import { PLAYBACK_MODE } from '@/lib/audio/audioModes';
 import {
   STT_FINAL_TIMEOUT_MS,
   HANDS_FREE_SILENCE_MS,
@@ -22,6 +24,13 @@ import {
   HANDS_FREE_VOLUME_THRESHOLD,
   HANDS_FREE_VOLUME_INTERVAL_MS,
 } from '@/lib/voice/voiceConfig';
+
+// Android 13+ (API 33) is required for `continuous: true` and for
+// `recordingOptions.persist` (the raw-audio file behind the Whisper rescue).
+// Below 33 the OS recognizer auto-endpoints after silence and never returns a
+// recording URI — both degradations are handled explicitly below rather than
+// passing unsupported options.
+const ANDROID_MODERN_STT = Platform.OS !== 'android' || Platform.Version >= 33;
 
 // Recognition runs under playAndRecord + measurement (see start() below),
 // which iOS plays MUCH quieter through the speaker — and BOTH the category
@@ -37,10 +46,7 @@ function restorePlaybackSession() {
       mode: 'default',
     });
   } catch { /* android / older module: nothing to restore */ }
-  Audio.setAudioModeAsync({
-    allowsRecordingIOS: false,
-    playsInSilentModeIOS: true,
-  }).catch(() => {});
+  Audio.setAudioModeAsync(PLAYBACK_MODE).catch(() => {});
 }
 
 export function isLiveRecognitionAvailable() {
@@ -113,6 +119,12 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
   let lastChangeAt = Date.now();
   let currentVolume = -2; // library range ≈ -2..10; below 0 is inaudible
 
+  const fireEndOfSpeech = (reason) => {
+    if (endOfSpeechFired || stopping || !handsFree) return;
+    endOfSpeechFired = true;
+    try { onEndOfSpeech?.({ reason }); } catch {}
+  };
+
   subs.push(ExpoSpeechRecognitionModule.addListener('result', (ev) => {
     const transcript = ev?.results?.[0]?.transcript ?? '';
     if (transcript) {
@@ -148,6 +160,11 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
 
   subs.push(ExpoSpeechRecognitionModule.addListener('end', () => {
     ended = true;
+    // Android < 33 has no continuous mode: the OS recognizer auto-endpoints
+    // itself after silence. Surface that as the hands-free end-of-speech
+    // signal so the UI stops "listening" instead of waiting on the (never
+    // firing) volume-based endpoint timer.
+    if (!ANDROID_MODERN_STT) fireEndOfSpeech('recognizer-end');
     settleStop();
   }));
 
@@ -168,11 +185,6 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
     }));
 
     const startedAt = Date.now();
-    const fireEndOfSpeech = (reason) => {
-      if (endOfSpeechFired || stopping) return;
-      endOfSpeechFired = true;
-      try { onEndOfSpeech?.({ reason }); } catch {}
-    };
     endpointTimer = setInterval(() => {
       if (stopping) return;
       const now = Date.now();
@@ -191,11 +203,12 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
     ExpoSpeechRecognitionModule.start({
       lang: 'en-NZ',
       interimResults: true,
-      continuous: true,
+      continuous: ANDROID_MODERN_STT,
       requiresOnDeviceRecognition: false,
       // Keep the raw audio so an empty/failed live transcript can be rescued
-      // by the Whisper fallback (Android 13+/iOS only; null uri elsewhere).
-      recordingOptions: { persist: true },
+      // by the Whisper fallback (Android 13+/iOS only; null uri elsewhere —
+      // sttService already skips the rescue when getRecordedUri() is null).
+      recordingOptions: ANDROID_MODERN_STT ? { persist: true } : undefined,
       volumeChangeEventOptions: { enabled: handsFree, intervalMillis: HANDS_FREE_VOLUME_INTERVAL_MS },
       // playAndRecord shares the AVAudioSession with the avatar's WebView
       // playback instead of fighting it — without this, recognition dies at

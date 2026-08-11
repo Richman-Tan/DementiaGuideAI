@@ -13,6 +13,7 @@
 
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
+import { PLAYBACK_MODE } from '@/lib/audio/audioModes';
 import { segmentToCC4Payload } from './blendshapeTranslator';
 import { NativeUnityAvatarModule } from '../../../../modules/unity-avatar-module/src';
 
@@ -52,7 +53,7 @@ async function playAudio(payload) {
   // as an AvatarUnity prop the same way modelUrl reaches AvatarVRM.
   const cc4Payload = segmentToCC4Payload(segment, null);
 
-  await Audio.setAudioModeAsync({ playsInSilentModeIOS: true, allowsRecordingIOS: false });
+  await Audio.setAudioModeAsync(PLAYBACK_MODE);
 
   // Audio.Sound.createAsync doesn't reliably load data: URIs directly — write
   // to a temp file first, matching the established pattern in ChatScreen.js.

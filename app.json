@@ -33,6 +33,14 @@
       "./plugins/withUnityFramework",
       "expo-font",
       [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      [
         "expo-speech-recognition",
         {
           "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone so you can talk to Aria.",

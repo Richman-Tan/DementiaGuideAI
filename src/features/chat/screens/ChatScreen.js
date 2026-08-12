@@ -23,6 +23,7 @@ import { openaiService, OpenAIAuthError, OpenAIRateLimitError } from '@/lib/open
 import { useSettings } from '@/context/SettingsContext';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Audio } from 'expo-av';
+import { PLAYBACK_MODE } from '@/lib/audio/audioModes';
 import { tts } from '@/lib/tts/ttsService';
 
 const MESSAGES_KEY = 'chat_messages_v1';
@@ -253,7 +254,7 @@ export const ChatScreen = ({ navigation, route }) => {
       if (autoPlayResponses) {
         tts(response.text).then(async ({ audio }) => {
           try {
-            await Audio.setAudioModeAsync({ playsInSilentModeIOS: true, allowsRecordingIOS: false });
+            await Audio.setAudioModeAsync(PLAYBACK_MODE);
             const base64 = audio.replace('data:audio/mpeg;base64,', '');
             const tempPath = `${FileSystem.cacheDirectory}aria_chat_${Date.now()}.mp3`;
             await FileSystem.writeAsStringAsync(tempPath, base64, { encoding: FileSystem.EncodingType.Base64 });

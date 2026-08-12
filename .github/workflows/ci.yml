@@ -38,3 +38,30 @@ jobs:
 
       - name: Test
         run: npm test
+
+  prebuild-smoke:
+    # Exercises every config-plugin code path (plugins/withUnityFramework.js)
+    # on a checkout WITHOUT the git-lfs Unity artifacts — the iOS copy mod and
+    # all Android mods must hit their warn-and-skip branches and still produce
+    # a valid native project. Catches plugin syntax/anchor regressions without
+    # multi-GB artifacts or a native toolchain.
+    name: Expo prebuild smoke (config plugins)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prebuild Android
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Prebuild iOS
+        run: npx expo prebuild --platform ios --no-install

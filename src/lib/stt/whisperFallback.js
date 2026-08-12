@@ -6,6 +6,7 @@
 
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
+import { PLAYBACK_MODE, RECORDING_MODE } from '@/lib/audio/audioModes';
 import { openaiService } from '@/lib/openaiService';
 
 // Whisper-optimised recording: 16 kHz mono reduces upload size ~4× vs HIGH_QUALITY
@@ -51,16 +52,13 @@ export async function startWhisperSession() {
     throw err;
   }
 
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: true,
-    playsInSilentModeIOS: true,
-  });
+  await Audio.setAudioModeAsync(RECORDING_MODE);
 
   let recording;
   try {
     ({ recording } = await Audio.Recording.createAsync(WHISPER_RECORDING_OPTIONS));
   } catch (err) {
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
+    await Audio.setAudioModeAsync(PLAYBACK_MODE).catch(() => {});
     throw err;
   }
 
@@ -75,10 +73,7 @@ export async function startWhisperSession() {
       done = true;
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-      });
+      await Audio.setAudioModeAsync(PLAYBACK_MODE);
       const transcript = await transcribeFile(uri);
       FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
       return transcript ?? '';
@@ -88,7 +83,7 @@ export async function startWhisperSession() {
       if (done) return;
       done = true;
       recording.stopAndUnloadAsync().catch(() => {});
-      Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
+      Audio.setAudioModeAsync(PLAYBACK_MODE).catch(() => {});
     },
   };
 }

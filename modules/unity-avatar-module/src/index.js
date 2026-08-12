@@ -11,17 +11,24 @@ import { requireNativeModule, requireNativeViewManager } from 'expo-modules-core
  *   — `visemes` drives Unity's co-articulation engine; `blendshapes` is the
  *   legacy fallback for payloads without viseme events.
  */
-// UnityFramework is a device-only arm64 binary, so the native module doesn't
-// exist in simulator builds — and requireNativeModule throws at IMPORT time,
-// which would kill app boot for everyone (this file is in the static import
-// graph via AvatarUnity). Guard the lookup: on simulator the app runs
-// normally with the Three.js avatars, and the Unity profile no-ops loudly.
+// The native module can legitimately be missing: iOS Simulator builds
+// (UnityFramework is a device-only arm64 binary) and Android builds made
+// without the committed Unity android-export. requireNativeModule throws at
+// IMPORT time, which would kill app boot for everyone (this file is in the
+// static import graph via AvatarUnity). Guard the lookup and EXPORT the
+// outcome — AvatarUnity renders a visible unavailable-state instead of a
+// silent blank view, while conversation audio keeps working through expo-av.
+let nativeModuleAvailable = false;
+
 function resolveNativeModule() {
   try {
-    return requireNativeModule('UnityAvatarModule');
+    const nativeModule = requireNativeModule('UnityAvatarModule');
+    nativeModuleAvailable = true;
+    return nativeModule;
   } catch (e) {
     console.warn(
-      `[UnityAvatarModule] native module unavailable (${e.message}) — Unity avatar disabled (simulator build?)`
+      `[UnityAvatarModule] native module unavailable (${e.message}) — Unity avatar disabled ` +
+      '(iOS simulator build, or Android build without the Unity android-export?)'
     );
     const warnOnce = () => console.warn('[UnityAvatarModule] call ignored — native module unavailable');
     return {
@@ -38,10 +45,13 @@ function resolveNativeView() {
   try {
     return requireNativeViewManager('UnityAvatarModule');
   } catch (e) {
-    return () => null; // renders nothing if the Unity profile is selected anyway
+    return () => null; // AvatarUnity renders its unavailable-fallback instead
   }
 }
 
 export const NativeUnityAvatarModule = resolveNativeModule();
 
 export const UnityAvatarNativeView = resolveNativeView();
+
+/** True when the real native Unity module loaded (device build with the Unity artifact present). */
+export const isUnityAvatarAvailable = nativeModuleAvailable;

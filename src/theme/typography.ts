@@ -1,10 +1,16 @@
 import { Platform, TextStyle } from 'react-native';
 
+// Android note: 'Roboto-Medium'/'Roboto-Bold' are NOT resolvable fontFamily
+// names on modern Android — RN silently falls back to regular Roboto and the
+// weight flattens. Use the generic aliases: 'sans-serif-medium' for the
+// 500/600 tier (which numeric fontWeight alone can't reach on older Android),
+// and plain 'sans-serif' elsewhere (the numeric fontWeight in Typography
+// renders the bold).
 export const FontFamily = {
-  regular: Platform.select({ ios: 'System', android: 'Roboto' }),
-  medium: Platform.select({ ios: 'System', android: 'Roboto-Medium' }),
-  semibold: Platform.select({ ios: 'System', android: 'Roboto-Medium' }),
-  bold: Platform.select({ ios: 'System', android: 'Roboto-Bold' }),
+  regular: Platform.select({ ios: 'System', android: 'sans-serif' }),
+  medium: Platform.select({ ios: 'System', android: 'sans-serif-medium' }),
+  semibold: Platform.select({ ios: 'System', android: 'sans-serif-medium' }),
+  bold: Platform.select({ ios: 'System', android: 'sans-serif' }),
 };
 
 export const FontSize = {

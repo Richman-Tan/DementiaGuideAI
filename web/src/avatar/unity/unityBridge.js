@@ -7,8 +7,14 @@
 // the 234MB download starts the moment the app opens, on the shared detached
 // canvas; screens attach when they mount. Load progress is broadcast through
 // onUnityLoadProgress — the loader reports byte progress 0→0.9 and then goes
-// silent through the multi-minute main-thread brotli decompress, so the state
+// silent while the engine compiles the wasm and boots the scene, so the state
 // machine surfaces that gap as an explicit 'preparing' phase.
+//
+// The build files are served with `Content-Encoding: br` (vercel.json in prod,
+// a middleware in vite.config.js for dev) so the browser decompresses them
+// natively. Serving them unlabelled still WORKS — Unity's loader has a JS
+// fallback decompressor — but it runs on the main thread and turns a ~4s
+// decode into a 20-minute one. web/scripts/sync-unity-webgl.mjs enforces it.
 //
 // The message protocol is IDENTICAL to mobile UaaL (AvatarBridgeProtocol):
 //   { type: 'setCharacter', id }                        → AvatarRouter.cs
@@ -99,13 +105,43 @@ export async function probeUnity() {
 // One canvas for the app: Unity binds its GL context to the canvas it was
 // created with, so screens reparent this shared element (same pattern as the
 // Three controller's host) instead of handing Unity a fresh canvas per mount.
+//
+// It MUST be in the document before Unity boots. The boot is eager, so it
+// normally starts before any screen has mounted, and Chrome refuses a WebGL
+// context on a detached zero-sized canvas — the engine logs "Unable to create
+// WebGL context." and then throws from its own cleanup path. The bridge caught
+// that as a transient failure and silently retried, re-downloading the whole
+// 233MB build. So park the canvas off-screen at a real size until a screen
+// adopts it. Off-screen, NOT display:none/0x0 — those lose the context too.
+let parkingHost = null;
+
+function getParkingHost() {
+  if (!parkingHost) {
+    parkingHost = document.createElement('div');
+    parkingHost.id = 'unity-parking';
+    parkingHost.setAttribute('aria-hidden', 'true');
+    parkingHost.style.cssText = 'position:fixed;left:-10000px;top:0;width:360px;height:640px;pointer-events:none;';
+    document.body.appendChild(parkingHost);
+  }
+  return parkingHost;
+}
+
 export function getUnityCanvas() {
   if (!sharedCanvas) {
     sharedCanvas = document.createElement('canvas');
     sharedCanvas.id = 'unity-canvas';
     sharedCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
   }
+  if (!sharedCanvas.isConnected) getParkingHost().appendChild(sharedCanvas);
   return sharedCanvas;
+}
+
+// Send the canvas back off-screen when a screen releases it, so it is never
+// left detached inside a removed subtree (which can drop the GL context).
+export function parkUnityCanvas() {
+  if (sharedCanvas && sharedCanvas.parentElement !== parkingHost) {
+    getParkingHost().appendChild(sharedCanvas);
+  }
 }
 
 // sync-unity-webgl.mjs writes a manifest naming the build files (so a future
@@ -162,6 +198,10 @@ export async function mountUnity() {
     // createUnityInstance is provided by the loader script. Its progress
     // callback covers 0→0.9 (byte-accurate download) then goes silent until
     // the engine finishes booting — surface that gap as 'preparing'.
+    // Note: with Content-Encoding: br the reader sees DECOMPRESSED bytes while
+    // Content-Length reports compressed ones, so the loader's own total is an
+    // over-estimate and this fraction climbs to roughly two-thirds before
+    // snapping to done. Harmless now that the whole phase takes seconds.
     // eslint-disable-next-line no-undef
     unityInstance = await createUnityInstance(getUnityCanvas(), {
       dataUrl: base + files.data + v,

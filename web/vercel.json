@@ -15,6 +15,27 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
     },
     {
+      "source": "/unity/Build/unity.data.unityweb",
+      "headers": [
+        { "key": "Content-Encoding", "value": "br" },
+        { "key": "Content-Type", "value": "application/octet-stream" }
+      ]
+    },
+    {
+      "source": "/unity/Build/unity.framework.js.unityweb",
+      "headers": [
+        { "key": "Content-Encoding", "value": "br" },
+        { "key": "Content-Type", "value": "text/javascript" }
+      ]
+    },
+    {
+      "source": "/unity/Build/unity.wasm.unityweb",
+      "headers": [
+        { "key": "Content-Encoding", "value": "br" },
+        { "key": "Content-Type", "value": "application/wasm" }
+      ]
+    },
+    {
       "source": "/unity/Build/manifest.json",
       "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
     },

@@ -5,7 +5,7 @@
 // leave the live instance rendering into a detached element) and shows the
 // load-progress states until the engine is up.
 import React, { useEffect, useRef, useState } from 'react';
-import { probeUnity, mountUnity, getUnityCanvas } from './unityBridge.js';
+import { probeUnity, mountUnity, getUnityCanvas, parkUnityCanvas } from './unityBridge.js';
 import { useUnityLoadState } from './useUnityLoadState.js';
 import { getUnityAvatar } from './UnityAvatarController.js';
 import { AvatarLoadProgress } from '../AvatarLoadProgress.jsx';
@@ -34,7 +34,10 @@ export function UnityAvatarMount({ characterId, name = 'your avatar', compact = 
         // AvatarLoadProgress shows the 'failed' state with a retry button.
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      parkUnityCanvas(); // never leave it inside a torn-down host
+    };
   }, [characterId, phase === 'ready']);
 
   const showProgress = !ready && !unavailable && (phase === 'downloading' || phase === 'preparing' || phase === 'failed');

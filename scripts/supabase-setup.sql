@@ -35,7 +35,7 @@ create table if not exists knowledge_chunks (
   source_org      text,
   embedding       vector(1536),
   search_vector   tsvector,
-  -- provenance (see docs/rag-target-architecture.md)
+  -- provenance (see docs/rag/rag-target-architecture.md)
   document_id     text,
   source_version  text,
   country         text,

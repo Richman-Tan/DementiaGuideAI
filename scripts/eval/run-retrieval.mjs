@@ -10,7 +10,7 @@
 //
 // Metrics per labelled question: recall@{1,3,5}, precision@5, MRR, nDCG@5
 // (relevant gain 2, acceptable gain 1). Aggregated per set and overall.
-// Zero LLM involvement — see docs/rag-evaluation-plan.md.
+// Zero LLM involvement — see docs/rag/rag-evaluation-plan.md.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';

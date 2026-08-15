@@ -5,7 +5,7 @@
 //
 // Methodology note: generation runs at temperature 0 with a fixed seed for
 // run-to-run comparability; production uses temperature 0.7. This is recorded
-// in every output file. See docs/rag-evaluation-plan.md.
+// in every output file. See docs/rag/rag-evaluation-plan.md.
 //
 // Usage:
 //   node scripts/eval/run-generation.mjs                     # all sets, active prompt version

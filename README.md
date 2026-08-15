@@ -302,7 +302,7 @@ avatarRef.current.stopAudio();
 
 ## RAG Pipeline
 
-The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI. All prompt/retrieval configuration lives in **`src/lib/rag/`** (plain CommonJS shared by the app, Jest, and the Node scripts — change values there, never in per-script copies). Full documentation: [current-state audit](docs/rag-current-state-audit.md) · [research](docs/rag-industry-research.md) · [target architecture](docs/rag-target-architecture.md) · [source inventory](docs/rag-source-inventory.md) · [evaluation plan](docs/rag-evaluation-plan.md) · [results](docs/rag-improvement-results.md).
+The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI. All prompt/retrieval configuration lives in **`src/lib/rag/`** (plain CommonJS shared by the app, Jest, and the Node scripts — change values there, never in per-script copies). Full documentation: [current-state audit](docs/rag/rag-current-state-audit.md) · [research](docs/rag/rag-industry-research.md) · [target architecture](docs/rag/rag-target-architecture.md) · [source inventory](docs/rag/rag-source-inventory.md) · [evaluation plan](docs/rag/rag-evaluation-plan.md) · [results](docs/rag/rag-improvement-results.md).
 
 | Setting | Value |
 |---|---|
@@ -340,7 +340,7 @@ npm run rag:eval:sweep                        # min_similarity × diversity-cap 
 npm run rag:introspect                        # dump live corpus → docs/report/kb_chunks_reference.csv
 ```
 
-The frozen pre-overhaul baseline lives in `docs/report/baseline/`; compare any change against it (see the [evaluation plan](docs/rag-evaluation-plan.md) for metric definitions and known limitations).
+The frozen pre-overhaul baseline lives in `docs/report/baseline/`; compare any change against it (see the [evaluation plan](docs/rag/rag-evaluation-plan.md) for metric definitions and known limitations).
 
 ---
 

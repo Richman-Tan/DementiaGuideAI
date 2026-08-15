@@ -2,6 +2,7 @@
 import React from 'react';
 import { go } from '../state/router.js';
 import { useSettings } from '../state/SettingsContext.jsx';
+import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 
 const I = {
   home: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 11 12 4l8 7" /><path d="M6 10v9h12v-9" /></svg>,
@@ -25,7 +26,8 @@ const navStyle = (on) => ({
 });
 
 export default function Shell({ active, isDesktop, isTablet, isMobile, children }) {
-  const { setSetting, effDark } = useSettings();
+  const { settings, setSetting, effDark } = useSettings();
+  const talkTo = `Talk to ${useEffectiveAvatarProfile(settings.avatarId).name}`;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -41,7 +43,7 @@ export default function Shell({ active, isDesktop, isTablet, isMobile, children 
               <button key={key} onClick={go(route)} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '48px', padding: '0 14px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '1rem', fontWeight: '600', textAlign: 'left', background: n.bg, color: n.c }} className="hv3">{icon}<span>{label}</span></button>
             );
           })}
-          <button onClick={go('#/app/voice')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', minHeight: '54px', marginTop: '14px', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '1.02rem', fontWeight: '700', background: 'var(--primary)', color: '#fff', boxShadow: 'var(--shadow)' }} className="hv1">{I.mic(20)}Talk to Aria</button>
+          <button onClick={go('#/app/voice')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', minHeight: '54px', marginTop: '14px', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '1.02rem', fontWeight: '700', background: 'var(--primary)', color: '#fff', boxShadow: 'var(--shadow)' }} className="hv1">{I.mic(20)}{talkTo}</button>
           <div style={{ flex: '1' }} />
           <button onClick={() => setSetting('darkMode', !effDark)} style={{ display: 'flex', alignItems: 'center', gap: '10px', minHeight: '44px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--elev)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv3">
             <span style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'linear-gradient(90deg,var(--text2) 50%,transparent 50%)', border: '2px solid var(--text2)', boxSizing: 'border-box' }} />
@@ -57,7 +59,7 @@ export default function Shell({ active, isDesktop, isTablet, isMobile, children 
             const n = navStyle(active === key);
             return <button key={key} onClick={go(route)} title={label} aria-label={label} style={{ width: '48px', height: '48px', borderRadius: '12px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: n.bg, color: n.c }} className="hv3">{icon}</button>;
           })}
-          <button onClick={go('#/app/voice')} title="Talk to Aria" aria-label="Talk to Aria" style={{ width: '52px', height: '52px', borderRadius: '16px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary)', color: '#fff', boxShadow: 'var(--shadow)' }} className="hv2">{I.mic()}</button>
+          <button onClick={go('#/app/voice')} title={talkTo} aria-label={talkTo} style={{ width: '52px', height: '52px', borderRadius: '16px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary)', color: '#fff', boxShadow: 'var(--shadow)' }} className="hv2">{I.mic()}</button>
           {NAV.slice(2).map(([key, label, route, icon]) => {
             const n = navStyle(active === key);
             return <button key={key} onClick={go(route)} title={label} aria-label={label} style={{ width: '48px', height: '48px', borderRadius: '12px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: n.bg, color: n.c }} className="hv3">{icon}</button>;
@@ -77,7 +79,7 @@ export default function Shell({ active, isDesktop, isTablet, isMobile, children 
               <button key={key} onClick={go(route)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', minWidth: '56px', minHeight: '48px', border: 'none', background: 'none', cursor: 'pointer', color: n.c, fontSize: '.72rem', fontWeight: '600' }}>{icon}{label}<span style={{ width: '5px', height: '5px', borderRadius: '50%', background: n.dot }} /></button>
             );
           })}
-          <button onClick={go('#/app/voice')} aria-label="Talk to Aria" style={{ width: '56px', height: '56px', borderRadius: '50%', border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-18px)', boxShadow: '0 4px 14px rgba(45,95,112,.4)' }} className="hv2">{I.mic(24)}</button>
+          <button onClick={go('#/app/voice')} aria-label={talkTo} style={{ width: '56px', height: '56px', borderRadius: '50%', border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-18px)', boxShadow: '0 4px 14px rgba(45,95,112,.4)' }} className="hv2">{I.mic(24)}</button>
           {NAV.slice(2).map(([key, label, route, icon]) => {
             const n = navStyle(active === key);
             return (

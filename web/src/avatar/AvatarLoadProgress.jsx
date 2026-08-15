@@ -36,7 +36,7 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
             <div style={{ width: `${percent}%`, height: '100%', borderRadius: '999px', background: 'var(--primary)', transition: 'width .3s ease' }} />
           </div>
           <div style={{ color: 'var(--text2)', fontSize: subSize }}>
-            {compact ? 'One-time download' : `Downloading… ${percent}% — this happens only once and is saved for your next visit.`}
+            {compact ? 'One-time download' : `Downloading… ${percent}% — ${name} is a large one-time download (about 230 MB), saved for your next visit.`}
           </div>
         </>
       )}
@@ -56,7 +56,9 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
         <>
           <div style={{ fontWeight: 700, fontSize: titleSize }}>We couldn't finish loading {name}.</div>
           {!compact && (
-            <div style={{ color: 'var(--text2)', fontSize: subSize }}>Check your internet connection and try again.</div>
+            <div style={{ color: 'var(--text2)', fontSize: subSize, maxWidth: '30em' }}>
+              The download is large (about 230 MB), so a brief drop in connection can interrupt it. You can keep using the rest of the app either way.
+            </div>
           )}
           <button
             onClick={ensureUnityBoot}

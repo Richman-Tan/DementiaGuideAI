@@ -27,6 +27,7 @@ let mountPromise = null;
 let loaderScriptPromise = null;
 let loaderUrl = null;
 let sharedCanvas = null;
+let retriedOnce = false;
 
 // Load-state machine: idle → downloading → preparing → ready | failed,
 // or → unavailable when no build is installed.
@@ -110,9 +111,11 @@ export function getUnityCanvas() {
 // sync-unity-webgl.mjs writes a manifest naming the build files (so a future
 // compression change — .unityweb suffixes — needs no code edit); older manual
 // drops without one get the documented default names.
+// The manifest also carries a per-build `version` stamp. It must never be
+// served stale or the version itself goes stale, hence cache: 'no-cache'.
 async function resolveBuildFiles(base) {
   try {
-    const r = await fetch(`${base}manifest.json`);
+    const r = await fetch(`${base}manifest.json`, { cache: 'no-cache' });
     const type = r.headers.get('content-type') || '';
     if (r.ok && !type.includes('text/html')) {
       const m = await r.json();
@@ -149,16 +152,21 @@ export async function mountUnity() {
     setLoadState('downloading', 0);
     const base = loaderUrl.replace(/[^/]+$/, '');
     const files = await resolveBuildFiles(base);
-    await loadLoaderScript(base + files.loader);
+    // Version every build URL. The filenames are stable and cached for a day,
+    // so without this a redeploy leaves returning visitors mixing an old wasm
+    // with a new data file — which crashes the engine deep inside its
+    // deserializer rather than failing cleanly.
+    const v = files.version ? `?v=${files.version}` : '';
+    await loadLoaderScript(base + files.loader + v);
 
     // createUnityInstance is provided by the loader script. Its progress
     // callback covers 0→0.9 (byte-accurate download) then goes silent until
     // the engine finishes booting — surface that gap as 'preparing'.
     // eslint-disable-next-line no-undef
     unityInstance = await createUnityInstance(getUnityCanvas(), {
-      dataUrl: base + files.data,
-      frameworkUrl: base + files.framework,
-      codeUrl: base + files.code,
+      dataUrl: base + files.data + v,
+      frameworkUrl: base + files.framework + v,
+      codeUrl: base + files.code + v,
       companyName: 'DementiaGuideAI',
       productName: 'UnityAvatar',
     }, (p) => {
@@ -172,6 +180,14 @@ export async function mountUnity() {
     return await mountPromise;
   } catch (err) {
     mountPromise = null; // allow a retry after a transient load failure
+    // A ~230MB transfer fails for boring reasons — a dropped connection, a
+    // sleeping laptop, memory pressure mid-decompress. Retry once silently
+    // before showing anyone an error they can't act on.
+    if (!retriedOnce) {
+      retriedOnce = true;
+      console.warn('[unity] load failed, retrying once:', err?.message ?? err);
+      return mountUnity();
+    }
     setLoadState('failed');
     throw err;
   }
@@ -182,6 +198,7 @@ export async function mountUnity() {
 // affordance after a failure (mountPromise nulls on failure, so this retries).
 export function ensureUnityBoot() {
   if (getSettingSnapshot().showAvatar === false) return;
+  retriedOnce = false; // a manual "Try again" gets its own silent retry
   probeUnity().then((ok) => {
     if (ok) mountUnity().catch(() => { /* state machine already says 'failed' */ });
   });

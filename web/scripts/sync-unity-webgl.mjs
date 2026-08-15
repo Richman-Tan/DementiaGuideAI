@@ -14,7 +14,8 @@
 // meshes with ~400 blendshapes per character dominate and can't be texture-
 // capped away), so files over 100 MB only WARN, and the script fails hard
 // near the Pro ceiling.
-import { cpSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -59,7 +60,20 @@ if (missing.length) {
   process.exit(1);
 }
 
+// Version stamp = content hash of the engine + data. The served filenames are
+// stable and cached for a day, so WITHOUT this a redeploy leaves browsers
+// mixing an old wasm with a new data file — which crashes the engine deep in
+// its deserializer (an infinite-recursion stack overflow, not an obvious
+// "mismatched files" error). unityBridge appends it to every build URL.
+manifest.version = createHash('sha256')
+  .update(readFileSync(join(dest, manifest.code)))
+  .update(readFileSync(join(dest, manifest.framework)))
+  .update(String(statSync(join(dest, manifest.data)).size))
+  .digest('hex')
+  .slice(0, 12);
+
 writeFileSync(join(dest, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+console.log(`Build version: ${manifest.version}`);
 
 let tooBig = false;
 console.log(`Synced Unity WebGL build → ${dest}`);

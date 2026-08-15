@@ -9,7 +9,7 @@ import { useSettings } from '../state/SettingsContext.jsx';
 import { useChat } from '../state/ChatContext.jsx';
 import { useVoiceConversation } from '../voice/useVoiceConversation.js';
 import { voiceAvatar } from '../avatar/avatarBridge.js';
-import { navigate } from '../state/router.js';
+import { navigate, useWidth } from '../state/router.js';
 import { AvatarBust, ThreeAvatarMount } from '../avatar/AvatarStage.jsx';
 import { UnityAvatarMount } from '../avatar/unity/UnityAvatarStage.jsx';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
@@ -166,6 +166,13 @@ export default function Voice() {
   const showSubtitle = !!settings.subtitles && vSpeaking && !!vSubtitle;
   const canType = vIdle || vSpeaking;
 
+  // A long answer stacked above the mic covers the avatar's face — the one
+  // thing the screen exists to show. Where there is room beside him, the
+  // captions move into a rail down the right instead; narrow screens have no
+  // such room and keep them above the controls.
+  const width = useWidth();
+  const sideCaptions = width >= 1024;
+
   const closeVoice = () => { history.length > 1 ? history.back() : navigate('#/app/home'); };
   const saveSetup = () => { saveKeys(keys); setSavedKeys(keys); };
   const sendDraft = () => {
@@ -176,6 +183,27 @@ export default function Voice() {
   };
 
   const iconBtn = { ...glass, width: '46px', height: '46px', borderRadius: '14px', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' };
+
+  const captions = showSubtitle ? (
+    <div
+      aria-live="polite"
+      style={{
+        ...glass,
+        background: 'color-mix(in srgb, var(--surface) 88%, transparent)',
+        borderRadius: '16px',
+        padding: '14px 20px',
+        fontSize: '1.08rem',
+        lineHeight: 1.5,
+        overflowY: 'auto',
+        pointerEvents: 'auto',
+        ...(sideCaptions
+          ? { width: '100%', maxHeight: '100%', boxSizing: 'border-box' }
+          : { maxWidth: '34em', maxHeight: '28dvh' }),
+      }}
+    >
+      {vSubtitle}
+    </div>
+  ) : null;
 
   return (
     <section style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', zIndex: 50, overflow: 'hidden', background: 'radial-gradient(circle at 50% 30%, var(--tint) 0%, var(--bg) 80%)' }}>
@@ -196,6 +224,14 @@ export default function Voice() {
         )}
       </div>
 
+      {/* Wide screens: captions ride down the right, clear of the avatar and of
+          the top-right controls / bottom cluster. */}
+      {hasKey && sideCaptions && captions && (
+        <div style={{ position: 'absolute', top: '82px', bottom: '150px', right: '16px', width: 'min(400px, 30vw)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', pointerEvents: 'none' }}>
+          {captions}
+        </div>
+      )}
+
       {/* Setup card (no keys) */}
       {!hasKey && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '18px' }}>
@@ -211,11 +247,7 @@ export default function Voice() {
               {vTranscript}
             </div>
           )}
-          {showSubtitle && (
-            <div style={{ ...glass, background: 'color-mix(in srgb, var(--surface) 88%, transparent)', maxWidth: '34em', maxHeight: '28dvh', overflowY: 'auto', borderRadius: '16px', padding: '14px 20px', fontSize: '1.08rem', lineHeight: 1.5, pointerEvents: 'auto' }}>
-              {vSubtitle}
-            </div>
-          )}
+          {!sideCaptions && captions}
           {!!error && (
             <div role="alert" style={{ maxWidth: '34em', background: 'var(--amber-bg)', border: 'var(--bw) solid var(--amber-bd)', borderLeft: '4px solid var(--amber)', borderRadius: '14px', padding: '12px 18px', display: 'flex', alignItems: 'center', gap: '12px', pointerEvents: 'auto' }}>
               <span style={{ flex: 1 }}>{error}</span>

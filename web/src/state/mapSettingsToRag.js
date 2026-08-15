@@ -1,5 +1,5 @@
 // Maps the web app's dg_settings enums onto the option names expected by
-// src/lib/rag/prompt.js (the mobile app's vocabulary). Unknown values fall back
+// packages/core/rag/prompt.js (the shared vocabulary). Unknown values fall back
 // safely inside buildSystemPrompt, but the mapping is still unit-tested to keep
 // the wiring honest.
 export function mapSettingsToRag(settings = {}) {

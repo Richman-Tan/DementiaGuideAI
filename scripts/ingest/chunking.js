@@ -1,7 +1,7 @@
 // Pure chunking + hashing for the ingestion pipeline. CommonJS so Jest and the
 // .mjs runner share one implementation. No network, no filesystem.
 //
-// Strategy (docs/rag-industry-research.md §4): section-aware first — split on
+// Strategy (docs/rag/rag-industry-research.md §4): section-aware first — split on
 // headings so retrieval units align with topic boundaries (the iSupport
 // material is heavily structured) — then a word-window fallback (500 words,
 // 50-word overlap, paragraph-preferred breaks) inside oversized sections.

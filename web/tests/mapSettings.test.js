@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { mapSettingsToRag, speechRateFor } from '@web/state/mapSettingsToRag.js';
-import { buildSystemPrompt } from '@/lib/rag/prompt';
+import { buildSystemPrompt } from '@core/rag/prompt';
 import { matchSourceToArticle } from '@web/services/kbToLibrary.js';
 
 describe('mapSettingsToRag', () => {

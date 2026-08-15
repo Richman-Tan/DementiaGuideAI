@@ -17,11 +17,11 @@ import {
   GENERATION_TEMPERATURE,
   CITATION_MODE,
   maxTokensForStyle,
-} from '@/lib/rag/ragConfig';
-import { buildSystemPrompt, buildUserContent } from '@/lib/rag/prompt';
-import { capBySourceFamily } from '@/lib/rag/retrieval';
-import { extractCitations, createMarkerStripper } from '@/lib/rag/citations';
-import { timeoutSignal } from '@/lib/net/withTimeout';
+} from '@core/rag/ragConfig';
+import { buildSystemPrompt, buildUserContent } from '@core/rag/prompt';
+import { capBySourceFamily } from '@core/rag/retrieval';
+import { extractCitations, createMarkerStripper } from '@core/rag/citations';
+import { timeoutSignal } from '@core/net/withTimeout';
 import { getOpenaiKey, loadKeys, saveKeys } from '../state/keysStore.js';
 
 const OPENAI_BASE = 'https://api.openai.com/v1';

@@ -22,7 +22,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { getEntry, REGISTRY } = require('./registry.js');
 const { chunkDocument, contentHash, normalise, stripPdfBoilerplate } = require('./chunking.js');
-const { EMBEDDING_MODEL, CATEGORIES } = require('../../src/lib/rag/ragConfig.js');
+const { EMBEDDING_MODEL, CATEGORIES } = require('../../packages/core/rag/ragConfig.js');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');

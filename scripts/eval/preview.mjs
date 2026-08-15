@@ -8,9 +8,9 @@ import { createRequire } from 'node:module';
 import { requireEnv, retrieve, openaiJson } from './lib.mjs';
 
 const require = createRequire(import.meta.url);
-const { CHAT_MODEL, GENERATION_TEMPERATURE, maxTokensForStyle } = require('../../src/lib/rag/ragConfig.js');
-const { buildSystemPrompt, buildUserContent } = require('../../src/lib/rag/prompt.js');
-const { extractCitations } = require('../../src/lib/rag/citations.js');
+const { CHAT_MODEL, GENERATION_TEMPERATURE, maxTokensForStyle } = require('../../packages/core/rag/ragConfig.js');
+const { buildSystemPrompt, buildUserContent } = require('../../packages/core/rag/prompt.js');
+const { extractCitations } = require('../../packages/core/rag/citations.js');
 
 const QUESTIONS = process.argv.slice(2).filter(a => !a.startsWith('--'));
 if (QUESTIONS.length === 0) {

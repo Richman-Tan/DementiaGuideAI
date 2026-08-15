@@ -1,6 +1,27 @@
 # DementiaGuide AI
 
-A modern cross-platform (iOS & Android) mobile application: an **avatar-based digital resource management platform for dementia care**. It helps caregivers, family members, and healthcare professionals **access, navigate, and organise** dementia-care resources — held in a searchable, categorised knowledge base — and get **grounded, cited answers** to questions asked by text or voice, delivered by a real-time 3D avatar with lip-sync driven by ElevenLabs character-level alignment.
+An **avatar-based digital resource platform for dementia care**, running on iOS, Android and the web. It helps caregivers, family members, and healthcare professionals **access, navigate, and organise** dementia-care resources — held in a searchable, categorised knowledge base — and get **grounded, cited answers** to questions asked by text or voice, delivered by a real-time 3D avatar with lip-sync driven by ElevenLabs character-level alignment.
+
+---
+
+## Repository map
+
+Three separate surfaces share one knowledge base and one RAG core:
+
+| Path | What it is | Run it with |
+|---|---|---|
+| `src/` + `App.js` | **Mobile app** — Expo / React Native (iOS + Android). The repo root *is* the Expo project. | `npm start` |
+| `web/` | **Web app** — Vite + React, deployed on Vercel. Own `package.json` and test suite. See [`web/README.md`](web/README.md). | `cd web && npm run dev` |
+| `packages/core/` | **Shared logic** — RAG (config, prompt, retrieval, citations) plus small utilities, imported by *all three* of mobile, web and Node. See [`packages/core/README.md`](packages/core/README.md). | — |
+| `unity-avatar/` | **Unity avatar project** (git submodule) — the CC4 characters and their exporters, for the native and WebGL avatar builds. | — |
+| `modules/unity-avatar-module/` | Local Expo native module embedding Unity-as-a-Library on iOS/Android. Autolinked; not an npm dependency. | — |
+| `plugins/` | Expo config plugin that wires the Unity library into the generated native projects. | — |
+| `scripts/` | Node/Python CLI tooling: `eval/` (RAG evaluation), `ingest/` (KB ingestion), `migrations/` (SQL). | `npm run rag:*`, `npm run kb:*` |
+| `content/` | Source documents for ingestion (PDFs are gitignored; `sources/MANIFEST.md` is the record). | — |
+| `docs/` | All documentation — [start at `docs/README.md`](docs/README.md). | — |
+| `assets/` | Icons, splash, and the `.glb`/`.vrm` avatar models (shared by mobile and web). | — |
+
+`android/` and `ios/` are **generated** by `expo prebuild` and are not tracked.
 
 ---
 
@@ -58,12 +79,22 @@ Together these let users **access, navigate, and organise** evidence-based demen
 
 ---
 
-## Project Structure
+## Mobile app structure
 
 The app is organised **feature-first**: each domain owns its screens, components, hooks
 and config under `src/features/<domain>/`. Cross-cutting concerns live in a shared kernel
 (`theme/`, `context/`, `constants/`, top-level `components/`) and all external integrations
-+ pure engines live in a single `lib/`. Imports use the `@/` path alias (`@/` → `src/`).
++ pure engines live in a single `lib/`.
+
+Two path aliases, and the distinction matters:
+
+| Alias | Points to | Contains |
+|---|---|---|
+| `@/` | `src/` | Mobile-app code only |
+| `@core/` | `packages/core/` | Logic shared with `web/` and the Node scripts |
+
+`@core` is declared in `babel.config.js`, `tsconfig.json`, `jest.config.js` and
+`web/vite.config.js` — all four must stay in step.
 
 Files are migrating to **TypeScript** incrementally — the shared kernel and integration
 layer are typed (`.ts`/`.tsx`); screens and the avatar/provider modules remain `.js` under
@@ -71,9 +102,11 @@ layer are typed (`.ts`/`.tsx`); screens and the avatar/provider modules remain `
 
 ```
 DementiaGuideAI/
-├── App.js
+├── App.js · index.js
 ├── tsconfig.json · babel.config.js · eslint.config.js · jest.config.js · .prettierrc
 ├── app.json                          # Expo config
+├── packages/core/                    # Shared with web/ + scripts: rag/, net/, sentiment/
+├── web/                              # Vite web app (own package.json — see web/README.md)
 ├── scripts/                          # Node CLI tools: eval/ (RAG evaluation), ingest/ (KB ingestion), migrations/ (SQL)
 └── src/
     ├── navigation/
@@ -101,13 +134,12 @@ DementiaGuideAI/
     ├── components/                    # Shared, cross-feature UI (Avatar, MessageCard)
     ├── lib/                           # Integrations + pure engines
     │   ├── openaiService.js           # RAG pipeline (embed → Supabase match_chunks → streaming chat)
-    │   ├── rag/                       # Shared RAG core: ragConfig, prompt, retrieval, citations (CJS — app + scripts)
     │   ├── ragTelemetry.js            # Device-local retrieval traces (no message text)
     │   ├── supabaseService.ts         # Supabase anon client
     │   ├── aceService.js              # NVIDIA ACE stub
     │   ├── types.ts                   # Shared service-layer domain types
     │   ├── tts/                       # ttsService.ts (provider selection) + Azure/ElevenLabs
-    │   ├── sentiment/detectSentiment.ts
+    │   ├── voice/                     # voiceConfig, prewarm, speculativeRetrieval (live-STT driven)
     │   └── lipsync/                   # Alignment → viseme timeline (shared with Unity test tools)
     ├── theme/                         # colors.ts, typography.ts (design tokens)
     ├── constants/data.js              # Categories, resources, sample messages
@@ -116,13 +148,39 @@ DementiaGuideAI/
 
 ### Scripts
 
+Run from the repo root unless noted.
+
+**Mobile app**
+
 | Command | What it does |
 |---|---|
 | `npm start` | Start the Expo dev server |
+| `npm run ios` / `npm run android` | Native build + run (`expo run:*`) — required for the Unity avatar |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint (`eslint-config-expo`) |
-| `npm run format` | Prettier write |
-| `npm test` | Jest (`jest-expo`) |
+| `npm run format` / `format:check` | Prettier write / check |
+| `npm test` | Jest (`jest-expo`) — covers `src/` and `packages/core/` |
+
+**Knowledge base and RAG evaluation** — see [Adding content](#adding-content-to-the-knowledge-base) and [Evaluating](#evaluating-the-pipeline)
+
+| Command | What it does |
+|---|---|
+| `npm run kb:ingest` / `kb:ingest:dry` | Ingest sources into Supabase / plan only |
+| `npm run rag:eval:retrieval` | recall@k / MRR / nDCG against the labelled set |
+| `npm run rag:eval:generation` | Generate answers for all sets (temp 0, seeded) |
+| `npm run rag:eval:safety` | MUST / MUST-NOT safety gates (exit code) |
+| `npm run rag:eval:sweep` | Parameter sweep |
+| `npm run rag:grade` | Groundedness judge + human spot-check file |
+| `npm run rag:introspect` | Dump the live corpus to CSV |
+
+**Web app** (run inside `web/`)
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Vite dev server |
+| `npm run build` / `preview` | Production build / preview it |
+| `npm test` | Vitest — includes the mobile↔web interop tests |
+| `npm run sync:unity` | Copy a Unity WebGL export into `web/public/unity/` |
 
 ---
 
@@ -186,6 +244,22 @@ npx expo start --android
 # Clear Metro cache if needed
 npx expo start --ios --clear
 ```
+
+### Run the web app
+
+`web/` is a separate npm project with its own install:
+
+```bash
+cd web
+npm install
+cp .env.example .env     # VITE_* equivalents of the mobile EXPO_PUBLIC_* vars
+npm run dev
+```
+
+Without an OpenAI key the web app runs in **mock mode** (canned replies, no API
+calls); enter keys in-app to switch to the real pipeline. The Unity WebGL avatar
+needs a build synced into `web/public/unity/` via `npm run sync:unity` — without
+it the app falls back to the Three.js avatar. Details in [`web/README.md`](web/README.md).
 
 > **Note:** the Unity 3D avatar only renders in full native builds (`npx expo run:ios` on a physical iPhone / `npx expo run:android`) with the committed Unity export present — see [Android (Unity avatar)](#android-unity-avatar) and `docs/android-unity.md`. Everything else (chat, voice, library) works in Expo Go / Simulator, where the avatar area shows an "unavailable on this build" fallback.
 
@@ -302,7 +376,7 @@ avatarRef.current.stopAudio();
 
 ## RAG Pipeline
 
-The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI. All prompt/retrieval configuration lives in **`src/lib/rag/`** (plain CommonJS shared by the app, Jest, and the Node scripts — change values there, never in per-script copies). Full documentation: [current-state audit](docs/rag-current-state-audit.md) · [research](docs/rag-industry-research.md) · [target architecture](docs/rag-target-architecture.md) · [source inventory](docs/rag-source-inventory.md) · [evaluation plan](docs/rag-evaluation-plan.md) · [results](docs/rag-improvement-results.md).
+The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI. All prompt/retrieval configuration lives in **`packages/core/rag/`** (plain CommonJS shared by the mobile app, the web app, Jest, and the Node scripts — change values there, never in per-script copies). Full documentation: [current-state audit](docs/rag/rag-current-state-audit.md) · [research](docs/rag/rag-industry-research.md) · [target architecture](docs/rag/rag-target-architecture.md) · [source inventory](docs/rag/rag-source-inventory.md) · [evaluation plan](docs/rag/rag-evaluation-plan.md) · [results](docs/rag/rag-improvement-results.md).
 
 | Setting | Value |
 |---|---|
@@ -340,7 +414,7 @@ npm run rag:eval:sweep                        # min_similarity × diversity-cap 
 npm run rag:introspect                        # dump live corpus → docs/report/kb_chunks_reference.csv
 ```
 
-The frozen pre-overhaul baseline lives in `docs/report/baseline/`; compare any change against it (see the [evaluation plan](docs/rag-evaluation-plan.md) for metric definitions and known limitations).
+The frozen pre-overhaul baseline lives in `docs/report/baseline/`; compare any change against it (see the [evaluation plan](docs/rag/rag-evaluation-plan.md) for metric definitions and known limitations).
 
 ---
 
@@ -373,4 +447,7 @@ DementiaGuide AI provides information for general guidance only. It is not a sub
 
 ## License
 
-Private — all rights reserved.
+Proprietary — all rights reserved. See [LICENSE](LICENSE).
+
+The repository is publicly readable for academic and portfolio purposes; that
+does **not** grant permission to use, copy, modify or redistribute the code.

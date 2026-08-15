@@ -2,6 +2,7 @@ module.exports = {
   preset: 'jest-expo',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@core/(.*)$': '<rootDir>/packages/core/$1',
   },
   testMatch: ['**/*.test.{js,jsx,ts,tsx}'],
   // web/ has its own vitest suite (cd web && npm test) — its tests import

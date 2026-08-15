@@ -5,7 +5,7 @@
 // The lipsync stack (with its 660 KB G2P lexicon) is imported dynamically so
 // it stays out of the initial bundle until the first spoken reply.
 import { normalizeSpokenText } from '@/lib/tts/normalizeSpokenText';
-import { timeoutSignal } from '@/lib/net/withTimeout';
+import { timeoutSignal } from '@core/net/withTimeout';
 import { getElevenKey } from '../state/keysStore.js';
 import { openaiClient } from './openaiClient.js';
 

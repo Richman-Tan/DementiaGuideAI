@@ -4,9 +4,10 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@core/*": ["packages/core/*"]
     }
   },
-  "include": ["index.js", "App.js", "src/**/*"],
+  "include": ["index.js", "App.js", "src/**/*", "packages/**/*"],
   "exclude": ["node_modules", "unity-avatar", "scripts", "modules", "plugins", "dist", ".expo"]
 }

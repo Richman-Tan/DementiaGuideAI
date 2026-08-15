@@ -3,7 +3,7 @@
 // than the retired rag-grade.mjs (which scored 32/32 answers a uniform 2/2 —
 // a judge that never dissents measures nothing) and a mandatory human
 // spot-check file. Judge output is never a gate on its own; the spot-check
-// agreement is reported alongside it (docs/rag-evaluation-plan.md).
+// agreement is reported alongside it (docs/rag/rag-evaluation-plan.md).
 //
 // Rubric (0/1/2, coarse on purpose — fine scales make LLM judges arbitrary):
 //   2 — every factual claim is either traceable to the provided passages OR is

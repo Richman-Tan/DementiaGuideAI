@@ -2,10 +2,10 @@
 // traces for debugging bad answers and eval-vs-production drift.
 //
 // Privacy: NEVER stores message text — only query length, retrieved chunk ids,
-// similarity scores, versions, and stage latencies. Lives outside src/lib/rag/
+// similarity scores, versions, and stage latencies. Lives outside packages/core/rag/
 // because it imports React Native storage (the rag/ core stays Node-loadable).
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PROMPT_VERSION, CITATION_MODE } from './rag/ragConfig';
+import { PROMPT_VERSION, CITATION_MODE } from '@core/rag/ragConfig';
 
 const KEY = 'rag_debug_log_v1';
 const MAX_ENTRIES = 50;

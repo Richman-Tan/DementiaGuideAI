@@ -11,12 +11,12 @@ import {
   GENERATION_TEMPERATURE,
   CITATION_MODE,
   maxTokensForStyle,
-} from './rag/ragConfig';
-import { buildSystemPrompt, buildUserContent } from './rag/prompt';
-import { capBySourceFamily } from './rag/retrieval';
-import { extractCitations, createMarkerStripper } from './rag/citations';
+} from '@core/rag/ragConfig';
+import { buildSystemPrompt, buildUserContent } from '@core/rag/prompt';
+import { capBySourceFamily } from '@core/rag/retrieval';
+import { extractCitations, createMarkerStripper } from '@core/rag/citations';
 import { recordRetrieval } from './ragTelemetry';
-import { timeoutSignal } from './net/withTimeout';
+import { timeoutSignal } from '@core/net/withTimeout';
 
 const SECURE_KEY = 'openai_api_key';
 const OPENAI_BASE = 'https://api.openai.com/v1';

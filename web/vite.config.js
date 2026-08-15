@@ -6,18 +6,16 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoSrc = path.resolve(__dirname, '../src');
+const repoCore = path.resolve(__dirname, '../packages/core');
 
-// The five deliberately-CommonJS mobile libs (see rag/ragConfig.js header).
+// The five deliberately-CommonJS shared libs (see core/rag/ragConfig.js header).
 // They are all `const X = …; module.exports = { shorthand list };` with at most
 // a destructured require — convertible to ESM with two regexes. One transform
 // used by BOTH dev serve and the Rollup build, so the pipelines can't diverge.
 const CJS_LIBS = [
-  'lib/rag/ragConfig.js',
-  'lib/rag/prompt.js',
-  'lib/rag/retrieval.js',
-  'lib/rag/citations.js',
-  'lib/voice/voiceConfig.js',
-].map((p) => path.join(repoSrc, p));
+  ...['rag/ragConfig.js', 'rag/prompt.js', 'rag/retrieval.js', 'rag/citations.js'].map((p) => path.join(repoCore, p)),
+  path.join(repoSrc, 'lib/voice/voiceConfig.js'),
+];
 
 function cjsLibsToEsm() {
   return {
@@ -102,6 +100,9 @@ export default defineConfig(({ mode }) => {
     plugins: [cjsLibsToEsm(), unityBrotliHeaders(), react()],
     resolve: {
       alias: {
+        // '@core' and '@' can coexist: alias matching is on whole path
+        // segments, so '@' only ever matches '@/…', never '@core/…'.
+        '@core': repoCore,
         '@': repoSrc,
         '@web': path.resolve(__dirname, 'src'),
       },

@@ -15,8 +15,8 @@ import { requireEnv, embed, gitSha, outDir, sleep, SUPABASE_URL, SUPABASE_ANON_K
 const require = createRequire(import.meta.url);
 const { QUESTIONS, questionText } = require('./questions.js');
 const { scoreQuestion, aggregate } = require('./metrics.js');
-const { TOP_K, RETRIEVAL_OVERSAMPLE, MIN_SIMILARITY, MAX_PER_SOURCE_FAMILY } = require('../../src/lib/rag/ragConfig.js');
-const { capBySourceFamily } = require('../../src/lib/rag/retrieval.js');
+const { TOP_K, RETRIEVAL_OVERSAMPLE, MIN_SIMILARITY, MAX_PER_SOURCE_FAMILY } = require('../../packages/core/rag/ragConfig.js');
+const { capBySourceFamily } = require('../../packages/core/rag/retrieval.js');
 
 const args = process.argv.slice(2);
 const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };

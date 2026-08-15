@@ -75,5 +75,8 @@ web/public/unity/Build/
 
 # Gradle build caches. /android is already ignored wholesale above, but the
 # UaaL module keeps its own android/ tree that is committed, so ignore the
-# regenerable .gradle cache inside it (and any future one) by name.
+# regenerable .gradle cache and build output inside it (and any future one) by
+# name. Trailing slashes matter: `build/` is generated output, while the
+# sibling `build.gradle` is source and must stay tracked.
 .gradle/
+**/android/build/

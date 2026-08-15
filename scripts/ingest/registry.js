@@ -1,7 +1,7 @@
 // Source registry — the single list of what the knowledge base should contain.
 // Every ingested chunk carries the provenance recorded here (audit F-13).
-// See docs/rag-source-inventory.md for the human-readable inventory with
-// review verdicts, and docs/rag-target-architecture.md §5 for the refresh flow.
+// See docs/rag/rag-source-inventory.md for the human-readable inventory with
+// review verdicts, and docs/rag/rag-target-architecture.md §5 for the refresh flow.
 //
 // Entry fields:
 //   document_id     stable id; versioned re-ingestions get a NEW document_id

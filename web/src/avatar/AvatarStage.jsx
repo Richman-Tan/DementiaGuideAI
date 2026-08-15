@@ -79,10 +79,13 @@ export function AvatarStageCard({ caption, maxWidth = 360 }) {
   );
 }
 
-// Home hero card. Boot is global and eager (main.jsx), so the Unity mount is
-// unconditional — it attaches the shared canvas and shows compact download/
-// preparing progress until the engine is live. Three.js profiles keep hosting
-// the real avatar directly (cheap, doubles as the GLB prefetch).
+// Home hero tile — fills whatever box the parent gives it (Home makes it a
+// full-height portrait tile). Boot is global and eager (main.jsx), so the
+// Unity mount is unconditional: it attaches the shared canvas and shows
+// compact download/preparing progress until the engine is live. The Unity
+// camera fits horizontally, so the canvas sits in a centered portrait-aspect
+// column — a wide canvas would crop the framing to mouth-only. A video-call
+// style name tag sits in the corner.
 export function AvatarHomeStage() {
   const { settings } = useSettings();
   const profile = useEffectiveAvatarProfile(settings.avatarId);
@@ -94,14 +97,19 @@ export function AvatarHomeStage() {
   );
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '210px', borderRadius: '18px', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {profile.renderer === 'unity' ? (
-        <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} compact>
-          {bust}
-        </UnityAvatarMount>
+        <div style={{ position: 'relative', height: '100%', aspectRatio: '3 / 4', maxWidth: '100%', flexShrink: 0 }}>
+          <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} compact>
+            {bust}
+          </UnityAvatarMount>
+        </div>
       ) : (
         <ThreeAvatarMount state="waiting">{bust}</ThreeAvatarMount>
       )}
+      <div style={{ position: 'absolute', left: '12px', bottom: '12px', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '999px', padding: '4px 14px', fontWeight: 700, fontSize: '.92rem', boxShadow: 'var(--shadow)' }}>
+        {profile.name}
+      </div>
     </div>
   );
 }

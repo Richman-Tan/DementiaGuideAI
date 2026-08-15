@@ -1,14 +1,14 @@
 // Interop canary: the reused mobile libs must resolve and behave through the
 // web aliases + CJS→ESM transform. If this file fails, phase (b)/(c) reuse breaks.
 import { describe, it, expect } from 'vitest';
-import { TOP_K, MAX_HISTORY, PROMPT_VERSION, CHAT_MODEL } from '@/lib/rag/ragConfig';
-import { buildSystemPrompt, buildUserContent } from '@/lib/rag/prompt';
-import { extractCitations, createMarkerStripper } from '@/lib/rag/citations';
-import { capBySourceFamily } from '@/lib/rag/retrieval';
+import { TOP_K, MAX_HISTORY, PROMPT_VERSION, CHAT_MODEL } from '@core/rag/ragConfig';
+import { buildSystemPrompt, buildUserContent } from '@core/rag/prompt';
+import { extractCitations, createMarkerStripper } from '@core/rag/citations';
+import { capBySourceFamily } from '@core/rag/retrieval';
 import { ELEVEN_STREAM_SAMPLE_RATE, SPECULATIVE_MIN_WORDS } from '@/lib/voice/voiceConfig';
-import { createSpeculativeRag } from '@/lib/rag/speculativeRetrieval';
+import { createSpeculativeRag } from '@/lib/voice/speculativeRetrieval';
 import { createSentenceSplitter } from '@/features/voice/sentenceTracker';
-import { timeoutSignal } from '@/lib/net/withTimeout';
+import { timeoutSignal } from '@core/net/withTimeout';
 
 describe('CJS libs through web alias', () => {
   it('exposes rag config constants', () => {

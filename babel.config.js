@@ -9,6 +9,8 @@ module.exports = function (api) {
           root: ['./'],
           alias: {
             '@': './src',
+            // Platform-agnostic logic shared with web/ and the Node scripts.
+            '@core': './packages/core',
           },
           extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
         },

@@ -1,4 +1,4 @@
-import { detectSentiment } from '@/lib/sentiment/detectSentiment';
+import { detectSentiment } from '@core/sentiment/detectSentiment';
 
 describe('detectSentiment', () => {
   it('classifies clearly positive text', () => {

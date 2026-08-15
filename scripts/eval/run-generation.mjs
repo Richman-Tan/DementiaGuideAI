@@ -21,8 +21,8 @@ import { requireEnv, retrieve, openaiJson, gitSha, outDir, sleep } from './lib.m
 
 const require = createRequire(import.meta.url);
 const { QUESTIONS, questionText } = require('./questions.js');
-const { CHAT_MODEL, PROMPT_VERSION, maxTokensForStyle } = require('../../src/lib/rag/ragConfig.js');
-const { buildSystemPrompt, buildUserContent } = require('../../src/lib/rag/prompt.js');
+const { CHAT_MODEL, PROMPT_VERSION, maxTokensForStyle } = require('../../packages/core/rag/ragConfig.js');
+const { buildSystemPrompt, buildUserContent } = require('../../packages/core/rag/prompt.js');
 
 const args = process.argv.slice(2);
 const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };

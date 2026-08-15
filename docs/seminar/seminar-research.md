@@ -149,5 +149,5 @@ Calibration from last year's example deck (Tony & Alex, Project #79): 14 slides 
 ## Assets to attach when submitting the design prompt
 - `docs/report/figures/fig2_viseme_montage.png` (avatar face frames — hero visual for slide 9)
 - `docs/report/figures/fig1_checks_passed.png`, `fig3_bilabial_curves.png` (reference for restyled charts)
-- `assets/rag-pipeline.png`, `assets/workflow.png` (reference for pipeline diagram)
+- Pipeline + retrieval diagrams: the Mermaid versions at the top of `README.md` (the former `assets/*.png` renders were removed — lower quality and out of date)
 - App screenshots / demo stills, team photos (to be taken)

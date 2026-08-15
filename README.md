@@ -19,13 +19,42 @@ Two ways of working with care information, in one place:
 The experience is tailored through a guided 12-step onboarding flow and
 accessibility settings (text size, contrast, audio, subtitles, haptics).
 
-![DementiaGuide AI system pipeline](./assets/workflow.png)
+## How it works
 
-![RAG retrieval flow](./assets/rag-pipeline.png)
+```mermaid
+flowchart LR
+    mic["Speak it<br/><small>expo-av · 16 kHz mono</small>"] --> stt["Speech to text<br/><small>OpenAI Whisper</small>"]
+    stt --> ret
+    txt["Type a question"] --> ret
 
-> The diagrams are illustrative. The authoritative configuration is
-> `packages/core/rag/ragConfig.js` — see [docs/rag/](docs/rag/README.md) for the
-> current models and retrieval settings.
+    ret["Retrieve<br/><small>hybrid vector + keyword</small>"] --> gen["Generate<br/><small>gpt-4o — grounded only in<br/>the retrieved passages</small>"]
+    kb[("Knowledge library<br/><small>Supabase pgvector<br/>curated NZ passages</small>")] -. passages .-> ret
+
+    gen --> screen["Cited answer<br/>on screen"]
+    gen --> tts["Speech<br/><small>ElevenLabs, streamed<br/>sentence by sentence</small>"]
+    tts --> avatar["Lip-synced avatar<br/><small>Unity CC4, or VRM fallback</small>"]
+```
+
+Speech starts before the full answer is generated: each sentence is sent to TTS
+as soon as it completes in the model stream.
+
+### Retrieval in detail
+
+```mermaid
+flowchart TB
+    q["User query"] --> emb["Embed<br/><small>text-embedding-3-small · 1536 dims</small>"]
+    emb --> rpc["match_chunks RPC<br/><small>runs server-side in Supabase<br/>0.7 × cosine + 0.3 × keyword</small>"]
+    store[("knowledge_chunks<br/><small>pgvector + tsvector</small>")] --> rpc
+    rpc --> cap["Oversample 50 → cap per source family<br/>→ keep top 5 above 0.25 similarity"]
+    cap --> inject["Inject the passages as numbered source blocks"]
+    inject --> llm["gpt-4o<br/><small>answer ONLY from the supplied passages</small>"]
+    llm --> validate["Validate every citation against those passages"]
+    validate --> ans["Answer + tappable sources"]
+```
+
+Retrieval and embedding run **server-side in Supabase** — there is no on-device
+vector search. Exact models and thresholds live in
+`packages/core/rag/ragConfig.js`; see [docs/rag/](docs/rag/README.md).
 
 ---
 

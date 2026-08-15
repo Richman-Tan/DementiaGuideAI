@@ -23,6 +23,13 @@ export function isUnityAvailable() {
   return availability === true;
 }
 
+// True once a Unity instance is live this session — lets screens that only
+// WANT the avatar when it's already paid for (the Home hero) mount it without
+// ever triggering the expensive cold boot themselves.
+export function isUnityBooted() {
+  return unityInstance !== null;
+}
+
 // Tri-state for the effective-profile resolver: null = probe still pending
 // (stay optimistic about Unity), true/false once resolved.
 export function getUnityAvailability() {

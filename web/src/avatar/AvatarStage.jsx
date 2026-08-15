@@ -8,7 +8,7 @@ import { useSettings } from '../state/SettingsContext.jsx';
 import { useEffectiveAvatarProfile } from './effectiveProfile.js';
 import { getThreeAvatar } from './three/controller.js';
 import { UnityAvatarMount } from './unity/UnityAvatarStage.jsx';
-import { warmUnityCache } from './unity/unityBridge.js';
+import { warmUnityCache, isUnityBooted } from './unity/unityBridge.js';
 
 export function AvatarBust({ size = 170 }) {
   return (
@@ -104,37 +104,44 @@ export function AvatarStageCard({ caption, maxWidth = 360 }) {
 }
 
 // Home hero card. Three.js profiles host the real avatar (doubling as the
-// model prefetch so the Voice screen opens warm). Unity profiles get a static
-// bust plus an idle-time HTTP cache warmer instead — booting a full Unity
-// heap inside a 210px browsing-screen card is the wrong trade, and the warmer
-// recovers most of the "Voice opens warm" benefit.
+// model prefetch so the Voice screen opens warm). Unity profiles mount the
+// live avatar only when the engine is ALREADY booted this session (a visit to
+// Voice paid the cold-boot cost; the shared canvas just reparents here) —
+// otherwise a static bust plus an idle-time HTTP cache warmer, because cold-
+// booting a full Unity heap inside a 210px browsing-screen card would put
+// ~a minute of decompression CPU on every fresh page load.
 export function AvatarHomeStage() {
   const { settings } = useSettings();
   const profile = useEffectiveAvatarProfile(settings.avatarId);
   const isUnity = profile.renderer === 'unity';
+  const unityWarm = isUnity && isUnityBooted();
 
   useEffect(() => {
-    if (!isUnity) return undefined;
+    if (!isUnity || unityWarm) return undefined;
     const warm = () => { warmUnityCache(); };
     const idle = typeof requestIdleCallback === 'function';
     const id = idle ? requestIdleCallback(warm, { timeout: 8000 }) : setTimeout(warm, 2500);
     return () => { idle ? cancelIdleCallback(id) : clearTimeout(id); };
-  }, [isUnity]);
+  }, [isUnity, unityWarm]);
+
+  const bust = (
+    <div style={{ animation: 'dgBreathe 5.5s ease-in-out infinite' }}>
+      <AvatarBust size={130} />
+    </div>
+  );
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '210px', borderRadius: '18px', overflow: 'hidden' }}>
       {isUnity ? (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ animation: 'dgBreathe 5.5s ease-in-out infinite' }}>
-            <AvatarBust size={130} />
+        unityWarm ? (
+          <UnityAvatarMount characterId={profile.unityCharacterId}>{bust}</UnityAvatarMount>
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {bust}
           </div>
-        </div>
+        )
       ) : (
-        <ThreeAvatarMount state="waiting">
-          <div style={{ animation: 'dgBreathe 5.5s ease-in-out infinite' }}>
-            <AvatarBust size={130} />
-          </div>
-        </ThreeAvatarMount>
+        <ThreeAvatarMount state="waiting">{bust}</ThreeAvatarMount>
       )}
     </div>
   );

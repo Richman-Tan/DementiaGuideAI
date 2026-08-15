@@ -64,3 +64,11 @@ content/sources/*
 
 # pre-prune DB backups (bulky, reproducible) — keep local, do not commit
 docs/report/backup/
+
+# MS Office lock files
+~$*
+**/~$*
+
+# Web build
+web/dist/
+web/public/unity/Build/

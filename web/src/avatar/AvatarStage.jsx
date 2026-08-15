@@ -8,7 +8,6 @@ import { useSettings } from '../state/SettingsContext.jsx';
 import { useEffectiveAvatarProfile } from './effectiveProfile.js';
 import { getThreeAvatar } from './three/controller.js';
 import { UnityAvatarMount } from './unity/UnityAvatarStage.jsx';
-import { warmUnityCache, isUnityBooted } from './unity/unityBridge.js';
 
 export function AvatarBust({ size = 170 }) {
   return (
@@ -45,7 +44,11 @@ export function ThreeAvatarMount({ state = 'idle', children }) {
   }, [wantThree, ready, state]);
 
   if (wantUnity) {
-    return <UnityAvatarMount characterId={profile.unityCharacterId}>{children}</UnityAvatarMount>;
+    return (
+      <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} compact>
+        {children}
+      </UnityAvatarMount>
+    );
   }
 
   return (
@@ -56,33 +59,6 @@ export function ThreeAvatarMount({ state = 'idle', children }) {
           {children}
         </div>
       )}
-    </div>
-  );
-}
-
-// The Voice screen's circular stage with full state chrome.
-export function AvatarStage({ state = 'idle', size = 230, bust = 170 }) {
-  const listening = state === 'listening';
-  const thinking = state === 'thinking';
-  const speaking = state === 'speaking';
-  return (
-    <div style={{ position: 'relative', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {listening && <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '3px solid var(--primary)', animation: 'dgPulse 1.6s ease-out infinite', zIndex: 2 }} />}
-      {thinking && <span style={{ position: 'absolute', inset: '8px', borderRadius: '50%', background: 'var(--tint)', animation: 'dgShimmer 1.4s ease-in-out infinite' }} />}
-      <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden' }}>
-        <ThreeAvatarMount state={state}>
-          <div style={{ position: 'relative', animation: 'dgBreathe 5.5s ease-in-out infinite', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <AvatarBust size={bust} />
-            {speaking && (
-              <div style={{ position: 'absolute', bottom: '-6px', display: 'flex', alignItems: 'center', gap: '4px', height: '22px' }}>
-                {[0, 0.12, 0.24, 0.36].map((d) => (
-                  <span key={d} style={{ width: '4px', height: '18px', borderRadius: '2px', background: 'var(--primary-d)', animation: `dgBar .8s ease-in-out ${d}s infinite` }} />
-                ))}
-              </div>
-            )}
-          </div>
-        </ThreeAvatarMount>
-      </div>
     </div>
   );
 }
@@ -103,26 +79,13 @@ export function AvatarStageCard({ caption, maxWidth = 360 }) {
   );
 }
 
-// Home hero card. Three.js profiles host the real avatar (doubling as the
-// model prefetch so the Voice screen opens warm). Unity profiles mount the
-// live avatar only when the engine is ALREADY booted this session (a visit to
-// Voice paid the cold-boot cost; the shared canvas just reparents here) —
-// otherwise a static bust plus an idle-time HTTP cache warmer, because cold-
-// booting a full Unity heap inside a 210px browsing-screen card would put
-// ~a minute of decompression CPU on every fresh page load.
+// Home hero card. Boot is global and eager (main.jsx), so the Unity mount is
+// unconditional — it attaches the shared canvas and shows compact download/
+// preparing progress until the engine is live. Three.js profiles keep hosting
+// the real avatar directly (cheap, doubles as the GLB prefetch).
 export function AvatarHomeStage() {
   const { settings } = useSettings();
   const profile = useEffectiveAvatarProfile(settings.avatarId);
-  const isUnity = profile.renderer === 'unity';
-  const unityWarm = isUnity && isUnityBooted();
-
-  useEffect(() => {
-    if (!isUnity || unityWarm) return undefined;
-    const warm = () => { warmUnityCache(); };
-    const idle = typeof requestIdleCallback === 'function';
-    const id = idle ? requestIdleCallback(warm, { timeout: 8000 }) : setTimeout(warm, 2500);
-    return () => { idle ? cancelIdleCallback(id) : clearTimeout(id); };
-  }, [isUnity, unityWarm]);
 
   const bust = (
     <div style={{ animation: 'dgBreathe 5.5s ease-in-out infinite' }}>
@@ -132,14 +95,10 @@ export function AvatarHomeStage() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '210px', borderRadius: '18px', overflow: 'hidden' }}>
-      {isUnity ? (
-        unityWarm ? (
-          <UnityAvatarMount characterId={profile.unityCharacterId}>{bust}</UnityAvatarMount>
-        ) : (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {bust}
-          </div>
-        )
+      {profile.renderer === 'unity' ? (
+        <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} compact>
+          {bust}
+        </UnityAvatarMount>
       ) : (
         <ThreeAvatarMount state="waiting">{bust}</ThreeAvatarMount>
       )}

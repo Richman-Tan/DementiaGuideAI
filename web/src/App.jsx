@@ -41,7 +41,11 @@ function Routed() {
 
   if (path === '/app/voice') {
     return (
-      <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: 'var(--text2)' }}>Loading…</div>}>
+      <Suspense fallback={
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', fontSize: '1.05rem' }}>
+          Opening voice…
+        </div>
+      }>
         <Voice />
       </Suspense>
     );

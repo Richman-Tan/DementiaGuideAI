@@ -3,11 +3,19 @@
 // it's absent, isUnityAvailable() stays false and the effective-profile
 // resolver falls the whole app back to the Three.js avatars.
 //
+// Boot is EAGER: main.jsx calls ensureUnityBoot() right after first paint so
+// the 234MB download starts the moment the app opens, on the shared detached
+// canvas; screens attach when they mount. Load progress is broadcast through
+// onUnityLoadProgress — the loader reports byte progress 0→0.9 and then goes
+// silent through the multi-minute main-thread brotli decompress, so the state
+// machine surfaces that gap as an explicit 'preparing' phase.
+//
 // The message protocol is IDENTICAL to mobile UaaL (AvatarBridgeProtocol):
 //   { type: 'setCharacter', id }                        → AvatarRouter.cs
 //   { type: 'play', duration, visemes: [{t,d,v,w}], … } → forwarded verbatim
 //   { type: 'stop' }
 // delivered via unityInstance.SendMessage('AvatarRouter','ReceiveBridgeMessage', json).
+import { getSettingSnapshot } from '../../state/settingsSnapshot.js';
 
 const LOADER_URL = '/unity/Build/unity.loader.js';
 const PROBE_CANDIDATES = [LOADER_URL, '/unity/Build.loader.js'];
@@ -16,24 +24,50 @@ let availability = null; // null = unprobed, else boolean
 let probePromise = null;
 let unityInstance = null;
 let mountPromise = null;
+let loaderScriptPromise = null;
 let loaderUrl = null;
 let sharedCanvas = null;
 
-export function isUnityAvailable() {
-  return availability === true;
+// Load-state machine: idle → downloading → preparing → ready | failed,
+// or → unavailable when no build is installed.
+let loadPhase = 'idle';
+let loadPct = 0; // 0..1 of the DOWNLOAD phase (normalized from the loader's 0→0.9)
+const loadSubscribers = new Set();
+
+function setLoadState(phase, pct = loadPct) {
+  if (phase === loadPhase && pct === loadPct) return;
+  loadPhase = phase;
+  loadPct = pct;
+  const snapshot = { phase: loadPhase, pct: loadPct };
+  for (const cb of loadSubscribers) cb(snapshot);
 }
 
-// True once a Unity instance is live this session — lets screens that only
-// WANT the avatar when it's already paid for (the Home hero) mount it without
-// ever triggering the expensive cold boot themselves.
-export function isUnityBooted() {
-  return unityInstance !== null;
+export function getUnityLoadState() {
+  return { phase: loadPhase, pct: loadPct };
+}
+
+// Subscribe to load-state changes. Invokes cb immediately with the current
+// state (late subscribers — a freshly-opened Voice screen — render correctly
+// without a separate init read). Returns an unsubscribe function.
+export function onUnityLoadProgress(cb) {
+  loadSubscribers.add(cb);
+  cb(getUnityLoadState());
+  return () => loadSubscribers.delete(cb);
+}
+
+export function isUnityAvailable() {
+  return availability === true;
 }
 
 // Tri-state for the effective-profile resolver: null = probe still pending
 // (stay optimistic about Unity), true/false once resolved.
 export function getUnityAvailability() {
   return availability;
+}
+
+// True once a Unity instance is live this session.
+export function isUnityBooted() {
+  return unityInstance !== null;
 }
 
 // HEAD-probe for a Unity build; result is cached for the session.
@@ -54,6 +88,7 @@ export async function probeUnity() {
         } catch { /* unreachable */ }
       }
       availability = false;
+      setLoadState('unavailable');
       return false;
     })();
   }
@@ -87,24 +122,38 @@ async function resolveBuildFiles(base) {
   return { loader: 'unity.loader.js', data: 'unity.data', framework: 'unity.framework.js', code: 'unity.wasm' };
 }
 
+// Inject the loader script once; guarded so a retry after a transient failure
+// doesn't append a second script tag.
+function loadLoaderScript(src) {
+  if (!loaderScriptPromise) {
+    loaderScriptPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => {
+        loaderScriptPromise = null;
+        reject(new Error('Unity loader failed to load'));
+      };
+      document.head.appendChild(s);
+    });
+  }
+  return loaderScriptPromise;
+}
+
 export async function mountUnity() {
   if (!(await probeUnity())) throw new Error('No Unity WebGL build installed');
   if (unityInstance) return unityInstance;
   if (mountPromise) return mountPromise;
 
   mountPromise = (async () => {
+    setLoadState('downloading', 0);
     const base = loaderUrl.replace(/[^/]+$/, '');
     const files = await resolveBuildFiles(base);
+    await loadLoaderScript(base + files.loader);
 
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = base + files.loader;
-      s.onload = resolve;
-      s.onerror = () => reject(new Error('Unity loader failed to load'));
-      document.head.appendChild(s);
-    });
-
-    // createUnityInstance is provided by the loader script.
+    // createUnityInstance is provided by the loader script. Its progress
+    // callback covers 0→0.9 (byte-accurate download) then goes silent until
+    // the engine finishes booting — surface that gap as 'preparing'.
     // eslint-disable-next-line no-undef
     unityInstance = await createUnityInstance(getUnityCanvas(), {
       dataUrl: base + files.data,
@@ -112,32 +161,30 @@ export async function mountUnity() {
       codeUrl: base + files.code,
       companyName: 'DementiaGuideAI',
       productName: 'UnityAvatar',
+    }, (p) => {
+      if (p >= 0.89) setLoadState('preparing', 1);
+      else setLoadState('downloading', Math.min(p / 0.9, 1));
     });
+    setLoadState('ready', 1);
     return unityInstance;
   })();
   try {
     return await mountPromise;
   } catch (err) {
     mountPromise = null; // allow a retry after a transient load failure
+    setLoadState('failed');
     throw err;
   }
 }
 
-// Idle-time HTTP cache warmer for the Home screen: primes the browser cache
-// (Cache-Control on /unity/* makes these hits) without booting a Unity heap.
-// <link rel=prefetch> keeps the bytes out of JS memory; unsupported browsers
-// simply ignore it.
-export async function warmUnityCache() {
-  if (!(await probeUnity())) return;
-  const base = loaderUrl.replace(/[^/]+$/, '');
-  const files = await resolveBuildFiles(base);
-  for (const f of [files.loader, files.data, files.framework, files.code]) {
-    const l = document.createElement('link');
-    l.rel = 'prefetch';
-    l.as = 'fetch';
-    l.href = base + f;
-    document.head.appendChild(l);
-  }
+// Idempotent eager entry point — called from main.jsx right after first paint
+// so the download begins the moment the app opens, and from the "Try again"
+// affordance after a failure (mountPromise nulls on failure, so this retries).
+export function ensureUnityBoot() {
+  if (getSettingSnapshot().showAvatar === false) return;
+  probeUnity().then((ok) => {
+    if (ok) mountUnity().catch(() => { /* state machine already says 'failed' */ });
+  });
 }
 
 export function sendBridgeMessage(obj) {
@@ -155,5 +202,6 @@ export function unmountUnity() {
     try { unityInstance.Quit(); } catch { /* already gone */ }
     unityInstance = null;
     mountPromise = null;
+    setLoadState('idle', 0);
   }
 }

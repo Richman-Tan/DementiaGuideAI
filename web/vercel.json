@@ -15,11 +15,36 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
     },
     {
+      "source": "/unity/Build/unity.data.unityweb",
+      "headers": [
+        { "key": "Content-Encoding", "value": "br" },
+        { "key": "Content-Type", "value": "application/octet-stream" }
+      ]
+    },
+    {
+      "source": "/unity/Build/unity.framework.js.unityweb",
+      "headers": [
+        { "key": "Content-Encoding", "value": "br" },
+        { "key": "Content-Type", "value": "text/javascript" }
+      ]
+    },
+    {
+      "source": "/unity/Build/unity.wasm.unityweb",
+      "headers": [
+        { "key": "Content-Encoding", "value": "br" },
+        { "key": "Content-Type", "value": "application/wasm" }
+      ]
+    },
+    {
+      "source": "/unity/Build/manifest.json",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' data: blob: https://api.openai.com https://api.elevenlabs.io wss://api.elevenlabs.io https://*.supabase.co; frame-ancestors 'none'"
+          "value": "default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-71aF7bp3UvyjHhO0WNMxTRokwviJ8A8B6s/dOOL901M='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' data: blob: https://api.openai.com https://api.elevenlabs.io wss://api.elevenlabs.io https://*.supabase.co; frame-ancestors 'none'"
         },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },

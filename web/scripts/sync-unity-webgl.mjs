@@ -14,7 +14,8 @@
 // meshes with ~400 blendshapes per character dominate and can't be texture-
 // capped away), so files over 100 MB only WARN, and the script fails hard
 // near the Pro ceiling.
-import { cpSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { closeSync, cpSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -59,7 +60,83 @@ if (missing.length) {
   process.exit(1);
 }
 
+// Version stamp = content hash of the engine + data. The served filenames are
+// stable and cached for a day, so WITHOUT this a redeploy leaves browsers
+// mixing an old wasm with a new data file — which crashes the engine deep in
+// its deserializer (an infinite-recursion stack overflow, not an obvious
+// "mismatched files" error). unityBridge appends it to every build URL.
+//
+// SERVING_REV additionally busts the cache when only the *response headers*
+// change while the bytes stay identical. Chrome replays a cached response with
+// the headers it was stored with, so after the Content-Encoding fix a returning
+// visitor would otherwise keep replaying the old unlabelled entry — and keep
+// paying the 20-minute main-thread decompress — for a full max-age window.
+// Bump this whenever how the files are SERVED changes.
+const SERVING_REV = 2; // 2 = Content-Encoding: br + Content-Type per file
+
+manifest.version = createHash('sha256')
+  .update(readFileSync(join(dest, manifest.code)))
+  .update(readFileSync(join(dest, manifest.framework)))
+  .update(String(statSync(join(dest, manifest.data)).size))
+  .update(`serving-rev-${SERVING_REV}`)
+  .digest('hex')
+  .slice(0, 12);
+
 writeFileSync(join(dest, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+console.log(`Build version: ${manifest.version}`);
+
+// --- Compression / header contract -----------------------------------------
+// The compressed build files are only usable at speed if the CDN labels them
+// with a Content-Encoding the browser can decode NATIVELY. Without it Unity's
+// loader silently falls back to decompressing in JavaScript on the main thread
+// — which took >20 minutes on the 245MB data file and pinned the tab, with no
+// error anywhere. vercel.json therefore pins a header rule per build file, and
+// because those rules name the files literally, a compression-mode change
+// (which renames .unityweb → .br) would stop matching them silently. Fail the
+// sync instead: an unshippable build beats a build that loads for 20 minutes.
+function detectEncoding(file) {
+  const buf = Buffer.alloc(64);
+  const fd = openSync(file, 'r');
+  try { readSync(fd, buf, 0, 64, 0); } finally { closeSync(fd); }
+  // Unity's decompression-fallback files carry a marker in a skippable
+  // metadata block (which is why they are still valid br/gzip streams).
+  const head = buf.toString('latin1');
+  if (head.includes('UnityWeb Compressed Content (brotli)') || file.endsWith('.br')) return 'br';
+  if (head.includes('UnityWeb Compressed Content (gzip)') || (buf[0] === 0x1f && buf[1] === 0x8b)) return 'gzip';
+  return null; // uncompressed — served as-is, no header needed
+}
+
+const REQUIRED_TYPE = { code: 'application/wasm' }; // nosniff + streaming compile
+const vercelPath = join(webRoot, 'vercel.json');
+const rules = JSON.parse(readFileSync(vercelPath, 'utf8')).headers ?? [];
+const headerFor = (name) => {
+  const rule = rules.find((r) => r.source === `/unity/Build/${name}`);
+  return Object.fromEntries((rule?.headers ?? []).map((h) => [h.key, h.value]));
+};
+
+const headerProblems = [];
+for (const [role, name] of Object.entries(manifest)) {
+  if (role === 'version') continue;
+  const encoding = detectEncoding(join(dest, name));
+  const sent = headerFor(name);
+  if (encoding && sent['Content-Encoding'] !== encoding) {
+    headerProblems.push(`  ${name}: is ${encoding}-compressed but vercel.json sends Content-Encoding: ${sent['Content-Encoding'] ?? '(none)'}`);
+  }
+  if (REQUIRED_TYPE[role] && sent['Content-Type'] !== REQUIRED_TYPE[role]) {
+    headerProblems.push(`  ${name}: needs Content-Type: ${REQUIRED_TYPE[role]}, vercel.json sends ${sent['Content-Type'] ?? '(none)'}`);
+  }
+}
+
+if (headerProblems.length) {
+  console.error(
+    `\nvercel.json does not match this build's files:\n${headerProblems.join('\n')}\n\n`
+      + 'Update the "/unity/Build/<file>" header rules in web/vercel.json (and the\n'
+      + 'UNITY_COMPRESSED_TYPES map in web/vite.config.js) to match the names above.\n'
+      + 'Shipping without them makes the browser decompress ~245MB in JS on the main\n'
+      + 'thread — a >20 minute load that reports no error.',
+  );
+  process.exit(1);
+}
 
 let tooBig = false;
 console.log(`Synced Unity WebGL build → ${dest}`);

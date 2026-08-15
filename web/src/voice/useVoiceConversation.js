@@ -442,5 +442,19 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     setVSubtitle('');
   }, [stopAudio]);
 
-  return { vState, vTranscript, vDone, vSubtitle, micTap, repeatLast, stop, error, clearError: () => setError(null) };
+  // Typed question through the same pipeline (the avatar screen's message
+  // bar): barge-in if speaking, ignore while listening/thinking. The send
+  // click is the AudioContext unlock gesture, same as the mic tap.
+  const askText = useCallback(async (text) => {
+    const t = (text ?? '').trim();
+    if (!t) return;
+    if (stateRef.current === 'listening' || stateRef.current === 'thinking') return;
+    setError(null);
+    if (stateRef.current === 'speaking') stopAudio();
+    avatar?.unlockAudio?.();
+    abortRef.current = false;
+    await processQuery(t);
+  }, [avatar, processQuery, stopAudio]);
+
+  return { vState, vTranscript, vDone, vSubtitle, micTap, askText, repeatLast, stop, error, clearError: () => setError(null) };
 }

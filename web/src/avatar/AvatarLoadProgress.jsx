@@ -1,7 +1,7 @@
 // Loading feedback for the one-time Unity avatar boot. Two honest phases:
 // a real percentage while the ~234MB build downloads (byte-accurate), then an
-// explicit "preparing" state for the decompress/boot stretch during which the
-// loader reports nothing. The bar is width-driven (not keyframed) and every
+// explicit "preparing" state for the wasm-compile/scene-boot stretch during
+// which the loader reports nothing. The bar is width-driven (not keyframed) and every
 // state carries its meaning in text, so prefers-reduced-motion and screen
 // readers lose nothing.
 import React from 'react';
@@ -36,7 +36,7 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
             <div style={{ width: `${percent}%`, height: '100%', borderRadius: '999px', background: 'var(--primary)', transition: 'width .3s ease' }} />
           </div>
           <div style={{ color: 'var(--text2)', fontSize: subSize }}>
-            {compact ? 'One-time download' : `Downloading… ${percent}% — this happens only once and is saved for your next visit.`}
+            {compact ? 'One-time download' : `Downloading… ${percent}% — ${name} is a large one-time download (about 230 MB), saved for your next visit.`}
           </div>
         </>
       )}
@@ -46,7 +46,7 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
           <div style={{ fontWeight: 700, fontSize: titleSize }}>Almost there — preparing {name}…</div>
           {!compact && (
             <div style={{ color: 'var(--text2)', fontSize: subSize }}>
-              This can take a minute or two. You can keep using the app.
+              This only takes a few seconds. You can keep using the app.
             </div>
           )}
         </>
@@ -56,7 +56,9 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
         <>
           <div style={{ fontWeight: 700, fontSize: titleSize }}>We couldn't finish loading {name}.</div>
           {!compact && (
-            <div style={{ color: 'var(--text2)', fontSize: subSize }}>Check your internet connection and try again.</div>
+            <div style={{ color: 'var(--text2)', fontSize: subSize, maxWidth: '30em' }}>
+              The download is large (about 230 MB), so a brief drop in connection can interrupt it. You can keep using the rest of the app either way.
+            </div>
           )}
           <button
             onClick={ensureUnityBoot}

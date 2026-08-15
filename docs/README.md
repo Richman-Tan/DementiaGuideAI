@@ -2,27 +2,26 @@
 
 Start here. Everything below is grouped by what you are trying to do.
 
+## The three surfaces
+
+| Doc | What it covers |
+|---|---|
+| [mobile-app.md](mobile-app.md) | Expo/React Native app: tech stack, screens, structure, path aliases, native builds, API keys |
+| [`web/README.md`](../web/README.md) | The Vite web app: mock vs real mode, architecture, Vercel deploy |
+| [`packages/core/README.md`](../packages/core/README.md) | The shared core — what may live in `@core` and why the boundary exists |
+
 ## Architecture
 
 | Doc | What it covers |
 |---|---|
 | [architecture/backend-plan.md](architecture/backend-plan.md) | The planned backend + DB, why it exists (credentials, not tidiness), and what moves server-side. **Not built** — a target, not a description. |
-
-See also [`packages/core/README.md`](../packages/core/README.md) for the rule
-governing what may live in the shared core.
+| [design-system.md](design-system.md) | Colour tokens and the accessibility requirements |
 
 ## RAG pipeline
 
 The retrieval-augmented chat: how it is built, measured, and sourced.
-
-| Doc | What it covers |
-|---|---|
-| [rag/rag-target-architecture.md](rag/rag-target-architecture.md) | The intended design — start here |
-| [rag/rag-current-state-audit.md](rag/rag-current-state-audit.md) | Audit of what was actually implemented |
-| [rag/rag-industry-research.md](rag/rag-industry-research.md) | Background research behind the design choices |
-| [rag/rag-evaluation-plan.md](rag/rag-evaluation-plan.md) | Metric definitions, method, known limitations |
-| [rag/rag-improvement-results.md](rag/rag-improvement-results.md) | Measured before/after results |
-| [rag/rag-source-inventory.md](rag/rag-source-inventory.md) | Every knowledge-base source and its review verdict |
+**Start at [rag/README.md](rag/README.md)** — config, ingestion and evaluation,
+plus an index of the six research documents behind it.
 
 Config lives in `packages/core/rag/`; tooling in `scripts/eval/` and
 `scripts/ingest/`.
@@ -31,6 +30,7 @@ Config lives in `packages/core/rag/`; tooling in `scripts/eval/` and
 
 | Doc | What it covers |
 |---|---|
+| [avatar.md](avatar.md) | Both avatar renderers, the voice conversation pipeline, lip sync |
 | [voice-latency-streaming.md](voice-latency-streaming.md) | Streaming STT/TTS, viseme scheduling, and the latency budget |
 | [android-unity.md](android-unity.md) | Embedding the Unity avatar on Android (UaaL) |
 

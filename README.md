@@ -1,449 +1,174 @@
 # DementiaGuide AI
 
-An **avatar-based digital resource platform for dementia care**, running on iOS, Android and the web. It helps caregivers, family members, and healthcare professionals **access, navigate, and organise** dementia-care resources — held in a searchable, categorised knowledge base — and get **grounded, cited answers** to questions asked by text or voice, delivered by a real-time 3D avatar with lip-sync driven by ElevenLabs character-level alignment.
+An **avatar-based digital resource platform for dementia care**, running on iOS,
+Android and the web.
+
+It helps caregivers, family members and healthcare professionals **access,
+navigate and organise** dementia-care resources — held in a searchable,
+categorised knowledge base — and get **grounded, cited answers** to questions
+asked by text or voice, delivered by a real-time 3D avatar with lip sync driven
+by ElevenLabs character-level alignment.
+
+Two ways of working with care information, in one place:
+
+- a **Library** of curated, provenance-tracked resources across six dementia-care
+  categories, searchable and browsable; and
+- a **conversational RAG assistant** that answers with inline citations back to
+  that same knowledge base — never from the model's own memory.
+
+The experience is tailored through a guided 12-step onboarding flow and
+accessibility settings (text size, contrast, audio, subtitles, haptics).
+
+## How it works
+
+```mermaid
+flowchart LR
+    mic["Speak it<br/><small>expo-av · 16 kHz mono</small>"] --> stt["Speech to text<br/><small>OpenAI Whisper</small>"]
+    stt --> ret
+    txt["Type a question"] --> ret
+
+    ret["Retrieve<br/><small>hybrid vector + keyword</small>"] --> gen["Generate<br/><small>gpt-4o — grounded only in<br/>the retrieved passages</small>"]
+    kb[("Knowledge library<br/><small>Supabase pgvector<br/>curated NZ passages</small>")] -. passages .-> ret
+
+    gen --> screen["Cited answer<br/>on screen"]
+    gen --> tts["Speech<br/><small>ElevenLabs, streamed<br/>sentence by sentence</small>"]
+    tts --> avatar["Lip-synced avatar<br/><small>Unity CC4, or VRM fallback</small>"]
+```
+
+Speech starts before the full answer is generated: each sentence is sent to TTS
+as soon as it completes in the model stream.
+
+### Retrieval in detail
+
+```mermaid
+flowchart TB
+    q["User query"] --> emb["Embed<br/><small>text-embedding-3-small · 1536 dims</small>"]
+    emb --> rpc["match_chunks RPC<br/><small>runs server-side in Supabase<br/>0.7 × cosine + 0.3 × keyword</small>"]
+    store[("knowledge_chunks<br/><small>pgvector + tsvector</small>")] --> rpc
+    rpc --> cap["Oversample 50 → cap per source family<br/>→ keep top 5 above 0.25 similarity"]
+    cap --> inject["Inject the passages as numbered source blocks"]
+    inject --> llm["gpt-4o<br/><small>answer ONLY from the supplied passages</small>"]
+    llm --> validate["Validate every citation against those passages"]
+    validate --> ans["Answer + tappable sources"]
+```
+
+Retrieval and embedding run **server-side in Supabase** — there is no on-device
+vector search. Exact models and thresholds live in
+`packages/core/rag/ragConfig.js`; see [docs/rag/](docs/rag/README.md).
 
 ---
 
 ## Repository map
 
-Three separate surfaces share one knowledge base and one RAG core:
+Three surfaces share one knowledge base and one RAG core:
 
-| Path | What it is | Run it with |
+| Path | What it is | Run it |
 |---|---|---|
-| `src/` + `App.js` | **Mobile app** — Expo / React Native (iOS + Android). The repo root *is* the Expo project. | `npm start` |
-| `web/` | **Web app** — Vite + React, deployed on Vercel. Own `package.json` and test suite. See [`web/README.md`](web/README.md). | `cd web && npm run dev` |
-| `packages/core/` | **Shared logic** — RAG (config, prompt, retrieval, citations) plus small utilities, imported by *all three* of mobile, web and Node. See [`packages/core/README.md`](packages/core/README.md). | — |
-| `unity-avatar/` | **Unity avatar project** (git submodule) — the CC4 characters and their exporters, for the native and WebGL avatar builds. | — |
-| `modules/unity-avatar-module/` | Local Expo native module embedding Unity-as-a-Library on iOS/Android. Autolinked; not an npm dependency. | — |
-| `plugins/` | Expo config plugin that wires the Unity library into the generated native projects. | — |
-| `scripts/` | Node/Python CLI tooling: `eval/` (RAG evaluation), `ingest/` (KB ingestion), `migrations/` (SQL). | `npm run rag:*`, `npm run kb:*` |
-| `content/` | Source documents for ingestion (PDFs are gitignored; `sources/MANIFEST.md` is the record). | — |
-| `docs/` | All documentation — [start at `docs/README.md`](docs/README.md). | — |
+| `src/` + `App.js` | **Mobile app** — Expo / React Native. The repo root *is* the Expo project. | `npm start` |
+| `web/` | **Web app** — Vite + React, deployed on Vercel. Own `package.json` and tests. | `cd web && npm run dev` |
+| `packages/core/` | **Shared logic** — RAG config, prompt, retrieval, citations + small utilities. Imported by mobile, web **and** Node. | — |
+| `unity-avatar/` | **Unity avatar project** (git submodule) — CC4 characters and their exporters. | — |
+| `modules/unity-avatar-module/` | Local Expo native module embedding Unity-as-a-Library. Autolinked, not an npm dependency. | — |
+| `plugins/` | Expo config plugin wiring the Unity library into the generated native projects. | — |
+| `scripts/` | Node/Python tooling: `eval/`, `ingest/`, `migrations/`. | `npm run rag:*`, `kb:*` |
+| `content/` | Source documents for ingestion (PDFs gitignored; `sources/MANIFEST.md` is the record). | — |
+| `docs/` | All documentation. | — |
 | `assets/` | Icons, splash, and the `.glb`/`.vrm` avatar models (shared by mobile and web). | — |
 
-`android/` and `ios/` are **generated** by `expo prebuild` and are not tracked.
+`android/` and `ios/` are generated by `expo prebuild` and are not tracked.
 
 ---
 
-## Application Workflow
+## Quick start
 
-![DementiaGuide AI Workflow](./assets/workflow.png)
-
-## RAG Pipeline Workflow
-
-![RAG Pipeline](./assets/rag-pipeline.png)
-
----
-
-## Overview
-
-DementiaGuide AI is designed for caregivers, family members, and healthcare professionals. It brings two ways of working with care information together in one place:
-
-- a **Library** of curated, provenance-tracked resources organised into six dementia-care categories, which users can search and browse (article detail view included); and
-- a **conversational RAG assistant** that answers questions with inline citations back to that same knowledge base.
-
-Together these let users **access, navigate, and organise** evidence-based dementia care guidance, rather than only ask isolated questions. The experience is tailored through a guided 12-step onboarding flow and accessibility settings (text size, contrast, audio, subtitles, haptics). The AI avatar — **Aria** — is a VRM model rendered in real time with natural speech, multi-shape lip-sync driven by ElevenLabs character-level alignment, and expressive idle animations.
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | React Native (Expo SDK 54) |
-| Navigation | React Navigation 7 (Bottom Tabs + Native Stack) |
-| AI / RAG | OpenAI `gpt-4o` + `text-embedding-3-small` |
-| Vector DB | Supabase (pgvector) — cloud-hosted knowledge base with `match_chunks` RPC |
-| STT | OpenAI Whisper (`whisper-1`) via `expo-av` audio recording |
-| TTS | ElevenLabs `eleven_turbo_v2_5` (primary) · OpenAI `tts-1` (fallback) |
-| Lip Sync | ElevenLabs character-level alignment → viseme timeline → 5 VRM blend shapes |
-| Avatar | VRM 3D model via Three.js r180 + `@pixiv/three-vrm` in a WebView |
-| Animations | React Native Animated API |
-| Gradients | expo-linear-gradient |
-| Audio | expo-av · Web Audio API (WebView) |
-| Haptics | expo-haptics |
-| Safe Area | react-native-safe-area-context |
-| Storage | `@react-native-async-storage/async-storage` · `expo-secure-store` |
-
----
-
-## Screens
-
-| Screen | Description |
-|---|---|
-| **Home** | Avatar hero card, quick question chips, text/voice entry, navigation grid |
-| **Chat** | iMessage-style conversation, typing indicator, clickable source links |
-| **Library** | Searchable knowledge base across 6 dementia-care categories with article detail view |
-| **Voice** | Full-screen voice UI — records via Whisper STT, streams LLM response, plays avatar speech sentence-by-sentence with lip sync |
-| **Settings** | Accessibility controls — text size, contrast, audio, subtitles, haptics, privacy |
-
----
-
-## Mobile app structure
-
-The app is organised **feature-first**: each domain owns its screens, components, hooks
-and config under `src/features/<domain>/`. Cross-cutting concerns live in a shared kernel
-(`theme/`, `context/`, `constants/`, top-level `components/`) and all external integrations
-+ pure engines live in a single `lib/`.
-
-Two path aliases, and the distinction matters:
-
-| Alias | Points to | Contains |
-|---|---|---|
-| `@/` | `src/` | Mobile-app code only |
-| `@core/` | `packages/core/` | Logic shared with `web/` and the Node scripts |
-
-`@core` is declared in `babel.config.js`, `tsconfig.json`, `jest.config.js` and
-`web/vite.config.js` — all four must stay in step.
-
-Files are migrating to **TypeScript** incrementally — the shared kernel and integration
-layer are typed (`.ts`/`.tsx`); screens and the avatar/provider modules remain `.js` under
-`allowJs` and convert in later passes.
-
-```
-DementiaGuideAI/
-├── App.js · index.js
-├── tsconfig.json · babel.config.js · eslint.config.js · jest.config.js · .prettierrc
-├── app.json                          # Expo config
-├── packages/core/                    # Shared with web/ + scripts: rag/, net/, sentiment/
-├── web/                              # Vite web app (own package.json — see web/README.md)
-├── scripts/                          # Node CLI tools: eval/ (RAG evaluation), ingest/ (KB ingestion), migrations/ (SQL)
-└── src/
-    ├── navigation/
-    │   └── AppNavigator.js           # Root bottom-tab + stack navigator (app shell)
-    ├── features/
-    │   ├── home/screens/HomeScreen.js
-    │   ├── chat/screens/ChatScreen.js
-    │   ├── voice/                     # Voice conversation (Whisper → LLM → TTS → avatar)
-    │   │   ├── screens/VoiceScreen.js
-    │   │   ├── components/VoiceWaveform.js
-    │   │   └── hooks/useAvatarConversation.js
-    │   ├── avatar/                    # Avatar rendering + Unity bridge
-    │   │   ├── components/{AvatarVRM,AvatarUnity}.js
-    │   │   ├── config/avatarProfiles.ts
-    │   │   └── bridge/{UnityAvatarBridge,blendshapeTranslator,AvatarBridgeProtocol}.js
-    │   ├── library/                   # Knowledge-base browsing
-    │   │   ├── screens/{LibraryScreen,ArticleDetailScreen}.js
-    │   │   ├── components/CategoryCard.js
-    │   │   └── data/knowledgeBase.js  # Local KB (source-of-truth backup; runtime uses Supabase)
-    │   ├── onboarding/
-    │   │   ├── navigation/OnboardingNavigator.js
-    │   │   ├── screens/*.js           # 12-step onboarding flow
-    │   │   └── components/*.js         # OnboardingLayout, OptionCard, ProgressBar, SummaryRow
-    │   └── settings/screens/ProfileScreen.js
-    ├── components/                    # Shared, cross-feature UI (Avatar, MessageCard)
-    ├── lib/                           # Integrations + pure engines
-    │   ├── openaiService.js           # RAG pipeline (embed → Supabase match_chunks → streaming chat)
-    │   ├── ragTelemetry.js            # Device-local retrieval traces (no message text)
-    │   ├── supabaseService.ts         # Supabase anon client
-    │   ├── aceService.js              # NVIDIA ACE stub
-    │   ├── types.ts                   # Shared service-layer domain types
-    │   ├── tts/                       # ttsService.ts (provider selection) + Azure/ElevenLabs
-    │   ├── voice/                     # voiceConfig, prewarm, speculativeRetrieval (live-STT driven)
-    │   └── lipsync/                   # Alignment → viseme timeline (shared with Unity test tools)
-    ├── theme/                         # colors.ts, typography.ts (design tokens)
-    ├── constants/data.js              # Categories, resources, sample messages
-    └── context/SettingsContext.tsx    # App-wide settings + theme provider
-```
-
-### Scripts
-
-Run from the repo root unless noted.
-
-**Mobile app**
-
-| Command | What it does |
-|---|---|
-| `npm start` | Start the Expo dev server |
-| `npm run ios` / `npm run android` | Native build + run (`expo run:*`) — required for the Unity avatar |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run lint` | ESLint (`eslint-config-expo`) |
-| `npm run format` / `format:check` | Prettier write / check |
-| `npm test` | Jest (`jest-expo`) — covers `src/` and `packages/core/` |
-
-**Knowledge base and RAG evaluation** — see [Adding content](#adding-content-to-the-knowledge-base) and [Evaluating](#evaluating-the-pipeline)
-
-| Command | What it does |
-|---|---|
-| `npm run kb:ingest` / `kb:ingest:dry` | Ingest sources into Supabase / plan only |
-| `npm run rag:eval:retrieval` | recall@k / MRR / nDCG against the labelled set |
-| `npm run rag:eval:generation` | Generate answers for all sets (temp 0, seeded) |
-| `npm run rag:eval:safety` | MUST / MUST-NOT safety gates (exit code) |
-| `npm run rag:eval:sweep` | Parameter sweep |
-| `npm run rag:grade` | Groundedness judge + human spot-check file |
-| `npm run rag:introspect` | Dump the live corpus to CSV |
-
-**Web app** (run inside `web/`)
-
-| Command | What it does |
-|---|---|
-| `npm run dev` | Vite dev server |
-| `npm run build` / `preview` | Production build / preview it |
-| `npm test` | Vitest — includes the mobile↔web interop tests |
-| `npm run sync:unity` | Copy a Unity WebGL export into `web/public/unity/` |
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- Expo CLI
-- Xcode (for iOS Simulator) or Expo Go on a physical device
-- An OpenAI API key
-- A Supabase project (free tier) with pgvector enabled
-- An ElevenLabs API key (optional — enables vowel-accurate lip sync; falls back to amplitude-based sync without it)
-
-### Install
+**Prerequisites:** Node 20 (see `.nvmrc`), an OpenAI API key, and a Supabase
+project with pgvector enabled. Xcode or Expo Go for mobile. An ElevenLabs key is
+optional — it enables vowel-accurate lip sync instead of amplitude-based.
 
 ```bash
-git clone <repo-url>
-cd DementiaGuideAI
+git clone <repo-url> && cd DementiaGuideAI
 npm install
+cp .env.example .env      # fill in Supabase + OpenAI values
 ```
 
-### Environment setup
-
-Copy `.env.example` to `.env` and fill in your keys:
-
-```bash
-cp .env.example .env
-```
-
-```env
-# Mobile app (Expo) — anon key is safe to use client-side
-EXPO_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon_key>
-
-# Scripts — service role key (never expose to clients)
-SUPABASE_URL=https://<your-project>.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<service_role_key>
-OPENAI_API_KEY=sk-...
-```
-
-### Supabase setup (first time only)
-
-Run `scripts/supabase-setup.sql` in the Supabase SQL Editor to create the `knowledge_chunks` table, the pgvector index, and the `match_chunks` RPC function, then apply any pending files from `scripts/migrations/` (see `scripts/migrations/README.md` for run order and status).
-
-Then seed the knowledge base:
+First time only, create the schema: run `scripts/supabase-setup.sql` in the
+Supabase SQL editor, apply anything pending from `scripts/migrations/` (see that
+folder's README for run order), then seed:
 
 ```bash
 npm run kb:ingest -- --doc curated
 ```
 
-### Run the mobile app
+**Mobile**
 
 ```bash
-# iOS Simulator
-npx expo start --ios
-
-# Android
-npx expo start --android
-
-# Clear Metro cache if needed
-npx expo start --ios --clear
+npx expo start --ios      # or --android
 ```
 
-### Run the web app
-
-`web/` is a separate npm project with its own install:
+**Web** — a separate npm project:
 
 ```bash
-cd web
-npm install
-cp .env.example .env     # VITE_* equivalents of the mobile EXPO_PUBLIC_* vars
+cd web && npm install
+cp .env.example .env      # VITE_* equivalents of the mobile EXPO_PUBLIC_* vars
 npm run dev
 ```
 
 Without an OpenAI key the web app runs in **mock mode** (canned replies, no API
-calls); enter keys in-app to switch to the real pipeline. The Unity WebGL avatar
-needs a build synced into `web/public/unity/` via `npm run sync:unity` — without
-it the app falls back to the Three.js avatar. Details in [`web/README.md`](web/README.md).
+calls); enter keys in-app to switch to the real pipeline.
 
-> **Note:** the Unity 3D avatar only renders in full native builds (`npx expo run:ios` on a physical iPhone / `npx expo run:android`) with the committed Unity export present — see [Android (Unity avatar)](#android-unity-avatar) and `docs/android-unity.md`. Everything else (chat, voice, library) works in Expo Go / Simulator, where the avatar area shows an "unavailable on this build" fallback.
+> The Unity 3D avatar needs a full native build (`npx expo run:ios` on a device,
+> or `npx expo run:android`) with the Unity export present. Everything else —
+> chat, voice, library — works in Expo Go and the Simulator, where the avatar
+> area shows a fallback. On web the Unity WebGL build must be synced in with
+> `npm run sync:unity`, otherwise the Three.js avatar is used.
 
-### Android (Unity avatar)
-
-One-time machine setup:
-
-1. **Unity Android Build Support** for the pinned editor (6000.5.0f1), including the *Android SDK & NDK Tools* and *OpenJDK* child modules. Via Unity Hub GUI (Installs → ⚙ → Add modules), or headless:
-   ```bash
-   "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless \
-     install-modules --version 6000.5.0f1 -m android --childModules
-   ```
-2. **Android SDK env** in your shell profile (`expo run:android` needs it to write `android/local.properties`):
-   ```bash
-   export ANDROID_HOME="$HOME/Library/Android/sdk"
-   export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
-   ```
-
-Build & run:
-
-```bash
-# 1. Export the Unity Android library (once per Unity-side change):
-#    Unity → Tools → UaaL → Export Android (android-export)
-#    …or pull the committed export: git submodule update --init && git -C unity-avatar/UnityAvatarProject lfs pull
-
-# 2. Generate the native project and run on a connected device:
-npx expo prebuild --platform android
-npx expo run:android
-
-# Debugging filters
-adb logcat -s Unity:V UnityAvatarModule:V UnityBridgeManager:V ReactNativeJS:V AndroidRuntime:E
-```
-
-Without the `android-export/` artifact the app still builds and runs — the config plugin logs a warning, skips the Unity wiring, and the avatar screen shows the fallback state. Full details (export internals, gradle wiring, material fallbacks): `docs/android-unity.md`.
-
-### API Key Setup (mobile app)
-
-Enter your API keys in the app under **Settings → AI Configuration**:
-- **OpenAI key** — required for chat, STT (Whisper), and fallback TTS
-- **ElevenLabs key** — optional; enables the full viseme lip sync pipeline
-
-Both keys are stored securely via `expo-secure-store` and never leave the device.
+Full setup, native builds and the Android/Unity toolchain:
+[docs/mobile-app.md](docs/mobile-app.md).
 
 ---
 
-## Voice Conversation Pipeline
+## Documentation
 
-The Voice screen runs a fully pipelined conversation flow managed by `useAvatarConversation.js`:
+Start at **[docs/README.md](docs/README.md)**.
 
-```
-[Microphone] → expo-av recording
-     ↓
-[Whisper STT] → transcribed text
-     ↓
-[OpenAI gpt-4o stream] → tokens arrive sentence by sentence
-     ↓
-[ElevenLabs TTS] ← fires immediately per sentence, in parallel
-     ↓
-[Viseme timeline] ← character alignment → mouth shape keyframes
-     ↓
-[AvatarVRM WebView] → plays audio + drives 5 blend shapes in real time
-```
-
-Each sentence is sent to TTS as soon as it completes in the LLM stream — so the avatar begins speaking the first sentence while later sentences are still being generated.
-
----
-
-## Avatar (AvatarVRM)
-
-The avatar is a `.vrm` model rendered inside a React Native `WebView` using Three.js and `@pixiv/three-vrm`. All animation runs in the embedded browser context and communicates back to React Native via `postMessage`.
-
-**State machine:** `idle → listening → thinking → speaking`
-
-Each state drives:
-- Body bob and sway amplitude
-- Head look-around frequency and range
-- Thinking gaze bias (up-right)
-- Breathing depth on spine/chest bones
-
-**Lip sync — ElevenLabs viseme path (primary)**
-
-ElevenLabs returns character-level timestamps alongside the audio. These are converted into a viseme frame sequence by `createVisemeTimeline.js`, mapping characters to one of five VRM blend shapes: `aa` (open), `ih` (smile-open), `ou` (round), `ee` (wide), `oh` (rounded-open). During playback, the WebView tracks `AudioContext.currentTime` each frame, binary-searches the viseme timeline, and cross-fades between the active and next frame over the final 20% of each frame's duration.
-
-**Lip sync — RMS fallback path (OpenAI TTS or no ElevenLabs key)**
-
-When no alignment data is available, a Web Audio `AnalyserNode` measures RMS amplitude per frame and maps it to the `aa` blend shape, producing open/close jaw movement that tracks the audio loudness.
-
-**Recovery:** If the WebGL context is lost (iOS background eviction, Android process kill), the WebView automatically remounts.
-
-**Custom VRM model:** Pass a `modelUrl` prop to `AvatarVRM` to use any publicly hosted `.vrm` file.
-
-```jsx
-<AvatarVRM
-  ref={avatarRef}
-  modelUrl="https://example.com/your-model.vrm"
-  isListening={listening}
-  isSpeaking={speaking}
-  isThinking={thinking}
-  width={300}
-  height={420}
-/>
-
-// Play TTS audio with viseme lip sync (ElevenLabs path)
-await avatarRef.current.playAudio({ audio: base64DataUri, visemeTimeline });
-
-// Play TTS audio with RMS fallback
-await avatarRef.current.playAudio(base64DataUri);
-
-// Stop early
-avatarRef.current.stopAudio();
-```
-
----
-
-## RAG Pipeline
-
-The chat is powered by a cloud RAG pipeline using Supabase pgvector and OpenAI. All prompt/retrieval configuration lives in **`packages/core/rag/`** (plain CommonJS shared by the mobile app, the web app, Jest, and the Node scripts — change values there, never in per-script copies). Full documentation: [current-state audit](docs/rag/rag-current-state-audit.md) · [research](docs/rag/rag-industry-research.md) · [target architecture](docs/rag/rag-target-architecture.md) · [source inventory](docs/rag/rag-source-inventory.md) · [evaluation plan](docs/rag/rag-evaluation-plan.md) · [results](docs/rag/rag-improvement-results.md).
-
-| Setting | Value |
+| Doc | What it covers |
 |---|---|
-| Embedding model | `text-embedding-3-small` (1536 dims) |
-| Chat model | `gpt-4o` (temp 0.7 in app; eval runs at temp 0 + seed for comparability) |
-| Vector DB | Supabase `knowledge_chunks` (pgvector `vector(1536)` + tsvector, hybrid `match_chunks` RPC) |
-| Retrieval | Oversample 50 → source-family cap (iSupport max 2) → top 5; min similarity 0.25 |
-| Prompt | `v2-nz-safety` — NZ region, 111-first emergency escalation, no dosing/diagnosis output; `PROMPT_VERSION='v1'` in `ragConfig.js` is the one-line rollback |
-| Citations | Inline `[S#]` markers validated against supplied passages (`CITATION_MODE='trailing'` rolls back) |
-| Context window | Last 6 messages |
-| Telemetry | Device-local ring buffer of retrieval traces (ids/scores/latency — never message text) |
-
-**Flow:** user query → embed (LRU-cached) → `match_chunks` hybrid RPC → cap/diversity → passages injected as `[S1]…` blocks → gpt-4o → citation extraction/validation → answer + tappable sources (voice path strips markers before TTS and delivers the same structured sources).
-
-### Adding content to the knowledge base
-
-Every source must be registered in `scripts/ingest/registry.js` (provenance: document_id, version, country, licence) — unregistered content cannot be ingested, and sources stay `enabled: false` until their licence is confirmed. Source files live in `content/sources/` with checksums in `MANIFEST.md`.
-
-```bash
-npm run kb:ingest:dry -- --doc curated        # plan (hash-diff, no writes)
-npm run kb:ingest -- --doc curated            # tag+embed only new/changed chunks
-npm run kb:ingest -- --doc <id> --prune       # also remove chunks the source no longer produces
-```
-
-Ingestion is idempotent by content hash: unchanged chunks are skipped, edited chunks re-embed, and every chunk carries full provenance columns (requires `scripts/migrations/2026-07-17_a_provenance_columns.sql`).
-
-### Evaluating the pipeline
-
-```bash
-npm run rag:eval:retrieval                    # deterministic recall@k / MRR / nDCG vs labelled set
-npm run rag:eval:generation                   # answers for all sets (temp 0, seeded)
-npm run rag:eval:safety -- docs/report/eval/generation_<sha>_<prompt>.json   # MUST/MUST-NOT gates (exit code)
-npm run rag:grade -- docs/report/eval/generation_<sha>_<prompt>.json         # groundedness judge + human spot-check file
-npm run rag:eval:sweep                        # min_similarity × diversity-cap parameter sweep
-npm run rag:introspect                        # dump live corpus → docs/report/kb_chunks_reference.csv
-```
-
-The frozen pre-overhaul baseline lives in `docs/report/baseline/`; compare any change against it (see the [evaluation plan](docs/rag/rag-evaluation-plan.md) for metric definitions and known limitations).
+| [Mobile app](docs/mobile-app.md) | Tech stack, screens, structure, path aliases, native builds, API keys |
+| [Web app](web/README.md) | Vite app, mock vs real mode, Vercel deploy |
+| [Shared core](packages/core/README.md) | What may live in `@core`, and why the boundary exists |
+| [RAG pipeline](docs/rag/README.md) | Config, ingestion, evaluation + the research docs |
+| [Avatar & voice](docs/avatar.md) | Renderers, conversation pipeline, lip sync |
+| [Backend plan](docs/architecture/backend-plan.md) | The planned backend + DB (not built) |
+| [Design system](docs/design-system.md) | Tokens and accessibility requirements |
+| [Contributing](CONTRIBUTING.md) | Setup, where code goes, required checks, known traps |
 
 ---
 
-## Design System
+## Scripts
 
-| Token | Value | Use |
-|---|---|---|
-| Primary | `#4A7C8E` | Buttons, links, user bubbles |
-| Secondary | `#7FB5A0` | Accents, success states |
-| Accent | `#E8956D` | Warnings, speaking state |
-| Background | `#F7F5F2` | App background |
-| Surface | `#FFFFFF` | Cards, nav bar |
-| Text Primary | `#1E2D3D` | Body and headings |
+Run from the repo root unless noted.
 
-**Accessibility:**
-- Minimum 44×44pt tap targets
-- `accessibilityLabel` and `accessibilityRole` on all interactive elements
-- Configurable text size (small / medium / large)
-- High contrast mode toggle
-- Subtitle and audio toggles for avatar responses
-- Haptic feedback toggle
+| Command | What it does |
+|---|---|
+| `npm start` | Expo dev server |
+| `npm run ios` / `android` | Native build + run — required for the Unity avatar |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint (`eslint-config-expo`) |
+| `npm run format` / `format:check` | Prettier write / check |
+| `npm test` | Jest — covers `src/` and `packages/core/` |
+| `npm run kb:ingest` / `kb:ingest:dry` | Ingest sources into Supabase / plan only |
+| `npm run rag:eval:*`, `rag:grade`, `rag:introspect` | RAG evaluation suite — see [docs/rag/](docs/rag/README.md) |
+
+Inside `web/`: `npm run dev`, `build`, `preview`, `test` (Vitest, includes the
+mobile↔web interop tests), and `sync:unity`.
 
 ---
 
 ## Disclaimer
 
-DementiaGuide AI provides information for general guidance only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for dementia-related concerns.
-
----
+DementiaGuide AI provides information for general guidance only. It is not a
+substitute for professional medical advice, diagnosis, or treatment. Always
+consult a qualified healthcare provider for dementia-related concerns.
 
 ## License
 

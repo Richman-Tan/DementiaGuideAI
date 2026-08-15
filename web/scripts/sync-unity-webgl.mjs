@@ -65,10 +65,20 @@ if (missing.length) {
 // mixing an old wasm with a new data file — which crashes the engine deep in
 // its deserializer (an infinite-recursion stack overflow, not an obvious
 // "mismatched files" error). unityBridge appends it to every build URL.
+//
+// SERVING_REV additionally busts the cache when only the *response headers*
+// change while the bytes stay identical. Chrome replays a cached response with
+// the headers it was stored with, so after the Content-Encoding fix a returning
+// visitor would otherwise keep replaying the old unlabelled entry — and keep
+// paying the 20-minute main-thread decompress — for a full max-age window.
+// Bump this whenever how the files are SERVED changes.
+const SERVING_REV = 2; // 2 = Content-Encoding: br + Content-Type per file
+
 manifest.version = createHash('sha256')
   .update(readFileSync(join(dest, manifest.code)))
   .update(readFileSync(join(dest, manifest.framework)))
   .update(String(statSync(join(dest, manifest.data)).size))
+  .update(`serving-rev-${SERVING_REV}`)
   .digest('hex')
   .slice(0, 12);
 

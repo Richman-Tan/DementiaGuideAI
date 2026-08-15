@@ -39,6 +39,32 @@ jobs:
       - name: Test
         run: npm test
 
+  web-checks:
+    # The web app has its own vitest suite (excluded from the root Jest run).
+    # Its tests exercise the ../src mobile-lib reuse through the web aliases,
+    # so the whole repo checkout is required, not just web/.
+    name: Web tests (vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
   prebuild-smoke:
     # Exercises every config-plugin code path (plugins/withUnityFramework.js)
     # on a checkout WITHOUT the git-lfs Unity artifacts — the iOS copy mod and

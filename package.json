@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19.4"
   },
   "workspaces": [
     "apps/*",
@@ -17,7 +17,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "npm run typecheck -w apps/mobile",
+    "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm test -w apps/mobile && npm test -w apps/web",
     "test:mobile": "npm test -w apps/mobile",
     "test:web": "npm test -w apps/web",

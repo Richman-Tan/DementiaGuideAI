@@ -105,8 +105,12 @@ Labels are prefixed so they group in the sidebar and can be filtered on:
 | `status:` | Workflow state | `needs-triage`, `blocked`, `question`, `duplicate`, `invalid`, `wontfix` |
 
 Every new issue arrives as `status: needs-triage`. Triage means adding an `area:`
-and a `priority:` and removing that label — not necessarily doing the work. Use
-`good first issue` generously; it's how newcomers find a way in.
+and a `priority:` and removing that label — not necessarily doing the work.
+
+Don't apply `good first issue`. GitHub indexes that label globally and feeds it
+to contribution-discovery surfaces, so an issue carrying it tends to attract a
+drive-by PR within the hour — usually before anyone here has decided what the
+right fix is. Two of the open PRs arrived that way.
 
 An issue is worth opening even for something you don't intend to fix. Several of
 the open ones are latent problems that were only found because a restructure

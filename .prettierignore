@@ -13,3 +13,8 @@ apps/web/public
 
 # Markdown is hand-wrapped on purpose; Prettier is scoped to code.
 *.md
+
+# docs/report/ is cited in submitted academic work — its paths and content are
+# frozen. The .md files there are already covered above; these are the .json
+# evaluation artefacts, which Prettier would otherwise re-indent.
+docs/report

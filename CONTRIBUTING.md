@@ -4,7 +4,7 @@ Notes for anyone working in this repo — including future me.
 
 ## Setup
 
-Node 20 (see `.nvmrc`). This is an npm-workspaces monorepo — one lockfile, one
+Node 20.19.4 (see `.nvmrc`). This is an npm-workspaces monorepo — one lockfile, one
 install, from the repo root:
 
 ```bash

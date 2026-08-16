@@ -6,7 +6,7 @@ profile:
 | Renderer | Where | Model |
 |---|---|---|
 | **Unity** (CC4 characters, UaaL) | Native iOS/Android builds; default on web via WebGL | `unity-avatar/` submodule |
-| **Three.js + `@pixiv/three-vrm`** | Expo Go, Simulator, and as the web fallback | `.vrm` / `.glb` in `assets/` |
+| **Three.js** (in a WebView, loaded from a CDN) | Expo Go, Simulator, and as the web fallback | `.vrm` / `.glb` in `assets/` |
 
 On mobile the Three.js renderer runs inside a React Native `WebView`; all
 animation happens in that embedded browser context and reports back via

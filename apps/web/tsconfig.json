@@ -7,6 +7,12 @@
     "allowJs": true,
     "checkJs": false,
     "noEmit": true,
+    // Third-party .d.ts files are not ours to fix. @types/webrtc@0.0.37 arrives
+    // transitively via microsoft-cognitiveservices-speech-sdk (a mobile dep,
+    // hoisted to the root) and duplicates types that lib.dom.d.ts now ships, so
+    // checking it reports nine errors in code this app never touches.
+    // apps/mobile gets the same setting from expo/tsconfig.base.
+    "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@web/*": ["src/*"],

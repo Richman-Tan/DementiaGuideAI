@@ -42,6 +42,45 @@ const ANDROID_UNITY_LIBRARY_DIR = path.join(ANDROID_EXPORT_SOURCE_DIR, 'unityLib
 // the app module — a compressed .resS breaks Unity asset loading outright.
 const UNITY_NO_COMPRESS_EXTENSIONS = ['.unity3d', '.ress', '.resource', '.obb', '.bundle', '.unityexp'];
 
+// The committed UnityFramework.framework is a DEVICE slice only — it is built
+// with `xcodebuild -sdk iphoneos` (see the note above), so `lipo -info` reports
+// a non-fat arm64 iOS binary. A framework built for the iOS device platform
+// cannot be linked into a simulator binary at all, which is why every iOS mod
+// below is gated: linking it unconditionally makes Simulator builds die at the
+// final link with "building for 'iOS-simulator', but linking in dylib built for
+// 'iOS'" — after a full compile, with nothing naming the cause.
+//
+// Skipping the mods produces an app with no Unity at all. That is the intended
+// degraded mode, not a broken one: canImport(UnityFramework) goes false in
+// UnityBridgeManager.swift, UnityAvatarModule reports unavailable, and the JS
+// falls back to the Three.js WebView avatar — which is exactly what docs/avatar.md
+// says the Simulator runs.
+const IOS_UNITY_DISABLED = process.env.EXPO_UNITY_AVATAR === '0';
+
+function iosExportExists() {
+  return fs.existsSync(UNITY_LIBRARY_SOURCE_DIR);
+}
+
+/** Every iOS Unity mod checks this. Mirrors androidExportExists() + its warning. */
+function iosUnityEnabled(modName) {
+  if (IOS_UNITY_DISABLED) {
+    console.warn(
+      `[withUnityFramework] EXPO_UNITY_AVATAR=0 — skipping ${modName}. ` +
+      'The build will use the Three.js WebView avatar instead of Unity.'
+    );
+    return false;
+  }
+  if (!iosExportExists()) {
+    console.warn(
+      `[withUnityFramework] No committed UnityLibrary at ${UNITY_LIBRARY_SOURCE_DIR} — ` +
+      `skipping ${modName} this prebuild. git-lfs pull the submodule, or set ` +
+      'EXPO_UNITY_AVATAR=0 to build without Unity deliberately.'
+    );
+    return false;
+  }
+  return true;
+}
+
 function androidExportExists() {
   return fs.existsSync(ANDROID_UNITY_LIBRARY_DIR);
 }
@@ -124,11 +163,11 @@ function withUnityLibraryCopy(config) {
       const iosRoot = config.modRequest.platformProjectRoot;
       const dest = path.join(iosRoot, UNITY_LIBRARY_DIR_NAME);
 
-      if (!fs.existsSync(UNITY_LIBRARY_SOURCE_DIR)) {
-        console.warn(
-          `[withUnityFramework] No committed UnityLibrary found at ${UNITY_LIBRARY_SOURCE_DIR} — ` +
-          'skipping copy this prebuild. See the Phase 5 plan for how to build it.'
-        );
+      if (!iosUnityEnabled('the UnityLibrary copy')) {
+        // Clear any library left by a previous Unity-enabled prebuild, so
+        // toggling EXPO_UNITY_AVATAR off actually produces a Unity-free tree
+        // rather than leaving a stale framework for the linker to find.
+        fs.rmSync(dest, { recursive: true, force: true });
         return config;
       }
 
@@ -169,6 +208,9 @@ function withUnityLibraryCopy(config) {
  */
 function withUnityDataCopyPhase(config) {
   return withXcodeProject(config, (config) => {
+    if (!iosUnityEnabled('the Unity Data copy phase')) {
+      return config;
+    }
     const project = config.modResults;
     const mainTargetUuid = project.getFirstTarget().uuid;
 
@@ -194,6 +236,13 @@ function withUnityDataCopyPhase(config) {
 /** Adds `pod 'UnityFramework', :path => 'UnityLibrary'` inside the main app target. */
 function withUnityPodfilePod(config) {
   return withPodfile(config, (config) => {
+    // Gated: without this, a checkout with no Unity artifacts gets a Podfile
+    // pointing at a directory withUnityLibraryCopy deliberately did not create
+    // (so `pod install` fails), and a checkout WITH them cannot build for the
+    // Simulator (so the link fails). Neither failure names the cause.
+    if (!iosUnityEnabled('the UnityFramework pod')) {
+      return config;
+    }
     if (config.modResults.contents.includes('unity-framework-pod')) {
       return config;
     }
@@ -224,6 +273,11 @@ function withUnityPodfilePod(config) {
  */
 function withUnityAppDelegateLifecycle(config) {
   return withAppDelegate(config, (config) => {
+    // Without Unity linked there is nothing to forward lifecycle events to,
+    // and the inserted `import UnityAvatarModule` would not resolve.
+    if (!iosUnityEnabled('AppDelegate lifecycle forwarding')) {
+      return config;
+    }
     if (config.modResults.language !== 'swift') {
       console.warn('[withUnityFramework] AppDelegate is not Swift — skipping lifecycle forwarding mod.');
       return config;

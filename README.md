@@ -81,14 +81,16 @@ generated native projects. `apps/mobile/{ios,android}/` are `expo prebuild`
 output and are not tracked.
 
 One lockfile at the root covers every workspace — `npm install` once, from the
-root. `react`, `three` and `@supabase/supabase-js` are held at matching versions
-across both apps so the shared code compiles against a single copy of each.
+root. `react` and `@supabase/supabase-js` are held at matching versions across
+both apps so the shared code compiles against a single copy of each. `three` is
+declared only by `apps/web`, which imports it as a module; the mobile avatar
+loads Three from a CDN inside its WebView, so Metro never bundles it.
 
 ---
 
 ## Quick start
 
-**Prerequisites:** Node 20 (see `.nvmrc`), an OpenAI API key, and a Supabase
+**Prerequisites:** Node 20.19.4 (see `.nvmrc`), an OpenAI API key, and a Supabase
 project with pgvector enabled. Xcode or Expo Go for mobile. An ElevenLabs key is
 optional — it enables vowel-accurate lip sync instead of amplitude-based.
 

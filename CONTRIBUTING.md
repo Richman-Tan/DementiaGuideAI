@@ -4,7 +4,7 @@ Notes for anyone working in this repo — including future me.
 
 ## Setup
 
-Node 20 (see `.nvmrc`). This is an npm-workspaces monorepo — one lockfile, one
+Node 20.19.4 (see `.nvmrc`). This is an npm-workspaces monorepo — one lockfile, one
 install, from the repo root:
 
 ```bash
@@ -13,7 +13,7 @@ npm install
 
 That covers `apps/mobile`, `apps/web` and `packages/core`. Don't run `npm install`
 inside a workspace; it will create a nested `node_modules` and undo the hoisting
-that keeps `react`, `three` and `@supabase/supabase-js` at a single shared copy.
+that keeps `react` and `@supabase/supabase-js` at a single shared copy.
 
 The Unity project is a submodule and is only needed for avatar work:
 
@@ -105,8 +105,12 @@ Labels are prefixed so they group in the sidebar and can be filtered on:
 | `status:` | Workflow state | `needs-triage`, `blocked`, `question`, `duplicate`, `invalid`, `wontfix` |
 
 Every new issue arrives as `status: needs-triage`. Triage means adding an `area:`
-and a `priority:` and removing that label — not necessarily doing the work. Use
-`good first issue` generously; it's how newcomers find a way in.
+and a `priority:` and removing that label — not necessarily doing the work.
+
+Don't apply `good first issue`. GitHub indexes that label globally and feeds it
+to contribution-discovery surfaces, so an issue carrying it tends to attract a
+drive-by PR within the hour — usually before anyone here has decided what the
+right fix is. Two of the open PRs arrived that way.
 
 An issue is worth opening even for something you don't intend to fix. Several of
 the open ones are latent problems that were only found because a restructure

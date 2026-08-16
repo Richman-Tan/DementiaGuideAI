@@ -23,7 +23,7 @@ or it will not resolve.
 | STT | OpenAI Whisper (`whisper-1`) via `expo-av` recording |
 | TTS | ElevenLabs `eleven_turbo_v2_5` (primary) · OpenAI `tts-1` (fallback) |
 | Lip sync | ElevenLabs character alignment → viseme timeline → 5 VRM blend shapes |
-| Avatar | Unity (CC4, native) or VRM via Three.js + `@pixiv/three-vrm` in a WebView |
+| Avatar | Unity (CC4, native) or `.glb` via Three.js in a WebView |
 | Audio | expo-av · Web Audio API (WebView) |
 | Storage | `@react-native-async-storage/async-storage` · `expo-secure-store` |
 | Other | expo-linear-gradient · expo-haptics · react-native-safe-area-context |

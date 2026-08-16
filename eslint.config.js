@@ -75,6 +75,20 @@ module.exports = [
     },
   },
   {
+    // Module-path globals for the CommonJS test surfaces only — a test that
+    // reads a fixture off disk needs them, and `require` alone is not enough.
+    // Deliberately NOT repo-wide: apps/web is `"type": "module"`, so its tests
+    // are ESM where __dirname genuinely does not exist. Declaring it there
+    // would silence a real no-undef rather than allow a legitimate one.
+    files: ['apps/mobile/**/*.test.{js,jsx}', 'packages/core/**/*.test.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+  },
+  {
     ignores: [
       '**/node_modules/**',
       '**/dist/**',

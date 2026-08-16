@@ -32,7 +32,7 @@ const replacements = [
   ["'${safeUrl}'", 'modelUrl'],
   ["'${safeBackdropUrl}'", 'backdropUrl'],
   // DRACO decoders served locally (apps/web/public/draco/)
-  ["'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/'", "'/draco/'"],
+  ["'https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/libs/draco/'", "'/draco/'"],
   // debug + status + viseme overlay live inside the container
   ['window._dbg', '_dbg'],
   ["const statusEl = document.getElementById('status');", 'const statusEl = _statusEl;'],

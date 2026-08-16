@@ -84,6 +84,34 @@ web app does, so a broken alias or a stray platform import fails there first.
   `scripts/parse-latency.mjs` and `scripts/make-figures.py`, which is why those
   two stay at the top level of `scripts/`.
 
+## Issues
+
+Open one from the [templates](https://github.com/Richman-Tan/DementiaGuideAI/issues/new/choose)
+— **Bug report**, **Task**, or **Feature request**. They're forms, so the fields
+we always end up asking for are asked up front.
+
+Security problems don't go here. Use a
+[private advisory](https://github.com/Richman-Tan/DementiaGuideAI/security/advisories/new);
+[SECURITY.md](SECURITY.md) covers what's in scope, including prompt injection
+that defeats answer grounding.
+
+Labels are prefixed so they group in the sidebar and can be filtered on:
+
+| Prefix | Means | Values |
+|---|---|---|
+| `type:` | What kind of work | `bug`, `feature`, `chore`, `docs`, `security` |
+| `area:` | Which surface | `mobile`, `web`, `core`, `unity`, `rag`, `tooling` |
+| `priority:` | How urgent | `high` (blocks work or breaks a documented command), `medium` (workaround exists), `low` |
+| `status:` | Workflow state | `needs-triage`, `blocked`, `question`, `duplicate`, `invalid`, `wontfix` |
+
+Every new issue arrives as `status: needs-triage`. Triage means adding an `area:`
+and a `priority:` and removing that label — not necessarily doing the work. Use
+`good first issue` generously; it's how newcomers find a way in.
+
+An issue is worth opening even for something you don't intend to fix. Several of
+the open ones are latent problems that were only found because a restructure
+happened to walk past them — writing them down is what stops that being luck.
+
 ## Commits and branches
 
 Conventional Commits (`feat(web): …`, `fix: …`, `docs: …`, `chore: …`), which is

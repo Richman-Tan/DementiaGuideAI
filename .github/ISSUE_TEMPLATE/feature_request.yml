@@ -1,0 +1,67 @@
+name: Feature request
+description: Propose new behaviour or a change to how something works
+labels: ["type: feature", "status: needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is a dementia-care tool, so features are judged on whether they help a caregiver or person with dementia, not only on whether they're technically interesting. Please say who benefits.
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface
+      multiple: true
+      options:
+        - Mobile app (Expo / React Native)
+        - Web app (Vite)
+        - Shared core (packages/core)
+        - Unity avatar
+        - RAG pipeline / knowledge base
+        - Scripts and tooling (ingest, eval, migrations)
+        - Build, CI, or dependencies
+        - Docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What can't someone do today? Describe the situation, not the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: who
+    attributes:
+      label: Who this is for
+      description: Caregiver, family member, healthcare professional, person living with dementia, or a developer working on the repo.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you'd like to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Including doing nothing — say why that isn't enough.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: considerations
+    attributes:
+      label: Does this touch any of these?
+      description: Tick what applies. None of these block a proposal; they tell us what review it needs.
+      options:
+        - label: Clinical or safety-sensitive content (anything the assistant says about care, medication, or emergencies)
+        - label: Accessibility (text size, contrast, audio, subtitles, haptics)
+        - label: Privacy or credentials (API keys, user data, telemetry)
+        - label: The knowledge base or how answers are grounded and cited

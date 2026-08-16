@@ -5,7 +5,7 @@
 // mobile) rides to Unity over SendMessage as `{type:'play', …}`.
 // supportsStreamingAudio=false routes the voice pipeline to the REST cascade —
 // exactly how mobile treats the Unity renderer.
-import { segmentToCC4Payload } from '@/features/avatar/bridge/blendshapeTranslator';
+import { segmentToCC4Payload } from '@core/avatar/blendshapeTranslator';
 import { AvatarAudioEngine } from '../three/audio.js';
 import { sendBridgeMessage, setCharacter } from './unityBridge.js';
 

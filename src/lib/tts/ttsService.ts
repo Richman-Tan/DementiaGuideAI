@@ -1,6 +1,6 @@
 import { azureTtsService as azureRaw } from './azureTtsService';
 import { elevenLabsService as elevenRaw } from './elevenLabsService';
-import { normalizeSpokenText } from './normalizeSpokenText';
+import { normalizeSpokenText } from '@core/tts/normalizeSpokenText';
 import { openaiService as openaiRaw } from '@/lib/openaiService';
 import type {
   AzureTtsService,

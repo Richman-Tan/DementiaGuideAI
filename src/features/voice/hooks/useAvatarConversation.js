@@ -3,16 +3,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { openaiService } from '@/lib/openaiService';
 import { tts } from '@/lib/tts/ttsService';
 import { selectTtsMode, markTtsDegraded } from '@/lib/tts/ttsMode';
-import { createElevenLabsStream } from '@/lib/tts/elevenLabsStreamService';
+import { createElevenLabsStream } from '@core/tts/elevenLabsStreamService';
 import { elevenLabsService } from '@/lib/tts/elevenLabsService';
-import { createStreamingVisemeAccumulator } from '@/lib/lipsync/streamingVisemeAccumulator';
+import { createStreamingVisemeAccumulator } from '@core/lipsync/streamingVisemeAccumulator';
 import { prewarmVoicePipeline } from '@/lib/voice/prewarm';
-import { ELEVEN_STREAM_SAMPLE_RATE, VOICE_SPECULATIVE_RAG } from '@/lib/voice/voiceConfig';
-import { createSpeculativeRag } from '@/lib/voice/speculativeRetrieval';
+import { ELEVEN_STREAM_SAMPLE_RATE, VOICE_SPECULATIVE_RAG } from '@core/voice/voiceConfig';
+import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
 import { startSttSession } from '@/lib/stt/sttService';
 import { detectSentiment } from '@core/sentiment/detectSentiment';
 import { useSettings } from '@/context/SettingsContext';
-import { createSentenceSplitter } from '@/features/voice/sentenceTracker';
+import { createSentenceSplitter } from '@core/voice/sentenceTracker';
 import { AVATAR_PROFILES, DEFAULT_AVATAR_ID } from '@/features/avatar/config/avatarProfiles';
 
 // ─── Voice state machine ──────────────────────────────────────────────────────

@@ -14,7 +14,7 @@
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
 import { PLAYBACK_MODE } from '@/lib/audio/audioModes';
-import { segmentToCC4Payload } from './blendshapeTranslator';
+import { segmentToCC4Payload } from '@core/avatar/blendshapeTranslator';
 import { NativeUnityAvatarModule } from '../../../../modules/unity-avatar-module/src';
 
 let currentSound = null;

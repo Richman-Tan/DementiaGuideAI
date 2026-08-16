@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { createVisemeTimeline } from '@/lib/lipsync/createVisemeTimeline';
+import { createVisemeTimeline } from '@core/lipsync/createVisemeTimeline';
 import { timeoutSignal } from '@core/net/withTimeout';
 
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io';

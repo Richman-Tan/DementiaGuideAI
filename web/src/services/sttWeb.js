@@ -15,7 +15,7 @@ import {
   STT_FINAL_TIMEOUT_MS,
   HANDS_FREE_SILENCE_MS,
   HANDS_FREE_MAX_LEAD_SILENCE_MS,
-} from '@/lib/voice/voiceConfig';
+} from '@core/voice/voiceConfig';
 import { openaiClient } from './openaiClient.js';
 
 const RMS_SILENCE_THRESHOLD = 0.012; // normalized RMS below this ≈ inaudible

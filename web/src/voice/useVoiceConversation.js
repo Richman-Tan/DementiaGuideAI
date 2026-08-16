@@ -12,12 +12,12 @@ import { startSttSession } from '../services/sttWeb.js';
 import { getElevenKey } from '../state/keysStore.js';
 import { mapSettingsToRag, speechRateFor } from '../state/mapSettingsToRag.js';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
-import { createElevenLabsStream } from '@/lib/tts/elevenLabsStreamService';
-import { createStreamingVisemeAccumulator } from '@/lib/lipsync/streamingVisemeAccumulator';
-import { ELEVEN_STREAM_SAMPLE_RATE, VOICE_SPECULATIVE_RAG } from '@/lib/voice/voiceConfig';
-import { createSpeculativeRag } from '@/lib/voice/speculativeRetrieval';
+import { createElevenLabsStream } from '@core/tts/elevenLabsStreamService';
+import { createStreamingVisemeAccumulator } from '@core/lipsync/streamingVisemeAccumulator';
+import { ELEVEN_STREAM_SAMPLE_RATE, VOICE_SPECULATIVE_RAG } from '@core/voice/voiceConfig';
+import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
 import { detectSentiment } from '@core/sentiment/detectSentiment';
-import { createSentenceSplitter } from '@/features/voice/sentenceTracker';
+import { createSentenceSplitter } from '@core/voice/sentenceTracker';
 
 const MAX_QUERY_CHARS = 1000;
 

@@ -23,7 +23,7 @@ import {
   HANDS_FREE_MAX_LEAD_SILENCE_MS,
   HANDS_FREE_VOLUME_THRESHOLD,
   HANDS_FREE_VOLUME_INTERVAL_MS,
-} from '@/lib/voice/voiceConfig';
+} from '@core/voice/voiceConfig';
 
 // Android 13+ (API 33) is required for `continuous: true` and for
 // `recordingOptions.persist` (the raw-audio file behind the Whisper rescue).

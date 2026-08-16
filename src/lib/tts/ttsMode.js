@@ -7,7 +7,7 @@
 // The caller additionally gates on the renderer's supportsStreamingAudio and
 // the user's fastVoiceMode setting.
 
-import { VOICE_STREAMING_TTS } from '@/lib/voice/voiceConfig';
+import { VOICE_STREAMING_TTS } from '@core/voice/voiceConfig';
 import { azureTtsService } from './azureTtsService';
 import { elevenLabsService } from './elevenLabsService';
 

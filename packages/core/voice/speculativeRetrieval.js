@@ -17,7 +17,7 @@ import {
   SPECULATIVE_MIN_WORDS,
   SPECULATIVE_MAX_FIRES,
   SPECULATIVE_REUSE_JACCARD,
-} from '@/lib/voice/voiceConfig';
+} from './voiceConfig';
 
 const tokenize = (text) =>
   text.toLowerCase().replace(/[^\w\s']/g, ' ').split(/\s+/).filter(Boolean);

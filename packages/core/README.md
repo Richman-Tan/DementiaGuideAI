@@ -14,6 +14,11 @@ in step:
 | Web (dev + build) | `web/vite.config.js` → `resolve.alias` |
 | Node scripts | plain relative `require('../../packages/core/…')` |
 
+**Inside this directory, imports are relative** (`./voiceConfig`,
+`../voice/voiceConfig`) — never `@core/…`. That is what lets `scripts/eval/*` and
+`scripts/ingest/ingest.mjs` pull core in with a bare `require()` and no alias
+configured at all.
+
 ## The rule for what belongs here
 
 **No platform imports and no outward dependencies.** Nothing in `@core` may
@@ -29,11 +34,20 @@ drawn where it is:
 | `rag/` — `ragConfig`, `prompt`, `retrieval`, `citations` | Zero dependencies. Already imported by `scripts/eval/*` and `scripts/ingest/ingest.mjs` in plain Node. |
 | `net/withTimeout` | Generic fetch/abort helper, used by both apps |
 | `sentiment/detectSentiment` | Pure text analysis, used by both apps |
+| `voice/` — `voiceConfig`, `speculativeRetrieval`, `sentenceTracker` | Timing constants and two pure state machines. No timer, socket or mic is owned here — callers drive them. |
+| `tts/` — `normalizeSpokenText`, `elevenLabsStreamService` | Text normalisation is pure; the stream service speaks the ElevenLabs WebSocket protocol using only `WebSocket`, which both runtimes provide. Audio *playback* stays platform-side. |
+| `lipsync/` — `createVisemeTimeline`, `streamingVisemeAccumulator`, `phonemeMap`, `g2p/` | Alignment → viseme timeline is arithmetic over text and timings. It produces a timeline; it never renders one. |
+| `avatar/blendshapeTranslator` | Maps viseme segments to CC4 blendshape payloads — a data transform, shared verbatim by the mobile and web Unity bridges. |
+
+The `voice`/`tts`/`lipsync`/`avatar` folders arrived when the web app was found to
+be importing nine modules straight out of `src/`. The boundary was originally drawn
+per *folder*, which left partly-shared folders behind; it is now drawn per *file*.
 
 | Deliberately NOT in core | Why |
 |---|---|
-| `src/lib/voice/speculativeRetrieval.js` | Schedules retrieval off **live-STT partials** and depends on voice timing config — client latency orchestration, not retrieval logic |
-| `src/lib/tts/`, `src/lib/lipsync/` | Only partly shared, and browser/native audio bound. Splitting them would leave two folders of the same name in two trees. |
+| `src/lib/voice/prewarm.js` | Warms Expo AV and the native recognizer — platform handles |
+| `src/lib/tts/{ttsService,ttsMode,azureTtsService,elevenLabsService}` | Own playback, `expo-av` and provider credentials |
+| `src/lib/lipsync/azureVisemeMap.js` | Azure Speech SDK viseme IDs — used only by the mobile Azure path |
 | `src/lib/stt/`, `src/lib/audio/` | Platform APIs |
 | `src/lib/supabaseService.ts`, `openaiService.js` | Carry platform config and credentials |
 

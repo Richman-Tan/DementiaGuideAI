@@ -1,5 +1,5 @@
 import { createSpeculativeRag } from './speculativeRetrieval';
-import { SPECULATIVE_STABLE_MS } from '@/lib/voice/voiceConfig';
+import { SPECULATIVE_STABLE_MS } from './voiceConfig';
 
 const CHUNKS = [{ id: 'c1', title: 'Sundowning basics' }];
 

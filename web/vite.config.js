@@ -5,17 +5,15 @@ import { createReadStream, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoSrc = path.resolve(__dirname, '../src');
 const repoCore = path.resolve(__dirname, '../packages/core');
 
 // The five deliberately-CommonJS shared libs (see core/rag/ragConfig.js header).
 // They are all `const X = …; module.exports = { shorthand list };` with at most
 // a destructured require — convertible to ESM with two regexes. One transform
 // used by BOTH dev serve and the Rollup build, so the pipelines can't diverge.
-const CJS_LIBS = [
-  ...['rag/ragConfig.js', 'rag/prompt.js', 'rag/retrieval.js', 'rag/citations.js'].map((p) => path.join(repoCore, p)),
-  path.join(repoSrc, 'lib/voice/voiceConfig.js'),
-];
+const CJS_LIBS = ['rag/ragConfig.js', 'rag/prompt.js', 'rag/retrieval.js', 'rag/citations.js', 'voice/voiceConfig.js'].map(
+  (p) => path.join(repoCore, p)
+);
 
 function cjsLibsToEsm() {
   return {
@@ -100,10 +98,11 @@ export default defineConfig(({ mode }) => {
     plugins: [cjsLibsToEsm(), unityBrotliHeaders(), react()],
     resolve: {
       alias: {
-        // '@core' and '@' can coexist: alias matching is on whole path
-        // segments, so '@' only ever matches '@/…', never '@core/…'.
+        // The web app resolves nothing out of the mobile tree — everything it
+        // shares with mobile lives in packages/core. (The one remaining link is
+        // scripts/extract-renderer.mjs, which *generates* three/renderer.js from
+        // the mobile WebView source at build time; that reads the file with fs.)
         '@core': repoCore,
-        '@': repoSrc,
         '@web': path.resolve(__dirname, 'src'),
       },
     },

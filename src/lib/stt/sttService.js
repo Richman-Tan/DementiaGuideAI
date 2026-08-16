@@ -14,7 +14,7 @@
 // Whisper using the recognizer's persisted recording, so a bad recognition
 // day never silently loses the user's words.
 
-import { VOICE_STREAMING_STT } from '@/lib/voice/voiceConfig';
+import { VOICE_STREAMING_STT } from '@core/voice/voiceConfig';
 import { isLiveRecognitionAvailable, startLiveSession } from './expoSpeechRecognition';
 import { startWhisperSession, transcribeFile } from './whisperFallback';
 

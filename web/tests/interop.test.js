@@ -5,9 +5,9 @@ import { TOP_K, MAX_HISTORY, PROMPT_VERSION, CHAT_MODEL } from '@core/rag/ragCon
 import { buildSystemPrompt, buildUserContent } from '@core/rag/prompt';
 import { extractCitations, createMarkerStripper } from '@core/rag/citations';
 import { capBySourceFamily } from '@core/rag/retrieval';
-import { ELEVEN_STREAM_SAMPLE_RATE, SPECULATIVE_MIN_WORDS } from '@/lib/voice/voiceConfig';
-import { createSpeculativeRag } from '@/lib/voice/speculativeRetrieval';
-import { createSentenceSplitter } from '@/features/voice/sentenceTracker';
+import { ELEVEN_STREAM_SAMPLE_RATE, SPECULATIVE_MIN_WORDS } from '@core/voice/voiceConfig';
+import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
+import { createSentenceSplitter } from '@core/voice/sentenceTracker';
 import { timeoutSignal } from '@core/net/withTimeout';
 
 describe('CJS libs through web alias', () => {

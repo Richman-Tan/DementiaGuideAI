@@ -4,7 +4,7 @@
 //   2. OpenAI tts-1 — no alignment; the renderer falls back to RMS lipsync
 // The lipsync stack (with its 660 KB G2P lexicon) is imported dynamically so
 // it stays out of the initial bundle until the first spoken reply.
-import { normalizeSpokenText } from '@/lib/tts/normalizeSpokenText';
+import { normalizeSpokenText } from '@core/tts/normalizeSpokenText';
 import { timeoutSignal } from '@core/net/withTimeout';
 import { getElevenKey } from '../state/keysStore.js';
 import { openaiClient } from './openaiClient.js';
@@ -56,7 +56,7 @@ async function elevenTtsWithAlignment(text, voiceId, speechRate, visemeWeights) 
 
   let visemeTimeline = null;
   if (data.alignment) {
-    const { createVisemeTimeline } = await import('@/lib/lipsync/createVisemeTimeline');
+    const { createVisemeTimeline } = await import('@core/lipsync/createVisemeTimeline');
     visemeTimeline = createVisemeTimeline(data.alignment, { visemeWeights: visemeWeights || undefined });
   }
   return { audioBase64: data.audio_base64, visemeTimeline };

@@ -14,8 +14,8 @@ animation happens in that embedded browser context and reports back via
 
 ## The voice conversation pipeline
 
-Managed by `src/features/voice/hooks/useAvatarConversation.js` (mobile) and
-`web/src/voice/useVoiceConversation.js` (web):
+Managed by `apps/mobile/src/features/voice/hooks/useAvatarConversation.js` (mobile) and
+`apps/web/src/voice/useVoiceConversation.js` (web):
 
 ```
 [Microphone] → expo-av recording
@@ -36,7 +36,7 @@ avatar starts speaking the first sentence while later ones are still generating.
 Latency budget, streaming STT and speculative retrieval:
 [voice-latency-streaming.md](voice-latency-streaming.md).
 
-`src/lib/voice/speculativeRetrieval.js` starts retrieval on a stabilised live-STT
+`packages/core/voice/speculativeRetrieval.js` starts retrieval on a stabilised live-STT
 partial *while the user is still talking*, so the embedding and vector-search
 round trips are already in flight when the final transcript lands.
 
@@ -96,4 +96,4 @@ The Unity path shares one message protocol across mobile and web
 (`setCharacter` / `play` / `stop`), so the same viseme timeline drives both.
 
 - Native embedding, gradle wiring and export internals: [android-unity.md](android-unity.md)
-- Web (WebGL) build and serving: [`web/README.md`](../web/README.md)
+- Web (WebGL) build and serving: [`apps/web/README.md`](../apps/web/README.md)

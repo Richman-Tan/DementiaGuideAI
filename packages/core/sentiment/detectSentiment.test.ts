@@ -1,4 +1,4 @@
-import { detectSentiment } from '@core/sentiment/detectSentiment';
+import { detectSentiment } from './detectSentiment';
 
 describe('detectSentiment', () => {
   it('classifies clearly positive text', () => {

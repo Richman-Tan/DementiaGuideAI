@@ -1,8 +1,8 @@
 # Android Unity Integration (UaaL)
 
 How the Unity avatar (Aaron/Ariana) is embedded on Android, mirroring the iOS
-`UnityFramework.framework` embed. iOS reference: `plugins/withUnityFramework.js`
-(iOS half) + `modules/unity-avatar-module/ios/`.
+`UnityFramework.framework` embed. iOS reference: `apps/mobile/plugins/withUnityFramework.js`
+(iOS half) + `apps/mobile/modules/unity-avatar-module/ios/`.
 
 ## Architecture
 
@@ -18,13 +18,13 @@ unity-avatar/UnityAvatarProject/
                                              shared/*.gradle        referenced by unityLibrary
                                              gradle.properties      source of the unity.* keys
 
-plugins/withUnityFramework.js (Android mods) — applied at `expo prebuild`:
+apps/mobile/plugins/withUnityFramework.js (Android mods) — applied at `expo prebuild`:
   settings.gradle   include ':unityLibrary' + projectDir → POINTS into the submodule (no copy)
   app/build.gradle  implementation project(':unityLibrary') + Unity noCompress list
   gradle.properties every unity.* key + unityStreamingAssets (read from the export) + reactNativeArchitectures=arm64-v8a
   AndroidManifest   strips com.unity3d.player.UnityPlayerActivity (Unity's template ships it with a LAUNCHER intent-filter)
 
-modules/unity-avatar-module/android/ — Expo module (Kotlin):
+apps/mobile/modules/unity-avatar-module/android/ — Expo module (Kotlin):
   UnityBridgeManager.kt  singleton UnityPlayerForActivityOrService owner; lazy boot; lifecycle; UnitySendMessage
   UnityAvatarView.kt     ExpoView hosting player.getFrameLayout(); touch-transparent
   UnityAvatarModule.kt   initialize/playAudio/setCharacter/stopAudio/setDebugMode + activity lifecycle hooks

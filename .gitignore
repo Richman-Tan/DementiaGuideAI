@@ -37,9 +37,9 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# generated native folders (expo prebuild output)
+apps/mobile/ios/
+apps/mobile/android/
 
 # Unity
 unity-avatar/UnityAvatarProject/Library/
@@ -70,10 +70,11 @@ docs/report/backup/
 **/~$*
 
 # Web build
-web/dist/
-web/public/unity/Build/
+apps/web/dist/
+apps/web/public/unity/Build/
 
-# Gradle build caches. /android is already ignored wholesale above, but the
+# Gradle build caches. apps/mobile/android/ is already ignored wholesale above,
+# but the
 # UaaL module keeps its own android/ tree that is committed, so ignore the
 # regenerable .gradle cache and build output inside it (and any future one) by
 # name. Trailing slashes matter: `build/` is generated output, while the

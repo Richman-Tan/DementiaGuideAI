@@ -6,7 +6,25 @@ module.exports = [
   ...expoConfig,
   eslintConfigPrettier,
   {
+    // eslint-config-expo only registers the `node` resolver, which knows nothing
+    // about our aliases. They used to resolve by accident: `tsconfig.json` sat in
+    // the lint cwd, so the TypeScript resolver picked its `paths` up for free.
+    // With the app one level down that no longer happens, so both projects are
+    // named explicitly — this is what keeps import/no-unresolved honest across
+    // apps/mobile, apps/web and packages/core.
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: ['apps/mobile/tsconfig.json', 'apps/web/tsconfig.json'],
+        },
+      },
+    },
+  },
+  {
     rules: {
+      // `@assets/…glb` are Metro/Vite binary assets, not modules — no resolver
+      // can follow them, and both bundlers are verified to emit them.
+      'import/no-unresolved': ['error', { ignore: ['\\.(glb|gltf|vrm)$'] }],
       // Idiomatic React Native Animated pattern: `useRef(new Animated.Value(0)).current`
       // read in a style prop. The react-compiler ref/immutability rules flag this as a
       // false positive, so we keep them visible as warnings rather than hard errors.
@@ -17,6 +35,26 @@ module.exports = [
       'react/no-unescaped-entities': 'off',
       // Dev-tools nicety, not a correctness issue; surfaced as a warning.
       'react/display-name': 'warn',
+      // Same react-compiler family as the three above, and the same situation:
+      // pre-existing code the compiler cannot fully analyse. Kept visible as a
+      // warning rather than blocking the build.
+      'react-hooks/preserve-manual-memoization': 'warn',
+    },
+  },
+  {
+    // Node-context files: build scripts and tool configs. eslint-config-expo
+    // loads browser globals, so these need Node's declared explicitly.
+    files: ['**/*.config.{js,mjs}', 'apps/web/scripts/**/*.mjs', 'apps/web/vite.config.js'],
+    languageOptions: {
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        console: 'readonly',
+        module: 'writable',
+        process: 'readonly',
+        require: 'readonly',
+      },
     },
   },
   {
@@ -38,15 +76,20 @@ module.exports = [
   },
   {
     ignores: [
-      'node_modules/**',
-      'dist/**',
-      '.expo/**',
-      'ios/**',
-      'android/**',
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.expo/**',
+      // Build output and vendored third-party bundles. `.vercel/output/` is the
+      // built site and `public/draco/` + `public/unity/` are decoder/engine
+      // blobs — multi-MB single-line files that blow up ESLint's formatter.
+      '**/.vercel/**',
+      'apps/web/public/**',
+      'apps/mobile/ios/**',
+      'apps/mobile/android/**',
+      'apps/mobile/modules/**',
+      'apps/mobile/plugins/**',
       'unity-avatar/**',
       'scripts/**',
-      'modules/**',
-      'plugins/**',
     ],
   },
 ];

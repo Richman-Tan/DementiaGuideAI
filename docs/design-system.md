@@ -1,7 +1,7 @@
 # Design system
 
-Tokens live in `src/theme/` (`colors.ts`, `typography.ts`) for mobile and
-`web/src/styles/` for web. Both surfaces share the same palette.
+Tokens live in `apps/mobile/src/theme/` (`colors.ts`, `typography.ts`) for mobile and
+`apps/web/src/styles/` for web. Both surfaces share the same palette.
 
 ## Colour
 
@@ -28,5 +28,5 @@ requirements rather than nice-to-haves:
 
 Settings are applied before first paint so there is no flash of the wrong theme
 or text size. On web that is an inline bootstrap script in `index.html`, allowed
-by a sha256 hash in the CSP — `web/tests/csp.test.js` keeps the hash in sync and
+by a sha256 hash in the CSP — `apps/web/tests/csp.test.js` keeps the hash in sync and
 fails the build if the script changes without it.

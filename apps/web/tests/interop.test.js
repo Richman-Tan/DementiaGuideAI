@@ -9,6 +9,7 @@ import { ELEVEN_STREAM_SAMPLE_RATE, SPECULATIVE_MIN_WORDS } from '@core/voice/vo
 import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
 import { createSentenceSplitter } from '@core/voice/sentenceTracker';
 import { timeoutSignal } from '@core/net/withTimeout';
+import { MARK, MARK_REVERSED, MARK_COMPACT, TILE, ANDROID_SAFE_ZONE_RATIO, markBounds, markFor, markEnclosingRadius } from '@core/brand/mark';
 
 describe('CJS libs through web alias', () => {
   it('exposes rag config constants', () => {
@@ -84,5 +85,47 @@ describe('ESM libs importing CJS constants', () => {
     const { signal, cancel } = timeoutSignal(50);
     expect(signal).toBeInstanceOf(AbortSignal);
     cancel();
+  });
+});
+
+describe('brand mark geometry', () => {
+  it('resolves through the alias with its geometry intact', () => {
+    expect(MARK.solid.r).toBeGreaterThan(0);
+    expect(MARK.ring.strokeWidth).toBeGreaterThan(0);
+    expect(TILE.background).toMatch(/^#[0-9A-Fa-f]{6}$/);
+  });
+
+  it('bounds the mark on the drawn shape, stroke included — not on the 48-box', () => {
+    const b = markBounds(MARK);
+    // The ring's stroke spills half a width past its radius.
+    expect(b.maxX).toBeCloseTo(MARK.ring.cx + MARK.ring.r + MARK.ring.strokeWidth / 2);
+    expect(b.minX).toBeCloseTo(MARK.solid.cx - MARK.solid.r);
+    // Wider than tall, and off-centre in the 48-box — which is why every renderer
+    // has to centre on these bounds rather than on 24,24.
+    expect(b.width).toBeGreaterThan(b.height);
+    expect((b.minX + b.maxX) / 2).not.toBeCloseTo(24);
+  });
+
+  it('picks the heavier variants for small and for reversed rendering', () => {
+    // Keyed on the drawn width of the mark, not on its container.
+    expect(markFor(21, true)).toBe(MARK_COMPACT);
+    expect(markFor(180, true)).toBe(MARK_REVERSED);
+    expect(markFor(180, false)).toBe(MARK);
+    // White on teal reads thinner, so the reversed ring is heavier.
+    expect(MARK_REVERSED.ring.strokeWidth).toBeGreaterThan(MARK.ring.strokeWidth);
+  });
+
+  it('encloses the mark more tightly than its bounding box would', () => {
+    const b = markBounds(MARK);
+    const halfDiagonal = Math.hypot(b.width, b.height) / 2;
+    // The mark is two discs, not a rectangle, so the circle that contains it is
+    // smaller than the one that contains its box. Sizing the Android adaptive
+    // icon off the box instead would shrink it by about a fifth for nothing.
+    expect(markEnclosingRadius(MARK)).toBeLessThan(halfDiagonal);
+  });
+
+  it('states the Android safe zone as 66dp of a 108dp canvas', () => {
+    // 61.1%, not 66% — the outer 18dp per side is mask and parallax bleed.
+    expect(ANDROID_SAFE_ZONE_RATIO).toBeCloseTo(0.611, 3);
   });
 });

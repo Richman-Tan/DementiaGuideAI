@@ -3,6 +3,7 @@ import React from 'react';
 import { go } from '../state/router.js';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import BrandMark from './BrandMark.jsx';
 
 const I = {
   home: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 11 12 4l8 7" /><path d="M6 10v9h12v-9" /></svg>,
@@ -34,7 +35,7 @@ export default function Shell({ active, isDesktop, isTablet, isMobile, children 
       {isDesktop && (
         <aside style={{ width: '260px', flexShrink: '0', position: 'sticky', top: '0', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '4px', background: 'var(--surface)', borderRight: 'var(--bw) solid var(--border)', padding: '22px 14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 10px 18px' }}>
-            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700' }}>A</div>
+            <BrandMark size={34} tile />
             <strong style={{ fontSize: '1.02rem' }}>DementiaGuide AI</strong>
           </div>
           {NAV.map(([key, label, route, icon]) => {
@@ -54,7 +55,7 @@ export default function Shell({ active, isDesktop, isTablet, isMobile, children 
       )}
       {isTablet && (
         <aside style={{ width: '72px', flexShrink: '0', position: 'sticky', top: '0', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', background: 'var(--surface)', borderRight: 'var(--bw) solid var(--border)', padding: '20px 0 16px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '11px', background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', marginBottom: '14px' }}>A</div>
+          <BrandMark size={36} tile style={{ marginBottom: '14px' }} />
           {NAV.slice(0, 2).map(([key, label, route, icon]) => {
             const n = navStyle(active === key);
             return <button key={key} onClick={go(route)} title={label} aria-label={label} style={{ width: '48px', height: '48px', borderRadius: '12px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: n.bg, color: n.c }} className="hv3">{icon}</button>;

@@ -59,9 +59,13 @@ module.exports = [
   },
   {
     // Jest test files (plain JS): declare the test globals so no-undef passes.
+    // `require` already resolves via the CommonJS source type, but the module
+    // path globals do not — a test that reads a fixture off disk needs them.
     files: ['**/*.test.js', '**/*.test.jsx'],
     languageOptions: {
       globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
         describe: 'readonly',
         it: 'readonly',
         test: 'readonly',

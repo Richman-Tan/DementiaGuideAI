@@ -69,8 +69,8 @@ function buildHTML(modelUrl, backdropUrl = null) {
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
   }
 }
 <\/script>
@@ -1024,7 +1024,7 @@ function loadModel() {
   window._dbg('Renderer created, loading GLB model...');
 
   const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/');
+  dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/libs/draco/');
 
   const loader = new GLTFLoader();
   loader.crossOrigin = 'anonymous';

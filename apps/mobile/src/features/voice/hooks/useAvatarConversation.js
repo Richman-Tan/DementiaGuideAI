@@ -69,10 +69,11 @@ export function useAvatarConversation({ avatarRef }) {
   const [conversationHistory, setConversationHistory] = useState([]);
   const [error, setError]                         = useState(null);            // string | null
   const [currentSubtitle, setCurrentSubtitle]     = useState(''); // current speaking sentence
+  const [sources, setSources]                     = useState([]); // citations for the latest turn
   const {
     audioEnabled, conciseMode,
     responseStyle, jargonMode, ariaPersonality, isCaregiversSetup, speechRate,
-    selectedAvatarId, handsFreeMode, fastVoiceMode,
+    selectedAvatarId, handsFreeMode, fastVoiceMode, conversationResetSignal,
   } = useSettings();
 
   // Resolve the active avatar profile so viseme weights match the loaded model.
@@ -137,6 +138,29 @@ export function useAvatarConversation({ avatarRef }) {
     };
   }, [avatarRef]);
 
+  // Settings' "Clear Conversation History" bumps conversationResetSignal after
+  // wiping AsyncStorage — mirror that here so a live voice turn doesn't keep
+  // speaking from (or appending to) the deleted history.
+  const isFirstReset = useRef(true);
+  useEffect(() => {
+    if (isFirstReset.current) {
+      isFirstReset.current = false;
+      return;
+    }
+    sttSessionRef.current?.cancel();
+    sttSessionRef.current = null;
+    speculativeRef.current?.cancel();
+    speculativeRef.current = null;
+    activeStreamRef.current?.abort();
+    avatarRef.current?.stopAudio();
+    setConversationHistory([]);
+    historyRef.current = [];
+    setCurrentSubtitle('');
+    setSources([]);
+    setError(null);
+    setVoiceState(VoiceState.IDLE);
+  }, [conversationResetSignal, avatarRef]);
+
   // ─── Core conversation loop ─────────────────────────────────────────────────
   // Producer-consumer pattern: LLM streaming and TTS playback run concurrently.
   // The consumer starts as soon as the first sentence is queued — it does NOT
@@ -150,6 +174,7 @@ export function useAvatarConversation({ avatarRef }) {
     }
 
     setVoiceState(VoiceState.PROCESSING);
+    setSources([]);
     abortRef.current = false;
 
     // Timing accumulator — checkpoints set inline, printed in finally
@@ -338,6 +363,7 @@ export function useAvatarConversation({ avatarRef }) {
       const splitter = createSentenceSplitter();
 
       let citedSources = [];
+      let citedText = '';
       try {
         const timingCbs = {
           onRagDone: () => {
@@ -350,7 +376,7 @@ export function useAvatarConversation({ avatarRef }) {
           },
           // Structured, validated sources extracted from inline [S#] markers
           // (the markers themselves are stripped before TTS).
-          onSources: (sources) => { citedSources = sources ?? []; },
+          onSources: (s, text) => { citedSources = s ?? []; citedText = text ?? ''; setSources(citedSources); },
         };
 
         pts.rag_start = Date.now();
@@ -407,7 +433,9 @@ export function useAvatarConversation({ avatarRef }) {
           const existing = raw ? JSON.parse(raw) : [];
           const now = Date.now();
           const userEntry = { id: `v_${now}`, role: 'user', text: userText, sources: [], timestamp: new Date().toISOString() };
-          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: fullText, sources: citedSources, timestamp: new Date().toISOString() };
+          // citedText (when available) carries the renumbered [1]…[n] markers so
+          // ChatScreen's CitationText renders identical tappable badges to a typed query.
+          const assistantEntry = { id: `v_${now + 1}`, role: 'assistant', text: citedText || fullText, sources: citedSources, timestamp: new Date().toISOString() };
           const updated = [...existing, userEntry, assistantEntry].slice(-MAX_PERSISTED);
           await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(updated));
         } catch { /* non-critical */ }
@@ -647,5 +675,6 @@ export function useAvatarConversation({ avatarRef }) {
     error,
     clearError: () => setError(null),
     currentSubtitle,
+    sources,
   };
 }

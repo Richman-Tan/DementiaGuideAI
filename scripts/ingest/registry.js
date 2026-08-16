@@ -29,7 +29,7 @@ const REGISTRY = [
     local_path: 'apps/mobile/src/features/library/data/knowledgeBase.js',
     category: null, // per-chunk categories come from the file itself
     enabled: true,
-    notes: '70 hand-authored chunks, 10 per category. Paraphrased from cited orgs; per-chunk source_org/source_url preserved.',
+    notes: '77 hand-authored chunks (10 per category, plus extensions). Paraphrased from cited orgs; per-chunk source_org/source_url preserved. 2026-08-12: added 5 chunks from Dementia NZ, Dementia Australia, and Forward with Dementia (wellbeing_011, clinical_011, bestpractices_011/012, homesafety_011) — pending owner fact-check before ingest.',
   },
   {
     document_id: 'isupport-who-v2026',

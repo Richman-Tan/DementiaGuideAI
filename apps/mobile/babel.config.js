@@ -6,6 +6,13 @@ module.exports = function (api) {
       [
         'module-resolver',
         {
+          // Relative alias values are resolved against `cwd`, which the plugin
+          // defaults to `process.cwd()` — not to this file's directory. That was
+          // harmless while babel.config.js sat at the repo root, but now the two
+          // differ: invoked from the root, '@core' would resolve to
+          // <above-the-repo>/packages/core and '@' to a repo-root src/ that no
+          // longer exists. Pinning cwd makes the aliases invocation-independent.
+          cwd: __dirname,
           root: ['./'],
           alias: {
             '@': './src',

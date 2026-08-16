@@ -6,6 +6,10 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@core/(.*)$': '<rootDir>/../../packages/core/$1',
+    // Binary models. Nothing imports these under Jest today, but the alias is
+    // declared on every other surface — leaving it out here means the first test
+    // that mounts VoiceScreen fails on a missing module rather than on its logic.
+    '^@assets/(.*)$': '<rootDir>/../../assets/$1',
   },
   testMatch: ['**/*.test.{js,jsx,ts,tsx}'],
   testPathIgnorePatterns: ['/node_modules/'],

@@ -50,7 +50,7 @@ describe('production CSP covers the inline bootstrap scripts', () => {
       expect(
         scriptSrc,
         `index.html inline script #${i + 1} is not allowed by the CSP.\n`
-          + `Add ${hash} to script-src in web/vercel.json (replacing the stale hash).`,
+          + `Add ${hash} to script-src in apps/web/vercel.json (replacing the stale hash).`,
       ).toContain(hash);
     });
   });

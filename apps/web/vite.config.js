@@ -86,7 +86,7 @@ function unityBrotliHeaders() {
 }
 
 export default defineConfig(({ mode }) => {
-  // Env resolution, least→most specific: web/.env (local dev; git-ignored so
+  // Env resolution, least→most specific: apps/web/.env (local dev; git-ignored so
   // `vercel build` doesn't stage it) → .vercel/.env.<mode>.local (written by
   // `vercel pull`/`vercel build` from project settings) → real process env (CI).
   const env = {

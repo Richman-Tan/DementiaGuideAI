@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Copies the Unity WebGL export into the web app's serving slot:
-//   unity-avatar/UnityAvatarProject/Builds/WebGL/Build/  →  web/public/unity/Build/
+//   unity-avatar/UnityAvatarProject/Builds/WebGL/Build/  →  apps/web/public/unity/Build/
 //
 // Unity names the files after productName (UnityAvatarProject.*); the web
 // loader contract is unity.* (probe hits /unity/Build/unity.loader.js), so
@@ -130,8 +130,8 @@ for (const [role, name] of Object.entries(manifest)) {
 if (headerProblems.length) {
   console.error(
     `\nvercel.json does not match this build's files:\n${headerProblems.join('\n')}\n\n`
-      + 'Update the "/unity/Build/<file>" header rules in web/vercel.json (and the\n'
-      + 'UNITY_COMPRESSED_TYPES map in web/vite.config.js) to match the names above.\n'
+      + 'Update the "/unity/Build/<file>" header rules in apps/web/vercel.json (and the\n'
+      + 'UNITY_COMPRESSED_TYPES map in apps/web/vite.config.js) to match the names above.\n'
       + 'Shipping without them makes the browser decompress ~245MB in JS on the main\n'
       + 'thread — a >20 minute load that reports no error.',
   );

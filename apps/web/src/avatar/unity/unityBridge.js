@@ -14,7 +14,7 @@
 // a middleware in vite.config.js for dev) so the browser decompresses them
 // natively. Serving them unlabelled still WORKS — Unity's loader has a JS
 // fallback decompressor — but it runs on the main thread and turns a ~4s
-// decode into a 20-minute one. web/scripts/sync-unity-webgl.mjs enforces it.
+// decode into a 20-minute one. apps/web/scripts/sync-unity-webgl.mjs enforces it.
 //
 // The message protocol is IDENTICAL to mobile UaaL (AvatarBridgeProtocol):
 //   { type: 'setCharacter', id }                        → AvatarRouter.cs

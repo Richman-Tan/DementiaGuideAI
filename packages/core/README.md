@@ -3,15 +3,16 @@
 Code in here runs unchanged on **every** surface: the Expo mobile app, the Vite
 web app, and headless Node (the eval and ingestion scripts under `scripts/`).
 
-Import it as `@core/…` — an alias defined in five places, all of which must stay
-in step:
+Import it as `@core/…` — an alias declared in five config files plus one
+convention, all of which must stay in step:
 
 | Consumer | Where the alias lives |
 |---|---|
 | Mobile (Metro) | `apps/mobile/babel.config.js` → `module-resolver` |
-| Types | `apps/mobile/tsconfig.json` → `paths` |
+| Mobile types | `apps/mobile/tsconfig.json` → `paths` |
 | Mobile tests | `apps/mobile/jest.config.js` → `moduleNameMapper` |
 | Web (dev + build) | `apps/web/vite.config.js` → `resolve.alias` |
+| Web types + lint | `apps/web/tsconfig.json` → `paths` |
 | Node scripts | plain relative `require('../../packages/core/…')` |
 
 **Inside this directory, imports are relative** (`./voiceConfig`,

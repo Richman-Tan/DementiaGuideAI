@@ -26,7 +26,7 @@ const REGISTRY = [
     licence_url: null,
     source_version: '2026-07',
     loader: 'curated-js',
-    local_path: 'src/features/library/data/knowledgeBase.js',
+    local_path: 'apps/mobile/src/features/library/data/knowledgeBase.js',
     category: null, // per-chunk categories come from the file itself
     enabled: true,
     notes: '70 hand-authored chunks, 10 per category. Paraphrased from cited orgs; per-chunk source_org/source_url preserved.',

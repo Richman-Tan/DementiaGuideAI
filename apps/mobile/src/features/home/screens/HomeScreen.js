@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Avatar } from '@/components/Avatar';
+import { BrandMark } from '@/components/BrandMark';
 import { Colors } from '@/theme/colors';
 import { Typography, FontSize } from '@/theme/typography';
 import { QUICK_QUESTIONS } from '@/constants/data';
@@ -78,7 +79,10 @@ export const HomeScreen = ({ navigation }) => {
           <View style={styles.headerTop}>
             <View>
               <Text style={[styles.greeting, { fontSize: 16 * textScale, color: colors.textSecondary }]}>{getGreeting()}</Text>
-              <Text style={[styles.appName, { fontSize: 28 * textScale, lineHeight: 28 * textScale * 1.3, color: colors.textPrimary }]}>DementiaGuide AI</Text>
+              <View style={styles.appNameRow}>
+                <BrandMark size={26 * textScale} color={colors.primary} ringColor={colors.primaryLight} />
+                <Text style={[styles.appName, { fontSize: 28 * textScale, lineHeight: 28 * textScale * 1.3, color: colors.textPrimary }]}>DementiaGuide AI</Text>
+              </View>
             </View>
             <TouchableOpacity
               style={[styles.settingsButton, { backgroundColor: colors.surface }]}
@@ -271,6 +275,11 @@ const styles = StyleSheet.create({
   greeting: {
     ...Typography.bodyMedium,
     color: Colors.textSecondary,
+  },
+  appNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   appName: {
     ...Typography.headlineLarge,

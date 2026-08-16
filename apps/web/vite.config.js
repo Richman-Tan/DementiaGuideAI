@@ -7,11 +7,13 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoCore = path.resolve(__dirname, '../../packages/core');
 
-// The five deliberately-CommonJS shared libs (see core/rag/ragConfig.js header).
+// The six deliberately-CommonJS shared libs (see core/rag/ragConfig.js header).
 // They are all `const X = …; module.exports = { shorthand list };` with at most
 // a destructured require — convertible to ESM with two regexes. One transform
 // used by BOTH dev serve and the Rollup build, so the pipelines can't diverge.
-const CJS_LIBS = ['rag/ragConfig.js', 'rag/prompt.js', 'rag/retrieval.js', 'rag/citations.js', 'voice/voiceConfig.js'].map(
+// A new CJS lib in packages/core has to be added here too, or the web build
+// ships raw `module.exports`; apps/web/tests/interop.test.js is the canary.
+const CJS_LIBS = ['rag/ragConfig.js', 'rag/prompt.js', 'rag/retrieval.js', 'rag/citations.js', 'voice/voiceConfig.js', 'brand/mark.js'].map(
   (p) => path.join(repoCore, p)
 );
 

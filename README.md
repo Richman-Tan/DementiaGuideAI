@@ -68,8 +68,8 @@ core:
 | `apps/mobile/` | **Mobile app** — Expo / React Native, iOS + Android. | `npm start` |
 | `apps/web/` | **Web app** — Vite + React, deployed on Vercel. | `npm run web` |
 | `packages/core/` | **Shared logic** — RAG config, prompt, retrieval, citations, voice/TTS/lip-sync engines and small utilities. Imported by mobile, web **and** Node, as `@core/…`. | — |
-| `scripts/` | Node/Python tooling: `migrations/`, `ingest/`, `eval/`. | `npm run rag:*`, `kb:*` |
-| `assets/` | The `.glb` avatar models, shared by both apps as `@assets/…`. App icons live in `apps/mobile/assets/`. | — |
+| `scripts/` | Node/Python tooling: `migrations/`, `ingest/`, `eval/`, `brand/`. | `npm run rag:*`, `kb:*`, `brand:icons` |
+| `assets/` | The `.glb` avatar models, shared by both apps as `@assets/…`, plus `brand/` — the logo in SVG. App icons live in `apps/mobile/assets/`, but **all of them are generated**: edit `packages/core/brand/mark.js` and run `npm run brand:icons`, never a PNG by hand. | — |
 | `unity-avatar/` | **Unity avatar project** (git submodule) — CC4 characters and their exporters. | — |
 | `content/` | Source documents for ingestion (PDFs gitignored; `sources/MANIFEST.md` is the record). | — |
 | `docs/` | All documentation. | — |

@@ -27,6 +27,7 @@
     "rag:eval:sweep": "node scripts/eval/sweep.mjs",
     "rag:grade": "node scripts/eval/grade-groundedness.mjs",
     "rag:introspect": "node scripts/eval/introspect.mjs",
+    "brand:icons": "node scripts/brand/build-icons.js",
     "kb:ingest": "node scripts/ingest/ingest.mjs",
     "kb:ingest:dry": "node scripts/ingest/ingest.mjs --dry-run",
     "postinstall": "patch-package"

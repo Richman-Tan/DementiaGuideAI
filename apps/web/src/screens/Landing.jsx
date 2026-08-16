@@ -1,12 +1,13 @@
 import React from 'react';
 import { AvatarStageCard } from '../avatar/AvatarStage.jsx';
+import BrandMark from '../components/BrandMark.jsx';
 
 export default function Landing({ openApp, browseLibrary }) {
   return (
     <section style={{ maxWidth: '1160px', margin: '0 auto', padding: '0 24px 40px' }}>
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '20px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '11px', background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '1.05rem' }}>A</div>
+          <BrandMark size={36} tile />
           <strong style={{ fontSize: '1.1rem', letterSpacing: '.01em' }}>DementiaGuide AI</strong>
         </div>
         <button onClick={openApp} style={{ minHeight: '44px', padding: '0 20px', borderRadius: '12px', border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: '600', cursor: 'pointer' }} className="hv1">Open the app</button>

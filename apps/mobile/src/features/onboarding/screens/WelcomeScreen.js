@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
+import { BrandMark } from '@/components/BrandMark';
 import { useSettings } from '@/context/SettingsContext';
 
 export function WelcomeScreen({ navigation }) {
@@ -42,13 +42,9 @@ export function WelcomeScreen({ navigation }) {
           },
         ]}
       >
-        {/* Avatar placeholder */}
+        {/* Brand mark */}
         <View style={styles.avatarCircle}>
-          <MaterialCommunityIcons
-            name="robot-excited"
-            size={56}
-            color={Colors.primary}
-          />
+          <BrandMark size={62} />
         </View>
 
         {/* Title */}

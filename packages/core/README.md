@@ -21,8 +21,12 @@ convention, all of which must stay in step:
 configured at all.
 
 For the same reason `package.json` here deliberately has **no `"type": "module"`**.
-The `rag/` files are CommonJS on purpose so plain Node can `require()` them;
-declaring the package ESM would break `scripts/eval` and `scripts/ingest`. The
+The `rag/` and `brand/` files are CommonJS on purpose so plain Node can
+`require()` them; declaring the package ESM would break `scripts/eval`,
+`scripts/ingest` and `scripts/brand`. Note that the web build converts these
+files with an **explicit allowlist** — `CJS_LIBS` in `apps/web/vite.config.js` —
+so a new CommonJS module here has to be added there as well, or Vite ships raw
+`module.exports` to the browser. `apps/web/tests/interop.test.js` is the canary. The
 `voice/`, `tts/`, `lipsync/` and `avatar/` files use ESM syntax and are only ever
 consumed by a bundler (Metro or Vite), which resolves them regardless.
 
@@ -45,6 +49,7 @@ drawn where it is:
 | `tts/` — `normalizeSpokenText`, `elevenLabsStreamService` | Text normalisation is pure; the stream service speaks the ElevenLabs WebSocket protocol using only `WebSocket`, which both runtimes provide. Audio *playback* stays platform-side. |
 | `lipsync/` — `createVisemeTimeline`, `streamingVisemeAccumulator`, `phonemeMap`, `g2p/` | Alignment → viseme timeline is arithmetic over text and timings. It produces a timeline; it never renders one. |
 | `avatar/blendshapeTranslator` | Maps viseme segments to CC4 blendshape payloads — a data transform, shared verbatim by the mobile and web Unity bridges. |
+| `brand/mark.js` | The logo's geometry and colours as plain numbers. Three things draw the mark — an SVG component on web, two `View`s on mobile, and the icon rasteriser in `scripts/brand/` — so the shape lives here and each one renders it. The *components* stay in their apps; only the spec is shared. |
 
 The `voice`/`tts`/`lipsync`/`avatar` folders arrived when the web app was found to
 be importing nine modules straight out of the mobile tree. The boundary was originally drawn

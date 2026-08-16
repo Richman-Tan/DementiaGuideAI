@@ -28,7 +28,7 @@ git submodule update --init
 | `packages/core/` | have **no platform imports and no outward dependencies** — it runs on mobile, web and in Node. See [`packages/core/README.md`](packages/core/README.md). |
 | `apps/mobile/src/` | be mobile-only (React Native, Expo APIs, native modules) |
 | `apps/web/src/` | be web-only (DOM, browser audio, Vite) |
-| `assets/` | be a binary asset both apps load (`@assets/…`). App icons go in `apps/mobile/assets/`. |
+| `assets/` | be a binary asset both apps load (`@assets/…`). App icons go in `apps/mobile/assets/` — but every icon and favicon in both apps is **generated**, so change `packages/core/brand/mark.js` and run `npm run brand:icons` rather than editing an image. `scripts/brand/build-icons.test.js` fails if the committed files fall behind. |
 
 If two surfaces need the same logic, it belongs in `packages/core` — not
 copy-pasted, and not imported across app boundaries.

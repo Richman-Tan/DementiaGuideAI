@@ -34,7 +34,7 @@ module.exports = [
       // Apostrophes in copy are intentional; escaping hurts readability.
       'react/no-unescaped-entities': 'off',
       // Dev-tools nicety, not a correctness issue; surfaced as a warning.
-      'react/display-name': 'warn',
+      'react/display-name': 'error',
       // Same react-compiler family as the three above, and the same situation:
       // pre-existing code the compiler cannot fully analyse. Kept visible as a
       // warning rather than blocking the build.

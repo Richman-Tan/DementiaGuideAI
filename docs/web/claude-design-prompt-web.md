@@ -1,5 +1,5 @@
 # Prompt for Claude Design — copy everything below the line
-# Attach when submitting (optional but recommended): app screenshots of Home / Chat / Voice / Library / Settings from the iOS or Android build, plus assets/workflow.png and assets/rag-pipeline.png as reference.
+# Attach when submitting (optional but recommended): app screenshots of Home / Chat / Voice / Library / Settings from the iOS or Android build, plus the pipeline/retrieval Mermaid diagrams at the top of README.md as reference.
 # Goal: the WEB build of DementiaGuide AI — same product, same brand, adapted to desktop/tablet/mobile-web layouts.
 
 ---

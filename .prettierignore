@@ -1,8 +1,8 @@
 node_modules
 dist
 .expo
-ios
-android
+apps/mobile/ios
+apps/mobile/android
 unity-avatar
 package-lock.json
-src/lib/lipsync/g2p/lexicon.json
+packages/core/lipsync/g2p/lexicon.json

@@ -1,6 +1,6 @@
 # Prompt for Claude Design — copy everything below the line
 # Attach when submitting: fig2_viseme_montage.png (avatar frames), app screenshots/demo stills, team photos.
-# Optional references: fig1_checks_passed.png, fig3_bilabial_curves.png, rag-pipeline.png, workflow.png.
+# Optional references: fig1_checks_passed.png, fig3_bilabial_curves.png, and the pipeline/retrieval Mermaid diagrams at the top of README.md.
 
 ---
 

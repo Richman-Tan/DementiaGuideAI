@@ -10,8 +10,8 @@ directly, holding the keys themselves**:
 
 | Surface | Where the key lives | Calls directly |
 |---|---|---|
-| Web | `localStorage` under `dg_keys` (`web/src/state/keysStore.js`) | `api.openai.com`, `api.elevenlabs.io` |
-| Mobile | on-device key entry (`src/lib/openaiService.js` → `getApiKey()`) | `api.openai.com`, `api.elevenlabs.io` |
+| Web | `localStorage` under `dg_keys` (`apps/web/src/state/keysStore.js`) | `api.openai.com`, `api.elevenlabs.io` |
+| Mobile | on-device key entry (`apps/mobile/src/lib/openaiService.js` → `getApiKey()`) | `api.openai.com`, `api.elevenlabs.io` |
 
 Consequences we live with right now:
 
@@ -34,26 +34,26 @@ and it already runs headless in Node via `scripts/eval/*` and
 `packages/core/README.md` for the rule that keeps it that way.
 
 Also server-side: the OpenAI chat/embedding calls, and the Supabase pgvector
-queries currently implemented **twice** — `src/lib/supabaseService.ts` and
-`web/src/services/supabase.js` are parallel implementations of the same thing.
+queries currently implemented **twice** — `apps/mobile/src/lib/supabaseService.ts` and
+`apps/web/src/services/supabase.js` are parallel implementations of the same thing.
 One backend collapses that duplication.
 
 ## What stays on the client
 
 Anything tied to a device or to perceived latency:
 
-- Audio playback, microphone, STT (`src/lib/stt/`, `web/src/services/sttWeb.js`)
-- Viseme/lip-sync scheduling (`src/lib/lipsync/`) and the avatar renderers
-- `src/lib/voice/speculativeRetrieval.js` — it fires off **live-STT partials**
+- Audio playback, microphone, STT (`apps/mobile/src/lib/stt/`, `apps/web/src/services/sttWeb.js`)
+- Viseme/lip-sync scheduling (`apps/mobile/src/lib/lipsync/`) and the avatar renderers
+- `packages/core/voice/speculativeRetrieval.js` — it fires off **live-STT partials**
   while the user is still speaking. It has to stay next to the microphone; it
   would call the backend's retrieve endpoint earlier rather than move.
 
 ## The seam that already exists
 
-`web/src/services/chatService.js` is a facade with a mock/real switch on
+`apps/web/src/services/chatService.js` is a facade with a mock/real switch on
 `isMockMode()`. A backend becomes a third implementation behind that same
 facade, so the UI does not change. The mobile equivalent is
-`src/lib/openaiService.js`.
+`apps/mobile/src/lib/openaiService.js`.
 
 The migration is therefore: stand up the service, point the facade at it, delete
 the client-side key entry, and drop the setup-card gate.
@@ -64,7 +64,7 @@ Supabase already provides Postgres + pgvector and holds the knowledge base, so
 "add a DB" is mostly **moving ownership of existing queries** behind the API
 rather than introducing new storage. A backend additionally makes room for
 tables the clients cannot safely own: accounts, usage/quota, and audit or
-telemetry beyond the local `src/lib/ragTelemetry.js`.
+telemetry beyond the local `apps/mobile/src/lib/ragTelemetry.js`.
 
 The dormant `origin/feat/auth-usage-metering` branch is prior thinking on the
 auth/metering half of this.

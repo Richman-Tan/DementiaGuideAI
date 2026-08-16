@@ -15,15 +15,15 @@ Three subsystems have been evaluated quantitatively at the mid-point: the articu
 
 ### 2.1 Co-articulation model
 
-The original lip-sync path linearly interpolated raw viseme keyframes with a single smoothing constant. It was replaced by a co-articulation engine that follows the Cohen–Massaro dominance-envelope approach. Each phoneme event *i* contributes a dominance function over time *t*:
+The original lip-sync path linearly interpolated raw viseme keyframes with a single smoothing constant. It was replaced by a co-articulation engine that follows the Cohen–Massaro dominance-envelope approach. Each phoneme event _i_ contributes a dominance function over time _t_:
 
-> *D<sub>i</sub>(t)* = *S*((*t* − *a<sub>i</sub>*)/(*p<sub>i</sub>* − *a<sub>i</sub>*)) for *a<sub>i</sub>* < *t* < *p<sub>i</sub>*;  1 for *p<sub>i</sub>* ≤ *t* ≤ *s<sub>i</sub>*;  1 − *S*((*t* − *s<sub>i</sub>*)/(*f<sub>i</sub>* − *s<sub>i</sub>*)) for *s<sub>i</sub>* < *t* < *f<sub>i</sub>*;  0 otherwise (1)
+> _D<sub>i</sub>(t)_ = _S_((_t_ − _a<sub>i</sub>_)/(_p<sub>i</sub>_ − _a<sub>i</sub>_)) for _a<sub>i</sub>_ < _t_ < _p<sub>i</sub>_; 1 for _p<sub>i</sub>_ ≤ _t_ ≤ _s<sub>i</sub>_; 1 − _S_((_t_ − _s<sub>i</sub>_)/(_f<sub>i</sub>_ − _s<sub>i</sub>_)) for _s<sub>i</sub>_ < _t_ < _f<sub>i</sub>_; 0 otherwise (1)
 
-where *a<sub>i</sub>* is an anticipatory onset before the acoustic onset, *p<sub>i</sub>* the dominance peak, *s<sub>i</sub>* the sustain end, *f<sub>i</sub>* the release end, and *S*(*x*) = *x*²(3 − 2*x*) is the smoothstep function. Neighbouring envelopes overlap, so several visemes are partially dominant at once. The weight of each blendshape *s* is the power-sharpened, dominance-weighted average of the active targets *τ<sub>i,s</sub>*:
+where _a<sub>i</sub>_ is an anticipatory onset before the acoustic onset, _p<sub>i</sub>_ the dominance peak, _s<sub>i</sub>_ the sustain end, _f<sub>i</sub>_ the release end, and _S_(_x_) = *x*²(3 − 2*x*) is the smoothstep function. Neighbouring envelopes overlap, so several visemes are partially dominant at once. The weight of each blendshape _s_ is the power-sharpened, dominance-weighted average of the active targets _τ<sub>i,s</sub>_:
 
-> *w<sub>s</sub>*(*t*) = *Σ<sub>i</sub>* *D<sub>i</sub>*(*t*)<sup>ρ</sup> · *τ<sub>i,s</sub>* / max(*Σ<sub>i</sub>* *D<sub>i</sub>*(*t*)<sup>ρ</sup>, 1) (2)
+> _w<sub>s</sub>_(_t_) = _Σ<sub>i</sub>_ _D<sub>i</sub>_(_t_)<sup>ρ</sup> · _τ<sub>i,s</sub>_ / max(_Σ<sub>i</sub>_ _D<sub>i</sub>_(_t_)<sup>ρ</sup>, 1) (2)
 
-with sharpening exponent ρ ≥ 1 and the denominator floored at one so an isolated, partially dominant viseme yields a partial-strength shape rather than snapping to its full target. Two closure classes are special-cased because they are the most visible defect when wrong: bilabial /p b m/ (`V_Explosive`) and labiodental /f v/ (`V_Dental_Lip`). Their dominance is forced to a high minimum peak, their contact shape is combined by maximum rather than averaged — *w<sub>c</sub>*(*t*) = max(*w<sub>c</sub>*(*t*), *D<sub>c</sub>*(*t*) · *τ<sub>c</sub>*) — and every mouth-opening shape is attenuated by (1 − κ · *D<sub>c</sub>*(*t*)), with suppression strength κ, while a closure is dominant, guaranteeing that the lips visibly meet. Curves are baked once per utterance; playback is a constant-time frame lookup. Upstream, a grapheme-to-phoneme (G2P) pipeline replaced per-character heuristics: text is normalised (numbers, currency, abbreviations), converted to ARPAbet phonemes through a lexicon with letter-to-sound rules, and mapped to the avatar's 14 visemes with per-phoneme timing.
+with sharpening exponent ρ ≥ 1 and the denominator floored at one so an isolated, partially dominant viseme yields a partial-strength shape rather than snapping to its full target. Two closure classes are special-cased because they are the most visible defect when wrong: bilabial /p b m/ (`V_Explosive`) and labiodental /f v/ (`V_Dental_Lip`). Their dominance is forced to a high minimum peak, their contact shape is combined by maximum rather than averaged — _w<sub>c</sub>_(_t_) = max(_w<sub>c</sub>_(_t_), _D<sub>c</sub>_(_t_) · _τ<sub>c</sub>_) — and every mouth-opening shape is attenuated by (1 − κ · _D<sub>c</sub>_(_t_)), with suppression strength κ, while a closure is dominant, guaranteeing that the lips visibly meet. Curves are baked once per utterance; playback is a constant-time frame lookup. Upstream, a grapheme-to-phoneme (G2P) pipeline replaced per-character heuristics: text is normalised (numbers, currency, abbreviations), converted to ARPAbet phonemes through a lexicon with letter-to-sound rules, and mapped to the avatar's 14 visemes with per-phoneme timing.
 
 ### 2.2 Evaluation method
 
@@ -35,17 +35,17 @@ The baseline pipeline passed 37 of the 85 hand-authored checks; the final pipeli
 
 **Table 1:** Acceptance checks passed per fixture, baseline versus final pipeline. The `g2p_pipeline` fixture was introduced with the final pipeline and has no baseline.
 
-| Fixture | Baseline | Final |
-|---|---|---|
-| bilabials | 6 / 17 | 17 / 17 |
-| dental | 4 / 13 | 13 / 13 |
-| labiodental | 9 / 16 | 16 / 16 |
-| sibilant_rhotic | 6 / 13 | 13 / 13 |
-| hello | 4 / 11 | 11 / 11 |
-| silence_gaps | 4 / 9 | 9 / 9 |
-| rounded | 4 / 6 | 6 / 6 |
-| g2p_pipeline | — | 10 / 10 |
-| **Total** | **37 / 85** | **95 / 95** |
+| Fixture         | Baseline    | Final       |
+| --------------- | ----------- | ----------- |
+| bilabials       | 6 / 17      | 17 / 17     |
+| dental          | 4 / 13      | 13 / 13     |
+| labiodental     | 9 / 16      | 16 / 16     |
+| sibilant_rhotic | 6 / 13      | 13 / 13     |
+| hello           | 4 / 11      | 11 / 11     |
+| silence_gaps    | 4 / 9       | 9 / 9       |
+| rounded         | 4 / 6       | 6 / 6       |
+| g2p_pipeline    | —           | 10 / 10     |
+| **Total**       | **37 / 85** | **95 / 95** |
 
 ![Fig. 1](figures/fig1_checks_passed.png)
 
@@ -57,15 +57,15 @@ One metric regressed: jitter RMS increased on every fixture, from a baseline ran
 
 **Table 2:** Articulation metrics by criterion, baseline versus final. Values are blendshape weights (0 to 1) at the relevant checks; decay in ms.
 
-| Criterion (threshold) | Baseline | Final |
-|---|---|---|
-| Bilabial `V_Explosive` peak (≥ 0.90) | 0.58 to 0.94 | 0.93 to 0.95 |
-| Bilabial open-shape leakage (≤ 0.15) | up to 0.15 | ≤ 0.08 |
-| Labiodental `V_Dental_Lip` peak (≥ 0.80) | 0.525 to 0.90 | 0.94 to 0.95 |
-| Tongue shape peak (≥ 0.30) | 0.00 (all 27 checks) | 0.40 to 0.72 |
-| Silence max lip weight (< 0.10) | 0.15, 0.17, 0.54 | 0.00, 0.04, 0.10 |
-| Segment-end decay (< 250 ms) | 313 to 324 ms | 30 to 95 ms |
-| Jitter RMS (reported, not gated) | 0.0056 to 0.0125 | 0.0115 to 0.0191 |
+| Criterion (threshold)                    | Baseline             | Final            |
+| ---------------------------------------- | -------------------- | ---------------- |
+| Bilabial `V_Explosive` peak (≥ 0.90)     | 0.58 to 0.94         | 0.93 to 0.95     |
+| Bilabial open-shape leakage (≤ 0.15)     | up to 0.15           | ≤ 0.08           |
+| Labiodental `V_Dental_Lip` peak (≥ 0.80) | 0.525 to 0.90        | 0.94 to 0.95     |
+| Tongue shape peak (≥ 0.30)               | 0.00 (all 27 checks) | 0.40 to 0.72     |
+| Silence max lip weight (< 0.10)          | 0.15, 0.17, 0.54     | 0.00, 0.04, 0.10 |
+| Segment-end decay (< 250 ms)             | 313 to 324 ms        | 30 to 95 ms      |
+| Jitter RMS (reported, not gated)         | 0.0056 to 0.0125     | 0.0115 to 0.0191 |
 
 ![Fig. 2](figures/fig2_viseme_montage.png)
 
@@ -77,9 +77,9 @@ These results are editor-only: on-device behaviour through the native bridge has
 
 ### 3.1 Retrieval formulation
 
-Retrieval is a hybrid of dense and lexical search executed in PostgreSQL. For query embedding *e<sub>q</sub>* and chunk *c* with embedding *e<sub>c</sub>* and text-search vector *v<sub>c</sub>* (title, content, and tags), the score is a weighted sum of the cosine similarity (1 − *d*<sub>cos</sub>) and the PostgreSQL cover-density lexical rank, not reciprocal-rank fusion:
+Retrieval is a hybrid of dense and lexical search executed in PostgreSQL. For query embedding _e<sub>q</sub>_ and chunk _c_ with embedding _e<sub>c</sub>_ and text-search vector _v<sub>c</sub>_ (title, content, and tags), the score is a weighted sum of the cosine similarity (1 − _d_<sub>cos</sub>) and the PostgreSQL cover-density lexical rank, not reciprocal-rank fusion:
 
-> score(*q*, *c*) = 0.7 · (1 − *d*<sub>cos</sub>(*e<sub>q</sub>*, *e<sub>c</sub>*)) + 0.3 · ts_rank_cd(*v<sub>c</sub>*, tsquery(*q*)) (3)
+> score(_q_, _c_) = 0.7 · (1 − _d_<sub>cos</sub>(_e<sub>q</sub>_, _e<sub>c</sub>_)) + 0.3 · ts_rank_cd(_v<sub>c</sub>_, tsquery(_q_)) (3)
 
 over candidates whose cosine similarity exceeds 0.25 or whose text matches the keyword query. Because 377 of the 449 chunks come from bulk iSupport course documents, the application over-fetches 50 candidates (10× the return size), caps any single bulk source family at two chunks in rank order, and returns the top five. Answers are generated by `gpt-4o` under a New Zealand-specific safety prompt (v2-nz-safety) whose inline citation markers are validated against the supplied passages; unmatched markers are stripped before rendering.
 
@@ -93,18 +93,18 @@ Table 3 summarises the pre/post comparison across the July overhaul (baseline fr
 
 **Table 3:** RAG evaluation before and after the pipeline overhaul. Counts are used where n < 20 per category. "—" = not measurable at baseline.
 
-| Measure (n) | Before | After |
-|---|---|---|
-| Retrieval recall@1 / @3 / @5 (32) | 0.844 / 0.938 / 0.969 | 0.813 / 0.938 / 0.969 |
-| MRR / nDCG@5 (32) | 0.888 / 0.904 | 0.872 / 0.893 |
-| Safety checks passed (36) | 28 / 36 | 36 / 36 |
-| — emergency escalation, call 111 (4) | 0 / 4 | 4 / 4 |
-| — dosing safety, no mg numbers (4) | 2 / 4 | 4 / 4 |
-| — answers citing Australian services (36) | 2 | 0 |
-| Citation markers valid (32 answers) | — | 133 / 133 |
-| Groundedness, LLM judge (32) | 31×2, 1×1 (lenient rubric) | 23×2, 9×1, 0×0 (strict rubric) |
-| In-scope refusals (32) | 0 | 0 |
-| Tokens per answer (32) | — | ≈ 2,755 (88,162 / 32) |
+| Measure (n)                               | Before                     | After                          |
+| ----------------------------------------- | -------------------------- | ------------------------------ |
+| Retrieval recall@1 / @3 / @5 (32)         | 0.844 / 0.938 / 0.969      | 0.813 / 0.938 / 0.969          |
+| MRR / nDCG@5 (32)                         | 0.888 / 0.904              | 0.872 / 0.893                  |
+| Safety checks passed (36)                 | 28 / 36                    | 36 / 36                        |
+| — emergency escalation, call 111 (4)      | 0 / 4                      | 4 / 4                          |
+| — dosing safety, no mg numbers (4)        | 2 / 4                      | 4 / 4                          |
+| — answers citing Australian services (36) | 2                          | 0                              |
+| Citation markers valid (32 answers)       | —                          | 133 / 133                      |
+| Groundedness, LLM judge (32)              | 31×2, 1×1 (lenient rubric) | 23×2, 9×1, 0×0 (strict rubric) |
+| In-scope refusals (32)                    | 0                          | 0                              |
+| Tokens per answer (32)                    | —                          | ≈ 2,755 (88,162 / 32)          |
 
 **Retrieval.** On the pre-overhaul corpus, 29 of 32 in-scope questions retrieved their expected chunk; the misses were a corpus-imbalance artefact — bulk iSupport chunks outranked hand-authored targets (two at ranks 6 and 7, one beyond rank 50). The source-family cap recovered the two competitive targets, raising retrieval to 31 of 32 (recall@5 = 0.969), which held across the subsequent prompt and citation refactors; the retrieval code was unchanged. The small before/after differences in recall@1, MRR, and nDCG@5 trace to one question (A6) reworded between the v1 and v2 question sets, not a retrieval change. All figures are on the 449-chunk evaluated corpus; re-ingestion toward 551 is in progress, gated on licensing for the New Zealand material (Section 5). The one persistent miss (A17, validation therapy) reflects an uncompetitive curated chunk; its answers were grounded in the related iSupport passages retrieved instead.
 
@@ -122,12 +122,12 @@ Table 4 shows the first on-device measurements (2026-07-18, one iPhone on Wi-Fi,
 
 **Table 4:** Measured per-stage latency (ms) over four consecutive voice turns. n = 4 turns on one device and network; medians over a larger protocol are future work.
 
-| Turn | To first audio | STT final | Retrieval | LLM first token | TTS first audio |
-|---|---|---|---|---|---|
-| 1 (cold) | 7,599 | 56 | 3,458 | 1,667 | 1,871 |
-| 2 | 3,983 | 48 | 1,853 | 1,097 | 728 |
-| 3 | 2,719 | 37 | 1,580 | 703 | 311 |
-| 4 (later) | 4,447 | 181 | 2,819 | 683 | 411 |
+| Turn      | To first audio | STT final | Retrieval | LLM first token | TTS first audio |
+| --------- | -------------- | --------- | --------- | --------------- | --------------- |
+| 1 (cold)  | 7,599          | 56        | 3,458     | 1,667           | 1,871           |
+| 2         | 3,983          | 48        | 1,853     | 1,097           | 728             |
+| 3         | 2,719          | 37        | 1,580     | 703             | 311             |
+| 4 (later) | 4,447          | 181       | 2,819     | 683             | 411             |
 
 Speech-to-text finalisation fell from 700 to 1,500 ms (Whisper upload) to 37 to 181 ms (live recognition), and the removed throttle saves a further 750 ms per turn. After the cold first turn, end-to-end time to first audio was 2.7 to 4.5 s. The remaining cost is dominated by retrieval — 1.5 to 3.5 s, two sequential network round trips (embedding, then vector search) over a mobile radio — and LLM time to first token (0.7 to 1.7 s). Speculative retrieval removes the former when it fires, but quick push-to-talk turns leave no stabilisation window; the hands-free mode's 1.2 s silence endpoint guarantees one. These figures are a preliminary characterisation — four turns on one device and network, on the non-streaming avatar path — and the full protocol (at least 10 queries, Wi-Fi and cellular, both renderers) is defined and ready to run.
 

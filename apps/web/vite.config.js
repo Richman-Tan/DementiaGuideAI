@@ -11,9 +11,13 @@ const repoCore = path.resolve(__dirname, '../../packages/core');
 // They are all `const X = …; module.exports = { shorthand list };` with at most
 // a destructured require — convertible to ESM with two regexes. One transform
 // used by BOTH dev serve and the Rollup build, so the pipelines can't diverge.
-const CJS_LIBS = ['rag/ragConfig.js', 'rag/prompt.js', 'rag/retrieval.js', 'rag/citations.js', 'voice/voiceConfig.js'].map(
-  (p) => path.join(repoCore, p)
-);
+const CJS_LIBS = [
+  'rag/ragConfig.js',
+  'rag/prompt.js',
+  'rag/retrieval.js',
+  'rag/citations.js',
+  'voice/voiceConfig.js',
+].map((p) => path.join(repoCore, p));
 
 function cjsLibsToEsm() {
   return {
@@ -80,8 +84,12 @@ function unityBrotliHeaders() {
   // — which vite then calls with no arguments, crashing dev/preview/vitest.
   return {
     name: 'dg-unity-brotli-headers',
-    configureServer(server) { server.middlewares.use(middleware); },
-    configurePreviewServer(server) { server.middlewares.use(middleware); },
+    configureServer(server) {
+      server.middlewares.use(middleware);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(middleware);
+    },
   };
 }
 

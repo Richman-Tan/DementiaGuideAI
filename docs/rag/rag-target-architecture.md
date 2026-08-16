@@ -3,6 +3,7 @@
 Date: 2026-07-16. This is the end-state the staged overhaul converges on. Design principle: **the simplest architecture that produces a measurable improvement** — no new services, no backend, no additional models. Everything below runs in the existing three environments: the Expo app, Node scripts, and Supabase Postgres.
 
 Binding product decisions this design implements:
+
 1. **Region: New Zealand** (verified helplines; NZ-correct corpus).
 2. **Grounding: augmentation + safety layer** — Aria answers from model knowledge, never refuses because retrieval missed; safety rules bound the risky output classes.
 3. **iSupport corpus re-ingested from official WHO / iSupport NZ materials** under confirmed licence, with full provenance.
@@ -75,14 +76,14 @@ Binding product decisions this design implements:
 
 ## 4. Failure handling
 
-| Failure | Behaviour |
-|---|---|
+| Failure                      | Behaviour                                                                                                                               |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | Supabase RPC error / timeout | `search()` throws → chat proceeds **without passages** (augmentation philosophy degrades gracefully); telemetry records empty retrieval |
-| Zero retrievals | Bare question; no fabricated context |
-| OpenAI 401 / 429 | Typed errors → existing UI banners; scripts retry with backoff (ingestion) |
-| Hallucinated citation marker | Stripped from text, logged, absent from sources — never rendered as a real source |
-| Judge/model drift in eval | Deterministic metrics + safety assertions unaffected; judge output always paired with human spot-check file |
-| Prod/repo function drift | Snapshot migration + eval regression run after any SQL change (retrieved-id lists compared) |
+| Zero retrievals              | Bare question; no fabricated context                                                                                                    |
+| OpenAI 401 / 429             | Typed errors → existing UI banners; scripts retry with backoff (ingestion)                                                              |
+| Hallucinated citation marker | Stripped from text, logged, absent from sources — never rendered as a real source                                                       |
+| Judge/model drift in eval    | Deterministic metrics + safety assertions unaffected; judge output always paired with human spot-check file                             |
+| Prod/repo function drift     | Snapshot migration + eval regression run after any SQL change (retrieved-id lists compared)                                             |
 
 ## 5. Content refresh
 

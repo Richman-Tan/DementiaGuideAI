@@ -1,6 +1,6 @@
 name: Task
 description: A concrete piece of work — refactor, chore, cleanup, or maintenance
-labels: ["type: chore", "status: needs-triage"]
+labels: ['type: chore', 'status: needs-triage']
 body:
   - type: markdown
     attributes:

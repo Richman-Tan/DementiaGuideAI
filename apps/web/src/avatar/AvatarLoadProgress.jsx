@@ -15,8 +15,27 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
   const percent = Math.round(pct * 100);
 
   return (
-    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: compact ? '10px' : '16px', padding: '0 20px', textAlign: 'center' }}>
-      <div style={{ animation: phase === 'preparing' ? 'dgShimmer 1.4s ease-in-out infinite' : 'dgBreathe 5.5s ease-in-out infinite' }}>
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: compact ? '10px' : '16px',
+        padding: '0 20px',
+        textAlign: 'center',
+      }}
+    >
+      <div
+        style={{
+          animation:
+            phase === 'preparing'
+              ? 'dgShimmer 1.4s ease-in-out infinite'
+              : 'dgBreathe 5.5s ease-in-out infinite',
+        }}
+      >
         <AvatarBust size={bustSize} />
       </div>
 
@@ -31,19 +50,37 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
             aria-valuemax={100}
             aria-valuenow={percent}
             aria-label={`Downloading ${name}`}
-            style={{ width: compact ? '70%' : 'min(320px, 76%)', height: '8px', borderRadius: '999px', background: 'var(--border)', overflow: 'hidden' }}
+            style={{
+              width: compact ? '70%' : 'min(320px, 76%)',
+              height: '8px',
+              borderRadius: '999px',
+              background: 'var(--border)',
+              overflow: 'hidden',
+            }}
           >
-            <div style={{ width: `${percent}%`, height: '100%', borderRadius: '999px', background: 'var(--primary)', transition: 'width .3s ease' }} />
+            <div
+              style={{
+                width: `${percent}%`,
+                height: '100%',
+                borderRadius: '999px',
+                background: 'var(--primary)',
+                transition: 'width .3s ease',
+              }}
+            />
           </div>
           <div style={{ color: 'var(--text2)', fontSize: subSize }}>
-            {compact ? 'One-time download' : `Downloading… ${percent}% — ${name} is a large one-time download (about 230 MB), saved for your next visit.`}
+            {compact
+              ? 'One-time download'
+              : `Downloading… ${percent}% — ${name} is a large one-time download (about 230 MB), saved for your next visit.`}
           </div>
         </>
       )}
 
       {phase === 'preparing' && (
         <>
-          <div style={{ fontWeight: 700, fontSize: titleSize }}>Almost there — preparing {name}…</div>
+          <div style={{ fontWeight: 700, fontSize: titleSize }}>
+            Almost there — preparing {name}…
+          </div>
           {!compact && (
             <div style={{ color: 'var(--text2)', fontSize: subSize }}>
               This only takes a few seconds. You can keep using the app.
@@ -54,16 +91,28 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
 
       {phase === 'failed' && (
         <>
-          <div style={{ fontWeight: 700, fontSize: titleSize }}>We couldn't finish loading {name}.</div>
+          <div style={{ fontWeight: 700, fontSize: titleSize }}>
+            We couldn't finish loading {name}.
+          </div>
           {!compact && (
             <div style={{ color: 'var(--text2)', fontSize: subSize, maxWidth: '30em' }}>
-              The download is large (about 230 MB), so a brief drop in connection can interrupt it. You can keep using the rest of the app either way.
+              The download is large (about 230 MB), so a brief drop in connection can interrupt it.
+              You can keep using the rest of the app either way.
             </div>
           )}
           <button
             onClick={ensureUnityBoot}
             className="hv2"
-            style={{ minHeight: '46px', padding: '0 22px', borderRadius: '12px', border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+            style={{
+              minHeight: '46px',
+              padding: '0 22px',
+              borderRadius: '12px',
+              border: 'none',
+              background: 'var(--primary)',
+              color: '#fff',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
           >
             Try again
           </button>

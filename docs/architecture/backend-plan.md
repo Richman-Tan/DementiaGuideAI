@@ -8,10 +8,10 @@ stays aligned with it. Nothing here is scheduled.
 Not for tidiness — for credentials. Today **both clients call third-party APIs
 directly, holding the keys themselves**:
 
-| Surface | Where the key lives | Calls directly |
-|---|---|---|
-| Web | `localStorage` under `dg_keys` (`apps/web/src/state/keysStore.js`) | `api.openai.com`, `api.elevenlabs.io` |
-| Mobile | on-device key entry (`apps/mobile/src/lib/openaiService.js` → `getApiKey()`) | `api.openai.com`, `api.elevenlabs.io` |
+| Surface | Where the key lives                                                          | Calls directly                        |
+| ------- | ---------------------------------------------------------------------------- | ------------------------------------- |
+| Web     | `localStorage` under `dg_keys` (`apps/web/src/state/keysStore.js`)           | `api.openai.com`, `api.elevenlabs.io` |
+| Mobile  | on-device key entry (`apps/mobile/src/lib/openaiService.js` → `getApiKey()`) | `api.openai.com`, `api.elevenlabs.io` |
 
 Consequences we live with right now:
 

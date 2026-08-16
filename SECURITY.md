@@ -27,7 +27,7 @@ model reflects that. The areas most worth reporting:
 - **Prompt injection that defeats grounding.** The assistant must answer only
   from retrieved passages and cite them. Input that makes it answer from model
   memory, fabricate a citation, or ignore the safety instructions is a genuine
-  finding for this project — the grounding *is* the safety mechanism.
+  finding for this project — the grounding _is_ the safety mechanism.
 - Dependency vulnerabilities that are actually reachable from application code.
 
 ## What is out of scope

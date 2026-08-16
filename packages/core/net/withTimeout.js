@@ -17,7 +17,10 @@ export function timeoutSignal(ms) {
   return {
     signal: controller.signal,
     cancel: () => clearTimeout(timer),
-    abort: () => { clearTimeout(timer); controller.abort(); },
+    abort: () => {
+      clearTimeout(timer);
+      controller.abort();
+    },
   };
 }
 

@@ -29,7 +29,8 @@ const REGISTRY = [
     local_path: 'apps/mobile/src/features/library/data/knowledgeBase.js',
     category: null, // per-chunk categories come from the file itself
     enabled: true,
-    notes: '70 hand-authored chunks, 10 per category. Paraphrased from cited orgs; per-chunk source_org/source_url preserved.',
+    notes:
+      '70 hand-authored chunks, 10 per category. Paraphrased from cited orgs; per-chunk source_org/source_url preserved.',
   },
   {
     document_id: 'isupport-who-v2026',
@@ -44,7 +45,8 @@ const REGISTRY = [
     local_path: 'content/sources/who-isupport-manual-2019.pdf',
     category: 'isupport-course',
     enabled: true, // Licence + non-commercial use confirmed by project owner 2026-07-17.
-    notes: 'Replaces the provenance-free isupport-who chunks currently in production. Prune old isupport-who ids only after the new set passes rag:eval:retrieval.',
+    notes:
+      'Replaces the provenance-free isupport-who chunks currently in production. Prune old isupport-who ids only after the new set passes rag:eval:retrieval.',
   },
   {
     document_id: 'isupport-nz-v2026',
@@ -64,7 +66,7 @@ const REGISTRY = [
 ];
 
 function getEntry(documentId) {
-  return REGISTRY.find(e => e.document_id === documentId) ?? null;
+  return REGISTRY.find((e) => e.document_id === documentId) ?? null;
 }
 
 module.exports = { REGISTRY, getEntry };

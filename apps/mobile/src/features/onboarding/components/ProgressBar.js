@@ -4,21 +4,12 @@ import { Colors } from '@/theme/colors';
 
 export function ProgressBar({ step, totalSteps }) {
   return (
-    <View
-      style={styles.container}
-      accessibilityLabel={`Step ${step} of ${totalSteps}`}
-    >
+    <View style={styles.container} accessibilityLabel={`Step ${step} of ${totalSteps}`}>
       <View style={styles.dotsRow}>
         {Array.from({ length: totalSteps }, (_, i) => {
           const filled = i < step;
           return (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                filled ? styles.dotFilled : styles.dotHollow,
-              ]}
-            />
+            <View key={i} style={[styles.dot, filled ? styles.dotFilled : styles.dotHollow]} />
           );
         })}
       </View>

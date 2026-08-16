@@ -58,11 +58,7 @@ const CitationText = ({ text, citations, onCiteTap, textStyle }) => {
         p.type === 'text' ? (
           <Text key={i}>{p.value}</Text>
         ) : (
-          <Text
-            key={i}
-            onPress={() => onCiteTap(p.num)}
-            style={styles.citeBadge}
-          >
+          <Text key={i} onPress={() => onCiteTap(p.num)} style={styles.citeBadge}>
             {` [${p.num}]`}
           </Text>
         )
@@ -75,17 +71,19 @@ const CitationText = ({ text, citations, onCiteTap, textStyle }) => {
 const TypingIndicator = ({ anim, bubbleStyle }) => (
   <View style={styles.typingRow}>
     <View style={[styles.typingBubble, bubbleStyle]}>
-      {[0, 1, 2].map(i => (
+      {[0, 1, 2].map((i) => (
         <Animated.View
           key={i}
-          style={[styles.typingDot, {
-            opacity: anim.interpolate({
-              inputRange: [0, 0.33, 0.66, 1],
-              outputRange: i === 0 ? [0.3, 1, 0.3, 0.3]
-                         : i === 1 ? [0.3, 0.3, 1, 0.3]
-                         : [0.3, 0.3, 0.3, 1],
-            }),
-          }]}
+          style={[
+            styles.typingDot,
+            {
+              opacity: anim.interpolate({
+                inputRange: [0, 0.33, 0.66, 1],
+                outputRange:
+                  i === 0 ? [0.3, 1, 0.3, 0.3] : i === 1 ? [0.3, 0.3, 1, 0.3] : [0.3, 0.3, 0.3, 1],
+              }),
+            },
+          ]}
         />
       ))}
     </View>
@@ -97,7 +95,9 @@ const persistMessages = async (internalMsgs) => {
   try {
     const toStore = internalMsgs.slice(-MAX_PERSISTED);
     await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(toStore));
-  } catch { /* non-critical */ }
+  } catch {
+    /* non-critical */
+  }
 };
 
 const loadPersistedMessages = async () => {
@@ -107,7 +107,9 @@ const loadPersistedMessages = async () => {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return [];
 };
 
@@ -115,8 +117,14 @@ const loadPersistedMessages = async () => {
 export const ChatScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
   const {
-    textScale, autoPlayResponses, conciseMode, colors,
-    responseStyle, jargonMode, ariaPersonality, isCaregiversSetup,
+    textScale,
+    autoPlayResponses,
+    conciseMode,
+    colors,
+    responseStyle,
+    jargonMode,
+    ariaPersonality,
+    isCaregiversSetup,
   } = useSettings();
   const messageListRef = useRef(null);
   // Internal message list (oldest first)
@@ -151,7 +159,9 @@ export const ChatScreen = ({ navigation, route }) => {
 
   // Unload sound when screen unmounts
   useEffect(() => {
-    return () => { soundRef.current?.unloadAsync().catch(() => {}); };
+    return () => {
+      soundRef.current?.unloadAsync().catch(() => {});
+    };
   }, []);
 
   // Re-check API key when screen comes back into focus (e.g. after saving in Profile)
@@ -203,90 +213,104 @@ export const ChatScreen = ({ navigation, route }) => {
   }, [internalMessages.length, isTyping]);
 
   // ── Send message ──────────────────────────────────────────────────────────────
-  const sendMessage = useCallback(async (text) => {
-    const trimmed = (text ?? '').trim();
-    if (!trimmed || apiKeyMissing) return;
+  const sendMessage = useCallback(
+    async (text) => {
+      const trimmed = (text ?? '').trim();
+      if (!trimmed || apiKeyMissing) return;
 
-    setError(null);
+      setError(null);
 
-    const userMsg = {
-      id: Date.now().toString(),
-      role: 'user',
-      text: trimmed,
-      timestamp: new Date().toISOString(),
-      sources: [],
-    };
-
-    setInternalMessages(prev => {
-      const updated = [...prev, userMsg];
-      persistMessages(updated);
-      return updated;
-    });
-    setInputText('');
-    setIsTyping(true);
-
-    // Build history for the RAG context window (last 6 messages)
-    const history = internalMessages.slice(-6).map(m => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.text,
-    }));
-
-    try {
-      const response = await openaiService.chat(trimmed, history,
-          { conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup });
-      setIsTyping(false);
-      setIsSpeaking(true);
-
-      const aiMsg = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        text: response.text,
-        sources: response.sources,
+      const userMsg = {
+        id: Date.now().toString(),
+        role: 'user',
+        text: trimmed,
         timestamp: new Date().toISOString(),
+        sources: [],
       };
 
-      setInternalMessages(prev => {
-        const updated = [...prev, aiMsg];
+      setInternalMessages((prev) => {
+        const updated = [...prev, userMsg];
         persistMessages(updated);
         return updated;
       });
+      setInputText('');
+      setIsTyping(true);
 
-      if (autoPlayResponses) {
-        tts(response.text).then(async ({ audio }) => {
-          try {
-            await Audio.setAudioModeAsync(PLAYBACK_MODE);
-            const base64 = audio.replace('data:audio/mpeg;base64,', '');
-            const tempPath = `${FileSystem.cacheDirectory}aria_chat_${Date.now()}.mp3`;
-            await FileSystem.writeAsStringAsync(tempPath, base64, { encoding: FileSystem.EncodingType.Base64 });
-            const { sound } = await Audio.Sound.createAsync({ uri: tempPath });
-            soundRef.current = sound;
-            await sound.playAsync();
-            sound.setOnPlaybackStatusUpdate(status => {
-              if (status.didJustFinish) {
-                sound.unloadAsync().catch(() => {});
-                FileSystem.deleteAsync(tempPath, { idempotent: true }).catch(() => {});
-                setIsSpeaking(false);
+      // Build history for the RAG context window (last 6 messages)
+      const history = internalMessages.slice(-6).map((m) => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      }));
+
+      try {
+        const response = await openaiService.chat(trimmed, history, {
+          conciseMode,
+          responseStyle,
+          jargonMode,
+          ariaPersonality,
+          isCaregiversSetup,
+        });
+        setIsTyping(false);
+        setIsSpeaking(true);
+
+        const aiMsg = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          text: response.text,
+          sources: response.sources,
+          timestamp: new Date().toISOString(),
+        };
+
+        setInternalMessages((prev) => {
+          const updated = [...prev, aiMsg];
+          persistMessages(updated);
+          return updated;
+        });
+
+        if (autoPlayResponses) {
+          tts(response.text)
+            .then(async ({ audio }) => {
+              try {
+                await Audio.setAudioModeAsync(PLAYBACK_MODE);
+                const base64 = audio.replace('data:audio/mpeg;base64,', '');
+                const tempPath = `${FileSystem.cacheDirectory}aria_chat_${Date.now()}.mp3`;
+                await FileSystem.writeAsStringAsync(tempPath, base64, {
+                  encoding: FileSystem.EncodingType.Base64,
+                });
+                const { sound } = await Audio.Sound.createAsync({ uri: tempPath });
+                soundRef.current = sound;
+                await sound.playAsync();
+                sound.setOnPlaybackStatusUpdate((status) => {
+                  if (status.didJustFinish) {
+                    sound.unloadAsync().catch(() => {});
+                    FileSystem.deleteAsync(tempPath, { idempotent: true }).catch(() => {});
+                    setIsSpeaking(false);
+                  }
+                });
+              } catch {
+                /* non-critical — TTS failure should not affect chat UX */
               }
-            });
-          } catch { /* non-critical — TTS failure should not affect chat UX */ }
-        }).catch(() => {});
-      }
+            })
+            .catch(() => {});
+        }
 
-      if (!autoPlayResponses) {
-        setTimeout(() => setIsSpeaking(false), 3000);
+        if (!autoPlayResponses) {
+          setTimeout(() => setIsSpeaking(false), 3000);
+        }
+      } catch (e) {
+        setIsTyping(false);
+        if (e instanceof OpenAIAuthError) {
+          setError('auth');
+          setApiKeyMissing(true);
+        } else if (e instanceof OpenAIRateLimitError) {
+          setError('ratelimit');
+        } else {
+          setError('network');
+        }
       }
-    } catch (e) {
-      setIsTyping(false);
-      if (e instanceof OpenAIAuthError) {
-        setError('auth');
-        setApiKeyMissing(true);
-      } else if (e instanceof OpenAIRateLimitError) {
-        setError('ratelimit');
-      } else {
-        setError('network');
-      }
-    }
-  }, [internalMessages, apiKeyMissing, autoPlayResponses]);
+    },
+    [internalMessages, apiKeyMissing, autoPlayResponses]
+  );
 
   // ── Custom renderers ──────────────────────────────────────────────────────────
 
@@ -295,21 +319,30 @@ export const ChatScreen = ({ navigation, route }) => {
     const citations = message.sources ?? [];
     return (
       <View style={[styles.messageRow, isUser ? styles.messageRowUser : styles.messageRowAria]}>
-        <View style={[styles.messageBubble, isUser ? styles.messageBubbleUser : [styles.messageBubbleAria, { backgroundColor: colors.border }]]}>
+        <View
+          style={[
+            styles.messageBubble,
+            isUser
+              ? styles.messageBubbleUser
+              : [styles.messageBubbleAria, { backgroundColor: colors.border }],
+          ]}
+        >
           {isUser ? (
-            <Text style={[
-              styles.messageText,
-              styles.messageTextUser,
-              { fontSize: 16 * textScale, lineHeight: 22 * textScale },
-            ]}>
+            <Text
+              style={[
+                styles.messageText,
+                styles.messageTextUser,
+                { fontSize: 16 * textScale, lineHeight: 22 * textScale },
+              ]}
+            >
               {message.text}
             </Text>
           ) : (
             <CitationText
               text={message.text}
               citations={citations}
-              onCiteTap={num => {
-                const c = citations.find(s => s.num === num);
+              onCiteTap={(num) => {
+                const c = citations.find((s) => s.num === num);
                 if (c) setActiveCitation(c);
               }}
               textStyle={[
@@ -329,7 +362,9 @@ export const ChatScreen = ({ navigation, route }) => {
   const renderChatEmpty = () => (
     <View style={styles.emptyState}>
       <MaterialCommunityIcons name="chat-outline" size={48} color={Colors.border} />
-      <Text style={[styles.emptyText, { fontSize: 15 * textScale }]}>Ask Aria anything about dementia care</Text>
+      <Text style={[styles.emptyText, { fontSize: 15 * textScale }]}>
+        Ask Aria anything about dementia care
+      </Text>
     </View>
   );
 
@@ -340,7 +375,16 @@ export const ChatScreen = ({ navigation, route }) => {
 
   // ── Input bar (rendered outside GiftedChat so layout is never clipped) ────────
   const inputBar = (
-    <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, 8), backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+    <View
+      style={[
+        styles.inputArea,
+        {
+          paddingBottom: Math.max(insets.bottom, 8),
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+        },
+      ]}
+    >
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -352,10 +396,10 @@ export const ChatScreen = ({ navigation, route }) => {
             style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => sendMessage(chip)}
             accessibilityLabel={chip}
-            >
-              <Text style={[styles.chipText, { color: colors.primary }]}>{chip}</Text>
-            </TouchableOpacity>
-          ))}
+          >
+            <Text style={[styles.chipText, { color: colors.primary }]}>{chip}</Text>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
 
       {error && (
@@ -379,12 +423,20 @@ export const ChatScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         )}
 
-        <View style={[styles.pillWrap, { backgroundColor: colors.surface, borderColor: colors.border }, inputText.trim() && styles.pillWrapActive]}>
+        <View
+          style={[
+            styles.pillWrap,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+            inputText.trim() && styles.pillWrapActive,
+          ]}
+        >
           <TextInput
             style={[styles.pillInput, { color: colors.textPrimary }]}
             value={inputText}
             onChangeText={setInputText}
-            placeholder={apiKeyMissing ? 'Add your API key in Settings first' : 'Ask Aria anything…'}
+            placeholder={
+              apiKeyMissing ? 'Add your API key in Settings first' : 'Ask Aria anything…'
+            }
             placeholderTextColor="#C7C7CC"
             multiline
             maxLength={500}
@@ -425,10 +477,17 @@ export const ChatScreen = ({ navigation, route }) => {
       <StatusBar barStyle="dark-content" />
 
       {/* Safe-area fill behind Dynamic Island */}
-      <View style={[styles.navBarSafeArea, { height: insets.top, backgroundColor: colors.surface }]} />
+      <View
+        style={[styles.navBarSafeArea, { height: insets.top, backgroundColor: colors.surface }]}
+      />
 
       {/* Nav bar */}
-      <View style={[styles.navBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.navBar,
+          { backgroundColor: colors.surface, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity
           style={styles.navBtn}
           onPress={() => navigation.goBack()}
@@ -510,14 +569,15 @@ export const ChatScreen = ({ navigation, route }) => {
             <View style={styles.citationHeader}>
               <MaterialCommunityIcons name="book-open-variant" size={16} color={Colors.primary} />
               <Text style={styles.citationNum}>Source [{activeCitation.num}]</Text>
-              <TouchableOpacity onPress={() => setActiveCitation(null)} style={{ marginLeft: 'auto' }}>
+              <TouchableOpacity
+                onPress={() => setActiveCitation(null)}
+                style={{ marginLeft: 'auto' }}
+              >
                 <MaterialCommunityIcons name="close" size={18} color="#6b7280" />
               </TouchableOpacity>
             </View>
             <Text style={styles.citationTitle}>{activeCitation.title}</Text>
-            {activeCitation.org && (
-              <Text style={styles.citationOrg}>{activeCitation.org}</Text>
-            )}
+            {activeCitation.org && <Text style={styles.citationOrg}>{activeCitation.org}</Text>}
             <View style={styles.citationExcerptBox}>
               <Text style={styles.citationExcerpt}>"{activeCitation.excerpt}"</Text>
             </View>
@@ -683,7 +743,10 @@ const styles = StyleSheet.create({
   citationOverlay: {
     position: 'absolute',
     inset: 0,
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
     zIndex: 100,

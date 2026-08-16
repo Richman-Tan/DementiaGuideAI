@@ -71,11 +71,7 @@
       "id": "A2",
       "set": "A",
       "category": "caregiving",
-      "retrieved": [
-        "caregiving_002",
-        "isupport_nz_c257",
-        "isupport_nz_c256"
-      ],
+      "retrieved": ["caregiving_002", "isupport_nz_c257", "isupport_nz_c256"],
       "topSimilarity": 0.346181398876437,
       "recall@1": 1,
       "recall@3": 1,
@@ -353,12 +349,7 @@
       "id": "A17",
       "set": "A",
       "category": "communication",
-      "retrieved": [
-        "isupport_who_c107",
-        "isupport_nz_c165",
-        "bestpractices_006",
-        "caregiving_002"
-      ],
+      "retrieved": ["isupport_who_c107", "isupport_nz_c165", "bestpractices_006", "caregiving_002"],
       "topSimilarity": 0.294911148073557,
       "recall@1": 0,
       "recall@3": 0,

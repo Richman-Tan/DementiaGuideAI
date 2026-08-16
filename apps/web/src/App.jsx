@@ -41,11 +41,25 @@ function Routed() {
 
   if (path === '/app/voice') {
     return (
-      <Suspense fallback={
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', fontSize: '1.05rem' }}>
-          Opening voice…
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 50,
+              background: 'var(--bg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text2)',
+              fontSize: '1.05rem',
+            }}
+          >
+            Opening voice…
+          </div>
+        }
+      >
         <Voice />
       </Suspense>
     );
@@ -53,14 +67,31 @@ function Routed() {
 
   const artId = path.startsWith('/app/library/') ? path.split('/')[3] : null;
   let screen, active;
-  if (path === '/app/home') { screen = <Home />; active = 'home'; }
-  else if (path === '/app/chat') { screen = <Chat isDesktop={isDesktop} isMobile={isMobile} />; active = 'chat'; }
-  else if (path === '/app/library') { screen = <Library />; active = 'lib'; }
-  else if (artId) { screen = <Article artId={artId} />; active = 'lib'; }
-  else if (path === '/app/settings') { screen = <Settings />; active = 'set'; }
-  else if (path === '/privacy') { screen = <Privacy />; active = null; }
-  else if (path === '/disclaimer') { screen = <Disclaimer />; active = null; }
-  else { screen = <NotFound />; active = null; }
+  if (path === '/app/home') {
+    screen = <Home />;
+    active = 'home';
+  } else if (path === '/app/chat') {
+    screen = <Chat isDesktop={isDesktop} isMobile={isMobile} />;
+    active = 'chat';
+  } else if (path === '/app/library') {
+    screen = <Library />;
+    active = 'lib';
+  } else if (artId) {
+    screen = <Article artId={artId} />;
+    active = 'lib';
+  } else if (path === '/app/settings') {
+    screen = <Settings />;
+    active = 'set';
+  } else if (path === '/privacy') {
+    screen = <Privacy />;
+    active = null;
+  } else if (path === '/disclaimer') {
+    screen = <Disclaimer />;
+    active = null;
+  } else {
+    screen = <NotFound />;
+    active = null;
+  }
 
   return (
     <Shell active={active} isDesktop={isDesktop} isTablet={isTablet} isMobile={isMobile}>
@@ -74,7 +105,15 @@ export default function App() {
     <SettingsProvider>
       <UiProvider>
         <ChatProvider>
-          <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem', lineHeight: '1.55' }}>
+          <div
+            style={{
+              minHeight: '100vh',
+              background: 'var(--bg)',
+              color: 'var(--text)',
+              fontSize: '1rem',
+              lineHeight: '1.55',
+            }}
+          >
             <RoutedWithChrome />
           </div>
         </ChatProvider>
@@ -100,15 +139,49 @@ class ErrorBoundary extends React.Component {
     super(props);
     this.state = { error: null };
   }
-  static getDerivedStateFromError(error) { return { error }; }
-  componentDidCatch(error) { console.error('[app] render error:', error); }
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+  componentDidCatch(error) {
+    console.error('[app] render error:', error);
+  }
   render() {
     if (!this.state.error) return this.props.children;
     return (
-      <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '14px', textAlign: 'center', padding: '24px' }}>
+      <div
+        style={{
+          minHeight: '60vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '14px',
+          textAlign: 'center',
+          padding: '24px',
+        }}
+      >
         <h1 style={{ margin: 0, fontSize: '1.5rem' }}>Something went wrong</h1>
-        <p style={{ margin: 0, color: 'var(--text2)', maxWidth: '30em' }}>Your conversations and settings are safe. Try going back to the start.</p>
-        <button onClick={() => { this.setState({ error: null }); navigate('#/app/home'); }} style={{ minHeight: '50px', padding: '0 24px', borderRadius: '14px', border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: '700', cursor: 'pointer' }}>Home</button>
+        <p style={{ margin: 0, color: 'var(--text2)', maxWidth: '30em' }}>
+          Your conversations and settings are safe. Try going back to the start.
+        </p>
+        <button
+          onClick={() => {
+            this.setState({ error: null });
+            navigate('#/app/home');
+          }}
+          style={{
+            minHeight: '50px',
+            padding: '0 24px',
+            borderRadius: '14px',
+            border: 'none',
+            background: 'var(--primary)',
+            color: '#fff',
+            fontWeight: '700',
+            cursor: 'pointer',
+          }}
+        >
+          Home
+        </button>
       </div>
     );
   }

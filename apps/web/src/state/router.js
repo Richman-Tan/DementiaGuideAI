@@ -17,8 +17,12 @@ export function useRoute(onboarded) {
   return path;
 }
 
-export const go = (r) => () => { location.hash = r; };
-export const navigate = (r) => { location.hash = r; };
+export const go = (r) => () => {
+  location.hash = r;
+};
+export const navigate = (r) => {
+  location.hash = r;
+};
 
 export function useWidth() {
   const [w, setW] = useState(() => window.innerWidth);

@@ -27,7 +27,9 @@ export async function startSttSession(opts = {}) {
       return wrapLiveSession(live);
     } catch (err) {
       if (err?.code === 'permission-denied') throw err; // don't burn the fallback on a denial
-      console.warn(`[STT] live recognition failed to start (${err?.message ?? err}) — using Whisper fallback from now on`);
+      console.warn(
+        `[STT] live recognition failed to start (${err?.message ?? err}) — using Whisper fallback from now on`
+      );
       sttDegraded = true;
     }
   }

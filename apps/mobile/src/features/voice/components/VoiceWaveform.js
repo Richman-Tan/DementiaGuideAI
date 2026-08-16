@@ -12,13 +12,11 @@ export const VoiceWaveform = ({
   gap = 5,
   style,
 }) => {
-  const anims = useRef(
-    Array.from({ length: BAR_COUNT }, () => new Animated.Value(0.15))
-  ).current;
+  const anims = useRef(Array.from({ length: BAR_COUNT }, () => new Animated.Value(0.15))).current;
   const loopsRef = useRef([]);
 
   useEffect(() => {
-    loopsRef.current.forEach(l => l?.stop?.());
+    loopsRef.current.forEach((l) => l?.stop?.());
     loopsRef.current = [];
 
     if (isActive) {
@@ -45,7 +43,7 @@ export const VoiceWaveform = ({
         loopsRef.current.push(loop);
       });
     } else {
-      anims.forEach(anim => {
+      anims.forEach((anim) => {
         Animated.spring(anim, {
           toValue: 0.15,
           useNativeDriver: false,
@@ -56,7 +54,7 @@ export const VoiceWaveform = ({
     }
 
     return () => {
-      loopsRef.current.forEach(l => l?.stop?.());
+      loopsRef.current.forEach((l) => l?.stop?.());
     };
   }, [isActive]);
 

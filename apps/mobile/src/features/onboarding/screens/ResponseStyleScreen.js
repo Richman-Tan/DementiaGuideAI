@@ -52,7 +52,7 @@ export function ResponseStyleScreen({ navigation, route }) {
       onSkip={handleSkip}
       onNext={handleNext}
       nextLabel="Next"
-      title={"When you ask a question,\nhow much detail would\nyou like?"}
+      title={'When you ask a question,\nhow much detail would\nyou like?'}
     >
       {OPTIONS.map((opt) => (
         <OptionCard

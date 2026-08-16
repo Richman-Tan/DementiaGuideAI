@@ -63,16 +63,16 @@ vector search. Exact models and thresholds live in
 An npm-workspaces monorepo. Three surfaces share one knowledge base and one RAG
 core:
 
-| Path | What it is | Run it |
-|---|---|---|
-| `apps/mobile/` | **Mobile app** — Expo / React Native, iOS + Android. | `npm start` |
-| `apps/web/` | **Web app** — Vite + React, deployed on Vercel. | `npm run web` |
-| `packages/core/` | **Shared logic** — RAG config, prompt, retrieval, citations, voice/TTS/lip-sync engines and small utilities. Imported by mobile, web **and** Node, as `@core/…`. | — |
-| `scripts/` | Node/Python tooling: `migrations/`, `ingest/`, `eval/`. | `npm run rag:*`, `kb:*` |
-| `assets/` | The `.glb` avatar models, shared by both apps as `@assets/…`. App icons live in `apps/mobile/assets/`. | — |
-| `unity-avatar/` | **Unity avatar project** (git submodule) — CC4 characters and their exporters. | — |
-| `content/` | Source documents for ingestion (PDFs gitignored; `sources/MANIFEST.md` is the record). | — |
-| `docs/` | All documentation. | — |
+| Path             | What it is                                                                                                                                                       | Run it                  |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `apps/mobile/`   | **Mobile app** — Expo / React Native, iOS + Android.                                                                                                             | `npm start`             |
+| `apps/web/`      | **Web app** — Vite + React, deployed on Vercel.                                                                                                                  | `npm run web`           |
+| `packages/core/` | **Shared logic** — RAG config, prompt, retrieval, citations, voice/TTS/lip-sync engines and small utilities. Imported by mobile, web **and** Node, as `@core/…`. | —                       |
+| `scripts/`       | Node/Python tooling: `migrations/`, `ingest/`, `eval/`.                                                                                                          | `npm run rag:*`, `kb:*` |
+| `assets/`        | The `.glb` avatar models, shared by both apps as `@assets/…`. App icons live in `apps/mobile/assets/`.                                                           | —                       |
+| `unity-avatar/`  | **Unity avatar project** (git submodule) — CC4 characters and their exporters.                                                                                   | —                       |
+| `content/`       | Source documents for ingestion (PDFs gitignored; `sources/MANIFEST.md` is the record).                                                                           | —                       |
+| `docs/`          | All documentation.                                                                                                                                               | —                       |
 
 Inside `apps/mobile/`, `modules/unity-avatar-module/` is a local Expo native
 module embedding Unity-as-a-Library (autolinked by convention, not an npm
@@ -136,16 +136,16 @@ Full setup, native builds and the Android/Unity toolchain:
 
 Start at **[docs/README.md](docs/README.md)**.
 
-| Doc | What it covers |
-|---|---|
-| [Mobile app](docs/mobile-app.md) | Tech stack, screens, structure, path aliases, native builds, API keys |
-| [Web app](apps/web/README.md) | Vite app, mock vs real mode, Vercel deploy |
-| [Shared core](packages/core/README.md) | What may live in `@core`, and why the boundary exists |
-| [RAG pipeline](docs/rag/README.md) | Config, ingestion, evaluation + the research docs |
-| [Avatar & voice](docs/avatar.md) | Renderers, conversation pipeline, lip sync |
-| [Backend plan](docs/architecture/backend-plan.md) | The planned backend + DB (not built) |
-| [Design system](docs/design-system.md) | Tokens and accessibility requirements |
-| [Contributing](CONTRIBUTING.md) | Setup, where code goes, required checks, known traps |
+| Doc                                               | What it covers                                                        |
+| ------------------------------------------------- | --------------------------------------------------------------------- |
+| [Mobile app](docs/mobile-app.md)                  | Tech stack, screens, structure, path aliases, native builds, API keys |
+| [Web app](apps/web/README.md)                     | Vite app, mock vs real mode, Vercel deploy                            |
+| [Shared core](packages/core/README.md)            | What may live in `@core`, and why the boundary exists                 |
+| [RAG pipeline](docs/rag/README.md)                | Config, ingestion, evaluation + the research docs                     |
+| [Avatar & voice](docs/avatar.md)                  | Renderers, conversation pipeline, lip sync                            |
+| [Backend plan](docs/architecture/backend-plan.md) | The planned backend + DB (not built)                                  |
+| [Design system](docs/design-system.md)            | Tokens and accessibility requirements                                 |
+| [Contributing](CONTRIBUTING.md)                   | Setup, where code goes, required checks, known traps                  |
 
 ---
 
@@ -153,18 +153,18 @@ Start at **[docs/README.md](docs/README.md)**.
 
 All of these run from the repo root; the workspace ones delegate with `-w`.
 
-| Command | What it does |
-|---|---|
-| `npm start` | Expo dev server |
-| `npm run ios` / `android` | Native build + run — required for the Unity avatar |
-| `npm run web` | Vite dev server |
-| `npm run typecheck` | `tsc --noEmit` over the mobile app + `packages/core` |
-| `npm run lint` | ESLint across both apps and `packages/core` |
-| `npm run format` / `format:check` | Prettier write / check |
-| `npm test` | Both suites: Jest (mobile + core + scripts) and Vitest (web) |
-| `npm run test:mobile` / `test:web` | One suite at a time |
-| `npm run kb:ingest` / `kb:ingest:dry` | Ingest sources into Supabase / plan only |
-| `npm run rag:eval:*`, `rag:grade`, `rag:introspect` | RAG evaluation suite — see [docs/rag/](docs/rag/README.md) |
+| Command                                             | What it does                                                 |
+| --------------------------------------------------- | ------------------------------------------------------------ |
+| `npm start`                                         | Expo dev server                                              |
+| `npm run ios` / `android`                           | Native build + run — required for the Unity avatar           |
+| `npm run web`                                       | Vite dev server                                              |
+| `npm run typecheck`                                 | `tsc --noEmit` over the mobile app + `packages/core`         |
+| `npm run lint`                                      | ESLint across both apps and `packages/core`                  |
+| `npm run format` / `format:check`                   | Prettier write / check                                       |
+| `npm test`                                          | Both suites: Jest (mobile + core + scripts) and Vitest (web) |
+| `npm run test:mobile` / `test:web`                  | One suite at a time                                          |
+| `npm run kb:ingest` / `kb:ingest:dry`               | Ingest sources into Supabase / plan only                     |
+| `npm run rag:eval:*`, `rag:grade`, `rag:introspect` | RAG evaluation suite — see [docs/rag/](docs/rag/README.md)   |
 
 Web-only extras, via `-w apps/web`: `build`, `preview`, and `sync:unity`.
 

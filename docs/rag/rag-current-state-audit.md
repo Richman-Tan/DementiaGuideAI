@@ -11,18 +11,18 @@ Companion documents: [rag-industry-research.md](rag-industry-research.md) · [ra
 
 ### 1.1 Components
 
-| Layer | Implementation | Location |
-|---|---|---|
-| Knowledge base | 449 chunks in Supabase Postgres (`knowledge_chunks`, pgvector) — 70 hand-authored + ~380 WHO/NZ iSupport | Supabase (live); curated source in `src/features/library/data/knowledgeBase.js` |
-| Embeddings | OpenAI `text-embedding-3-small`, 1536 dims; documents embedded as `` `${title}. ${content}` `` | ingestion scripts; query embedding in `src/lib/openaiService.js:106-112` |
-| Retrieval | Hybrid via Postgres function `match_chunks` (vector cosine + tsvector keyword), called through PostgREST RPC | `openaiService.js:116-126`; SQL lives **only in production DB** |
-| Post-retrieval | Oversample ×10 (50 candidates) → `capBySourceFamily` (iSupport max 2) → top 5 | `openaiService.js:28-47,125` |
-| Generation | OpenAI `gpt-4o`, temp 0.7, max_tokens 300–900 by response style, last 6 messages of history | `openaiService.js:351-417` (text), `:132-226` (streaming/voice) |
-| Prompt | "Aria" system prompt, augmentation-not-a-cage philosophy, style/personality/jargon variants | `openaiService.js:292-347` |
-| Citations | Model asked to emit trailing `Sources:` bullet list of passage titles; regex-parsed, exact-title-matched to chunks | `openaiService.js:332-334,392-414` |
-| Clients | ChatScreen (text) and useAvatarConversation (voice/streaming + TTS) | `src/features/chat/`, `src/features/voice/` |
-| Evaluation | 42-question harness (hit@5 + refusal regex) + gpt-4o-mini groundedness judge | `scripts/rag-eval.mjs`, `scripts/rag-grade.mjs` |
-| Ingestion | Ad-hoc URL/PDF/text script (currently non-runnable, see F-9) + one-time curated seed | `scripts/ingest.mjs`, `scripts/migrate-to-supabase.mjs` |
+| Layer          | Implementation                                                                                                     | Location                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Knowledge base | 449 chunks in Supabase Postgres (`knowledge_chunks`, pgvector) — 70 hand-authored + ~380 WHO/NZ iSupport           | Supabase (live); curated source in `src/features/library/data/knowledgeBase.js` |
+| Embeddings     | OpenAI `text-embedding-3-small`, 1536 dims; documents embedded as `` `${title}. ${content}` ``                     | ingestion scripts; query embedding in `src/lib/openaiService.js:106-112`        |
+| Retrieval      | Hybrid via Postgres function `match_chunks` (vector cosine + tsvector keyword), called through PostgREST RPC       | `openaiService.js:116-126`; SQL lives **only in production DB**                 |
+| Post-retrieval | Oversample ×10 (50 candidates) → `capBySourceFamily` (iSupport max 2) → top 5                                      | `openaiService.js:28-47,125`                                                    |
+| Generation     | OpenAI `gpt-4o`, temp 0.7, max_tokens 300–900 by response style, last 6 messages of history                        | `openaiService.js:351-417` (text), `:132-226` (streaming/voice)                 |
+| Prompt         | "Aria" system prompt, augmentation-not-a-cage philosophy, style/personality/jargon variants                        | `openaiService.js:292-347`                                                      |
+| Citations      | Model asked to emit trailing `Sources:` bullet list of passage titles; regex-parsed, exact-title-matched to chunks | `openaiService.js:332-334,392-414`                                              |
+| Clients        | ChatScreen (text) and useAvatarConversation (voice/streaming + TTS)                                                | `src/features/chat/`, `src/features/voice/`                                     |
+| Evaluation     | 42-question harness (hit@5 + refusal regex) + gpt-4o-mini groundedness judge                                       | `scripts/rag-eval.mjs`, `scripts/rag-grade.mjs`                                 |
+| Ingestion      | Ad-hoc URL/PDF/text script (currently non-runnable, see F-9) + one-time curated seed                               | `scripts/ingest.mjs`, `scripts/migrate-to-supabase.mjs`                         |
 
 ### 1.2 One question, end to end
 
@@ -72,7 +72,7 @@ Fix: prompt v2 with NZ framing and verified NZ helplines (111 emergency; Healthl
 Measured by: deterministic safety checks (answers MUST NOT contain `1800 100 500|My Aged Care|Carer Gateway`; emergency answers MUST contain `111`).
 
 **F-2 · High — No explicit emergency-escalation rule.**
-Evidence: the only medical-safety instruction is one sentence asking the model to "naturally suggest their GP" for dosing/diagnosis/sudden changes (`openaiService.js:346`). Nothing instructs the model to put emergency escalation *first* for red-flag presentations (stroke signs, unresponsiveness, head injury after a fall, swallowing a dangerous substance).
+Evidence: the only medical-safety instruction is one sentence asking the model to "naturally suggest their GP" for dosing/diagnosis/sudden changes (`openaiService.js:346`). Nothing instructs the model to put emergency escalation _first_ for red-flag presentations (stroke signs, unresponsiveness, head injury after a fall, swallowing a dangerous substance).
 User effect: with temp 0.7 and no rule, escalation placement and presence are left to chance on exactly the questions where ordering matters.
 Fix: SAFETY block in prompt v2 (escalate to 111 first, then support — preserving the no-refusal philosophy) + a machine-checked safety question set. Effort: small.
 Measured by: S-set pass rate (deterministic regex assertions).
@@ -197,18 +197,18 @@ Triplicated prompt (F-20) · dead citation UI (F-7) · dead knowledgeService (F-
 
 See [rag-industry-research.md](rag-industry-research.md) for sources and reasoning. Summary of where this implementation stands:
 
-| Area | Common production practice | This system | Verdict |
-|---|---|---|---|
-| Hybrid retrieval | Vector + lexical, fused by RRF or tuned weights | Weighted-sum 0.7/0.3 (now captured); untuned, scale-mismatched | Right idea; RRF is a measured Stage-10 experiment (F-14 resolved) |
-| Chunking | Structure-aware, token-sized, with overlap | Word-based 500/50, paragraph-aware, no headings | Adequate; improve at re-ingestion |
-| Embeddings | text-embedding-3-small is the standard cost/quality point at this scale | Same | Keep; larger model only via controlled comparison |
-| Metadata | First-class columns, filterable, versioned | Crammed into tags[] | Below practice (F-13) |
-| Provenance | Source registry, licences, hashes, versions | Absent for 85% of corpus | Well below practice (F-13) |
-| Reranking | Often skipped below ~10⁵ docs; cross-encoders for large corpora | None | Correctly absent; evaluate cheap options only with evidence |
-| Evaluation | Multi-metric retrieval + judged generation + deterministic safety checks | hit@5 + lenient judge | Below practice (F-16, F-23, F-24) |
-| Citations | Structured ids validated against context | Honour-system title list | Below practice (F-7, F-21) |
-| Safety (health) | Explicit escalation rules, no-dose rules, tested | One prompt sentence, wrong region | Well below practice (F-1..F-3) |
-| Observability | Per-request retrieval traces, token/latency accounting | Voice latency logs only | Below practice (F-30) |
+| Area             | Common production practice                                               | This system                                                    | Verdict                                                           |
+| ---------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Hybrid retrieval | Vector + lexical, fused by RRF or tuned weights                          | Weighted-sum 0.7/0.3 (now captured); untuned, scale-mismatched | Right idea; RRF is a measured Stage-10 experiment (F-14 resolved) |
+| Chunking         | Structure-aware, token-sized, with overlap                               | Word-based 500/50, paragraph-aware, no headings                | Adequate; improve at re-ingestion                                 |
+| Embeddings       | text-embedding-3-small is the standard cost/quality point at this scale  | Same                                                           | Keep; larger model only via controlled comparison                 |
+| Metadata         | First-class columns, filterable, versioned                               | Crammed into tags[]                                            | Below practice (F-13)                                             |
+| Provenance       | Source registry, licences, hashes, versions                              | Absent for 85% of corpus                                       | Well below practice (F-13)                                        |
+| Reranking        | Often skipped below ~10⁵ docs; cross-encoders for large corpora          | None                                                           | Correctly absent; evaluate cheap options only with evidence       |
+| Evaluation       | Multi-metric retrieval + judged generation + deterministic safety checks | hit@5 + lenient judge                                          | Below practice (F-16, F-23, F-24)                                 |
+| Citations        | Structured ids validated against context                                 | Honour-system title list                                       | Below practice (F-7, F-21)                                        |
+| Safety (health)  | Explicit escalation rules, no-dose rules, tested                         | One prompt sentence, wrong region                              | Well below practice (F-1..F-3)                                    |
+| Observability    | Per-request retrieval traces, token/latency accounting                   | Voice latency logs only                                        | Below practice (F-30)                                             |
 
 ---
 

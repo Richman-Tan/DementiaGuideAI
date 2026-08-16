@@ -35,10 +35,16 @@ const LLM_TOTAL_TIMEOUT_MS = 60000;
 const LLM_TTFB_TIMEOUT_MS = 12000;
 
 class OpenAIAuthError extends Error {
-  constructor(msg) { super(msg); this.name = 'OpenAIAuthError'; }
+  constructor(msg) {
+    super(msg);
+    this.name = 'OpenAIAuthError';
+  }
 }
 class OpenAIRateLimitError extends Error {
-  constructor(msg) { super(msg); this.name = 'OpenAIRateLimitError'; }
+  constructor(msg) {
+    super(msg);
+    this.name = 'OpenAIRateLimitError';
+  }
 }
 
 class OpenAIClient {
@@ -58,8 +64,12 @@ class OpenAIClient {
   async saveApiKey(key) {
     saveKeys({ ...loadKeys(), openai: key.trim() });
   }
-  async getApiKey() { return getOpenaiKey() || null; }
-  async clearApiKey() { saveKeys({ ...loadKeys(), openai: '' }); }
+  async getApiKey() {
+    return getOpenaiKey() || null;
+  }
+  async clearApiKey() {
+    saveKeys({ ...loadKeys(), openai: '' });
+  }
   async hasApiKey() {
     const k = getOpenaiKey();
     return !!k && k.length > 10;
@@ -77,7 +87,7 @@ class OpenAIClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
+          Authorization: `Bearer ${key}`,
         },
         body: JSON.stringify(body),
         ...(t ? { signal: t.signal } : {}),
@@ -103,10 +113,15 @@ class OpenAIClient {
       this._embedCache.set(key, hit);
       return hit;
     }
-    const data = await this._callOpenAI('/embeddings', {
-      model: EMBEDDING_MODEL,
-      input: text,
-    }, null, { timeoutMs: EMBED_TIMEOUT_MS });
+    const data = await this._callOpenAI(
+      '/embeddings',
+      {
+        model: EMBEDDING_MODEL,
+        input: text,
+      },
+      null,
+      { timeoutMs: EMBED_TIMEOUT_MS }
+    );
     const embedding = data.data[0].embedding;
     this._embedCache.set(key, embedding);
     if (this._embedCache.size > EMBED_CACHE_MAX) {
@@ -122,12 +137,14 @@ class OpenAIClient {
     const t = timeoutSignal(SEARCH_TIMEOUT_MS);
     let data, error;
     try {
-      ({ data, error } = await supabase.rpc('match_chunks', {
-        query_embedding: queryEmbedding,
-        query_text: query,
-        match_count: topK * RETRIEVAL_OVERSAMPLE,
-        min_similarity: MIN_SIMILARITY,
-      }).abortSignal(t.signal));
+      ({ data, error } = await supabase
+        .rpc('match_chunks', {
+          query_embedding: queryEmbedding,
+          query_text: query,
+          match_count: topK * RETRIEVAL_OVERSAMPLE,
+          min_similarity: MIN_SIMILARITY,
+        })
+        .abortSignal(t.signal));
     } finally {
       t.cancel();
     }
@@ -141,10 +158,21 @@ class OpenAIClient {
   // validated sources and timingCbs.onFinal gets extractCitations' full result
   // ({ text with renumbered [1..n], sources }) for the chat transcript.
 
-  async *chatStream(userMessage, conversationHistory = [], timingCbs = null,
-                    { conciseMode = false, responseStyle = 'balanced', jargonMode = 'explain',
-                      ariaPersonality = 'warm', isCaregiversSetup = false,
-                      skipThrottle = false, preRetrievedChunks = null, signal = null } = {}) {
+  async *chatStream(
+    userMessage,
+    conversationHistory = [],
+    timingCbs = null,
+    {
+      conciseMode = false,
+      responseStyle = 'balanced',
+      jargonMode = 'explain',
+      ariaPersonality = 'warm',
+      isCaregiversSetup = false,
+      skipThrottle = false,
+      preRetrievedChunks = null,
+      signal = null,
+    } = {}
+  ) {
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new OpenAIAuthError('No API key configured');
 
@@ -175,7 +203,17 @@ class OpenAIClient {
 
     const inlineCitations = CITATION_MODE === 'inline';
     const messages = [
-      { role: 'system', content: buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup, includeSources: inlineCitations }) },
+      {
+        role: 'system',
+        content: buildSystemPrompt({
+          conciseMode,
+          responseStyle,
+          jargonMode,
+          ariaPersonality,
+          isCaregiversSetup,
+          includeSources: inlineCitations,
+        }),
+      },
       ...recentHistory,
       { role: 'user', content: userContent },
     ];
@@ -185,9 +223,20 @@ class OpenAIClient {
     const onOuterAbort = () => ac.abort();
     signal?.addEventListener('abort', onOuterAbort, { once: true });
     let timedOut = null;
-    const totalTimer = setTimeout(() => { timedOut = 'OpenAI stream timed out'; ac.abort(); }, LLM_TOTAL_TIMEOUT_MS);
-    let ttfbTimer = setTimeout(() => { timedOut = 'OpenAI stream timed out waiting for first response'; ac.abort(); }, LLM_TTFB_TIMEOUT_MS);
-    const clearTtfb = () => { if (ttfbTimer) { clearTimeout(ttfbTimer); ttfbTimer = null; } };
+    const totalTimer = setTimeout(() => {
+      timedOut = 'OpenAI stream timed out';
+      ac.abort();
+    }, LLM_TOTAL_TIMEOUT_MS);
+    let ttfbTimer = setTimeout(() => {
+      timedOut = 'OpenAI stream timed out waiting for first response';
+      ac.abort();
+    }, LLM_TTFB_TIMEOUT_MS);
+    const clearTtfb = () => {
+      if (ttfbTimer) {
+        clearTimeout(ttfbTimer);
+        ttfbTimer = null;
+      }
+    };
 
     const stripper = inlineCitations ? createMarkerStripper() : null;
     let rawFull = '';
@@ -199,7 +248,7 @@ class OpenAIClient {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
+            Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
             model: CHAT_MODEL,
@@ -244,7 +293,9 @@ class OpenAIClient {
           let content;
           try {
             content = JSON.parse(d)?.choices?.[0]?.delta?.content;
-          } catch { continue; }
+          } catch {
+            continue;
+          }
           if (!content) continue;
           if (stripper) {
             rawFull += content;
@@ -353,7 +404,8 @@ import { matchSourceToArticle } from './kbToLibrary.js';
 // The design's amber "If you need help now" callout. The model itself handles
 // safety in the v2-nz-safety prompt; this flag only adds the visual treatment
 // for clearly high-risk topics.
-const SAFETY_RE = /(aggress|violen|hit|hurt|harm|suicid|self.?harm|danger|emergency|missing|lost and)/i;
+const SAFETY_RE =
+  /(aggress|violen|hit|hurt|harm|suicid|self.?harm|danger|emergency|missing|lost and)/i;
 
 // Drawer-ready citations from validated KB sources (shared with the voice path).
 export function mapSourcesToCitations(sources) {
@@ -376,16 +428,26 @@ export async function realGenerate({ question, settings, history, signal, onToke
     .filter((m) => m.text && !m.streaming)
     .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
   // Drop the just-appended current question — it goes in as the prompt itself.
-  if (apiHistory.length && apiHistory[apiHistory.length - 1].role === 'user'
-      && apiHistory[apiHistory.length - 1].content === question) {
+  if (
+    apiHistory.length &&
+    apiHistory[apiHistory.length - 1].role === 'user' &&
+    apiHistory[apiHistory.length - 1].content === question
+  ) {
     apiHistory.pop();
   }
 
   let final = null;
   let acc = '';
-  const stream = openaiClient.chatStream(question, apiHistory, {
-    onFinal: (f) => { final = f; },
-  }, opts);
+  const stream = openaiClient.chatStream(
+    question,
+    apiHistory,
+    {
+      onFinal: (f) => {
+        final = f;
+      },
+    },
+    opts
+  );
   for await (const piece of stream) {
     acc += piece;
     onToken(acc);

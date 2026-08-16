@@ -1,4 +1,11 @@
-const { recallAtK, precisionAtK, reciprocalRank, ndcgAtK, scoreQuestion, aggregate } = require('./metrics');
+const {
+  recallAtK,
+  precisionAtK,
+  reciprocalRank,
+  ndcgAtK,
+  scoreQuestion,
+  aggregate,
+} = require('./metrics');
 
 // Fixtures are hand-computed; do not regenerate them from the implementation.
 

@@ -1,17 +1,37 @@
 const { extractCitations, createMarkerStripper } = require('./citations');
 
 const chunks = [
-  { id: 'c1', title: 'Sundowning', content: 'A'.repeat(300), source_org: 'WHO', source_url: 'https://who.int/x' },
+  {
+    id: 'c1',
+    title: 'Sundowning',
+    content: 'A'.repeat(300),
+    source_org: 'WHO',
+    source_url: 'https://who.int/x',
+  },
   { id: 'c2', title: 'Sleep', content: 'Short body.', source_org: null, source_url: null },
-  { id: 'c3', title: 'Routines', content: 'Routine body.', source_org: 'Alzheimers NZ', source_url: null },
+  {
+    id: 'c3',
+    title: 'Routines',
+    content: 'Routine body.',
+    source_org: 'Alzheimers NZ',
+    source_url: null,
+  },
 ];
 
 describe('extractCitations', () => {
   it('renumbers used markers to contiguous [1]..[n] in first-use order', () => {
-    const { text, sources } = extractCitations('Keep routines [S3]. Light helps [S1]. More [S3].', chunks);
+    const { text, sources } = extractCitations(
+      'Keep routines [S3]. Light helps [S1]. More [S3].',
+      chunks
+    );
     expect(text).toBe('Keep routines [1]. Light helps [2]. More [1].');
-    expect(sources.map(s => s.id)).toEqual(['c3', 'c1']);
-    expect(sources[0]).toMatchObject({ num: 1, title: 'Routines', org: 'Alzheimers NZ', url: null });
+    expect(sources.map((s) => s.id)).toEqual(['c3', 'c1']);
+    expect(sources[0]).toMatchObject({
+      num: 1,
+      title: 'Routines',
+      org: 'Alzheimers NZ',
+      url: null,
+    });
   });
 
   it('strips hallucinated markers instead of rendering them', () => {

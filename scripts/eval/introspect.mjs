@@ -25,7 +25,9 @@ async function main() {
   const cols = select.split(',');
   const lines = [cols.join(',')];
   for (const row of rows) {
-    lines.push(cols.map(c => csvEscape(Array.isArray(row[c]) ? row[c].join('|') : row[c])).join(','));
+    lines.push(
+      cols.map((c) => csvEscape(Array.isArray(row[c]) ? row[c].join('|') : row[c])).join(',')
+    );
   }
   const out = resolve(ROOT, 'docs/report/kb_chunks_reference.csv');
   writeFileSync(out, lines.join('\n') + '\n');
@@ -38,4 +40,7 @@ async function main() {
   }
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

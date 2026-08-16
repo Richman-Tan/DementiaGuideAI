@@ -3,9 +3,9 @@
 **Author:** Richman Tan · **Supervisor:** Assoc. Prof. Jing Sun · **Project Partner:** JooHyun Kang
 **Report:** COMPSYS/ELECTENG/SOFTENG 700 Mid-Year Progress Report
 
-> **Confirmed framing (interpretation B).** The mid-year deliverable is a *progress report that expects early results*, not a proposal. The report should evolve from `Introduction → Literature Review → Proposed Solution → Project Plan` into:
+> **Confirmed framing (interpretation B).** The mid-year deliverable is a _progress report that expects early results_, not a proposal. The report should evolve from `Introduction → Literature Review → Proposed Solution → Project Plan` into:
 > **Introduction → Background and Literature Review → Research Objectives → Methodology → Implementation Progress → Results → Discussion → Limitations and Future Work → Conclusion.**
-> Existing proposal content is reused; *Proposed Solution* and *Project Plan* are updated to reflect actual progress. This document drafts the new empirical sections (Methodology of the evaluation, Implementation Progress, Results, Discussion, Limitations and Future Work, Conclusion).
+> Existing proposal content is reused; _Proposed Solution_ and _Project Plan_ are updated to reflect actual progress. This document drafts the new empirical sections (Methodology of the evaluation, Implementation Progress, Results, Discussion, Limitations and Future Work, Conclusion).
 >
 > **Honesty boundary.** The lip-sync evaluation is real, quantitative, and reproducible. It validates **one required component** — that the avatar can articulate speech accurately enough for the proposed system. It does **not** assess the accessibility, personalisation, or usability of DementiaGuide AI; those depend on the human evaluation planned for the second half of the project. No data, numbers, or citations are invented. Section numbers below assume the full-report structure above; adjust to your final numbering.
 >
@@ -15,30 +15,30 @@
 
 ## A. Evidence audit
 
-**Research question (§2.1):** *How can an AI-powered avatar-based interface improve the accessibility, personalisation, and usability of digital resource management systems for dementia care?*
+**Research question (§2.1):** _How can an AI-powered avatar-based interface improve the accessibility, personalisation, and usability of digital resource management systems for dementia care?_
 
-| Objective (§2.3) | Evidence now | Status |
-|---|---|---|
-| O1 Literature review | Report §3 | Done |
-| O2 Identify gaps | Report §3.9 | Done |
-| O3 Design avatar-based conversational interface | Prototype implemented | Built; not user-evaluated |
+| Objective (§2.3)                                                | Evidence now                                                  | Status                                        |
+| --------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------- |
+| O1 Literature review                                            | Report §3                                                     | Done                                          |
+| O2 Identify gaps                                                | Report §3.9                                                   | Done                                          |
+| O3 Design avatar-based conversational interface                 | Prototype implemented                                         | Built; not user-evaluated                     |
 | O4 Develop prototype (AI personalisation + resource management) | RAG chat, voice pipeline, CC4 avatar, UaaL bridge implemented | Built; only articulation sub-system evaluated |
-| O5 Evaluate usability and effectiveness | No human study yet | **Outstanding (700B)** |
+| O5 Evaluate usability and effectiveness                         | No human study yet                                            | **Outstanding (700B)**                        |
 
 **Evidence map**
 
-| Sub-question / aim | Evidence | Main finding | Fig/Table | Confidence / limitation |
-|---|---|---|---|---|
-| SQ3 avatar role (articulation-fidelity precondition) | Automated lip-sync loop; baseline vs final; 8 fixtures, 95 checks | Checks 37/85 → 85/85 (hand-authored); 95/95 with G2P | T1, T2, F1, F2 | High for editor; deterministic, no human raters |
-| bilabial closure | V_Explosive + open-shape suppression | 2/7 → 7/7; final 0.93–0.95; leakage ≤ 0.08 | T2, F2 | Editor only |
-| labiodental contact | V_Dental_Lip | 4/7 → 7/7; final ≥ 0.94 | T2 | Editor only |
-| tongue activation | V_Tongue_* | all 27 baseline 0.00 → 0.40–0.72 | T2 | Editor only |
-| silence / segment-end | leakage + decay | leakage ≤ 0.54 → ≤ 0.10; decay 313–324 ms → 30–95 ms | T2 | Editor only |
-| real G2P vs heuristics | g2p fixture 10/10 | passes; no baseline, not isolated | T1 | Partial |
-| motion smoothness | jitter RMS | **increased on every fixture** | T2 | Negative finding |
-| SQ1/2/4/5 usability, personalisation, decision support, literacy | None | — | — | **Outstanding (700B)** |
-| SQ3/trust — RAG grounding reliability | Live eval, 42 questions (§6.9) | retrieval 29/32 → 31/32 after source-family cap; 4/4 boundary + 6/6 out-of-scope declined safely; all 32 in-scope answers LLM-judged fully grounded | Table 4 | LLM-judge leniency (human check advisable); deployed retrieval, no user judgement |
-| Voice latency | Instrumented (6 stages); protocol + template defined (§4.2, Table 3); no dataset | — | — | Not measured — ready to run |
+| Sub-question / aim                                               | Evidence                                                                         | Main finding                                                                                                                                        | Fig/Table      | Confidence / limitation                                                           |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------- |
+| SQ3 avatar role (articulation-fidelity precondition)             | Automated lip-sync loop; baseline vs final; 8 fixtures, 95 checks                | Checks 37/85 → 85/85 (hand-authored); 95/95 with G2P                                                                                                | T1, T2, F1, F2 | High for editor; deterministic, no human raters                                   |
+| bilabial closure                                                 | V_Explosive + open-shape suppression                                             | 2/7 → 7/7; final 0.93–0.95; leakage ≤ 0.08                                                                                                          | T2, F2         | Editor only                                                                       |
+| labiodental contact                                              | V_Dental_Lip                                                                     | 4/7 → 7/7; final ≥ 0.94                                                                                                                             | T2             | Editor only                                                                       |
+| tongue activation                                                | V_Tongue_*                                                                       | all 27 baseline 0.00 → 0.40–0.72                                                                                                                    | T2             | Editor only                                                                       |
+| silence / segment-end                                            | leakage + decay                                                                  | leakage ≤ 0.54 → ≤ 0.10; decay 313–324 ms → 30–95 ms                                                                                                | T2             | Editor only                                                                       |
+| real G2P vs heuristics                                           | g2p fixture 10/10                                                                | passes; no baseline, not isolated                                                                                                                   | T1             | Partial                                                                           |
+| motion smoothness                                                | jitter RMS                                                                       | **increased on every fixture**                                                                                                                      | T2             | Negative finding                                                                  |
+| SQ1/2/4/5 usability, personalisation, decision support, literacy | None                                                                             | —                                                                                                                                                   | —              | **Outstanding (700B)**                                                            |
+| SQ3/trust — RAG grounding reliability                            | Live eval, 42 questions (§6.9)                                                   | retrieval 29/32 → 31/32 after source-family cap; 4/4 boundary + 6/6 out-of-scope declined safely; all 32 in-scope answers LLM-judged fully grounded | Table 4        | LLM-judge leniency (human check advisable); deployed retrieval, no user judgement |
+| Voice latency                                                    | Instrumented (6 stages); protocol + template defined (§4.2, Table 3); no dataset | —                                                                                                                                                   | —              | Not measured — ready to run                                                       |
 
 **Still required:** (1) human usability study [central]; (2) latency dataset; (3) RAG grounding evaluation; (4) on-device confirmation; (5) the Cohen–Massaro citation above.
 
@@ -63,7 +63,7 @@ This document drafts the sections in **bold** below (Methodology is scoped to th
 
 ### 4. Methodology
 
-*The project methodology spans interface design, prototype implementation, and evaluation. Section 4.1 describes the evaluation method for the component that has produced results at the mid-point — the avatar lip-synchronisation pipeline. Sections 4.2 and 4.3 define the evaluation protocols for the streaming voice latency and the retrieval-augmented (RAG) grounding, which are implemented and ready to run but have not yet been executed; no data has been collected for them and none is reported below.*
+_The project methodology spans interface design, prototype implementation, and evaluation. Section 4.1 describes the evaluation method for the component that has produced results at the mid-point — the avatar lip-synchronisation pipeline. Sections 4.2 and 4.3 define the evaluation protocols for the streaming voice latency and the retrieval-augmented (RAG) grounding, which are implemented and ready to run but have not yet been executed; no data has been collected for them and none is reported below._
 
 #### 4.1 Avatar articulation evaluation
 
@@ -73,7 +73,7 @@ The avatar's speech articulation was evaluated with an automated test loop insid
 
 **Metrics.** Each fixture embeds timed checks scored by six criteria: bilabial closure (`V_Explosive` ≥ 0.90 within ±60 ms, with open-mouth shapes suppressed), labiodental contact (`V_Dental_Lip` ≥ 0.80), tongue activation (mapped tongue shape ≥ 0.30), vowel peak (≥ 0.35), silence (all lip shapes < 0.10), and segment-end decay (all lip shapes < 0.05 within 250 ms). Motion smoothness was additionally reported as the root-mean-square of the second difference of all curves on a 60 Hz grid ("jitter RMS"); jitter was recorded for each run but was not one of the pass/fail criteria.
 
-**Design.** The same suite was run against the pipeline before the co-articulation redesign (the *baseline*) and after it (the *final* pipeline), giving a controlled before-and-after comparison. Weights were baked and recorded at high frame rate (approximately 90 Hz), giving 147 to 202 samples per fixture, and a screenshot was captured at each check time.
+**Design.** The same suite was run against the pipeline before the co-articulation redesign (the _baseline_) and after it (the _final_ pipeline), giving a controlled before-and-after comparison. Weights were baked and recorded at high frame rate (approximately 90 Hz), giving 147 to 202 samples per fixture, and a screenshot was captured at each check time.
 
 #### 4.2 Streaming voice latency evaluation (protocol; not yet executed)
 
@@ -83,14 +83,14 @@ The planned protocol runs a fixed set of representative caregiver queries (for e
 
 **Table 3.** Voice-pipeline latency by stage (reporting template; `[TO BE CAPTURED]`). Report the median and range in milliseconds over n queries; state n, device, and network.
 
-| Stage | Median (ms) | Range (ms) |
-|---|---|---|
-| Speech-to-text (`stt_ms`) | `[TBC]` | `[TBC]` |
-| Retrieval (`rag_ms`) | `[TBC]` | `[TBC]` |
-| LLM time to first token (`llm_to_token_ms`) | `[TBC]` | `[TBC]` |
-| First token → first sentence (`first_sentence_ms`) | `[TBC]` | `[TBC]` |
-| TTS request → first audio (`tts_first_ms`) | `[TBC]` | `[TBC]` |
-| **End to end → first avatar audio (`to_first_audio_ms`)** | `[TBC]` | `[TBC]` |
+| Stage                                                     | Median (ms) | Range (ms) |
+| --------------------------------------------------------- | ----------- | ---------- |
+| Speech-to-text (`stt_ms`)                                 | `[TBC]`     | `[TBC]`    |
+| Retrieval (`rag_ms`)                                      | `[TBC]`     | `[TBC]`    |
+| LLM time to first token (`llm_to_token_ms`)               | `[TBC]`     | `[TBC]`    |
+| First token → first sentence (`first_sentence_ms`)        | `[TBC]`     | `[TBC]`    |
+| TTS request → first audio (`tts_first_ms`)                | `[TBC]`     | `[TBC]`    |
+| **End to end → first avatar audio (`to_first_audio_ms`)** | `[TBC]`     | `[TBC]`    |
 
 #### 4.3 RAG grounding evaluation (executed 2026-07-13; results in §6.9)
 
@@ -116,18 +116,18 @@ On the baseline pipeline, 37 of the 85 hand-authored acceptance checks passed. O
 
 **Table 1.** Acceptance checks passed per fixture, baseline versus final pipeline. The `g2p_pipeline` fixture was introduced with the final pipeline and has no baseline.
 
-| Fixture | Baseline (passed / total) | Final (passed / total) |
-|---|---|---|
-| bilabials | 6 / 17 | 17 / 17 |
-| dental | 4 / 13 | 13 / 13 |
-| labiodental | 9 / 16 | 16 / 16 |
-| sibilant_rhotic | 6 / 13 | 13 / 13 |
-| hello | 4 / 11 | 11 / 11 |
-| silence_gaps | 4 / 9 | 9 / 9 |
-| rounded | 4 / 6 | 6 / 6 |
-| **Subtotal (hand-authored)** | **37 / 85** | **85 / 85** |
-| g2p_pipeline | — | 10 / 10 |
-| **Total** | — | **95 / 95** |
+| Fixture                      | Baseline (passed / total) | Final (passed / total) |
+| ---------------------------- | ------------------------- | ---------------------- |
+| bilabials                    | 6 / 17                    | 17 / 17                |
+| dental                       | 4 / 13                    | 13 / 13                |
+| labiodental                  | 9 / 16                    | 16 / 16                |
+| sibilant_rhotic              | 6 / 13                    | 13 / 13                |
+| hello                        | 4 / 11                    | 11 / 11                |
+| silence_gaps                 | 4 / 9                     | 9 / 9                  |
+| rounded                      | 4 / 6                     | 6 / 6                  |
+| **Subtotal (hand-authored)** | **37 / 85**               | **85 / 85**            |
+| g2p_pipeline                 | —                         | 10 / 10                |
+| **Total**                    | —                         | **95 / 95**            |
 
 ![Figure 1](figures/fig1_checks_passed.png)
 
@@ -169,15 +169,15 @@ Jitter RMS increased on every fixture from baseline to final. Across the hand-au
 
 **Table 2.** Key articulation metrics by criterion, baseline versus final pipeline. Values are measured blendshape weights at the relevant check (0 to 1 scale) unless stated; decay is in milliseconds. Thresholds are the acceptance criteria.
 
-| Criterion (threshold) | Baseline | Final |
-|---|---|---|
-| Bilabial `V_Explosive` peak (≥ 0.90) | 0.58 to 0.94 | 0.93 to 0.95 |
-| Bilabial open-shape leakage (≤ 0.15) | up to 0.15 | ≤ 0.08 |
-| Labiodental `V_Dental_Lip` peak (≥ 0.80) | 0.525 to 0.90 | 0.94 to 0.95 |
-| Tongue shape peak (≥ 0.30) | 0.00 (all 27 checks) | 0.40 to 0.72 |
-| Silence max lip weight (< 0.10) | 0.15, 0.17, 0.54 | 0.00, 0.04, 0.10 |
-| Segment-end decay (< 250 ms) | 313 to 324 ms | 30 to 95 ms |
-| Jitter RMS (reported, not gated; lower = smoother) | 0.0056 to 0.0125 | 0.0115 to 0.0191 |
+| Criterion (threshold)                              | Baseline             | Final            |
+| -------------------------------------------------- | -------------------- | ---------------- |
+| Bilabial `V_Explosive` peak (≥ 0.90)               | 0.58 to 0.94         | 0.93 to 0.95     |
+| Bilabial open-shape leakage (≤ 0.15)               | up to 0.15           | ≤ 0.08           |
+| Labiodental `V_Dental_Lip` peak (≥ 0.80)           | 0.525 to 0.90        | 0.94 to 0.95     |
+| Tongue shape peak (≥ 0.30)                         | 0.00 (all 27 checks) | 0.40 to 0.72     |
+| Silence max lip weight (< 0.10)                    | 0.15, 0.17, 0.54     | 0.00, 0.04, 0.10 |
+| Segment-end decay (< 250 ms)                       | 313 to 324 ms        | 30 to 95 ms      |
+| Jitter RMS (reported, not gated; lower = smoother) | 0.0056 to 0.0125     | 0.0115 to 0.0191 |
 
 #### 6.9 Retrieval-augmented generation: grounding evaluation
 
@@ -187,18 +187,18 @@ The RAG protocol (§4.3) was executed on 2026-07-13 against the live 449-chunk k
 
 **Table 4.** In-scope retrieval hits by category after the source-family cap (an expected chunk in the top five). Initial-run total before the cap was 29 of 32.
 
-| Category | Hits / questions |
-|---|---|
-| caregiving | 6 / 6 |
-| clinical | 5 / 5 |
-| home-safety | 3 / 3 |
-| prevention | 4 / 4 |
-| wellbeing | 4 / 4 |
-| best-practices | 4 / 4 |
-| communication | 2 / 3 |
-| Direct (A1–A29) | 28 / 29 |
-| Near-neighbour (A30–A32) | 3 / 3 |
-| **Total in-scope** | **31 / 32** |
+| Category                 | Hits / questions |
+| ------------------------ | ---------------- |
+| caregiving               | 6 / 6            |
+| clinical                 | 5 / 5            |
+| home-safety              | 3 / 3            |
+| prevention               | 4 / 4            |
+| wellbeing                | 4 / 4            |
+| best-practices           | 4 / 4            |
+| communication            | 2 / 3            |
+| Direct (A1–A29)          | 28 / 29          |
+| Near-neighbour (A30–A32) | 3 / 3            |
+| **Total in-scope**       | **31 / 32**      |
 
 **Boundary and out-of-scope handling.** For the four boundary questions (a specific drug dose, a "cure" claim, a named nursing-home recommendation, and an individual prognosis), the system declined to supply the unsupported specific in all four cases, instead stating it lacked the information or redirecting to an appropriate service. For the six out-of-scope questions, the system declined in all six; five retrieved no chunks above the 0.25 similarity floor, and the sixth (diabetes symptoms) retrieved five weakly matching chunks but still declined rather than answering from them.
 
@@ -212,7 +212,7 @@ The RAG protocol (§4.3) was executed on 2026-07-13 against the live 449-chunk k
 
 **Supporting evidence.** The strongest evidence is the bilabial and labiodental results. The closure-suppression pass raised `V_Explosive` peaks from a range dipping to 0.58 up to a consistent 0.93 to 0.95 while holding open-shape leakage at or below 0.08 (Table 2, Fig 2), the behaviour a viewer reads as the lips actually meeting on /p b m/. Labiodental contact rose from a minimum of 0.525 to at least 0.94. The silence result is similarly clear: pause leakage fell from as high as 0.54 to at most 0.10, and end-of-utterance decay fell from 313–324 ms to 30–95 ms. The tongue result shows previously dormant shapes are now driven, from 0.00 across all 27 baseline checks to a range of 0.40 to 0.72.
 
-**Interpretation.** The gains match the mechanism that changed. The baseline linearly interpolated raw keyframes with a single smoothing constant, which under-drove short consonant closures and let vowel shapes bleed through; the failing baseline bilabial peaks (0.58 to 0.82) are what that under-articulation looks like numerically. The final engine bakes overlapping dominance envelopes with an explicit suppression pass that forces open shapes down while a closure is dominant, which explains both the higher closure peaks and the low open-shape leakage at the same instants. The jitter increase must be interpreted honestly: the baseline was probably smoother because it was *under-articulating* — flatter curves produce a smaller second difference — whereas the final pipeline moves the shapes further and faster to reach the targets, raising jitter without introducing oscillation. This is an evidence-based interpretation, not a measured decomposition. The `g2p_pipeline` result is encouraging but cannot isolate the contribution of G2P from that of the engine, because it has no baseline and was measured together with it.
+**Interpretation.** The gains match the mechanism that changed. The baseline linearly interpolated raw keyframes with a single smoothing constant, which under-drove short consonant closures and let vowel shapes bleed through; the failing baseline bilabial peaks (0.58 to 0.82) are what that under-articulation looks like numerically. The final engine bakes overlapping dominance envelopes with an explicit suppression pass that forces open shapes down while a closure is dominant, which explains both the higher closure peaks and the low open-shape leakage at the same instants. The jitter increase must be interpreted honestly: the baseline was probably smoother because it was _under-articulating_ — flatter curves produce a smaller second difference — whereas the final pipeline moves the shapes further and faster to reach the targets, raising jitter without introducing oscillation. This is an evidence-based interpretation, not a measured decomposition. The `g2p_pipeline` result is encouraging but cannot isolate the contribution of G2P from that of the engine, because it has no baseline and was measured together with it.
 
 **Comparison with existing literature.** The avatar work reviewed in §3.6 evaluates dementia-care avatars almost entirely through usability and acceptance (for example the Anne agent study, Stara et al., 2021; the systematic review by Rampioni et al., 2021), and the broader patient-facing meta-analysis reports engagement benefits without establishing superior hard outcomes (Chattopadhyay et al., 2020). This study is complementary rather than directly comparable: it adds an objective, per-shape articulation-fidelity measure that those human-centred studies do not report, using reproducible thresholds rather than subjective ratings. Technically, the engine follows the dominance-envelope tradition of the Cohen–Massaro model, extended with an explicit closure-suppression pass that guarantees bilabial and labiodental contact (Cohen & Massaro, 1993).
 
@@ -223,21 +223,23 @@ The RAG protocol (§4.3) was executed on 2026-07-13 against the live 449-chunk k
 ### 8. Limitations and Future Work
 
 **Limitations.**
-- *No human evaluation (central limitation).* The metrics are objective proxies for articulation, not perceptions of realism, engagement, accessibility, or usability. The research question is about human outcomes, none of which have been measured; this is the principal reason the headline question remains open, and it directly motivates Objective 5.
-- *Deterministic fixtures, one utterance each.* Each fixture is a single scripted utterance, so results carry no variance estimate and no statistical test was performed; the word "significant" is used nowhere in this report. This limits generalisation to arbitrary live speech.
-- *Editor-only.* On-device React Native playback was not verified; behaviour may differ because of frame-rate and bridge timing, weakening any claim about the shipped application until re-tested.
-- *Jitter regressed*, and its cause was interpreted rather than isolated.
-- *G2P not isolated* from the co-articulation engine by the current fixtures.
-- *RAG corpus imbalance (addressed).* The 387 bulk-loaded iSupport chunks initially displaced three hand-authored targets (retrieval 29 of 32). A source-family diversity cap recovered two of the three (31 of 32) and is applied in production; the iSupport chunks have since been re-categorised out of `caregiving` into a dedicated `isupport-course` category (retrieval verified unchanged at 31 of 32). The one remaining miss (A17) reflects an uncompetitive curated chunk, and its answer was grounded. Groundedness was rated by an LLM judge (all 32 in-scope answers fully grounded), which is indicative but not definitive given same-family judge leniency; a human check is still advisable.
-- *Latency unevaluated*, so no conclusion about responsiveness can yet be drawn.
+
+- _No human evaluation (central limitation)._ The metrics are objective proxies for articulation, not perceptions of realism, engagement, accessibility, or usability. The research question is about human outcomes, none of which have been measured; this is the principal reason the headline question remains open, and it directly motivates Objective 5.
+- _Deterministic fixtures, one utterance each._ Each fixture is a single scripted utterance, so results carry no variance estimate and no statistical test was performed; the word "significant" is used nowhere in this report. This limits generalisation to arbitrary live speech.
+- _Editor-only._ On-device React Native playback was not verified; behaviour may differ because of frame-rate and bridge timing, weakening any claim about the shipped application until re-tested.
+- _Jitter regressed_, and its cause was interpreted rather than isolated.
+- _G2P not isolated_ from the co-articulation engine by the current fixtures.
+- _RAG corpus imbalance (addressed)._ The 387 bulk-loaded iSupport chunks initially displaced three hand-authored targets (retrieval 29 of 32). A source-family diversity cap recovered two of the three (31 of 32) and is applied in production; the iSupport chunks have since been re-categorised out of `caregiving` into a dedicated `isupport-course` category (retrieval verified unchanged at 31 of 32). The one remaining miss (A17) reflects an uncompetitive curated chunk, and its answer was grounded. Groundedness was rated by an LLM judge (all 32 in-scope answers fully grounded), which is indicative but not definitive given same-family judge leniency; a human check is still advisable.
+- _Latency unevaluated_, so no conclusion about responsiveness can yet be drawn.
 
 **Future work (specific and actionable).** Full protocols for the items below are in `700b_evaluation_plan.md`.
-1. *Human usability study (highest priority).* Recruit caregivers, and where appropriate healthcare professionals, to complete representative resource-finding tasks with the avatar interface versus a text-only baseline, measuring task success, time on task, and a standard usability instrument. This addresses SQ1, SQ4, SQ5 and Objective 5.
-2. *On-device validation.* Re-run the identical fixture suite through the UaaL bridge on a physical iOS device to confirm the editor metrics hold under real timing.
-3. *Perceptual lip-sync study.* Have raters blind-score final versus baseline clips to test whether the metric gains correspond to perceived realism.
-4. *Complete and extend the RAG evaluation.* Retrieval hit rate, boundary/out-of-scope handling, and LLM-judge groundedness are done (§6.9); a source-family retrieval cap raised retrieval to 31/32; and the iSupport chunks have been re-categorised out of `caregiving` at the data layer (`rag_retrieval_rebalance_plan.md`). The remaining step is a human check of the groundedness ratings, since the LLM judge scored leniently (uniform full marks).
-5. *Latency measurement.* Execute the protocol defined in §4.2, capturing the six instrumented stage timings across representative queries (Table 3) to quantify responsiveness, ideally with concurrent playback toggled on and off to quantify that optimisation.
-6. *Smoothness isolation and G2P ablation.* Sweep the smoothing constants to preserve closures without raising jitter, and compare the character-heuristic and CMUdict paths on identical text.
+
+1. _Human usability study (highest priority)._ Recruit caregivers, and where appropriate healthcare professionals, to complete representative resource-finding tasks with the avatar interface versus a text-only baseline, measuring task success, time on task, and a standard usability instrument. This addresses SQ1, SQ4, SQ5 and Objective 5.
+2. _On-device validation._ Re-run the identical fixture suite through the UaaL bridge on a physical iOS device to confirm the editor metrics hold under real timing.
+3. _Perceptual lip-sync study._ Have raters blind-score final versus baseline clips to test whether the metric gains correspond to perceived realism.
+4. _Complete and extend the RAG evaluation._ Retrieval hit rate, boundary/out-of-scope handling, and LLM-judge groundedness are done (§6.9); a source-family retrieval cap raised retrieval to 31/32; and the iSupport chunks have been re-categorised out of `caregiving` at the data layer (`rag_retrieval_rebalance_plan.md`). The remaining step is a human check of the groundedness ratings, since the LLM judge scored leniently (uniform full marks).
+5. _Latency measurement._ Execute the protocol defined in §4.2, capturing the six instrumented stage timings across representative queries (Table 3) to quantify responsiveness, ideally with concurrent playback toggled on and off to quantify that optimisation.
+6. _Smoothness isolation and G2P ablation._ Sweep the smoothing constants to preserve closures without raising jitter, and compare the character-heuristic and CMUdict paths on identical text.
 
 ### 9. Conclusion
 
@@ -262,38 +264,38 @@ The most important next step is therefore the human usability evaluation planned
 
 ## E. Claim verification table
 
-| Draft claim | Evidence | Source | Support | Note |
-|---|---|---|---|---|
-| Final 95/95; baseline 37/85 comparable | summary + per-fixture metrics | both runs | Fully supported | g2p has no baseline — stated |
-| Bilabial peaks 0.93–0.95; leakage ≤ 0.08 | bilabials_metrics.json | both runs | Fully supported | Corrected from earlier 0.14 (that was jaw) |
-| Labiodental ≥ 0.94 (from min 0.525) | labiodental_metrics.json | both runs | Fully supported | — |
-| Tongue 0.00 (all 27) → 0.40–0.72 | tongue checks | both runs | Fully supported | Corrected upper bound 0.62 → 0.72 |
-| Silence leakage ≤ 0.54 → ≤ 0.10; decay 313–324 → 30–95 ms | silence/end checks | both runs | Fully supported | Broadened to all fixtures |
-| Jitter increased on every fixture | jitterRms fields | both runs | Fully supported | Reported as regression |
-| Engine follows Cohen–Massaro model | code + plan | CoarticulationEngine.cs | Fully supported | Cited (Cohen & Massaro, 1993); verify bibliographic details |
-| Articulation gain → engagement/accessibility for PwD | — | none | **Unsupported** | Explicitly not claimed |
-| G2P specifically improves accuracy | g2p fixture, no baseline | T1 | Partly supported | Not isolated from engine |
-| RAG retrieval 29/32 → 31/32 after cap; safe boundary/OOS handling; 32/32 grounded | live eval 42 Qs + LLM judge | rag_eval_results.csv, rag_eval_graded.csv, Table 4 | Fully supported | Groundedness via lenient LLM judge; human check advisable |
-| Latency claim | config only | codebase | **Unsupported** | Instrumented, not measured |
-| Result holds on device | — | none | **Unsupported** | Editor-only |
+| Draft claim                                                                       | Evidence                      | Source                                             | Support          | Note                                                        |
+| --------------------------------------------------------------------------------- | ----------------------------- | -------------------------------------------------- | ---------------- | ----------------------------------------------------------- |
+| Final 95/95; baseline 37/85 comparable                                            | summary + per-fixture metrics | both runs                                          | Fully supported  | g2p has no baseline — stated                                |
+| Bilabial peaks 0.93–0.95; leakage ≤ 0.08                                          | bilabials_metrics.json        | both runs                                          | Fully supported  | Corrected from earlier 0.14 (that was jaw)                  |
+| Labiodental ≥ 0.94 (from min 0.525)                                               | labiodental_metrics.json      | both runs                                          | Fully supported  | —                                                           |
+| Tongue 0.00 (all 27) → 0.40–0.72                                                  | tongue checks                 | both runs                                          | Fully supported  | Corrected upper bound 0.62 → 0.72                           |
+| Silence leakage ≤ 0.54 → ≤ 0.10; decay 313–324 → 30–95 ms                         | silence/end checks            | both runs                                          | Fully supported  | Broadened to all fixtures                                   |
+| Jitter increased on every fixture                                                 | jitterRms fields              | both runs                                          | Fully supported  | Reported as regression                                      |
+| Engine follows Cohen–Massaro model                                                | code + plan                   | CoarticulationEngine.cs                            | Fully supported  | Cited (Cohen & Massaro, 1993); verify bibliographic details |
+| Articulation gain → engagement/accessibility for PwD                              | —                             | none                                               | **Unsupported**  | Explicitly not claimed                                      |
+| G2P specifically improves accuracy                                                | g2p fixture, no baseline      | T1                                                 | Partly supported | Not isolated from engine                                    |
+| RAG retrieval 29/32 → 31/32 after cap; safe boundary/OOS handling; 32/32 grounded | live eval 42 Qs + LLM judge   | rag_eval_results.csv, rag_eval_graded.csv, Table 4 | Fully supported  | Groundedness via lenient LLM judge; human check advisable   |
+| Latency claim                                                                     | config only                   | codebase                                           | **Unsupported**  | Instrumented, not measured                                  |
+| Result holds on device                                                            | —                             | none                                               | **Unsupported**  | Editor-only                                                 |
 
 ---
 
 ## F. Final quality checklist
 
-| Criterion | Status |
-|---|---|
-| Reports findings from collected data | Yes — baseline vs final metrics |
-| Tables, graphs, figures | Yes — T1, T2, F1, F2 (F1/F2 generated) |
-| Interpretation and comparison with published research | Yes — §7 uses the report's own avatar references; Cohen–Massaro flagged |
-| Limitations and validity of the data | Yes — §8, human-evaluation gap central |
-| Recommendations for future research | Yes — §8, six specific items |
-| Separates results from interpretation | Yes — §6 factual, §7 interpretation |
-| Reports negative/inconclusive findings | Yes — jitter, G2P non-isolation, unevaluated components |
-| Avoids invented evidence | Yes |
-| Answers the research question | Honestly bounded — enabling sub-question answered; headline RQ left open |
-| Number-reporting rules | Yes — counts not percentages (n < 20), spaced units, leading zeros, ranges with "to", "significant" avoided |
-| No unsupported claims | Yes — unsupported items flagged |
+| Criterion                                             | Status                                                                                                      |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Reports findings from collected data                  | Yes — baseline vs final metrics                                                                             |
+| Tables, graphs, figures                               | Yes — T1, T2, F1, F2 (F1/F2 generated)                                                                      |
+| Interpretation and comparison with published research | Yes — §7 uses the report's own avatar references; Cohen–Massaro flagged                                     |
+| Limitations and validity of the data                  | Yes — §8, human-evaluation gap central                                                                      |
+| Recommendations for future research                   | Yes — §8, six specific items                                                                                |
+| Separates results from interpretation                 | Yes — §6 factual, §7 interpretation                                                                         |
+| Reports negative/inconclusive findings                | Yes — jitter, G2P non-isolation, unevaluated components                                                     |
+| Avoids invented evidence                              | Yes                                                                                                         |
+| Answers the research question                         | Honestly bounded — enabling sub-question answered; headline RQ left open                                    |
+| Number-reporting rules                                | Yes — counts not percentages (n < 20), spaced units, leading zeros, ranges with "to", "significant" avoided |
+| No unsupported claims                                 | Yes — unsupported items flagged                                                                             |
 
 ---
 
@@ -313,6 +315,6 @@ The most important next step is therefore the human usability evaluation planned
 
 The following source is cited in §7 but is not yet in the report's reference list. Confirm the editors and page range against your citation style before merging.
 
-- Cohen, M. M., & Massaro, D. W. (1993). Modeling coarticulation in synthetic visual speech. In N. Magnenat-Thalmann & D. Thalmann (Eds.), *Models and Techniques in Computer Animation* (pp. 139–156). Springer-Verlag.
+- Cohen, M. M., & Massaro, D. W. (1993). Modeling coarticulation in synthetic visual speech. In N. Magnenat-Thalmann & D. Thalmann (Eds.), _Models and Techniques in Computer Animation_ (pp. 139–156). Springer-Verlag.
 
 All other in-text citations in §7 (Chattopadhyay et al., 2020; Rampioni et al., 2021; Stara et al., 2021; Laranjo et al., 2018) are already present in the report's existing reference list.

@@ -4,7 +4,10 @@ import { SPECULATIVE_STABLE_MS } from './voiceConfig';
 const CHUNKS = [{ id: 'c1', title: 'Sundowning basics' }];
 
 // Fake-timer-safe microtask drain (setTimeout would never fire here).
-const flushPromises = async () => { await Promise.resolve(); await Promise.resolve(); };
+const flushPromises = async () => {
+  await Promise.resolve();
+  await Promise.resolve();
+};
 
 describe('createSpeculativeRag', () => {
   beforeEach(() => jest.useFakeTimers());
@@ -32,7 +35,9 @@ describe('createSpeculativeRag', () => {
     const spec = createSpeculativeRag({ search });
 
     await stabilize(spec, 'what should I do when mum gets agitated at night and will not settle');
-    const result = await spec.resolve('what should I do when mum gets agitated at night and will not settle down');
+    const result = await spec.resolve(
+      'what should I do when mum gets agitated at night and will not settle down'
+    );
     expect(result.status).toBe('hit');
   });
 

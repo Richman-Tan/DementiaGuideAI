@@ -21,11 +21,18 @@ import { requireEnv, retrieve, openaiJson, gitSha, outDir, sleep } from './lib.m
 
 const require = createRequire(import.meta.url);
 const { QUESTIONS, questionText } = require('./questions.js');
-const { CHAT_MODEL, PROMPT_VERSION, maxTokensForStyle } = require('../../packages/core/rag/ragConfig.js');
+const {
+  CHAT_MODEL,
+  PROMPT_VERSION,
+  maxTokensForStyle,
+} = require('../../packages/core/rag/ragConfig.js');
 const { buildSystemPrompt, buildUserContent } = require('../../packages/core/rag/prompt.js');
 
 const args = process.argv.slice(2);
-const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
+const argVal = (name) => {
+  const i = args.indexOf(name);
+  return i === -1 ? null : args[i + 1];
+};
 const PROMPT = argVal('--prompt') ?? PROMPT_VERSION;
 const QUESTION_VERSION = argVal('--questions') ?? 'v2';
 const SETS = (argVal('--sets') ?? 'A,A-neighbour,B,C,S,I,N').split(',');
@@ -37,8 +44,10 @@ const EVAL_SEED = 42;
 
 async function main() {
   requireEnv();
-  const questions = QUESTIONS.filter(q => SETS.includes(q.set)).slice(0, LIMIT);
-  console.log(`Generation eval — prompt ${PROMPT}, questions ${QUESTION_VERSION}, ${questions.length} questions, temp ${EVAL_TEMPERATURE}, seed ${EVAL_SEED}`);
+  const questions = QUESTIONS.filter((q) => SETS.includes(q.set)).slice(0, LIMIT);
+  console.log(
+    `Generation eval — prompt ${PROMPT}, questions ${QUESTION_VERSION}, ${questions.length} questions, temp ${EVAL_TEMPERATURE}, seed ${EVAL_SEED}`
+  );
 
   const systemPrompt = buildSystemPrompt({}, PROMPT);
   const rows = [];
@@ -62,7 +71,7 @@ async function main() {
       set: q.set,
       category: q.category,
       question: text,
-      retrieved: chunks.map(c => ({ id: c.id, similarity: c.similarity })),
+      retrieved: chunks.map((c) => ({ id: c.id, similarity: c.similarity })),
       answer,
       promptTokens: usage.prompt_tokens ?? null,
       completionTokens: usage.completion_tokens ?? null,
@@ -81,14 +90,23 @@ async function main() {
     model: CHAT_MODEL,
     temperature: EVAL_TEMPERATURE,
     seed: EVAL_SEED,
-    methodologyNote: 'Eval runs at temperature 0 + fixed seed for comparability; production runs at 0.7.',
+    methodologyNote:
+      'Eval runs at temperature 0 + fixed seed for comparability; production runs at 0.7.',
     rows,
   };
   outDir(); // ensure docs/report/eval exists even with an explicit --out
-  const outPath = OUT ? resolve(process.cwd(), OUT) : resolve(outDir(), `generation_${sha}_${PROMPT}.json`);
+  const outPath = OUT
+    ? resolve(process.cwd(), OUT)
+    : resolve(outDir(), `generation_${sha}_${PROMPT}.json`);
   writeFileSync(outPath, JSON.stringify(result, null, 2));
-  const totalTokens = rows.reduce((s, r) => s + (r.promptTokens ?? 0) + (r.completionTokens ?? 0), 0);
+  const totalTokens = rows.reduce(
+    (s, r) => s + (r.promptTokens ?? 0) + (r.completionTokens ?? 0),
+    0
+  );
   console.log(`\nWrote ${outPath} (${rows.length} answers, ~${totalTokens} tokens total)`);
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

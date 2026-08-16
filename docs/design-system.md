@@ -5,14 +5,14 @@ Tokens live in `apps/mobile/src/theme/` (`colors.ts`, `typography.ts`) for mobil
 
 ## Colour
 
-| Token | Value | Use |
-|---|---|---|
-| Primary | `#4A7C8E` | Buttons, links, user bubbles |
-| Secondary | `#7FB5A0` | Accents, success states |
-| Accent | `#E8956D` | Warnings, speaking state |
-| Background | `#F7F5F2` | App background |
-| Surface | `#FFFFFF` | Cards, nav bar |
-| Text primary | `#1E2D3D` | Body and headings |
+| Token        | Value     | Use                          |
+| ------------ | --------- | ---------------------------- |
+| Primary      | `#4A7C8E` | Buttons, links, user bubbles |
+| Secondary    | `#7FB5A0` | Accents, success states      |
+| Accent       | `#E8956D` | Warnings, speaking state     |
+| Background   | `#F7F5F2` | App background               |
+| Surface      | `#FFFFFF` | Cards, nav bar               |
+| Text primary | `#1E2D3D` | Body and headings            |
 
 ## Accessibility
 

@@ -1,20 +1,24 @@
 # Prompt for Claude Design — copy everything below the line
+
 # Attach when submitting: fig2_viseme_montage.png (avatar frames), app screenshots/demo stills, team photos.
+
 # Optional references: fig1_checks_passed.png, fig3_bilabial_curves.png, and the pipeline/retrieval Mermaid diagrams at the top of README.md.
 
 ---
 
 Build a polished 16:9 HTML slide deck (1920×1080) for a 10-minute university engineering conference talk, exportable to PDF (include print CSS: one slide per page, landscape). 15 main slides + 4 backup slides. Keyboard/arrow navigation, slide counter, and a thin progress bar. Everything self-contained (inline CSS/JS, no external fonts or CDNs).
 
-CONTEXT: University of Auckland Part IV (final-year) Software Engineering project seminar at the Part IV Conference Day. Two students present ~5 minutes each — JooHyun Kang presents slides 1–7, Richman Tan presents slides 8–15. It is a **public event with a broad, mixed audience**: software / electrical / computer-systems engineers *and* non-technical attendees. An external academic assessor asks technical questions in Q&A — but the *talk itself* must be understandable to everyone.
+CONTEXT: University of Auckland Part IV (final-year) Software Engineering project seminar at the Part IV Conference Day. Two students present ~5 minutes each — JooHyun Kang presents slides 1–7, Richman Tan presents slides 8–15. It is a **public event with a broad, mixed audience**: software / electrical / computer-systems engineers _and_ non-technical attendees. An external academic assessor asks technical questions in Q&A — but the _talk itself_ must be understandable to everyone.
 
 AUDIENCE RULE (most important):
+
 - **Plain language over jargon on every main slide.** No unexplained technical terms. Say "looks up an answer in a trusted library", not "hybrid vector retrieval". Say "the mouth moves like a real mouth", not "co-articulation / dominance envelopes".
 - **Metrics are minimal and always wrapped in meaning.** At most ONE headline number per results slide, and it must carry a plain-English caption a non-engineer understands ("answers in about 3 seconds — fast enough to feel like a conversation"). No `recall@k`, `MRR`, `nDCG`, `temperature 0`, `pgvector`, `blendshapes`, millisecond tables, or chunk counts on the main slides.
 - **All the hard numbers move to BACKUP slides (16–19)**, clearly tagged "Backup — for Q&A", shown only if the assessor asks. That's where technical credibility lives.
 - Keep the small academic citations ONLY on the problem/motivation slides (1 and 4), where they establish credibility. Results slides (8–15) do not need citations — they describe our own work.
 
 DESIGN DIRECTION:
+
 - Mood: calm, warm, trustworthy — a dementia-care project. Not clinical, not hackathon-flashy. "Modern health research group."
 - Palette: deep slate/ink background alternating with warm off-white content slides; one calm teal/sea-green primary accent; one warm amber/coral secondary accent used ONLY for "after" states and the single hero number on a slide. High contrast, WCAG AA.
 - Typography: clean humanist sans (system stack). Very large headlines; one giant numeral where a slide has a hero number; small grey type for the few citations on slides 1 and 4.
@@ -34,7 +38,7 @@ THE 15 MAIN SLIDES:
    - "About 1 in 3 family dementia caregivers experience depression" (tiny cite: meta-analysis, Sallim et al. 2015)
    - "Care systems are fragmented and hard to navigate" (tiny cite: systematic review of 47 studies, Frontiers in Public Health 2025)
    - "Even WHO's own self-guided online programme didn't significantly ease carer burden on its own" (tiny cite: large iSupport RCTs, UK & Australia, 2024–2026)
-   Kicker in accent: "Static content isn't the bottleneck. Finding, navigating and applying it is."
+     Kicker in accent: "Static content isn't the bottleneck. Finding, navigating and applying it is."
 
 5. TODAY vs OUR VISION: Two columns. Left (grey, "Today"): scattered resources · manual searching · generic advice · high caregiver stress. Right (accent, "DementiaGuide AI"): one place to ask · a conversation, not a search box · NZ-specific answers · less to juggle. Bridge line: "The same trusted content — with a conversation in front of it."
 
@@ -50,7 +54,7 @@ THE 15 MAIN SLIDES:
 
 9. MAKING IT FEEL HUMAN: Split slide. Left, three short lines — Problem: "the obvious lip-sync looks wrong — lips don't close on p/b/m, tongue never moves" · What we did: "rebuilt it to move like a real mouth" · Guarantee: "lips are forced to meet when they should". Right: a simple before/after — one hero number "95" with caption "specific mouth-movement checks — now all passing (the old way passed fewer than half)". Keep the grouped bar chart small/optional; the hero number leads. Image placeholder row for avatar mouth-shape frames.
 
-10. MAKING IT TRUSTWORTHY (the story slide — the emotional centre): Big line: "Our first version told a New Zealand caregiver to call 000 — the *Australian* emergency number. On every emergency question." Then a calm "after" row of three plain tiles (accent): "Now always says 111" · "Won't invent medication doses" · "Every answer backed by a real source". No assertion counts or recall numbers here — those are Backup B3.
+10. MAKING IT TRUSTWORTHY (the story slide — the emotional centre): Big line: "Our first version told a New Zealand caregiver to call 000 — the _Australian_ emergency number. On every emergency question." Then a calm "after" row of three plain tiles (accent): "Now always says 111" · "Won't invent medication doses" · "Every answer backed by a real source". No assertion counts or recall numbers here — those are Backup B3.
 
 11. MAKING IT FAST: Before/after timeline strips. Top (grey, "Before"): a long silent wait — "up to 5.5 seconds before it spoke". Bottom (accent, "Now"): steps overlap — "starts writing your words as you talk · starts looking up the answer before you finish". One hero number "~3 seconds" with caption "to start answering — fast enough to feel like a conversation". Tiny honest caveat: "early numbers; full testing this semester".
 

@@ -51,18 +51,27 @@ function startRecorder(stream) {
   const mime = pickMime();
   const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
   const parts = [];
-  rec.ondataavailable = (e) => { if (e.data && e.data.size) parts.push(e.data); };
+  rec.ondataavailable = (e) => {
+    if (e.data && e.data.size) parts.push(e.data);
+  };
   rec.start(250);
   return {
     async stopAndGetBlob() {
       if (rec.state !== 'inactive') {
-        await new Promise((resolve) => { rec.onstop = resolve; rec.stop(); });
+        await new Promise((resolve) => {
+          rec.onstop = resolve;
+          rec.stop();
+        });
       }
       return parts.length ? new Blob(parts, { type: mime || 'audio/webm' }) : null;
     },
     abort() {
       rec.onstop = null;
-      try { rec.stop(); } catch { /* already stopped */ }
+      try {
+        rec.stop();
+      } catch {
+        /* already stopped */
+      }
     },
     ext: (mime || '').includes('mp4') ? 'mp4' : 'webm',
   };
@@ -153,24 +162,38 @@ async function startLiveSession({ handsFree, onPartial, onEndOfSpeech, onError }
   const teardown = () => {
     clearInterval(endTimer);
     clearInterval(rmsTimer);
-    try { audioCtx?.close(); } catch { /* closed */ }
+    try {
+      audioCtx?.close();
+    } catch {
+      /* closed */
+    }
     stream.getTracks().forEach((t) => t.stop());
   };
 
   return {
     provider: 'web-speech',
     cancel: () => {
-      try { rec.abort(); } catch { /* not started */ }
+      try {
+        rec.abort();
+      } catch {
+        /* not started */
+      }
       recorder.abort();
       teardown();
     },
     stop: async () => {
-      try { rec.stop(); } catch { /* not started */ }
+      try {
+        rec.stop();
+      } catch {
+        /* not started */
+      }
       // Wait briefly for the recognizer's final result; the last partial is
       // almost always the complete utterance.
       if (!finalized) {
         await Promise.race([
-          new Promise((r) => { finalResolve = r; }),
+          new Promise((r) => {
+            finalResolve = r;
+          }),
           new Promise((r) => setTimeout(r, STT_FINAL_TIMEOUT_MS)),
         ]);
       }
@@ -200,7 +223,10 @@ async function startWhisperSession() {
   const teardown = () => stream.getTracks().forEach((t) => t.stop());
   return {
     provider: 'whisper',
-    cancel: () => { recorder.abort(); teardown(); },
+    cancel: () => {
+      recorder.abort();
+      teardown();
+    },
     stop: async () => {
       const blob = await recorder.stopAndGetBlob();
       teardown();
@@ -218,7 +244,9 @@ export async function startSttSession(opts = {}) {
       return await startLiveSession(opts);
     } catch (err) {
       if (err?.code === 'permission-denied') throw err;
-      console.warn(`[STT] live recognition failed to start (${err?.message ?? err}) — using Whisper fallback from now on`);
+      console.warn(
+        `[STT] live recognition failed to start (${err?.message ?? err}) — using Whisper fallback from now on`
+      );
       sttDegraded = true;
     }
   }

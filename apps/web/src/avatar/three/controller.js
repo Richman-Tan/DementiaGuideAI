@@ -73,21 +73,31 @@ class ThreeAvatarController {
     this._listeners.add(fn);
     return () => this._listeners.delete(fn);
   }
-  _notify() { for (const fn of this._listeners) fn(this); }
+  _notify() {
+    for (const fn of this._listeners) fn(this);
+  }
 
   _waitAudioEnd() {
     return new Promise((r) => this._audioEndResolvers.push(r));
   }
 
   // ── AvatarBridgeProtocol surface ─────────────────────────────────────────
-  unlockAudio() { /* renderer creates/resumes its ctx on play; nothing to do */ }
-  setOnAudioStart(cb) { this._onAudioStart = cb; }
+  unlockAudio() {
+    /* renderer creates/resumes its ctx on play; nothing to do */
+  }
+  setOnAudioStart(cb) {
+    this._onAudioStart = cb;
+  }
 
   async playAudio(segment) {
     if (!this.renderer) return;
     const done = this._waitAudioEnd();
     if (segment.visemeTimeline) {
-      this.renderer.playAudioWithVisemeTimeline(segment.audio, segment.visemeTimeline, segment.emotion);
+      this.renderer.playAudioWithVisemeTimeline(
+        segment.audio,
+        segment.visemeTimeline,
+        segment.emotion
+      );
     } else {
       this.renderer.playAudioWithLipSync(segment.audio);
     }
@@ -106,10 +116,18 @@ class ThreeAvatarController {
     this.renderer.endStreamingPlayback(sessionId);
     await done;
   }
-  setSpeechEmotion(emotion) { this.renderer?.setSpeechEmotion(emotion); }
-  setAvatarState(state) { this.renderer?.setAvatarState(state); }
-  setDebugMode(on) { this.renderer?.setDebugMode?.(on); }
-  stopAudio() { this.renderer?.stopAudioLipSync(); }
+  setSpeechEmotion(emotion) {
+    this.renderer?.setSpeechEmotion(emotion);
+  }
+  setAvatarState(state) {
+    this.renderer?.setAvatarState(state);
+  }
+  setDebugMode(on) {
+    this.renderer?.setDebugMode?.(on);
+  }
+  stopAudio() {
+    this.renderer?.stopAudioLipSync();
+  }
 
   dispose() {
     this.renderer?.dispose();

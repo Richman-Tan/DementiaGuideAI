@@ -8,16 +8,16 @@ Change values there, never in per-script copies.
 
 ## Configuration
 
-| Setting | Value |
-|---|---|
-| Embedding model | `text-embedding-3-small` (1536 dims) |
-| Chat model | `gpt-4o` (temp 0.7 in app; eval runs temp 0 + seed for comparability) |
-| Vector DB | Supabase `knowledge_chunks` (pgvector `vector(1536)` + tsvector, hybrid `match_chunks` RPC) |
-| Retrieval | Oversample 50 → source-family cap (iSupport max 2) → top 5; min similarity 0.25 |
-| Prompt | `v2-nz-safety` — NZ region, 111-first emergency escalation, no dosing/diagnosis output. `PROMPT_VERSION='v1'` in `ragConfig.js` is the one-line rollback |
-| Citations | Inline `[S#]` markers validated against supplied passages (`CITATION_MODE='trailing'` rolls back) |
-| Context window | Last 6 messages |
-| Telemetry | Device-local ring buffer of retrieval traces (ids/scores/latency — never message text) |
+| Setting         | Value                                                                                                                                                    |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Embedding model | `text-embedding-3-small` (1536 dims)                                                                                                                     |
+| Chat model      | `gpt-4o` (temp 0.7 in app; eval runs temp 0 + seed for comparability)                                                                                    |
+| Vector DB       | Supabase `knowledge_chunks` (pgvector `vector(1536)` + tsvector, hybrid `match_chunks` RPC)                                                              |
+| Retrieval       | Oversample 50 → source-family cap (iSupport max 2) → top 5; min similarity 0.25                                                                          |
+| Prompt          | `v2-nz-safety` — NZ region, 111-first emergency escalation, no dosing/diagnosis output. `PROMPT_VERSION='v1'` in `ragConfig.js` is the one-line rollback |
+| Citations       | Inline `[S#]` markers validated against supplied passages (`CITATION_MODE='trailing'` rolls back)                                                        |
+| Context window  | Last 6 messages                                                                                                                                          |
+| Telemetry       | Device-local ring buffer of retrieval traces (ids/scores/latency — never message text)                                                                   |
 
 **Flow:** user query → embed (LRU-cached) → `match_chunks` hybrid RPC →
 cap/diversity → passages injected as `[S1]…` blocks → gpt-4o → citation
@@ -58,14 +58,14 @@ change against it. Metric definitions and known limitations are in the
 
 ## Reference documents
 
-| Doc | What it covers |
-|---|---|
-| [rag-target-architecture.md](rag-target-architecture.md) | The intended design — start here |
-| [rag-current-state-audit.md](rag-current-state-audit.md) | Audit of what was actually implemented |
-| [rag-industry-research.md](rag-industry-research.md) | Background research behind the design choices |
-| [rag-evaluation-plan.md](rag-evaluation-plan.md) | Metric definitions, method, known limitations |
-| [rag-improvement-results.md](rag-improvement-results.md) | Measured before/after results |
-| [rag-source-inventory.md](rag-source-inventory.md) | Every knowledge-base source and its review verdict |
+| Doc                                                      | What it covers                                     |
+| -------------------------------------------------------- | -------------------------------------------------- |
+| [rag-target-architecture.md](rag-target-architecture.md) | The intended design — start here                   |
+| [rag-current-state-audit.md](rag-current-state-audit.md) | Audit of what was actually implemented             |
+| [rag-industry-research.md](rag-industry-research.md)     | Background research behind the design choices      |
+| [rag-evaluation-plan.md](rag-evaluation-plan.md)         | Metric definitions, method, known limitations      |
+| [rag-improvement-results.md](rag-improvement-results.md) | Measured before/after results                      |
+| [rag-source-inventory.md](rag-source-inventory.md)       | Every knowledge-base source and its review verdict |
 
 ## Where this is heading
 

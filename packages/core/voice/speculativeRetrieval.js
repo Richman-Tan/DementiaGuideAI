@@ -20,7 +20,11 @@ import {
 } from './voiceConfig';
 
 const tokenize = (text) =>
-  text.toLowerCase().replace(/[^\w\s']/g, ' ').split(/\s+/).filter(Boolean);
+  text
+    .toLowerCase()
+    .replace(/[^\w\s']/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
 
 function jaccard(tokensA, tokensB) {
   if (!tokensA.length || !tokensB.length) return 0;
@@ -54,20 +58,31 @@ export function createSpeculativeRag({ search }) {
   let lastText = '';
   let current = null; // { queryText, promise } — promise resolves to chunks|null
 
-  const clearTimer = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  const clearTimer = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
 
   const fire = (text) => {
     if (cancelled || fires >= SPECULATIVE_MAX_FIRES) return;
     // Don't refire when the stabilized text is still close to the in-flight
     // query — the existing result will pass the reuse gate anyway.
-    if (current && jaccard(tokenize(current.queryText), tokenize(text)) >= SPECULATIVE_REUSE_JACCARD) return;
+    if (
+      current &&
+      jaccard(tokenize(current.queryText), tokenize(text)) >= SPECULATIVE_REUSE_JACCARD
+    )
+      return;
     fires++;
     const startedAt = Date.now();
     current = {
       queryText: text,
       promise: search(text)
         .then((chunks) => {
-          console.log(`[RAG] speculative fire #${fires} done ms=${Date.now() - startedAt} chunks=${chunks?.length ?? 0}`);
+          console.log(
+            `[RAG] speculative fire #${fires} done ms=${Date.now() - startedAt} chunks=${chunks?.length ?? 0}`
+          );
           return chunks;
         })
         .catch((err) => {
@@ -106,7 +121,9 @@ export function createSpeculativeRag({ search }) {
       }
       const chunks = await current.promise;
       if (!chunks) return { chunks: null, status: 'miss' };
-      console.log(`[RAG] speculative hit (jaccard=${overlap.toFixed(2)}) — retrieval off the hot path`);
+      console.log(
+        `[RAG] speculative hit (jaccard=${overlap.toFixed(2)}) — retrieval off the hot path`
+      );
       return { chunks, status: 'hit' };
     },
 

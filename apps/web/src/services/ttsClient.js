@@ -34,9 +34,9 @@ async function elevenTtsWithAlignment(text, voiceId, speechRate, visemeWeights) 
           model_id: DEFAULT_MODEL_ID,
           output_format: 'mp3_44100_64',
           voice_settings: {
-            stability: 0.40,
+            stability: 0.4,
             similarity_boost: 0.75,
-            style: 0.20,
+            style: 0.2,
             speed: speechRate,
           },
         }),
@@ -57,7 +57,9 @@ async function elevenTtsWithAlignment(text, voiceId, speechRate, visemeWeights) 
   let visemeTimeline = null;
   if (data.alignment) {
     const { createVisemeTimeline } = await import('@core/lipsync/createVisemeTimeline');
-    visemeTimeline = createVisemeTimeline(data.alignment, { visemeWeights: visemeWeights || undefined });
+    visemeTimeline = createVisemeTimeline(data.alignment, {
+      visemeWeights: visemeWeights || undefined,
+    });
   }
   return { audioBase64: data.audio_base64, visemeTimeline };
 }
@@ -74,14 +76,28 @@ export async function tts(text, options = {}) {
     const elevenVoice = options.elevenVoiceId ?? WARM_FEMALE_ELEVEN_VOICE;
     try {
       const { audioBase64, visemeTimeline } = await elevenTtsWithAlignment(
-        text, elevenVoice, speechRate, options.visemeWeights ?? null);
+        text,
+        elevenVoice,
+        speechRate,
+        options.visemeWeights ?? null
+      );
       return { audio: `data:audio/mpeg;base64,${audioBase64}`, visemeTimeline };
     } catch (err) {
       console.warn(`[TTS] elevenlabs failed: ${err?.message ?? err} — falling back to OpenAI TTS`);
     }
   }
 
-  const OPENAI_VOICES = new Set(['nova', 'shimmer', 'echo', 'onyx', 'fable', 'alloy', 'ash', 'sage', 'coral']);
+  const OPENAI_VOICES = new Set([
+    'nova',
+    'shimmer',
+    'echo',
+    'onyx',
+    'fable',
+    'alloy',
+    'ash',
+    'sage',
+    'coral',
+  ]);
   const requested = options.openaiVoice ?? options.voice;
   const openaiVoice = requested && OPENAI_VOICES.has(requested) ? requested : 'nova';
   const dataUri = await openaiClient.tts(text, openaiVoice);

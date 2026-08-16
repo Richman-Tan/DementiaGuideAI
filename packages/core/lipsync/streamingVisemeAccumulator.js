@@ -24,8 +24,8 @@ import { createVisemeTimeline } from './createVisemeTimeline';
 const EPSILON_SEC = 0.25; // tolerance when classifying chunk- vs stream-relative times
 
 export function createStreamingVisemeAccumulator({ visemeWeights = null } = {}) {
-  let streamOffsetSec = 0;   // cumulative duration of all PCM audio received so far
-  let carry = null;          // { characters, starts, ends } — held-back trailing partial word
+  let streamOffsetSec = 0; // cumulative duration of all PCM audio received so far
+  let carry = null; // { characters, starts, ends } — held-back trailing partial word
 
   const toFrames = (characters, starts, ends) => {
     if (!characters.length) return [];
@@ -81,7 +81,10 @@ export function createStreamingVisemeAccumulator({ visemeWeights = null } = {}) 
       // entirely and emit nothing yet.
       let lastSpace = -1;
       for (let i = characters.length - 1; i >= 0; i--) {
-        if (/\s/.test(characters[i])) { lastSpace = i; break; }
+        if (/\s/.test(characters[i])) {
+          lastSpace = i;
+          break;
+        }
       }
       if (lastSpace >= 0 && lastSpace < characters.length - 1) {
         carry = {

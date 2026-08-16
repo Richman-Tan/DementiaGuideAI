@@ -20,49 +20,61 @@ import { KNOWLEDGE_CATEGORIES } from '@/constants/data';
 import { KNOWLEDGE_BASE } from '@/features/library/data/knowledgeBase';
 import { useSettings } from '@/context/SettingsContext';
 
-const CATEGORY_LABELS = Object.fromEntries(
-  KNOWLEDGE_CATEGORIES.map(c => [c.id, c.title])
-);
-const readTime = content => `${Math.ceil(content.split(/\s+/).length / 200)} min read`;
+const CATEGORY_LABELS = Object.fromEntries(KNOWLEDGE_CATEGORIES.map((c) => [c.id, c.title]));
+const readTime = (content) => `${Math.ceil(content.split(/\s+/).length / 200)} min read`;
 
 const ResourceItem = ({ resource, onPress }) => {
   const { textScale, colors } = useSettings();
   return (
-  <TouchableOpacity
-    style={[styles.resourceCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-    onPress={() => onPress?.(resource)}
-    activeOpacity={0.75}
-    accessibilityLabel={`${resource.title}, ${resource.readTime}`}
-    accessibilityRole="button"
-  >
-    <View style={styles.resourceType}>
+    <TouchableOpacity
+      style={[styles.resourceCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      onPress={() => onPress?.(resource)}
+      activeOpacity={0.75}
+      accessibilityLabel={`${resource.title}, ${resource.readTime}`}
+      accessibilityRole="button"
+    >
+      <View style={styles.resourceType}>
+        <MaterialCommunityIcons
+          name={resource.type === 'guide' ? 'book-open-page-variant' : 'file-document-outline'}
+          size={14}
+          color={Colors.primary}
+        />
+        <Text style={styles.resourceTypeText}>
+          {resource.type === 'guide' ? 'Guide' : 'Article'}
+        </Text>
+      </View>
+      <Text
+        style={[
+          styles.resourceTitle,
+          { fontSize: 18 * textScale, lineHeight: 22 * textScale, color: colors.textPrimary },
+        ]}
+        numberOfLines={2}
+      >
+        {resource.title}
+      </Text>
+      <View style={styles.resourceMeta}>
+        <Text style={[styles.resourceCategory, { color: colors.textSecondary }]}>
+          {CATEGORY_LABELS[resource.category] ?? resource.category}
+        </Text>
+        <View style={styles.dot} />
+        <Text style={styles.resourceReadTime}>
+          {resource.readTime ?? readTime(resource.content)}
+        </Text>
+      </View>
+      <View style={styles.resourceTags}>
+        {resource.tags.slice(0, 3).map((tag) => (
+          <View key={tag} style={styles.tag}>
+            <Text style={styles.tagText}>{tag}</Text>
+          </View>
+        ))}
+      </View>
       <MaterialCommunityIcons
-        name={resource.type === 'guide' ? 'book-open-page-variant' : 'file-document-outline'}
-        size={14}
-        color={Colors.primary}
+        name="arrow-right"
+        size={18}
+        color={Colors.textTertiary}
+        style={styles.resourceArrow}
       />
-      <Text style={styles.resourceTypeText}>{resource.type === 'guide' ? 'Guide' : 'Article'}</Text>
-    </View>
-    <Text style={[styles.resourceTitle, { fontSize: 18 * textScale, lineHeight: 22 * textScale, color: colors.textPrimary }]} numberOfLines={2}>{resource.title}</Text>
-    <View style={styles.resourceMeta}>
-      <Text style={[styles.resourceCategory, { color: colors.textSecondary }]}>{CATEGORY_LABELS[resource.category] ?? resource.category}</Text>
-      <View style={styles.dot} />
-      <Text style={styles.resourceReadTime}>{resource.readTime ?? readTime(resource.content)}</Text>
-    </View>
-    <View style={styles.resourceTags}>
-      {resource.tags.slice(0, 3).map(tag => (
-        <View key={tag} style={styles.tag}>
-          <Text style={styles.tagText}>{tag}</Text>
-        </View>
-      ))}
-    </View>
-    <MaterialCommunityIcons
-      name="arrow-right"
-      size={18}
-      color={Colors.textTertiary}
-      style={styles.resourceArrow}
-    />
-  </TouchableOpacity>
+    </TouchableOpacity>
   );
 };
 
@@ -93,16 +105,16 @@ export const LibraryScreen = ({ navigation }) => {
 
   const FILTERS = [
     { id: 'all', label: 'All' },
-    ...KNOWLEDGE_CATEGORIES.map(c => ({ id: c.id, label: c.title })),
+    ...KNOWLEDGE_CATEGORIES.map((c) => ({ id: c.id, label: c.title })),
   ];
 
-  const filteredResources = KNOWLEDGE_BASE.filter(r => {
+  const filteredResources = KNOWLEDGE_BASE.filter((r) => {
     const q = searchQuery.toLowerCase();
     const matchesSearch =
       !searchQuery ||
       r.title.toLowerCase().includes(q) ||
       r.content.toLowerCase().includes(q) ||
-      r.tags.some(t => t.toLowerCase().includes(q));
+      r.tags.some((t) => t.toLowerCase().includes(q));
     const matchesFilter = activeFilter === 'all' || r.category === activeFilter;
     return matchesSearch && matchesFilter;
   });
@@ -116,8 +128,23 @@ export const LibraryScreen = ({ navigation }) => {
         <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
           <View style={styles.headerRow}>
             <View>
-              <Text style={[styles.headerTitle, { fontSize: 28 * textScale, lineHeight: 28 * textScale * 1.3, color: colors.textPrimary }]}>Knowledge Library</Text>
-              <Text style={[styles.headerSub, { fontSize: 14 * textScale, color: colors.textTertiary }]}>Evidence-based dementia care resources</Text>
+              <Text
+                style={[
+                  styles.headerTitle,
+                  {
+                    fontSize: 28 * textScale,
+                    lineHeight: 28 * textScale * 1.3,
+                    color: colors.textPrimary,
+                  },
+                ]}
+              >
+                Knowledge Library
+              </Text>
+              <Text
+                style={[styles.headerSub, { fontSize: 14 * textScale, color: colors.textTertiary }]}
+              >
+                Evidence-based dementia care resources
+              </Text>
             </View>
             <TouchableOpacity
               style={styles.chatButton}
@@ -154,10 +181,26 @@ export const LibraryScreen = ({ navigation }) => {
 
         {/* Search */}
         <Animated.View
-          style={[styles.searchSection, { opacity: fadeAnim, transform: [{ scale: searchScaleAnim }] }]}
+          style={[
+            styles.searchSection,
+            { opacity: fadeAnim, transform: [{ scale: searchScaleAnim }] },
+          ]}
         >
-          <View style={[styles.searchBar, isSearchFocused && styles.searchBarFocused, { backgroundColor: colors.surface, borderColor: isSearchFocused ? colors.primary : colors.border }]}>
-            <MaterialCommunityIcons name="magnify" size={20} color={isSearchFocused ? Colors.primary : Colors.textTertiary} />
+          <View
+            style={[
+              styles.searchBar,
+              isSearchFocused && styles.searchBarFocused,
+              {
+                backgroundColor: colors.surface,
+                borderColor: isSearchFocused ? colors.primary : colors.border,
+              },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="magnify"
+              size={20}
+              color={isSearchFocused ? Colors.primary : Colors.textTertiary}
+            />
             <TextInput
               style={[styles.searchInput, { fontSize: 16 * textScale, color: colors.textPrimary }]}
               value={searchQuery}
@@ -169,24 +212,44 @@ export const LibraryScreen = ({ navigation }) => {
               accessibilityLabel="Search knowledge library"
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')} accessibilityLabel="Clear search">
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                accessibilityLabel="Clear search"
+              >
                 <MaterialCommunityIcons name="close-circle" size={18} color={Colors.textTertiary} />
               </TouchableOpacity>
             )}
           </View>
 
           {/* Filter chips */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-            {FILTERS.map(f => (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterRow}
+          >
+            {FILTERS.map((f) => (
               <TouchableOpacity
                 key={f.id}
-                style={[styles.filterChip, activeFilter === f.id ? styles.filterChipActive : { backgroundColor: colors.surface, borderColor: colors.border }]}
+                style={[
+                  styles.filterChip,
+                  activeFilter === f.id
+                    ? styles.filterChipActive
+                    : { backgroundColor: colors.surface, borderColor: colors.border },
+                ]}
                 onPress={() => setActiveFilter(f.id)}
                 accessibilityLabel={`Filter by ${f.label}`}
                 accessibilityRole="button"
                 accessibilityState={{ selected: activeFilter === f.id }}
               >
-                <Text style={[styles.filterText, activeFilter === f.id ? styles.filterTextActive : { color: colors.textSecondary }, { fontSize: 14 * textScale }]}>
+                <Text
+                  style={[
+                    styles.filterText,
+                    activeFilter === f.id
+                      ? styles.filterTextActive
+                      : { color: colors.textSecondary },
+                    { fontSize: 14 * textScale },
+                  ]}
+                >
                   {f.label}
                 </Text>
               </TouchableOpacity>
@@ -198,14 +261,17 @@ export const LibraryScreen = ({ navigation }) => {
         {!searchQuery && activeFilter === 'all' && (
           <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { fontSize: 20 * textScale, color: colors.textPrimary }]}>Browse by Category</Text>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { fontSize: 20 * textScale, color: colors.textPrimary },
+                ]}
+              >
+                Browse by Category
+              </Text>
             </View>
-            {KNOWLEDGE_CATEGORIES.map(cat => (
-              <CategoryCard
-                key={cat.id}
-                category={cat}
-                onPress={(c) => setActiveFilter(c.id)}
-              />
+            {KNOWLEDGE_CATEGORIES.map((cat) => (
+              <CategoryCard key={cat.id} category={cat} onPress={(c) => setActiveFilter(c.id)} />
             ))}
           </Animated.View>
         )}
@@ -213,11 +279,13 @@ export const LibraryScreen = ({ navigation }) => {
         {/* Resources */}
         <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { fontSize: 20 * textScale, color: colors.textPrimary }]}>
+            <Text
+              style={[styles.sectionTitle, { fontSize: 20 * textScale, color: colors.textPrimary }]}
+            >
               {searchQuery
                 ? `Results (${filteredResources.length})`
                 : activeFilter !== 'all'
-                  ? `${KNOWLEDGE_CATEGORIES.find(c => c.id === activeFilter)?.title ?? 'Articles'} (${filteredResources.length})`
+                  ? `${KNOWLEDGE_CATEGORIES.find((c) => c.id === activeFilter)?.title ?? 'Articles'} (${filteredResources.length})`
                   : `All Resources (${filteredResources.length})`}
             </Text>
             {activeFilter !== 'all' && !searchQuery && (
@@ -233,8 +301,12 @@ export const LibraryScreen = ({ navigation }) => {
           {filteredResources.length === 0 ? (
             <View style={styles.emptyState}>
               <MaterialCommunityIcons name="file-search-outline" size={48} color={Colors.border} />
-              <Text style={[styles.emptyTitle, { fontSize: 18 * textScale }]}>No results found</Text>
-              <Text style={[styles.emptyBody, { fontSize: 14 * textScale }]}>Try different search terms or browse a category</Text>
+              <Text style={[styles.emptyTitle, { fontSize: 18 * textScale }]}>
+                No results found
+              </Text>
+              <Text style={[styles.emptyBody, { fontSize: 14 * textScale }]}>
+                Try different search terms or browse a category
+              </Text>
               <TouchableOpacity
                 style={styles.askAriaButton}
                 onPress={() => navigation.navigate('Chat', { initialMessage: searchQuery })}
@@ -244,7 +316,7 @@ export const LibraryScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           ) : (
-            filteredResources.map(r => (
+            filteredResources.map((r) => (
               <ResourceItem
                 key={r.id}
                 resource={r}
@@ -268,12 +340,24 @@ export const LibraryScreen = ({ navigation }) => {
                 end={{ x: 1, y: 1 }}
                 style={styles.ctaGradient}
               >
-                <MaterialCommunityIcons name="robot-excited-outline" size={32} color={Colors.textInverse} />
+                <MaterialCommunityIcons
+                  name="robot-excited-outline"
+                  size={32}
+                  color={Colors.textInverse}
+                />
                 <View style={styles.ctaText}>
-                  <Text style={[styles.ctaTitle, { fontSize: 18 * textScale }]}>Can't find what you need?</Text>
-                  <Text style={[styles.ctaSub, { fontSize: 14 * textScale }]}>Ask Aria — your AI guide is ready to help</Text>
+                  <Text style={[styles.ctaTitle, { fontSize: 18 * textScale }]}>
+                    Can't find what you need?
+                  </Text>
+                  <Text style={[styles.ctaSub, { fontSize: 14 * textScale }]}>
+                    Ask Aria — your AI guide is ready to help
+                  </Text>
                 </View>
-                <MaterialCommunityIcons name="chevron-right" size={22} color="rgba(255,255,255,0.8)" />
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={22}
+                  color="rgba(255,255,255,0.8)"
+                />
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>

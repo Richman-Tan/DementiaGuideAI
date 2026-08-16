@@ -28,13 +28,7 @@ function ToggleRow({ iconName, label, description, value, onToggle, isLast }) {
 }
 
 export function DisplayPrefsScreen({ navigation, route }) {
-  const {
-    updateSetting,
-    toggleDarkMode,
-    highContrast,
-    reducedMotion,
-    darkMode,
-  } = useSettings();
+  const { updateSetting, toggleDarkMode, highContrast, reducedMotion, darkMode } = useSettings();
 
   const handleNext = () => {
     if (route.params?.returnToSummary) {

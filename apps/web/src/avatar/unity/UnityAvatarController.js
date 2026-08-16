@@ -27,8 +27,12 @@ export class UnityAvatarControllerImpl {
     setCharacter(characterId);
   }
 
-  unlockAudio() { this.engine.unlock(); }
-  setOnAudioStart(cb) { this._onAudioStart = cb; }
+  unlockAudio() {
+    this.engine.unlock();
+  }
+  setOnAudioStart(cb) {
+    this._onAudioStart = cb;
+  }
 
   async playAudio(segment) {
     // ensureCharacter-before-play (mobile parity): idempotent Unity-side, and
@@ -38,7 +42,11 @@ export class UnityAvatarControllerImpl {
     const duration = segment.visemeTimeline?.totalDuration ?? 0;
     const done = this.engine.waitForEnd();
     // No analyser path needed — Unity drives the mouth; the engine only plays.
-    await this.engine.playAudioWithVisemeTimeline(segment.audio, segment.visemeTimeline ?? { frames: [], totalDuration: 0 }, segment.emotion);
+    await this.engine.playAudioWithVisemeTimeline(
+      segment.audio,
+      segment.visemeTimeline ?? { frames: [], totalDuration: 0 },
+      segment.emotion
+    );
     sendBridgeMessage({
       type: 'play',
       duration,
@@ -55,8 +63,12 @@ export class UnityAvatarControllerImpl {
   appendAudioChunk() {}
   async endStreamingPlayback() {}
 
-  setSpeechEmotion() { /* carried inside the play payload */ }
-  setAvatarState(state) { sendBridgeMessage({ type: 'setState', state }); }
+  setSpeechEmotion() {
+    /* carried inside the play payload */
+  }
+  setAvatarState(state) {
+    sendBridgeMessage({ type: 'setState', state });
+  }
   stopAudio() {
     this.engine.stopAudioLipSync();
     sendBridgeMessage({ type: 'stop' });

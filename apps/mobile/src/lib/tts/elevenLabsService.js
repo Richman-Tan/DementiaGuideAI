@@ -16,11 +16,17 @@ const DEFAULT_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL';
 // ─── Custom error types (mirror openaiService pattern) ───────────────────────
 
 export class ElevenLabsAuthError extends Error {
-  constructor(msg) { super(msg); this.name = 'ElevenLabsAuthError'; }
+  constructor(msg) {
+    super(msg);
+    this.name = 'ElevenLabsAuthError';
+  }
 }
 
 export class ElevenLabsRateLimitError extends Error {
-  constructor(msg) { super(msg); this.name = 'ElevenLabsRateLimitError'; }
+  constructor(msg) {
+    super(msg);
+    this.name = 'ElevenLabsRateLimitError';
+  }
 }
 
 // ─── Service ─────────────────────────────────────────────────────────────────
@@ -86,9 +92,9 @@ class ElevenLabsService {
             model_id: DEFAULT_MODEL_ID,
             output_format: 'mp3_44100_64',
             voice_settings: {
-              stability: 0.40,
+              stability: 0.4,
               similarity_boost: 0.75,
-              style: 0.20,
+              style: 0.2,
               speed: speechRate,
             },
           }),

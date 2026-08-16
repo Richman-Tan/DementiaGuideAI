@@ -14,13 +14,28 @@
  */
 
 const ONES = [
-  'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
-  'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen',
-  'seventeen', 'eighteen', 'nineteen',
+  'zero',
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'ten',
+  'eleven',
+  'twelve',
+  'thirteen',
+  'fourteen',
+  'fifteen',
+  'sixteen',
+  'seventeen',
+  'eighteen',
+  'nineteen',
 ];
-const TENS = [
-  '', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety',
-];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
 const SCALES = [
   { value: 1e9, name: 'billion' },
   { value: 1e6, name: 'million' },
@@ -44,12 +59,18 @@ function intToWords(n) {
     }
   }
   // Beyond our scale table — read the digits out one by one.
-  return String(n).split('').map((d) => ONES[Number(d)]).join(' ');
+  return String(n)
+    .split('')
+    .map((d) => ONES[Number(d)])
+    .join(' ');
 }
 
 /** Reads a run of digits one at a time: "05" → "zero five" (for decimals). */
 function digitsToWords(digits) {
-  return digits.split('').map((d) => ONES[Number(d)]).join(' ');
+  return digits
+    .split('')
+    .map((d) => ONES[Number(d)])
+    .join(' ');
 }
 
 /** "3.5" → "three point five"; integer part uses cardinal words, fraction is digit-by-digit. */
@@ -87,8 +108,9 @@ export function normalizeSpokenText(text) {
   });
 
   // Percent: "50%" → "fifty percent" (accepts an optional decimal).
-  out = out.replace(/(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d+))?\s*%/g, (_m, intPart, fracPart) =>
-    `${decimalToWords(intPart, fracPart)} percent`
+  out = out.replace(
+    /(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d+))?\s*%/g,
+    (_m, intPart, fracPart) => `${decimalToWords(intPart, fracPart)} percent`
   );
 
   // Clock times: "3:30" → "three thirty" (H:MM, minutes 00–59).

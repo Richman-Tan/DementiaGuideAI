@@ -92,7 +92,9 @@ export async function probeUnity() {
             availability = true;
             return true;
           }
-        } catch { /* unreachable */ }
+        } catch {
+          /* unreachable */
+        }
       }
       availability = false;
       setLoadState('unavailable');
@@ -120,7 +122,8 @@ function getParkingHost() {
     parkingHost = document.createElement('div');
     parkingHost.id = 'unity-parking';
     parkingHost.setAttribute('aria-hidden', 'true');
-    parkingHost.style.cssText = 'position:fixed;left:-10000px;top:0;width:360px;height:640px;pointer-events:none;';
+    parkingHost.style.cssText =
+      'position:fixed;left:-10000px;top:0;width:360px;height:640px;pointer-events:none;';
     document.body.appendChild(parkingHost);
   }
   return parkingHost;
@@ -157,8 +160,15 @@ async function resolveBuildFiles(base) {
       const m = await r.json();
       if (m.loader && m.data && m.framework && m.code) return m;
     }
-  } catch { /* no manifest — use defaults */ }
-  return { loader: 'unity.loader.js', data: 'unity.data', framework: 'unity.framework.js', code: 'unity.wasm' };
+  } catch {
+    /* no manifest — use defaults */
+  }
+  return {
+    loader: 'unity.loader.js',
+    data: 'unity.data',
+    framework: 'unity.framework.js',
+    code: 'unity.wasm',
+  };
 }
 
 // Inject the loader script once; guarded so a retry after a transient failure
@@ -203,16 +213,20 @@ export async function mountUnity() {
     // over-estimate and this fraction climbs to roughly two-thirds before
     // snapping to done. Harmless now that the whole phase takes seconds.
     // eslint-disable-next-line no-undef
-    unityInstance = await createUnityInstance(getUnityCanvas(), {
-      dataUrl: base + files.data + v,
-      frameworkUrl: base + files.framework + v,
-      codeUrl: base + files.code + v,
-      companyName: 'DementiaGuideAI',
-      productName: 'UnityAvatar',
-    }, (p) => {
-      if (p >= 0.89) setLoadState('preparing', 1);
-      else setLoadState('downloading', Math.min(p / 0.9, 1));
-    });
+    unityInstance = await createUnityInstance(
+      getUnityCanvas(),
+      {
+        dataUrl: base + files.data + v,
+        frameworkUrl: base + files.framework + v,
+        codeUrl: base + files.code + v,
+        companyName: 'DementiaGuideAI',
+        productName: 'UnityAvatar',
+      },
+      (p) => {
+        if (p >= 0.89) setLoadState('preparing', 1);
+        else setLoadState('downloading', Math.min(p / 0.9, 1));
+      }
+    );
     setLoadState('ready', 1);
     return unityInstance;
   })();
@@ -240,7 +254,10 @@ export function ensureUnityBoot() {
   if (getSettingSnapshot().showAvatar === false) return;
   retriedOnce = false; // a manual "Try again" gets its own silent retry
   probeUnity().then((ok) => {
-    if (ok) mountUnity().catch(() => { /* state machine already says 'failed' */ });
+    if (ok)
+      mountUnity().catch(() => {
+        /* state machine already says 'failed' */
+      });
   });
 }
 
@@ -256,7 +273,11 @@ export function setCharacter(id) {
 
 export function unmountUnity() {
   if (unityInstance) {
-    try { unityInstance.Quit(); } catch { /* already gone */ }
+    try {
+      unityInstance.Quit();
+    } catch {
+      /* already gone */
+    }
     unityInstance = null;
     mountPromise = null;
     setLoadState('idle', 0);

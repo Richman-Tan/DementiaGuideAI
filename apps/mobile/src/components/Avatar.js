@@ -1,10 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  Animated,
-  Easing,
-} from 'react-native';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { Colors } from '@/theme/colors';
 
 // Placeholder for NVIDIA ACE avatar integration.
@@ -152,11 +147,7 @@ export const Avatar = ({
             height: ringSize,
             borderRadius: ringSize / 2,
             transform: [{ scale: pulseAnim }],
-            borderColor: isListening
-              ? Colors.primary
-              : isSpeaking
-              ? Colors.accent
-              : Colors.border,
+            borderColor: isListening ? Colors.primary : isSpeaking ? Colors.accent : Colors.border,
             borderWidth: isListening ? 2 : isSpeaking ? 2 : 1,
           },
         ]}
@@ -210,8 +201,8 @@ export const Avatar = ({
                 backgroundColor: isListening
                   ? Colors.success
                   : isSpeaking
-                  ? Colors.accent
-                  : Colors.secondary,
+                    ? Colors.accent
+                    : Colors.secondary,
               },
             ]}
           />

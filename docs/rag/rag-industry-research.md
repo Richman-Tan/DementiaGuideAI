@@ -44,15 +44,15 @@ A recommendation is adopted only if it is expected to produce a measurable impro
 
 ## 7. Answer generation and citations
 
-**Practice.** For health-adjacent assistants the floor requirements are: grounding instructions that distinguish sourced from general-knowledge claims, citation markers that are *validated against the supplied context* (models fabricate plausible source titles when asked for free-text bibliographies), explicit emergency-escalation behaviour, and refusal/uncertainty language that does not overclaim. Structured citation ids beat free-text titles because validation becomes a set-membership check.
+**Practice.** For health-adjacent assistants the floor requirements are: grounding instructions that distinguish sourced from general-knowledge claims, citation markers that are _validated against the supplied context_ (models fabricate plausible source titles when asked for free-text bibliographies), explicit emergency-escalation behaviour, and refusal/uncertainty language that does not overclaim. Structured citation ids beat free-text titles because validation becomes a set-membership check.
 
-**Verdict for this system.** Adopt inline `[S1]`-style markers validated in code (`extractCitations`), replacing the current honour-system title list whose exact-match enrichment silently fails on paraphrase. Keep the no-refusal augmentation philosophy (a deliberate, documented product decision that fixed real refusal failures) but bound it with a safety layer: escalation-first for red-flag symptoms, no dose/individual-diagnosis output, uncertainty statements for contested facts. Citation *validation* is deterministic; citation *completeness* stays judged + human-spot-checked.
+**Verdict for this system.** Adopt inline `[S1]`-style markers validated in code (`extractCitations`), replacing the current honour-system title list whose exact-match enrichment silently fails on paraphrase. Keep the no-refusal augmentation philosophy (a deliberate, documented product decision that fixed real refusal failures) but bound it with a safety layer: escalation-first for red-flag symptoms, no dose/individual-diagnosis output, uncertainty statements for contested facts. Citation _validation_ is deterministic; citation _completeness_ stays judged + human-spot-checked.
 
 ## 8. Evaluation
 
 **Practice.** Retrieval and generation are evaluated separately. Retrieval: recall@k, precision@k, MRR, nDCG against labelled relevant sets — deterministic, cheap, no LLM. Generation: faithfulness/groundedness, answer relevance, citation correctness — typically LLM-judged (RAGAS-style claim extraction + NLI) but with documented reliability limits: correlation with human judgment can be modest (harmonic mean ≈ 0.55 reported in one validation), judges exhibit position/verbosity/leniency biases, and fine-grained scales produce arbitrary scores ([RAGAS docs](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/), [LLM-as-judge survey](https://arxiv.org/html/2411.15594v6), [Evidently guide](https://www.evidentlyai.com/llm-guide/rag-evaluation)). Recommended mitigations: coarse scales (binary or 0/1/2), judge calibration against a human-annotated set, deterministic checks wherever the property is machine-checkable.
 
-**Verdict for this system.** This is the highest-leverage gap. The current eval's own history proves the point: the gpt-4o-mini judge scored 32/32 answers uniformly 2/2 (baseline re-run 2026-07-16: 31×2, 1×1) — a judge that (almost) never dissents measures (almost) nothing. Adopt: deterministic retrieval metrics (recall@{1,3,5}, precision@5, MRR, nDCG@5) over graded relevance labels; deterministic safety assertions (regex/predicate MUST/MUST-NOT rules for emergency numbers, dosing, region, injection-leakage) which are *more* reliable than any judge for these properties; a stricter 0/1/2 groundedness rubric with mandatory human spot-checks and recorded agreement. **Not adopted:** the RAGAS library itself (Python dependency, LLM-heavy metrics, overkill for a 60-question set — its metric *definitions* are borrowed, not its runtime), synthetic test-set generation (hand-labelled questions are affordable and higher-quality at this scale).
+**Verdict for this system.** This is the highest-leverage gap. The current eval's own history proves the point: the gpt-4o-mini judge scored 32/32 answers uniformly 2/2 (baseline re-run 2026-07-16: 31×2, 1×1) — a judge that (almost) never dissents measures (almost) nothing. Adopt: deterministic retrieval metrics (recall@{1,3,5}, precision@5, MRR, nDCG@5) over graded relevance labels; deterministic safety assertions (regex/predicate MUST/MUST-NOT rules for emergency numbers, dosing, region, injection-leakage) which are _more_ reliable than any judge for these properties; a stricter 0/1/2 groundedness rubric with mandatory human spot-checks and recorded agreement. **Not adopted:** the RAGAS library itself (Python dependency, LLM-heavy metrics, overkill for a 60-question set — its metric _definitions_ are borrowed, not its runtime), synthetic test-set generation (hand-labelled questions are affordable and higher-quality at this scale).
 
 ## 9. Healthcare AI safety
 
@@ -76,22 +76,22 @@ A recommendation is adopted only if it is expected to produce a measurable impro
 
 ## Summary of adoption decisions
 
-| Technique | Decision | Primary justification |
-|---|---|---|
-| Hybrid vector+keyword | Keep; commit function; benchmark RRF vs production formula | Reproducibility first, then measured tuning |
-| HNSW / index migration | **Rejected** (trigger condition recorded); REINDEX after corpus replacement | 449 rows — unmeasurable benefit |
-| text-embedding-3-large | **Rejected** without eval evidence | 31/32 baseline leaves no measurable headroom; 6.5× cost |
-| Section-aware chunking + title prefixes | Adopt at re-ingestion | Free during rebuild; aligns units with structured source |
-| LLM contextual chunk enrichment | **Rejected** | Cost/complexity vs corpus size |
-| Cross-encoder / API reranker | **Rejected** | No backend; failure mode not observed |
-| Flag-gated LLM rerank of oversample window | Experiment only, adoption gated on ≥5-pt gain | Cheap to try, likely not adopted |
-| Context reordering (lost-in-middle) | **Rejected** | k=5 — effect below measurement noise |
-| Structured validated citations | Adopt | Deterministic; fixes dead UI + honour-system risk |
-| Deterministic retrieval metrics + safety assertions | Adopt | Judge demonstrated near-zero discrimination |
-| RAGAS library | **Rejected** (definitions borrowed, runtime not) | Dependency weight vs 60-question set |
-| Stricter judge + human spot-check | Adopt | Known judge-leniency failure, documented mitigation |
-| Source registry + licence-gated re-ingestion | Adopt | 85% of corpus currently provenance-free |
-| Device-local telemetry | Adopt | Smallest debuggable observability; privacy-preserving |
+| Technique                                           | Decision                                                                    | Primary justification                                    |
+| --------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Hybrid vector+keyword                               | Keep; commit function; benchmark RRF vs production formula                  | Reproducibility first, then measured tuning              |
+| HNSW / index migration                              | **Rejected** (trigger condition recorded); REINDEX after corpus replacement | 449 rows — unmeasurable benefit                          |
+| text-embedding-3-large                              | **Rejected** without eval evidence                                          | 31/32 baseline leaves no measurable headroom; 6.5× cost  |
+| Section-aware chunking + title prefixes             | Adopt at re-ingestion                                                       | Free during rebuild; aligns units with structured source |
+| LLM contextual chunk enrichment                     | **Rejected**                                                                | Cost/complexity vs corpus size                           |
+| Cross-encoder / API reranker                        | **Rejected**                                                                | No backend; failure mode not observed                    |
+| Flag-gated LLM rerank of oversample window          | Experiment only, adoption gated on ≥5-pt gain                               | Cheap to try, likely not adopted                         |
+| Context reordering (lost-in-middle)                 | **Rejected**                                                                | k=5 — effect below measurement noise                     |
+| Structured validated citations                      | Adopt                                                                       | Deterministic; fixes dead UI + honour-system risk        |
+| Deterministic retrieval metrics + safety assertions | Adopt                                                                       | Judge demonstrated near-zero discrimination              |
+| RAGAS library                                       | **Rejected** (definitions borrowed, runtime not)                            | Dependency weight vs 60-question set                     |
+| Stricter judge + human spot-check                   | Adopt                                                                       | Known judge-leniency failure, documented mitigation      |
+| Source registry + licence-gated re-ingestion        | Adopt                                                                       | 85% of corpus currently provenance-free                  |
+| Device-local telemetry                              | Adopt                                                                       | Smallest debuggable observability; privacy-preserving    |
 
 ### Sources
 

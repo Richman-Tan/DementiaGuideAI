@@ -10,10 +10,20 @@ class FakeWebSocket {
     this.sent = [];
     FakeWebSocket.instances.push(this);
   }
-  send(data) { this.sent.push(JSON.parse(data)); }
-  close() { this.readyState = 3; this.onclose?.({}); }
-  emitOpen() { this.readyState = 1; this.onopen?.(); }
-  emitMessage(obj) { this.onmessage?.({ data: JSON.stringify(obj) }); }
+  send(data) {
+    this.sent.push(JSON.parse(data));
+  }
+  close() {
+    this.readyState = 3;
+    this.onclose?.({});
+  }
+  emitOpen() {
+    this.readyState = 1;
+    this.onopen?.();
+  }
+  emitMessage(obj) {
+    this.onmessage?.({ data: JSON.stringify(obj) });
+  }
 }
 
 describe('pcmBase64DurationSec', () => {
@@ -93,7 +103,7 @@ describe('createElevenLabsStream', () => {
     expect(ws.sent[1].text).toBe('call eight hundred ');
   });
 
-  it('flush() forces generation without stealing the next sentence\'s held word', () => {
+  it("flush() forces generation without stealing the next sentence's held word", () => {
     const { stream } = makeStream();
     stream.open();
     const ws = FakeWebSocket.instances[0];
@@ -126,7 +136,10 @@ describe('createElevenLabsStream', () => {
     ws.emitOpen();
 
     const b64 = Buffer.from(new Uint8Array(4410)).toString('base64'); // 100ms @22050
-    ws.emitMessage({ audio: b64, alignment: { chars: ['h', 'i'], charStartTimesMs: [0, 50], charDurationsMs: [50, 50] } });
+    ws.emitMessage({
+      audio: b64,
+      alignment: { chars: ['h', 'i'], charStartTimesMs: [0, 50], charDurationsMs: [50, 50] },
+    });
     expect(events.chunks).toHaveLength(1);
     expect(events.chunks[0].durationSec).toBeCloseTo(0.1, 3);
     expect(events.chunks[0].alignment.chars).toEqual(['h', 'i']);

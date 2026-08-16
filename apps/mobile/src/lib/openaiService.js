@@ -20,7 +20,7 @@ import { timeoutSignal } from '@core/net/withTimeout';
 
 const SECURE_KEY = 'openai_api_key';
 const OPENAI_BASE = 'https://api.openai.com/v1';
-const EMBED_CACHE_MAX = 20;   // LRU of recent query embeddings (repeat/retry queries skip a network call)
+const EMBED_CACHE_MAX = 20; // LRU of recent query embeddings (repeat/retry queries skip a network call)
 const MIN_REQUEST_INTERVAL_MS = 750; // client-side pacing between chat requests
 
 // Hot-path timeouts. A stalled request without one hangs the whole voice turn.
@@ -33,10 +33,16 @@ const LLM_TOTAL_TIMEOUT_MS = 60000;
 const LLM_TTFB_TIMEOUT_MS = 12000;
 
 class OpenAIAuthError extends Error {
-  constructor(msg) { super(msg); this.name = 'OpenAIAuthError'; }
+  constructor(msg) {
+    super(msg);
+    this.name = 'OpenAIAuthError';
+  }
 }
 class OpenAIRateLimitError extends Error {
-  constructor(msg) { super(msg); this.name = 'OpenAIRateLimitError'; }
+  constructor(msg) {
+    super(msg);
+    this.name = 'OpenAIRateLimitError';
+  }
 }
 
 class OpenAIService {
@@ -51,7 +57,7 @@ class OpenAIService {
   // burn the user's OpenAI quota.
   async _throttle() {
     const wait = this._lastRequestAt + MIN_REQUEST_INTERVAL_MS - Date.now();
-    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
     this._lastRequestAt = Date.now();
   }
 
@@ -80,10 +86,6 @@ class OpenAIService {
     return !!k && k.length > 10;
   }
 
-
-
-
-
   // ─── Raw OpenAI Calls ───────────────────────────────────────────────────────
 
   async _callOpenAI(endpoint, body, apiKey, { timeoutMs = null } = {}) {
@@ -95,7 +97,7 @@ class OpenAIService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
+          Authorization: `Bearer ${key}`,
         },
         body: JSON.stringify(body),
         ...(t ? { signal: t.signal } : {}),
@@ -123,10 +125,15 @@ class OpenAIService {
       this._embedCache.set(key, hit);
       return hit;
     }
-    const data = await this._callOpenAI('/embeddings', {
-      model: EMBEDDING_MODEL,
-      input: text,
-    }, null, { timeoutMs: EMBED_TIMEOUT_MS });
+    const data = await this._callOpenAI(
+      '/embeddings',
+      {
+        model: EMBEDDING_MODEL,
+        input: text,
+      },
+      null,
+      { timeoutMs: EMBED_TIMEOUT_MS }
+    );
     const embedding = data.data[0].embedding;
     this._embedCache.set(key, embedding);
     if (this._embedCache.size > EMBED_CACHE_MAX) {
@@ -142,12 +149,14 @@ class OpenAIService {
     const t = timeoutSignal(SEARCH_TIMEOUT_MS);
     let data, error;
     try {
-      ({ data, error } = await supabase.rpc('match_chunks', {
-        query_embedding: queryEmbedding,
-        query_text: query,
-        match_count: topK * RETRIEVAL_OVERSAMPLE,
-        min_similarity: MIN_SIMILARITY,
-      }).abortSignal(t.signal));
+      ({ data, error } = await supabase
+        .rpc('match_chunks', {
+          query_embedding: queryEmbedding,
+          query_text: query,
+          match_count: topK * RETRIEVAL_OVERSAMPLE,
+          min_similarity: MIN_SIMILARITY,
+        })
+        .abortSignal(t.signal));
     } finally {
       t.cancel();
     }
@@ -159,10 +168,20 @@ class OpenAIService {
   // Async generator — yields text chunks as they stream from the API so the
   // caller can start TTS on completed sentences before the full response arrives.
 
-  async *chatStream(userMessage, conversationHistory = [], timingCbs = null,
-                    { conciseMode = false, responseStyle = 'balanced', jargonMode = 'explain',
-                      ariaPersonality = 'warm', isCaregiversSetup = false,
-                      skipThrottle = false, preRetrievedChunks = null } = {}) {
+  async *chatStream(
+    userMessage,
+    conversationHistory = [],
+    timingCbs = null,
+    {
+      conciseMode = false,
+      responseStyle = 'balanced',
+      jargonMode = 'explain',
+      ariaPersonality = 'warm',
+      isCaregiversSetup = false,
+      skipThrottle = false,
+      preRetrievedChunks = null,
+    } = {}
+  ) {
     const apiKey = await this.getApiKey();
     if (!apiKey) throw new OpenAIAuthError('No API key configured');
 
@@ -200,7 +219,7 @@ class OpenAIService {
     });
     const userContent = buildUserContent(userMessage, chunks);
 
-    const recentHistory = conversationHistory.slice(-MAX_HISTORY).map(m => ({
+    const recentHistory = conversationHistory.slice(-MAX_HISTORY).map((m) => ({
       role: m.role,
       content: m.content,
     }));
@@ -211,7 +230,17 @@ class OpenAIService {
     // spoken aloud).
     const inlineCitations = CITATION_MODE === 'inline';
     const messages = [
-      { role: 'system', content: buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup, includeSources: inlineCitations }) },
+      {
+        role: 'system',
+        content: buildSystemPrompt({
+          conciseMode,
+          responseStyle,
+          jargonMode,
+          ariaPersonality,
+          isCaregiversSetup,
+          includeSources: inlineCitations,
+        }),
+      },
       ...recentHistory,
       { role: 'user', content: userContent },
     ];
@@ -237,7 +266,11 @@ class OpenAIService {
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.setRequestHeader('Authorization', `Bearer ${apiKey}`);
 
-    const wake = () => { const n = notify; notify = null; n?.(); };
+    const wake = () => {
+      const n = notify;
+      notify = null;
+      n?.();
+    };
 
     // Overall cap plus a time-to-first-byte watchdog: mobile radios can hold a
     // dead socket open for minutes; 12s with zero bytes means the turn is lost.
@@ -251,10 +284,17 @@ class OpenAIService {
       ttfbTimer = null;
       streamError = new Error('OpenAI stream timed out waiting for first response');
       finished = true;
-      try { xhr.abort(); } catch {}
+      try {
+        xhr.abort();
+      } catch {}
       wake();
     }, LLM_TTFB_TIMEOUT_MS);
-    const clearTtfb = () => { if (ttfbTimer) { clearTimeout(ttfbTimer); ttfbTimer = null; } };
+    const clearTtfb = () => {
+      if (ttfbTimer) {
+        clearTimeout(ttfbTimer);
+        ttfbTimer = null;
+      }
+    };
 
     xhr.onprogress = () => {
       clearTtfb();
@@ -307,7 +347,9 @@ class OpenAIService {
         }
       }
       if (finished) break;
-      await new Promise(r => { notify = r; });
+      await new Promise((r) => {
+        notify = r;
+      });
     }
 
     if (stripper) {
@@ -396,25 +438,48 @@ class OpenAIService {
   // System prompt + user-content construction live in ./rag/prompt.js — the
   // single definition shared with the eval scripts.
 
-  async chat(userMessage, conversationHistory = [],
-             { conciseMode = false, responseStyle = 'balanced', jargonMode = 'explain',
-               ariaPersonality = 'warm', isCaregiversSetup = false } = {}) {
+  async chat(
+    userMessage,
+    conversationHistory = [],
+    {
+      conciseMode = false,
+      responseStyle = 'balanced',
+      jargonMode = 'explain',
+      ariaPersonality = 'warm',
+      isCaregiversSetup = false,
+    } = {}
+  ) {
     // Retrieve relevant chunks
     await this._throttle();
     const ragStart = Date.now();
     const chunks = await this.search(userMessage, TOP_K);
-    recordRetrieval({ queryLength: userMessage.length, retrieved: chunks, ragMs: Date.now() - ragStart, path: 'chat' });
+    recordRetrieval({
+      queryLength: userMessage.length,
+      retrieved: chunks,
+      ragMs: Date.now() - ragStart,
+      path: 'chat',
+    });
 
     const userContent = buildUserContent(userMessage, chunks);
 
     // Build messages — last MAX_HISTORY items from conversation history
-    const recentHistory = conversationHistory.slice(-MAX_HISTORY).map(m => ({
+    const recentHistory = conversationHistory.slice(-MAX_HISTORY).map((m) => ({
       role: m.role,
       content: m.content,
     }));
 
     const messages = [
-      { role: 'system', content: buildSystemPrompt({ conciseMode, responseStyle, jargonMode, ariaPersonality, isCaregiversSetup, includeSources: true }) },
+      {
+        role: 'system',
+        content: buildSystemPrompt({
+          conciseMode,
+          responseStyle,
+          jargonMode,
+          ariaPersonality,
+          isCaregiversSetup,
+          includeSources: true,
+        }),
+      },
       ...recentHistory,
       {
         role: 'user',
@@ -447,7 +512,7 @@ class OpenAIService {
       responseText = rawText.slice(0, rawText.indexOf(sourcesMatch[0])).trim();
       sourceTitles = sourcesMatch[1]
         .split('\n')
-        .map(s => s.replace(/^[·\-\*•]\s*/, '').trim())
+        .map((s) => s.replace(/^[·\-\*•]\s*/, '').trim())
         .filter(Boolean);
     }
 
@@ -455,8 +520,8 @@ class OpenAIService {
     // answered from general knowledge and showing source chips would be misleading.
 
     // Enrich titles with source_url and source_org from matched chunks
-    const chunkByTitle = new Map(chunks.map(c => [c.title, c]));
-    const sources = sourceTitles.map(title => ({
+    const chunkByTitle = new Map(chunks.map((c) => [c.title, c]));
+    const sources = sourceTitles.map((title) => ({
       title,
       url: chunkByTitle.get(title)?.source_url ?? null,
       org: chunkByTitle.get(title)?.source_org ?? null,

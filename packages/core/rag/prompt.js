@@ -14,12 +14,12 @@
 const { PROMPT_VERSION, CITATION_MODE } = require('./ragConfig');
 
 function buildSystemPromptV1({
-  conciseMode       = false,
-  responseStyle     = 'balanced',
-  jargonMode        = 'explain',
-  ariaPersonality   = 'warm',
+  conciseMode = false,
+  responseStyle = 'balanced',
+  jargonMode = 'explain',
+  ariaPersonality = 'warm',
   isCaregiversSetup = false,
-  includeSources    = true,
+  includeSources = true,
 } = {}) {
   // Caregiver preamble
   const caregiverPreamble = isCaregiversSetup
@@ -27,30 +27,42 @@ function buildSystemPromptV1({
     : '';
 
   // Personality
-  const personalityRule = {
-    warm:      '- Be warm, gentle, and emotionally supportive. Validate feelings before giving information. Caregiving is hard, and the person reading your response may be exhausted or distressed.',
-    calm:      '- Maintain a calm, steady, and reassuring tone. Be clear and measured without excessive emotional language.',
-    friendly:  '- Be warm and encouraging — like a knowledgeable friend. Use natural, conversational language and a positive tone.',
-    practical: '- Be direct and practical. Lead with the most useful information. Avoid lengthy emotional preambles.',
-  }[ariaPersonality] ?? '- Be warm, empathetic, and emotionally supportive.';
+  const personalityRule =
+    {
+      warm: '- Be warm, gentle, and emotionally supportive. Validate feelings before giving information. Caregiving is hard, and the person reading your response may be exhausted or distressed.',
+      calm: '- Maintain a calm, steady, and reassuring tone. Be clear and measured without excessive emotional language.',
+      friendly:
+        '- Be warm and encouraging — like a knowledgeable friend. Use natural, conversational language and a positive tone.',
+      practical:
+        '- Be direct and practical. Lead with the most useful information. Avoid lengthy emotional preambles.',
+    }[ariaPersonality] ?? '- Be warm, empathetic, and emotionally supportive.';
 
   // Jargon
-  const jargonRule = {
-    explain: "- If you use a medical or technical word, immediately define it in plain language in parentheses — e.g. \"lewy body dementia (a type of dementia that affects movement and memory)\".",
-    avoid:   '- Never use medical jargon or technical terms. Always use the simplest everyday word available.',
-    ok:      '- Use plain, everyday language.',
-  }[jargonMode] ?? "- Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.";
+  const jargonRule =
+    {
+      explain:
+        '- If you use a medical or technical word, immediately define it in plain language in parentheses — e.g. "lewy body dementia (a type of dementia that affects movement and memory)".',
+      avoid:
+        '- Never use medical jargon or technical terms. Always use the simplest everyday word available.',
+      ok: '- Use plain, everyday language.',
+    }[jargonMode] ??
+    '- Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.';
 
   // Response length (conciseMode overrides responseStyle)
-  let lengthRule = '- Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.';
+  let lengthRule =
+    '- Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.';
   if (conciseMode) {
-    lengthRule = '- CONCISE MODE ON: Answer in 1–2 short paragraphs maximum. Lead with the direct answer immediately — no preamble, no filler phrases, no restating the question.';
+    lengthRule =
+      '- CONCISE MODE ON: Answer in 1–2 short paragraphs maximum. Lead with the direct answer immediately — no preamble, no filler phrases, no restating the question.';
   } else if (responseStyle === 'brief') {
-    lengthRule = '- Keep responses very short — 1 to 2 sentences maximum. State the answer first, then stop.';
+    lengthRule =
+      '- Keep responses very short — 1 to 2 sentences maximum. State the answer first, then stop.';
   } else if (responseStyle === 'detailed') {
-    lengthRule = '- Give thorough, detailed responses — 4 to 6 paragraphs if the topic warrants it. Include context, examples, and practical tips.';
+    lengthRule =
+      '- Give thorough, detailed responses — 4 to 6 paragraphs if the topic warrants it. Include context, examples, and practical tips.';
   } else if (responseStyle === 'step-by-step') {
-    lengthRule = '- Format any instructions or processes as a numbered list. Break every process into small, clear steps. Use plain language for each step.';
+    lengthRule =
+      '- Format any instructions or processes as a numbered list. Break every process into small, clear steps. Use plain language for each step.';
   }
 
   const sourcesRule = includeSources
@@ -78,40 +90,52 @@ ${lengthRule}
 //   0800 004 001   — Alzheimers New Zealand support line
 //   1737           — free national mental-health support line (call or text)
 function buildSystemPromptV2({
-  conciseMode       = false,
-  responseStyle     = 'balanced',
-  jargonMode        = 'explain',
-  ariaPersonality   = 'warm',
+  conciseMode = false,
+  responseStyle = 'balanced',
+  jargonMode = 'explain',
+  ariaPersonality = 'warm',
   isCaregiversSetup = false,
-  includeSources    = true,
-  citationMode      = CITATION_MODE,
+  includeSources = true,
+  citationMode = CITATION_MODE,
 } = {}) {
   const caregiverPreamble = isCaregiversSetup
     ? 'The person using this app is a family caregiver or support worker. Frame responses to support them in their caring role, not as advice to the person with dementia.\n\n'
     : '';
 
-  const personalityRule = {
-    warm:      '- Be warm, gentle, and emotionally supportive. Validate feelings before giving information. Caregiving is hard, and the person reading your response may be exhausted or distressed.',
-    calm:      '- Maintain a calm, steady, and reassuring tone. Be clear and measured without excessive emotional language.',
-    friendly:  '- Be warm and encouraging — like a knowledgeable friend. Use natural, conversational language and a positive tone.',
-    practical: '- Be direct and practical. Lead with the most useful information. Avoid lengthy emotional preambles.',
-  }[ariaPersonality] ?? '- Be warm, empathetic, and emotionally supportive.';
+  const personalityRule =
+    {
+      warm: '- Be warm, gentle, and emotionally supportive. Validate feelings before giving information. Caregiving is hard, and the person reading your response may be exhausted or distressed.',
+      calm: '- Maintain a calm, steady, and reassuring tone. Be clear and measured without excessive emotional language.',
+      friendly:
+        '- Be warm and encouraging — like a knowledgeable friend. Use natural, conversational language and a positive tone.',
+      practical:
+        '- Be direct and practical. Lead with the most useful information. Avoid lengthy emotional preambles.',
+    }[ariaPersonality] ?? '- Be warm, empathetic, and emotionally supportive.';
 
-  const jargonRule = {
-    explain: "- If you use a medical or technical word, immediately define it in plain language in parentheses — e.g. \"lewy body dementia (a type of dementia that affects movement and memory)\".",
-    avoid:   '- Never use medical jargon or technical terms. Always use the simplest everyday word available.',
-    ok:      '- Use plain, everyday language.',
-  }[jargonMode] ?? "- Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.";
+  const jargonRule =
+    {
+      explain:
+        '- If you use a medical or technical word, immediately define it in plain language in parentheses — e.g. "lewy body dementia (a type of dementia that affects movement and memory)".',
+      avoid:
+        '- Never use medical jargon or technical terms. Always use the simplest everyday word available.',
+      ok: '- Use plain, everyday language.',
+    }[jargonMode] ??
+    '- Use plain, everyday language. Avoid medical jargon unless you explain the term immediately after.';
 
-  let lengthRule = '- Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.';
+  let lengthRule =
+    '- Keep responses concise — aim for 2 to 4 short paragraphs. People are often reading on a phone.';
   if (conciseMode) {
-    lengthRule = '- CONCISE MODE ON: Answer in 1–2 short paragraphs maximum. Lead with the direct answer immediately — no preamble, no filler phrases, no restating the question.';
+    lengthRule =
+      '- CONCISE MODE ON: Answer in 1–2 short paragraphs maximum. Lead with the direct answer immediately — no preamble, no filler phrases, no restating the question.';
   } else if (responseStyle === 'brief') {
-    lengthRule = '- Keep responses very short — 1 to 2 sentences maximum. State the answer first, then stop.';
+    lengthRule =
+      '- Keep responses very short — 1 to 2 sentences maximum. State the answer first, then stop.';
   } else if (responseStyle === 'detailed') {
-    lengthRule = '- Give thorough, detailed responses — 4 to 6 paragraphs if the topic warrants it. Include context, examples, and practical tips.';
+    lengthRule =
+      '- Give thorough, detailed responses — 4 to 6 paragraphs if the topic warrants it. Include context, examples, and practical tips.';
   } else if (responseStyle === 'step-by-step') {
-    lengthRule = '- Format any instructions or processes as a numbered list. Break every process into small, clear steps. Use plain language for each step.';
+    lengthRule =
+      '- Format any instructions or processes as a numbered list. Break every process into small, clear steps. Use plain language for each step.';
   }
 
   const sourcesRule = !includeSources
@@ -153,9 +177,15 @@ function buildSystemPrompt(opts = {}, version = PROMPT_VERSION) {
 // the model can cite it; extractCitations() later validates those markers.
 function buildUserContent(userMessage, chunks, citationMode = CITATION_MODE) {
   if (!chunks || chunks.length === 0) return userMessage;
-  const passages = citationMode === 'inline'
-    ? chunks.map((c, i) => `[S${i + 1}] ${c.title}${c.source_org ? ` — ${c.source_org}` : ''}\n${c.content}`).join('\n\n')
-    : chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n');
+  const passages =
+    citationMode === 'inline'
+      ? chunks
+          .map(
+            (c, i) =>
+              `[S${i + 1}] ${c.title}${c.source_org ? ` — ${c.source_org}` : ''}\n${c.content}`
+          )
+          .join('\n\n')
+      : chunks.map((c) => `--- ${c.title} ---\n${c.content}`).join('\n\n');
   return `[REFERENCE PASSAGES — may or may not be relevant]\n${passages}\n[/REFERENCE PASSAGES]\n\nUser question: ${userMessage}`;
 }
 

@@ -1,10 +1,33 @@
 /* Hover styles generated from the prototype's style-hover attributes. */
-.hv1:hover{background:var(--primary-d);color:#fff}
-.hv2:hover{background:var(--primary-d)}
-.hv3:hover{background:var(--tint)}
-.hv4:hover{background:var(--tint);color:var(--primary-d)}
-.hv5:hover{color:var(--primary-d)}
-.hv6:hover{border-color:var(--primary)}
-.hv7:hover{background:var(--primary);color:#fff}
-.hv8:hover{background:var(--tint);border-color:var(--primary)}
-.hv9:hover{border-color:var(--primary);background:var(--tint)}
+.hv1:hover {
+  background: var(--primary-d);
+  color: #fff;
+}
+.hv2:hover {
+  background: var(--primary-d);
+}
+.hv3:hover {
+  background: var(--tint);
+}
+.hv4:hover {
+  background: var(--tint);
+  color: var(--primary-d);
+}
+.hv5:hover {
+  color: var(--primary-d);
+}
+.hv6:hover {
+  border-color: var(--primary);
+}
+.hv7:hover {
+  background: var(--primary);
+  color: #fff;
+}
+.hv8:hover {
+  background: var(--tint);
+  border-color: var(--primary);
+}
+.hv9:hover {
+  border-color: var(--primary);
+  background: var(--tint);
+}

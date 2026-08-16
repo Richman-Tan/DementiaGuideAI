@@ -10,12 +10,13 @@ cannot provide; items 2 and 4 have runnable tooling already in the repo.
 ## 1. Human usability study (central — answers the research question)
 
 The mid-year evaluations validate enabling components (avatar articulation, RAG
-grounding) but not the headline question: *does an AI-powered avatar-based
+grounding) but not the headline question: _does an AI-powered avatar-based
 interface improve accessibility, personalisation, and usability of dementia-care
-resource management?* This study is designed to address SQ1, SQ4, SQ5 and O5.
+resource management?_ This study is designed to address SQ1, SQ4, SQ5 and O5.
 
 **Design.** Within-subjects, counterbalanced comparison of two interfaces on the
 same knowledge base:
+
 - **A — avatar interface:** the DementiaGuide AI voice/avatar assistant.
 - **B — text baseline:** the same RAG chat without the avatar/voice (text in, text out).
 
@@ -36,12 +37,13 @@ wandering". Use different but matched task sets for A and B so answers can't car
 over.
 
 **Measures.**
-- *Effectiveness:* task success (completed / partial / failed), scored against a
+
+- _Effectiveness:_ task success (completed / partial / failed), scored against a
   rubric of the key information the answer should contain.
-- *Efficiency:* time on task; number of turns/queries to reach the answer.
-- *Satisfaction/usability:* System Usability Scale (SUS) per interface; plus 3–4
+- _Efficiency:_ time on task; number of turns/queries to reach the answer.
+- _Satisfaction/usability:_ System Usability Scale (SUS) per interface; plus 3–4
   Likert items on trust, engagement, and perceived helpfulness.
-- *Accessibility/personalisation (qualitative):* short semi-structured debrief on
+- _Accessibility/personalisation (qualitative):_ short semi-structured debrief on
   clarity, cognitive load, and whether responses felt tailored to their role.
 
 **Analysis.** With n < 20, report **counts and medians, not percentages**, and use
@@ -60,6 +62,7 @@ improves usability/engagement over text — the core of the research question.
 end-to-end (§4.2, Table 3).
 
 **Procedure.**
+
 1. Run the app and drive ~20 representative caregiver queries (reuse the RAG
    question set, Set A). Keep device and network fixed and stated.
 2. The pipeline logs one `[LATENCY SUMMARY] {…}` line per response
@@ -84,6 +87,7 @@ The lip-sync metrics (§6.1–6.8) were recorded in the Unity Editor only. This
 confirms they hold in the shipped React Native app on a physical iOS device.
 
 **Procedure.**
+
 1. Build and run the app on a physical iPhone (UaaL bridge active).
 2. Drive the same fixtures / representative utterances through the production
    avatar path.
@@ -95,7 +99,7 @@ confirms they hold in the shipped React Native app on a physical iOS device.
 **Evidence produced.** Confirmation that the editor-verified articulation transfers
 to the deployed application (or a documented gap to close).
 
-*(Requires a build on device — not runnable from here.)*
+_(Requires a build on device — not runnable from here.)_
 
 ---
 
@@ -106,6 +110,7 @@ all 32 in-scope answers a uniform 2/2 — plausible but subject to same-family j
 leniency.
 
 **Procedure.**
+
 1. Open `docs/report/rag_eval_graded.csv` — each row has the question, the judge's
    score, and its reason; `rag_eval_results.audit.json` has the answers and the
    exact retrieved chunk ids.
@@ -122,9 +127,9 @@ with the LLM-judge leniency caveat resolved or quantified.
 
 ## Status summary
 
-| Item | Runnable here? | Deliverable in repo |
-|---|---|---|
-| 1 Usability study | No (people + ethics) | This protocol |
-| 2 Latency measurement | Tooling yes, data needs the running app | `scripts/parse-latency.mjs`, Table 3 template |
-| 3 On-device lip-sync | No (device build) | This checklist |
-| 4 Human groundedness check | No (needs a human rater) | `rag_eval_graded.csv` as the review sheet |
+| Item                       | Runnable here?                          | Deliverable in repo                           |
+| -------------------------- | --------------------------------------- | --------------------------------------------- |
+| 1 Usability study          | No (people + ethics)                    | This protocol                                 |
+| 2 Latency measurement      | Tooling yes, data needs the running app | `scripts/parse-latency.mjs`, Table 3 template |
+| 3 On-device lip-sync       | No (device build)                       | This checklist                                |
+| 4 Human groundedness check | No (needs a human rater)                | `rag_eval_graded.csv` as the review sheet     |

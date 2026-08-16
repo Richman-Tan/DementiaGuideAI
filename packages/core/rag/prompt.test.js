@@ -1,4 +1,9 @@
-const { buildSystemPrompt, buildSystemPromptV1, buildSystemPromptV2, buildUserContent } = require('./prompt');
+const {
+  buildSystemPrompt,
+  buildSystemPromptV1,
+  buildSystemPromptV2,
+  buildUserContent,
+} = require('./prompt');
 const { PROMPT_VERSION } = require('./ragConfig');
 
 // The default (warm / explain / balanced / includeSources) V1 prompt, copied
@@ -43,7 +48,7 @@ describe('buildSystemPromptV2 (active: NZ region + safety layer)', () => {
     expect(p).toMatch(/\b111\b/);
     expect(p).toContain('0800 611 116'); // Healthline
     expect(p).toContain('0800 004 001'); // Alzheimers NZ
-    expect(p).toContain('1737');         // mental-health support line
+    expect(p).toContain('1737'); // mental-health support line
   });
 
   it('escalates emergencies first and forbids dosing/diagnosis', () => {
@@ -66,7 +71,6 @@ describe('buildSystemPromptV2 (active: NZ region + safety layer)', () => {
 });
 
 describe('buildSystemPrompt (style plumbing, both versions)', () => {
-
   it('omits the Sources rule on the voice path (includeSources: false)', () => {
     const p = buildSystemPrompt({ includeSources: false });
     expect(p).not.toContain('Sources:');
@@ -78,7 +82,11 @@ describe('buildSystemPrompt (style plumbing, both versions)', () => {
   });
 
   it('selects personality, jargon, and length rules from settings', () => {
-    const p = buildSystemPrompt({ ariaPersonality: 'practical', jargonMode: 'avoid', responseStyle: 'brief' });
+    const p = buildSystemPrompt({
+      ariaPersonality: 'practical',
+      jargonMode: 'avoid',
+      responseStyle: 'brief',
+    });
     expect(p).toContain('- Be direct and practical.');
     expect(p).toContain('- Never use medical jargon');
     expect(p).toContain('1 to 2 sentences maximum');
@@ -106,10 +114,10 @@ describe('buildUserContent', () => {
     const c = buildUserContent('What helps with sundowning?', chunks);
     expect(c).toBe(
       '[REFERENCE PASSAGES — may or may not be relevant]\n' +
-      '[S1] Chunk One — WHO\nAlpha content.\n\n' +
-      '[S2] Chunk Two\nBeta content.\n' +
-      '[/REFERENCE PASSAGES]\n\n' +
-      'User question: What helps with sundowning?'
+        '[S1] Chunk One — WHO\nAlpha content.\n\n' +
+        '[S2] Chunk Two\nBeta content.\n' +
+        '[/REFERENCE PASSAGES]\n\n' +
+        'User question: What helps with sundowning?'
     );
   });
 
@@ -117,10 +125,10 @@ describe('buildUserContent', () => {
     const c = buildUserContent('What helps with sundowning?', chunks, 'trailing');
     expect(c).toBe(
       '[REFERENCE PASSAGES — may or may not be relevant]\n' +
-      '--- Chunk One ---\nAlpha content.\n\n' +
-      '--- Chunk Two ---\nBeta content.\n' +
-      '[/REFERENCE PASSAGES]\n\n' +
-      'User question: What helps with sundowning?'
+        '--- Chunk One ---\nAlpha content.\n\n' +
+        '--- Chunk Two ---\nBeta content.\n' +
+        '[/REFERENCE PASSAGES]\n\n' +
+        'User question: What helps with sundowning?'
     );
   });
 });

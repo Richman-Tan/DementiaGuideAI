@@ -13,7 +13,14 @@ function RootNavigator() {
 
   if (!isHydrated) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.background }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: Colors.background,
+        }}
+      >
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );

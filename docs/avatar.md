@@ -3,10 +3,10 @@
 Two renderers exist. Which one runs is resolved per platform and per avatar
 profile:
 
-| Renderer | Where | Model |
-|---|---|---|
-| **Unity** (CC4 characters, UaaL) | Native iOS/Android builds; default on web via WebGL | `unity-avatar/` submodule |
-| **Three.js + `@pixiv/three-vrm`** | Expo Go, Simulator, and as the web fallback | `.vrm` / `.glb` in `assets/` |
+| Renderer                          | Where                                               | Model                        |
+| --------------------------------- | --------------------------------------------------- | ---------------------------- |
+| **Unity** (CC4 characters, UaaL)  | Native iOS/Android builds; default on web via WebGL | `unity-avatar/` submodule    |
+| **Three.js + `@pixiv/three-vrm`** | Expo Go, Simulator, and as the web fallback         | `.vrm` / `.glb` in `assets/` |
 
 On mobile the Three.js renderer runs inside a React Native `WebView`; all
 animation happens in that embedded browser context and reports back via
@@ -37,7 +37,7 @@ Latency budget, streaming STT and speculative retrieval:
 [voice-latency-streaming.md](voice-latency-streaming.md).
 
 `packages/core/voice/speculativeRetrieval.js` starts retrieval on a stabilised live-STT
-partial *while the user is still talking*, so the embedding and vector-search
+partial _while the user is still talking_, so the embedding and vector-search
 round trips are already in flight when the final transcript lands.
 
 ## State machine
@@ -78,7 +78,7 @@ Pass `modelUrl` to render any publicly hosted `.vrm`:
   isThinking={thinking}
   width={300}
   height={420}
-/>
+/>;
 
 // Play TTS audio with viseme lip sync (ElevenLabs path)
 await avatarRef.current.playAudio({ audio: base64DataUri, visemeTimeline });

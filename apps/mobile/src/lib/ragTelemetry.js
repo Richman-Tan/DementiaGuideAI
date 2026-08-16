@@ -34,13 +34,18 @@ export function recordRetrieval({ queryLength, retrieved, ragMs, path }) {
         queryLength,
         promptVersion: PROMPT_VERSION,
         citationMode: CITATION_MODE,
-        retrieved: (retrieved ?? []).map(c => ({ id: c.id, sim: Number(c.similarity?.toFixed?.(4) ?? c.similarity ?? null) })),
+        retrieved: (retrieved ?? []).map((c) => ({
+          id: c.id,
+          sim: Number(c.similarity?.toFixed?.(4) ?? c.similarity ?? null),
+        })),
         empty: !retrieved || retrieved.length === 0,
         ragMs: ragMs ?? null,
       });
       if (buf.length > MAX_ENTRIES) buf.splice(0, buf.length - MAX_ENTRIES);
       await AsyncStorage.setItem(KEY, JSON.stringify(buf));
-    } catch { /* never surface */ }
+    } catch {
+      /* never surface */
+    }
   })();
 }
 
@@ -50,5 +55,9 @@ export async function getTelemetry() {
 
 export async function clearTelemetry() {
   buffer = [];
-  try { await AsyncStorage.removeItem(KEY); } catch { /* ignore */ }
+  try {
+    await AsyncStorage.removeItem(KEY);
+  } catch {
+    /* ignore */
+  }
 }

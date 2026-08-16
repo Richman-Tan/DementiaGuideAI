@@ -55,60 +55,70 @@ export function ChatProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const run = useCallback(async (q, base) => {
-    busyRef.current = true;
-    setTyping(true);
-    setChatError(false);
-    const ac = new AbortController();
-    abortRef.current = ac;
-    const msg = { role: 'aria', text: '', citations: [], safety: false, streaming: true, time: now() };
-    let started = false;
-    try {
-      const result = await generateReply({
-        question: q,
-        settings: settingsRef.current,
-        history: base,
-        signal: ac.signal,
-        onToken: (fullText) => {
-          if (ac.signal.aborted) return;
-          if (!started) {
-            started = true;
-            setTyping(false);
-            setMessages(base.concat([msg]));
-          }
-          msg.text = fullText;
-          setMessages(base.concat([{ ...msg }]));
-          queueMicrotask(() => scrollCb.current && scrollCb.current());
-        },
-      });
-      if (ac.signal.aborted) return;
-      Object.assign(msg, {
-        text: result.text,
-        citations: result.citations || [],
-        sources: result.sources || null,
-        safety: !!result.safety,
-        streaming: false,
-      });
-      setTyping(false);
-      persist(base.concat([{ ...msg }]));
-    } catch (err) {
-      if (ac.signal.aborted) return;
-      console.warn('[chat] turn failed:', err?.message || err);
-      failedQ.current = q;
-      setTyping(false);
-      setChatError(true);
-      setChatErrorMsg(
-        err?.name === 'OpenAIAuthError'
-          ? 'Your OpenAI API key looks invalid — check it in Settings → Advanced.'
-          : err?.name === 'OpenAIRateLimitError'
-            ? 'The AI service is rate-limited right now — wait a moment and retry.'
-            : "I couldn't reach the knowledge base — try again."
-      );
-      setMessages(base); // drop the empty streaming bubble if any
-    } finally {
-      busyRef.current = false;
-    }
-  }, [persist]);
+  const run = useCallback(
+    async (q, base) => {
+      busyRef.current = true;
+      setTyping(true);
+      setChatError(false);
+      const ac = new AbortController();
+      abortRef.current = ac;
+      const msg = {
+        role: 'aria',
+        text: '',
+        citations: [],
+        safety: false,
+        streaming: true,
+        time: now(),
+      };
+      let started = false;
+      try {
+        const result = await generateReply({
+          question: q,
+          settings: settingsRef.current,
+          history: base,
+          signal: ac.signal,
+          onToken: (fullText) => {
+            if (ac.signal.aborted) return;
+            if (!started) {
+              started = true;
+              setTyping(false);
+              setMessages(base.concat([msg]));
+            }
+            msg.text = fullText;
+            setMessages(base.concat([{ ...msg }]));
+            queueMicrotask(() => scrollCb.current && scrollCb.current());
+          },
+        });
+        if (ac.signal.aborted) return;
+        Object.assign(msg, {
+          text: result.text,
+          citations: result.citations || [],
+          sources: result.sources || null,
+          safety: !!result.safety,
+          streaming: false,
+        });
+        setTyping(false);
+        persist(base.concat([{ ...msg }]));
+      } catch (err) {
+        if (ac.signal.aborted) return;
+        console.warn('[chat] turn failed:', err?.message || err);
+        failedQ.current = q;
+        setTyping(false);
+        setChatError(true);
+        setChatErrorMsg(
+          err?.name === 'OpenAIAuthError'
+            ? 'Your OpenAI API key looks invalid — check it in Settings → Advanced.'
+            : err?.name === 'OpenAIRateLimitError'
+              ? 'The AI service is rate-limited right now — wait a moment and retry.'
+              : "I couldn't reach the knowledge base — try again."
+        );
+        setMessages(base); // drop the empty streaming bubble if any
+      } finally {
+        busyRef.current = false;
+      }
+    },
+    [persist]
+  );
 
   const retry = useCallback(() => {
     const q = failedQ.current;
@@ -117,10 +127,13 @@ export function ChatProvider({ children }) {
     run(q, messagesRef.current);
   }, [run]);
 
-  const askNow = useCallback((q) => {
-    navigate('#/app/chat');
-    setTimeout(() => send(q), 450);
-  }, [send]);
+  const askNow = useCallback(
+    (q) => {
+      navigate('#/app/chat');
+      setTimeout(() => send(q), 450);
+    },
+    [send]
+  );
 
   const newConvo = useCallback(() => {
     if (abortRef.current) abortRef.current.abort();
@@ -140,8 +153,19 @@ export function ChatProvider({ children }) {
   }, []);
 
   const value = {
-    messages, typing, chatError, chatErrorMsg, send, retry, askNow, newConvo, appendMessage,
-    drawer, setDrawer, scrollCb, mock: isMockMode(),
+    messages,
+    typing,
+    chatError,
+    chatErrorMsg,
+    send,
+    retry,
+    askNow,
+    newConvo,
+    appendMessage,
+    drawer,
+    setDrawer,
+    scrollCb,
+    mock: isMockMode(),
   };
   return <ChatCtx.Provider value={value}>{children}</ChatCtx.Provider>;
 }

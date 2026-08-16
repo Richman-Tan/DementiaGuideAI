@@ -11,7 +11,20 @@ const normalize = (s) =>
     .split(/\s+/)
     .filter((w) => w.length > 2 && !STOP.has(w));
 
-const STOP = new Set(['the', 'and', 'for', 'with', 'about', 'your', 'you', 'how', 'what', 'when', 'are', 'can']);
+const STOP = new Set([
+  'the',
+  'and',
+  'for',
+  'with',
+  'about',
+  'your',
+  'you',
+  'how',
+  'what',
+  'when',
+  'are',
+  'can',
+]);
 
 // Hand-curated aliases for known bulk sources whose chunk titles don't mirror
 // article titles.
@@ -40,7 +53,10 @@ export function matchSourceToArticle(source) {
     let overlap = 0;
     for (const t of tokens) if (at.has(t)) overlap += 1;
     const score = overlap / tokens.length;
-    if (score > bestScore) { bestScore = score; best = a; }
+    if (score > bestScore) {
+      bestScore = score;
+      best = a;
+    }
   }
   // ≥60% of the source-title's meaningful words must appear in the article.
   return bestScore >= 0.6 ? best : null;

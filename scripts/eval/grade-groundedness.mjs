@@ -28,12 +28,15 @@ const { QUESTIONS } = require('./questions.js');
 const JUDGE_MODEL = 'gpt-4o-mini';
 
 const args = process.argv.slice(2);
-const genPath = args.find(a => !a.startsWith('--'));
+const genPath = args.find((a) => !a.startsWith('--'));
 if (!genPath) {
   console.error('Usage: node scripts/eval/grade-groundedness.mjs <generation.json>');
   process.exit(1);
 }
-const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
+const argVal = (name) => {
+  const i = args.indexOf(name);
+  return i === -1 ? null : args[i + 1];
+};
 const SAMPLE = Number(argVal('--sample') ?? 10);
 
 const JUDGE_SYSTEM = `You are a strict fact-checking judge for a dementia-care assistant. You receive: the user question, the reference passages the assistant was given, and the assistant's answer.
@@ -50,28 +53,46 @@ Respond with JSON: {"score": 0|1|2, "reason": "<one sentence naming the specific
 async function main() {
   requireEnv();
   const run = JSON.parse(readFileSync(resolve(ROOT, genPath), 'utf8'));
-  const byId = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+  const byId = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
   // Judge only in-scope answers (A sets) — B/C/S/I are covered by deterministic checks.
-  const rows = run.rows.filter(r => ['A', 'A-neighbour'].includes(byId[r.id]?.set));
-  console.log(`Grading groundedness — ${rows.length} in-scope answers, judge ${JUDGE_MODEL}, temp 0`);
+  const rows = run.rows.filter((r) => ['A', 'A-neighbour'].includes(byId[r.id]?.set));
+  console.log(
+    `Grading groundedness — ${rows.length} in-scope answers, judge ${JUDGE_MODEL}, temp 0`
+  );
 
   const graded = [];
   for (const row of rows) {
-    const chunks = await fetchChunks(row.retrieved.map(r => r.id));
-    const passages = chunks.map(c => `--- ${c.title} ---\n${c.content}`).join('\n\n') || '(no passages retrieved)';
+    const chunks = await fetchChunks(row.retrieved.map((r) => r.id));
+    const passages =
+      chunks.map((c) => `--- ${c.title} ---\n${c.content}`).join('\n\n') ||
+      '(no passages retrieved)';
     const data = await openaiJson('/chat/completions', {
       model: JUDGE_MODEL,
       temperature: 0,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: JUDGE_SYSTEM },
-        { role: 'user', content: `QUESTION:\n${row.question}\n\nREFERENCE PASSAGES:\n${passages}\n\nASSISTANT ANSWER:\n${row.answer}` },
+        {
+          role: 'user',
+          content: `QUESTION:\n${row.question}\n\nREFERENCE PASSAGES:\n${passages}\n\nASSISTANT ANSWER:\n${row.answer}`,
+        },
       ],
       max_tokens: 200,
     });
-    let score = null, reason = 'unparsed';
-    try { ({ score, reason } = JSON.parse(data.choices[0].message.content)); } catch {}
-    graded.push({ id: row.id, set: byId[row.id].set, question: row.question, answer: row.answer, passages, score, reason });
+    let score = null,
+      reason = 'unparsed';
+    try {
+      ({ score, reason } = JSON.parse(data.choices[0].message.content));
+    } catch {}
+    graded.push({
+      id: row.id,
+      set: byId[row.id].set,
+      question: row.question,
+      answer: row.answer,
+      passages,
+      score,
+      reason,
+    });
     console.log(`${row.id.padEnd(4)} score=${score}  ${String(reason).slice(0, 90)}`);
     await sleep(200);
   }
@@ -100,9 +121,9 @@ async function main() {
     '',
     '| id | Judge | Human | Agree? |',
     '|----|-------|-------|--------|',
-    ...sample.map(g => `| ${g.id} | ${g.score} | | |`),
+    ...sample.map((g) => `| ${g.id} | ${g.score} | | |`),
     '',
-    ...sample.flatMap(g => [
+    ...sample.flatMap((g) => [
       `## ${g.id} (judge: ${g.score} — ${g.reason})`,
       `**Q:** ${g.question}`,
       '',
@@ -114,7 +135,12 @@ async function main() {
   ].join('\n');
   writeFileSync(mdPath, md);
 
-  console.log(`\nWrote ${csvPath}\n      ${mdPath} (${sample.length}-row human spot-check — REQUIRED before citing judge scores)`);
+  console.log(
+    `\nWrote ${csvPath}\n      ${mdPath} (${sample.length}-row human spot-check — REQUIRED before citing judge scores)`
+  );
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

@@ -55,7 +55,7 @@ export function AriaStyleScreen({ navigation, route }) {
       onSkip={handleSkip}
       onNext={handleNext}
       nextLabel="Next"
-      title={"What kind of helper\nfeels right for you?"}
+      title={'What kind of helper\nfeels right for you?'}
       subtitle="You can always change this later."
     >
       {OPTIONS.map((opt) => (

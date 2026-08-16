@@ -1,6 +1,6 @@
 name: Feature request
 description: Propose new behaviour or a change to how something works
-labels: ["type: feature", "status: needs-triage"]
+labels: ['type: feature', 'status: needs-triage']
 body:
   - type: markdown
     attributes:

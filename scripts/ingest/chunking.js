@@ -21,7 +21,10 @@ const MIN_SECTION_WORDS = 100;
 
 // Normalise whitespace without altering wording.
 function normalise(text) {
-  return text.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').trim();
+  return text
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .trim();
 }
 
 // Strip PDF running headers/footers. pdf-parse v2 emits "-- N of M --" page
@@ -47,12 +50,17 @@ function stripPdfBoilerplate(rawText, { threshold = 0.4, maxHeaderLen = 80 } = {
   const boilerplate = new Set(
     Object.entries(pageCount)
       .filter(([, n]) => n / pages.length > threshold)
-      .map(([line]) => line),
+      .map(([line]) => line)
   );
   if (boilerplate.size === 0) return rawText.replace(/^-- \d+ of \d+ --$/gm, '');
 
   return pages
-    .map(page => page.split('\n').filter(l => !boilerplate.has(l.trim())).join('\n'))
+    .map((page) =>
+      page
+        .split('\n')
+        .filter((l) => !boilerplate.has(l.trim()))
+        .join('\n')
+    )
     .join('\n\n');
 }
 
@@ -63,14 +71,19 @@ function isHeading(line) {
   const t = line.trim();
   if (!t || t.length > 90) return false;
   if (/^#{1,6}\s+\S/.test(t)) return true;
-  if (/^(module|lesson|unit|section|chapter|part)\s+\d+\b/i.test(t) && !/[.!?]$/.test(t)) return true;
-  if (/^\d+(\.\d+)*[.)]?\s+\S/.test(t) && !/[.!?]$/.test(t) && t.split(' ').length <= 12) return true;
+  if (/^(module|lesson|unit|section|chapter|part)\s+\d+\b/i.test(t) && !/[.!?]$/.test(t))
+    return true;
+  if (/^\d+(\.\d+)*[.)]?\s+\S/.test(t) && !/[.!?]$/.test(t) && t.split(' ').length <= 12)
+    return true;
   if (t === t.toUpperCase() && /[A-Z]{3}/.test(t) && t.split(' ').length <= 10) return true;
   return false;
 }
 
 function headingText(line) {
-  return line.trim().replace(/^#{1,6}\s+/, '').replace(/\s+$/, '');
+  return line
+    .trim()
+    .replace(/^#{1,6}\s+/, '')
+    .replace(/\s+$/, '');
 }
 
 // Split a document into sections at heading lines. Text before the first
@@ -101,14 +114,13 @@ function splitIntoSections(text) {
 // Word-window split of one section's text: paragraph-preferred break points,
 // CHUNK_WORDS budget, OVERLAP_WORDS carried between windows, short tails
 // merged into the previous chunk.
-function windowSplit(text, {
-  chunkWords = CHUNK_WORDS,
-  overlapWords = OVERLAP_WORDS,
-  minChunkWords = MIN_CHUNK_WORDS,
-} = {}) {
+function windowSplit(
+  text,
+  { chunkWords = CHUNK_WORDS, overlapWords = OVERLAP_WORDS, minChunkWords = MIN_CHUNK_WORDS } = {}
+) {
   const paragraphs = text
     .split(/\n{2,}/)
-    .map(p => p.replace(/\n/g, ' ').trim())
+    .map((p) => p.replace(/\n/g, ' ').trim())
     .filter(Boolean);
 
   const chunks = [];
@@ -160,7 +172,9 @@ function windowSplit(text, {
 // sha256 of the normalised title+content — the idempotency key. Any change to
 // either re-embeds the chunk; identical content is skipped on re-ingestion.
 function contentHash(title, content) {
-  return createHash('sha256').update(`${normalise(title)}\n${normalise(content)}`).digest('hex');
+  return createHash('sha256')
+    .update(`${normalise(title)}\n${normalise(content)}`)
+    .digest('hex');
 }
 
 // Merge undersized sections forward so every windowed unit has enough words

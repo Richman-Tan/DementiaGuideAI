@@ -23,12 +23,12 @@ git submodule update --init
 
 ## Where code goes
 
-| Putting something in… | …means it must |
-|---|---|
-| `packages/core/` | have **no platform imports and no outward dependencies** — it runs on mobile, web and in Node. See [`packages/core/README.md`](packages/core/README.md). |
-| `apps/mobile/src/` | be mobile-only (React Native, Expo APIs, native modules) |
-| `apps/web/src/` | be web-only (DOM, browser audio, Vite) |
-| `assets/` | be a binary asset both apps load (`@assets/…`). App icons go in `apps/mobile/assets/`. |
+| Putting something in… | …means it must                                                                                                                                           |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/core/`      | have **no platform imports and no outward dependencies** — it runs on mobile, web and in Node. See [`packages/core/README.md`](packages/core/README.md). |
+| `apps/mobile/src/`    | be mobile-only (React Native, Expo APIs, native modules)                                                                                                 |
+| `apps/web/src/`       | be web-only (DOM, browser audio, Vite)                                                                                                                   |
+| `assets/`             | be a binary asset both apps load (`@assets/…`). App icons go in `apps/mobile/assets/`.                                                                   |
 
 If two surfaces need the same logic, it belongs in `packages/core` — not
 copy-pasted, and not imported across app boundaries.
@@ -97,12 +97,12 @@ that defeats answer grounding.
 
 Labels are prefixed so they group in the sidebar and can be filtered on:
 
-| Prefix | Means | Values |
-|---|---|---|
-| `type:` | What kind of work | `bug`, `feature`, `chore`, `docs`, `security` |
-| `area:` | Which surface | `mobile`, `web`, `core`, `unity`, `rag`, `tooling` |
-| `priority:` | How urgent | `high` (blocks work or breaks a documented command), `medium` (workaround exists), `low` |
-| `status:` | Workflow state | `needs-triage`, `blocked`, `question`, `duplicate`, `invalid`, `wontfix` |
+| Prefix      | Means             | Values                                                                                   |
+| ----------- | ----------------- | ---------------------------------------------------------------------------------------- |
+| `type:`     | What kind of work | `bug`, `feature`, `chore`, `docs`, `security`                                            |
+| `area:`     | Which surface     | `mobile`, `web`, `core`, `unity`, `rag`, `tooling`                                       |
+| `priority:` | How urgent        | `high` (blocks work or breaks a documented command), `medium` (workaround exists), `low` |
+| `status:`   | Workflow state    | `needs-triage`, `blocked`, `question`, `duplicate`, `invalid`, `wontfix`                 |
 
 Every new issue arrives as `status: needs-triage`. Triage means adding an `area:`
 and a `priority:` and removing that label — not necessarily doing the work. Use

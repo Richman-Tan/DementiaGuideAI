@@ -14,29 +14,29 @@ or it will not resolve.
 
 ## Tech stack
 
-| Layer | Technology |
-|---|---|
-| Framework | React Native (Expo SDK 54) |
-| Navigation | React Navigation 7 (Bottom Tabs + Native Stack) |
-| AI / RAG | OpenAI `gpt-4o` + `text-embedding-3-small` |
-| Vector DB | Supabase (pgvector) — hosted knowledge base with the `match_chunks` RPC |
-| STT | OpenAI Whisper (`whisper-1`) via `expo-av` recording |
-| TTS | ElevenLabs `eleven_turbo_v2_5` (primary) · OpenAI `tts-1` (fallback) |
-| Lip sync | ElevenLabs character alignment → viseme timeline → 5 VRM blend shapes |
-| Avatar | Unity (CC4, native) or VRM via Three.js + `@pixiv/three-vrm` in a WebView |
-| Audio | expo-av · Web Audio API (WebView) |
-| Storage | `@react-native-async-storage/async-storage` · `expo-secure-store` |
-| Other | expo-linear-gradient · expo-haptics · react-native-safe-area-context |
+| Layer      | Technology                                                                |
+| ---------- | ------------------------------------------------------------------------- |
+| Framework  | React Native (Expo SDK 54)                                                |
+| Navigation | React Navigation 7 (Bottom Tabs + Native Stack)                           |
+| AI / RAG   | OpenAI `gpt-4o` + `text-embedding-3-small`                                |
+| Vector DB  | Supabase (pgvector) — hosted knowledge base with the `match_chunks` RPC   |
+| STT        | OpenAI Whisper (`whisper-1`) via `expo-av` recording                      |
+| TTS        | ElevenLabs `eleven_turbo_v2_5` (primary) · OpenAI `tts-1` (fallback)      |
+| Lip sync   | ElevenLabs character alignment → viseme timeline → 5 VRM blend shapes     |
+| Avatar     | Unity (CC4, native) or VRM via Three.js + `@pixiv/three-vrm` in a WebView |
+| Audio      | expo-av · Web Audio API (WebView)                                         |
+| Storage    | `@react-native-async-storage/async-storage` · `expo-secure-store`         |
+| Other      | expo-linear-gradient · expo-haptics · react-native-safe-area-context      |
 
 ## Screens
 
-| Screen | Description |
-|---|---|
-| **Home** | Avatar hero card, quick question chips, text/voice entry, navigation grid |
-| **Chat** | iMessage-style conversation, typing indicator, clickable source links |
-| **Library** | Searchable knowledge base across 6 categories, with article detail view |
-| **Voice** | Full-screen voice UI — Whisper STT, streamed LLM response, sentence-by-sentence avatar speech with lip sync |
-| **Settings** | Accessibility controls — text size, contrast, audio, subtitles, haptics, privacy |
+| Screen       | Description                                                                                                 |
+| ------------ | ----------------------------------------------------------------------------------------------------------- |
+| **Home**     | Avatar hero card, quick question chips, text/voice entry, navigation grid                                   |
+| **Chat**     | iMessage-style conversation, typing indicator, clickable source links                                       |
+| **Library**  | Searchable knowledge base across 6 categories, with article detail view                                     |
+| **Voice**    | Full-screen voice UI — Whisper STT, streamed LLM response, sentence-by-sentence avatar speech with lip sync |
+| **Settings** | Accessibility controls — text size, contrast, audio, subtitles, haptics, privacy                            |
 
 A guided 12-step onboarding flow runs on first launch.
 
@@ -49,11 +49,11 @@ external integrations and pure engines live in `lib/`.
 
 Three path aliases, and the distinctions matter:
 
-| Alias | Points to | Contains |
-|---|---|---|
-| `@/` | `apps/mobile/src/` | Mobile-app code only |
-| `@core/` | `packages/core/` | Logic shared with `apps/web/` and the Node scripts |
-| `@assets/` | `assets/` | The `.glb` avatar models, shared with `apps/web/` |
+| Alias      | Points to          | Contains                                           |
+| ---------- | ------------------ | -------------------------------------------------- |
+| `@/`       | `apps/mobile/src/` | Mobile-app code only                               |
+| `@core/`   | `packages/core/`   | Logic shared with `apps/web/` and the Node scripts |
+| `@assets/` | `assets/`          | The `.glb` avatar models, shared with `apps/web/`  |
 
 `@core` is declared in `babel.config.js`, `tsconfig.json`, `jest.config.js` and
 `apps/web/vite.config.js` — **all four must stay in step.** See
@@ -100,8 +100,9 @@ src/
 The pure engines these sit on top of live in `packages/core/` — `voice/`
 (`voiceConfig`, `speculativeRetrieval`, `sentenceTracker`), `tts/`
 (`normalizeSpokenText`, `elevenLabsStreamService`), `lipsync/` (viseme timeline
-+ `g2p/`) and `avatar/blendshapeTranslator`. Anything with no platform import
-belongs there, not here.
+
+- `g2p/`) and `avatar/blendshapeTranslator`. Anything with no platform import
+  belongs there, not here.
 
 ## Running natively
 
@@ -119,7 +120,7 @@ npx expo start --ios --clear   # clear the Metro cache
 One-time machine setup:
 
 1. **Unity Android Build Support** for the pinned editor (6000.5.0f1), including
-   the *Android SDK & NDK Tools* and *OpenJDK* child modules — via Unity Hub
+   the _Android SDK & NDK Tools_ and _OpenJDK_ child modules — via Unity Hub
    (Installs → ⚙ → Add modules), or headless:
    ```bash
    "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless \

@@ -132,7 +132,7 @@ characters render magenta or broken on device:
    tessellation) with the vendored CCiC tools
    (`Packages/com.soupday.cc3_unity_tools`) as a parallel material set, applied
    at runtime by a `PlatformMaterialSwapper` on `Application.platform ==
-   RuntimePlatform.Android`. Blendshapes are mesh-level — lip-sync is
+RuntimePlatform.Android`. Blendshapes are mesh-level — lip-sync is
    unaffected. iOS visuals untouched.
 
 ## Known limitations

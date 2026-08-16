@@ -13,7 +13,15 @@ export function isMockMode() {
 const sleep = (ms, signal) =>
   new Promise((resolve, reject) => {
     const t = setTimeout(resolve, ms);
-    if (signal) signal.addEventListener('abort', () => { clearTimeout(t); reject(new DOMException('aborted', 'AbortError')); }, { once: true });
+    if (signal)
+      signal.addEventListener(
+        'abort',
+        () => {
+          clearTimeout(t);
+          reject(new DOMException('aborted', 'AbortError'));
+        },
+        { once: true }
+      );
   });
 
 // Prototype behaviour: ~1.1s "typing", then the reply streams two words per 70ms.

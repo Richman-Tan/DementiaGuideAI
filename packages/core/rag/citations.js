@@ -25,29 +25,30 @@ function extractCitations(rawText, chunks = []) {
   const numByS = new Map(); // S-index (1-based) → renumbered citation number
   const sources = [];
 
-  const text = rawText.replace(MARKER_RE, (match) => {
-    // A bracket may contain several refs: [S1, S3]
-    const sIndexes = [...match.matchAll(/S(\d+)/g)].map(m => parseInt(m[1], 10));
-    const nums = [];
-    for (const s of sIndexes) {
-      if (s < 1 || s > supplied) continue; // hallucinated marker — drop
-      if (!numByS.has(s)) {
-        const chunk = chunks[s - 1];
-        const num = sources.length + 1;
-        numByS.set(s, num);
-        sources.push({
-          num,
-          id: chunk.id,
-          title: chunk.title,
-          org: chunk.source_org ?? null,
-          url: chunk.source_url ?? null,
-          excerpt: excerptOf(chunk),
-        });
+  const text = rawText
+    .replace(MARKER_RE, (match) => {
+      // A bracket may contain several refs: [S1, S3]
+      const sIndexes = [...match.matchAll(/S(\d+)/g)].map((m) => parseInt(m[1], 10));
+      const nums = [];
+      for (const s of sIndexes) {
+        if (s < 1 || s > supplied) continue; // hallucinated marker — drop
+        if (!numByS.has(s)) {
+          const chunk = chunks[s - 1];
+          const num = sources.length + 1;
+          numByS.set(s, num);
+          sources.push({
+            num,
+            id: chunk.id,
+            title: chunk.title,
+            org: chunk.source_org ?? null,
+            url: chunk.source_url ?? null,
+            excerpt: excerptOf(chunk),
+          });
+        }
+        nums.push(numByS.get(s));
       }
-      nums.push(numByS.get(s));
-    }
-    return nums.length ? nums.map(n => `[${n}]`).join('') : '';
-  })
+      return nums.length ? nums.map((n) => `[${n}]`).join('') : '';
+    })
     // Collapse doubled spaces left by stripped markers, but keep newlines.
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/ +([.,;!?])/g, '$1')

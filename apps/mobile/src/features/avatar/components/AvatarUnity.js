@@ -3,7 +3,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/theme/colors';
 import { Typography } from '@/theme/typography';
 import { UnityAvatarBridge } from '@/features/avatar/bridge/UnityAvatarBridge';
-import { UnityAvatarNativeView, isUnityAvatarAvailable } from '../../../../modules/unity-avatar-module/src';
+import {
+  UnityAvatarNativeView,
+  isUnityAvatarAvailable,
+} from '../../../../modules/unity-avatar-module/src';
 
 /**
  * AvatarUnity — Phase 5.
@@ -28,13 +31,17 @@ export const AvatarUnity = forwardRef(function AvatarUnity(props, ref) {
     if (characterId) UnityAvatarBridge.setCharacter(characterId);
   }, [characterId]);
 
-  useImperativeHandle(ref, () => ({
-    playAudio:       UnityAvatarBridge.playAudio,
-    stopAudio:       UnityAvatarBridge.stopAudio,
-    setOnAudioStart: UnityAvatarBridge.setOnAudioStart,
-    setCharacter:    UnityAvatarBridge.setCharacter,
-    setDebugMode:    UnityAvatarBridge.setDebugMode,
-  }), []);
+  useImperativeHandle(
+    ref,
+    () => ({
+      playAudio: UnityAvatarBridge.playAudio,
+      stopAudio: UnityAvatarBridge.stopAudio,
+      setOnAudioStart: UnityAvatarBridge.setOnAudioStart,
+      setCharacter: UnityAvatarBridge.setCharacter,
+      setDebugMode: UnityAvatarBridge.setDebugMode,
+    }),
+    []
+  );
 
   if (!isUnityAvatarAvailable) {
     const initial = (characterId || 'A').charAt(0).toUpperCase();

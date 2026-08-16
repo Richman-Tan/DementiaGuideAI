@@ -18,18 +18,22 @@ const webRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const html = readFileSync(join(webRoot, 'index.html'), 'utf8');
 const vercel = JSON.parse(readFileSync(join(webRoot, 'vercel.json'), 'utf8'));
 
-const csp = (vercel.headers ?? [])
-  .flatMap((entry) => entry.headers ?? [])
-  .find((h) => h.key === 'Content-Security-Policy')?.value ?? '';
+const csp =
+  (vercel.headers ?? [])
+    .flatMap((entry) => entry.headers ?? [])
+    .find((h) => h.key === 'Content-Security-Policy')?.value ?? '';
 
 // Scope every assertion to script-src: style-src legitimately allows inline.
-const scriptSrc = csp
-  .split(';')
-  .map((directive) => directive.trim())
-  .find((directive) => directive.startsWith('script-src')) ?? '';
+const scriptSrc =
+  csp
+    .split(';')
+    .map((directive) => directive.trim())
+    .find((directive) => directive.startsWith('script-src')) ?? '';
 
 // Inline == a <script> with no src attribute. Those are the ones a hash covers.
-const inlineScripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+const inlineScripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(
+  (m) => m[1]
+);
 
 describe('production CSP covers the inline bootstrap scripts', () => {
   it('defines a script-src directive', () => {
@@ -49,8 +53,8 @@ describe('production CSP covers the inline bootstrap scripts', () => {
       const hash = `'sha256-${createHash('sha256').update(source, 'utf8').digest('base64')}'`;
       expect(
         scriptSrc,
-        `index.html inline script #${i + 1} is not allowed by the CSP.\n`
-          + `Add ${hash} to script-src in apps/web/vercel.json (replacing the stale hash).`,
+        `index.html inline script #${i + 1} is not allowed by the CSP.\n` +
+          `Add ${hash} to script-src in apps/web/vercel.json (replacing the stale hash).`
       ).toContain(hash);
     });
   });

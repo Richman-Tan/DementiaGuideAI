@@ -40,17 +40,53 @@ export function UnityAvatarMount({ characterId, name = 'your avatar', compact = 
     };
   }, [characterId, phase === 'ready']);
 
-  const showProgress = !ready && !unavailable && (phase === 'downloading' || phase === 'preparing' || phase === 'failed');
+  const showProgress =
+    !ready &&
+    !unavailable &&
+    (phase === 'downloading' || phase === 'preparing' || phase === 'failed');
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit', overflow: 'hidden' }}>
-      <div ref={hostRef} style={{ position: 'absolute', inset: 0, opacity: ready ? 1 : 0, transition: 'opacity .5s' }} />
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        borderRadius: 'inherit',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        ref={hostRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: ready ? 1 : 0,
+          transition: 'opacity .5s',
+        }}
+      />
       {showProgress && <AvatarLoadProgress phase={phase} pct={pct} name={name} compact={compact} />}
       {!ready && !showProgress && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+        >
           {children}
           {unavailable && (
-            <div style={{ fontSize: '.75rem', color: 'var(--text2)', textAlign: 'center', padding: '0 12px' }}>
+            <div
+              style={{
+                fontSize: '.75rem',
+                color: 'var(--text2)',
+                textAlign: 'center',
+                padding: '0 12px',
+              }}
+            >
               Unity build not installed
             </div>
           )}

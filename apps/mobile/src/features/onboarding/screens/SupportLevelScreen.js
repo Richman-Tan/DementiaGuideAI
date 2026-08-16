@@ -51,7 +51,7 @@ export function SupportLevelScreen({ navigation, route }) {
       onSkip={handleSkip}
       onNext={handleNext}
       nextLabel="Next"
-      title={"How comfortable are you with\nusing apps like this?"}
+      title={'How comfortable are you with\nusing apps like this?'}
     >
       {OPTIONS.map((opt) => (
         <OptionCard

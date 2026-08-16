@@ -66,8 +66,8 @@ export function createElevenLabsStream({
   let ws = null;
   let openPromise = null;
   let wsOpen = false;
-  let dead = false;          // fatal error or abort — ignore everything after
-  let inputEnded = false;    // end() called
+  let dead = false; // fatal error or abort — ignore everything after
+  let inputEnded = false; // end() called
   let finalReceived = false; // server isFinal seen
   let chunkIndex = 0;
   let stallTimer = null;
@@ -89,12 +89,19 @@ export function createElevenLabsStream({
     errorFired = true;
     dead = true;
     clearStall();
-    try { ws?.close(); } catch {}
-    try { onError?.(err); } catch {}
+    try {
+      ws?.close();
+    } catch {}
+    try {
+      onError?.(err);
+    } catch {}
   };
 
   const clearStall = () => {
-    if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }
+    if (stallTimer) {
+      clearTimeout(stallTimer);
+      stallTimer = null;
+    }
   };
 
   // Audio must keep arriving while we have undelivered input. Re-armed on
@@ -125,7 +132,11 @@ export function createElevenLabsStream({
   const sendTextPayload = (text, flush = false) => {
     if (!text && !flush) return false;
     const ok = wsSend(flush ? { text, flush: true } : { text });
-    if (ok && text) { try { onTextSent?.(text); } catch {} }
+    if (ok && text) {
+      try {
+        onTextSent?.(text);
+      } catch {}
+    }
     return ok;
   };
 
@@ -143,7 +154,9 @@ export function createElevenLabsStream({
         if (settled) return;
         settled = true;
         dead = true;
-        try { ws?.close(); } catch {}
+        try {
+          ws?.close();
+        } catch {}
         reject(new Error(`ElevenLabs WS open timed out after ${WS_OPEN_TIMEOUT_MS}ms`));
       }, WS_OPEN_TIMEOUT_MS);
 
@@ -163,22 +176,26 @@ export function createElevenLabsStream({
         // BOS message: auth + voice/generation config. xi_api_key in-message
         // avoids relying on RN WebSocket header support.
         try {
-          ws.send(JSON.stringify({
-            text: ' ',
-            voice_settings: {
-              stability: 0.40,
-              similarity_boost: 0.75,
-              style: 0.20,
-              speed: speechRate,
-            },
-            generation_config: { chunk_length_schedule: ELEVEN_CHUNK_SCHEDULE },
-            xi_api_key: apiKey,
-          }));
+          ws.send(
+            JSON.stringify({
+              text: ' ',
+              voice_settings: {
+                stability: 0.4,
+                similarity_boost: 0.75,
+                style: 0.2,
+                speed: speechRate,
+              },
+              generation_config: { chunk_length_schedule: ELEVEN_CHUNK_SCHEDULE },
+              xi_api_key: apiKey,
+            })
+          );
         } catch (err) {
           reject(err);
           return;
         }
-        try { onTextSent?.(' '); } catch {}
+        try {
+          onTextSent?.(' ');
+        } catch {}
         wsOpen = true;
         // Flush text that arrived while the handshake was in flight
         // (onTextSent already fired for these when they were queued).
@@ -192,7 +209,11 @@ export function createElevenLabsStream({
       ws.onmessage = (event) => {
         if (dead) return;
         let msg;
-        try { msg = JSON.parse(event.data); } catch { return; }
+        try {
+          msg = JSON.parse(event.data);
+        } catch {
+          return;
+        }
 
         if (msg.audio) {
           armStall();
@@ -210,8 +231,12 @@ export function createElevenLabsStream({
         if (msg.isFinal) {
           finalReceived = true;
           clearStall();
-          try { onFinal?.(); } catch {}
-          try { ws?.close(); } catch {}
+          try {
+            onFinal?.();
+          } catch {}
+          try {
+            ws?.close();
+          } catch {}
         }
 
         if (msg.error) {
@@ -224,7 +249,9 @@ export function createElevenLabsStream({
           settled = true;
           clearTimeout(openTimer);
           dead = true;
-          reject(new Error(`ElevenLabs WS connection error${event?.message ? `: ${event.message}` : ''}`));
+          reject(
+            new Error(`ElevenLabs WS connection error${event?.message ? `: ${event.message}` : ''}`)
+          );
           return;
         }
         fireError(new Error(`ElevenLabs WS error${event?.message ? `: ${event.message}` : ''}`));
@@ -239,7 +266,9 @@ export function createElevenLabsStream({
           // Input ended but server closed without isFinal — treat drained
           // audio as complete rather than erroring a finished response.
           finalReceived = true;
-          try { onFinal?.(); } catch {}
+          try {
+            onFinal?.();
+          } catch {}
         }
       };
     });
@@ -286,9 +315,13 @@ export function createElevenLabsStream({
     abort() {
       dead = true;
       clearStall();
-      try { ws?.close(); } catch {}
+      try {
+        ws?.close();
+      } catch {}
     },
 
-    get isDead() { return dead; },
+    get isDead() {
+      return dead;
+    },
   };
 }

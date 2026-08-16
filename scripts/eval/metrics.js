@@ -11,7 +11,7 @@
 function recallAtK(retrieved, relevant, k) {
   if (!relevant || relevant.length === 0) return null;
   const top = new Set(retrieved.slice(0, k));
-  const found = relevant.filter(id => top.has(id)).length;
+  const found = relevant.filter((id) => top.has(id)).length;
   return found / relevant.length;
 }
 
@@ -21,7 +21,7 @@ function precisionAtK(retrieved, relevant, acceptable, k) {
   const useful = new Set([...(relevant || []), ...(acceptable || [])]);
   const top = retrieved.slice(0, k);
   if (top.length === 0) return 0;
-  const hits = top.filter(id => useful.has(id)).length;
+  const hits = top.filter((id) => useful.has(id)).length;
   return hits / k;
 }
 
@@ -29,7 +29,7 @@ function precisionAtK(retrieved, relevant, acceptable, k) {
 function reciprocalRank(retrieved, relevant, acceptable) {
   if ((!relevant || relevant.length === 0) && (!acceptable || acceptable.length === 0)) return null;
   const useful = new Set([...(relevant || []), ...(acceptable || [])]);
-  const idx = retrieved.findIndex(id => useful.has(id));
+  const idx = retrieved.findIndex((id) => useful.has(id));
   return idx === -1 ? 0 : 1 / (idx + 1);
 }
 
@@ -63,7 +63,7 @@ function aggregate(rows) {
   const out = {};
   const keys = rows.length ? Object.keys(rows[0]) : [];
   for (const key of keys) {
-    const vals = rows.map(r => r[key]).filter(v => v !== null && v !== undefined);
+    const vals = rows.map((r) => r[key]).filter((v) => v !== null && v !== undefined);
     out[key] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
     out[`${key}#n`] = vals.length;
   }

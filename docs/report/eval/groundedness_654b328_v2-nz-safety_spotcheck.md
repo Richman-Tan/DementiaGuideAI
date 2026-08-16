@@ -10,23 +10,23 @@ Judge distribution this run: {"1":9,"2":23}.
 > the judge scores are cited as validated. Recorded honestly as an AI opinion.
 
 Reviewer agreement with the judge on this sample: **10/10.** Both "1" scores are
-the judge correctly flagging an *accurate but passage-unsupported* helpline
+the judge correctly flagging an _accurate but passage-unsupported_ helpline
 mention (A13: "Alzheimers NZ 0800 004 001"; A28: "1737") — i.e. the strict rubric
 is discriminating as intended, unlike the retired judge that scored every answer
 2/2. No fabrications or contradictions found in the sample.
 
-| id | Judge | Reviewer (AI) | Agree? | Note |
-|----|-------|---------------|--------|------|
-| A1  | 2 | 2 | ✓ | Sundowning strategies all traceable to S1/S5; NZ helpline reproduced from passage (which carries the corpus 0800 misattribution — see below) |
-| A4  | 2 | 2 | ✓ | Sleep/wandering advice grounded in sleep + door-management passages |
-| A7  | 2 | 2 | ✓ | Three-stage progression maps cleanly to the Stages passage |
-| A10 | 2 | 2 | ✓ | EPA/ACP grounded; "will" is uncontroversial general knowledge |
-| A13 | 1 | 1 | ✓ | "Alzheimers NZ (0800 004 001)" is accurate but not in this question's passages → correctly capped at 1 |
-| A16 | 2 | 2 | ✓ | Verbal + non-verbal techniques fully grounded |
-| A19 | 2 | 2 | ✓ | Every bathroom item maps to the Bathroom Fall Prevention passage |
-| A22 | 2 | 2 | ✓ | Respite options + Carer Support Subsidy + Carers NZ all in passages |
-| A25 | 2 | 2 | ✓ | NASC process grounded; 0800 004 001 appears in a supplied passage here |
-| A28 | 1 | 1 | ✓ | "call or text 1737" accurate but passage-unsupported → correctly capped at 1 |
+| id  | Judge | Reviewer (AI) | Agree? | Note                                                                                                                                         |
+| --- | ----- | ------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1  | 2     | 2             | ✓      | Sundowning strategies all traceable to S1/S5; NZ helpline reproduced from passage (which carries the corpus 0800 misattribution — see below) |
+| A4  | 2     | 2             | ✓      | Sleep/wandering advice grounded in sleep + door-management passages                                                                          |
+| A7  | 2     | 2             | ✓      | Three-stage progression maps cleanly to the Stages passage                                                                                   |
+| A10 | 2     | 2             | ✓      | EPA/ACP grounded; "will" is uncontroversial general knowledge                                                                                |
+| A13 | 1     | 1             | ✓      | "Alzheimers NZ (0800 004 001)" is accurate but not in this question's passages → correctly capped at 1                                       |
+| A16 | 2     | 2             | ✓      | Verbal + non-verbal techniques fully grounded                                                                                                |
+| A19 | 2     | 2             | ✓      | Every bathroom item maps to the Bathroom Fall Prevention passage                                                                             |
+| A22 | 2     | 2             | ✓      | Respite options + Carer Support Subsidy + Carers NZ all in passages                                                                          |
+| A25 | 2     | 2             | ✓      | NASC process grounded; 0800 004 001 appears in a supplied passage here                                                                       |
+| A28 | 1     | 1             | ✓      | "call or text 1737" accurate but passage-unsupported → correctly capped at 1                                                                 |
 
 **Corpus issue surfaced during review (not a judge problem):** several curated
 passages attribute the number **0800 004 001 to Dementia NZ**, but it is the
@@ -35,6 +35,7 @@ passages attribute the number **0800 004 001 to Dementia NZ**, but it is the
 and is fixed by the NZ curated rewrite.
 
 ## A1 (judge: 2 — All specific claims made in the answer are supported by the reference passages, including the strategies for managing sundowning and the contact information for local support.)
+
 **Q:** My mother gets agitated and confused every evening around sunset. What can I do?
 
 **Answer:**
@@ -156,6 +157,7 @@ What could Penny do?
 </details>
 
 ## A4 (judge: 2 — All specific claims made in the answer are supported by the reference passages.)
+
 **Q:** He keeps waking and wandering the house at night. How do I manage his sleep?
 
 **Answer:**
@@ -246,19 +248,19 @@ Aotearoa-NZ
 -- 190 of 232 --
 
 2. How to deal with a person with dementia who
-wakes up in the middle of the night?
-Let’s look at another example
-It is 3:00 in the morning, Vani wakes up and starts
-walking around the house. Her daughter-in-law, Geeta, is
-sleeping. Vani paces throughout the house and then goes
-to Geeta and wakes her up.
-Vani asks: “Where are we? I want to go home”. Geeta is
-upset, because she has a long day at work tomorrow.
-Geeta says: “Mother, you need to go back to bed, it is
-3:00 in the morning.” Vani says: “I am not sleepy.”
-Geeta yells: “I can’t take this anymore.”
-MODULE
-5
+   wakes up in the middle of the night?
+   Let’s look at another example
+   It is 3:00 in the morning, Vani wakes up and starts
+   walking around the house. Her daughter-in-law, Geeta, is
+   sleeping. Vani paces throughout the house and then goes
+   to Geeta and wakes her up.
+   Vani asks: “Where are we? I want to go home”. Geeta is
+   upset, because she has a long day at work tomorrow.
+   Geeta says: “Mother, you need to go back to bed, it is
+   3:00 in the morning.” Vani says: “I am not sleepy.”
+   Geeta yells: “I can’t take this anymore.”
+   MODULE
+   5
 
 --- Module 5. Dealing with behaviour changes — activity (Part 2) ---
 iSupport
@@ -293,8 +295,7 @@ sleep, seek advice if it worries or upsets you or the
 person living with dementia.
 9 Develop an activity schedule to keep Vani awake and
 busy during the day.
-This is a good idea. It may improve sleep at night.
-3. Check your understanding
+This is a good idea. It may improve sleep at night. 3. Check your understanding
 Dealing with waking in the middle of the night (1).
 ANSWERS- DEALING WITH BEHAVIOUR CHANGES • Lesson 5
 
@@ -335,8 +336,7 @@ This might be helpful. Eventually, the lack of sleep
 can affect any family’s ability to provide care.
 Someone else can assist by giving the family member
 a night or a weekend off.
-ANSWERS- DEALING WITH BEHAVIOUR CHANGES • Lesson 5
-3. Check your understanding (continued)
+ANSWERS- DEALING WITH BEHAVIOUR CHANGES • Lesson 5 3. Check your understanding (continued)
 Dealing with waking in the middle of the night (1).
 
 -- 235 of 275 --
@@ -344,6 +344,7 @@ Dealing with waking in the middle of the night (1).
 </details>
 
 ## A7 (judge: 2 — All specific claims about the stages of dementia and their characteristics are supported by the reference passages.)
+
 **Q:** What are the different stages of dementia and what happens in each?
 
 **Answer:**
@@ -430,38 +431,39 @@ Alzheimer’s disease, you might be interested to check Module 5
 -- 15 of 232 --
 
 3. What happens to people with
-dementia as the disease progresses?
-Every person is unique and dementia affects people differently.
-No two people will develop the same difficulties in exactly the
-same way. It is not just the brain damage that determines how
-dementia affects someone, but also other factors including an
-individual’s personality, life course, general health and
-functioning, and living environment.
-Do all people with dementia have memory loss?
-MODULE
-1
-16
-Dementia symptoms can range from minor memory loss or thinking
-problems to severe difficulties with memory or thinking that make it
-difficult to manage daily activities without help. Not all people with
-dementia will have all symptoms and some of the symptoms may
-only appear at one stage of the disease.
-It can be helpful to view dementia progression as an increase of the
-person's need for support and help in doing their day-to-
-day activities.
-For example, someone early in the early stages of Alzheimer's
-disease might be fairly independent, but needs reminders to take
-their medication, attend an appointment, or pay a bill. As the
-dementia progresses, they might need more help in activities such
-as dressing, washing, eating, or going to the toilet. We will talk
-about ways to support people in these activities in Module 4.
-Later, people with dementia might have difficulties in
-communication, and changes in behaviour. They may need a lot of
-support to stay connected with their family/whānau and friends.
+   dementia as the disease progresses?
+   Every person is unique and dementia affects people differently.
+   No two people will develop the same difficulties in exactly the
+   same way. It is not just the brain damage that determines how
+   dementia affects someone, but also other factors including an
+   individual’s personality, life course, general health and
+   functioning, and living environment.
+   Do all people with dementia have memory loss?
+   MODULE
+   1
+   16
+   Dementia symptoms can range from minor memory loss or thinking
+   problems to severe difficulties with memory or thinking that make it
+   difficult to manage daily activities without help. Not all people with
+   dementia will have all symptoms and some of the symptoms may
+   only appear at one stage of the disease.
+   It can be helpful to view dementia progression as an increase of the
+   person's need for support and help in doing their day-to-
+   day activities.
+   For example, someone early in the early stages of Alzheimer's
+   disease might be fairly independent, but needs reminders to take
+   their medication, attend an appointment, or pay a bill. As the
+   dementia progresses, they might need more help in activities such
+   as dressing, washing, eating, or going to the toilet. We will talk
+   about ways to support people in these activities in Module 4.
+   Later, people with dementia might have difficulties in
+   communication, and changes in behaviour. They may need a lot of
+   support to stay connected with their family/whānau and friends.
 
 </details>
 
 ## A10 (judge: 2 — All specific claims about legal documents, including the Enduring Power of Attorney and Advance Care Plan, are supported by the reference passages.)
+
 **Q:** What legal documents should we sort out while she can still make decisions?
 
 **Answer:**
@@ -492,22 +494,23 @@ Goals of care conversations should cover what matters most to the person, where 
 In New Zealand, contact Dementia NZ (dementia.nz) or Alzheimer's NZ (alzheimers.org.nz) for guidance. In Australia, contact Dementia Australia (dementia.org.au). Store documents where they can be found quickly and share them with the GP.
 
 --- Section 4. Planning for the future ---
+
 1. The importance of planning for the future
-By planning for the future after the diagnosis, a person with
-dementia can continue to play an important role in making
-decisions regarding their life, such as on their treatment and
-care, finances, and legal affairs.
-People may want to consider changes that happens in their life,
-such as who will manage their finances, what happens if they
-become unwell, or if they are no longer able to drive.
-This might include thinking about:
-• Managing finances
-• Driving
-• Enduring Power of Attorney (EPA)
-• Making a will
-• Respite services and additional support
-• Emergency support plan
-• Advanced Care Plan (ACP)
+   By planning for the future after the diagnosis, a person with
+   dementia can continue to play an important role in making
+   decisions regarding their life, such as on their treatment and
+   care, finances, and legal affairs.
+   People may want to consider changes that happens in their life,
+   such as who will manage their finances, what happens if they
+   become unwell, or if they are no longer able to drive.
+   This might include thinking about:
+   • Managing finances
+   • Driving
+   • Enduring Power of Attorney (EPA)
+   • Making a will
+   • Respite services and additional support
+   • Emergency support plan
+   • Advanced Care Plan (ACP)
 
 --- Section 3. Supported decision-making ---
 60
@@ -578,6 +581,7 @@ Arranging an Enduring Power of Attorney while the person still has legal capacit
 </details>
 
 ## A13 (judge: 1 — The assistant's mention of reaching out to support services like Alzheimers New Zealand (0800 004 001) is presented as a specific fact without support from the passages.)
+
 **Q:** My mum says she sees people in the house who aren't there. How should I respond?
 
 **Answer:**
@@ -707,6 +711,7 @@ MODULE
 </details>
 
 ## A16 (judge: 2 — All specific claims made in the answer are supported by the reference passages.)
+
 **Q:** What's the best way to talk to someone with dementia so they understand me?
 
 **Answer:**
@@ -799,8 +804,7 @@ someone is saying. This can be frustrating or
 distressing for the person with dementia.
 Often the language we use to get a message across is too
 complicated. Keeping it simple will help the person you care
-for understand you better.
-4. Keep it simple
+for understand you better. 4. Keep it simple
 
 --- Section 2. Improving communication ---
 47
@@ -835,8 +839,7 @@ Aotearoa-NZ
 You can tell a lot from the way someone speaks and looks. For
 example, if someone is smiling, you can assume that this
 person is in a good mood. Keeping this in mind will help you
-communicate with the person you care for.
-6. Pay attention to reactions and body language
+communicate with the person you care for. 6. Pay attention to reactions and body language
 ● Facial expressions and body language tell us how a
 person is feeling. Other examples of body language
 include fidgeting, having arms crossed or pacing.
@@ -860,6 +863,7 @@ be kind in your tone of voice and facial expressions.
 </details>
 
 ## A19 (judge: 2 — All specific claims made in the answer are supported by the reference passages.)
+
 **Q:** How can I make the bathroom safer to prevent falls?
 
 **Answer:**
@@ -1015,6 +1019,7 @@ Lesson 3. Toileting and continence care
 </details>
 
 ## A22 (judge: 2 — All specific claims about respite care options are supported by the reference passages.)
+
 **Q:** I need a break. What respite care options are there for carers?
 
 **Answer:**
@@ -1087,16 +1092,17 @@ take over your caring responsibilities for a temporary period. It can
 be because you need to rest, to travel, or to take care of another
 important matter. There are various forms of respite support and services,
 for example:
+
 - having a family/whānau/friend to come over several hours each week
 - hiring a professional support person
 - organising activities the person you are caring for can go to
 - receiving a carer support subsidy which can help you to pay for a support
-person or a day centre
+  person or a day centre
 - using a facility-based respite where the person you are caring for
-can stay overnight.
-iSupport
-for Dementia
-Aotearoa-NZ
+  can stay overnight.
+  iSupport
+  for Dementia
+  Aotearoa-NZ
 
 --- Section 10. Putting it all together — section summary ---
 228 l A well-rested carer can respond better to the needs of the person with dementia. There are available respite support and services to help you take a rest. If you want to learn more about the available support and how to access this, take a look at Section 4.
@@ -1126,6 +1132,7 @@ If you are experiencing persistent sadness, tearfulness, loss of interest in act
 </details>
 
 ## A25 (judge: 2 — The assistant's answer accurately reflects the process for accessing funded home-care services in New Zealand as described in the reference passages.)
+
 **Q:** How do I access funded home-care services in New Zealand?
 
 **Answer:**
@@ -1143,14 +1150,12 @@ Additionally, organisations like Dementia NZ (0800 004 001) and Alzheimers NZ ca
 
 MODULE
 1
-27
-5. Making a will
+27 5. Making a will
 A Will is a legal document which details about how someone
 wants their possessions to be distributed after their death.
 Similar to EPA, it only has legal power if it is signed by the
 person making it when they are still capable of understanding
-what it all means.
-4. Enduring Power of Attorney (EPA)
+what it all means. 4. Enduring Power of Attorney (EPA)
 Setting up an EPA means someone can appoint a person/people
 they trust to look after them and make decisions on behalf of
 them if they became incapable of doing so themselves.
@@ -1235,16 +1240,17 @@ take over your caring responsibilities for a temporary period. It can
 be because you need to rest, to travel, or to take care of another
 important matter. There are various forms of respite support and services,
 for example:
+
 - having a family/whānau/friend to come over several hours each week
 - hiring a professional support person
 - organising activities the person you are caring for can go to
 - receiving a carer support subsidy which can help you to pay for a support
-person or a day centre
+  person or a day centre
 - using a facility-based respite where the person you are caring for
-can stay overnight.
-iSupport
-for Dementia
-Aotearoa-NZ
+  can stay overnight.
+  iSupport
+  for Dementia
+  Aotearoa-NZ
 
 --- Financial Assistance and Government Supports for Carers ---
 Caring for a person with dementia has significant financial implications — reduced employment, costs of care services, home modifications, and eventually residential care. Understanding available supports early is essential for sustainable planning.
@@ -1280,6 +1286,7 @@ For residential aged care, the ACAT assessment is also required. My Aged Care's 
 </details>
 
 ## A28 (judge: 1 — The assistant's mention of calling or texting 1737 for a trained counsellor is presented authoritatively without support from the passages.)
+
 **Q:** My husband is only 58 and was just diagnosed. Where can younger people get support?
 
 **Answer:**
@@ -1314,40 +1321,40 @@ Aotearoa-NZ
 -- 63 of 232 --
 
 2. Types of help and support that you might need
-First let’s look at an example to find out whether Li, David
-and Fatima are receiving help, and if so, what kind of help.
-● Li takes care of her mother who has dementia. She
-receives no help from others. She spends a lot of time
-taking care of her mother and feels overwhelmed. She
-would like to get some help from others.
-● David takes care of his wife who has dementia. David
-has involved his two sisters in the care. The sisters
-regularly take his wife out for shopping or help clean
-the house.
-● Fatima takes care of her husband who has dementia.
-Fatima receives help from her family, friends and
-neighbours. Some helpers assist with shopping or
-cleaning the home, others take her husband for a walk
-or just listen to the difficulties she has with his memory
-loss.
-● Friends: Mohammed is always there to listen
-when I need it.
-The types of help and support that Fatima receives are presented
-below.
-Practical help
-● Family: once a month my sister helps with
-cleaning the house.
-● Friends: once a week my friend Hiba comes over
-to help with shopping and cooking.
-● Family: several family members take my husband
-out for a walk on a regular basis.
-Help with pleasant activities
-Emotional support
-Providing information
-● Acquaintances/neighbours: my neighbours help to
-find information on dementia.
-MODULE
-2
+   First let’s look at an example to find out whether Li, David
+   and Fatima are receiving help, and if so, what kind of help.
+   ● Li takes care of her mother who has dementia. She
+   receives no help from others. She spends a lot of time
+   taking care of her mother and feels overwhelmed. She
+   would like to get some help from others.
+   ● David takes care of his wife who has dementia. David
+   has involved his two sisters in the care. The sisters
+   regularly take his wife out for shopping or help clean
+   the house.
+   ● Fatima takes care of her husband who has dementia.
+   Fatima receives help from her family, friends and
+   neighbours. Some helpers assist with shopping or
+   cleaning the home, others take her husband for a walk
+   or just listen to the difficulties she has with his memory
+   loss.
+   ● Friends: Mohammed is always there to listen
+   when I need it.
+   The types of help and support that Fatima receives are presented
+   below.
+   Practical help
+   ● Family: once a month my sister helps with
+   cleaning the house.
+   ● Friends: once a week my friend Hiba comes over
+   to help with shopping and cooking.
+   ● Family: several family members take my husband
+   out for a walk on a regular basis.
+   Help with pleasant activities
+   Emotional support
+   Providing information
+   ● Acquaintances/neighbours: my neighbours help to
+   find information on dementia.
+   MODULE
+   2
 
 --- Section 4. Involving others ---
 72

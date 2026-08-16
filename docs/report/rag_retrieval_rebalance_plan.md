@@ -6,18 +6,18 @@ This is a **corpus-balance and ranking problem, not a retrieval-method failure**
 
 ## Diagnosis (measured 2026-07-13, top-50 retrieval)
 
-| Q | Expected chunk | Rank of expected in top-50 | Recoverable by re-ranking? |
-|---|---|---|---|
-| A12 | bestpractices_003 (de-escalation) | 7 | **Yes** |
-| A13 | bestpractices_004 (hallucinations) | 6 | **Yes** |
-| A17 | communication_003 (validation therapy) | > 50 | **No** — target not competitive |
+| Q   | Expected chunk                         | Rank of expected in top-50 | Recoverable by re-ranking?      |
+| --- | -------------------------------------- | -------------------------- | ------------------------------- |
+| A12 | bestpractices_003 (de-escalation)      | 7                          | **Yes**                         |
+| A13 | bestpractices_004 (hallucinations)     | 6                          | **Yes**                         |
+| A17 | communication_003 (validation therapy) | > 50                       | **No** — target not competitive |
 
 The iSupport chunks carry a `document_id:isupport-nz` / `document_id:isupport-who` tag; the hand-authored chunks do not. That tag is the lever for a fix.
 
 ## Options
 
 **A. Source-family diversity cap in retrieval (recommended).** Retrieve a wider candidate set (e.g. 50), then cap the number of chunks from the iSupport family (any `document_id` starting `isupport`) at two before taking the top five. Purely re-ranking; no data changes; no re-embedding.
-*Verified:* recovers A12 and A13 (both enter the top five). Does not recover A17.
+_Verified:_ recovers A12 and A13 (both enter the top five). Does not recover A17.
 
 **B. Curated-source boost.** Add a small constant to the similarity of non-iSupport ("curated") chunks, or a `priority` column. Simple, but a magic weight to tune and it distorts raw similarity.
 
@@ -37,17 +37,18 @@ A re-ranking pass in `openaiService.search()` — retrieve `TOP_K * over` candid
 
 ```js
 // src/lib/openaiService.js — inside search(), after the RPC returns `data`
-const OVERSAMPLE = 10;               // retrieve TOP_K * OVERSAMPLE candidates
-const MAX_PER_SOURCE_FAMILY = 2;     // cap bulk-source dominance in the final list
+const OVERSAMPLE = 10; // retrieve TOP_K * OVERSAMPLE candidates
+const MAX_PER_SOURCE_FAMILY = 2; // cap bulk-source dominance in the final list
 
 function familyOf(chunk) {
-  const t = (chunk.tags || []).find(x => x.startsWith('document_id:'));
+  const t = (chunk.tags || []).find((x) => x.startsWith('document_id:'));
   const doc = t ? t.split(':')[1] : 'curated';
   return doc.startsWith('isupport') ? 'isupport' : doc;
 }
 
 function capBySourceFamily(rows, k, maxPerFamily) {
-  const counts = {}; const out = [];
+  const counts = {};
+  const out = [];
   for (const r of rows) {
     const fam = familyOf(r);
     counts[fam] = (counts[fam] || 0) + 1;
@@ -64,17 +65,21 @@ function capBySourceFamily(rows, k, maxPerFamily) {
 Cost: one retrieval of ~50 rows instead of 5 (negligible latency; the vector index already ranks them). Keep the cap loose (2) so iSupport still contributes where it is genuinely best.
 
 ### Server-side alternative
+
 If preferred in-database, add a re-ranked variant of the 8-arg `match_chunks` that keeps at most N rows per `document_id` via a window function (`row_number() over (partition by document_id order by similarity desc)`). This needs the current deployed function body (dump it with `pg_get_functiondef`) so the hybrid ranking and filters are preserved — do not rewrite it blind.
 
 ## Verification
 
 After applying option A, re-run the harness and confirm retrieval rises from 29/32 to **31/32** with A12 and A13 recovered and A17 unchanged (expected):
+
 ```bash
 node scripts/rag-eval.mjs
 ```
+
 Then update §6.9 / Table 4 with the new counts.
 
 ## Status
+
 **Applied and verified (2026-07-13).** Option A (source-family cap, `RETRIEVAL_OVERSAMPLE = 10`, `MAX_PER_SOURCE_FAMILY = 2`) is implemented in `openaiService.search()` and mirrored in `scripts/rag-eval.mjs`. Re-running the full eval raised in-scope retrieval from 29/32 to 31/32: A12 and A13 recovered; A17 unchanged (its target is beyond the candidate set, and its answer was grounded in the iSupport content retrieved instead). Groundedness on the post-cap answers remained 32/32.
 
 **Durable fix also applied (2026-07-13):** option C run — the 377 `isupport%` chunks were moved out of `caregiving` into a dedicated `isupport-course` category (`scripts/migrations/2026-07-13_recategorise_isupport.sql`). `caregiving` is back to its 10 curated chunks. Retrieval verified unchanged at 31/32 afterwards (the cap keys off the `document_id` tag, not category).

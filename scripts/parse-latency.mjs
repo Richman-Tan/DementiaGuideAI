@@ -22,18 +22,22 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 // stage key → human label (order = Table 3 order)
 const STAGES = [
-  ['stt_ms',            'Speech-to-text'],
-  ['rag_ms',            'Retrieval'],
-  ['llm_to_token_ms',   'LLM time to first token'],
+  ['stt_ms', 'Speech-to-text'],
+  ['rag_ms', 'Retrieval'],
+  ['llm_to_token_ms', 'LLM time to first token'],
   ['first_sentence_ms', 'First token → first sentence'],
-  ['tts_first_ms',      'TTS request → first audio'],
+  ['tts_first_ms', 'TTS request → first audio'],
   ['to_first_audio_ms', 'End to end → first avatar audio'],
 ];
 
 function readInput() {
   const arg = process.argv[2];
   if (arg) return readFileSync(arg, 'utf8');
-  try { return readFileSync(0, 'utf8'); } catch { return ''; }
+  try {
+    return readFileSync(0, 'utf8');
+  } catch {
+    return '';
+  }
 }
 
 function median(xs) {
@@ -52,7 +56,11 @@ if (!text.trim()) {
 // Pull the JSON object following each [LATENCY SUMMARY] marker.
 const summaries = [];
 for (const m of text.matchAll(/\[LATENCY SUMMARY\]\s*(\{[^\n}]*\})/g)) {
-  try { summaries.push(JSON.parse(m[1])); } catch { /* skip malformed */ }
+  try {
+    summaries.push(JSON.parse(m[1]));
+  } catch {
+    /* skip malformed */
+  }
 }
 if (!summaries.length) {
   console.error('No [LATENCY SUMMARY] {...} lines found in the input.');
@@ -63,11 +71,13 @@ const csv = ['"Stage","Median (ms)","Range (ms)","n"'];
 console.log(`Parsed ${summaries.length} latency summaries.\n`);
 console.log('Stage                              Median   Range          n');
 for (const [key, label] of STAGES) {
-  const vals = summaries.map(s => s[key]).filter(v => typeof v === 'number');
+  const vals = summaries.map((s) => s[key]).filter((v) => typeof v === 'number');
   const med = median(vals);
   const range = vals.length ? `${Math.min(...vals)} to ${Math.max(...vals)}` : '';
   csv.push(`"${label}","${med ?? ''}","${range}","${vals.length}"`);
-  console.log(`${label.padEnd(34)} ${String(med ?? '—').padStart(6)}   ${range.padEnd(14)} ${vals.length}`);
+  console.log(
+    `${label.padEnd(34)} ${String(med ?? '—').padStart(6)}   ${range.padEnd(14)} ${vals.length}`
+  );
 }
 
 const out = resolve(ROOT, 'docs/report/latency_results.csv');

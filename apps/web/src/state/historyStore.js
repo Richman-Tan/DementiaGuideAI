@@ -15,9 +15,15 @@ export function loadHistory() {
 export function saveHistory(msgs) {
   try {
     localStorage.setItem(KEY, JSON.stringify(msgs.slice(-MAX_PERSISTED)));
-  } catch { /* full/blocked */ }
+  } catch {
+    /* full/blocked */
+  }
 }
 
 export function clearHistory() {
-  try { localStorage.removeItem(KEY); } catch { /* blocked */ }
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    /* blocked */
+  }
 }

@@ -11,25 +11,25 @@ have to add a bundler to run these, the boundary has been broken.
 
 Run everything from the repo root via the npm scripts — they are root-relative.
 
-| Group | What it is |
-|---|---|
-| `migrations/` | SQL applied by hand in the Supabase SQL editor. **Start here on a fresh database** — see [migrations/README.md](migrations/README.md) for run order and status. |
-| `ingest/` | Fetches, chunks, embeds and upserts source documents into `knowledge_chunks`. |
-| `eval/` | The RAG evaluation suite: retrieval metrics, generation runs, safety checks, groundedness grading, parameter sweeps. |
-| loose files | Report tooling — `make-figures.py`, `report-to-docx.py`, `parse-latency.mjs`. Kept at this level because `docs/report/` cites these paths and that directory is frozen. |
+| Group         | What it is                                                                                                                                                              |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `migrations/` | SQL applied by hand in the Supabase SQL editor. **Start here on a fresh database** — see [migrations/README.md](migrations/README.md) for run order and status.         |
+| `ingest/`     | Fetches, chunks, embeds and upserts source documents into `knowledge_chunks`.                                                                                           |
+| `eval/`       | The RAG evaluation suite: retrieval metrics, generation runs, safety checks, groundedness grading, parameter sweeps.                                                    |
+| loose files   | Report tooling — `make-figures.py`, `report-to-docx.py`, `parse-latency.mjs`. Kept at this level because `docs/report/` cites these paths and that directory is frozen. |
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `npm run kb:ingest` | Ingest sources into Supabase |
-| `npm run kb:ingest:dry` | Plan the ingest without writing |
-| `npm run rag:eval:retrieval` | Retrieval metrics over the labelled question set |
-| `npm run rag:eval:generation` | Generation run (answers + token use) |
-| `npm run rag:eval:safety` | Safety checks |
-| `npm run rag:eval:sweep` | Parameter sweep |
-| `npm run rag:grade` | Groundedness grading |
-| `npm run rag:introspect` | Inspect what retrieval returns for a query |
+| Command                       | What it does                                     |
+| ----------------------------- | ------------------------------------------------ |
+| `npm run kb:ingest`           | Ingest sources into Supabase                     |
+| `npm run kb:ingest:dry`       | Plan the ingest without writing                  |
+| `npm run rag:eval:retrieval`  | Retrieval metrics over the labelled question set |
+| `npm run rag:eval:generation` | Generation run (answers + token use)             |
+| `npm run rag:eval:safety`     | Safety checks                                    |
+| `npm run rag:eval:sweep`      | Parameter sweep                                  |
+| `npm run rag:grade`           | Groundedness grading                             |
+| `npm run rag:introspect`      | Inspect what retrieval returns for a query       |
 
 Full methodology and results: [docs/rag/](../docs/rag/README.md).
 

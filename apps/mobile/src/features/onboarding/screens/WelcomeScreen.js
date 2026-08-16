@@ -44,11 +44,7 @@ export function WelcomeScreen({ navigation }) {
       >
         {/* Avatar placeholder */}
         <View style={styles.avatarCircle}>
-          <MaterialCommunityIcons
-            name="robot-excited"
-            size={56}
-            color={Colors.primary}
-          />
+          <MaterialCommunityIcons name="robot-excited" size={56} color={Colors.primary} />
         </View>
 
         {/* Title */}
@@ -58,13 +54,13 @@ export function WelcomeScreen({ navigation }) {
 
         {/* Subtitle */}
         <Text style={[styles.subtitle, { fontSize: 18 * textScale }]}>
-          {"I'm Aria. I'm here to help you find\nclear, trustworthy information —\nany time you need it."}
+          {
+            "I'm Aria. I'm here to help you find\nclear, trustworthy information —\nany time you need it."
+          }
         </Text>
 
         {/* Time note */}
-        <Text style={[styles.note, { fontSize: 14 * textScale }]}>
-          This takes about 2 minutes
-        </Text>
+        <Text style={[styles.note, { fontSize: 14 * textScale }]}>This takes about 2 minutes</Text>
 
         {/* Spacer */}
         <View style={styles.spacer} />
@@ -77,9 +73,7 @@ export function WelcomeScreen({ navigation }) {
           accessibilityRole="button"
           accessibilityLabel="Let's begin"
         >
-          <Text style={[styles.primaryButtonText, { fontSize: 17 * textScale }]}>
-            Let's begin
-          </Text>
+          <Text style={[styles.primaryButtonText, { fontSize: 17 * textScale }]}>Let's begin</Text>
         </TouchableOpacity>
 
         {/* Secondary link */}

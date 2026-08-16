@@ -41,7 +41,9 @@ export function requireEnv({ openai = true, supabase = true } = {}) {
     process.exit(1);
   }
   if (supabase && (!SUPABASE_URL || !SUPABASE_ANON_KEY)) {
-    console.error('ERROR: EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY missing from .env');
+    console.error(
+      'ERROR: EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY missing from .env'
+    );
     process.exit(1);
   }
 }
@@ -58,7 +60,8 @@ export async function openaiJson(endpoint, body) {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` },
     body: JSON.stringify(body),
   });
-  if (!r.ok) throw new Error(`OpenAI ${endpoint} failed (${r.status}): ${(await r.text()).slice(0, 300)}`);
+  if (!r.ok)
+    throw new Error(`OpenAI ${endpoint} failed (${r.status}): ${(await r.text()).slice(0, 300)}`);
   return r.json();
 }
 
@@ -83,7 +86,10 @@ export async function retrieve(question) {
   const text = await r.text();
   if (!r.ok) {
     let msg = text.slice(0, 200);
-    try { const j = JSON.parse(text); msg = `${j.code}: ${j.message}`; } catch {}
+    try {
+      const j = JSON.parse(text);
+      msg = `${j.code}: ${j.message}`;
+    } catch {}
     throw new Error(`match_chunks failed (HTTP ${r.status}) ${msg}`);
   }
   return capBySourceFamily(JSON.parse(text), TOP_K, MAX_PER_SOURCE_FAMILY);
@@ -92,18 +98,21 @@ export async function retrieve(question) {
 // Fetch chunk rows by id (for the groundedness judge).
 export async function fetchChunks(ids) {
   if (ids.length === 0) return [];
-  const list = ids.map(id => `"${id}"`).join(',');
+  const list = ids.map((id) => `"${id}"`).join(',');
   const r = await fetch(
     `${SUPABASE_URL}/rest/v1/knowledge_chunks?id=in.(${encodeURIComponent(list)})&select=id,title,content,source_org,source_url`,
-    { headers: SB_HEADERS() },
+    { headers: SB_HEADERS() }
   );
   if (!r.ok) throw new Error(`chunk fetch failed (${r.status})`);
   return r.json();
 }
 
 export function gitSha() {
-  try { return execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim(); }
-  catch { return 'unknown'; }
+  try {
+    return execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim();
+  } catch {
+    return 'unknown';
+  }
 }
 
 export function outDir() {
@@ -117,4 +126,4 @@ export function csvEscape(v) {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-export const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

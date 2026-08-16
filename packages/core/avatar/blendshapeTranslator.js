@@ -53,99 +53,99 @@
 const VISEME_TO_CC4 = {
   // "ah" — widest open vowel
   aa: {
-    jaw_drive:            1.00,
-    V_Lip_Open:           0.90,
-    V_Open:               0.80,
-    Mouth_Lips_Pull_DL:   0.45,
-    Mouth_Lips_Pull_DR:   0.45,
-    Mouth_Lips_Pull_UL:   0.30,
-    Mouth_Lips_Pull_UR:   0.30,
+    jaw_drive: 1.0,
+    V_Lip_Open: 0.9,
+    V_Open: 0.8,
+    Mouth_Lips_Pull_DL: 0.45,
+    Mouth_Lips_Pull_DR: 0.45,
+    Mouth_Lips_Pull_UL: 0.3,
+    Mouth_Lips_Pull_UR: 0.3,
   },
   // "ih" — mid-open, wide corners
   ih: {
-    jaw_drive:            0.45,
-    V_Lip_Open:           0.42,
-    V_Wide:               0.90,
-    Mouth_Lips_Pull_DL:   0.22,
-    Mouth_Lips_Pull_DR:   0.22,
+    jaw_drive: 0.45,
+    V_Lip_Open: 0.42,
+    V_Wide: 0.9,
+    Mouth_Lips_Pull_DL: 0.22,
+    Mouth_Lips_Pull_DR: 0.22,
   },
   // "oo" — rounded, small opening
   ou: {
-    jaw_drive:            0.25,
-    V_Lip_Open:           0.22,
-    V_Tight_O:            1.00,
+    jaw_drive: 0.25,
+    V_Lip_Open: 0.22,
+    V_Tight_O: 1.0,
   },
   // "ee" — wide smile, small jaw
   ee: {
-    jaw_drive:            0.18,
-    V_Lip_Open:           0.18,
-    V_Tight:              0.90,
+    jaw_drive: 0.18,
+    V_Lip_Open: 0.18,
+    V_Tight: 0.9,
   },
   // "oh" — rounded open
   oh: {
-    jaw_drive:            0.70,
-    V_Lip_Open:           0.65,
-    V_Open:               0.58,
-    Mouth_Lips_Pull_DL:   0.35,
-    Mouth_Lips_Pull_DR:   0.35,
-    Mouth_Lips_Pull_UL:   0.22,
-    Mouth_Lips_Pull_UR:   0.22,
+    jaw_drive: 0.7,
+    V_Lip_Open: 0.65,
+    V_Open: 0.58,
+    Mouth_Lips_Pull_DL: 0.35,
+    Mouth_Lips_Pull_DR: 0.35,
+    Mouth_Lips_Pull_UL: 0.22,
+    Mouth_Lips_Pull_UR: 0.22,
   },
   // Bilabial stop (p, b, m) — lips press together
   v_pp: {
-    V_Explosive:          1.00,
-    Mouth_Lips_Press_L:   0.40,
-    Mouth_Lips_Press_R:   0.40,
+    V_Explosive: 1.0,
+    Mouth_Lips_Press_L: 0.4,
+    Mouth_Lips_Press_R: 0.4,
   },
   // Labiodental (f, v) — upper teeth on lower lip
   v_ff: {
-    V_Dental_Lip:         1.00,
-    jaw_drive:            0.08,
+    V_Dental_Lip: 1.0,
+    jaw_drive: 0.08,
   },
   // Dental (th) — tongue near teeth, slight opening
   v_th: {
-    jaw_drive:            0.12,
-    V_Lip_Open:           0.12,
-    V_Open:               0.15,
+    jaw_drive: 0.12,
+    V_Lip_Open: 0.12,
+    V_Open: 0.15,
   },
   // Alveolar (d, t, n, l) — tongue on ridge
   v_dd: {
-    jaw_drive:            0.22,
-    V_Lip_Open:           0.20,
-    V_Open:               0.28,
-    Mouth_Lips_Pull_DL:   0.14,
-    Mouth_Lips_Pull_DR:   0.14,
+    jaw_drive: 0.22,
+    V_Lip_Open: 0.2,
+    V_Open: 0.28,
+    Mouth_Lips_Pull_DL: 0.14,
+    Mouth_Lips_Pull_DR: 0.14,
   },
   // Velar (k, g) — back tongue, moderate opening
   v_kk: {
-    jaw_drive:            0.32,
-    V_Lip_Open:           0.28,
-    V_Open:               0.22,
-    Mouth_Lips_Pull_DL:   0.18,
-    Mouth_Lips_Pull_DR:   0.18,
+    jaw_drive: 0.32,
+    V_Lip_Open: 0.28,
+    V_Open: 0.22,
+    Mouth_Lips_Pull_DL: 0.18,
+    Mouth_Lips_Pull_DR: 0.18,
   },
   // Affricate (ch, sh, j, zh) — lips rounded
   v_ch: {
-    V_Affricate:          0.90,
-    jaw_drive:            0.15,
-    V_Lip_Open:           0.12,
+    V_Affricate: 0.9,
+    jaw_drive: 0.15,
+    V_Lip_Open: 0.12,
   },
   // Sibilant (s, z) — narrow, teeth close
   v_ss: {
-    V_Tight:              0.35,
-    jaw_drive:            0.08,
+    V_Tight: 0.35,
+    jaw_drive: 0.08,
   },
   // Nasal (n, ng) — near-closed
   v_nn: {
-    Mouth_Lips_Press_L:   0.25,
-    Mouth_Lips_Press_R:   0.25,
-    jaw_drive:            0.04,
+    Mouth_Lips_Press_L: 0.25,
+    Mouth_Lips_Press_R: 0.25,
+    jaw_drive: 0.04,
   },
   // Rhotic (r) — rounded, slight opening
   v_rr: {
-    V_Tight_O:            0.48,
-    jaw_drive:            0.16,
-    V_Lip_Open:           0.16,
+    V_Tight_O: 0.48,
+    jaw_drive: 0.16,
+    V_Lip_Open: 0.16,
   },
   // Silence — all shapes at zero (mouth closed)
   neutral: {},
@@ -166,7 +166,7 @@ const CC4_DEFAULT_WEIGHT = 1.0;
 export function visemeTimelineToCC4(visemeTimeline, visemeWeights) {
   if (!visemeTimeline?.frames?.length) return [];
 
-  return visemeTimeline.frames.map(frame => {
+  return visemeTimeline.frames.map((frame) => {
     const { time, viseme, weight } = frame;
     const baseShapes = VISEME_TO_CC4[viseme];
     if (!baseShapes) return { time, weights: {} };
@@ -216,7 +216,7 @@ export function segmentToCC4Payload(segment, visemeWeights) {
   const { audio, visemeTimeline, text, emotion } = segment;
   return {
     audio,
-    visemes:     visemeTimelineToEvents(visemeTimeline),
+    visemes: visemeTimelineToEvents(visemeTimeline),
     blendshapes: visemeTimelineToCC4(visemeTimeline, visemeWeights),
     emotion: emotion ?? 'neutral',
     text,

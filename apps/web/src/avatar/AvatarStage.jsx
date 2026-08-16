@@ -30,9 +30,15 @@ export function ThreeAvatarMount({ state = 'idle', children }) {
   const wantUnity = settings.showAvatar && profile.renderer === 'unity';
 
   useEffect(() => {
-    if (!wantThree || !mountRef.current) { setReady(false); return undefined; }
+    if (!wantThree || !mountRef.current) {
+      setReady(false);
+      return undefined;
+    }
     const controller = getThreeAvatar();
-    if (!controller) { setReady(false); return undefined; }
+    if (!controller) {
+      setReady(false);
+      return undefined;
+    }
     mountRef.current.appendChild(controller.host);
     setReady(controller.loaded && !controller.failed);
     const off = controller.onStatusChange((c) => setReady(c.loaded && !c.failed));
@@ -53,9 +59,27 @@ export function ThreeAvatarMount({ state = 'idle', children }) {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit' }}>
-      <div ref={mountRef} style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', overflow: 'hidden', opacity: ready ? 1 : 0, transition: 'opacity .5s' }} />
+      <div
+        ref={mountRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 'inherit',
+          overflow: 'hidden',
+          opacity: ready ? 1 : 0,
+          transition: 'opacity .5s',
+        }}
+      />
       {!ready && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           {children}
         </div>
       )}
@@ -70,11 +94,37 @@ export function AvatarStageCard({ caption, maxWidth = 360 }) {
   const profile = useEffectiveAvatarProfile(settings.avatarId);
   caption = caption ?? `avatar stage · ${profile.name} (3D, lip-synced)`;
   return (
-    <div style={{ position: 'relative', width: '100%', maxWidth, aspectRatio: '1/1.05', borderRadius: '26px', border: 'var(--bw) solid var(--border)', background: 'radial-gradient(circle at 50% 32%,var(--tint) 0%,transparent 72%),linear-gradient(165deg,var(--tint),var(--surface))', boxShadow: 'var(--shadow)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        maxWidth,
+        aspectRatio: '1/1.05',
+        borderRadius: '26px',
+        border: 'var(--bw) solid var(--border)',
+        background:
+          'radial-gradient(circle at 50% 32%,var(--tint) 0%,transparent 72%),linear-gradient(165deg,var(--tint),var(--surface))',
+        boxShadow: 'var(--shadow)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '14px',
+      }}
+    >
       <div style={{ animation: 'dgBreathe 5.5s ease-in-out infinite' }}>
         <AvatarBust />
       </div>
-      <div style={{ fontSize: '.85rem', color: 'var(--text2)', fontFamily: 'ui-monospace,Menlo,monospace', letterSpacing: '.03em' }}>{caption}</div>
+      <div
+        style={{
+          fontSize: '.85rem',
+          color: 'var(--text2)',
+          fontFamily: 'ui-monospace,Menlo,monospace',
+          letterSpacing: '.03em',
+        }}
+      >
+        {caption}
+      </div>
     </div>
   );
 }
@@ -97,9 +147,28 @@ export function AvatarHomeStage() {
   );
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        borderRadius: 'inherit',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       {profile.renderer === 'unity' ? (
-        <div style={{ position: 'relative', height: '100%', aspectRatio: '3 / 4', maxWidth: '100%', flexShrink: 0 }}>
+        <div
+          style={{
+            position: 'relative',
+            height: '100%',
+            aspectRatio: '3 / 4',
+            maxWidth: '100%',
+            flexShrink: 0,
+          }}
+        >
           <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} compact>
             {bust}
           </UnityAvatarMount>
@@ -107,7 +176,20 @@ export function AvatarHomeStage() {
       ) : (
         <ThreeAvatarMount state="waiting">{bust}</ThreeAvatarMount>
       )}
-      <div style={{ position: 'absolute', left: '12px', bottom: '12px', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '999px', padding: '4px 14px', fontWeight: 700, fontSize: '.92rem', boxShadow: 'var(--shadow)' }}>
+      <div
+        style={{
+          position: 'absolute',
+          left: '12px',
+          bottom: '12px',
+          background: 'var(--surface)',
+          border: 'var(--bw) solid var(--border)',
+          borderRadius: '999px',
+          padding: '4px 14px',
+          fontWeight: 700,
+          fontSize: '.92rem',
+          boxShadow: 'var(--shadow)',
+        }}
+      >
         {profile.name}
       </div>
     </div>

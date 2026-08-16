@@ -39,10 +39,13 @@ const CATEGORIES = [
 const GENERATION_TEMPERATURE = 0.7;
 
 function maxTokensForStyle(responseStyle, conciseMode) {
-  return conciseMode || responseStyle === 'brief' ? 300
-       : responseStyle === 'detailed' ? 900
-       : responseStyle === 'step-by-step' ? 700
-       : 600;
+  return conciseMode || responseStyle === 'brief'
+    ? 300
+    : responseStyle === 'detailed'
+      ? 900
+      : responseStyle === 'step-by-step'
+        ? 700
+        : 600;
 }
 
 module.exports = {

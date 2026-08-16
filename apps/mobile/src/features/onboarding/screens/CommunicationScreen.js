@@ -51,7 +51,7 @@ export function CommunicationScreen({ navigation, route }) {
       onSkip={handleSkip}
       onNext={handleNext}
       nextLabel="Next"
-      title={"How would you like to\ntalk with Aria?"}
+      title={'How would you like to\ntalk with Aria?'}
     >
       {OPTIONS.map((opt) => (
         <OptionCard

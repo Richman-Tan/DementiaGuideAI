@@ -33,7 +33,11 @@ function load() {
     if (stored.avatarId === 'aria' && !stored.avatarMigratedToUnity) {
       stored.avatarId = 'aaron';
       stored.avatarMigratedToUnity = true;
-      try { localStorage.setItem('dg_settings', JSON.stringify(stored)); } catch { /* full/blocked */ }
+      try {
+        localStorage.setItem('dg_settings', JSON.stringify(stored));
+      } catch {
+        /* full/blocked */
+      }
     }
     return Object.assign({}, DEFAULTS, stored);
   } catch {
@@ -62,7 +66,11 @@ export function SettingsProvider({ children }) {
   const setMany = useCallback((obj) => {
     setSettings((prev) => {
       const next = { ...prev, ...obj };
-      try { localStorage.setItem('dg_settings', JSON.stringify(next)); } catch { /* full/blocked */ }
+      try {
+        localStorage.setItem('dg_settings', JSON.stringify(next));
+      } catch {
+        /* full/blocked */
+      }
       return next;
     });
   }, []);

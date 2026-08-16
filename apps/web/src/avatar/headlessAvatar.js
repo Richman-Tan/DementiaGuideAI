@@ -25,13 +25,19 @@ export function getHeadlessAvatar() {
     supportsStreamingAudio: true,
     unlockAudio: () => engine.unlock(),
 
-    setOnAudioStart(cb) { onAudioStartCb = cb; },
+    setOnAudioStart(cb) {
+      onAudioStartCb = cb;
+    },
 
     // segment: { audio: dataUri, visemeTimeline, emotion } — resolves on audioEnd.
     async playAudio(segment) {
       const done = engine.waitForEnd();
       if (segment.visemeTimeline) {
-        await engine.playAudioWithVisemeTimeline(segment.audio, segment.visemeTimeline, segment.emotion);
+        await engine.playAudioWithVisemeTimeline(
+          segment.audio,
+          segment.visemeTimeline,
+          segment.emotion
+        );
       } else {
         await engine.playAudioWithLipSync(segment.audio);
       }
@@ -47,9 +53,15 @@ export function getHeadlessAvatar() {
     endStreamingPlayback(sessionId) {
       return engine.endStreamingPlayback(sessionId);
     },
-    setSpeechEmotion(emotion) { engine.setSpeechEmotion(emotion); },
-    stopAudio() { engine.stopAudioLipSync(); },
-    setAvatarState() { /* no visual — AvatarStage renders state separately */ },
+    setSpeechEmotion(emotion) {
+      engine.setSpeechEmotion(emotion);
+    },
+    stopAudio() {
+      engine.stopAudioLipSync();
+    },
+    setAvatarState() {
+      /* no visual — AvatarStage renders state separately */
+    },
   };
   return singleton;
 }

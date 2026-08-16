@@ -46,7 +46,12 @@ const MainTabs = () => {
         component={HomeScreen}
         options={{
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon name={focused ? 'home' : 'home-outline'} label="Home" focused={focused} color={color} />
+            <TabIcon
+              name={focused ? 'home' : 'home-outline'}
+              label="Home"
+              focused={focused}
+              color={color}
+            />
           ),
           tabBarAccessibilityLabel: 'Home',
         }}
@@ -56,7 +61,12 @@ const MainTabs = () => {
         component={ChatScreen}
         options={{
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon name={focused ? 'chat' : 'chat-outline'} label="Chat" focused={focused} color={color} />
+            <TabIcon
+              name={focused ? 'chat' : 'chat-outline'}
+              label="Chat"
+              focused={focused}
+              color={color}
+            />
           ),
           tabBarAccessibilityLabel: 'Chat with Aria',
         }}
@@ -68,7 +78,12 @@ const MainTabs = () => {
           tabBarStyle: { display: 'none' },
           tabBarIcon: ({ focused, color }) => (
             <View style={tabStyles.voiceTabWrapper}>
-              <View style={[tabStyles.voiceCenterButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
+              <View
+                style={[
+                  tabStyles.voiceCenterButton,
+                  { backgroundColor: colors.primary, shadowColor: colors.primary },
+                ]}
+              >
                 <MaterialCommunityIcons name="microphone" size={26} color={colors.textInverse} />
               </View>
             </View>
@@ -81,7 +96,12 @@ const MainTabs = () => {
         component={LibraryScreen}
         options={{
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon name={focused ? 'library' : 'library-outline'} label="Library" focused={focused} color={color} />
+            <TabIcon
+              name={focused ? 'library' : 'library-outline'}
+              label="Library"
+              focused={focused}
+              color={color}
+            />
           ),
           tabBarAccessibilityLabel: 'Knowledge library',
         }}
@@ -91,7 +111,12 @@ const MainTabs = () => {
         component={ProfileScreen}
         options={{
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon name={focused ? 'tune-variant' : 'tune-variant'} label="Settings" focused={focused} color={color} />
+            <TabIcon
+              name={focused ? 'tune-variant' : 'tune-variant'}
+              label="Settings"
+              focused={focused}
+              color={color}
+            />
           ),
           tabBarAccessibilityLabel: 'Settings',
         }}

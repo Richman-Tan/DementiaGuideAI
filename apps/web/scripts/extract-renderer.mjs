@@ -19,7 +19,10 @@ const lines = readFileSync(SRC, 'utf8').split('\n');
 const start = lines.findIndex((l) => l.includes('<script type="module">'));
 let end = -1;
 for (let i = lines.length - 1; i >= 0; i--) {
-  if (lines[i].includes('<\\/script>')) { end = i; break; }
+  if (lines[i].includes('<\\/script>')) {
+    end = i;
+    break;
+  }
 }
 if (start < 0 || end < 0 || end <= start) throw new Error('module script markers not found');
 let body = lines.slice(start + 1, end).join('\n');
@@ -39,10 +42,13 @@ const replacements = [
   ["document.getElementById('viseme-dbg')", '_visemeDbgEl'],
   // The WebView styled the canvas via a CSS rule (canvas{width:100%;height:100%});
   // here the style rides along with the element.
-  ['document.body.appendChild(renderer.domElement);',
-    "renderer.domElement.style.cssText = 'display:block;width:100%;height:100%';\ncontainer.appendChild(renderer.domElement);"],
+  [
+    'document.body.appendChild(renderer.domElement);',
+    "renderer.domElement.style.cssText = 'display:block;width:100%;height:100%';\ncontainer.appendChild(renderer.domElement);",
+  ],
   // size from the container, not the window
-  ['window.innerWidth', '_w()'], ['window.innerHeight', '_h()'],
+  ['window.innerWidth', '_w()'],
+  ['window.innerHeight', '_h()'],
   // RN bridge → callback shim (always truthy, so the guards keep passing)
   ['window.ReactNativeWebView', '_bridge'],
   // WebView message plumbing is not needed — commands are direct method calls
@@ -106,16 +112,33 @@ const footer = `
 `;
 
 // Indent body by 2 spaces to sit inside the factory (cosmetic only).
-const indented = body.split('\n').map((l) => (l.trim() ? '  ' + l : l)).join('\n');
+const indented = body
+  .split('\n')
+  .map((l) => (l.trim() ? '  ' + l : l))
+  .join('\n');
 writeFileSync(OUT, header + indented + footer);
 
 // Sanity checks — fail loudly if the source drifted from the seams we patch.
 const out = readFileSync(OUT, 'utf8');
-const mustNotContain = ['${safeUrl}', '${safeBackdropUrl}', 'ReactNativeWebView', 'document.body', 'cdn.jsdelivr.net'];
+const mustNotContain = [
+  '${safeUrl}',
+  '${safeBackdropUrl}',
+  'ReactNativeWebView',
+  'document.body',
+  'cdn.jsdelivr.net',
+];
 for (const bad of mustNotContain) {
   if (out.includes(bad)) throw new Error(`extraction left unpatched token: ${bad}`);
 }
-const mustContain = ['api.setAvatarState', 'api.startStreamingPlayback', 'api.appendAudioChunk', 'api.endStreamingPlayback', 'api.playAudioWithVisemeTimeline', 'api.stopAudioLipSync', 'function animate'];
+const mustContain = [
+  'api.setAvatarState',
+  'api.startStreamingPlayback',
+  'api.appendAudioChunk',
+  'api.endStreamingPlayback',
+  'api.playAudioWithVisemeTimeline',
+  'api.stopAudioLipSync',
+  'function animate',
+];
 for (const good of mustContain) {
   if (!out.includes(good)) throw new Error(`extraction missing expected api: ${good}`);
 }

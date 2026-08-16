@@ -19,7 +19,9 @@ describe('isHeading', () => {
   });
   it('rejects sentences and long lines', () => {
     expect(isHeading('This is a normal sentence about care.')).toBe(false);
-    expect(isHeading('3. Take a deep breath and count to ten before responding to them.')).toBe(false);
+    expect(isHeading('3. Take a deep breath and count to ten before responding to them.')).toBe(
+      false
+    );
     expect(isHeading(words(30))).toBe(false);
   });
 });
@@ -27,8 +29,10 @@ describe('isHeading', () => {
 describe('stripPdfBoilerplate', () => {
   // 8 pages; "iSupport Manual" repeats on every page (running header), each page
   // has unique body text.
-  const doc = Array.from({ length: 8 }, (_, i) =>
-    `-- ${i + 1} of 8 --\niSupport Manual\nUnique body paragraph number ${i} with real content here.`,
+  const doc = Array.from(
+    { length: 8 },
+    (_, i) =>
+      `-- ${i + 1} of 8 --\niSupport Manual\nUnique body paragraph number ${i} with real content here.`
   ).join('\n');
 
   it('removes lines that repeat on most pages', () => {
@@ -43,14 +47,18 @@ describe('stripPdfBoilerplate', () => {
   });
 
   it('strips page-separator markers even when nothing else repeats', () => {
-    const unique = Array.from({ length: 6 }, (_, i) => `-- ${i + 1} of 6 --\nAll different ${i}`).join('\n');
+    const unique = Array.from(
+      { length: 6 },
+      (_, i) => `-- ${i + 1} of 6 --\nAll different ${i}`
+    ).join('\n');
     expect(stripPdfBoilerplate(unique)).not.toMatch(/-- \d+ of \d+ --/);
   });
 });
 
 describe('splitIntoSections', () => {
   it('splits at headings and keeps the preamble', () => {
-    const text = 'Intro paragraph.\n\n## First section\n\nBody one.\n\n## Second section\n\nBody two.';
+    const text =
+      'Intro paragraph.\n\n## First section\n\nBody one.\n\n## Second section\n\nBody two.';
     const sections = splitIntoSections(text);
     expect(sections).toHaveLength(3);
     expect(sections[0]).toEqual({ heading: null, text: 'Intro paragraph.' });
@@ -106,7 +114,7 @@ describe('chunkDocument', () => {
     expect(chunks[0].section).toBe('Understanding dementia');
     expect(chunks[0].title).toBe('Carer Guide — Understanding dementia');
     expect(chunks[0].content.startsWith('Welcome to the guide.')).toBe(true);
-    const daily = chunks.filter(c => c.section === 'Daily care');
+    const daily = chunks.filter((c) => c.section === 'Daily care');
     expect(daily.length).toBeGreaterThan(1); // 600 words → split
     expect(daily[0].title).toBe('Carer Guide — Daily care (Part 1)');
     for (const c of chunks) {
@@ -136,7 +144,10 @@ describe('chunkDocument', () => {
   });
 
   it('does not alter source wording (normalisation only)', () => {
-    const chunks = chunkDocument('## S\n\nExact   wording preserved.', { idBase: 'w', sourceTitle: 'T' });
+    const chunks = chunkDocument('## S\n\nExact   wording preserved.', {
+      idBase: 'w',
+      sourceTitle: 'T',
+    });
     expect(chunks[0].content).toBe(normalise('Exact   wording preserved.'));
   });
 });

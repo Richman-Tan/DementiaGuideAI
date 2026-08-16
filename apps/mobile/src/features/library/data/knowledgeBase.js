@@ -37,7 +37,7 @@ Distraction and redirection are practical tools: a favourite snack, a familiar a
 Accepting that some repetition cannot be eliminated, and focusing on managing your own response calmly, is an important part of sustainable caregiving.`,
     tags: ['repetitive questioning', 'memory loss', 'patience', 'redirection', 'behaviour'],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
@@ -103,7 +103,14 @@ Establish a regular prompted toileting routine — offer the toilet every two to
 Use absorbent pads or underwear discreetly as needed, choosing the most dignified option available. When accidents occur, respond calmly and matter-of-factly — no expressions of frustration or embarrassment, as the person cannot control this and emotional reactions increase shame and distress.
 
 Keep skin clean and dry after accidents to prevent irritation and breakdown. If incontinence is worsening or causing significant difficulty, ask the GP for a referral to a continence nurse specialist who can advise on appropriate products and personalised management strategies.`,
-    tags: ['incontinence', 'toileting', 'dignity', 'urinary tract infection', 'continence', 'personal care'],
+    tags: [
+      'incontinence',
+      'toileting',
+      'dignity',
+      'urinary tract infection',
+      'continence',
+      'personal care',
+    ],
     source_url: 'https://dementia.nz/about-dementia/',
     source_org: 'Dementia NZ',
     embedding: null,
@@ -141,15 +148,23 @@ In the middle (moderate) stage, symptoms become more severe and wide-ranging. Th
 In the late (severe) stage, the person needs more constant care. Difficulty with eating, drinking, and moving around becomes prominent, and professional care is usually required. Communication is severely limited, and comfort-focused care becomes the priority. The risk of infections — particularly pneumonia — increases significantly in this stage.
 
 Understanding the current stage helps families plan appropriate support, anticipate what is coming, and have important conversations about future care preferences before a crisis arises.`,
-    tags: ['stages', 'mild dementia', 'moderate dementia', 'severe dementia', 'progression', 'planning'],
-    source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/how-dementia-progresses/progression-stages-dementia',
-    source_org: 'Alzheimer\'s Society UK',
+    tags: [
+      'stages',
+      'mild dementia',
+      'moderate dementia',
+      'severe dementia',
+      'progression',
+      'planning',
+    ],
+    source_url:
+      'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/how-dementia-progresses/progression-stages-dementia',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
     id: 'clinical_002',
     category: 'clinical',
-    title: 'Alzheimer\'s Disease, Vascular Dementia, and Lewy Body Dementia',
+    title: "Alzheimer's Disease, Vascular Dementia, and Lewy Body Dementia",
     content: `The Alzheimer's Society identifies over 200 types of dementia, with four being most prevalent: Alzheimer's disease, vascular dementia, dementia with Lewy bodies, and frontotemporal dementia.
 
 Alzheimer's disease is the most common cause of dementia. Early signs include memory problems — particularly forgetting recent events — difficulties with thinking, language challenges, and perception issues. The disease progresses gradually; the person may ask the same questions repeatedly and gradually withdraw from activities.
@@ -161,9 +176,16 @@ Dementia with Lewy bodies is characterised by fluctuating alertness, detailed vi
 Frontotemporal dementia (sometimes called Pick's disease) causes early changes to personality and behaviour and/or difficulties with language — memory loss is less prominent initially, which can delay diagnosis. It is more common in people under 65.
 
 Young-onset dementia — diagnosed before age 65 — is less likely to involve memory loss as the first symptom and more likely to involve changes in behaviour, language, or personality.`,
-    tags: ['Alzheimer\'s', 'vascular dementia', 'Lewy body', 'types of dementia', 'diagnosis', 'prognosis'],
+    tags: [
+      "Alzheimer's",
+      'vascular dementia',
+      'Lewy body',
+      'types of dementia',
+      'diagnosis',
+      'prognosis',
+    ],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/types-dementia',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
@@ -181,7 +203,14 @@ The Alzheimer's Society notes that when these medications are effective, benefit
 Antipsychotic medications — such as risperidone or haloperidol — may be prescribed for severe agitation, aggression, or distress when other approaches have not worked. These carry significant risks in dementia and should only be used under specialist supervision, at the lowest effective dose, for the shortest possible duration.
 
 Non-medication approaches including cognitive stimulation therapy, cognitive rehabilitation, and reminiscence work have good evidence for improving mood and quality of life.`,
-    tags: ['donepezil', 'memantine', 'medication', 'cholinesterase inhibitor', 'antipsychotic', 'treatment'],
+    tags: [
+      'donepezil',
+      'memantine',
+      'medication',
+      'cholinesterase inhibitor',
+      'antipsychotic',
+      'treatment',
+    ],
     source_url: 'https://www.nhs.uk/conditions/dementia/treatment/',
     source_org: 'NHS UK',
     embedding: null,
@@ -199,7 +228,14 @@ Urgent signs requiring same-day medical assessment include: a sudden marked incr
 Keep a brief written record of what has changed and when, including the person's current medications and diagnoses. This information significantly speeds medical assessment.
 
 Contact your GP for urgent advice or call Healthline (0800 611 116) for free 24/7 nurse guidance. In an emergency, call 111.`,
-    tags: ['delirium', 'urgent', 'infection', 'sudden deterioration', 'emergency', 'medical review'],
+    tags: [
+      'delirium',
+      'urgent',
+      'infection',
+      'sudden deterioration',
+      'emergency',
+      'medical review',
+    ],
     source_url: 'https://www.nhs.uk/conditions/dementia/symptoms/',
     source_org: 'NHS UK',
     embedding: null,
@@ -237,7 +273,7 @@ Regular scheduled paracetamol — rather than only offering pain relief when obv
 Non-pharmacological pain management is also important: repositioning, gentle massage, heat or cold therapy, and addressing the underlying cause all have a role. Review all medications regularly, as some may no longer be appropriate as dementia progresses. Any new or worsening pain should be investigated medically rather than simply attributed to the dementia and managed behaviourally.`,
     tags: ['pain', 'pain assessment', 'agitation', 'non-verbal', 'Abbey Pain Scale', 'paracetamol'],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
@@ -253,7 +289,14 @@ An Advance Care Plan is a less formal but equally important document that descri
 Goals of care conversations should cover what matters most to the person, where they wish to be cared for, and their wishes about CPR, hospital admission, and artificial feeding in late-stage dementia. These conversations, though emotionally difficult, prevent family conflict and ensure wishes are honoured.
 
 In New Zealand, contact Alzheimers NZ (alzheimers.org.nz, 0800 004 001) or your local Dementia NZ service (dementia.nz) for guidance. Store documents where they can be found quickly and share them with the GP.`,
-    tags: ['advance care planning', 'power of attorney', 'advance directive', 'legal', 'capacity', 'end of life'],
+    tags: [
+      'advance care planning',
+      'power of attorney',
+      'advance directive',
+      'legal',
+      'capacity',
+      'end of life',
+    ],
     source_url: 'https://dementia.nz/about-dementia/',
     source_org: 'Dementia NZ',
     embedding: null,
@@ -275,7 +318,7 @@ Diary-keeping after incidents helps identify patterns: the time of day, the prec
 If aggression escalates or results in injury, seek specialist behavioural assessment through the person's GP or dementia support team. Antipsychotic medications may be considered as an absolute last resort under specialist supervision, given their significant risks in older people with dementia.`,
     tags: ['aggression', 'agitation', 'de-escalation', 'behaviour', 'violence', 'triggers'],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
@@ -331,7 +374,7 @@ Paranoid beliefs — that someone is stealing, that a family member is an impost
 If hallucinations or delusions are causing significant distress or dangerous behaviour, speak with the person's GP — pharmacological management may be considered but requires careful specialist oversight.`,
     tags: ['hallucinations', 'paranoia', 'delusions', 'Lewy body', 'psychosis', 'behaviour'],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/types-dementia',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
@@ -349,7 +392,7 @@ Ask Alzheimers NZ (alzheimers.org.nz) or your local Dementia NZ service (dementi
 Inform neighbours: a note with the person's photo and a contact number means more people looking out. A safely accessible garden or outdoor area reduces the drive to leave by meeting the need for outdoor experience.`,
     tags: ['wandering', 'safe return', 'GPS', 'elopement', 'door alarm', 'safety', 'lost'],
     source_url: 'https://alzheimers.org.nz/',
-    source_org: 'Alzheimer\'s NZ',
+    source_org: "Alzheimer's NZ",
     embedding: null,
   },
   {
@@ -383,7 +426,14 @@ Prevention requires actively accepting help — which is harder than it sounds. 
 Key strategies include: taking up all offers of respite care; attending a carer support group through Carers NZ (carers.net.nz) or your local Alzheimers NZ service; speaking with your GP if experiencing depression or anxiety — these are medical conditions that respond to treatment; accessing counselling from a psychologist with experience in carer issues; and setting realistic daily expectations.
 
 In New Zealand, Carers NZ (carers.net.nz) offers support, guidance, and connection to local carer resources and peer networks.`,
-    tags: ['burnout', 'caregiver stress', 'depression', 'exhaustion', 'carer wellbeing', 'self-care'],
+    tags: [
+      'burnout',
+      'caregiver stress',
+      'depression',
+      'exhaustion',
+      'carer wellbeing',
+      'self-care',
+    ],
     source_url: 'https://carers.net.nz/',
     source_org: 'Carers NZ',
     embedding: null,
@@ -403,7 +453,14 @@ Face the person directly at their eye level before speaking. Use their preferred
 When the person struggles to find a word, offer it gently without rushing or consistently finishing all their sentences. This preserves communication confidence and dignity. If something is not understood, rephrase it rather than simply repeating at a higher volume.
 
 Keep sentences positive where possible — "Let's go for a walk" is more motivating than "Don't just sit there." These small adjustments in how we speak make a substantial difference to the person's ability to engage, feel respected, and maintain the sense that communication is still possible and worthwhile.`,
-    tags: ['verbal communication', 'language', 'speech', 'instructions', 'conversation', 'technique'],
+    tags: [
+      'verbal communication',
+      'language',
+      'speech',
+      'instructions',
+      'conversation',
+      'technique',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -421,9 +478,16 @@ Gentle touch on the hand or forearm conveys reassurance and connection, but rema
 Use gesture to support verbal communication — pointing, demonstrating an action, or using pictures helps bridge gaps in language comprehension. Mirror the person's body language subtly to create a sense of connection and ease.
 
 Music and singing — particularly songs from the person's younger years — are powerful forms of non-verbal communication that remain effective even in advanced dementia when verbal language has largely been lost. They can open connection, evoke emotional responses, and create moments of genuine engagement when other forms of communication have become very difficult.`,
-    tags: ['non-verbal', 'body language', 'touch', 'tone of voice', 'facial expression', 'connection'],
+    tags: [
+      'non-verbal',
+      'body language',
+      'touch',
+      'tone of voice',
+      'facial expression',
+      'connection',
+    ],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
@@ -439,7 +503,14 @@ This approach acknowledges the person's feelings, reduces distress, maintains di
 Validation therapy is not about uncritically agreeing with everything — it is about responding to the emotional reality of the person's experience. Someone who is frightened, however irrationally, deserves to have that fear acknowledged and responded to with genuine warmth rather than argued away.
 
 For carers, learning to respond this way rather than automatically correcting or reorienting represents an achievable but significant shift in approach — one that typically reduces distress for both the person with dementia and the carer over time.`,
-    tags: ['validation therapy', 'Naomi Feil', 'therapeutic communication', 'feelings', 'empathy', 'advanced dementia'],
+    tags: [
+      'validation therapy',
+      'Naomi Feil',
+      'therapeutic communication',
+      'feelings',
+      'empathy',
+      'advanced dementia',
+    ],
     source_url: 'https://dementia.nz/about-dementia/',
     source_org: 'Dementia NZ',
     embedding: null,
@@ -457,7 +528,15 @@ These can be shared with professional carers, respite workers, and residential c
 Benefits of reminiscence include improved mood, reduced agitation, stronger connection between the person and their carer, and maintenance of identity and self-esteem. For group reminiscence, shared historical experiences and popular culture create community and belonging.
 
 Reminiscence is not simply an exercise in nostalgia — it is a vehicle for connection, dignity, and personhood in the present moment.`,
-    tags: ['reminiscence', 'life review', 'memory', 'life story', 'long-term memory', 'connection', 'identity'],
+    tags: [
+      'reminiscence',
+      'life review',
+      'memory',
+      'life story',
+      'long-term memory',
+      'connection',
+      'identity',
+    ],
     source_url: 'https://www.nhs.uk/conditions/dementia/treatment/',
     source_org: 'NHS UK',
     embedding: null,
@@ -475,7 +554,14 @@ Visual communication aids include: large-print labels on cupboards, drawers, and
 For people who have lost verbal speech but retain some literacy or symbol recognition, Augmentative and Alternative Communication (AAC) tools — ranging from low-tech picture cards to speech-generating apps — can provide an ongoing means of expression and maintain independence. A speech-language therapist can assess communication abilities and recommend the most appropriate tools.
 
 In residential care or when multiple carers are involved, ensure that all staff know the person's communication preferences, abilities, and any specialist tools they use. A one-page communication profile — describing how the person communicates, what helps, and what does not — can make a significant difference when shared across the care team.`,
-    tags: ['visual aids', 'labels', 'picture communication', 'AAC', 'language', 'speech pathologist'],
+    tags: [
+      'visual aids',
+      'labels',
+      'picture communication',
+      'AAC',
+      'language',
+      'speech pathologist',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -483,7 +569,7 @@ In residential care or when multiple carers are involved, ensure that all staff 
   {
     id: 'communication_006',
     category: 'communication',
-    title: 'When the Person Doesn\'t Recognise You',
+    title: "When the Person Doesn't Recognise You",
     content: `One of the most emotionally painful experiences in dementia caregiving is when the person no longer recognises a spouse, child, or close friend. The Alzheimer's Society emphasises that this is a symptom of brain disease — not a reflection of the strength of the relationship or what it has meant.
 
 Not being recognised does not mean the person does not feel connection. Many people with dementia respond warmly to the care and emotional presence of people they cannot name — the relationship continues, even without explicit recognition.
@@ -495,7 +581,7 @@ Grief about this loss is real and legitimate. Many carers describe a form of "an
 The Alzheimer's Society encourages carers to focus on the quality of the present moment rather than on what has been lost. Even without name-recognition, the person with dementia can still experience comfort, joy, and love in the interaction.`,
     tags: ['recognition', 'identity', 'grief', 'relationship', 'imposter syndrome', 'connection'],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
@@ -511,7 +597,15 @@ Respond to these signals attentively. Assume all communication has meaning and t
 Music — particularly songs meaningful to the person from earlier in their life — remains one of the most powerful communication tools in advanced dementia. It can evoke emotional responses and moments of genuine connection long after verbal language has faded. The NHS acknowledges music, gentle touch, and familiar sensory experiences as important in late-stage care.
 
 Gentle touch — holding a hand, a reassuring hand on the shoulder — conveys care and presence. Familiar scents associated with the person's life can also be meaningful. In all interactions at this stage, comfort and dignity are the primary goals of care.`,
-    tags: ['non-verbal', 'advanced dementia', 'late stage', 'comfort', 'pain signals', 'touch', 'music'],
+    tags: [
+      'non-verbal',
+      'advanced dementia',
+      'late stage',
+      'comfort',
+      'pain signals',
+      'touch',
+      'music',
+    ],
     source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
     source_org: 'NHS UK',
     embedding: null,
@@ -549,7 +643,14 @@ Set the hot water thermostat to a maximum of 50°C to prevent scalding — a per
 The NHS recommends using clear visual signs on the toilet door to help the person find their way, particularly at night. A raised toilet seat with arms makes sitting and rising safer. Keep the bathroom uncluttered and remove unnecessary items from the floor.
 
 Review footwear throughout the home: the person should wear well-fitting, closed-toe, flat shoes with non-slip soles rather than loose slippers or socks alone. After any fall, arrange a medical review and, where possible, an occupational therapy home assessment.`,
-    tags: ['falls', 'bathroom', 'grab rails', 'shower chair', 'fall prevention', 'safety modifications'],
+    tags: [
+      'falls',
+      'bathroom',
+      'grab rails',
+      'shower chair',
+      'fall prevention',
+      'safety modifications',
+    ],
     source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
     source_org: 'NHS UK',
     embedding: null,
@@ -567,7 +668,14 @@ Keep a current, accurate medication list — including drug name, dose, frequenc
 Review all medications at least every six months with the GP or pharmacist. Some medications appropriate at diagnosis become unsuitable as dementia progresses — reviewing the full medication list regularly avoids unnecessary risk. Never split, crush, or dissolve tablets without pharmacist advice — some slow-release formulations are dangerous if the coating is broken.
 
 Medication reminder apps and automatic pill dispensers with alarms can supplement — but should not replace — carer supervision of medication taking. When in doubt about a missed or doubled dose, contact the pharmacist or GP rather than guessing.`,
-    tags: ['medication', 'pill organiser', 'locked storage', 'medication errors', 'blister pack', 'safety'],
+    tags: [
+      'medication',
+      'pill organiser',
+      'locked storage',
+      'medication errors',
+      'blister pack',
+      'safety',
+    ],
     source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
     source_org: 'NHS UK',
     embedding: null,
@@ -603,9 +711,17 @@ A doorstop alarm placed under the door creates resistance and sound. Smart doorb
 The motivation behind wandering should inform the approach. If the person is anxious about a family member, addressing that anxiety may reduce wandering behaviour itself. If they are bored or restless, building more structured outdoor activity into the daily routine reduces the drive to leave independently.
 
 Ensure a safely accessible garden or outdoor area is available if possible — a fenced garden with seating and sensory interest provides appropriate outdoor access and significantly reduces the drive to seek unsanctioned exit. As a last-resort safety net, a GPS tracking device worn as a watch or pendant provides location information if other prevention measures fail.`,
-    tags: ['door alarms', 'exit', 'locks', 'wandering prevention', 'GPS', 'camouflage', 'home safety'],
+    tags: [
+      'door alarms',
+      'exit',
+      'locks',
+      'wandering prevention',
+      'GPS',
+      'camouflage',
+      'home safety',
+    ],
     source_url: 'https://alzheimers.org.nz/',
-    source_org: 'Alzheimer\'s NZ',
+    source_org: "Alzheimer's NZ",
     embedding: null,
   },
   {
@@ -621,7 +737,14 @@ Family members often notice declining driving safety before the person does: get
 Do not secretly disable the vehicle — this erodes trust and creates significant distress without addressing the underlying issue. Instead, involve the doctor in an honest, empathetic conversation with the person about safety.
 
 Plan alternatives well before they are needed: family driving rosters, local transport options, community transport services, and taxi or rideshare accounts all support continued independence and social connection after driving ends. Acknowledge the loss with genuine empathy — it is a significant change that deserves respect.`,
-    tags: ['driving', 'driving cessation', 'road safety', 'occupational therapist', 'licence', 'independence'],
+    tags: [
+      'driving',
+      'driving cessation',
+      'road safety',
+      'occupational therapist',
+      'licence',
+      'independence',
+    ],
     source_url: 'https://dementia.nz/about-dementia/',
     source_org: 'Dementia NZ',
     embedding: null,
@@ -639,9 +762,17 @@ Good signage uses both words and pictures: large, clearly printed labels on door
 Install motion-activated nightlights in the hallway between the bedroom and bathroom — adequate lighting at night dramatically reduces falls and disorientation. Remove large mirrors in corridors if the person is startled or distressed by their own reflection.
 
 Clear pathways through the home of at least 90cm between furniture, remove rugs that are not securely fixed, tape down trailing cords, and eliminate trip hazards from all walkways. An occupational therapy home visit for a comprehensive safety assessment is strongly recommended and can often be arranged through the person's GP or through Alzheimer's NZ (alzheimers.org.nz) in New Zealand.`,
-    tags: ['stairs', 'signage', 'labels', 'nightlights', 'occupational therapist', 'fall prevention', 'home modifications'],
+    tags: [
+      'stairs',
+      'signage',
+      'labels',
+      'nightlights',
+      'occupational therapist',
+      'fall prevention',
+      'home modifications',
+    ],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
 
@@ -705,7 +836,15 @@ The right group is one where you feel safe to speak honestly. It may take trying
 In New Zealand, financial support for carers is administered by Work and Income (workandincome.govt.nz). Carers who cannot work full-time because of their caring role may be eligible for the Supported Living Payment (carer); other assistance may apply depending on circumstances. Funded home support for the person with dementia is arranged through a NASC needs assessment (Health NZ – Te Whatu Ora), and the Carer Support Subsidy helps pay for respite. Long-term residential care may be covered by the income- and asset-tested Residential Care Subsidy, administered by Work and Income; independent financial advice before residential placement is worthwhile, as the rules are complex. Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) can help navigate what is available.
 
 Arranging an Enduring Power of Attorney while the person still has legal capacity is also essential — it enables financial management decisions to be made on their behalf when they are no longer able to act independently, and is significantly harder to put in place once capacity is lost.`,
-    tags: ['financial', 'Supported Living Payment', 'Carer Support Subsidy', 'Work and Income', 'Residential Care Subsidy', 'NASC', 'government support'],
+    tags: [
+      'financial',
+      'Supported Living Payment',
+      'Carer Support Subsidy',
+      'Work and Income',
+      'Residential Care Subsidy',
+      'NASC',
+      'government support',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
@@ -723,7 +862,15 @@ Sleep is particularly critical: chronic sleep deprivation caused by night-time c
 Maintain social connections even when it is difficult to get out. Phone calls, video calls, and brief visits sustain the relationships that provide emotional resilience. Maintain at least one activity each week that is purely for your own enjoyment.
 
 If you are experiencing persistent sadness, tearfulness, loss of interest in activities you previously enjoyed, or feelings of hopelessness, speak with your GP. Depression in carers is extremely common, frequently unrecognised, and responds well to treatment when identified.`,
-    tags: ['carer health', 'self-care', 'depression', 'GP', 'sleep', 'exercise', 'social connection'],
+    tags: [
+      'carer health',
+      'self-care',
+      'depression',
+      'GP',
+      'sleep',
+      'exercise',
+      'social connection',
+    ],
     source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
     source_org: 'NHS UK',
     embedding: null,
@@ -741,7 +888,14 @@ Accept imperfect help graciously. If someone does a task differently than you wo
 Consider a formal family meeting to distribute caregiving tasks fairly among siblings and other family members. Shared responsibility is more sustainable than one person carrying the full burden. Use community services — home care, day programmes, and respite — rather than trying to do everything personally.
 
 In New Zealand, Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) can help identify local home support and community services. Carers NZ (carers.net.nz) provides practical support for carers navigating what is available in their area.`,
-    tags: ['help-seeking', 'family support', 'delegating', 'carer support', 'burnout prevention', 'community services'],
+    tags: [
+      'help-seeking',
+      'family support',
+      'delegating',
+      'carer support',
+      'burnout prevention',
+      'community services',
+    ],
     source_url: 'https://dementia.nz/about-dementia/',
     source_org: 'Dementia NZ',
     embedding: null,
@@ -759,7 +913,15 @@ In New Zealand, a NASC needs assessment determines eligibility for rest-home or 
 Involve the person with dementia in the decision where they retain capacity. The transition period typically takes four to eight weeks for the person to feel settled — continue to visit regularly, bring familiar objects from home, and remain actively involved in care decisions.
 
 Transition to residential care is not abandonment — it is a form of love that acknowledges when the level of care needed has moved beyond what one household can safely provide.`,
-    tags: ['residential care', 'nursing home', 'transition', 'aged care', 'guilt', 'decision', 'placement'],
+    tags: [
+      'residential care',
+      'nursing home',
+      'transition',
+      'aged care',
+      'guilt',
+      'decision',
+      'placement',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
@@ -779,9 +941,16 @@ Each of these is modifiable — meaning that addressing it reduces risk, even if
 Non-modifiable factors include age (the largest overall risk factor), genetic variants such as APOE ε4, and family history. However, the Lancet Commission's key message is clear: genetics is not destiny, and lifestyle factors significantly influence whether genetic risk translates into dementia.
 
 Prevention begins early and extends across the whole life course. The most impactful changes most people can make include: treating hearing and vision loss promptly; managing blood pressure and cholesterol from midlife; staying physically active; maintaining social connections; and avoiding smoking and excessive alcohol.`,
-    tags: ['risk factors', 'prevention', 'Lancet Commission', 'modifiable risk', 'lifestyle', 'brain health'],
+    tags: [
+      'risk factors',
+      'prevention',
+      'Lancet Commission',
+      'modifiable risk',
+      'lifestyle',
+      'brain health',
+    ],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
@@ -813,7 +982,16 @@ For brain health, aim for at least 150 minutes of moderate-intensity aerobic act
 Resistance training two to three times per week provides additional brain health benefits and is especially important for older adults. Balance and coordination exercises such as tai chi and yoga reduce fall risk and have cognitive benefits.
 
 Even short bouts of movement help. Starting slowly and building gradually is more sustainable than an intensive start. Many councils and community centres across New Zealand offer low-cost or free exercise programmes (including Green Prescription activities and community fitness groups) for older adults — your GP can help with referrals.`,
-    tags: ['exercise', 'physical activity', 'prevention', 'FINGER study', 'brain health', 'BDNF', 'aerobic', 'resistance'],
+    tags: [
+      'exercise',
+      'physical activity',
+      'prevention',
+      'FINGER study',
+      'brain health',
+      'BDNF',
+      'aerobic',
+      'resistance',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -829,9 +1007,17 @@ Cognitively stimulating activities that build reserve include: learning a new la
 Social connection is a separate but equally important protective factor. Social isolation is associated with significantly elevated dementia risk. Social engagement protects brain health through: cognitive stimulation from conversation and relationship navigation; emotional regulation and stress reduction; physical activity often associated with social participation; and sense of purpose and meaning.
 
 Protective social activities include: maintaining regular contact with family and friends; joining clubs, community organisations, or volunteer groups; and mentoring or teaching others. In New Zealand, connection to community, whānau, and cultural identity is particularly protective — maintaining language, cultural practices, and kinship networks benefits cognitive health and overall wellbeing across the lifespan.`,
-    tags: ['cognitive reserve', 'social connection', 'mental stimulation', 'bilingualism', 'prevention', 'brain health', 'learning'],
+    tags: [
+      'cognitive reserve',
+      'social connection',
+      'mental stimulation',
+      'bilingualism',
+      'prevention',
+      'brain health',
+      'learning',
+    ],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
@@ -847,9 +1033,18 @@ The life circumstances of younger people with dementia differ substantially from
 Partners of people with younger onset dementia often face sudden changes in roles, loss of a peer relationship, and the need to assume sole financial responsibility. Children in the household may need dedicated psychological support to make sense of the changes they are witnessing.
 
 In New Zealand, the Younger Onset Dementia Aotearoa Trust (YODAT, yodat.org.nz) runs online support groups and a day programme specifically for people with younger onset dementia and their whānau. Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) also provide support, and people under 65 can be assessed for funded support through their local NASC.`,
-    tags: ['younger onset', 'early onset', 'under 65', 'frontotemporal', 'genetic', 'employment', 'financial', 'family'],
+    tags: [
+      'younger onset',
+      'early onset',
+      'under 65',
+      'frontotemporal',
+      'genetic',
+      'employment',
+      'financial',
+      'family',
+    ],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/types-dementia',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
@@ -865,7 +1060,15 @@ Connect with support services promptly: in New Zealand, Alzheimers NZ (alzheimer
 If the person still drives, arrange a formal occupational therapy driving assessment. Ask the GP for a referral to your local NASC (Needs Assessment and Service Coordination) service to understand what funded home support may be available.
 
 A dementia diagnosis does not end a person's life — many people live well with dementia for years. Focus on what the person can still do and enjoy, and involve them in all decisions about their care and life for as long as possible.`,
-    tags: ['post-diagnosis', 'first steps', 'power of attorney', 'advance care plan', 'driving', 'disclosure', 'support services'],
+    tags: [
+      'post-diagnosis',
+      'first steps',
+      'power of attorney',
+      'advance care plan',
+      'driving',
+      'disclosure',
+      'support services',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -883,9 +1086,18 @@ There are two main subtypes: amnestic MCI (memory is primarily affected) and non
 If you or someone you care about has MCI, address all modifiable risk factors — particularly blood pressure, cholesterol, blood glucose, hearing, vision, physical activity, sleep quality, and social engagement. These lifestyle modifications are the most evidence-based approach currently available for slowing progression. Attend regular GP monitoring appointments (typically six-monthly) to track changes.
 
 Ensure legal and financial affairs are in order while capacity is fully intact — do not wait for a dementia diagnosis. In New Zealand, contact Alzheimers NZ (alzheimers.org.nz, 0800 004 001) or your local Dementia NZ service (dementia.nz) for information, and see the Dementia Prevention Research Clinics (Brain Research NZ) to learn about research participation.`,
-    tags: ['MCI', 'mild cognitive impairment', 'early stage', 'progression', 'monitoring', 'APOE', 'risk', 'normal ageing'],
+    tags: [
+      'MCI',
+      'mild cognitive impairment',
+      'early stage',
+      'progression',
+      'monitoring',
+      'APOE',
+      'risk',
+      'normal ageing',
+    ],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/symptoms-and-diagnosis/symptoms',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
 
@@ -901,7 +1113,14 @@ Start with the person's GP. The GP can review for treatable physical causes (suc
 Best practice treats behaviour as communication — asking what unmet need, physical discomfort, emotional distress, or environmental factor is driving it, and addressing that underlying cause rather than suppressing the behaviour with medication. Non-pharmacological strategies come first. Antipsychotic medicines are used only with careful specialist oversight, because they carry significant risks in older people with dementia, including increased risk of stroke.
 
 Before deciding on residential placement mainly because of unmanageable behaviour, ask the GP about a specialist assessment first — in many cases it leads to real improvement and restored confidence. For advice and support, contact Alzheimers NZ (alzheimers.org.nz, 0800 004 001), your local Dementia NZ service (dementia.nz), or Healthline (0800 611 116) for free 24/7 nurse advice.`,
-    tags: ['behaviour support', 'BPSD', 'agitation', 'specialist', 'GP referral', 'mental health services for older people'],
+    tags: [
+      'behaviour support',
+      'BPSD',
+      'agitation',
+      'specialist',
+      'GP referral',
+      'mental health services for older people',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
@@ -917,7 +1136,15 @@ Carers NZ (carers.net.nz) is the national body for family carers. It provides in
 Practical and financial support flows through two main channels. A NASC needs assessment (funded by Health New Zealand – Te Whatu Ora) can arrange in-home support and respite for the person with dementia, and the Carer Support Subsidy helps pay for a support person or day centre so the carer can take a break. Work and Income (workandincome.govt.nz) administers financial assistance for eligible carers, such as the Supported Living Payment for those unable to work full-time because of their caring role.
 
 Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) run carer education, support groups, and coaching, and can help you find local options. If you are feeling overwhelmed or distressed, you can call or text 1737 any time to talk with a trained counsellor.`,
-    tags: ['carer support', 'respite', 'Carer Support Subsidy', 'counselling', 'Carers NZ', 'NASC', 'Work and Income'],
+    tags: [
+      'carer support',
+      'respite',
+      'Carer Support Subsidy',
+      'counselling',
+      'Carers NZ',
+      'NASC',
+      'Work and Income',
+    ],
     source_url: 'https://carers.net.nz/',
     source_org: 'Carers NZ',
     embedding: null,
@@ -935,7 +1162,16 @@ Sort out legal and financial planning early. While the person has capacity, set 
 Arrange practical support and look after the carer. Ask the GP for referral to your local NASC (Needs Assessment and Service Coordination) service to find out what funded home support and respite may be available, and about the Carer Support Subsidy. Connect with a support group through Alzheimers NZ or Carers NZ (carers.net.nz). If the person is under 65, the Younger Onset Dementia Aotearoa Trust (yodat.org.nz) offers tailored support.
 
 A diagnosis does not end a person's life — many people live well with dementia for years. Focus on what the person can still do and enjoy, and involve them in decisions about their care for as long as possible.`,
-    tags: ['post-diagnosis', 'first year', 'planning', 'navigation', 'EPA', 'NASC', 'Alzheimers NZ', 'YODAT'],
+    tags: [
+      'post-diagnosis',
+      'first year',
+      'planning',
+      'navigation',
+      'EPA',
+      'NASC',
+      'Alzheimers NZ',
+      'YODAT',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -953,8 +1189,17 @@ Conditions that commonly cause reversible dementia-like symptoms include: hypoth
 For this reason, every assessment for suspected dementia should include a comprehensive medical workup: blood tests for thyroid function, vitamin B12, folate, full blood count, glucose, renal and liver function; a full medication review including all over-the-counter preparations and supplements; and brain imaging (CT or MRI) to exclude structural causes.
 
 Mayo Clinic notes that when a reversible cause is identified and treated promptly, cognitive function can improve substantially or normalise entirely. This makes a thorough initial evaluation — rather than an immediate dementia diagnosis — essential, particularly when symptom onset has been relatively sudden rather than gradual.`,
-    tags: ['reversible dementia', 'treatable causes', 'B12 deficiency', 'hypothyroidism', 'delirium', 'medication', 'Mayo Clinic'],
-    source_url: 'https://www.mayoclinic.org/diseases-conditions/dementia/symptoms-causes/syc-20352013',
+    tags: [
+      'reversible dementia',
+      'treatable causes',
+      'B12 deficiency',
+      'hypothyroidism',
+      'delirium',
+      'medication',
+      'Mayo Clinic',
+    ],
+    source_url:
+      'https://www.mayoclinic.org/diseases-conditions/dementia/symptoms-causes/syc-20352013',
     source_org: 'Mayo Clinic',
     embedding: null,
   },
@@ -969,7 +1214,17 @@ Rare dementias include: Posterior Cortical Atrophy (PCA), which primarily affect
 Diagnosis typically requires specialist neurological evaluation, detailed neuropsychological testing, and often specialised brain imaging beyond standard MRI. Some rare dementias have specific genetic components, making genetic counselling an important consideration for the person and their family — particularly where children or siblings may be at heritable risk.
 
 In New Zealand, ask the GP for referral to a neurologist or memory service for specialist diagnosis of a suspected rare dementia. Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) provide guidance and support for families facing rare dementia diagnoses, and can help navigate specialist referral pathways.`,
-    tags: ['rare dementia', 'PCA', 'PPA', 'PSP', 'CBS', 'Huntington\'s', 'CJD', 'specialist', 'specialist referral'],
+    tags: [
+      'rare dementia',
+      'PCA',
+      'PPA',
+      'PSP',
+      'CBS',
+      "Huntington's",
+      'CJD',
+      'specialist',
+      'specialist referral',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -985,7 +1240,14 @@ For learning about dementia, Alzheimers NZ (alzheimers.org.nz) and Dementia NZ (
 New Zealand also has active dementia research. Brain Research New Zealand (brainresearch.co.nz), a national Centre of Research Excellence, runs the Dementia Prevention Research Clinics in Auckland, Dunedin, and Christchurch, studying the factors that influence how dementia develops and progresses in New Zealanders — including work relevant to Māori and Pacific communities, who are under-represented in international research.
 
 Completing a good dementia education course is associated with increased carer confidence, improved care quality, and a better understanding of what to expect as the condition progresses. Ask your GP or local Alzheimers NZ service for guidance on where to start.`,
-    tags: ['education', 'research', 'Brain Research NZ', 'Dementia Prevention Research Clinics', 'carer education', 'courses'],
+    tags: [
+      'education',
+      'research',
+      'Brain Research NZ',
+      'Dementia Prevention Research Clinics',
+      'carer education',
+      'courses',
+    ],
     source_url: 'https://www.brainresearch.co.nz/',
     source_org: 'Brain Research New Zealand',
     embedding: null,
@@ -993,7 +1255,7 @@ Completing a good dementia education course is associated with increased carer c
   {
     id: 'alzheimers_disease_001',
     category: 'clinical',
-    title: 'What is Alzheimer\'s Disease? (Part 1)',
+    title: "What is Alzheimer's Disease? (Part 1)",
     content: `Around two out of three people living with dementia have Alzheimer's disease. It is a physical illness which, as it progresses, damages a person's brain. It starts many years before symptoms show. Eventually, Alzheimer's causes enough damage that the person develops dementia — their thinking skills, memory, and ability to carry out everyday tasks are reduced.
 
 Age is the biggest risk factor for Alzheimer's, as it is for most types of dementia: above the age of 65, a person's risk of developing Alzheimer's roughly doubles every five years.
@@ -1001,15 +1263,15 @@ Age is the biggest risk factor for Alzheimer's, as it is for most types of demen
 Alzheimer's affects everyone differently. For most people it starts in and around the part of the brain involved in memory. In some rarer forms the disease starts in a different part of the brain and causes a different set of symptoms — this is called 'atypical Alzheimer's'. The most common early symptoms include memory problems, thinking and reasoning difficulties, language problems, changes to how a person sees and hears things, and changes in mood. Early symptoms are mild and do not prevent someone from doing everyday activities by themselves; at this stage it is often not possible to say for certain that the symptoms are caused by Alzheimer's, as there can be many other causes.
 
 The causes of Alzheimer's are complex, but one key part is the build-up of two substances in the brain called amyloid and tau, which clump together to form tiny structures called plaques and tangles that make it harder for the brain to work properly. Over time the disease shrinks certain parts of the brain and reduces the chemicals needed to send messages around it. When the resulting problems with memory and thinking make everyday tasks difficult, this is called dementia. If you or someone you care for has worsening memory or thinking problems, see your GP.`,
-    tags: ['alzheimer\'s disease', 'dementia', 'amyloid', 'tau', 'cognitive decline', 'memory loss'],
+    tags: ["alzheimer's disease", 'dementia', 'amyloid', 'tau', 'cognitive decline', 'memory loss'],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/types-dementia/alzheimers-disease',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
   {
     id: 'alzheimers_disease_002',
     category: 'clinical',
-    title: 'What is Alzheimer\'s Disease? (Part 2)',
+    title: "What is Alzheimer's Disease? (Part 2)",
     content: `Getting a diagnosis of Alzheimer's disease usually begins with the GP. It is important for anyone with worsening problems with memory or thinking to be assessed by a health professional — most often their GP — who, if they think the symptoms may be caused by dementia, will refer the person to a local memory service for more detailed assessment. Alzheimer's is usually diagnosed by a specialist. Getting an early diagnosis has many benefits, giving the person and family time to adjust and to arrange the support they need.
 
 There are some less common, 'atypical' types of Alzheimer's that do not cause memory problems at first. Four main types have different early symptoms: one mostly affecting language (logopenic aphasia); one causing problems with vision and judging where things are (posterior cortical atrophy); one affecting behaviour and/or thinking (frontal-variant Alzheimer's disease); and one causing problems with movement and sensation as well as thinking, perception, and language (corticobasal syndrome).
@@ -1017,9 +1279,16 @@ There are some less common, 'atypical' types of Alzheimer's that do not cause me
 Many things can increase a person's chance of developing Alzheimer's — known as risk factors. Age and genes are the biggest and cannot be changed, but many others can: people can still reduce their risk through positive changes to their health and lifestyle.
 
 There are many ways to help someone live as well as possible with Alzheimer's disease. For advice and support in New Zealand, contact Alzheimers NZ (alzheimers.org.nz, 0800 004 001) or your local Dementia NZ service (dementia.nz), or call Healthline (0800 611 116) for free 24/7 nurse advice.`,
-    tags: ['alzheimer\'s disease', 'diagnosis', 'memory service', 'atypical alzheimer\'s', 'risk factors', 'GP'],
+    tags: [
+      "alzheimer's disease",
+      'diagnosis',
+      'memory service',
+      "atypical alzheimer's",
+      'risk factors',
+      'GP',
+    ],
     source_url: 'https://www.alzheimers.org.uk/about-dementia/types-dementia/alzheimers-disease',
-    source_org: 'Alzheimer\'s Society UK',
+    source_org: "Alzheimer's Society UK",
     embedding: null,
   },
 
@@ -1035,7 +1304,15 @@ A comprehensive falls risk assessment should include: a physiotherapist assessme
 Environmental modifications that significantly reduce fall risk include: removing loose rugs and all trip hazards from walkways; ensuring all areas of the home including outdoor paths are well-lit, particularly at night; installing grab rails beside the toilet and in the shower; using non-slip mats in the bathroom; and ensuring the person always wears well-fitting, flat-soled, non-slip enclosed shoes rather than loose slippers. A nightlight in the hallway between bedroom and bathroom is one of the single most effective interventions for preventing night-time falls.
 
 Regular supervised physical activity specifically targeting strength, balance, and coordination — including physiotherapy-guided programmes, tai chi, and seated exercises — reduces falls risk and should be maintained for as long as possible. In New Zealand, ask the person's GP for referral to community physiotherapy, or arrange it through a NASC needs assessment where the person is eligible for funded support.`,
-    tags: ['falls', 'fall prevention', 'balance', 'physiotherapy', 'grab rails', 'JCCPA', 'home safety'],
+    tags: [
+      'falls',
+      'fall prevention',
+      'balance',
+      'physiotherapy',
+      'grab rails',
+      'JCCPA',
+      'home safety',
+    ],
     source_url: 'https://www.jccpa.org.hk/en/about-dementia/caring-tips/fall-prevention-tips/',
     source_org: 'Jockey Club Centre for Positive Ageing',
     embedding: null,
@@ -1067,7 +1344,15 @@ The fundamental principle is to use the person's remaining mobility rather than 
 Carer back safety is as important as the person's safety — many dementia carers sustain serious back injuries from poor transfer technique. Maintain a wide base of support with feet apart, keep your back straight, bend at the knees, and stay close to the person throughout the movement. Never attempt to catch someone who is falling; instead, guide their descent gently and call for assistance. Attempting to catch a falling person is a leading cause of carer injury.
 
 For people who can no longer weight-bear safely, mechanical aids — slide sheets, transfer boards, and ceiling or floor hoists — should be sourced and used before injury occurs, not after. An occupational therapist can assess the person's transfer needs and recommend appropriate equipment and technique. The person's occupational therapist, or a community physiotherapist, can provide formal training in safe manual handling, which is strongly recommended before attempting complex assisted transfers without professional guidance.`,
-    tags: ['manual handling', 'transfers', 'mobility', 'back safety', 'JCCPA', 'hoist', 'occupational therapist'],
+    tags: [
+      'manual handling',
+      'transfers',
+      'mobility',
+      'back safety',
+      'JCCPA',
+      'hoist',
+      'occupational therapist',
+    ],
     source_url: 'https://www.jccpa.org.hk/en/about-dementia/caring-tips/safe-lifting/',
     source_org: 'Jockey Club Centre for Positive Ageing',
     embedding: null,
@@ -1085,7 +1370,16 @@ Cultural and linguistic factors play a significant role in this gap. Dementia in
 The CPT project focuses on three priorities: raising awareness within the Chinese community and promoting brain health to reduce dementia risk; providing education and support for carers and families in culturally appropriate formats, including Chinese-language resources and videos; and implementing a Living Well programme for Chinese people living with dementia that connects participants to culturally relevant activities and peer support.
 
 For Chinese New Zealanders affected by dementia, chinesedementia.org.nz provides bilingual information in English and Chinese and can connect families to culturally appropriate local services. Contact chineseservices@dementiaauckland.org.nz for enquiries.`,
-    tags: ['Chinese community', 'culturally appropriate', 'bilingual', 'Cantonese', 'Mandarin', 'stigma', 'CPT project', 'New Zealand'],
+    tags: [
+      'Chinese community',
+      'culturally appropriate',
+      'bilingual',
+      'Cantonese',
+      'Mandarin',
+      'stigma',
+      'CPT project',
+      'New Zealand',
+    ],
     source_url: 'https://www.chinesedementia.org.nz/',
     source_org: 'Chinese Dementia NZ (CPT Project)',
     embedding: null,
@@ -1101,7 +1395,14 @@ Practise the core techniques (covered in the communication guidance in this libr
 Learning works best with feedback and repetition. Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) run carer education sessions and support groups where you can learn techniques, role-play situations, and hear what has worked for others facing the same challenges. Carers NZ (carers.net.nz) also offers guidance and peer connection.
 
 New tools are emerging — including interactive and AI-assisted practice apps — that let carers rehearse conversations in a safe, low-pressure way. These complement, rather than replace, face-to-face education and real experience. Whatever the format, the goal is the same: enough confidence and practised habit that you can stay calm and connected in the moment, even when a situation is escalating.`,
-    tags: ['communication practice', 'carer education', 'skills', 'confidence', 'role-play', 'Alzheimers NZ'],
+    tags: [
+      'communication practice',
+      'carer education',
+      'skills',
+      'confidence',
+      'role-play',
+      'Alzheimers NZ',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -1117,7 +1418,15 @@ The Alzheimer's Society and dementia specialists emphasise the importance of rec
 Where bilingual carers are unavailable, professional interpreting services are the appropriate resource for medical appointments and clinical discussions. In New Zealand, ask the GP, hospital, or health service to arrange a professional interpreter — public health services can book interpreters, and Language Line provides free phone interpreting in many languages for many government services. Plan for this in advance, and avoid using family members as interpreters in clinical settings — they may be emotionally affected by what is being discussed and may not accurately convey clinical information in either direction.
 
 Non-verbal cultural connection through music from the person's country of origin, culturally significant foods, familiar cultural objects, and family photographs is valuable for all people with dementia but particularly for those whose verbal communication has become unreliable. For Chinese communities in New Zealand, chinesedementia.org.nz provides bilingual resources. For Pacific communities and all New Zealanders, Dementia NZ (dementia.nz) and Alzheimer's NZ (alzheimers.org.nz) can connect families to appropriate support.`,
-    tags: ['CALD', 'culturally diverse', 'first language', 'interpreter', 'Language Line', 'multilingual', 'Pacific communities'],
+    tags: [
+      'CALD',
+      'culturally diverse',
+      'first language',
+      'interpreter',
+      'Language Line',
+      'multilingual',
+      'Pacific communities',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -1135,7 +1444,14 @@ First, see the person's GP promptly. A sudden change in behaviour often has a tr
 The approach treats behaviour as communication of an unmet need, physical discomfort, emotional distress, or environmental factor — identifying and addressing that underlying cause rather than suppressing the behaviour with medication. This aligns with best-practice guidelines and reduces the use of antipsychotic medicines, which carry significant risks in older people with dementia, including increased risk of stroke and falls.
 
 For families who have been told nothing more can be done, or who are considering residential placement primarily because of unmanageable behaviour, seek a specialist assessment before that decision is made — it often leads to significant improvement and restored confidence. For advice at any time, call Healthline (0800 611 116, free 24/7 nurse advice) or the Alzheimers NZ support line (0800 004 001); in an emergency, or if there is risk of harm, call 111.`,
-    tags: ['behaviour crisis', 'BPSD', 'specialist support', 'behaviour management', 'non-pharmacological', 'mental health services for older people'],
+    tags: [
+      'behaviour crisis',
+      'BPSD',
+      'specialist support',
+      'behaviour management',
+      'non-pharmacological',
+      'mental health services for older people',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
@@ -1151,7 +1467,15 @@ BrainTrack is a free app designed for individuals who are concerned about their 
 Ask Annie is a mobile app developed to support home care workers and family carers of people with dementia. It provides practical, evidence-based guidance on common caregiving challenges — including managing agitation, supporting personal hygiene, responding to difficult behaviours, recognising warning signs that warrant medical attention, and improving communication — in a searchable, in-the-moment format. Ask Annie is designed to be consulted during care delivery, making evidence-based guidance available regardless of whether a trainer or support coordinator is present.
 
 Both tools complement — rather than replace — professional dementia support. For specialist clinical guidance, contact the Alzheimers NZ support line (0800 004 001), Healthline (0800 611 116) for free 24/7 nurse advice, or arrange a consultation with a GP. For ongoing carer support and skills development, Carers NZ (carers.net.nz) provides guidance and peer connection.`,
-    tags: ['BrainTrack', 'Ask Annie', 'digital health', 'app', 'cognitive monitoring', 'carer support', 'technology'],
+    tags: [
+      'BrainTrack',
+      'Ask Annie',
+      'digital health',
+      'app',
+      'cognitive monitoring',
+      'carer support',
+      'technology',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -1159,7 +1483,7 @@ Both tools complement — rather than replace — professional dementia support.
   {
     id: 'wellbeing_010',
     category: 'wellbeing',
-    title: 'NASC — New Zealand\'s Gateway to Funded Home and Residential Care',
+    title: "NASC — New Zealand's Gateway to Funded Home and Residential Care",
     content: `In New Zealand, publicly funded home and community support for people with dementia is arranged through a Needs Assessment and Service Coordination service (NASC), funded by Health New Zealand – Te Whatu Ora. For dementia carers, understanding the NASC pathway is essential for securing funded support that can improve quality of life and delay premature residential placement — and early engagement produces far better outcomes than last-minute crisis navigation.
 
 The process usually begins with your GP, who can refer the person to the local NASC. A NASC assessor — often a nurse, social worker, or occupational therapist — visits the person and whānau at home or in hospital to work out how much support is needed and what publicly funded services the person is eligible for. Support coordinated through NASC can include personal care (help with washing, dressing, and toileting), household assistance, day programmes, and respite care. Services may combine publicly funded support with user-pays options and help from whānau and friends.
@@ -1167,7 +1491,16 @@ The process usually begins with your GP, who can refer the person to the local N
 Start the process early: needs can change quickly with dementia, and arranging support before a crisis prevents the gap between need and help from becoming unmanageable. If needs increase, ask the NASC for a reassessment rather than waiting.
 
 When care needs progress to rest-home or hospital-level care, the NASC assessment also determines eligibility for residential care. The cost of long-term residential care may be covered by the Residential Care Subsidy, which is income- and asset-tested and administered by Work and Income (see the separate guidance on residential care and financial support). Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and your local Dementia NZ service (dementia.nz) can help families navigate the NASC process, choose a provider, and self-advocate. More information on needs assessments is at govt.nz.`,
-    tags: ['NASC', 'needs assessment', 'home support', 'Health NZ', 'Te Whatu Ora', 'residential care', 'Residential Care Subsidy', 'funding'],
+    tags: [
+      'NASC',
+      'needs assessment',
+      'home support',
+      'Health NZ',
+      'Te Whatu Ora',
+      'residential care',
+      'Residential Care Subsidy',
+      'funding',
+    ],
     source_url: 'https://www.govt.nz/browse/health/help-in-your-home/needs-assessment/',
     source_org: 'Health New Zealand – Te Whatu Ora',
     embedding: null,
@@ -1185,8 +1518,17 @@ The Health NZ framework organises brain health actions around three interconnect
 The framework explicitly recognises that lifestyle changes work best when they are suited to a person's age and stage of life, enjoyable, sustainable, ideally undertaken with others, and long-term. Starting small and building gradually is encouraged — small, consistent changes accumulate into significant protection over time.
 
 This resource is freely available at healthnz.govt.nz and directly complements the work of Alzheimers NZ (alzheimers.org.nz, 0800 004 001) and Dementia NZ (dementia.nz) in supporting New Zealanders affected by or at risk of dementia. People with specific concerns about brain health should discuss personalised risk reduction priorities with their GP.`,
-    tags: ['Health NZ', 'brain health', 'Te Whatu Ora', 'prevention', 'New Zealand', 'lifestyle', 'modifiable risk'],
-    source_url: 'https://www.healthnz.govt.nz/health-topics/conditions-treatments/brain-and-nerves/dementia/brain-health-for-adults',
+    tags: [
+      'Health NZ',
+      'brain health',
+      'Te Whatu Ora',
+      'prevention',
+      'New Zealand',
+      'lifestyle',
+      'modifiable risk',
+    ],
+    source_url:
+      'https://www.healthnz.govt.nz/health-topics/conditions-treatments/brain-and-nerves/dementia/brain-health-for-adults',
     source_org: 'Health New Zealand Te Whatu Ora',
     embedding: null,
   },
@@ -1201,7 +1543,14 @@ In New Zealand, the Dementia Prevention Research Clinics — run by Brain Resear
 Participation is voluntary and for research purposes only; it is free and does not affect the person's usual medical care. Healthy volunteers are as valuable as those with memory concerns, because many prevention and early-detection studies need cognitively healthy older adults as comparison groups. Involvement can include cognitive assessments, lifestyle and health evaluations, brain imaging, and blood tests, usually repeated every couple of years.
 
 To find out more or to volunteer, visit brainresearch.co.nz or ask your GP about current dementia and brain-ageing studies. For people who want to contribute to a future with less dementia beyond their own health choices, taking part in well-designed research is one of the most direct and meaningful contributions available.`,
-    tags: ['dementia research', 'research participation', 'Brain Research NZ', 'Dementia Prevention Research Clinics', 'prevention research', 'volunteer'],
+    tags: [
+      'dementia research',
+      'research participation',
+      'Brain Research NZ',
+      'Dementia Prevention Research Clinics',
+      'prevention research',
+      'volunteer',
+    ],
     source_url: 'https://www.brainresearch.co.nz/clinics/',
     source_org: 'Brain Research New Zealand',
     embedding: null,
@@ -1217,7 +1566,16 @@ The programme serves community members aged 60 and above who have concerns about
 The programme operates through a network of community partner organisations across Hong Kong's districts, recognising that accessible, geographically distributed service delivery substantially increases help-seeking — particularly in communities where stigma reduces self-referral to centralised specialist services. A family intervention and empowerment approach, treating carer wellbeing and capability as equally important to the wellbeing of the person with dementia, is central to the programme's design.
 
 This community-based proactive screening model reflects the direction of best practice globally. In New Zealand, Alzheimers NZ (alzheimers.org.nz, 0800 004 001), your local Dementia NZ service (dementia.nz), and Health NZ – Te Whatu Ora (healthnz.govt.nz) promote early assessment and provide post-diagnostic support consistent with these principles, including through the Dementia Mate Wareware initiative.`,
-    tags: ['JCCPA', 'Jockey Club', 'community screening', 'early detection', 'Hong Kong', 'MCI', 'prevention programme', 'family empowerment'],
+    tags: [
+      'JCCPA',
+      'Jockey Club',
+      'community screening',
+      'early detection',
+      'Hong Kong',
+      'MCI',
+      'prevention programme',
+      'family empowerment',
+    ],
     source_url: 'https://www.jccpa.org.hk/en/projects/dscs/',
     source_org: 'Jockey Club Centre for Positive Ageing',
     embedding: null,
@@ -1235,7 +1593,15 @@ Medication management devices include automatic pill dispensers that open at pro
 Personal safety devices include GPS tracking wristbands and pendants that provide real-time location information when a person wanders; medic alert bracelets engraved with the person's name, diagnosis, and emergency contact; and personal emergency response buttons that summon help if the person falls or becomes distressed alone. Telehealth and remote check-in services allow family members to maintain connection and monitor wellbeing from a distance — particularly valuable when the primary carer does not live in the same household.
 
 Introduce assistive technology collaboratively and transparently. A sudden introduction of monitoring technology without explanation can feel invasive and damage trust. Explaining what each device does, involving the person in choosing it, and framing it around their safety and continued independence is the most effective and respectful approach.`,
-    tags: ['assistive technology', 'GPS tracker', 'pill dispenser', 'smart home', 'medic alert', 'remote monitoring', 'independence'],
+    tags: [
+      'assistive technology',
+      'GPS tracker',
+      'pill dispenser',
+      'smart home',
+      'medic alert',
+      'remote monitoring',
+      'independence',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,
@@ -1251,7 +1617,15 @@ The most important single water safety intervention is setting the household hot
 Cold exposure is an underappreciated hazard: people with dementia may sit in cold rooms without recognising discomfort, wear seasonally inappropriate clothing without initiating a change, or go outdoors in cold weather without adequate protection. Regularly check body temperature and room temperature — particularly in winter — rather than relying on the person to self-report feeling cold. Establish a habit of checking that the person's clothing is appropriate for current conditions.
 
 Unsupervised access to garden ponds, swimming pools, or open water features requires specific attention: dementia impairs hazard recognition and a fall near or into water can be fatal. Fence or secure all open water features, and ensure the person cannot access them without supervision. For people known to seek out water, assess whether a locked garden gate or other barrier is warranted.`,
-    tags: ['water safety', 'scalding', 'temperature', 'hot water thermostat', 'hypothermia', 'garden pond', 'cold exposure'],
+    tags: [
+      'water safety',
+      'scalding',
+      'temperature',
+      'hot water thermostat',
+      'hypothermia',
+      'garden pond',
+      'cold exposure',
+    ],
     source_url: 'https://www.nhs.uk/conditions/dementia/carers/',
     source_org: 'NHS UK',
     embedding: null,
@@ -1267,7 +1641,15 @@ A formal occupational therapy (OT) home assessment is the gold standard. OTs who
 Carers who want to begin an assessment themselves can use checklists published by Alzheimers NZ as a starting framework. Key areas include: entry and exit security; fall hazards in bathrooms, bedrooms, hallways, stairs, and outdoor areas; kitchen safety including appliances, cleaning products, and sharp items; fire safety including smoke alarms, stove guards, and heater placement; medication security; lighting adequacy including nightlights; and garden and outdoor safety.
 
 Prioritise modifications based on the person's specific current and near-term risks — a phased approach spread over several months is manageable and sustainable. Keep a written record of what has been modified and when, so that future reassessments can track progress and identify gaps. For carers who find the process overwhelming, Alzheimers NZ (0800 004 001) or the person's GP can help identify occupational therapy or specialist support.`,
-    tags: ['home safety assessment', 'occupational therapist', 'OT', 'home modification', 'checklist', 'proactive', 'Alzheimers NZ'],
+    tags: [
+      'home safety assessment',
+      'occupational therapist',
+      'OT',
+      'home modification',
+      'checklist',
+      'proactive',
+      'Alzheimers NZ',
+    ],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
     embedding: null,

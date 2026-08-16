@@ -26,8 +26,12 @@ export function useEffectiveAvatarProfile(avatarId) {
   const [, setProbed] = useState(getUnityAvailability() !== null);
   useEffect(() => {
     let on = true;
-    probeUnity().then(() => { if (on) setProbed(true); });
-    return () => { on = false; };
+    probeUnity().then(() => {
+      if (on) setProbed(true);
+    });
+    return () => {
+      on = false;
+    };
   }, []);
   return resolveEffectiveProfile(avatarId);
 }

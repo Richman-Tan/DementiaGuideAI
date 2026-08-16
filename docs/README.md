@@ -7,7 +7,7 @@ Start here. Everything below is grouped by what you are trying to do.
 | Doc | What it covers |
 |---|---|
 | [mobile-app.md](mobile-app.md) | Expo/React Native app: tech stack, screens, structure, path aliases, native builds, API keys |
-| [`web/README.md`](../web/README.md) | The Vite web app: mock vs real mode, architecture, Vercel deploy |
+| [`apps/web/README.md`](../apps/web/README.md) | The Vite web app: mock vs real mode, architecture, Vercel deploy |
 | [`packages/core/README.md`](../packages/core/README.md) | The shared core — what may live in `@core` and why the boundary exists |
 
 ## Architecture
@@ -42,7 +42,7 @@ These are point-in-time academic artefacts, not living reference docs.
 |---|---|
 | `report/` | Mid-year report: drafts, `figures/`, `baseline/`, `eval/` data. **Paths here are stable on purpose** — they may be cited in submitted work, so do not reorganise. |
 | `seminar/` | Conference-day deck prompt, research notes, speaker script |
-| `web/` | The design prompt used to generate the web front-end |
+| `web/` | The design prompt used to generate the web front-end (this is `docs/web/`, not the app) |
 
 ## Conventions
 

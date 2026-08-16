@@ -6,8 +6,15 @@ ROLLBACK blocks. **Keep exactly one `match_chunks` function at all times** —
 multiple overloads with defaulted extra args make the app's 4-named-arg call
 ambiguous (PostgREST PGRST203) and break all retrieval (see 2026-07-13 fix).
 
+On a **fresh database** run `000_supabase-setup.sql` first — it creates the
+schema, the `match_chunks` function, the indexes and the RLS policy in one go,
+reproducing production 1:1. Then apply anything below it that is not already
+folded in. On an existing database it has already been run; start from the
+dated files.
+
 | File | Status | Purpose |
 |---|---|---|
+| `000_supabase-setup.sql` | 🏁 fresh databases only | Full schema: `knowledge_chunks`, pgvector + tsvector indexes, `match_chunks`, `search_vector` trigger, RLS policy |
 | `2026-07-13_fix_match_chunks_overload.sql` | ✅ run 2026-07-13 | Dropped ambiguous overloads (PGRST203 outage) |
 | `2026-07-13_recategorise_isupport.sql` | ✅ run 2026-07-13 | iSupport chunks out of `caregiving` → `isupport-course` |
 | `2026-07-16_production_snapshot_request.sql` | ✅ run 2026-07-17 | Read-only dump of production `match_chunks` + trigger + indexes + policy |

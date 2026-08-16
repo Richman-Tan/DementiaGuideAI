@@ -8,10 +8,10 @@ in step:
 
 | Consumer | Where the alias lives |
 |---|---|
-| Mobile (Metro) | `babel.config.js` → `module-resolver` |
-| Types | `tsconfig.json` → `paths` |
-| Mobile tests | `jest.config.js` → `moduleNameMapper` |
-| Web (dev + build) | `web/vite.config.js` → `resolve.alias` |
+| Mobile (Metro) | `apps/mobile/babel.config.js` → `module-resolver` |
+| Types | `apps/mobile/tsconfig.json` → `paths` |
+| Mobile tests | `apps/mobile/jest.config.js` → `moduleNameMapper` |
+| Web (dev + build) | `apps/web/vite.config.js` → `resolve.alias` |
 | Node scripts | plain relative `require('../../packages/core/…')` |
 
 **Inside this directory, imports are relative** (`./voiceConfig`,
@@ -28,7 +28,7 @@ consumed by a bundler (Metro or Vite), which resolves them regardless.
 ## The rule for what belongs here
 
 **No platform imports and no outward dependencies.** Nothing in `@core` may
-import from `src/` (the mobile app) or `web/`. Dependencies point inward only.
+import from `apps/mobile/src/` or `apps/web/src/`. Dependencies point inward only.
 If a module needs React Native, the DOM, browser audio, or microphone timing, it
 is *not* core.
 
@@ -46,16 +46,16 @@ drawn where it is:
 | `avatar/blendshapeTranslator` | Maps viseme segments to CC4 blendshape payloads — a data transform, shared verbatim by the mobile and web Unity bridges. |
 
 The `voice`/`tts`/`lipsync`/`avatar` folders arrived when the web app was found to
-be importing nine modules straight out of `src/`. The boundary was originally drawn
+be importing nine modules straight out of the mobile tree. The boundary was originally drawn
 per *folder*, which left partly-shared folders behind; it is now drawn per *file*.
 
 | Deliberately NOT in core | Why |
 |---|---|
-| `src/lib/voice/prewarm.js` | Warms Expo AV and the native recognizer — platform handles |
-| `src/lib/tts/{ttsService,ttsMode,azureTtsService,elevenLabsService}` | Own playback, `expo-av` and provider credentials |
-| `src/lib/lipsync/azureVisemeMap.js` | Azure Speech SDK viseme IDs — used only by the mobile Azure path |
-| `src/lib/stt/`, `src/lib/audio/` | Platform APIs |
-| `src/lib/supabaseService.ts`, `openaiService.js` | Carry platform config and credentials |
+| `apps/mobile/src/lib/voice/prewarm.js` | Warms Expo AV and the native recognizer — platform handles |
+| `apps/mobile/src/lib/tts/{ttsService,ttsMode,azureTtsService,elevenLabsService}` | Own playback, `expo-av` and provider credentials |
+| `apps/mobile/src/lib/lipsync/azureVisemeMap.js` | Azure Speech SDK viseme IDs — used only by the mobile Azure path |
+| `apps/mobile/src/lib/stt/`, `apps/mobile/src/lib/audio/` | Platform APIs |
+| `apps/mobile/src/lib/supabaseService.ts`, `openaiService.js` | Carry platform config and credentials |
 
 ## Why this exists: the backend
 
@@ -64,4 +64,4 @@ runs in Node today, so that move should be a relocation rather than an
 untangling. See `docs/architecture/backend-plan.md` for the target.
 
 Keeping the rule above intact is what preserves that option — the moment
-something in here imports from `src/`, the RAG core stops being portable.
+something in here imports from an app, the RAG core stops being portable.

@@ -3,19 +3,23 @@
 The web build of DementiaGuideAI: the same product as the iOS/Android app —
 RAG chat with inline citations, a full voice loop, and the real-time 3D
 avatar — implemented from the Claude Design prototype ("Full web build
-review") and reusing the mobile app's core libraries from `../src/lib`.
+review") and reusing the shared engines from `packages/core` as `@core/…`.
 
 **Live:** https://dementiaguide-web.vercel.app
 
 ## Run
 
+Install once from the **repo root** (`npm install`) — this is an npm workspace and
+shares the root lockfile. Then, from here:
+
 ```bash
-cd web
-npm install
 npm run dev        # http://localhost:5173 (or --port)
 npm test           # vitest — interop canary + settings/citation mapping
 npm run build      # static bundle in dist/
 ```
+
+Or from the repo root without changing directory: `npm run web`, and
+`npm run test:web` / `npm run build -w apps/web`.
 
 `cp .env.example .env` and fill `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`
 (same values as the mobile app's `EXPO_PUBLIC_*` vars) for live retrieval.
@@ -39,13 +43,13 @@ Settings → Advanced to go live:
 
 ## Architecture notes
 
-- `src/lib/rag`, `src/lib/lipsync`, `src/lib/tts`, sentence tracking and
+- `apps/mobile/src/lib/rag`, `apps/mobile/src/lib/lipsync`, `apps/mobile/src/lib/tts`, sentence tracking and
   speculative retrieval are imported **verbatim from the mobile app** via the
   `@` alias (see `vite.config.js` — a tiny transform converts the five
   deliberately-CJS config modules to ESM).
 - The Three.js avatar renderer is **generated** from the mobile WebView
   template: `node scripts/extract-renderer.mjs` re-derives
-  `src/avatar/three/renderer.js` from `AvatarVRM.js`. Edit the mobile source,
+  `apps/web/src/avatar/three/renderer.js` from `AvatarVRM.js`. Edit the mobile source,
   not the generated file.
 - GLB models are referenced from `../assets` (aria 26 MB, zhenja 8.8 MB,
   backdrop 9.6 MB) and content-hashed into `dist/` at build.
@@ -59,15 +63,18 @@ Settings → Advanced to go live:
 
 ## Deploy (Vercel)
 
-The bundle imports from `../src`, which Vercel's cloud build can't see when
-the project root is `web/` — deploy **prebuilt**:
+The bundle imports `packages/core` and `assets/` from outside this directory,
+which Vercel's cloud build can't see when the project root is `apps/web/` —
+deploy **prebuilt**:
 
 ```bash
-cd web
+cd apps/web
 export VITE_SUPABASE_URL=… VITE_SUPABASE_ANON_KEY=…   # vercel build stages a copy without .env
 vercel build --prod --yes
 vercel deploy --prebuilt --prod --yes
 ```
 
-(If you later connect the Git repo instead, set Root Directory to `web` and
-enable "Include source files outside of the Root Directory".)
+(If you later connect the Git repo instead, set Root Directory to `apps/web` and
+enable "Include source files outside of the Root Directory". The project's Root
+Directory setting must be updated from `web` to `apps/web` after the monorepo
+restructure, whichever route you take.)

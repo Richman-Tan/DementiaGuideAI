@@ -5,7 +5,7 @@ import { createReadStream, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoCore = path.resolve(__dirname, '../packages/core');
+const repoCore = path.resolve(__dirname, '../../packages/core');
 
 // The five deliberately-CommonJS shared libs (see core/rag/ragConfig.js header).
 // They are all `const X = …; module.exports = { shorthand list };` with at most
@@ -104,6 +104,9 @@ export default defineConfig(({ mode }) => {
         // the mobile WebView source at build time; that reads the file with fs.)
         '@core': repoCore,
         '@web': path.resolve(__dirname, 'src'),
+        // Shared 3D models live at the workspace root because both apps load
+        // them. Aliased so neither app counts ../ levels to reach them.
+        '@assets': path.resolve(__dirname, '../../assets'),
       },
     },
     define: {
@@ -114,7 +117,7 @@ export default defineConfig(({ mode }) => {
     },
     assetsInclude: ['**/*.glb'],
     server: {
-      fs: { allow: [path.resolve(__dirname, '..')] },
+      fs: { allow: [path.resolve(__dirname, '../..')] },
     },
     test: {
       environment: 'node',

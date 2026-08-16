@@ -19,6 +19,12 @@ in step:
 `scripts/ingest/ingest.mjs` pull core in with a bare `require()` and no alias
 configured at all.
 
+For the same reason `package.json` here deliberately has **no `"type": "module"`**.
+The `rag/` files are CommonJS on purpose so plain Node can `require()` them;
+declaring the package ESM would break `scripts/eval` and `scripts/ingest`. The
+`voice/`, `tts/`, `lipsync/` and `avatar/` files use ESM syntax and are only ever
+consumed by a bundler (Metro or Vite), which resolves them regardless.
+
 ## The rule for what belongs here
 
 **No platform imports and no outward dependencies.** Nothing in `@core` may

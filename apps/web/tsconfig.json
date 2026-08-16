@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@web/*": ["src/*"],
+      "@core/*": ["../../packages/core/*"],
+      "@assets/*": ["../../assets/*"]
+    }
+  },
+  "include": ["src/**/*", "tests/**/*", "../../packages/core/**/*"]
+}

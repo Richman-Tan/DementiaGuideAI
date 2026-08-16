@@ -31,11 +31,11 @@ import { AVATAR_PROFILES, AVATAR_PROFILE_LIST, DEFAULT_AVATAR_ID } from '@/featu
 
 // All model assets must be required statically — Metro cannot handle dynamic require().
 const ASSET_MAP = {
-  sdk:       require('../../../../assets/characters/aria/model.glb'),
-  rpm:       require('../../../../assets/characters/zhenja/zhenja.glb'),
-  metahuman: require('../../../../assets/characters/eric/eric.glb'),
+  sdk:       require('@assets/characters/aria/model.glb'),
+  rpm:       require('@assets/characters/zhenja/zhenja.glb'),
+  metahuman: require('@assets/characters/eric/eric.glb'),
 };
-const COZY_ROOM_ASSET = require('../../../../assets/cozy_living_room_baked_small.glb');
+const COZY_ROOM_ASSET = require('@assets/cozy_living_room_baked_small.glb');
 
 
 const QUICK_CHIPS = [

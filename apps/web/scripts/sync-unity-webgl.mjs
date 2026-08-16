@@ -20,7 +20,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const webRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const src = resolve(webRoot, '../unity-avatar/UnityAvatarProject/Builds/WebGL/Build');
+const src = resolve(webRoot, '../../unity-avatar/UnityAvatarProject/Builds/WebGL/Build');
 const dest = join(webRoot, 'public', 'unity', 'Build');
 const HOBBY_BYTES = 100 * 1024 * 1024; // Hobby per-file cap — warn only
 const MAX_BYTES = 950 * 1024 * 1024;   // just under the Pro 1 GB cap — fail

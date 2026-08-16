@@ -24,7 +24,7 @@ const { mergeContents } = require('@expo/config-plugins/build/utils/generateCode
 // podspec here, and let CocoaPods do all the Xcode wiring via `pod install`.
 // Rebuild this folder's contents whenever Unity-side scripts/assets/scene
 // change — see the Phase 5 plan for the exact rebuild steps.
-const UNITY_LIBRARY_SOURCE_DIR = path.join(__dirname, '..', 'unity-avatar', 'UnityAvatarProject', 'UnityLibrary');
+const UNITY_LIBRARY_SOURCE_DIR = path.join(__dirname, '..', '..', '..', 'unity-avatar', 'UnityAvatarProject', 'UnityLibrary');
 const UNITY_LIBRARY_DIR_NAME = 'UnityLibrary';
 
 // Android sibling of the committed iOS UnityLibrary/: the Gradle project that
@@ -33,7 +33,7 @@ const UNITY_LIBRARY_DIR_NAME = 'UnityLibrary';
 // ios/ for CocoaPods), Gradle supports out-of-tree modules via projectDir —
 // so the Android mods POINT at the export instead of copying ~1.5 GB into
 // android/ on every prebuild.
-const ANDROID_EXPORT_SOURCE_DIR = path.join(__dirname, '..', 'unity-avatar', 'UnityAvatarProject', 'android-export');
+const ANDROID_EXPORT_SOURCE_DIR = path.join(__dirname, '..', '..', '..', 'unity-avatar', 'UnityAvatarProject', 'android-export');
 const ANDROID_UNITY_LIBRARY_DIR = path.join(ANDROID_EXPORT_SOURCE_DIR, 'unityLibrary');
 
 // Unity's exported launcher marks these APK entries uncompressed so il2cpp can

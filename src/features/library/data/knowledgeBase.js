@@ -1,4 +1,4 @@
-// Dementia care knowledge base — 70 chunks, 10 per category.
+// Dementia care knowledge base — 77 chunks (10 per category, plus extensions).
 // Content paraphrased from authoritative sources; see source_url per chunk.
 // `embedding` is null at build time; populated at runtime from cache or API.
 
@@ -1270,6 +1270,90 @@ Prioritise modifications based on the person's specific current and near-term ri
     tags: ['home safety assessment', 'occupational therapist', 'OT', 'home modification', 'checklist', 'proactive', 'Alzheimers NZ'],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
+    embedding: null,
+  },
+
+  // ─── NEW EXTERNAL SOURCES (2026-08-12, pending owner review before commit) ────
+  {
+    id: 'wellbeing_011',
+    category: 'wellbeing',
+    title: 'Protecting Finances and Preventing Scams',
+    content: `Financial safety becomes an increasing concern as dementia progresses, and Dementia New Zealand recommends acting early — while the person can still be involved in the decisions — rather than waiting until a scam or costly mistake forces the issue. People with dementia are especially vulnerable to financial exploitation, so a few simple banking safeguards make a real difference.
+
+Everyday measures recommended by banks such as Westpac include setting up account alerts for unusual activity, arranging automatic payments or direct debits so regular bills are never missed, and simplifying banking arrangements to match the person's current needs. A withdrawal limit on debit or EFTPOS cards reduces the impact of any single mistake or scam, and adding a trusted contact to the account means the bank can notify a family member if something looks concerning.
+
+Alongside banking safeguards, the essential legal documents to put in place early are an up-to-date will, an Enduring Power of Attorney (EPOA) for Property, and a separate EPOA for Personal Care and Wellbeing. Talking openly with family or a trusted friend about future financial wishes — while the person can still take part in the conversation — avoids difficult guesswork later and reduces family conflict.
+
+Local Dementia Advisors and bank branch staff can help put these safeguards in place. Dementia New Zealand provides free information and education on managing money with dementia, and acting early — rather than after a scam or financial mistake has already happened — is the single most protective step a family can take.`,
+    tags: ['finances', 'money management', 'scams', 'fraud protection', 'EPOA', 'banking', 'financial safety'],
+    source_url: 'https://dementia.nz/resources/managing-money-when-living-with-dementia/',
+    source_org: 'Dementia NZ',
+    embedding: null,
+  },
+  {
+    id: 'clinical_011',
+    category: 'clinical',
+    title: 'Other and Less Common Causes of Dementia',
+    content: `Dementia is not a single disease — it is an umbrella term for a collection of symptoms caused by over 100 different underlying conditions that damage the brain. Alzheimer's disease, vascular dementia, and Lewy body dementia account for the large majority of diagnoses, but several less commonly discussed causes are worth families knowing about, particularly because some are preventable or have a different care pathway.
+
+Alcohol-related brain injury (ARBI) results from sustained heavy alcohol consumption and can produce dementia-like symptoms; because the underlying cause is behavioural rather than purely neurodegenerative, some improvement is possible with abstinence and nutritional support, particularly if identified early. HIV-associated dementia reflects the direct and indirect effects of the human immunodeficiency virus on brain tissue. Traumatic brain injury can also lead to dementia over time, including Chronic Traumatic Encephalopathy (CTE) from repeated head impacts — well documented in contact-sport athletes — and dementia following a single severe blast or impact injury.
+
+Less common still are childhood dementia — a group of over 100 rare genetic disorders that cause progressive loss of skills in children — and Down syndrome-associated Alzheimer's disease, which occurs at much higher rates and often at a younger age in people with Down syndrome because of the extra copy of chromosome 21 (which carries the amyloid precursor protein gene). Limbic-predominant Age-related TDP-43 Encephalopathy (LATE) is a further example: a biologically distinct condition, only identified as a separate entity in recent years, that can look clinically like Alzheimer's disease but has different underlying pathology and is now understood to be a common contributor to dementia symptoms in the oldest age groups.
+
+Because the underlying cause shapes both prognosis and treatment options, families noticing an unusual symptom pattern — for example, symptoms starting well before age 65, or a history of heavy alcohol use, significant head injury, or HIV — should ask their GP for referral to a specialist who can investigate the specific cause rather than assuming a standard Alzheimer's or vascular pattern.`,
+    tags: ['causes of dementia', 'alcohol-related brain injury', 'ARBI', 'HIV-associated dementia', 'traumatic brain injury', 'CTE', 'childhood dementia', 'Down syndrome', 'LATE'],
+    source_url: 'https://www.dementia.org.au/about-dementia/causes-and-types-dementia',
+    source_org: 'Dementia Australia',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_011',
+    category: 'best-practices',
+    title: 'Cognitive Stimulation Therapy and Other Cognitive Therapies',
+    content: `For people with mild-to-moderate dementia, several structured, evidence-based therapies exist to help maintain or improve memory and thinking — distinct from medication, and worth discussing with a GP or dementia specialist alongside any pharmacological treatment.
+
+Cognitive Stimulation Therapy (CST) is a group-based programme of themed discussion and activity sessions — puzzles, games, and structured conversation — typically run as 14 sessions of around 45 minutes with 5 to 8 participants, ideally repeated for a second course of 14 sessions. CST is designed to build concentration, language skills (word-finding, naming, comprehension), memory, and confidence in group conversation, and is usually available through community programmes or hospital outpatient services; a GP mental health plan can sometimes help with the cost.
+
+Cognitive training, sometimes called "brain training," involves repetitive thinking exercises of increasing difficulty — often app-based or pen-and-paper puzzles similar to games. It has reasonable evidence for mild cognitive impairment and may help delay the onset of dementia, but it is not yet clear whether it helps people who already have a dementia diagnosis, and improvements tend to be specific to the skill practised rather than generalising broadly. Simple, enjoyable options with a similar cognitive benefit include jigsaw puzzles, music and singing, dancing, card games, and word or number puzzles — particularly when done socially, which adds an additional layer of benefit.
+
+Cognitive rehabilitation is the most individualised of the three: a therapist or occupational therapist works with the person to set a personally meaningful goal — for example, someone who repeatedly forgets they have left the stove on might work on attention exercises, a simplified recipe, or an external memory aid like a timer alarm. It has a good evidence base in mild cognitive impairment and mild dementia but is more time-consuming and intensive to deliver than group programmes.
+
+Ask the GP or a memory service about local CST groups or referral to an occupational therapist for cognitive rehabilitation — access varies by region, so a dementia advisor can help identify what's available locally.`,
+    tags: ['cognitive stimulation therapy', 'CST', 'cognitive training', 'cognitive rehabilitation', 'brain training', 'non-pharmacological', 'memory'],
+    source_url: 'https://forwardwithdementia.au/for-carers/managing-changes/3-5-cognitive-therapies-and-rehabilitation/',
+    source_org: 'Forward with Dementia',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_012',
+    category: 'best-practices',
+    title: 'Helping Someone with Dementia Stay Focused on a Task',
+    content: `People with dementia typically find it much harder than others to filter out irrelevant sensory information — their brains have to work substantially harder to block out background noise, movement, and clutter, which makes sustaining attention on a single task genuinely more effortful, not simply a matter of willpower or motivation.
+
+A few practical adjustments make a real difference. Do one thing at a time rather than encouraging any kind of multi-tasking, and build in frequent short breaks rather than expecting sustained focus over a long stretch. Schedule anything mentally demanding for whenever the person is naturally most alert — for most people this is the morning — and save routine or physical tasks for the afternoon, when concentration typically wanes; plan a rest before any evening activity for the same reason.
+
+The environment matters as much as the task itself: reduce background noise and visual clutter, and make sure lighting is genuinely adequate — older adults need roughly twice the light intensity of a much younger adult to see as clearly, so a room that looks well lit to a carer may not be well lit enough for the person they are supporting.
+
+A simple but effective technique for multi-step tasks is verbal rehearsal: ask the person to repeat the instruction back in their own words before they start — for example, "get the prescription from the kitchen" — which helps anchor the goal and makes them less likely to be derailed by something else they notice on the way. What works varies between individuals, so it is worth trying a few of these adjustments deliberately and noting which ones actually help in practice.`,
+    tags: ['attention', 'focus', 'task completion', 'environment', 'lighting', 'communication', 'daily activities'],
+    source_url: 'https://forwardwithdementia.au/for-carers/managing-changes/3-9-helping-people-with-dementia-to-stay-on-task/',
+    source_org: 'Forward with Dementia',
+    embedding: null,
+  },
+  {
+    id: 'homesafety_011',
+    category: 'home-safety',
+    title: 'Living Alone with Dementia: Safety and Support Planning',
+    content: `Many people with early or mild dementia can continue living alone safely, but doing so well takes deliberate planning rather than waiting until a crisis forces the issue. Whether solo living remains safe depends on the individual's circumstances, the type and stage of their dementia, any other health conditions, and the support available around them.
+
+Rather than trying to solve every possible risk at once, start with a short, specific list of what is actually difficult for the person right now, or what worries you most — this is far more manageable than an open-ended worry about "everything that could go wrong." Build a layered support network around them: informal support from friends, family, and neighbours; formal support through aged-care services, the GP, and other health and social services; and peer support through dementia-friendly community groups.
+
+Simple, informal safety checks can be surprisingly effective — one carer described how a neighbour knew the person living alone was safely up and about each morning because of a small daily routine (hanging a towel out), without either party needing to frame it as "checking up" on them. Formal technology can extend this further: reminders, item-finding tools, fall detection, and other safety and social-connection technologies are increasingly available, and an assistive-technology directory can help identify options suited to a particular home and situation.
+
+If the person is reluctant to discuss extra support, it often helps to first understand how much insight they have into the areas of difficulty — someone who does not recognise a problem exists is unlikely to accept a solution framed around it. Revisit the plan regularly rather than treating it as a one-off decision, since needs — and what "safe enough" looks like — change as dementia progresses.`,
+    tags: ['living alone', 'independence', 'safety planning', 'support network', 'assistive technology', 'peer support'],
+    source_url: 'https://forwardwithdementia.au/for-carers/managing-changes/3-20-living-alone-with-dementia/',
+    source_org: 'Forward with Dementia',
     embedding: null,
   },
 ];

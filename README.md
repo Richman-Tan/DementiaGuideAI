@@ -81,8 +81,10 @@ generated native projects. `apps/mobile/{ios,android}/` are `expo prebuild`
 output and are not tracked.
 
 One lockfile at the root covers every workspace — `npm install` once, from the
-root. `react`, `three` and `@supabase/supabase-js` are held at matching versions
-across both apps so the shared code compiles against a single copy of each.
+root. `react` and `@supabase/supabase-js` are held at matching versions across
+both apps so the shared code compiles against a single copy of each. `three` is
+declared only by `apps/web`, which imports it as a module; the mobile avatar
+loads Three from a CDN inside its WebView, so Metro never bundles it.
 
 ---
 

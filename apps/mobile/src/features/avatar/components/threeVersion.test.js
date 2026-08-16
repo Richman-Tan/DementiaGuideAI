@@ -14,7 +14,6 @@
 
 const { readFileSync } = require('fs');
 const { join } = require('path');
-const semver = require('semver');
 
 const REPO = join(__dirname, '..', '..', '..', '..', '..', '..');
 const read = (p) => readFileSync(join(REPO, p), 'utf8');
@@ -30,18 +29,23 @@ describe('Three.js version seam', () => {
 
   it('uses one CDN version throughout AvatarVRM.js', () => {
     // The importmap has two entries and DRACOLoader.setDecoderPath a third.
-    // Updating only some of them is the obvious way to get this wrong.
+    // Updating only some of them is the obvious way to get this wrong. The
+    // floor is two rather than three so that self-hosting the DRACO decoder —
+    // which is what apps/web already does — stays open without tripping this.
     const found = [...avatarVrm.matchAll(new RegExp(CDN_VERSION, 'g'))].map((m) => m[1]);
-    expect(found.length).toBeGreaterThanOrEqual(3);
+    expect(found.length).toBeGreaterThanOrEqual(2);
     expect([...new Set(found)]).toHaveLength(1);
   });
 
-  it('renders with a version satisfying the npm range apps/web builds against', () => {
-    // apps/web is the source of truth: it imports npm three genuinely, and the
-    // extracted renderer runs against that copy.
-    const range = JSON.parse(read('apps/web/package.json')).dependencies.three;
-    const pinned = avatarVrm.match(CDN_VERSION)[1];
-    expect(semver.satisfies(pinned, range)).toBe(true);
+  it('renders the exact version apps/web resolves, not merely a satisfying one', () => {
+    // Compare against the lockfile, not apps/web's `^` range. A range is too
+    // weak to be a guard: with `^0.185.0` declared, npm resolves 0.185.1 while
+    // a CDN pin of 0.185.0 still "satisfies" it — which is precisely the drift
+    // this test exists to prevent, passing. The lockfile is the artefact that
+    // says what the web build actually runs.
+    const lock = JSON.parse(read('package-lock.json'));
+    const resolved = lock.packages['node_modules/three'].version;
+    expect(avatarVrm.match(CDN_VERSION)[1]).toBe(resolved);
   });
 
   it('keeps the extract-renderer replacement key on the same version', () => {

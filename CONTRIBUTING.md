@@ -13,7 +13,7 @@ npm install
 
 That covers `apps/mobile`, `apps/web` and `packages/core`. Don't run `npm install`
 inside a workspace; it will create a nested `node_modules` and undo the hoisting
-that keeps `react`, `three` and `@supabase/supabase-js` at a single shared copy.
+that keeps `react` and `@supabase/supabase-js` at a single shared copy.
 
 The Unity project is a submodule and is only needed for avatar work:
 

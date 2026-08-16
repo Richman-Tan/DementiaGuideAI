@@ -59,13 +59,9 @@ module.exports = [
   },
   {
     // Jest test files (plain JS): declare the test globals so no-undef passes.
-    // `require` already resolves via the CommonJS source type, but the module
-    // path globals do not — a test that reads a fixture off disk needs them.
     files: ['**/*.test.js', '**/*.test.jsx'],
     languageOptions: {
       globals: {
-        __dirname: 'readonly',
-        __filename: 'readonly',
         describe: 'readonly',
         it: 'readonly',
         test: 'readonly',
@@ -75,6 +71,20 @@ module.exports = [
         beforeAll: 'readonly',
         afterAll: 'readonly',
         jest: 'readonly',
+      },
+    },
+  },
+  {
+    // Module-path globals for the CommonJS test surfaces only — a test that
+    // reads a fixture off disk needs them, and `require` alone is not enough.
+    // Deliberately NOT repo-wide: apps/web is `"type": "module"`, so its tests
+    // are ESM where __dirname genuinely does not exist. Declaring it there
+    // would silence a real no-undef rather than allow a legitimate one.
+    files: ['apps/mobile/**/*.test.{js,jsx}', 'packages/core/**/*.test.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
       },
     },
   },

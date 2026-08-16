@@ -1,0 +1,33 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.unityavatar'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.unityavatar"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+dependencies {
+  // compileOnly on the JAR FILE, not project(':unityLibrary'): unityLibrary
+  // holds unity-classes.jar as a local `implementation fileTree` dependency,
+  // which AGP does NOT export to consumers' compile classpaths — a project()
+  // dependency here leaves com.unity3d.player.* unresolved. The app still gets
+  // its single runtime copy through the `implementation project(':unityLibrary')`
+  // edge injected into app/build.gradle by plugins/withUnityFramework.js
+  // (compileOnly keeps this module from double-packaging the classes).
+  // findProject guard: :unityLibrary only exists once the Unity Android export
+  // has been committed (unity-avatar/UnityAvatarProject/android-export) and the
+  // config plugin has wired settings.gradle; without it, prebuild/gradle sync
+  // still configure cleanly (compilation of this module then fails, which is
+  // the correct loud signal that the export is missing).
+  if (findProject(':unityLibrary') != null) {
+    compileOnly files("${project(':unityLibrary').projectDir}/libs/unity-classes.jar")
+  }
+}

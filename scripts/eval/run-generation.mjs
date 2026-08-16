@@ -5,7 +5,7 @@
 //
 // Methodology note: generation runs at temperature 0 with a fixed seed for
 // run-to-run comparability; production uses temperature 0.7. This is recorded
-// in every output file. See docs/rag-evaluation-plan.md.
+// in every output file. See docs/rag/rag-evaluation-plan.md.
 //
 // Usage:
 //   node scripts/eval/run-generation.mjs                     # all sets, active prompt version
@@ -21,8 +21,8 @@ import { requireEnv, retrieve, openaiJson, gitSha, outDir, sleep } from './lib.m
 
 const require = createRequire(import.meta.url);
 const { QUESTIONS, questionText } = require('./questions.js');
-const { CHAT_MODEL, PROMPT_VERSION, maxTokensForStyle } = require('../../src/lib/rag/ragConfig.js');
-const { buildSystemPrompt, buildUserContent } = require('../../src/lib/rag/prompt.js');
+const { CHAT_MODEL, PROMPT_VERSION, maxTokensForStyle } = require('../../packages/core/rag/ragConfig.js');
+const { buildSystemPrompt, buildUserContent } = require('../../packages/core/rag/prompt.js');
 
 const args = process.argv.slice(2);
 const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };

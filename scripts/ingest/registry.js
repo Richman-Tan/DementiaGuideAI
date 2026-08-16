@@ -1,7 +1,7 @@
 // Source registry — the single list of what the knowledge base should contain.
 // Every ingested chunk carries the provenance recorded here (audit F-13).
-// See docs/rag-source-inventory.md for the human-readable inventory with
-// review verdicts, and docs/rag-target-architecture.md §5 for the refresh flow.
+// See docs/rag/rag-source-inventory.md for the human-readable inventory with
+// review verdicts, and docs/rag/rag-target-architecture.md §5 for the refresh flow.
 //
 // Entry fields:
 //   document_id     stable id; versioned re-ingestions get a NEW document_id
@@ -26,7 +26,7 @@ const REGISTRY = [
     licence_url: null,
     source_version: '2026-07',
     loader: 'curated-js',
-    local_path: 'src/features/library/data/knowledgeBase.js',
+    local_path: 'apps/mobile/src/features/library/data/knowledgeBase.js',
     category: null, // per-chunk categories come from the file itself
     enabled: true,
     notes: '77 hand-authored chunks (10 per category, plus extensions). Paraphrased from cited orgs; per-chunk source_org/source_url preserved. 2026-08-12: added 5 chunks from Dementia NZ, Dementia Australia, and Forward with Dementia (wellbeing_011, clinical_011, bestpractices_011/012, homesafety_011) — pending owner fact-check before ingest.',

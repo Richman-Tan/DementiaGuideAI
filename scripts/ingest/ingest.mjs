@@ -22,7 +22,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { getEntry, REGISTRY } = require('./registry.js');
 const { chunkDocument, contentHash, normalise, stripPdfBoilerplate } = require('./chunking.js');
-const { EMBEDDING_MODEL, CATEGORIES } = require('../../src/lib/rag/ragConfig.js');
+const { EMBEDDING_MODEL, CATEGORIES } = require('../../packages/core/rag/ragConfig.js');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
@@ -109,8 +109,12 @@ const sbHeaders = (extra = {}, { write = true } = {}) => {
 
 function loadCuratedJs(entry) {
   // knowledgeBase.js is an ES module data file; extract the array literal.
-  const src = readFileSync(resolve(ROOT, entry.local_path), 'utf8')
-    .replace(/^export const KNOWLEDGE_BASE/m, 'const KNOWLEDGE_BASE');
+  const path = resolve(ROOT, entry.local_path);
+  // Guarded like loadPdf/loadText: local_path is a plain repo-relative string, so
+  // nothing type-checks or lints it. A repo reorganisation moved this file once
+  // already and the bare readFileSync just threw ENOENT with no hint why.
+  if (!existsSync(path)) throw new Error(`Source file missing: ${entry.local_path}`);
+  const src = readFileSync(path, 'utf8').replace(/^export const KNOWLEDGE_BASE/m, 'const KNOWLEDGE_BASE');
   // eslint-disable-next-line no-new-func
   const kb = new Function(`${src}\nreturn KNOWLEDGE_BASE;`)();
   return kb.map(c => ({

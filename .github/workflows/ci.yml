@@ -25,8 +25,10 @@ jobs:
           node-version: 20
           cache: npm
 
-      # `npm ci` runs the postinstall hook (patch-package), applying the
-      # @supabase/supabase-js Hermes dynamic-import patch.
+      # One `npm ci` covers every workspace — apps/mobile, apps/web and
+      # packages/core share the root lockfile. The postinstall hook
+      # (patch-package) applies the @supabase/supabase-js Hermes
+      # dynamic-import patch to the hoisted copy in the root node_modules.
       - name: Install dependencies
         run: npm ci
 
@@ -36,5 +38,39 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Runs both suites: jest (apps/mobile + packages/core + scripts) and
+      # vitest (apps/web, including the mobile↔web interop tests).
       - name: Test
         run: npm test
+
+  prebuild-smoke:
+    # Exercises every config-plugin code path (apps/mobile/plugins/withUnityFramework.js)
+    # on a checkout WITHOUT the git-lfs Unity artifacts — the iOS copy mod and
+    # all Android mods must hit their warn-and-skip branches and still produce
+    # a valid native project. Catches plugin syntax/anchor regressions without
+    # multi-GB artifacts or a native toolchain.
+    name: Expo prebuild smoke (config plugins)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Install from the workspace root, not apps/mobile — the lockfile lives there.
+      - name: Install dependencies
+        run: npm ci
+        working-directory: .
+
+      - name: Prebuild Android
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Prebuild iOS
+        run: npx expo prebuild --platform ios --no-install

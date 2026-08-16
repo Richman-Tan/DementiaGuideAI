@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en-NZ">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="DementiaGuide AI — dementia care answers you can actually talk to. Grounded, cited guidance by text or voice." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" sizes="48x48" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#4A7C8E" />
+    <title>DementiaGuide AI</title>
+    <script>
+      // Apply persisted theme before first paint to avoid a light-mode flash.
+      try {
+        var s = JSON.parse(localStorage.getItem('dg_settings') || '{}');
+        var dark = s.darkMode === null || s.darkMode === undefined
+          ? matchMedia('(prefers-color-scheme: dark)').matches
+          : !!s.darkMode;
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        document.documentElement.dataset.hc = s.highContrast ? '1' : '0';
+        document.documentElement.style.fontSize = (17 * (s.textScale || 1)) + 'px';
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,61 @@
+name: Task
+description: A concrete piece of work — refactor, chore, cleanup, or maintenance
+labels: ["type: chore", "status: needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For work whose shape is already known. If you're proposing something new, use **Feature request**. If something is broken, use **Bug report**.
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface
+      multiple: true
+      options:
+        - Mobile app (Expo / React Native)
+        - Web app (Vite)
+        - Shared core (packages/core)
+        - Unity avatar
+        - RAG pipeline / knowledge base
+        - Scripts and tooling (ingest, eval, migrations)
+        - Build, CI, or dependencies
+        - Docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What needs doing
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What this unblocks, prevents, or improves. If it's a latent problem, say what would eventually break.
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: Checkable outcomes, not a plan. Someone else should be able to tell whether this is finished.
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: |
+        Constraints, prior art, affected files, links into `docs/`. Worth knowing:
+        `docs/report/` paths are frozen (cited in submitted academic work), and `packages/core` must keep no platform imports.
+    validations:
+      required: false

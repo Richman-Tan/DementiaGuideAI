@@ -1,5 +1,5 @@
 // Deterministic retrieval metrics — pure functions over ranked id lists.
-// No LLM involvement anywhere in this module (see docs/rag-evaluation-plan.md).
+// No LLM involvement anywhere in this module (see docs/rag/rag-evaluation-plan.md).
 // Plain CommonJS so Jest and the .mjs runners share one implementation.
 //
 // Conventions:

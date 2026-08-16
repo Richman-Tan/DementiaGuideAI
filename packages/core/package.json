@@ -1,0 +1,7 @@
+{
+  "name": "@dementiaguide/core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Platform-agnostic logic shared by the mobile app, the web app and the Node scripts. Imported as @core/… — see README.md.",
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "DementiaGuideAi",
+    "slug": "DementiaGuideAi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4A7C8E"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.DementiaGuideAi"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#4A7C8E"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.DementiaGuideAi"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-asset",
+      "./plugins/withUnityFramework",
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone so you can talk to Aria.",
+          "speechRecognitionPermission": "Allow $(PRODUCT_NAME) to use speech recognition so Aria can understand you faster."
+        }
+      ]
+    ]
+  }
+}

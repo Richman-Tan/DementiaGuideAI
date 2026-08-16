@@ -13,8 +13,8 @@ import {
   MIN_SIMILARITY,
   RETRIEVAL_OVERSAMPLE,
   MAX_PER_SOURCE_FAMILY,
-} from '../../src/lib/rag/ragConfig.js';
-import { capBySourceFamily } from '../../src/lib/rag/retrieval.js';
+} from '../../packages/core/rag/ragConfig.js';
+import { capBySourceFamily } from '../../packages/core/rag/retrieval.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const ROOT = resolve(__dirname, '../..');

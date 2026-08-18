@@ -24,13 +24,23 @@ create sequence if not exists public.study_participant_seq as integer start 1;
 
 -- Never hand out a number that already exists, and never move backwards. This
 -- runs on every re-run of the migration, so it must be safe to repeat: rewinding
--- the sequence mid-study would reissue live participant numbers.
+-- the sequence mid-study would reissue live participant numbers, and creeping it
+-- forward would silently skip numbers.
+--
+-- `is_called` is the subtlety. A freshly created sequence sits at
+-- (last_value = 1, is_called = false), which means "the next call returns 1" —
+-- not "1 has been used". Reading last_value alone and adding one starts the
+-- study at P02 and then advances by one on every re-run, so the arithmetic has
+-- to ask what the sequence would hand out next, not what it last stored.
 select setval(
   'public.study_participant_seq',
   greatest(
-    (select coalesce(max(participant_number), 0) from public.study_sessions),
-    (select last_value from public.study_participant_seq)
-  ) + 1,
+    -- lowest number that cannot collide with a row already in the table
+    (select coalesce(max(participant_number), 0) + 1 from public.study_sessions),
+    -- what this sequence would hand out next, right now
+    (select case when is_called then last_value + 1 else last_value end
+       from public.study_participant_seq)
+  ),
   false                                    -- false: the next nextval RETURNS this value
 );
 

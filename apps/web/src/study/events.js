@@ -10,8 +10,9 @@
 // unaffected. See docs/study/ethics/data-management-plan.md for what is and is
 // not collected.
 import { loadStudy, saveStudy, nextSeq } from './studyStore.js';
+import { apiUrl } from '../services/apiBase.js';
 
-const ENDPOINT = '/api/study/event';
+const ENDPOINT = apiUrl('/api/study/event');
 const QUEUE_KEY = 'dg_study_queue';
 const FLUSH_AFTER_MS = 2000;
 const FLUSH_AT_COUNT = 20;
@@ -152,7 +153,12 @@ export function flushOnUnload() {
       accessCode: s.accessCode,
       events: q.slice(0, MAX_BATCH),
     })],
-    { type: 'application/json' }
+    // text/plain, not application/json. The API is a different origin, and
+    // application/json is not CORS-safelisted — the browser would demand a
+    // preflight it cannot complete while the page is unloading, losing the
+    // final batch precisely when there is no second chance to send it. The
+    // endpoint parses the body itself (see jsonBody in _lib/guard.js).
+    { type: 'text/plain;charset=UTF-8' }
   );
   // Deliberately does NOT clear the queue. sendBeacon returning true means the
   // request was queued for transfer, not that it arrived — and this runs on

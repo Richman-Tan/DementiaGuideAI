@@ -7,6 +7,7 @@
 import { normalizeSpokenText } from '@core/tts/normalizeSpokenText';
 import { timeoutSignal } from '@core/net/withTimeout';
 import { elevenTransport } from './transport.js';
+import { apiUrl } from './apiBase.js';
 import { openaiClient } from './openaiClient.js';
 import { emit } from '../study/events.js';
 
@@ -22,7 +23,7 @@ async function elevenTtsWithAlignment(text, voiceId, speechRate, visemeWeights) 
   // Proxied: model, format and voice settings are fixed server-side, so only the
   // text, voice and rate travel. Direct: the original request, unchanged.
   const url = transport.proxied
-    ? '/api/eleven-tts'
+    ? apiUrl('/api/eleven-tts')
     : `${ELEVENLABS_BASE}/v1/text-to-speech/${encodeURIComponent(voiceId)}/with-timestamps`;
   const body = transport.proxied
     ? { text, voiceId, speechRate }

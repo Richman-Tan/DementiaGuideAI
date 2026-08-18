@@ -133,6 +133,19 @@ export default function StudyScreen() {
     const done = BACKGROUND.every((q) => answer(q.id) !== undefined || q.optional);
     return (
       <Page title="A few questions about you" lead="Every question can be skipped.">
+        {/* The code is allocated by the server, so this is the first moment the
+            participant can see it — and they need it to ask for their data to be
+            deleted, or to pick the session up on another device. */}
+        {st.participantCode && (
+          <div style={{ ...card, marginBottom: '1.25rem', borderColor: 'var(--primary)' }}>
+            <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--text)' }}>
+              Your participant code is <strong>{st.participantCode}</strong>. Please write
+              it down. It is how you can ask us to delete your answers later, and how you
+              would carry on if you had to continue on another device. We don’t collect
+              your name, so it is the only way we can find your session.
+            </p>
+          </div>
+        )}
         {BACKGROUND.map((q) => (
           <div key={q.id} style={{ ...card, marginBottom: '.9rem' }}>
             <p style={{ margin: '0 0 .8rem', fontSize: '1.02rem', lineHeight: 1.5 }}>{q.text}</p>
@@ -529,6 +542,9 @@ function ConsentStep({ onNext, onStop }) {
 function SetupStep({ onStop }) {
   const st = useStudy();
   const [participantCode, setParticipantCode] = useState(st.participantCode || '');
+  // Open by default only when a code is already on file, i.e. this really is a
+  // resume — otherwise the field stays out of a first-timer's way.
+  const [resuming, setResuming] = useState(Boolean(st.participantCode));
   const [accessCode, setAccessCode] = useState(st.accessCode || '');
   const [group, setGroup] = useState(st.group || 'caregiver');
   const [mic, setMic] = useState(null);
@@ -592,19 +608,6 @@ function SetupStep({ onStop }) {
 
   return (
     <Page title="Let’s get set up" lead="Two codes from your invitation email, and a quick microphone check.">
-      <div style={{ ...card, marginBottom: '.9rem' }}>
-        <label style={{ display: 'block', fontSize: '1rem', marginBottom: '.5rem', color: 'var(--text)' }}>
-          Your participant code <span style={{ color: 'var(--text2)' }}>(looks like P07)</span>
-        </label>
-        <input
-          value={participantCode}
-          onChange={(e) => setParticipantCode(e.target.value)}
-          placeholder="P07"
-          autoComplete="off"
-          style={inputStyle}
-        />
-      </div>
-
       <div style={{ ...card, marginBottom: '.9rem' }}>
         <label style={{ display: 'block', fontSize: '1rem', marginBottom: '.5rem', color: 'var(--text)' }}>
           Your access code
@@ -675,6 +678,44 @@ function SetupStep({ onStop }) {
         )}
       </div>
 
+      {/* Only for someone continuing an earlier session on a different device or
+          a cleared browser. First-time participants are allocated a code by the
+          server — asking everyone to invent one is what let two people collide on
+          the same number and be silently merged into one session. */}
+      <div style={{ ...card, marginBottom: '.9rem' }}>
+        <button
+          type="button"
+          onClick={() => setResuming((v) => !v)}
+          aria-expanded={resuming}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: 0,
+            border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left',
+            color: 'var(--text2)', fontSize: '1rem', minHeight: 44,
+          }}
+        >
+          <span style={{ flex: 1 }}>I’ve done part of this before and have a participant code</span>
+          <span>{resuming ? '▾' : '▸'}</span>
+        </button>
+        {resuming && (
+          <div style={{ paddingTop: '.75rem' }}>
+            <label style={{ display: 'block', fontSize: '1rem', marginBottom: '.5rem', color: 'var(--text)' }}>
+              Your participant code <span style={{ color: 'var(--text2)' }}>(looks like P07)</span>
+            </label>
+            <input
+              value={participantCode}
+              onChange={(e) => setParticipantCode(e.target.value)}
+              placeholder="P07"
+              autoComplete="off"
+              style={inputStyle}
+            />
+            <p style={{ margin: '.6rem 0 0', fontSize: '.92rem', color: 'var(--text2)', lineHeight: 1.6 }}>
+              Leave this blank unless you were given a code earlier — you’ll pick up
+              where you left off.
+            </p>
+          </div>
+        )}
+      </div>
+
       {error && (
         <p role="alert" style={{ color: 'var(--amber)', lineHeight: 1.6 }}>{error}</p>
       )}
@@ -683,7 +724,7 @@ function SetupStep({ onStop }) {
         <Button
           onClick={start}
           disabled={
-            busy || !participantCode.trim() || !accessCode.trim() || !GROUPS.includes(group)
+            busy || !accessCode.trim() || !GROUPS.includes(group)
             // A PLWD session cannot proceed without a support person present.
             || (group === 'plwd' && supporterPresent !== true)
           }

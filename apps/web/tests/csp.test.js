@@ -16,10 +16,10 @@ import { fileURLToPath } from 'node:url';
 
 const webRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const html = readFileSync(join(webRoot, 'index.html'), 'utf8');
-// Public routing and headers live in the ROOT vercel.json now: under Vercel
-// Services they own traffic for the whole deployment, not for one service.
-const repoRoot = join(webRoot, '..', '..');
-const vercel = JSON.parse(readFileSync(join(repoRoot, 'vercel.json'), 'utf8'));
+// Routing and headers belong to the web deployment again: apps/web and apps/api
+// are two separate Vercel projects, so each owns its own vercel.json and there
+// is no root file to inherit from.
+const vercel = JSON.parse(readFileSync(join(webRoot, 'vercel.json'), 'utf8'));
 
 const csp = (vercel.headers ?? [])
   .flatMap((entry) => entry.headers ?? [])
@@ -53,7 +53,7 @@ describe('production CSP covers the inline bootstrap scripts', () => {
       expect(
         scriptSrc,
         `index.html inline script #${i + 1} is not allowed by the CSP.\n`
-          + `Add ${hash} to script-src in the root vercel.json (replacing the stale hash).`,
+          + `Add ${hash} to script-src in apps/web/vercel.json (replacing the stale hash).`,
       ).toContain(hash);
     });
   });

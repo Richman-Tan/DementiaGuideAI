@@ -7,6 +7,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { loadStudy, saveStudy, clearStudy, isStudyMode } from './studyStore.js';
 import { emit, flush, installUnloadFlush, pendingCount, resetQueue } from './events.js';
+import { apiUrl } from '../services/apiBase.js';
 import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
 import { navigate } from '../state/router.js';
 import { getUnityAvailability, getUnityLoadState, probeUnity } from '../avatar/unity/unityBridge.js';
@@ -21,7 +22,7 @@ export const STEPS = [
 ];
 
 async function post(path, body, accessCode, accessToken = null) {
-  const resp = await fetch(path, {
+  const resp = await fetch(apiUrl(path), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -77,15 +78,23 @@ export function StudyProvider({ children }) {
   // ─── Session ──────────────────────────────────────────────────────────────
 
   const begin = useCallback(async ({ participantCode, accessCode, group, consent, consentTranscripts, supporterPresent = null }) => {
-    const code = normaliseParticipantCode(participantCode);
-    if (!code) throw new Error('That participant code does not look right — it should be like P07.');
+    // The participant code is optional. A first-time participant supplies none
+    // and the server allocates one; a returning participant is identified by the
+    // code already in the store, or by re-typing the one they were given if they
+    // are resuming on another device. Only reject a code that was actually
+    // entered and is malformed — an empty field is the normal path now.
+    const typed = participantCode ? normaliseParticipantCode(participantCode) : null;
+    if (participantCode && !typed) {
+      throw new Error('That participant code does not look right — it should be like P07.');
+    }
+    const code = typed || loadStudy().participantCode || null;
 
     // Persist first: the endpoint reads the access code from the store via the
     // event emitter, and a failed call should leave the codes on screen.
-    saveStudy({ participantCode: code, accessCode: accessCode.trim(), group });
+    saveStudy({ accessCode: accessCode.trim(), group, ...(code ? { participantCode: code } : {}) });
 
     const data = await post('/api/study/session', {
-      participantCode: code,
+      ...(code ? { participantCode: code } : {}),
       group,
       consent,
       consentTranscripts,

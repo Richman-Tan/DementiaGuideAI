@@ -4,7 +4,7 @@
 // gets the same session row and the same arm assignment, so a resumed session
 // cannot silently land in a different Latin-square cell.
 import { guard, readUserId } from '../_lib/guard.js';
-import { selectOne, insertReturning, adminConfigured } from '../_lib/supabaseAdmin.js';
+import { selectOne, insertReturning, rpc, adminConfigured } from '../_lib/supabaseAdmin.js';
 import {
   parseParticipantCode,
   normaliseParticipantCode,
@@ -38,9 +38,16 @@ export default async function handler(req, res) {
     renderer = '',
   } = req.body || {};
 
-  const number = parseParticipantCode(rawCode);
-  const participantCode = normaliseParticipantCode(rawCode);
-  if (number === null) {
+  // A code is optional. It is sent when the participant is RETURNING (the client
+  // has one stored, or they typed the one they were given to recover a session
+  // on another device); a first-time participant sends none and is allocated
+  // one. Since the study is handed round on one shared access code, nobody is
+  // assigning these by hand, and two people choosing the same number would be
+  // silently merged into a single session by the unique index.
+  const supplied = String(rawCode ?? '').trim() !== '';
+  let number = supplied ? parseParticipantCode(rawCode) : null;
+  let participantCode = supplied ? normaliseParticipantCode(rawCode) : null;
+  if (supplied && number === null) {
     res.status(400).json({ error: 'participant code should look like P07' });
     return;
   }
@@ -50,16 +57,18 @@ export default async function handler(req, res) {
   }
 
   let existing;
-  try {
-    existing = await selectOne(
-      'study_sessions',
-      'id,participant_code,participant_number,participant_group,arm_order,set_order,completed_at,step,stage_index,task_index',
-      `participant_code=eq.${encodeURIComponent(participantCode)}`
-    );
-  } catch (err) {
-    console.error(`[study] session lookup failed: ${err?.message ?? err}`);
-    res.status(500).json({ error: 'could not start session' });
-    return;
+  if (participantCode) {
+    try {
+      existing = await selectOne(
+        'study_sessions',
+        'id,participant_code,participant_number,participant_group,arm_order,set_order,completed_at,step,stage_index,task_index',
+        `participant_code=eq.${encodeURIComponent(participantCode)}`
+      );
+    } catch (err) {
+      console.error(`[study] session lookup failed: ${err?.message ?? err}`);
+      res.status(500).json({ error: 'could not start session' });
+      return;
+    }
   }
 
   if (existing) {
@@ -80,6 +89,28 @@ export default async function handler(req, res) {
       studyVersion: STUDY_VERSION,
     });
     return;
+  }
+
+  // First-time participant: take the next number from the sequence. Allocated
+  // here rather than in the client so it is atomic — two people starting in the
+  // same second get different numbers, which "read the max and add one" cannot
+  // guarantee under concurrency.
+  if (number === null) {
+    try {
+      // `{}`, not no argument: rpc() JSON.stringifies what it is given, and
+      // undefined would send a bodyless POST that PostgREST rejects.
+      number = await rpc('claim_participant_number', {});
+    } catch (err) {
+      console.error(`[study] participant number allocation failed: ${err?.message ?? err}`);
+      res.status(500).json({ error: 'could not start session' });
+      return;
+    }
+    if (!Number.isInteger(number) || number < 1) {
+      console.error(`[study] participant number allocation returned ${JSON.stringify(number)}`);
+      res.status(500).json({ error: 'could not start session' });
+      return;
+    }
+    participantCode = normaliseParticipantCode(`P${number}`);
   }
 
   const { armOrder, setOrder } = assignmentFor(number);

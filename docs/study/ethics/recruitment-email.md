@@ -127,9 +127,12 @@ Sent by the researcher; asks the organisation to forward, not to hand over conta
 > Thank you for offering to take part. I have attached the participant information
 > sheet — please read it before you start, and email me if anything is unclear.
 >
-> **Your participant code:** [P**]
 > **Your access code:** [code]
 > **Your link:** https://dementiaguide-web.vercel.app/#/study
+>
+> The app will give you a **participant code** near the start — please write it
+> down. I don't collect your name, so that code is the only way I could find your
+> answers again if you wanted them deleted.
 >
 > A few practical things:
 >

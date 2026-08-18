@@ -96,7 +96,9 @@ function unityBrotliHeaders() {
 // route opts out via `config.api.bodyParser === false`) plus res.status() and
 // res.json(). Dev only — `apply: 'serve'` keeps it out of the build entirely.
 function studyApiDevServer() {
-  const API_DIR = path.resolve(__dirname, '../api');
+  // apps/api/api — the handlers sit in the `api/` directory Vercel serves
+  // functions from, so the service root stays free for package.json and docs.
+  const API_DIR = path.resolve(__dirname, '../api/api');
   return {
     name: 'dg-study-api-dev',
     apply: 'serve',

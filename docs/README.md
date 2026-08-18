@@ -11,9 +11,11 @@ Start here. Everything below is grouped by what you are trying to do.
 | [`apps/api/README.md`](../apps/api/README.md) | The backend service: holds the provider credentials, owns study and conversation data |
 | [`packages/core/README.md`](../packages/core/README.md) | The shared core — what may live in `@core` and why the boundary exists |
 
-`apps/web` and `apps/api` deploy together as two **Vercel Services** declared in
-the root `vercel.json`, on one domain: the browser calls `/api/*` same-origin, and
-mobile calls the same paths. See [architecture/backend-plan.md](architecture/backend-plan.md).
+`apps/web` and `apps/api` deploy as **two separate Vercel projects**, each with its
+own `vercel.json`. The browser reaches the API cross-origin, so the backend sets
+CORS headers against an allowlist and the web CSP names the API origin; mobile is
+unaffected. `apps/api/README.md` records why Vercel Services was not used. See
+[architecture/backend-plan.md](architecture/backend-plan.md).
 
 ## Architecture
 

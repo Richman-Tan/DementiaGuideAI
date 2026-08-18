@@ -91,16 +91,21 @@ because the app degrades to Three.js on its own if the build fails to load.
 
 ## Deploy
 
-This app and `apps/api` are two **Vercel Services** declared in the repo-root
-`vercel.json`; they build separately and deploy together on one domain, with
-`/api/*` routed to the backend and everything else here. Public routing, headers
-and the CSP live in that root file — under services they own traffic for the whole
-deployment, so they cannot sit in a per-service config.
+This app and `apps/api` are **two separate Vercel projects**. Routing, headers and
+the CSP for the web deployment live in this directory's `vercel.json`; the backend
+owns its own. See `apps/api/README.md` for why they are not Vercel Services.
 
-Deploy from the **repo root**, not from this directory:
+Because the API is a different origin, set `VITE_API_BASE_URL` to its origin —
+`apps/web/src/services/apiBase.js` is the only place that reads it — and add that
+same origin to `connect-src` in `vercel.json`. Miss the CSP entry and every call
+is blocked by the browser, which presents exactly like a backend outage. Leave
+`VITE_API_BASE_URL` unset for local development: `npm run dev` mounts the
+handlers as Vite middleware, so the paths stay relative and same-origin.
+
+Deploy from this directory:
 
 ```bash
-export VITE_SUPABASE_URL=… VITE_SUPABASE_ANON_KEY=…
+export VITE_SUPABASE_URL=… VITE_SUPABASE_ANON_KEY=… VITE_API_BASE_URL=…
 vercel build --prod --yes
 vercel deploy --prebuilt --prod --yes
 ```

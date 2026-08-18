@@ -11,7 +11,15 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { rpc, adminConfigured } from './supabaseAdmin.js';
 
-const DAILY_LIMIT = Number(process.env.STUDY_DAILY_REQUEST_LIMIT || 400);
+// Per-code, per-UTC-day. The study runs on ONE access code shared between all
+// participants, so this is a pool, not a per-person allowance: at the old 400
+// it covered roughly nine sessions a day in total, and the tenth participant
+// that day would have been refused mid-task with no way to tell that it was a
+// quota rather than a fault. Sized instead so a whole cohort can run in one
+// evening. The hard spend cap on the OpenAI account is the real backstop —
+// this meter only bounds the blast radius if the shared code gets passed on
+// further than intended.
+const DAILY_LIMIT = Number(process.env.STUDY_DAILY_REQUEST_LIMIT || 4000);
 
 const MIN_CODE_LENGTH = 16;
 
@@ -30,13 +38,68 @@ function validCodes() {
   return codes.filter((c) => c.length >= MIN_CODE_LENGTH);
 }
 
+/**
+ * The parsed JSON body.
+ *
+ * The unload flush uses sendBeacon, which must send a CORS-safelisted content
+ * type or the browser demands a preflight it cannot complete while the page is
+ * going away. That arrives as text/plain, which the platform leaves unparsed —
+ * so without this the last batch of a participant's session, the one carrying
+ * everything since the previous flush, would be rejected as malformed.
+ */
+export function jsonBody(req) {
+  const body = req.body;
+  if (typeof body !== 'string') return body || {};
+  try {
+    return JSON.parse(body) || {};
+  } catch {
+    return {};
+  }
+}
+
+// ─── CORS ────────────────────────────────────────────────────────────────────
+//
+// apps/api deploys as its own project, so the browser reaches it cross-origin.
+// Origins are allow-listed rather than answered with `*`: the study access code
+// travels in a custom header, and `*` would let any page in the participant's
+// browser call these endpoints with it.
+function allowedOrigins() {
+  return (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Applies the CORS headers. Returns true when the request was a preflight and
+ * has already been answered, in which case the caller must stop.
+ */
+export function applyCors(req, res) {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins().includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    // The response body is origin-independent but this header is not, so a
+    // shared cache must not hand one origin's response to another.
+    res.setHeader('Vary', 'Origin');
+  }
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-study-code, Authorization');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.status(204).end();
+    return true;
+  }
+  return false;
+}
+
 export function readCode(req, { allowBody = false } = {}) {
   const raw = req.headers['x-study-code'];
   const header = (Array.isArray(raw) ? raw[0] : raw || '').trim();
   if (header) return header;
   // navigator.sendBeacon cannot set headers, so the unload flush carries the
   // code in the body instead. Same secret, different envelope.
-  if (allowBody && typeof req.body?.accessCode === 'string') return req.body.accessCode.trim();
+  const code = allowBody ? jsonBody(req).accessCode : null;
+  if (typeof code === 'string') return code.trim();
   return '';
 }
 
@@ -84,6 +147,11 @@ export async function guard(req, res, {
   methods = ['POST'], meter = true, allowBodyCode = false,
   meterSuffix = '', meterLimit = null,
 } = {}) {
+  // Before the method check: a preflight arrives as OPTIONS, which no route
+  // lists, so checking methods first would answer every preflight with a 405
+  // and the real request would never be sent.
+  if (applyCors(req, res)) return null;
+
   if (!methods.includes(req.method)) {
     res.setHeader('Allow', methods.join(', '));
     res.status(405).json({ error: 'method not allowed' });

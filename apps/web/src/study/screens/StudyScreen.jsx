@@ -124,6 +124,7 @@ export default function StudyScreen() {
   }
 
   if (step === 'info') return <InfoStep onNext={st.next} onStop={st.stop} />;
+  if (step === 'group') return <GroupStep onNext={st.next} onStop={st.stop} />;
   if (step === 'consent') return <ConsentStep onNext={st.next} onStop={st.stop} />;
   if (step === 'setup') return <SetupStep onStop={st.stop} />;
 
@@ -460,12 +461,115 @@ function InfoStep({ onNext, onStop }) {
 // optional and declining it does not block participation
 // (docs/study/ethics/consent-form.md).
 
+/**
+ * Which group the participant is in — asked before consent, not at setup.
+ *
+ * Participants living with dementia consent on paper with their support person
+ * before the session (ethics/consent-form.md, "Form for a participant living
+ * with dementia"): plain language, 16 pt, signed. The eleven-item on-screen form
+ * is for the unmoderated groups, and putting a person with dementia through it
+ * anyway works against the fatigue safeguard in protocol §3.3 — the very reason
+ * the short form exists. The app can only tell the two apart if it asks first.
+ */
+function GroupStep({ onNext, onStop }) {
+  const st = useStudy();
+  const [group, setGroup] = useState(st.group || null);
+  return (
+    <Page title="Which best describes you?" lead="This decides which questions you are asked, and how long the session takes.">
+      <div style={card}>
+        <Choice
+          name="group"
+          options={[
+            { value: 'caregiver', label: 'I care, or recently cared, for someone with dementia' },
+            { value: 'worker', label: 'I work in dementia care or aged care' },
+            { value: 'plwd', label: 'I have a diagnosis of early-stage dementia' },
+            { value: 'pilot', label: 'I am helping test the study itself' },
+          ]}
+          value={group}
+          onChange={(v) => { setGroup(v); st.update({ group: v }); }}
+        />
+      </div>
+      <div style={{ marginTop: '1.5rem' }}>
+        <Button onClick={onNext} disabled={!GROUPS.includes(group)}>Continue</Button>
+      </div>
+      <StopBar onStop={onStop} />
+    </Page>
+  );
+}
+
+/**
+ * Confirms the paper consent already signed with the support person.
+ *
+ * Deliberately NOT a second consent. The approved process for this group is a
+ * signed paper form read through beforehand; re-collecting it on screen would
+ * both duplicate it and replace a supported conversation with an unsupported
+ * tick-box. This records that the paper step happened, and nothing more.
+ */
+function PlwdConsentStep({ onNext, onStop }) {
+  const st = useStudy();
+  const [confirmed, setConfirmed] = useState(false);
+  const [transcripts, setTranscripts] = useState(null);
+  return (
+    <Page
+      title="Before we start"
+      lead="You should already have gone through the paper consent form with the person supporting you."
+    >
+      <div style={card}>
+        <p style={{ margin: '0 0 1rem', fontSize: '1.05rem', lineHeight: 1.7, color: 'var(--text)' }}>
+          If you have not done that yet, please stop here and do it together first.
+        </p>
+        <label style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={confirmed}
+            onChange={(e) => setConfirmed(e.target.checked)}
+            style={{ width: 24, height: 24, marginTop: 2, flexShrink: 0, accentColor: 'var(--primary)' }}
+          />
+          <span style={{ fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--text)' }}>
+            We have read and signed the paper form together.
+          </span>
+        </label>
+      </div>
+
+      <div style={{ ...card, borderColor: 'var(--primary)', marginTop: '1.25rem' }}>
+        <p style={{ margin: '0 0 1rem', fontSize: '1.05rem', lineHeight: 1.7, color: 'var(--text)' }}>
+          May the researcher read what you type or say to the app, and what the app says
+          back? You can say no and still take part.
+        </p>
+        <Choice
+          name="transcripts"
+          options={[
+            { value: true, label: 'Yes, the researcher may read it' },
+            { value: false, label: 'No, they may not' },
+          ]}
+          value={transcripts}
+          onChange={setTranscripts}
+        />
+      </div>
+
+      <div style={{ marginTop: '1.5rem' }}>
+        <Button
+          onClick={() => { st.update({ consent: { paperFormSigned: true }, consentTranscripts: transcripts }); onNext(); }}
+          disabled={!confirmed || transcripts === null}
+        >
+          Continue
+        </Button>
+      </div>
+      <StopBar onStop={onStop} />
+    </Page>
+  );
+}
+
 function ConsentStep({ onNext, onStop }) {
   const st = useStudy();
   const [ticks, setTicks] = useState({});
   const [transcripts, setTranscripts] = useState(null);
   const allTicked = CONSENT_ITEMS.every((i) => ticks[i.id]);
   const ready = allTicked && transcripts !== null;
+
+  // Paper consent, signed with the support person, is the approved route for
+  // this group — see PlwdConsentStep.
+  if (st.group === 'plwd') return <PlwdConsentStep onNext={onNext} onStop={onStop} />;
 
   return (
     <Page title="Your consent" lead="Please tick each box to show you understand and agree.">
@@ -537,7 +641,8 @@ function SetupStep({ onStop }) {
   // resume — otherwise the field stays out of a first-timer's way.
   const [resuming, setResuming] = useState(Boolean(st.participantCode));
   const [accessCode, setAccessCode] = useState(st.accessCode || '');
-  const [group, setGroup] = useState(st.group || 'caregiver');
+  // Chosen on the group step, before consent — see GroupStep.
+  const group = st.group || 'caregiver';
   const [mic, setMic] = useState(null);
   const [supporterPresent, setSupporterPresent] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -609,21 +714,6 @@ function SetupStep({ onStop }) {
           placeholder="from your invitation email"
           autoComplete="off"
           style={inputStyle}
-        />
-      </div>
-
-      <div style={{ ...card, marginBottom: '.9rem' }}>
-        <p style={{ margin: '0 0 .8rem', fontSize: '1rem' }}>Which best describes you?</p>
-        <Choice
-          name="group"
-          options={[
-            { value: 'caregiver', label: 'I care, or recently cared, for someone with dementia' },
-            { value: 'worker', label: 'I work in dementia care or aged care' },
-            { value: 'plwd', label: 'I have a diagnosis of early-stage dementia' },
-            { value: 'pilot', label: 'I am helping test the study itself' },
-          ]}
-          value={group}
-          onChange={setGroup}
         />
       </div>
 

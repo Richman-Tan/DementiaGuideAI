@@ -16,7 +16,11 @@ import { useAuth } from '../state/AuthContext.jsx';
 const Ctx = createContext(null);
 
 export const STEPS = [
-  'intro', 'info', 'consent', 'setup', 'background',
+  // `group` precedes `consent` on purpose. Participants living with dementia
+  // consent on paper, with their support person, before the session — the
+  // eleven-item on-screen form is for the unmoderated groups. The app cannot
+  // honour that distinction unless it knows who it is talking to before it asks.
+  'intro', 'info', 'group', 'consent', 'setup', 'background',
   'armbrief', 'task', 'posttask', 'sus', 'likert',
   'recheck', 'debrief', 'done', 'stopped',
 ];
@@ -238,7 +242,8 @@ export function StudyProvider({ children }) {
     const s = loadStudy();
     switch (s.step) {
       case 'intro': return update({ step: 'info' });
-      case 'info': return update({ step: 'consent' });
+      case 'info': return update({ step: 'group' });
+      case 'group': return update({ step: 'consent' });
       case 'consent': return update({ step: 'setup' });
       case 'setup': return update({ step: 'background' });
       case 'background':

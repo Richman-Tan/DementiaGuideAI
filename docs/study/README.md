@@ -44,7 +44,8 @@ dementia in a supported, shortened variant.
 
 | File | What it is |
 |---|---|
-| [uahpec-application-notes.md](ethics/uahpec-application-notes.md) | **Start here.** Section-by-section mapping onto the UAHPEC form, plus the decisions needed from the supervisor |
+| [amendment-request.md](ethics/amendment-request.md) | **Start here.** Approval already exists; the architecture changed after it was granted, so this is what goes to the committee next |
+| [uahpec-application-notes.md](ethics/uahpec-application-notes.md) | Section-by-section mapping onto the UAHPEC form, plus the decisions needed from the supervisor |
 | [participant-information-sheet-caregiver.md](ethics/participant-information-sheet-caregiver.md) | PIS — family carers (primary group) |
 | [participant-information-sheet-careworker.md](ethics/participant-information-sheet-careworker.md) | PIS — health and aged-care workers |
 | [participant-information-sheet-plwd.md](ethics/participant-information-sheet-plwd.md) | PIS — people living with dementia, plain language, 16 pt |

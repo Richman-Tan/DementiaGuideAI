@@ -1,5 +1,6 @@
 // OpenAI text-to-speech — the last stage of the cascade in services/ttsClient.js.
-import { guard, requireEnv } from './_lib/guard.js';
+import { guard, requireEnv, readUserId } from './_lib/guard.js';
+import { recordUsage } from './_lib/usage.js';
 
 const VOICES = new Set(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']);
 const MAX_INPUT_CHARS = 4000;
@@ -44,6 +45,8 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Characters, not tokens — that is how speech providers bill.
+  recordUsage({ userId: readUserId(req), kind: 'tts', units: input.length, model: 'tts-1' });
   res.setHeader('Content-Type', 'audio/mpeg');
   res.setHeader('Cache-Control', 'no-store');
   res.status(200).send(Buffer.from(await upstream.arrayBuffer()));

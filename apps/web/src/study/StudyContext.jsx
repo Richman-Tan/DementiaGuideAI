@@ -4,12 +4,13 @@
 //
 // Task timing is anchored on wall-clock epochs rather than performance.now()
 // for the same reason: a reload must not restart the clock.
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { loadStudy, saveStudy, clearStudy, isStudyMode } from './studyStore.js';
 import { emit, flush, installUnloadFlush, resetQueue } from './events.js';
 import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
 import { navigate } from '../state/router.js';
 import { getUnityAvailability, getUnityLoadState, probeUnity } from '../avatar/unity/unityBridge.js';
+import { useAuth } from '../state/AuthContext.jsx';
 
 const Ctx = createContext(null);
 
@@ -19,10 +20,16 @@ export const STEPS = [
   'recheck', 'debrief', 'done', 'stopped',
 ];
 
-async function post(path, body, accessCode) {
+async function post(path, body, accessCode, accessToken = null) {
   const resp = await fetch(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-study-code': accessCode },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-study-code': accessCode,
+      // Lets the backend attach the session to a real identity. Optional: the
+      // study still works without a Supabase session, it just cannot link.
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
     body: JSON.stringify(body),
   });
   const data = await resp.json().catch(() => ({}));
@@ -31,7 +38,10 @@ async function post(path, body, accessCode) {
 }
 
 export function StudyProvider({ children }) {
+  const { accessToken } = useAuth();
   const [state, setState] = useState(loadStudy);
+  const tokenRef = useRef(null);
+  useEffect(() => { tokenRef.current = accessToken; }, [accessToken]);
 
   const update = useCallback((patch) => setState(saveStudy(patch)), []);
 
@@ -82,7 +92,7 @@ export function StudyProvider({ children }) {
       userAgent: navigator.userAgent,
       browser: detectBrowser(),
       renderer: await detectRenderer(),
-    }, accessCode.trim());
+    }, accessCode.trim(), tokenRef.current);
 
     if (!data.resumed) resetQueue();
 

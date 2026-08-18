@@ -4,7 +4,8 @@
 // citation extraction all stay in the client (packages/core/rag), so the study
 // build and the bring-your-own-key build run byte-identical RAG logic and the
 // study measures the shipped pipeline rather than a parallel one.
-import { guard, requireEnv } from './_lib/guard.js';
+import { guard, requireEnv, readUserId } from './_lib/guard.js';
+import { recordUsage } from './_lib/usage.js';
 
 // Allowlisted so a leaked access code cannot be used to call an arbitrary model.
 const MODELS = new Set(['gpt-4o', 'gpt-4o-mini']);
@@ -15,6 +16,21 @@ const DEFAULT_TEMPERATURE = 0.4;
 // JSON.stringify turns it into null, so OpenAI falls back to ITS default of 1.0.
 // A study build generating at a different temperature from the BYO-key build
 // would break the byte-identical-pipeline property this proxy exists to keep.
+// Pull total_tokens out of the trailing SSE frames, if the usage frame is there.
+function totalTokensFrom(chunk) {
+  for (const line of String(chunk).split('\n')) {
+    const t = line.trim();
+    if (!t.startsWith('data:')) continue;
+    const d = t.slice(5).trim();
+    if (d === '[DONE]') continue;
+    try {
+      const n = JSON.parse(d)?.usage?.total_tokens;
+      if (Number.isFinite(n)) return n;
+    } catch { /* partial frame */ }
+  }
+  return 0;
+}
+
 function clampTemperature(value) {
   const t = Number(value);
   return Number.isFinite(t) ? Math.min(Math.max(t, 0), 1) : DEFAULT_TEMPERATURE;
@@ -58,6 +74,9 @@ export default async function handler(req, res) {
         max_tokens: Math.min(Number(maxTokens) || 800, MAX_TOKENS_CEILING),
         temperature: clampTemperature(temperature),
         stream: true,
+        // Without this a streamed completion reports no usage at all, so every
+        // chat turn would be invisible to metering.
+        stream_options: { include_usage: true },
       }),
     });
   } catch (err) {
@@ -85,12 +104,17 @@ export default async function handler(req, res) {
   });
 
   const reader = upstream.body.getReader();
+  const decoder = new TextDecoder();
+  let tail = '';
   let failed = false;
   try {
     for (;;) {
       if (res.destroyed || ac.signal.aborted) break;
       const { done, value } = await reader.read();
       if (done) break;
+      // Keep only the last chunk: the usage frame arrives at the very end, and
+      // buffering the whole stream to find it would be pointless memory.
+      tail = decoder.decode(value, { stream: true });
       res.write(value);
     }
   } catch (err) {
@@ -108,5 +132,9 @@ export default async function handler(req, res) {
     await reader.cancel().catch(() => {});
     req.off('close', onClose);
     res.end();
+    recordUsage({
+      userId: readUserId(req), kind: 'chat',
+      units: totalTokensFrom(tail), model,
+    });
   }
 }

@@ -1,5 +1,6 @@
 // Query embedding for retrieval, credential held server-side.
-import { guard, requireEnv } from './_lib/guard.js';
+import { guard, requireEnv, readUserId } from './_lib/guard.js';
+import { recordUsage } from './_lib/usage.js';
 
 const MODELS = new Set(['text-embedding-3-small', 'text-embedding-3-large']);
 const MAX_INPUT_CHARS = 4000;
@@ -39,5 +40,10 @@ export default async function handler(req, res) {
     return;
   }
 
-  res.status(200).json(await upstream.json());
+  const body = await upstream.json();
+  recordUsage({
+    userId: readUserId(req), kind: 'embedding',
+    units: body?.usage?.total_tokens ?? 0, model,
+  });
+  res.status(200).json(body);
 }

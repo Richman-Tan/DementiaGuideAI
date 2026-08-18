@@ -4,7 +4,8 @@
 // parser is disabled and the payload is forwarded verbatim. Audio is never
 // written to disk and never stored: only the returned text reaches the study
 // record (docs/study/ethics/data-management-plan.md §2).
-import { guard, requireEnv, readRaw } from './_lib/guard.js';
+import { guard, requireEnv, readRaw, readUserId } from './_lib/guard.js';
+import { recordUsage } from './_lib/usage.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -92,5 +93,8 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Bytes stand in for duration: the response carries no length, and the ratio
+  // is stable enough for a usage signal. Recorded as such, not as seconds.
+  recordUsage({ userId: readUserId(req), kind: 'whisper', units: audio.bytes.length, model: MODEL });
   res.status(200).json(await upstream.json());
 }

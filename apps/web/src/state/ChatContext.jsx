@@ -3,7 +3,12 @@
 // mode (phase b) generateReply() streams gpt-4o tokens through the same surface.
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import * as S from '../data/services.js';
-import { loadHistory, saveHistory, clearHistory } from './historyStore.js';
+import {
+  loadCached, saveCached, clearCached,
+  getOrCreateConversation, loadMessages, appendMessage as persistMessage,
+  startNewConversation, migrateLegacyHistory,
+} from './conversationStore.js';
+import { useAuth } from './AuthContext.jsx';
 import { navigate } from './router.js';
 import { useSettings } from './SettingsContext.jsx';
 import { isMockMode, generateReply } from '../services/chatService.js';
@@ -24,8 +29,11 @@ const now = () => {
 
 export function ChatProvider({ children }) {
   const { settings } = useSettings();
+  const { userId, status: authStatus } = useAuth();
   const [messages, setMessages] = useState(() => {
-    const saved = loadHistory();
+    // Render the cache immediately; the server copy replaces it once the session
+    // resolves. Waiting on the network would show an empty screen every load.
+    const saved = loadCached();
     if (saved && saved.length) return saved;
     // The demo seed opens on a distressing exchange ("he lashes out at me and I
     // get scared"). Fine as prototype furniture; not acceptable as the first
@@ -43,11 +51,39 @@ export function ChatProvider({ children }) {
   const busyRef = useRef(false);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
+  const [conversationId, setConversationId] = useState(null);
+  // Read by the fire-and-forget writes without re-creating the callbacks, which
+  // would abort an in-flight turn.
+  const convIdRef = useRef(null);
+  useEffect(() => { convIdRef.current = conversationId; }, [conversationId]);
+  const studyArm = currentArm();
   const scrollCb = useRef(null); // Chat screen registers its scroll-to-bottom here
+
+  // One conversation per (user, study arm). The arm key is what stops a
+  // within-subjects participant carrying arm A's answers into arm B, where they
+  // could re-read them instead of searching — measuring memory of the first arm
+  // rather than the second interface.
+  useEffect(() => {
+    if (authStatus !== 'ready' || !userId) return undefined;
+    let cancelled = false;
+    (async () => {
+      const id = await getOrCreateConversation(userId, { surface: 'chat', studyArm: studyArm || null });
+      if (cancelled || !id) return;
+      setConversationId(id);
+      // Not during a study: importing a participant's own prior history into an
+      // arm would contaminate it.
+      if (!isStudyMode()) await migrateLegacyHistory(userId, id);
+      const server = await loadMessages(id);
+      if (cancelled || !server.length) return;
+      setMessages(server);
+      saveCached(server);
+    })();
+    return () => { cancelled = true; };
+  }, [authStatus, userId, studyArm]);
 
   const persist = useCallback((msgs) => {
     setMessages(msgs);
-    saveHistory(msgs);
+    saveCached(msgs);
     queueMicrotask(() => scrollCb.current && scrollCb.current());
   }, []);
 
@@ -58,6 +94,7 @@ export function ChatProvider({ children }) {
     if (!q || busyRef.current) return; // one turn at a time
     const withUser = messagesRef.current.concat([{ role: 'user', text: q, time: now() }]);
     persist(withUser);
+    persistMessage(convIdRef.current, { role: 'user', text: q });
     run(q, withUser);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -73,7 +110,7 @@ export function ChatProvider({ children }) {
     // Text arm of the study. No STT or TTS stage here, so the turn timer records
     // retrieval and time-to-first-token only — which is the fair comparison
     // against the voice arm's to-first-audio.
-    const arm = currentArm();
+    const arm = studyArm;
     const taskId = currentTaskId();
     const turn = createTurnTimer(arm, taskId);
     emit('turn_start', { arm, taskId, chars: q.length });
@@ -106,6 +143,9 @@ export function ChatProvider({ children }) {
       });
       setTyping(false);
       persist(base.concat([{ ...msg }]));
+      persistMessage(convIdRef.current, {
+        role: 'aria', text: result.text, citations: result.citations || [],
+      });
       turn.finish({ arm, taskId });
       emit('turn', {
         arm,
@@ -134,7 +174,7 @@ export function ChatProvider({ children }) {
     } finally {
       busyRef.current = false;
     }
-  }, [persist]);
+  }, [persist, studyArm]);
 
   const retry = useCallback(() => {
     const q = failedQ.current;
@@ -148,26 +188,31 @@ export function ChatProvider({ children }) {
     setTimeout(() => send(q), 450);
   }, [send]);
 
-  const newConvo = useCallback(() => {
+  const newConvo = useCallback(async () => {
     if (abortRef.current) abortRef.current.abort();
     setTyping(false);
     setChatError(false);
-    clearHistory();
+    clearCached();
     setMessages([]);
-  }, []);
+    // A new thread server-side too, or the screen clears while the next message
+    // appends to the old conversation.
+    const id = await startNewConversation(userId, { surface: 'chat', studyArm: studyArm || null });
+    if (id) setConversationId(id);
+  }, [userId, studyArm]);
 
   // Voice appends fully-formed messages (its own streaming lives in the voice loop)
   const appendMessage = useCallback((m) => {
     setMessages((prev) => {
       const next = prev.concat([{ time: now(), ...m }]);
-      saveHistory(next);
+      saveCached(next);
       return next;
     });
+    persistMessage(convIdRef.current, m);
   }, []);
 
   const value = {
     messages, typing, chatError, chatErrorMsg, send, retry, askNow, newConvo, appendMessage,
-    drawer, setDrawer, scrollCb, mock: isMockMode(),
+    drawer, setDrawer, scrollCb, mock: isMockMode(), conversationId,
   };
   return <ChatCtx.Provider value={value}>{children}</ChatCtx.Provider>;
 }

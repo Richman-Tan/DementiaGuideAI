@@ -3,7 +3,7 @@
 // Idempotent on participant code: a participant who closes the tab and returns
 // gets the same session row and the same arm assignment, so a resumed session
 // cannot silently land in a different Latin-square cell.
-import { guard } from '../_lib/guard.js';
+import { guard, readUserId } from '../_lib/guard.js';
 import { selectOne, insertReturning, adminConfigured } from '../_lib/supabaseAdmin.js';
 import {
   parseParticipantCode,
@@ -95,6 +95,9 @@ export default async function handler(req, res) {
       consent: { ...consent, formVersion: CONSENT_FORM_VERSION },
       consent_transcripts: Boolean(consentTranscripts),
       supporter_present: typeof supporterPresent === 'boolean' ? supporterPresent : null,
+      // A real identity alongside the hand-typed participant code, so a mistyped
+      // code cannot silently attach one participant's events to another's session.
+      user_id: readUserId(req),
       // Recorded to explain technical failures. No IP address is read or stored
       // (docs/study/ethics/data-management-plan.md §2).
       user_agent: String(userAgent).slice(0, 400),

@@ -11,7 +11,7 @@ import { guard } from '../_lib/guard.js';
 import { updateWhere, adminConfigured } from '../_lib/supabaseAdmin.js';
 
 const STEPS = new Set([
-  'intro', 'info', 'consent', 'setup', 'background',
+  'intro', 'info', 'group', 'consent', 'setup', 'background',
   'armbrief', 'task', 'posttask', 'sus', 'likert',
   'recheck', 'debrief', 'done', 'stopped',
 ]);

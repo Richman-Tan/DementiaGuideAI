@@ -10,6 +10,12 @@ import { recordUsage } from './_lib/usage.js';
 // Allowlisted so a leaked access code cannot be used to call an arbitrary model.
 const MODELS = new Set(['gpt-4o', 'gpt-4o-mini']);
 const MAX_TOKENS_CEILING = 1600;
+// Input bounds. A study turn sends the system prompt, the retrieved passages and
+// the conversation so far — comfortably inside both. Sized to leave headroom for
+// a long session rather than to be tight, since the cost of being wrong here is
+// a participant refused mid-task.
+const MAX_MESSAGES = 60;
+const MAX_INPUT_CHARS = 60000;
 const DEFAULT_TEMPERATURE = 0.4;
 
 // `Number(undefined) ?? 0.4` never applies its default — NaN is not nullish, and
@@ -49,6 +55,27 @@ export default async function handler(req, res) {
   }
   if (!Array.isArray(messages) || messages.length === 0) {
     res.status(400).json({ error: 'messages required' });
+    return;
+  }
+  // Bound the INPUT as well as the output. max_tokens caps what the model
+  // writes, but nothing capped what it was asked to read, and input is billed
+  // too: a single caller could post megabytes of `messages` per request and, at
+  // the daily request cap, run up a bill orders of magnitude beyond a real
+  // session. That matters more now the study runs on one shared access code —
+  // a leak is not contained to one participant.
+  //
+  // A real turn is a handful of retrieved passages plus the conversation so far,
+  // which sits far inside these limits; anything beyond is not a session.
+  if (messages.length > MAX_MESSAGES) {
+    res.status(400).json({ error: `at most ${MAX_MESSAGES} messages per request` });
+    return;
+  }
+  const totalChars = messages.reduce(
+    (n, m) => n + (typeof m?.content === 'string' ? m.content.length : 0),
+    0,
+  );
+  if (totalChars > MAX_INPUT_CHARS) {
+    res.status(413).json({ error: 'conversation too long for one request' });
     return;
   }
 

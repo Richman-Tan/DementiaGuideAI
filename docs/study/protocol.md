@@ -236,19 +236,24 @@ dataset — from real sessions rather than a scripted run.
 1. Invitation with the study link and the access code.
 2. **Landing** — what the study is, how long it takes, what is recorded.
 3. **Participant Information Sheet**, on screen and downloadable.
-4. **Consent** — itemised tick boxes, including a separate tick for transcript
-   retention. No progress without consent; declining ends the session cleanly.
-5. **Browser and microphone check** — Chrome/Edge confirmation and a microphone
+4. **Group** — asked before consent, because the two groups consent differently.
+5. **Consent** — for the unmoderated groups, itemised tick boxes matching the
+   numbered items on the approved form, plus a separate tick for transcript
+   retention. Participants living with dementia instead confirm that the paper
+   form has already been read and signed with their support person; the app does
+   not re-collect that consent on screen. No progress without consent; declining
+   ends the session cleanly.
+6. **Browser and microphone check** — Chrome/Edge confirmation and a microphone
    permission test before any task.
-6. **Participant code shown** — allocated at session start and displayed with an
+7. **Participant code shown** — allocated at session start and displayed with an
    instruction to keep it. It is the only handle on their data, so it is what a
    withdrawal request must quote.
-7. **Background questions** — group, age band, self-rated confidence with
+8. **Background questions** — group, age band, self-rated confidence with
    technology, prior use of AI assistants.
-8. **Arm 1** — one-screen briefing, three tasks, then SUS and the four Likert items.
-9. **Arm 2** — same structure, other interface, other task set.
-10. **Debrief** — five free-text questions.
-11. **Close** — thank-you, support numbers, contact details for questions or
+9. **Arm 1** — one-screen briefing, three tasks, then SUS and the four Likert items.
+10. **Arm 2** — same structure, other interface, other task set.
+11. **Debrief** — five free-text questions.
+12. **Close** — thank-you, support numbers, contact details for questions or
     withdrawal.
 
 A persistent **"I need to stop"** control is available on every screen. It ends the

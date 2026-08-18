@@ -21,6 +21,9 @@ const MAX_QUEUE = 500; // backstop against an offline session growing unbounded
 
 let timer = null;
 let sending = false;
+// Shrinks when the server permanently rejects a batch, so one malformed event
+// can be isolated instead of taking the batch down with it. Reset on success.
+let batchLimit = MAX_BATCH;
 
 // crypto.randomUUID is unavailable on insecure origins in some browsers; the
 // fallback only has to be collision-free within one participant's session.
@@ -86,7 +89,7 @@ export async function flush() {
   const q = readQueue();
   if (q.length === 0) return;
 
-  const batch = q.slice(0, MAX_BATCH);
+  const batch = q.slice(0, Math.max(1, Math.min(MAX_BATCH, batchLimit)));
   sending = true;
   try {
     const resp = await fetch(ENDPOINT, {
@@ -99,11 +102,22 @@ export async function flush() {
       }),
     });
     if (!resp.ok) {
-      // 4xx other than 429 means these events will never be accepted; keeping
-      // them would block every later flush behind a permanent failure.
+      // 4xx other than 429 means these events will never be accepted, and
+      // keeping them would block every later flush behind a permanent failure.
+      // But the whole batch is rarely at fault: the endpoint inserts the rows in
+      // one statement, so a single event Postgres refuses — a stray NUL in a
+      // transcript, a malformed client_ts — used to take up to 99 good events
+      // with it. Halve instead of dropping, until the offender is alone and
+      // provably the problem.
       if (resp.status >= 400 && resp.status < 500 && resp.status !== 429) {
-        console.warn(`[study] dropping ${batch.length} rejected events (HTTP ${resp.status})`);
-        removeSent(batch);
+        if (batch.length === 1) {
+          console.warn(`[study] dropping 1 permanently rejected event (HTTP ${resp.status})`);
+          removeSent(batch);
+          batchLimit = MAX_BATCH;
+        } else {
+          batchLimit = Math.ceil(batch.length / 2);
+          console.warn(`[study] batch rejected (HTTP ${resp.status}) — retrying in halves of ${batchLimit} to isolate the bad event`);
+        }
       }
       return;
     }
@@ -114,6 +128,7 @@ export async function flush() {
       console.warn(`[study] ${batch.length - body.inserted} of ${batch.length} events were duplicates or rejected`);
     }
     removeSent(batch);
+    batchLimit = MAX_BATCH;
   } catch (err) {
     console.warn(`[study] event flush failed (${err?.message ?? err}) — will retry`);
   } finally {

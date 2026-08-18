@@ -120,6 +120,11 @@ for (const end of ends) {
     hidden_ms: hiddenMs,
     turns: turnCount,
     gave_up: end.payload?.gaveUp ?? null,
+    // True when the participant stopped the SESSION while this task was open,
+    // rather than ending the task. Distinct from gave_up, which is a task they
+    // finished by saying they could not find the answer. The window still
+    // attributes turns, but the duration is only a lower bound.
+    stopped_mid_task: end.payload?.stoppedMidTask ?? false,
     self_report: null,   // filled from the post-task instrument below
     effort: null,
     rubric_score: '',    // scored by hand against docs/study/tasks.md §2

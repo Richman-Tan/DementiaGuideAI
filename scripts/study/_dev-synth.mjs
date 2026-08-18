@@ -21,7 +21,7 @@
  *   node scripts/study/safety-scan-transcripts.mjs
  */
 import { writeCsv, OUT_DIR } from './lib.mjs';
-import { sequenceFor, assignmentFor } from '../../apps/web/src/study/studyConfig.js';
+import { sequenceFor, assignmentFor } from '../../packages/core/study/studyConfig.mjs';
 
 const N = 12;
 // Deterministic pseudo-random so runs are reproducible and reviewable.

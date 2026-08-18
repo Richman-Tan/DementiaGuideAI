@@ -6,7 +6,7 @@
 // for the same reason: a reload must not restart the clock.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { loadStudy, saveStudy, clearStudy, isStudyMode } from './studyStore.js';
-import { emit, flush, installUnloadFlush, resetQueue } from './events.js';
+import { emit, flush, installUnloadFlush, pendingCount, resetQueue } from './events.js';
 import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
 import { navigate } from '../state/router.js';
 import { getUnityAvailability, getUnityLoadState, probeUnity } from '../avatar/unity/unityBridge.js';
@@ -119,6 +119,12 @@ export function StudyProvider({ children }) {
       step: data.resumed ? (resumeStep || 'background') : 'background',
       stageIndex: data.resumed ? (data.stageIndex ?? state.stageIndex) : 0,
       taskIndex: data.resumed ? (data.taskIndex ?? state.taskIndex) : 0,
+      // A new session inherits nothing from whoever used this device last.
+      // resetQueue() above drops their unsent events; these are their answers,
+      // which would otherwise pre-fill this participant's questionnaires and be
+      // re-emitted under the new participant's code — including for items this
+      // participant never saw.
+      ...(data.resumed ? {} : { responses: {}, taskId: '', taskStartedAt: null }),
     });
 
     emit('session_start', {
@@ -243,10 +249,24 @@ export function StudyProvider({ children }) {
   // (docs/study/ethics/risk-and-distress-protocol.md §2).
   const stop = useCallback(() => finish(true), [finish]);
 
-  const reset = useCallback(() => {
+  // Hand the device to the next participant.
+  //
+  // Refuses while anything is still queued rather than clearing regardless:
+  // resetQueue() discards the queue, and a session that ran on bad wifi keeps
+  // its whole record there. Returns what happened so the caller can say so
+  // instead of silently appearing to work.
+  const reset = useCallback(async () => {
+    try {
+      await flush();
+    } catch {
+      // Ignore — the pending check below is the decision, not this outcome.
+    }
+    const pending = pendingCount();
+    if (pending > 0) return { cleared: false, pending };
     clearStudy();
     resetQueue();
     setState(loadStudy());
+    return { cleared: true, pending: 0 };
   }, []);
 
   const value = {

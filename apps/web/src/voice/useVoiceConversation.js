@@ -12,7 +12,7 @@ import { startSttSession } from '../services/sttWeb.js';
 import { getElevenKey } from '../state/keysStore.js';
 import { createTurnTimer } from '../study/latency.js';
 import { emit } from '../study/events.js';
-import { currentArm, currentTaskId } from '../study/studyStore.js';
+import { currentArm, currentTaskId, transcriptFields } from '../study/studyStore.js';
 import { mapSettingsToRag, speechRateFor } from '../state/mapSettingsToRag.js';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { createElevenLabsStream } from '@core/tts/elevenLabsStreamService';
@@ -281,8 +281,8 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         emit('turn', {
           arm,
           taskId,
-          question: userText,
-          answer: fullText,
+          // Withheld at source when the participant declined — see the chat arm.
+          ...transcriptFields({ question: userText, answer: fullText }),
           sourceIds: (citedSources || []).map((c) => c.id ?? c.num ?? null),
           aborted: abortRef.current,
         });

@@ -12,7 +12,7 @@ import { useAuth } from './AuthContext.jsx';
 import { navigate } from './router.js';
 import { useSettings } from './SettingsContext.jsx';
 import { isMockMode, generateReply } from '../services/chatService.js';
-import { isStudyMode, currentArm, currentTaskId } from '../study/studyStore.js';
+import { isStudyMode, currentArm, currentTaskId, transcriptFields } from '../study/studyStore.js';
 import { createTurnTimer } from '../study/latency.js';
 import { emit } from '../study/events.js';
 
@@ -58,6 +58,28 @@ export function ChatProvider({ children }) {
   useEffect(() => { convIdRef.current = conversationId; }, [conversationId]);
   const studyArm = currentArm();
   const scrollCb = useRef(null); // Chat screen registers its scroll-to-bottom here
+
+  // The guard in the initialiser above runs once, at mount — which on a fresh
+  // browser is before the participant has entered their code, so isStudyMode()
+  // is still false and the demo seed wins. StudyProvider is a *parent* of this
+  // provider, so begin() re-renders us but never remounts, and the initialiser
+  // cannot re-run. Without this the seed survives into task 1: on screen, fed to
+  // the model as history, and counted as turns.
+  //
+  // Clearing on the transition rather than on `studyOn` itself is deliberate. A
+  // reload mid-task mounts with isStudyMode() already true, and must keep the
+  // messages the participant has legitimately accumulated.
+  const studyOn = isStudyMode();
+  const wasStudyOn = useRef(studyOn);
+  useEffect(() => {
+    const entering = studyOn && !wasStudyOn.current;
+    wasStudyOn.current = studyOn;
+    if (!entering) return;
+    // Also covers a device where someone used the app before the session: the
+    // participant starts from an empty screen either way.
+    setMessages([]);
+    clearCached();
+  }, [studyOn]);
 
   // One conversation per (user, study arm). The arm key is what stops a
   // within-subjects participant carrying arm A's answers into arm B, where they
@@ -150,14 +172,23 @@ export function ChatProvider({ children }) {
       emit('turn', {
         arm,
         taskId,
-        question: q,
-        answer: result.text,
+        // A participant who declines has their words withheld here, not at
+        // export: declining means the text never reaches the database. The turn
+        // is still recorded — turn count is a primary effectiveness measure and
+        // carries no content of its own.
+        ...transcriptFields({ question: q, answer: result.text }),
         sourceIds: (result.sources || []).map((c) => c.id ?? c.num ?? null),
       });
     } catch (err) {
       if (ac.signal.aborted) return;
       console.warn('[chat] turn failed:', err?.message || err);
-      emit('turn_error', { arm, taskId, question: q, error: err?.name || 'Error', message: String(err?.message ?? err).slice(0, 300) });
+      emit('turn_error', {
+        arm,
+        taskId,
+        ...transcriptFields({ question: q }),
+        error: err?.name || 'Error',
+        message: String(err?.message ?? err).slice(0, 300),
+      });
       failedQ.current = q;
       setTyping(false);
       setChatError(true);

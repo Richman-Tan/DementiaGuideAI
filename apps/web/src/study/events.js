@@ -179,6 +179,16 @@ export function installUnloadFlush() {
   });
 }
 
+/**
+ * How many events are still waiting to reach the server.
+ *
+ * Read before clearing a device. resetQueue() below discards the queue outright,
+ * and for a session that ran offline that queue is the entire record.
+ */
+export function pendingCount() {
+  return readQueue().length;
+}
+
 export function resetQueue() {
   try { localStorage.removeItem(QUEUE_KEY); } catch { /* blocked */ }
   saveStudy({ seq: 0 });

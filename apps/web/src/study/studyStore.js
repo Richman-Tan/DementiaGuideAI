@@ -67,6 +67,31 @@ export function currentTaskId() {
   return s.sessionId && s.step === 'task' ? s.taskId || null : null;
 }
 
+/**
+ * Whether the participant agreed to their conversation being kept.
+ *
+ * Consulted before any question or answer text leaves the browser. Declining has
+ * to mean the text is never stored: filtering it back out at export would still
+ * have written it to the database and held it for the retention period, which is
+ * not what the consent screen promises.
+ */
+export function transcriptsConsented() {
+  const s = loadStudy();
+  return Boolean(s.sessionId && s.consentTranscripts);
+}
+
+/**
+ * The participant's own words, or nothing at all if they declined.
+ *
+ * Spread into an event payload rather than tested at each call site, so that
+ * adding a field carrying what someone said is a deliberate act:
+ *
+ *   emit('turn', { arm, taskId, ...transcriptFields({ question, answer }) })
+ */
+export function transcriptFields(fields) {
+  return transcriptsConsented() ? fields : {};
+}
+
 /** Next event sequence number. Monotonic across reloads so ordering survives. */
 export function nextSeq() {
   const s = loadStudy();

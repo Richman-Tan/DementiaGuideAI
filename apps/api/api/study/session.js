@@ -12,7 +12,12 @@ import {
   GROUPS,
   STUDY_VERSION,
   CONSENT_FORM_VERSION,
-} from '@dementiaguide/core/study/studyConfig.mjs';
+  // Relative, not the '@dementiaguide/core' package specifier. The bundler
+  // traces this file into the deployment either way, but it lands at its real
+  // path (packages/core/...) with no node_modules in the lambda, so a bare
+  // specifier resolves at build time and then throws ERR_MODULE_NOT_FOUND on
+  // the first request — a 500 that no local build or test reproduces.
+} from '../../../../packages/core/study/studyConfig.mjs';
 
 export default async function handler(req, res) {
   // Not metered: session creation happens once and must never be the request

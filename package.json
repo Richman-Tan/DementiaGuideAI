@@ -28,6 +28,10 @@
     "rag:grade": "node scripts/eval/grade-groundedness.mjs",
     "rag:introspect": "node scripts/eval/introspect.mjs",
     "brand:icons": "node scripts/brand/build-icons.js",
+    "study:export": "node scripts/study/export-study-data.mjs",
+    "study:analyse": "node scripts/study/analyse-study.mjs",
+    "study:safety": "node scripts/study/safety-scan-transcripts.mjs",
+    "study:figures": "python3 scripts/study/make-study-figures.py",
     "kb:ingest": "node scripts/ingest/ingest.mjs",
     "kb:ingest:dry": "node scripts/ingest/ingest.mjs --dry-run",
     "postinstall": "patch-package"

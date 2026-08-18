@@ -42,9 +42,10 @@ module.exports = [
     },
   },
   {
-    // Node-context files: build scripts and tool configs. eslint-config-expo
-    // loads browser globals, so these need Node's declared explicitly.
-    files: ['**/*.config.{js,mjs}', 'apps/web/scripts/**/*.mjs', 'apps/web/vite.config.js'],
+    // Node-context files: build scripts, tool configs, and the web app's
+    // serverless API routes. eslint-config-expo loads browser globals, so these
+    // need Node's declared explicitly.
+    files: ['**/*.config.{js,mjs}', 'apps/web/scripts/**/*.mjs', 'apps/web/vite.config.js', 'apps/api/**/*.js'],
     languageOptions: {
       globals: {
         __dirname: 'readonly',

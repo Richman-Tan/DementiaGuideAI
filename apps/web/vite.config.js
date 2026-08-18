@@ -87,6 +87,102 @@ function unityBrotliHeaders() {
   };
 }
 
+// The backend is a separate service (apps/api, see the root vercel.json).
+// `vercel dev` runs both together and is the faithful local setup — but it needs
+// the CLI and a linked project, so this keeps plain `npm run web` self-sufficient
+// by mounting apps/api's handlers as middleware.
+//
+// Same (req, res) contract Vercel gives them: a parsed JSON body (unless the
+// route opts out via `config.api.bodyParser === false`) plus res.status() and
+// res.json(). Dev only — `apply: 'serve'` keeps it out of the build entirely.
+function studyApiDevServer() {
+  const API_DIR = path.resolve(__dirname, '../api');
+  return {
+    name: 'dg-study-api-dev',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url?.startsWith('/api/')) return next();
+
+        const route = req.url.split('?')[0].replace(/^\/api\//, '').replace(/\/+$/, '');
+        // Route names come off the URL, so refuse anything that could climb out
+        // of api/ before it reaches the filesystem.
+        if (!/^[a-zA-Z0-9/_-]+$/.test(route) || route.includes('..')) {
+          res.statusCode = 400;
+          return res.end('bad route');
+        }
+
+        let mod;
+        try {
+          // Re-imported per request with a cache-buster so edits to a route are
+          // picked up without restarting the dev server.
+          mod = await server.ssrLoadModule(path.resolve(API_DIR, `${route}.js`));
+        } catch (err) {
+          if (err?.code === 'ERR_MODULE_NOT_FOUND' || /Failed to load url/.test(String(err?.message))) {
+            return next();
+          }
+          server.config.logger.error(`[api] ${route}: ${err?.message ?? err}`);
+          res.statusCode = 500;
+          return res.end('api route failed to load');
+        }
+
+        const handler = mod.default;
+        if (typeof handler !== 'function') return next();
+
+        if (mod.config?.api?.bodyParser !== false) {
+          req.body = await readJsonBody(req);
+        }
+        decorate(res);
+        try {
+          await handler(req, res);
+        } catch (err) {
+          server.config.logger.error(`[api] ${route}: ${err?.stack ?? err}`);
+          if (!res.headersSent) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: 'handler threw' }));
+          }
+        }
+      });
+    },
+  };
+}
+
+function readJsonBody(req) {
+  return new Promise((resolve) => {
+    if (req.method === 'GET' || req.method === 'HEAD') return resolve(undefined);
+    let raw = '';
+    req.on('data', (c) => { raw += c; });
+    req.on('end', () => {
+      if (!raw) return resolve(undefined);
+      try { resolve(JSON.parse(raw)); } catch { resolve(undefined); }
+    });
+    req.on('error', () => resolve(undefined));
+  });
+}
+
+// The two response helpers Vercel adds; everything else is stock http.
+function decorate(res) {
+  // A double-send raises an unhandled 'error' on the response, which would take
+  // the whole dev server down over one buggy route. On Vercel each invocation
+  // is isolated, so this only ever bites locally — but it bites hard.
+  res.on('error', () => {});
+  res.status = (code) => { res.statusCode = code; return res; };
+  res.json = (body) => {
+    if (res.writableEnded) return res;
+    if (!res.headersSent) res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(body));
+    return res;
+  };
+  const send = res.send;
+  if (!send) {
+    res.send = (body) => {
+      if (res.writableEnded) return res;
+      res.end(Buffer.isBuffer(body) ? body : String(body));
+      return res;
+    };
+  }
+}
+
 export default defineConfig(({ mode }) => {
   // Env resolution, least→most specific: apps/web/.env (local dev; git-ignored so
   // `vercel build` doesn't stage it) → .vercel/.env.<mode>.local (written by
@@ -97,7 +193,7 @@ export default defineConfig(({ mode }) => {
     ...process.env,
   };
   return {
-    plugins: [cjsLibsToEsm(), unityBrotliHeaders(), react()],
+    plugins: [cjsLibsToEsm(), unityBrotliHeaders(), studyApiDevServer(), react()],
     resolve: {
       alias: {
         // The web app resolves nothing out of the mobile tree — everything it

@@ -14,6 +14,7 @@ import { AvatarBust, ThreeAvatarMount } from '../avatar/AvatarStage.jsx';
 import { UnityAvatarMount } from '../avatar/unity/UnityAvatarStage.jsx';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { loadKeys, saveKeys } from '../state/keysStore.js';
+import { hasCredentials } from '../services/transport.js';
 
 // Translucent chrome over the live scene; readable in both themes.
 const glass = {
@@ -147,7 +148,10 @@ export default function Voice() {
 
   const profile = useEffectiveAvatarProfile(settings.avatarId);
   const who = profile.name;
-  const hasKey = savedKeys.openai.trim().length > 0;
+  // A study participant reaches the model through the server-side proxy with an
+  // access code, so there is nothing for them to set up — and showing them a
+  // raw `sk-…` field would be both confusing and a dead end.
+  const hasKey = savedKeys.openai.trim().length > 0 || hasCredentials();
 
   const { vState, vTranscript, vDone, vSubtitle, micTap, askText, repeatLast, error, clearError } = useVoiceConversation({
     enabled: hasKey,
@@ -206,7 +210,7 @@ export default function Voice() {
   ) : null;
 
   return (
-    <section style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', zIndex: 50, overflow: 'hidden', background: 'radial-gradient(circle at 50% 30%, var(--tint) 0%, var(--bg) 80%)' }}>
+    <section style={{ position: 'fixed', top: 'var(--study-overlay-h, 0px)', left: 0, right: 0, height: 'calc(100dvh - var(--study-overlay-h, 0px))', zIndex: 50, overflow: 'hidden', background: 'radial-gradient(circle at 50% 30%, var(--tint) 0%, var(--bg) 80%)' }}>
       {/* The scene fills the screen */}
       <div style={{ position: 'absolute', inset: 0 }}>
         <VoiceStage profile={profile} showAvatar={!!settings.showAvatar} state={vState} />

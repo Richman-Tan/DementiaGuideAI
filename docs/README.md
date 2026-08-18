@@ -2,13 +2,18 @@
 
 Start here. Everything below is grouped by what you are trying to do.
 
-## The three surfaces
+## The surfaces
 
 | Doc | What it covers |
 |---|---|
 | [mobile-app.md](mobile-app.md) | Expo/React Native app: tech stack, screens, structure, path aliases, native builds, API keys |
-| [`apps/web/README.md`](../apps/web/README.md) | The Vite web app: mock vs real mode, architecture, Vercel deploy |
+| [`apps/web/README.md`](../apps/web/README.md) | The Vite web app: mock vs real mode, architecture, deploy |
+| [`apps/api/README.md`](../apps/api/README.md) | The backend service: holds the provider credentials, owns study and conversation data |
 | [`packages/core/README.md`](../packages/core/README.md) | The shared core — what may live in `@core` and why the boundary exists |
+
+`apps/web` and `apps/api` deploy together as two **Vercel Services** declared in
+the root `vercel.json`, on one domain: the browser calls `/api/*` same-origin, and
+mobile calls the same paths. See [architecture/backend-plan.md](architecture/backend-plan.md).
 
 ## Architecture
 
@@ -40,6 +45,7 @@ These are point-in-time academic artefacts, not living reference docs.
 
 | Folder | Contents |
 |---|---|
+| [`study/`](study/README.md) | **The human usability study**: protocol, task sets and rubric, instruments, analysis plan, pilot gate, and the full UAHPEC ethics pack. Start at [study/README.md](study/README.md). Live — this one is being executed, not archived. |
 | `report/` | Mid-year report: drafts, `figures/`, `baseline/`, `eval/` data. **Paths here are stable on purpose** — they may be cited in submitted work, so do not reorganise. |
 | `seminar/` | Conference-day deck prompt, research notes, speaker script |
 | `web/` | The design prompt used to generate the web front-end (this is `docs/web/`, not the app) |
@@ -49,5 +55,6 @@ These are point-in-time academic artefacts, not living reference docs.
 - Living technical docs go in a topic folder (`rag/`, `architecture/`) or at
   this level if they are standalone.
 - Anything submitted or presented goes under `report/` or `seminar/` and is then
-  left alone.
+  left alone. `study/` is the exception: it is a live folder that will accumulate
+  results while the study runs.
 - Update this index when adding a folder.

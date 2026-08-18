@@ -41,6 +41,34 @@ Settings → Advanced to go live:
 - Keys live only in this browser's localStorage — parity with the app's
   on-device key entry. Don't use this pattern for a public multi-tenant site.
 
+## Study mode
+
+The usability study (`docs/study/`) runs on this app. Two things it needed that
+the shipped build could not do:
+
+- **Answer without the participant's own key.** The backend service
+  (`apps/api`, its own app — see its README for why it is not a folder in here)
+  holds the OpenAI and ElevenLabs credentials and admits callers by **study
+  access code**. Retrieval, prompt assembly and citation extraction stay in the
+  client, so both credential modes run byte-identical RAG.
+- **Produce data.** `src/study/` adds the `/study` flow (consent → tasks →
+  questionnaires) and records events to Supabase.
+
+Credential resolution lives in `src/services/transport.js`: a personal key in
+localStorage wins; otherwise a study access code routes to `/api/*`; otherwise
+mock mode. **Study sessions can never fall into mock mode** — canned replies
+would silently turn a session into a test of the prototype.
+
+Set the server-side variables from `apps/api/.env.example` in the Vercel project
+(never with a `VITE_` prefix — that would inline them into the browser bundle) and
+run `scripts/migrations/2026-08-18_study_tables.sql`.
+
+One constraint the study inherits, recorded in `docs/study/protocol.md` §10:
+text-to-speech uses the **REST cascade**, since the ElevenLabs WebSocket path
+needs the key in the browser. Arm A uses the deployed **Unity** avatar like every
+other visitor; the study records per session which renderer actually resolved,
+because the app degrades to Three.js on its own if the build fails to load.
+
 ## Architecture notes
 
 - `apps/mobile/src/lib/rag`, `apps/mobile/src/lib/lipsync`, `apps/mobile/src/lib/tts`, sentence tracking and
@@ -61,20 +89,26 @@ Settings → Advanced to go live:
   resolution — renderer, TTS voice and UI copy fall back together) and the
   picker keeps the Unity entries locked.
 
-## Deploy (Vercel)
+## Deploy
 
-The bundle imports `packages/core` and `assets/` from outside this directory,
-which Vercel's cloud build can't see when the project root is `apps/web/` —
-deploy **prebuilt**:
+This app and `apps/api` are two **Vercel Services** declared in the repo-root
+`vercel.json`; they build separately and deploy together on one domain, with
+`/api/*` routed to the backend and everything else here. Public routing, headers
+and the CSP live in that root file — under services they own traffic for the whole
+deployment, so they cannot sit in a per-service config.
+
+Deploy from the **repo root**, not from this directory:
 
 ```bash
-cd apps/web
-export VITE_SUPABASE_URL=… VITE_SUPABASE_ANON_KEY=…   # vercel build stages a copy without .env
+export VITE_SUPABASE_URL=… VITE_SUPABASE_ANON_KEY=…
 vercel build --prod --yes
 vercel deploy --prebuilt --prod --yes
 ```
 
-(If you later connect the Git repo instead, set Root Directory to `apps/web` and
-enable "Include source files outside of the Root Directory". The project's Root
-Directory setting must be updated from `web` to `apps/web` after the monorepo
-restructure, whichever route you take.)
+`vercel dev` from the root runs both services together locally.
+
+> **Not yet verified on a real deploy.** The previous prebuilt-from-`apps/web`
+> flow existed because the bundle imports `packages/core` and `assets/` from
+> outside the app directory. Confirm the service build resolves those workspace
+> paths on the first deploy — that is the one thing about this layout most likely
+> to need adjusting.

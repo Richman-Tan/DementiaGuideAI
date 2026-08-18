@@ -7,6 +7,9 @@ import { loadHistory, saveHistory, clearHistory } from './historyStore.js';
 import { navigate } from './router.js';
 import { useSettings } from './SettingsContext.jsx';
 import { isMockMode, generateReply } from '../services/chatService.js';
+import { isStudyMode, currentArm, currentTaskId } from '../study/studyStore.js';
+import { createTurnTimer } from '../study/latency.js';
+import { emit } from '../study/events.js';
 
 const ChatCtx = createContext(null);
 
@@ -23,7 +26,11 @@ export function ChatProvider({ children }) {
   const { settings } = useSettings();
   const [messages, setMessages] = useState(() => {
     const saved = loadHistory();
-    return saved && saved.length ? saved : S.seedThread();
+    if (saved && saved.length) return saved;
+    // The demo seed opens on a distressing exchange ("he lashes out at me and I
+    // get scared"). Fine as prototype furniture; not acceptable as the first
+    // thing a study participant sees, and it would contaminate turn counts.
+    return isStudyMode() ? [] : S.seedThread();
   });
   const [typing, setTyping] = useState(false);
   const [chatError, setChatError] = useState(false);
@@ -63,12 +70,20 @@ export function ChatProvider({ children }) {
     abortRef.current = ac;
     const msg = { role: 'aria', text: '', citations: [], safety: false, streaming: true, time: now() };
     let started = false;
+    // Text arm of the study. No STT or TTS stage here, so the turn timer records
+    // retrieval and time-to-first-token only — which is the fair comparison
+    // against the voice arm's to-first-audio.
+    const arm = currentArm();
+    const taskId = currentTaskId();
+    const turn = createTurnTimer(arm, taskId);
+    emit('turn_start', { arm, taskId, chars: q.length });
     try {
       const result = await generateReply({
         question: q,
         settings: settingsRef.current,
         history: base,
         signal: ac.signal,
+        onStage: (stage) => turn.mark(stage),
         onToken: (fullText) => {
           if (ac.signal.aborted) return;
           if (!started) {
@@ -91,14 +106,25 @@ export function ChatProvider({ children }) {
       });
       setTyping(false);
       persist(base.concat([{ ...msg }]));
+      turn.finish({ arm, taskId });
+      emit('turn', {
+        arm,
+        taskId,
+        question: q,
+        answer: result.text,
+        sourceIds: (result.sources || []).map((c) => c.id ?? c.num ?? null),
+      });
     } catch (err) {
       if (ac.signal.aborted) return;
       console.warn('[chat] turn failed:', err?.message || err);
+      emit('turn_error', { arm, taskId, question: q, error: err?.name || 'Error', message: String(err?.message ?? err).slice(0, 300) });
       failedQ.current = q;
       setTyping(false);
       setChatError(true);
       setChatErrorMsg(
-        err?.name === 'OpenAIAuthError'
+        err?.name === 'StudyAccessError'
+          ? 'Your study access code was not accepted — check the code in your invitation email.'
+          : err?.name === 'OpenAIAuthError'
           ? 'Your OpenAI API key looks invalid — check it in Settings → Advanced.'
           : err?.name === 'OpenAIRateLimitError'
             ? 'The AI service is rate-limited right now — wait a moment and retry.'

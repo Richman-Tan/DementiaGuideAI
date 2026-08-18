@@ -10,6 +10,9 @@ import { tts } from '../services/ttsClient.js';
 import { selectTtsMode, markTtsDegraded } from '../services/ttsModeWeb.js';
 import { startSttSession } from '../services/sttWeb.js';
 import { getElevenKey } from '../state/keysStore.js';
+import { createTurnTimer } from '../study/latency.js';
+import { emit } from '../study/events.js';
+import { currentArm, currentTaskId } from '../study/studyStore.js';
 import { mapSettingsToRag, speechRateFor } from '../state/mapSettingsToRag.js';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { createElevenLabsStream } from '@core/tts/elevenLabsStreamService';
@@ -74,7 +77,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
 
   // ─── Core conversation loop (producer/consumer, mobile parity) ─────────────
-  const processQuery = useCallback(async (userText, preRetrievedChunks = null) => {
+  const processQuery = useCallback(async (userText, preRetrievedChunks = null, timer = null) => {
     if (!userText.trim()) return;
     if (userText.length > MAX_QUERY_CHARS) userText = userText.slice(0, MAX_QUERY_CHARS);
 
@@ -84,6 +87,12 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     abortRef.current = false;
 
     const audioOn = settingsRef.current.audioResponses && !mutedRef.current;
+    const arm = currentArm();
+    const taskId = currentTaskId();
+    const turn = timer || createTurnTimer(arm, taskId);
+    // Emitted at submit, not at completion. Turn counts are derived from these:
+    // the completing `turn` event can land after task_end and would be missed.
+    emit('turn_start', { arm, taskId, chars: userText.length });
 
     // Shared async queue — also the fallback target for a mid-stream WS failure.
     const queue = { promises: [], done: false, notify: null };
@@ -156,6 +165,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
             sessionStarted = true;
             avatar?.setOnAudioStart(() => {
               audioStartWallclock = Date.now();
+              turn.mark('firstAudio');
               setVState('speaking');
               scheduleSubtitles();
             });
@@ -189,8 +199,12 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       const clean = text.trim();
       if (!clean || !audioOn) return;
       const emotion = detectSentiment(clean);
+      turn.mark('ttsRequest');
       queue.promises.push(
-        tts(clean, { speechRate, visemeWeights, ...ttsVoiceOptions }).then((result) => ({ ...result, text: clean, emotion }))
+        tts(clean, { speechRate, visemeWeights, ...ttsVoiceOptions }).then((result) => {
+          turn.mark('firstAudio');
+          return { ...result, text: clean, emotion };
+        })
       );
       wake();
     };
@@ -198,6 +212,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     const handleSentence = (text) => {
       const clean = text.trim();
       if (!clean) return;
+      turn.mark('firstSentence');
       if (!audioOn) {
         // Audio off: still surface sentences as subtitles-in-order via the queue.
         queue.promises.push(Promise.resolve({ text: clean, emotion: 'neutral', audio: null }));
@@ -220,13 +235,18 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       let fullText = '';
       const splitter = createSentenceSplitter();
       try {
-        const timingCbs = { onSources: (sources) => { citedSources = sources ?? []; } };
+        const timingCbs = {
+          onRagDone: () => turn.mark('ragDone'),
+          onLlmSend: () => turn.mark('llmSend'),
+          onSources: (sources) => { citedSources = sources ?? []; },
+        };
         for await (const chunk of openaiClient.chatStream(userText, history, timingCbs, {
           ...mapSettingsToRag(settingsRef.current),
           skipThrottle: true,
           preRetrievedChunks,
         })) {
           if (abortRef.current) break;
+          turn.mark('firstToken');
           fullText += chunk;
           if (streamingActive && !streamFailed && audioOn) ttsStream.sendText(chunk);
           for (const sentence of splitter.push(chunk)) handleSentence(sentence);
@@ -251,6 +271,20 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           citations: mapSourcesToCitations(citedSources),
           sources: citedSources,
           safety: false,
+        });
+        turn.finish({ streaming: streamingActive && !streamFailed, aborted: abortRef.current });
+        // Transcript capture for rubric scoring and the safety scan. Retrieved
+        // chunk ids travel with it so the analysis can check whether the two
+        // arms retrieved differently — speech recognition changes the query, so
+        // a divergence there would mean the study measured STT, not interface
+        // (docs/study/analysis-plan.md §7).
+        emit('turn', {
+          arm,
+          taskId,
+          question: userText,
+          answer: fullText,
+          sourceIds: (citedSources || []).map((c) => c.id ?? c.num ?? null),
+          aborted: abortRef.current,
         });
         queue.done = true;
         wake();
@@ -358,9 +392,12 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     setVState('thinking');
     setVDone(true);
 
+    const turn = createTurnTimer(currentArm(), currentTaskId());
     try {
       const { transcript } = await session.stop();
+      turn.mark('sttDone');
       if (!transcript) {
+        emit('stt_empty', { arm: currentArm(), taskId: currentTaskId() });
         speculativeRef.current?.cancel();
         speculativeRef.current = null;
         setError("I didn't catch that — try again a little closer to the microphone.");
@@ -376,7 +413,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         if (spec.status === 'hit') preRetrievedChunks = spec.chunks;
       }
 
-      await processQuery(transcript, preRetrievedChunks);
+      await processQuery(transcript, preRetrievedChunks, turn);
 
       // Hands-free: re-arm listening after a completed (not interrupted) reply.
       if (settingsRef.current.handsFree && !abortRef.current) {

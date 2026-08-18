@@ -3,6 +3,7 @@ import { useSettings } from '../state/SettingsContext.jsx';
 import { useChat } from '../state/ChatContext.jsx';
 import { useUi } from '../state/UiContext.jsx';
 import { loadKeys, saveKeys as persistKeys, clearKeys as wipeKeys } from '../state/keysStore.js';
+import { useStudy } from '../study/StudyContext.jsx';
 import { navigate } from '../state/router.js';
 import { AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
 import { isUnityAvailable } from '../avatar/unity/unityBridge.js';
@@ -34,6 +35,10 @@ export default function Settings() {
   const { settings, setSetting, effDark } = useSettings();
   const { newConvo } = useChat();
   const { showToast, askConfirm } = useUi();
+  const study = useStudy();
+  // A study participant reaches the model through the server-side proxy with an
+  // access code. Showing them an API-key form would be a confusing dead end.
+  const inStudy = Boolean(study?.active);
   const [keys, setKeys] = useState(loadKeys);
   const [advOpen, setAdvOpen] = useState(false);
   // Re-renders when the Unity-build probe resolves (locks/unlocks the picker).
@@ -129,10 +134,11 @@ export default function Settings() {
         <a href="#/privacy" style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', borderBottom: 'var(--bw) solid var(--border)', textDecoration: 'none', color: 'var(--text)' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Privacy Policy</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>How this app handles your information</span></span><span style={{ color: 'var(--text2)' }}>›</span></a>
         <button onClick={() => showToast('Conversations are stored only on this device — nothing is sent to a server.')} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', borderBottom: 'var(--bw) solid var(--border)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Data Security</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>Conversations are stored only on this device</span></span><span style={{ color: 'var(--text2)' }}>ⓘ</span></button>
         <a href="#/disclaimer" style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', borderBottom: 'var(--bw) solid var(--border)', textDecoration: 'none', color: 'var(--text)' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Medical Disclaimer</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>What Aria can and can't help with</span></span><span style={{ color: 'var(--text2)' }}>›</span></a>
-        <button onClick={clearHistory} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Clear Conversation History</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>Remove past conversations from this device</span></span><span style={{ color: 'var(--text2)' }}>›</span></button>
+        {!inStudy && <button onClick={clearHistory} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Clear Conversation History</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>Remove past conversations from this device</span></span><span style={{ color: 'var(--text2)' }}>›</span></button>}
       </Card>
 
-      <SectionTitle>Advanced</SectionTitle>
+      {!inStudy && <SectionTitle>Advanced</SectionTitle>}
+      {!inStudy && (
       <Card>
         <button onClick={() => setAdvOpen(!advOpen)} aria-expanded={advOpen} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '56px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>API Keys</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>For developers — connect live services</span></span><span style={{ color: 'var(--text2)' }}>{advOpen ? '▾' : '▸'}</span></button>
         {advOpen && (
@@ -151,6 +157,7 @@ export default function Settings() {
           </div>
         )}
       </Card>
+      )}
 
       <SectionTitle>About</SectionTitle>
       <Card mb={0}>

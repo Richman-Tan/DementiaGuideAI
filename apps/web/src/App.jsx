@@ -2,6 +2,9 @@ import React, { Suspense } from 'react';
 import { SettingsProvider, useSettings } from './state/SettingsContext.jsx';
 import { UiProvider } from './state/UiContext.jsx';
 import { ChatProvider } from './state/ChatContext.jsx';
+import { StudyProvider, useStudy } from './study/StudyContext.jsx';
+import StudyScreen from './study/screens/StudyScreen.jsx';
+import StudyTaskOverlay from './study/screens/StudyTaskOverlay.jsx';
 import { useRoute, useWidth, navigate } from './state/router.js';
 import Shell from './components/Shell.jsx';
 import { SourceDrawer, ConfirmDialog, Toast } from './components/Chrome.jsx';
@@ -22,11 +25,22 @@ const Voice = React.lazy(() => import('./screens/Voice.jsx'));
 
 function Routed() {
   const { settings } = useSettings();
-  const path = useRoute(settings.onboarded);
+  const study = useStudy();
+  const path = useRoute(settings.onboarded, Boolean(study?.active));
   const width = useWidth();
   const isDesktop = width >= 1024;
   const isTablet = width >= 768 && width < 1024;
   const isMobile = width < 768;
+
+  if (path.startsWith('/study')) return <StudyScreen />;
+
+  // Arm B is the text baseline: the voice route must be unreachable, or a
+  // participant could wander into the avatar arm and the comparison would be
+  // measuring neither condition.
+  if (path === '/app/voice' && study?.active && study.stage?.arm === 'B') {
+    navigate('#/app/chat');
+    return null;
+  }
 
   if (path === '/') {
     const openApp = () => navigate(settings.onboarded ? '#/app/home' : '#/onboarding/1');
@@ -73,11 +87,13 @@ export default function App() {
   return (
     <SettingsProvider>
       <UiProvider>
+        <StudyProvider>
         <ChatProvider>
           <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem', lineHeight: '1.55' }}>
             <RoutedWithChrome />
           </div>
         </ChatProvider>
+        </StudyProvider>
       </UiProvider>
     </SettingsProvider>
   );
@@ -88,6 +104,7 @@ function RoutedWithChrome() {
   return (
     <ErrorBoundary>
       <Routed />
+      <StudyTaskOverlay />
       <SourceDrawer isMobile={width < 768} />
       <ConfirmDialog />
       <Toast />

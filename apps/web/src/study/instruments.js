@@ -12,6 +12,49 @@ const AGREE_5 = [
   { value: 5, label: '5 — Strongly agree' },
 ];
 
+/**
+ * Consent ticks — one per numbered item on the approved consent form
+ * (docs/study/ethics/ethics/consent-form.md), in the same order.
+ *
+ * The correspondence is the point, not a nicety. `session.js` stamps every
+ * session with `formVersion: CONSENT_FORM_VERSION`, so a recorded consent event
+ * asserts the participant agreed to *that* form. When this list was shorter than
+ * the form, that assertion was false: the screen carried seven ticks against a
+ * twelve-item form, and the ones missing were the overseas-transfer item — the
+ * one most needing an explicit tick, and the only place the app would name
+ * OpenAI or ElevenLabs at all — plus conversation storage and publication.
+ *
+ * Form item 9 is the optional transcript question, asked separately on the same
+ * screen because declining it must not block participation. Keep the ids stable:
+ * they are the keys the consent JSON is stored under.
+ *
+ * `apps/web/tests/studyConsent.test.js` fails if this drifts from the form again.
+ */
+export const CONSENT_ITEMS = [
+  // form 1
+  { id: 'take_part', text: 'I agree to take part in this research.' },
+  // form 2
+  { id: 'voluntary', text: 'I understand that taking part is voluntary, and that I may stop at any time without giving a reason and without any disadvantage.' },
+  // form 3
+  { id: 'fictional', text: 'I understand that the situations are made up, and that I should not enter real names or anything that would identify me or anyone else.' },
+  // form 4
+  { id: 'not_advice', text: 'I understand that the app gives general information only, that it is not medical advice, that it is a research prototype which may be wrong, and that I should consult a health professional about any real decision.' },
+  // form 5
+  { id: 'collection', text: 'I agree to the collection of my questionnaire answers, the time I take on each task, the number of questions I ask, and technical information about my browser and the app’s response times.' },
+  // form 6
+  { id: 'no_audio', text: 'I understand that no recording of my voice is kept, and that anything I say to the app is converted to text with only the text retained.' },
+  // form 7
+  { id: 'saves_conversations', text: 'I understand that the app saves my conversations so that I can come back to them, in the same way any messaging app does, and that they are stored against an anonymous account identifier rather than my name.' },
+  // form 8 — the cross-border transfer, and the only place the app names the providers
+  { id: 'overseas_providers', text: 'I understand that answering my questions means my words are sent to overseas service providers (OpenAI, and ElevenLabs for the spoken voice), that they receive no name or contact details, and that the project account is not on any tier that uses submitted text to train models.' },
+  // form 10
+  { id: 'storage_code', text: 'I understand that my study data is stored against a participant code and not my name, held securely for six years, and then destroyed.' },
+  // form 11
+  { id: 'deletion_window', text: 'I understand that I may ask for my data to be deleted up to two weeks after my session by contacting the researcher and quoting my participant code, and that after that point my data cannot be identified.' },
+  // form 12
+  { id: 'reporting', text: 'I understand that anonymised findings will be reported in the researcher’s project report and may be presented or published, and that nothing identifying me will be included.' },
+];
+
 // Standard SUS, ten items, fixed order. "System" is replaced throughout by
 // "this way of using the app" so participants score the interface rather than
 // the product — the only permitted deviation, and it is declared in the

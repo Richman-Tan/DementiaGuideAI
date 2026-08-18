@@ -7,7 +7,7 @@ import { useSettings } from '../../state/SettingsContext.jsx';
 import { useEffectiveAvatarProfile } from '../../avatar/effectiveProfile.js';
 import { Page, Button, Choice, LikertItem, TextArea, SupportNumbers, Disclaimer, card } from '../ui.jsx';
 import { navigate } from '../../state/router.js';
-import { SUS_ITEMS, LIKERT_ITEMS, BACKGROUND, POST_TASK, DEBRIEF, PLWD_ITEMS, PLWD_DEBRIEF, SUPPORTER_DEBRIEF } from '../instruments.js';
+import { CONSENT_ITEMS, SUS_ITEMS, LIKERT_ITEMS, BACKGROUND, POST_TASK, DEBRIEF, PLWD_ITEMS, PLWD_DEBRIEF, SUPPORTER_DEBRIEF } from '../instruments.js';
 
 function StopBar({ onStop }) {
   return (
@@ -459,15 +459,6 @@ function InfoStep({ onNext, onStop }) {
 // Itemised consent. Items 1–6 are required; the transcript item is genuinely
 // optional and declining it does not block participation
 // (docs/study/ethics/consent-form.md).
-const CONSENT_ITEMS = [
-  { id: 'take_part', text: 'I agree to take part in this research.' },
-  { id: 'voluntary', text: 'I understand that taking part is voluntary, and that I may stop at any time without giving a reason and without any disadvantage.' },
-  { id: 'fictional', text: 'I understand that the situations are made up, and that I should not enter real names or anything that would identify me or anyone else.' },
-  { id: 'not_advice', text: 'I understand that the app gives general information only, that it is not medical advice, that it is a research prototype which may be wrong, and that I should consult a health professional about any real decision.' },
-  { id: 'collection', text: 'I agree to the collection of my questionnaire answers, the time I take on each task, the number of questions I ask, and technical information about my browser.' },
-  { id: 'no_audio', text: 'I understand that no recording of my voice is kept, and that anything I say to the app is converted to text with only the text retained.' },
-  { id: 'storage', text: 'I understand that my data is stored against a participant code, held securely for six years, then destroyed, and that I may request deletion within two weeks by quoting my code.' },
-];
 
 function ConsentStep({ onNext, onStop }) {
   const st = useStudy();

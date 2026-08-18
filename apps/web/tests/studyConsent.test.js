@@ -10,7 +10,11 @@
 // guards against was invisible precisely because nothing exercised the real
 // emission path.
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { saveStudy, transcriptFields, transcriptsConsented } from '../src/study/studyStore.js';
+import { CONSENT_ITEMS } from '../src/study/instruments.js';
 import { emit } from '../src/study/events.js';
 
 const QUEUE_KEY = 'dg_study_queue';
@@ -117,5 +121,55 @@ describe('transcriptFields', () => {
   it('passes fields through untouched once consented', () => {
     session(true);
     expect(transcriptFields({ question: QUESTION })).toEqual({ question: QUESTION });
+  });
+});
+
+// The on-screen ticks are recorded with `formVersion`, so they assert the
+// participant agreed to that version of the approved form. If the screen carries
+// fewer items than the form, that assertion is false — which is what happened:
+// seven ticks against a twelve-item form, missing the overseas-transfer item.
+// Nothing failed, because nothing compared the two.
+describe('the consent screen matches the approved form', () => {
+  const formPath = join(
+    dirname(fileURLToPath(import.meta.url)),
+    '..', '..', '..', 'docs', 'study', 'ethics', 'consent-form.md',
+  );
+  const form = readFileSync(formPath, 'utf8');
+  // The standard form only; the PLWD short form below it uses unnumbered ticks.
+  const numbered = [...form.matchAll(/^☐ \*\*(\d+)\.\*\*([\s\S]*?)(?=^☐|\n---)/gm)];
+  const optional = numbered.filter(([, , body]) => /\(Optional/i.test(body));
+
+  it('finds the numbered items in the form', () => {
+    expect(numbered.length).toBeGreaterThan(0);
+    // Exactly one item is optional: the transcript question, asked separately
+    // because declining it must not block participation.
+    expect(optional).toHaveLength(1);
+  });
+
+  it('has one tick per required form item', () => {
+    const required = numbered.length - optional.length;
+    expect(
+      CONSENT_ITEMS.length,
+      `The form has ${required} required items; the screen shows ${CONSENT_ITEMS.length}. `
+        + 'Add the missing tick to CONSENT_ITEMS, or amend the form and bump CONSENT_FORM_VERSION.',
+    ).toBe(required);
+  });
+
+  it('names the overseas processors, which no other screen does', () => {
+    const text = CONSENT_ITEMS.map((i) => i.text).join(' ');
+    expect(text).toMatch(/OpenAI/);
+    expect(text).toMatch(/ElevenLabs/);
+  });
+
+  it('covers conversation storage and publication', () => {
+    const ids = CONSENT_ITEMS.map((i) => i.id);
+    expect(ids).toContain('saves_conversations');
+    expect(ids).toContain('reporting');
+  });
+
+  it('uses unique, stable ids — they are the keys consent is stored under', () => {
+    const ids = CONSENT_ITEMS.map((i) => i.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(CONSENT_ITEMS.every((i) => i.text && i.text.length > 20)).toBe(true);
   });
 });

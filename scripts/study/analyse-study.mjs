@@ -57,7 +57,15 @@ const PRIMARY_GROUPS = new Set(['caregiver', 'worker']);
 const sessions = allSessions.filter((s) => PRIMARY_GROUPS.has(s.group));
 const plwd = allSessions.filter((s) => s.group === 'plwd');
 const primaryCodes = new Set(sessions.map((s) => s.participant_code));
-const tasks = allTasks.filter((t) => primaryCodes.has(t.participant_code));
+const primaryTasks = allTasks.filter((t) => primaryCodes.has(t.participant_code));
+// A task cut short — the participant stopped the session while it was still open
+// rather than ending the task — records a duration that is only a lower bound on
+// how long they would have taken. Pooling those would bias every timing statistic
+// downward, and would do it unevenly, because stopping is not random with respect
+// to how hard the task was. Excluded once here rather than at each of the places
+// duration is read, and reported as a count below.
+const stoppedMidTask = primaryTasks.filter((t) => String(t.stopped_mid_task) === 'true');
+const tasks = primaryTasks.filter((t) => String(t.stopped_mid_task) !== 'true');
 const sus = allSus.filter((r) => primaryCodes.has(r.participant_code));
 
 if (!allSessions.length) {
@@ -89,6 +97,14 @@ say(`**Excluded from the primary comparison:** ${plwd.length} participants livin
 say('dementia (reported separately below — they complete a shortened, non-comparable');
 say('protocol, per protocol §3.1).');
 say('');
+if (stoppedMidTask.length) {
+  say(`**Tasks cut short by stopping, excluded from timing:** ${stoppedMidTask.length}.`);
+  say('The participant stopped the session while the task was still open, so the recorded');
+  say('duration is a lower bound rather than a time on task. Distinct from a task they');
+  say('finished by saying they could not find the answer, counted separately below. The');
+  say('turns inside those windows are still captured in the transcripts.');
+  say('');
+}
 if (sessions.length < 20) {
   say('> n < 20, so everything below is counts and medians. No percentages, and no');
   say('> significance claim unless a test was run and met.');
@@ -226,8 +242,9 @@ if (!armA.length) {
     ['rag_ms', 'Retrieval'],
     ['llm_to_token_ms', 'LLM time to first token'],
     ['first_sentence_ms', 'First token → first sentence'],
-    ['tts_first_ms', 'TTS request → first audio'],
-    ['to_first_audio_ms', 'End to end → first avatar audio'],
+    ['tts_first_ms', 'TTS request → audio received'],
+    ['playback_wait_ms', 'Audio received → audio audible'],
+    ['to_first_audio_ms', 'End to end → first avatar audio (audible)'],
   ];
   for (const [key, label] of STAGES) {
     const xs = armA.map((r) => num(r[key])).filter((x) => x !== null);

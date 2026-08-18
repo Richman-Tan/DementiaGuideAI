@@ -31,6 +31,57 @@ const ev = (kind, { arm = null, taskId = null, clientTs = null, ...payload } = {
   client_ts: clientTs,
 });
 
+// Stopping mid-task is a normal, encouraged outcome, and it used to void the task
+// entirely: finish() emitted no task_end, so the window had no upper bound and the
+// export drops any start without a matching end. Anything typed on the screen the
+// participant was standing on went with it, because every response event fired
+// from next(). These assert the events finish() now emits.
+describe('stopping mid-task keeps the task and the answers', () => {
+  it('closes the window so turns can still be attributed', () => {
+    seq = 0;
+    const start = ev('task_start', { arm: 'A', taskId: 't1a' });
+    const events = [
+      start,
+      ev('turn_start', { arm: 'A', taskId: 't1a' }),
+      ev('turn_start', { arm: 'A', taskId: 't1a' }),
+      // What finish() emits when the session is stopped with a task open.
+      ev('task_end', { arm: 'A', taskId: 't1a', set: 1, durationMs: 42000, gaveUp: false, stoppedMidTask: true }),
+      ev('session_stopped', {}),
+    ];
+    const end = events.find((e) => e.kind === 'task_end');
+    expect(end).toBeDefined();
+    expect(turnsInWindow(events, SESSION, start.seq, end.seq)).toBe(2);
+  });
+
+  it('marks the task as cut short so its duration is not a time on task', () => {
+    seq = 0;
+    const end = ev('task_end', { arm: 'A', taskId: 't1a', durationMs: 42000, stoppedMidTask: true });
+    // The export reads payload.stoppedMidTask into tasks.csv as stopped_mid_task,
+    // and analyse-study.mjs excludes those from every timing statistic. Named to
+    // stay distinct from gave_up, which the report already calls "abandoned".
+    expect(end.payload.stoppedMidTask).toBe(true);
+    expect(end.payload.gaveUp).toBeUndefined();
+  });
+
+  it('carries the answers already on screen, merged rather than overwritten', () => {
+    seq = 0;
+    const events = [
+      ev('background_done', { responses: { 'bg.age': '65-74' } }),
+      // Typed but never submitted — previously discarded.
+      ev('responses_snapshot', {
+        responses: { 'sus.A.q1': 4, 'sus.A.q2': 2, 't1a.found': 'yes' },
+        atStep: 'sus',
+        stoppedEarly: true,
+      }),
+      ev('session_stopped', {}),
+    ];
+    const merged = mergeResponses(events).get(SESSION);
+    expect(merged['bg.age']).toBe('65-74');
+    expect(merged['sus.A.q1']).toBe(4);
+    expect(merged['t1a.found']).toBe('yes');
+  });
+});
+
 describe('post-task answers survive a participant who stops early', () => {
   // The failure this guards: answers used to reach the server only when swept
   // into a LATER questionnaire snapshot, and the export took last-wins. A

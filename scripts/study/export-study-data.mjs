@@ -120,6 +120,11 @@ for (const end of ends) {
     hidden_ms: hiddenMs,
     turns: turnCount,
     gave_up: end.payload?.gaveUp ?? null,
+    // True when the participant stopped the SESSION while this task was open,
+    // rather than ending the task. Distinct from gave_up, which is a task they
+    // finished by saying they could not find the answer. The window still
+    // attributes turns, but the duration is only a lower bound.
+    stopped_mid_task: end.payload?.stoppedMidTask ?? false,
     self_report: null,   // filled from the post-task instrument below
     effort: null,
     rubric_score: '',    // scored by hand against docs/study/tasks.md §2
@@ -216,6 +221,10 @@ const latencyRows = evOf('latency').map((e) => {
     first_sentence_ms: e.payload?.first_sentence_ms ?? null,
     tts_first_ms: e.payload?.tts_first_ms ?? null,
     to_first_audio_ms: e.payload?.to_first_audio_ms ?? null,
+    // Audio in hand → audio audible. Carried through because it is the interval
+    // that used to be excluded from to_first_audio_ms, so it is what quantifies
+    // how far the old avatar-vs-text figures were out.
+    playback_wait_ms: e.payload?.playback_wait_ms ?? null,
     to_first_token_ms: e.payload?.to_first_token_ms ?? null,
     streaming: e.payload?.streaming ?? null,
   };

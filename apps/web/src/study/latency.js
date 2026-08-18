@@ -42,8 +42,21 @@ export function createTurnTimer(arm = null, taskId = null) {
         rag_ms: delta('sttDone', 'ragDone'),
         llm_to_token_ms: delta('llmSend', 'firstToken'),
         first_sentence_ms: delta('firstToken', 'firstSentence'),
-        tts_first_ms: delta('ttsRequest', 'firstAudio'),
+        // The TTS round trip alone: request out, audio back. Deliberately ends at
+        // `ttsResponse`, not `firstAudio` — those were once the same mark, which
+        // is what made the arms incomparable (see below).
+        tts_first_ms: delta('ttsRequest', 'ttsResponse'),
+        // `firstAudio` MUST be marked when playback actually begins, not when the
+        // audio arrives. On the REST path — the only path a study session takes,
+        // because streaming needs the ElevenLabs key in the browser — the two are
+        // separated by queue wait and decode. Marking on arrival made Arm A look
+        // faster than the participant experienced, while Arm B's
+        // to_first_token_ms below is measured at the moment text appears. The
+        // headline comparison of the study was biased by exactly that gap.
         to_first_audio_ms: rel('firstAudio'),
+        // The gap that used to be invisible: audio in hand → audio audible.
+        // Recorded so the bias is quantifiable rather than merely fixed.
+        playback_wait_ms: delta('ttsResponse', 'firstAudio'),
         // Not one of the six report stages, and parse-latency.mjs ignores it.
         // It is the text arm's analogue of to_first_audio_ms: the moment the
         // participant first has something to read.

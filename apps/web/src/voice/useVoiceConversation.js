@@ -202,7 +202,10 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       turn.mark('ttsRequest');
       queue.promises.push(
         tts(clean, { speechRate, visemeWeights, ...ttsVoiceOptions }).then((result) => {
-          turn.mark('firstAudio');
+          // The audio has ARRIVED, which is not the same as the participant
+          // hearing it — it still waits its turn in the queue and has to decode.
+          // `firstAudio` is marked by the consumer at actual playback start.
+          turn.mark('ttsResponse');
           return { ...result, text: clean, emotion };
         })
       );
@@ -309,6 +312,11 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         avatar?.setSpeechEmotion?.(segment.emotion);
 
         if (segment.audio && avatar) {
+          // Time-to-audible, measured where the participant experiences it. The
+          // timer keeps the first call only, so later segments do not overwrite
+          // this. The streaming path marks the same name from the avatar's own
+          // onAudioStart callback, so both paths mean the same thing.
+          turn.mark('firstAudio');
           await avatar.playAudio(segment);
         } else if (!segment.audio) {
           // Audio off: pace subtitles by reading speed (~55ms/char, min 1.4s).

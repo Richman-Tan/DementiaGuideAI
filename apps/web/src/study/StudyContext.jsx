@@ -183,6 +183,40 @@ export function StudyProvider({ children }) {
 
   const finish = useCallback(async (stoppedEarly) => {
     const s = loadStudy();
+
+    // Close a task that is still open. Stopping mid-task is a normal, encouraged
+    // outcome (ethics/risk-and-distress-protocol.md §2) and the overlay puts "I
+    // need to stop" beside the two end-task buttons — but without a matching
+    // task_end the export has no upper bound for the window, so the whole task
+    // vanished: its duration, its turn count and its away-time. The participants
+    // most likely to press that button are the ones whose data the protocol is
+    // most careful about.
+    if (s.step === 'task' && stage && task) {
+      emit('task_end', {
+        arm: stage.arm,
+        taskId: task.id,
+        set: stage.set,
+        durationMs: Date.now() - (s.taskStartedAt || Date.now()),
+        gaveUp: false,
+        // Not a completed task: the duration is a lower bound on what the
+        // participant would have taken, so analysis must keep it out of the
+        // time-on-task comparison while still using the window to attribute
+        // turns. Deliberately NOT called "abandoned" — the report already uses
+        // that word for gaveUp ("I couldn't find it"), which is a different
+        // thing a participant can do.
+        stoppedMidTask: true,
+      });
+    }
+
+    // Whatever is already answered on the screen they are standing on. Every
+    // other response event fires from next(), so anything entered and not yet
+    // submitted was discarded — a completed SUS, or five debrief answers, thrown
+    // away at the exact moment someone decided to stop. The export merges
+    // response blobs rather than overwriting, so this is additive.
+    if (Object.keys(s.responses || {}).length) {
+      emit('responses_snapshot', { responses: s.responses, atStep: s.step, stoppedEarly });
+    }
+
     emit(stoppedEarly ? 'session_stopped' : 'session_complete', {});
     update({ step: stoppedEarly ? 'stopped' : 'done', taskStartedAt: null });
     navigate('#/study');
@@ -192,7 +226,8 @@ export function StudyProvider({ children }) {
     } catch (err) {
       console.warn(`[study] could not close session: ${err?.message ?? err}`);
     }
-  }, [update]);
+    // stage/task are needed to close an open task above.
+  }, [update, stage, task]);
 
   const next = useCallback(() => {
     const s = loadStudy();

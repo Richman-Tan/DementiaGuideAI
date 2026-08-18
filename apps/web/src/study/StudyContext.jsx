@@ -7,6 +7,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { loadStudy, saveStudy, clearStudy, isStudyMode } from './studyStore.js';
 import { emit, flush, installUnloadFlush, pendingCount, resetQueue } from './events.js';
+import { apiUrl } from '../services/apiBase.js';
 import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
 import { navigate } from '../state/router.js';
 import { getUnityAvailability, getUnityLoadState, probeUnity } from '../avatar/unity/unityBridge.js';
@@ -21,7 +22,7 @@ export const STEPS = [
 ];
 
 async function post(path, body, accessCode, accessToken = null) {
-  const resp = await fetch(path, {
+  const resp = await fetch(apiUrl(path), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

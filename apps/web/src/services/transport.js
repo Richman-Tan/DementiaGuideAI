@@ -10,6 +10,7 @@
 // mode, so the study measures the shipped pipeline rather than a parallel one.
 import { getOpenaiKey, getElevenKey } from '../state/keysStore.js';
 import { isStudyMode, studyAccessCode } from '../study/studyStore.js';
+import { apiUrl } from './apiBase.js';
 
 const OPENAI_BASE = 'https://api.openai.com/v1';
 
@@ -41,7 +42,7 @@ export function openaiUrl(transport, path) {
   if (!transport?.proxied) return `${OPENAI_BASE}${path}`;
   const route = PROXY_ROUTES[path];
   if (!route) throw new Error(`no study route for ${path}`);
-  return route;
+  return apiUrl(route);
 }
 
 /** → { proxied, headers } or null when ElevenLabs is unavailable. */

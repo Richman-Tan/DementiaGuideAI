@@ -4,7 +4,7 @@
 // final batch via sendBeacon on unload, so the same (session, seq) pair can
 // legitimately arrive twice. The unique index makes the second one a no-op
 // rather than a duplicate row.
-import { guard } from '../_lib/guard.js';
+import { guard, jsonBody } from '../_lib/guard.js';
 import { insertIgnoringConflicts, adminConfigured } from '../_lib/supabaseAdmin.js';
 
 const MAX_BATCH = 100;
@@ -25,7 +25,9 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { sessionId, participantCode, events } = req.body || {};
+  // jsonBody, not req.body: the unload beacon sends text/plain to dodge a
+  // preflight it cannot finish, so the platform hands it over unparsed.
+  const { sessionId, participantCode, events } = jsonBody(req);
   if (!sessionId || !participantCode || !Array.isArray(events) || events.length === 0) {
     res.status(400).json({ error: 'sessionId, participantCode and events required' });
     return;

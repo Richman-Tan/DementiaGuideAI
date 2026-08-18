@@ -22,28 +22,35 @@ frontend's own API routes. That is the wrong shape here for three reasons:
 
 ## How it deploys
 
-`apps/web` and `apps/api` are two [Vercel Services](https://vercel.com/docs/services)
-declared in the **root `vercel.json`**, built separately and deployed together on
-one domain:
+`apps/web` and `apps/api` are **two separate Vercel projects**, each with its own
+`vercel.json` and its own root directory.
 
-```
-/api/*  → the api service
-/*      → the web service
-```
+An earlier attempt declared them as two [Vercel Services](https://vercel.com/docs/services)
+in a root `vercel.json`, which would have kept them on one domain and same-origin.
+That does not work for this backend, and the failure is silent: a service is a
+single server identified by an `entrypoint`, so a directory of per-route handlers
+has no entrypoint to detect. Vercel fell back to treating `apps/api` as a *static
+site* and published the handlers — `_lib/guard.js` and `_lib/supabaseAdmin.js`
+included — as static files, with zero functions and no build error. Services is
+also still in Beta. Verified with `vercel build`; see the run in `docs/`.
 
-One domain means the browser calls `/api/*` same-origin — no CORS, no second
-origin in the CSP. Mobile calls the same public paths. Because every request
-enters through one route table, the firewall, rate limiting and deployment
-protection are configured once, at the top level, rather than per service.
+Two projects means the browser reaches this API cross-origin, so it sets CORS
+headers itself (`_lib/guard.js`) against the `ALLOWED_ORIGINS` allowlist. Mobile
+is unaffected — a native app has no origin to preserve.
 
 ## Layout
 
+Handlers live under `api/` because that is the directory Vercel serves functions
+from; the service root is left for `package.json` and this file. `_lib/` is
+excluded from routing by its underscore, so it is importable but never
+addressable.
+
 | Path | Role |
 |---|---|
-| `chat.js`, `embed.js`, `speech.js`, `transcribe.js`, `eleven-tts.js` | Credentialed proxies. Explicit per-endpoint allowlists, not a catch-all passthrough: a leaked access code must not reach an arbitrary model. |
-| `study/` | Session lifecycle and event capture for the usability study (`docs/study/`) |
-| `_lib/guard.js` | Access-code auth, per-code metering, raw-body reading |
-| `_lib/supabaseAdmin.js` | PostgREST over `fetch` — **not** supabase-js, which throws on Node 20 for want of a native WebSocket (same reason `scripts/eval/lib.mjs` avoids it) |
+| `api/chat.js`, `api/embed.js`, `api/speech.js`, `api/transcribe.js`, `api/eleven-tts.js` | Credentialed proxies. Explicit per-endpoint allowlists, not a catch-all passthrough: a leaked access code must not reach an arbitrary model. |
+| `api/study/` | Session lifecycle and event capture for the usability study (`docs/study/`) |
+| `api/_lib/guard.js` | CORS, access-code auth, per-code metering, raw-body reading |
+| `api/_lib/supabaseAdmin.js` | PostgREST over `fetch` — **not** supabase-js, which throws on Node 20 for want of a native WebSocket (same reason `scripts/eval/lib.mjs` avoids it) |
 
 Shared logic comes from `@dementiaguide/core`, declared as a real workspace
 dependency so the bundler includes it. `study/studyConfig.mjs` in particular is

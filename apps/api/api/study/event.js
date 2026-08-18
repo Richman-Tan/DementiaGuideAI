@@ -15,7 +15,13 @@ export default async function handler(req, res) {
   // participant's AI budget — but leaving it unmetered made this an unbounded
   // write endpoint (100 events × 20 kB per request, unlimited rate), and the
   // first casualty of a full database is the study's own data.
-  if (!(await guard(req, res, { allowBodyCode: true, meterSuffix: ':events', meterLimit: 5000 }))) return;
+  // Shared across every participant, like the AI counter, but sized far higher:
+  // these are database rows rather than paid tokens, a session emits hundreds of
+  // events across many small batches, and flush() retries every 2s without
+  // backoff — so one participant on bad wifi can spend a lot of this on their
+  // own. Running out here loses the study's own data, which is worse than the
+  // cost of allowing it.
+  if (!(await guard(req, res, { allowBodyCode: true, meterSuffix: ':events', meterLimit: 20000 }))) return;
   // adminConfigured covers both SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY, so
   // this is the single place the response is sent — requireEnv would have
   // already replied, and a second send is a write-after-end.

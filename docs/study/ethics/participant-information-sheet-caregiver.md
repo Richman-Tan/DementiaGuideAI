@@ -40,16 +40,19 @@ the people who would actually use it.
 Everything happens online, on your own device, whenever suits you. There is no
 appointment and nobody will be watching you.
 
-1. You will get a link, a participant code and an access code by email.
+1. You will get a link and an access code.
 2. The website will explain the study and ask for your consent.
-3. You will answer a few short questions about yourself — no name, no contact
+3. The app will give you a **participant code** and ask you to write it down. We
+   never ask for your name, so that code is the only way we could find your
+   answers again — you would need it to ask us to delete them.
+4. You will answer a few short questions about yourself — no name, no contact
    details.
-4. You will be given a short, made-up situation — for example, *someone who becomes
+5. You will be given a short, made-up situation — for example, *someone who becomes
    restless and upset in the evenings* — and asked to use the app to find out what
    could help. You will do three of these one way, and three the other way.
-5. After each way of using the app, you will answer some questions about how easy it
+6. After each way of using the app, you will answer some questions about how easy it
    was to use.
-6. At the end there are five short questions about what you thought.
+7. At the end there are five short questions about what you thought.
 
 **It takes about 35 to 45 minutes.** You can take a break between the two halves.
 

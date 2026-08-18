@@ -45,13 +45,16 @@ told whether you took part, and will not receive any individual results.
 Everything is online, on your own device, at a time that suits you. There is no
 appointment and no observer.
 
-1. You receive a link, a participant code and an access code by email.
+1. You receive a link and an access code.
 2. The site explains the study and asks for your consent.
-3. A few short background questions — no name, no contact details.
-4. Six short scenarios. For each, you use the app to find out what could help. Three
+3. The app issues you a **participant code** and asks you to keep it. No name is
+   collected, so it is the only way your data can be located — you would need it
+   to request deletion.
+4. A few short background questions — no name, no contact details.
+5. Six short scenarios. For each, you use the app to find out what could help. Three
    are done using the speaking avatar, three using text chat.
-5. A usability questionnaire after each of the two halves.
-6. Five short open questions at the end.
+6. A usability questionnaire after each of the two halves.
+7. Five short open questions at the end.
 
 **About 35 to 45 minutes**, with a break available between halves.
 

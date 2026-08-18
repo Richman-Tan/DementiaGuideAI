@@ -153,9 +153,16 @@ services, and University of Auckland channels for the worker group. Materials in
 `ethics/recruitment-email.md` and `ethics/recruitment-flyer.md`. No participant is
 approached directly by the investigator without the referring service's involvement.
 
-Each participant receives a unique **participant code** and **access code** in
-their invitation. The access code both authorises the application's API usage and
-links the session's data to a participant number without collecting a name.
+Participants receive an **access code** with the study link. It authorises the
+application's API usage and nothing else — it carries no identity, and the same
+code may be held by more than one participant.
+
+Identification is by **participant code**, which the application allocates at the
+start of a session and displays to the participant to keep. It is allocated
+rather than issued in advance because the study link is passed on rather than
+addressed individually, so no one is assigning numbers by hand; two participants
+choosing the same number would otherwise be recorded as a single session. The
+participant code is the only key in the dataset, and no name is collected.
 
 ---
 
@@ -226,19 +233,22 @@ dataset — from real sessions rather than a scripted run.
 
 ## 6. Procedure
 
-1. Invitation email with the study link, participant code and access code.
+1. Invitation with the study link and the access code.
 2. **Landing** — what the study is, how long it takes, what is recorded.
 3. **Participant Information Sheet**, on screen and downloadable.
 4. **Consent** — itemised tick boxes, including a separate tick for transcript
    retention. No progress without consent; declining ends the session cleanly.
 5. **Browser and microphone check** — Chrome/Edge confirmation and a microphone
    permission test before any task.
-6. **Background questions** — group, age band, self-rated confidence with
+6. **Participant code shown** — allocated at session start and displayed with an
+   instruction to keep it. It is the only handle on their data, so it is what a
+   withdrawal request must quote.
+7. **Background questions** — group, age band, self-rated confidence with
    technology, prior use of AI assistants.
-7. **Arm 1** — one-screen briefing, three tasks, then SUS and the four Likert items.
-8. **Arm 2** — same structure, other interface, other task set.
-9. **Debrief** — five free-text questions.
-10. **Close** — thank-you, support numbers, contact details for questions or
+8. **Arm 1** — one-screen briefing, three tasks, then SUS and the four Likert items.
+9. **Arm 2** — same structure, other interface, other task set.
+10. **Debrief** — five free-text questions.
+11. **Close** — thank-you, support numbers, contact details for questions or
     withdrawal.
 
 A persistent **"I need to stop"** control is available on every screen. It ends the

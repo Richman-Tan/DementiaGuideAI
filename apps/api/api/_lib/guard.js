@@ -11,7 +11,15 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { rpc, adminConfigured } from './supabaseAdmin.js';
 
-const DAILY_LIMIT = Number(process.env.STUDY_DAILY_REQUEST_LIMIT || 400);
+// Per-code, per-UTC-day. The study runs on ONE access code shared between all
+// participants, so this is a pool, not a per-person allowance: at the old 400
+// it covered roughly nine sessions a day in total, and the tenth participant
+// that day would have been refused mid-task with no way to tell that it was a
+// quota rather than a fault. Sized instead so a whole cohort can run in one
+// evening. The hard spend cap on the OpenAI account is the real backstop —
+// this meter only bounds the blast radius if the shared code gets passed on
+// further than intended.
+const DAILY_LIMIT = Number(process.env.STUDY_DAILY_REQUEST_LIMIT || 4000);
 
 const MIN_CODE_LENGTH = 16;
 

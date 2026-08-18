@@ -108,6 +108,27 @@ export async function guard(req, res, {
 
 // Takes the value, not the variable name: a dynamic process.env read hides
 // which variable a route actually needs, and lint forbids it.
+/**
+ * The caller's Supabase user id, from the Authorization bearer token.
+ *
+ * The signature is NOT verified here, and that is deliberate: this value is only
+ * ever used to LABEL a row the caller already has the right to create via their
+ * study access code. It grants no access — RLS is what protects user data, and
+ * RLS verifies the token itself. Never authorise anything on this.
+ */
+export function readUserId(req) {
+  const raw = req.headers.authorization || '';
+  const token = raw.startsWith('Bearer ') ? raw.slice(7) : '';
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  try {
+    const claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    return typeof claims.sub === 'string' ? claims.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 export function requireEnv(res, value, name = 'a required setting') {
   if (!value) {
     console.error(`[study] ${name} is not configured`);

@@ -4,6 +4,7 @@ import { useChat } from '../state/ChatContext.jsx';
 import { useUi } from '../state/UiContext.jsx';
 import { loadKeys, saveKeys as persistKeys, clearKeys as wipeKeys } from '../state/keysStore.js';
 import { useStudy } from '../study/StudyContext.jsx';
+import { useAuth } from '../state/AuthContext.jsx';
 import { navigate } from '../state/router.js';
 import { AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
 import { isUnityAvailable } from '../avatar/unity/unityBridge.js';
@@ -31,11 +32,84 @@ const Card = ({ children, mb = 26 }) => (
 
 const segStyle = (on) => ({ background: on ? 'var(--primary)' : 'transparent', color: on ? '#fff' : 'var(--text2)' });
 
+// Anonymous by default, upgradeable on request. Deliberately framed as "keep
+// your conversations", not "create an account": the benefit is the thing worth
+// saying, and for this audience an account is a cost, not a feature.
+function AccountUpgrade({ onLink, showToast }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      await onLink(email.trim(), password);
+      showToast('Check your email to confirm — your conversations are already saved.');
+      setOpen(false);
+    } catch (err) {
+      setError(err?.message || 'Could not save that. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}
+      >
+        <span style={{ flex: '1' }}>
+          <span style={{ display: 'block', fontWeight: '600', color: 'var(--primary-d)' }}>Use these conversations on another device</span>
+          <span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>
+            They are saved on this device already. Add an email to reach them anywhere.
+          </span>
+        </span>
+        <span style={{ color: 'var(--text2)' }}>›</span>
+      </button>
+    );
+  }
+
+  const field = { minHeight: '48px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--elev)', color: 'var(--text)', fontSize: '.95rem', boxSizing: 'border-box', width: '100%' };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '12px 0 18px' }}>
+      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <span style={{ fontWeight: '600', fontSize: '.92rem' }}>Email</span>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" style={field} />
+      </label>
+      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <span style={{ fontWeight: '600', fontSize: '.92rem' }}>Choose a password</span>
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" style={field} />
+      </label>
+      <p style={{ margin: 0, color: 'var(--text2)', fontSize: '.85rem', lineHeight: 1.5 }}>
+        Nothing you have already said is lost — this attaches your existing
+        conversations to an email so you can reach them from another device.
+      </p>
+      {error && <p role="alert" style={{ margin: 0, color: 'var(--amber)', fontSize: '.9rem' }}>{error}</p>}
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <button onClick={submit} disabled={busy || !email.trim() || password.length < 6}
+          style={{ minHeight: '46px', padding: '0 20px', borderRadius: '12px', border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: '600', cursor: busy ? 'default' : 'pointer', opacity: busy || !email.trim() || password.length < 6 ? 0.5 : 1 }}>
+          {busy ? 'Saving…' : 'Save'}
+        </button>
+        <button onClick={() => setOpen(false)}
+          style={{ minHeight: '46px', padding: '0 20px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }}>
+          Not now
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Settings() {
   const { settings, setSetting, effDark } = useSettings();
-  const { newConvo } = useChat();
+  const { clearHistory: wipeConversations, conversationId } = useChat();
   const { showToast, askConfirm } = useUi();
   const study = useStudy();
+  const auth = useAuth();
   // A study participant reaches the model through the server-side proxy with an
   // access code. Showing them an API-key form would be a confusing dead end.
   const inStudy = Boolean(study?.active);
@@ -63,10 +137,36 @@ export default function Settings() {
     ['azure', 'Azure Speech key (not used on web)'],
   ];
 
+  // Where conversations actually live right now. The app used to keep them in
+  // localStorage only, and every line of copy below still said so; they now go
+  // to the account as well, unless anonymous sign-in is unavailable and the
+  // device cache is all there is.
+  // Deliberately not auth.status: signing in proves only that an account
+  // exists, not that a conversation was ever written. If the tables are absent
+  // the insert 404s and getOrCreateConversation returns null, and telling
+  // someone their conversations are "saved to your account" when nothing was
+  // saved is the worst way to be wrong about storage. A real conversation id is
+  // the only evidence a write actually landed.
+  const savedToAccount = Boolean(conversationId);
+  const storageSummary = savedToAccount
+    ? 'Saved to your account and cached on this device'
+    : 'Saved on this device only — no account is available';
+  const storageDetail = savedToAccount
+    ? 'Your conversations are saved to your anonymous account so they are still here next time, and cached on this device so the app opens instantly. Questions are sent to the AI provider to be answered.'
+    : 'Sign-in is unavailable, so your conversations are saved on this device only and will not follow you to another browser. Questions are still sent to the AI provider to be answered.';
+
   const clearHistory = () =>
-    askConfirm({ title: 'Clear conversation history?', message: 'This removes all past conversations from this browser. It cannot be undone.', yesLabel: 'Clear history' }, () => {
-      newConvo();
-      showToast('History cleared');
+    askConfirm({
+      title: 'Clear conversation history?',
+      message: savedToAccount
+        ? 'This deletes all past conversations from your account and this device. It cannot be undone.'
+        : 'This removes all past conversations from this device. It cannot be undone.',
+      yesLabel: 'Clear history',
+    }, async () => {
+      const result = await wipeConversations();
+      // Never report a deletion that did not happen — the whole point of the
+      // wording above is that the record is gone, not just the screen.
+      showToast(result?.deleted ? 'History cleared' : 'Could not clear your history — check your connection and try again');
     });
 
   return (
@@ -132,9 +232,9 @@ export default function Settings() {
       <SectionTitle>Privacy &amp; Trust</SectionTitle>
       <Card>
         <a href="#/privacy" style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', borderBottom: 'var(--bw) solid var(--border)', textDecoration: 'none', color: 'var(--text)' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Privacy Policy</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>How this app handles your information</span></span><span style={{ color: 'var(--text2)' }}>›</span></a>
-        <button onClick={() => showToast('Conversations are stored only on this device — nothing is sent to a server.')} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', borderBottom: 'var(--bw) solid var(--border)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Data Security</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>Conversations are stored only on this device</span></span><span style={{ color: 'var(--text2)' }}>ⓘ</span></button>
+        <button onClick={() => showToast(storageDetail)} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', borderBottom: 'var(--bw) solid var(--border)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Data Security</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>{storageSummary}</span></span><span style={{ color: 'var(--text2)' }}>ⓘ</span></button>
         <a href="#/disclaimer" style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', borderBottom: 'var(--bw) solid var(--border)', textDecoration: 'none', color: 'var(--text)' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Medical Disclaimer</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>What Aria can and can't help with</span></span><span style={{ color: 'var(--text2)' }}>›</span></a>
-        {!inStudy && <button onClick={clearHistory} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Clear Conversation History</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>Remove past conversations from this device</span></span><span style={{ color: 'var(--text2)' }}>›</span></button>}
+        {!inStudy && <button onClick={clearHistory} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Clear Conversation History</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>{savedToAccount ? 'Delete past conversations from your account and this device' : 'Delete past conversations from this device'}</span></span><span style={{ color: 'var(--text2)' }}>›</span></button>}
       </Card>
 
       {!inStudy && <SectionTitle>Advanced</SectionTitle>}
@@ -157,6 +257,26 @@ export default function Settings() {
           </div>
         )}
       </Card>
+      )}
+
+      {!inStudy && auth?.status === 'ready' && (
+        <>
+          <SectionTitle>Your conversations</SectionTitle>
+          <Card>
+            {auth.isAnonymous ? (
+              <AccountUpgrade onLink={auth.linkEmail} showToast={showToast} />
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0' }}>
+                <span style={{ flex: '1' }}>
+                  <span style={{ display: 'block', fontWeight: '600' }}>Saved to your account</span>
+                  <span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>
+                    Your conversations follow you to any device you sign in on.
+                  </span>
+                </span>
+              </div>
+            )}
+          </Card>
+        </>
       )}
 
       <SectionTitle>About</SectionTitle>

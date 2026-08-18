@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { SettingsProvider, useSettings } from './state/SettingsContext.jsx';
 import { UiProvider } from './state/UiContext.jsx';
+import { AuthProvider } from './state/AuthContext.jsx';
 import { ChatProvider } from './state/ChatContext.jsx';
 import { StudyProvider, useStudy } from './study/StudyContext.jsx';
 import StudyScreen from './study/screens/StudyScreen.jsx';
@@ -87,6 +88,7 @@ export default function App() {
   return (
     <SettingsProvider>
       <UiProvider>
+        <AuthProvider>
         <StudyProvider>
         <ChatProvider>
           <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem', lineHeight: '1.55' }}>
@@ -94,6 +96,7 @@ export default function App() {
           </div>
         </ChatProvider>
         </StudyProvider>
+        </AuthProvider>
       </UiProvider>
     </SettingsProvider>
   );

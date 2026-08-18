@@ -8,7 +8,8 @@
 // socket, which is the thing this endpoint exists to avoid. The study therefore
 // runs on this REST cascade and reports latency against it — recorded as a
 // limitation in docs/study/protocol.md §10.
-import { guard, requireEnv } from './_lib/guard.js';
+import { guard, requireEnv, readUserId } from './_lib/guard.js';
+import { recordUsage } from './_lib/usage.js';
 
 const MODEL_ID = 'eleven_turbo_v2_5';
 const MAX_INPUT_CHARS = 4000;
@@ -63,5 +64,6 @@ export default async function handler(req, res) {
     return;
   }
 
+  recordUsage({ userId: readUserId(req), kind: 'tts', units: text.length, model: MODEL_ID });
   res.status(200).json(await upstream.json());
 }

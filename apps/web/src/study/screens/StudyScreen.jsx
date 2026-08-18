@@ -22,6 +22,63 @@ function StopBar({ onStop }) {
   );
 }
 
+/**
+ * Hands the device to the next participant.
+ *
+ * Only ever rendered on a finished session. The fallback screen further down
+ * must not offer this while a session is live — that was the old behaviour and
+ * it silently discarded progress. Two steps rather than one so that a tap does
+ * not clear the participant code before the participant has written it down.
+ */
+function NextParticipant({ onReset }) {
+  const [armed, setArmed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState(0);
+
+  const clear = async () => {
+    setBusy(true);
+    try {
+      const result = await onReset();
+      if (!result.cleared) setPending(result.pending);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!armed) {
+    return (
+      <div style={{ marginTop: '2.5rem', paddingTop: '1.25rem', borderTop: 'var(--bw) solid var(--border)' }}>
+        <Button variant="quiet" onClick={() => setArmed(true)} style={{ padding: 0, minHeight: 44 }}>
+          Setting up for another participant?
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ ...card, marginTop: '2.5rem' }}>
+      {pending > 0 ? (
+        <p style={{ margin: '0 0 1rem', lineHeight: 1.6, color: 'var(--text)' }}>
+          <strong>Not cleared.</strong> {pending} {pending === 1 ? 'record has' : 'records have'} not
+          reached the server yet. Stay on this page while the connection recovers, then try again —
+          clearing now would lose {pending === 1 ? 'it' : 'them'}.
+        </p>
+      ) : (
+        <p style={{ margin: '0 0 1rem', lineHeight: 1.6, color: 'var(--text)' }}>
+          This clears the session from this device so the next participant starts from a blank
+          slate. Answers already sent to the server are not affected.
+        </p>
+      )}
+      <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
+        <Button onClick={clear} disabled={busy}>
+          {busy ? 'Checking…' : pending > 0 ? 'Try again' : 'Clear this device'}
+        </Button>
+        <Button variant="quiet" onClick={() => setArmed(false)}>Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
 export default function StudyScreen() {
   const st = useStudy();
   const { settings } = useSettings();
@@ -289,6 +346,7 @@ export default function StudyScreen() {
           If you would like the data from your session deleted, email the researcher
           within two weeks quoting your participant code — <strong>{st.participantCode}</strong>.
         </p>
+        <NextParticipant onReset={st.reset} />
       </Page>
     );
   }
@@ -308,6 +366,7 @@ export default function StudyScreen() {
           </p>
         </div>
         <Disclaimer />
+        <NextParticipant onReset={st.reset} />
       </Page>
     );
   }

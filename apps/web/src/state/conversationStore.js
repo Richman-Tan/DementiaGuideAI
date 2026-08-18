@@ -119,6 +119,37 @@ export async function appendMessage(conversationId, { role, text, citations }) {
     .eq('id', conversationId);
 }
 
+/**
+ * Delete every conversation this user owns.
+ *
+ * Settings offers "Clear Conversation History" and the privacy policy promises
+ * it "removes it permanently". Starting a new thread — which is all newConvo()
+ * does — left every earlier row on the server, so that promise was not true
+ * once conversations moved off the device.
+ *
+ * `messages` cascades from `conversations`, and the RLS policy scopes the
+ * delete to auth.uid(), so this cannot reach another user's rows. The cache is
+ * cleared only once the server copy is actually gone: emptying the screen while
+ * the record survives is the failure mode worth avoiding.
+ */
+export async function deleteAllConversations(userId) {
+  // No server to delete from — the cache *is* the record, so clearing it is the
+  // whole job rather than a half-done one.
+  if (!usable(userId)) {
+    clearCached();
+    return { deleted: true, scope: 'device' };
+  }
+
+  const { error } = await supabase.from('conversations').delete().eq('user_id', userId);
+  if (error) {
+    console.warn(`[conversations] delete failed: ${error.message}`);
+    return { deleted: false, scope: 'server', message: error.message };
+  }
+
+  clearCached();
+  return { deleted: true, scope: 'server' };
+}
+
 export async function startNewConversation(userId, { surface = 'chat', studyArm = null } = {}) {
   if (!usable(userId)) return null;
   const { data, error } = await supabase

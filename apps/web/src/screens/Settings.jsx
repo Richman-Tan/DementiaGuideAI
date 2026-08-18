@@ -106,7 +106,7 @@ function AccountUpgrade({ onLink, showToast }) {
 
 export default function Settings() {
   const { settings, setSetting, effDark } = useSettings();
-  const { newConvo } = useChat();
+  const { clearHistory: wipeConversations, conversationId } = useChat();
   const { showToast, askConfirm } = useUi();
   const study = useStudy();
   const auth = useAuth();
@@ -137,10 +137,36 @@ export default function Settings() {
     ['azure', 'Azure Speech key (not used on web)'],
   ];
 
+  // Where conversations actually live right now. The app used to keep them in
+  // localStorage only, and every line of copy below still said so; they now go
+  // to the account as well, unless anonymous sign-in is unavailable and the
+  // device cache is all there is.
+  // Deliberately not auth.status: signing in proves only that an account
+  // exists, not that a conversation was ever written. If the tables are absent
+  // the insert 404s and getOrCreateConversation returns null, and telling
+  // someone their conversations are "saved to your account" when nothing was
+  // saved is the worst way to be wrong about storage. A real conversation id is
+  // the only evidence a write actually landed.
+  const savedToAccount = Boolean(conversationId);
+  const storageSummary = savedToAccount
+    ? 'Saved to your account and cached on this device'
+    : 'Saved on this device only — no account is available';
+  const storageDetail = savedToAccount
+    ? 'Your conversations are saved to your anonymous account so they are still here next time, and cached on this device so the app opens instantly. Questions are sent to the AI provider to be answered.'
+    : 'Sign-in is unavailable, so your conversations are saved on this device only and will not follow you to another browser. Questions are still sent to the AI provider to be answered.';
+
   const clearHistory = () =>
-    askConfirm({ title: 'Clear conversation history?', message: 'This removes all past conversations from this browser. It cannot be undone.', yesLabel: 'Clear history' }, () => {
-      newConvo();
-      showToast('History cleared');
+    askConfirm({
+      title: 'Clear conversation history?',
+      message: savedToAccount
+        ? 'This deletes all past conversations from your account and this device. It cannot be undone.'
+        : 'This removes all past conversations from this device. It cannot be undone.',
+      yesLabel: 'Clear history',
+    }, async () => {
+      const result = await wipeConversations();
+      // Never report a deletion that did not happen — the whole point of the
+      // wording above is that the record is gone, not just the screen.
+      showToast(result?.deleted ? 'History cleared' : 'Could not clear your history — check your connection and try again');
     });
 
   return (
@@ -206,9 +232,9 @@ export default function Settings() {
       <SectionTitle>Privacy &amp; Trust</SectionTitle>
       <Card>
         <a href="#/privacy" style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', borderBottom: 'var(--bw) solid var(--border)', textDecoration: 'none', color: 'var(--text)' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Privacy Policy</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>How this app handles your information</span></span><span style={{ color: 'var(--text2)' }}>›</span></a>
-        <button onClick={() => showToast('Conversations are stored only on this device — nothing is sent to a server.')} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', borderBottom: 'var(--bw) solid var(--border)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Data Security</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>Conversations are stored only on this device</span></span><span style={{ color: 'var(--text2)' }}>ⓘ</span></button>
+        <button onClick={() => showToast(storageDetail)} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', borderBottom: 'var(--bw) solid var(--border)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Data Security</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>{storageSummary}</span></span><span style={{ color: 'var(--text2)' }}>ⓘ</span></button>
         <a href="#/disclaimer" style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', borderBottom: 'var(--bw) solid var(--border)', textDecoration: 'none', color: 'var(--text)' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Medical Disclaimer</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>What Aria can and can't help with</span></span><span style={{ color: 'var(--text2)' }}>›</span></a>
-        {!inStudy && <button onClick={clearHistory} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Clear Conversation History</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>Remove past conversations from this device</span></span><span style={{ color: 'var(--text2)' }}>›</span></button>}
+        {!inStudy && <button onClick={clearHistory} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Clear Conversation History</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>{savedToAccount ? 'Delete past conversations from your account and this device' : 'Delete past conversations from this device'}</span></span><span style={{ color: 'var(--text2)' }}>›</span></button>}
       </Card>
 
       {!inStudy && <SectionTitle>Advanced</SectionTitle>}

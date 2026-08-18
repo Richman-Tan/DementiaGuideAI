@@ -6,7 +6,7 @@ import * as S from '../data/services.js';
 import {
   loadCached, saveCached, clearCached,
   getOrCreateConversation, loadMessages, appendMessage as persistMessage,
-  startNewConversation, migrateLegacyHistory,
+  startNewConversation, migrateLegacyHistory, deleteAllConversations,
 } from './conversationStore.js';
 import { useAuth } from './AuthContext.jsx';
 import { navigate } from './router.js';
@@ -241,8 +241,29 @@ export function ChatProvider({ children }) {
     persistMessage(convIdRef.current, m);
   }, []);
 
+  /**
+   * Delete every stored conversation, not just the one on screen.
+   *
+   * newConvo() starts a fresh thread and leaves the old rows where they are,
+   * which is right for "New conversation" and wrong for "Clear history". The
+   * screen is only emptied once the delete has actually succeeded, so a failure
+   * cannot look like a success.
+   */
+  const clearHistory = useCallback(async () => {
+    if (abortRef.current) abortRef.current.abort();
+    setTyping(false);
+    setChatError(false);
+    const result = await deleteAllConversations(userId);
+    if (!result.deleted) return result;
+    setMessages([]);
+    setConversationId(null);
+    const id = await startNewConversation(userId, { surface: 'chat', studyArm: studyArm || null });
+    if (id) setConversationId(id);
+    return result;
+  }, [userId, studyArm]);
+
   const value = {
-    messages, typing, chatError, chatErrorMsg, send, retry, askNow, newConvo, appendMessage,
+    messages, typing, chatError, chatErrorMsg, send, retry, askNow, newConvo, clearHistory, appendMessage,
     drawer, setDrawer, scrollCb, mock: isMockMode(), conversationId,
   };
   return <ChatCtx.Provider value={value}>{children}</ChatCtx.Provider>;

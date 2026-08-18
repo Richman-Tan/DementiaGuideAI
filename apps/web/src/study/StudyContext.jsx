@@ -98,6 +98,11 @@ export function StudyProvider({ children }) {
       group,
       consent,
       consentTranscripts,
+      // Was destructured above and then left out of the body, so the column was
+      // NULL for every session. Protocol §3.3 commits to recording that a support
+      // person was present for a participant living with dementia — the safeguard
+      // is only auditable if the answer is actually stored.
+      supporterPresent,
       userAgent: navigator.userAgent,
       browser: detectBrowser(),
       renderer: await detectRenderer(),

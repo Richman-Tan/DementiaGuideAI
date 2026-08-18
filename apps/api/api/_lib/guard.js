@@ -118,11 +118,26 @@ function isAllowed(code) {
   return hit;
 }
 
+/**
+ * The key the meter counts against.
+ *
+ * A digest of the access code, never the code itself: study_usage persists this
+ * key, so the raw value would sit in the database in plaintext — the one
+ * credential between a stranger and the provider bill, readable in the
+ * dashboard, in any export, and by anyone with project access. A digest counts
+ * identically, because the same code always maps to the same key and nothing
+ * needs to reverse it. The suffix stays in the clear so the AI and event
+ * counters are still easy to tell apart at a glance.
+ */
+function meterKey(code, suffix = '') {
+  return createHash('sha256').update(code).digest('hex').slice(0, 32) + suffix;
+}
+
 // Per-code daily cap, counted in Postgres because functions are stateless.
 // Fails OPEN on a database error: losing a participant's session to a transient
 // outage costs more than the handful of requests the cap would have blocked.
 // The OpenAI account spend cap is the real backstop.
-async function underLimit(code, limit = DAILY_LIMIT) {
+async function underLimit(code, limit = DAILY_LIMIT, suffix = '') {
   // Fail CLOSED when the backend is not configured. This is not a transient
   // condition that will resolve itself: it means the meter can never run, so
   // "allow anyway" would silently uncap spending for the whole study.
@@ -131,7 +146,7 @@ async function underLimit(code, limit = DAILY_LIMIT) {
     return false;
   }
   try {
-    const under = await rpc('bump_study_usage', { p_code: code, p_limit: limit });
+    const under = await rpc('bump_study_usage', { p_code: meterKey(code, suffix), p_limit: limit });
     return under !== false;
   } catch (err) {
     // Fail open only here: a transient database error should not cost a
@@ -166,7 +181,7 @@ export async function guard(req, res, {
     return null;
   }
 
-  if (meter && !(await underLimit(code + meterSuffix, meterLimit ?? DAILY_LIMIT))) {
+  if (meter && !(await underLimit(code, meterLimit ?? DAILY_LIMIT, meterSuffix))) {
     res.status(429).json({ error: 'study request limit reached for today' });
     return null;
   }

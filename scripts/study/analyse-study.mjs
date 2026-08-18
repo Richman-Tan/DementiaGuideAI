@@ -226,8 +226,9 @@ if (!armA.length) {
     ['rag_ms', 'Retrieval'],
     ['llm_to_token_ms', 'LLM time to first token'],
     ['first_sentence_ms', 'First token → first sentence'],
-    ['tts_first_ms', 'TTS request → first audio'],
-    ['to_first_audio_ms', 'End to end → first avatar audio'],
+    ['tts_first_ms', 'TTS request → audio received'],
+    ['playback_wait_ms', 'Audio received → audio audible'],
+    ['to_first_audio_ms', 'End to end → first avatar audio (audible)'],
   ];
   for (const [key, label] of STAGES) {
     const xs = armA.map((r) => num(r[key])).filter((x) => x !== null);

@@ -106,8 +106,17 @@ question: whether workers and family carers rate the same answers differently.
 **Table 4 — Voice pipeline latency, live sessions**
 
 Median and min–max per stage over all Arm A turns: `stt_ms`, `rag_ms`,
-`llm_to_token_ms`, `first_sentence_ms`, `tts_first_ms`, `to_first_audio_ms`. State n
-turns, and note that browser, device and network varied between participants.
+`llm_to_token_ms`, `first_sentence_ms`, `tts_first_ms`, `playback_wait_ms`,
+`to_first_audio_ms`. State n turns, and note that browser, device and network
+varied between participants.
+
+**`to_first_audio_ms` is time to *audible*, not time to audio received.** On the
+REST path the audio arrives, then waits in the segment queue and decodes before
+the participant hears anything; `playback_wait_ms` is that interval, reported
+separately so the end-to-end figure can be decomposed. This matters for any
+cross-arm claim: Arm B's `to_first_token_ms` is the moment text appears, so the
+comparison is only like-for-like if the audio figure is taken at playback. An
+earlier build marked it on arrival, which understated Arm A by `playback_wait_ms`.
 
 This discharges item 2 of `docs/report/700b_evaluation_plan.md` from real sessions
 rather than a scripted run, which is stronger evidence than the protocol originally

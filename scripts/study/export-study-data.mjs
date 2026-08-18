@@ -216,6 +216,10 @@ const latencyRows = evOf('latency').map((e) => {
     first_sentence_ms: e.payload?.first_sentence_ms ?? null,
     tts_first_ms: e.payload?.tts_first_ms ?? null,
     to_first_audio_ms: e.payload?.to_first_audio_ms ?? null,
+    // Audio in hand → audio audible. Carried through because it is the interval
+    // that used to be excluded from to_first_audio_ms, so it is what quantifies
+    // how far the old avatar-vs-text figures were out.
+    playback_wait_ms: e.payload?.playback_wait_ms ?? null,
     to_first_token_ms: e.payload?.to_first_token_ms ?? null,
     streaming: e.payload?.streaming ?? null,
   };

@@ -15,6 +15,7 @@ import { isMockMode, generateReply } from '../services/chatService.js';
 import { isStudyMode, currentArm, currentTaskId, transcriptFields } from '../study/studyStore.js';
 import { createTurnTimer } from '../study/latency.js';
 import { emit } from '../study/events.js';
+import { MODALITY_TYPED } from '@core/study/studyConfig.mjs';
 
 const ChatCtx = createContext(null);
 
@@ -135,7 +136,10 @@ export function ChatProvider({ children }) {
     const arm = studyArm;
     const taskId = currentTaskId();
     const turn = createTurnTimer(arm, taskId);
-    emit('turn_start', { arm, taskId, chars: q.length });
+    // Always typed: this screen has no microphone. Recorded explicitly rather
+    // than inferred from the arm, so that "how did they ask?" is one field in
+    // both arms and neither has to be reconstructed from which code path ran.
+    emit('turn_start', { arm, taskId, modality: MODALITY_TYPED, chars: q.length });
     try {
       const result = await generateReply({
         question: q,
@@ -168,10 +172,11 @@ export function ChatProvider({ children }) {
       persistMessage(convIdRef.current, {
         role: 'aria', text: result.text, citations: result.citations || [],
       });
-      turn.finish({ arm, taskId });
+      turn.finish({ arm, taskId, modality: MODALITY_TYPED });
       emit('turn', {
         arm,
         taskId,
+        modality: MODALITY_TYPED,
         // A participant who declines has their words withheld here, not at
         // export: declining means the text never reaches the database. The turn
         // is still recorded — turn count is a primary effectiveness measure and
@@ -185,6 +190,7 @@ export function ChatProvider({ children }) {
       emit('turn_error', {
         arm,
         taskId,
+        modality: MODALITY_TYPED,
         ...transcriptFields({ question: q }),
         error: err?.name || 'Error',
         message: String(err?.message ?? err).slice(0, 300),

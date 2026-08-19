@@ -37,6 +37,27 @@ verify it is gone.)
 ☐ Arm B is isolated: no avatar canvas is created, `/app/voice` is blocked, no
 ElevenLabs request is made.
 
+☐ **Arm A is isolated too.** During an Arm A task, close the avatar, go to Home, and
+click "Chat" in the sidebar — it must bounce straight back to the avatar. The reverse
+guard is the one that was missing, and its failure is invisible: the app works, and
+every turn is recorded as Arm A while running through the Arm B interface.
+
+☐ Typed turns in Arm A are recorded as typed. Send one question through the avatar
+screen's message bar and confirm the `turn` event carries `modality: "typed"`, and
+that `tasks.csv` counts it under `typed_turns`. The message bar stays — a participant
+who cannot speak comfortably needs it — so the measurement is what keeps the arm
+comparison honest.
+
+☐ **Handover gate.** Leave a session half-finished, reload `#/study`, and confirm the
+"Welcome back / I'm someone else" screen appears before anything else. This is the
+single most likely data corruption in the whole study: one link is forwarded to
+everyone, so a second person on the same browser would otherwise be resumed silently
+into the first person's session — same code, same answers, same Latin square cell,
+two people merged into one row.
+
+☐ "I'm someone else" refuses to clear while events are still queued, and says so.
+Test it offline: the clear must fail with a count, not succeed and discard the record.
+
 ☐ Latency events emit and `scripts/parse-latency.mjs` parses them unmodified.
 
 ☐ Events reach `study_events` and carry participant code, arm, task and monotonic
@@ -107,6 +128,17 @@ without hand-editing.
 ☐ Rubric scoring can actually be done from the transcripts alone. Score one pilot
 transcript blind and check the rubric discriminates — if every task scores "complete"
 regardless, the key points are too easy.
+
+☐ **Two people score the same pilot transcripts independently**, into `rubric_score`
+and `rubric_score_2`, and `analyse-study.mjs` reports agreement and κ. Do this at the
+pilot, not at the end: if the raters disagree, the fix is to clarify the rubric in
+`tasks.md` §2 *before* real transcripts exist. Discovering it afterwards means
+re-scoring everything under a rubric written with the results already visible.
+
+☐ The six Likert items read naturally out loud and none of them is answered "well,
+it depends". Personalisation and actionability are the newest wording and the least
+tested — if a proxy participant hesitates over "rather than general information anyone
+would get", fix it now. After the first real participant the wording is frozen.
 
 ---
 

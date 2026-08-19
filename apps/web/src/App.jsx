@@ -4,6 +4,7 @@ import { UiProvider } from './state/UiContext.jsx';
 import { AuthProvider } from './state/AuthContext.jsx';
 import { ChatProvider } from './state/ChatContext.jsx';
 import { StudyProvider, useStudy } from './study/StudyContext.jsx';
+import { wrongArmRedirect } from './study/guards.js';
 import StudyScreen from './study/screens/StudyScreen.jsx';
 import StudyTaskOverlay from './study/screens/StudyTaskOverlay.jsx';
 import { useRoute, useWidth, navigate } from './state/router.js';
@@ -35,11 +36,11 @@ function Routed() {
 
   if (path.startsWith('/study')) return <StudyScreen />;
 
-  // Arm B is the text baseline: the voice route must be unreachable, or a
-  // participant could wander into the avatar arm and the comparison would be
-  // measuring neither condition.
-  if (path === '/app/voice' && study?.active && study.stage?.arm === 'B') {
-    navigate('#/app/chat');
+  // Each arm has exactly one interface and the other must be unreachable, in
+  // both directions. Rule and rationale in study/guards.js.
+  const redirect = wrongArmRedirect(path, study);
+  if (redirect) {
+    navigate(redirect);
     return null;
   }
 
@@ -91,7 +92,14 @@ export default function App() {
         <AuthProvider>
         <StudyProvider>
         <ChatProvider>
-          <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem', lineHeight: '1.55' }}>
+          {/* Subtracts the study task band, which is position:fixed and paid for
+              by padding-top on <body>. Every screen inside already subtracts it
+              (Shell, Chat, Home, Voice); this wrapper did not, so during a task
+              the page was one band-height taller than the viewport and a
+              participant scrolling down found a screen of blank nothing below
+              the app. That overflow is also what made the scrollbar appear and
+              disappear, which is what drove the band's resize loop. */}
+          <div style={{ minHeight: 'calc(100vh - var(--study-overlay-h, 0px))', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem', lineHeight: '1.55' }}>
             <RoutedWithChrome />
           </div>
         </ChatProvider>

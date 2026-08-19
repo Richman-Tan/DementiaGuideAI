@@ -145,5 +145,40 @@ export function susScore(responsesByItem) {
   return vals.reduce((a, b) => a + b, 0) * 2.5;
 }
 
+/**
+ * Inter-rater agreement over a set of [rater1, rater2] label pairs.
+ *
+ * The primary effectiveness measure is a hand-scored rubric, so a single rater
+ * makes "complete vs partial" an assertion by the person with the most to gain
+ * from it. Double-scoring even a fifth of the tasks turns it into a measurement
+ * that can be reported with a number attached.
+ *
+ * Returns raw agreement and Cohen's kappa. Kappa is null when it is undefined
+ * rather than zero: with both raters using a single label, expected agreement is
+ * 1 and the statistic divides by zero — which is a real situation here, since
+ * "every task the second rater looked at was complete" is a plausible outcome at
+ * this n, and reporting it as κ = 0 would say the raters agreed no better than
+ * chance when in fact they agreed on everything.
+ */
+export function interRater(pairs) {
+  const clean = pairs.filter(([a, b]) => a && b);
+  const n = clean.length;
+  if (!n) return { n: 0, agreed: 0, agreement: null, kappa: null };
+
+  const agreed = clean.filter(([a, b]) => a === b).length;
+  const observed = agreed / n;
+
+  const labels = [...new Set(clean.flat())];
+  let expected = 0;
+  for (const label of labels) {
+    const p1 = clean.filter(([a]) => a === label).length / n;
+    const p2 = clean.filter(([, b]) => b === label).length / n;
+    expected += p1 * p2;
+  }
+
+  const kappa = expected === 1 ? null : (observed - expected) / (1 - expected);
+  return { n, agreed, agreement: observed, kappa };
+}
+
 export const fmt = (v, digits = 0) =>
   v === null || v === undefined ? '—' : Number(v).toFixed(digits);

@@ -21,6 +21,7 @@
  * participants who ticked the separate transcript consent item.
  */
 import { requireServiceKey, selectAll, writeCsv, median, OUT_DIR } from './lib.mjs';
+import { LIKERT_CONSTRUCTS, MODALITY_TYPED } from '../../packages/core/study/studyConfig.mjs';
 
 const args = new Set(process.argv.slice(2));
 const includePilot = args.has('--include-pilot');
@@ -51,6 +52,10 @@ const sessionRows = sessions.map((s) => ({
   group: s.participant_group,
   arm_order: s.arm_order,
   set_order: s.set_order,
+  // Which instrument set this participant answered. Sessions on different
+  // versions are not poolable, and this is the only field that says so — a
+  // skipped item and an item that was never shown look identical in sus.csv.
+  study_version: s.study_version ?? '1.0',
   consent_transcripts: s.consent_transcripts,
   supporter_present: s.supporter_present,
   browser: s.browser,
@@ -97,9 +102,14 @@ for (const end of ends) {
   // Count turn_start, not turn: the completing `turn` event fires after the
   // spoken answer finishes and can land after task_end, so counting those
   // undercounted — and did so more in Arm A, where answers are longer.
-  const turnCount = turnStarts.filter(
+  const windowTurns = turnStarts.filter(
     (t) => t.session_id === end.session_id && t.seq > start.seq && t.seq < end.seq
-  ).length;
+  );
+  const turnCount = windowTurns.length;
+  // Turns the participant typed. In Arm B that is all of them; in Arm A it is
+  // the ones taken through the message bar rather than the microphone, which are
+  // not evidence about the voice interface — see recover.mjs typedTurnsInWindow.
+  const typedTurns = windowTurns.filter((t) => t.payload?.modality === MODALITY_TYPED).length;
 
   const hiddenMs = hiddenDuring(end.session_id, start.seq, end.seq);
 
@@ -119,6 +129,7 @@ for (const end of ends) {
     // participant and one who walked away.
     hidden_ms: hiddenMs,
     turns: turnCount,
+    typed_turns: typedTurns,
     gave_up: end.payload?.gaveUp ?? null,
     // True when the participant stopped the SESSION while this task was open,
     // rather than ending the task. Distinct from gave_up, which is a task they
@@ -128,6 +139,13 @@ for (const end of ends) {
     self_report: null,   // filled from the post-task instrument below
     effort: null,
     rubric_score: '',    // scored by hand against docs/study/tasks.md §2
+    // Second, independent scorer. Optional, and left blank for the tasks nobody
+    // double-scores — but with a hand-scored primary effectiveness measure and
+    // one rater, "complete vs partial" is an unexamined judgement call by the
+    // person with the most to gain from it. analyse-study.mjs reports agreement
+    // and Cohen's kappa over whatever subset is filled in; even 20 % of tasks
+    // turns the rubric from an assertion into a measurement.
+    rubric_score_2: '',
   });
 }
 
@@ -183,12 +201,12 @@ for (const s of sessions) {
       const v = r[`sus.${arm}.q${i}`];
       if (v !== undefined) items[`q${i}`] = v;
     }
-    const likert = {
-      trust: r[`likert.${arm}.trust`] ?? null,
-      engagement: r[`likert.${arm}.engagement`] ?? null,
-      helpfulness: r[`likert.${arm}.helpfulness`] ?? null,
-      clarity: r[`likert.${arm}.clarity`] ?? null,
-    };
+    // All six constructs, from the shared list — the pre-registered four plus
+    // personalisation and actionability. Which of them count toward the declared
+    // criterion is a question for the analysis, not the export.
+    const likert = Object.fromEntries(
+      LIKERT_CONSTRUCTS.map((k) => [k, r[`likert.${arm}.${k}`] ?? null]),
+    );
     // Build the row if EITHER instrument has an answer. Every item is skippable
     // by design, so gating the Likert answers on SUS being present discarded one
     // of the two pre-registered usability criteria — and all PLWD data, since
@@ -215,6 +233,10 @@ const latencyRows = evOf('latency').map((e) => {
     arm: e.arm,
     task_id: e.task_id,
     browser: s?.browser,
+    // A typed turn in Arm A has no stt_ms and no synthesis wait, so pooling it
+    // into the Arm A latency medians would report the text pipeline's timings
+    // under the avatar's name.
+    modality: e.payload?.modality ?? null,
     stt_ms: e.payload?.stt_ms ?? null,
     rag_ms: e.payload?.rag_ms ?? null,
     llm_to_token_ms: e.payload?.llm_to_token_ms ?? null,
@@ -259,6 +281,7 @@ if (withTranscripts) {
       arm: t.arm,
       task_id: t.task_id,
       seq: t.seq,
+      modality: t.payload?.modality ?? '',
       question: t.payload?.question ?? '',
       answer: t.payload?.answer ?? '',
       source_ids: (t.payload?.sourceIds || []).join(' '),
@@ -286,6 +309,12 @@ console.log(`  stopped early   ${sessionRows.filter((r) => r.stopped_early).leng
 console.log(`tasks completed   ${taskRows.length}`);
 console.log(`median time (s)   ${median(taskRows.map((r) => r.duration_s)) ?? '—'}`);
 console.log(`latency turns     ${latencyRows.length}`);
+// Surfaced here as well as in the analysis: if this is large, the Arm A figures
+// are partly about the text pipeline and that has to be known before, not after,
+// the tables are written.
+const typedInA = taskRows.filter((r) => r.arm === 'A').reduce((n, r) => n + (r.typed_turns || 0), 0);
+const allInA = taskRows.filter((r) => r.arm === 'A').reduce((n, r) => n + (r.turns || 0), 0);
+console.log(`Arm A typed turns ${typedInA} of ${allInA}`);
 if (excludedPilots) console.log(`pilot sessions excluded  ${excludedPilots}`);
 if (!withTranscripts) {
   console.log('\nTranscripts not exported. Re-run with --with-transcripts to score task success.');
@@ -293,4 +322,5 @@ if (!withTranscripts) {
   console.log(`\n${withheld} turns withheld — those participants declined transcript consent.`);
 }
 console.log('\nNext: score rubric_score in tasks.csv against docs/study/tasks.md §2,');
-console.log('then run scripts/study/analyse-study.mjs.');
+console.log('have a second person independently score at least a fifth of the same');
+console.log('tasks into rubric_score_2, then run scripts/study/analyse-study.mjs.');

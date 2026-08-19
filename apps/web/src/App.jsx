@@ -92,7 +92,14 @@ export default function App() {
         <AuthProvider>
         <StudyProvider>
         <ChatProvider>
-          <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem', lineHeight: '1.55' }}>
+          {/* Subtracts the study task band, which is position:fixed and paid for
+              by padding-top on <body>. Every screen inside already subtracts it
+              (Shell, Chat, Home, Voice); this wrapper did not, so during a task
+              the page was one band-height taller than the viewport and a
+              participant scrolling down found a screen of blank nothing below
+              the app. That overflow is also what made the scrollbar appear and
+              disappear, which is what drove the band's resize loop. */}
+          <div style={{ minHeight: 'calc(100vh - var(--study-overlay-h, 0px))', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem', lineHeight: '1.55' }}>
             <RoutedWithChrome />
           </div>
         </ChatProvider>

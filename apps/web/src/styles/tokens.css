@@ -5,6 +5,14 @@
 html[data-theme="dark"]{--bg:#111820;--surface:#1C2532;--elev:#222E3D;--primary:#5C9CB0;--primary-l:#7FB6C8;--primary-d:#9CCBDB;--tint:#0F2535;--text:#E8EDF1;--text2:#A3B1BB;--border:#2E3B4A;--amber:#E8B76B;--amber-bg:#2A2318;--amber-bd:#5A4A28;--shadow:0 1px 4px rgba(0,0,0,.4)}
 html[data-hc="1"]{--bw:2px;--text:#14181B;--text2:#39444B;--border:#6B7378}
 html[data-hc="1"][data-theme="dark"]{--text:#FFFFFF;--text2:#D9E1E7;--border:#93A3AF}
+/* scrollbar-gutter keeps the vertical scrollbar's space reserved whether or not
+   it is showing. Without it, any change to document height can add or remove the
+   scrollbar, which changes the viewport width, which rewraps text — and the
+   study task band measures its own height and writes it back into page layout,
+   so that rewrap closed a feedback loop that froze the tab mid-task
+   (study/screens/StudyTaskOverlay.jsx). Also stops the whole page shifting
+   sideways whenever a chat answer grows past one screen. */
+html{scrollbar-gutter:stable}
 html,body{margin:0;padding:0;background:var(--bg)}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--primary-d)}a:hover{color:var(--primary)}

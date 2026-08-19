@@ -10,7 +10,7 @@ import { useUnityLoadState } from './useUnityLoadState.js';
 import { getUnityAvatar } from './UnityAvatarController.js';
 import { AvatarLoadProgress } from '../AvatarLoadProgress.jsx';
 
-export function UnityAvatarMount({ characterId, name = 'your avatar', compact = false, children }) {
+export function UnityAvatarMount({ characterId, name = 'your avatar', compact = false, state = 'idle', children }) {
   const hostRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
@@ -39,6 +39,13 @@ export function UnityAvatarMount({ characterId, name = 'your avatar', compact = 
       parkUnityCanvas(); // never leave it inside a torn-down host
     };
   }, [characterId, phase === 'ready']);
+
+  // Conversational state drives IdleAnimator's six-way blend (listening nod,
+  // brow raises, thinking gaze bias, head tilts). Only send once the engine is
+  // up — messages before that are dropped by the runtime.
+  useEffect(() => {
+    if (ready) getUnityAvatar(characterId)?.setAvatarState(state);
+  }, [ready, characterId, state]);
 
   const showProgress = !ready && !unavailable && (phase === 'downloading' || phase === 'preparing' || phase === 'failed');
 

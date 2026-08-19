@@ -6,6 +6,7 @@
 // for the same reason: a reload must not restart the clock.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { loadStudy, saveStudy, clearStudy, isStudyMode } from './studyStore.js';
+import { needsResumeCheck } from './guards.js';
 import { emit, flush, installUnloadFlush, pendingCount, resetQueue } from './events.js';
 import { apiUrl } from '../services/apiBase.js';
 import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
@@ -14,6 +15,24 @@ import { getUnityAvailability, getUnityLoadState, probeUnity } from '../avatar/u
 import { useAuth } from '../state/AuthContext.jsx';
 
 const Ctx = createContext(null);
+
+/**
+ * Whether the person at the keyboard has been confirmed as the owner of the
+ * session this device restored from localStorage.
+ *
+ * Module scope on purpose: it must reset on page load and survive in-app
+ * navigation, which is exactly the lifetime of a module binding. React state
+ * alone would not do — the provider never unmounts, so a flag inside it would
+ * persist across a participant handover that happens without a reload; a stored
+ * flag would not reset on the reload that a handover normally does involve.
+ *
+ * The failure this exists for: the study runs on ONE forwarded link, so a second
+ * person opening it on a device where the first did not finish is silently
+ * resumed INTO the first participant's session — same participant code, answers
+ * already filled in, arm assignment from someone else's Latin square cell. Two
+ * people merged into one row, with nothing in the data to say so.
+ */
+let resumeAcknowledged = false;
 
 export const STEPS = [
   // `group` precedes `consent` on purpose. Participants living with dementia
@@ -45,8 +64,14 @@ async function post(path, body, accessCode, accessToken = null) {
 export function StudyProvider({ children }) {
   const { accessToken } = useAuth();
   const [state, setState] = useState(loadStudy);
+  const [resumeAck, setResumeAck] = useState(resumeAcknowledged);
   const tokenRef = useRef(null);
   useEffect(() => { tokenRef.current = accessToken; }, [accessToken]);
+
+  const acknowledgeResume = useCallback(() => {
+    resumeAcknowledged = true;
+    setResumeAck(true);
+  }, []);
 
   const update = useCallback((patch) => setState(saveStudy(patch)), []);
 
@@ -113,6 +138,11 @@ export function StudyProvider({ children }) {
     }, accessCode.trim(), tokenRef.current);
 
     if (!data.resumed) resetQueue();
+
+    // This person just typed the codes in, so there is nothing left to confirm —
+    // without this the gate would fire on the session it has just created.
+    resumeAcknowledged = true;
+    setResumeAck(true);
 
     // NB study sessions never see the product's onboarding wizard — the router
     // exempts them (see useRoute). That is deliberate beyond the routing bug it
@@ -328,6 +358,10 @@ export function StudyProvider({ children }) {
     active: isStudyMode(),
     sequence, stage, task, isLastStage, isLastTask,
     begin, setResponse, next, startTask, endTask, stop, reset, update,
+    // "Is this still you?" — asked once per page load when a live session was
+    // restored from this device, and never for a session started in this load.
+    needsResumeCheck: needsResumeCheck(state, resumeAck),
+    acknowledgeResume,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

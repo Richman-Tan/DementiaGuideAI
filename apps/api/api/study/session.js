@@ -66,7 +66,7 @@ export default async function handler(req, res) {
     try {
       existing = await selectOne(
         'study_sessions',
-        'id,participant_code,participant_number,participant_group,arm_order,set_order,completed_at,step,stage_index,task_index',
+        'id,participant_code,participant_number,participant_group,arm_order,set_order,completed_at,step,stage_index,task_index,study_version',
         `participant_code=eq.${encodeURIComponent(participantCode)}`
       );
     } catch (err) {
@@ -91,7 +91,11 @@ export default async function handler(req, res) {
       taskIndex: s.task_index,
       resumed: true,
       completed: Boolean(s.completed_at),
-      studyVersion: STUDY_VERSION,
+      // The version this session STARTED under, not the one running now. A
+      // participant resuming after an instrument change answered the older set
+      // in their first half, and reporting the current constant here would claim
+      // otherwise. Falls back only for rows written before the column existed.
+      studyVersion: s.study_version ?? STUDY_VERSION,
     });
     return;
   }
@@ -128,6 +132,11 @@ export default async function handler(req, res) {
       arm_order: armOrder,
       set_order: setOrder,
       is_pilot: group === 'pilot',
+      // Which instrument set this participant was actually shown. Reported to
+      // the client since the beginning but never stored, so the one value that
+      // says whether two sessions are poolable existed only in a JSON reply
+      // nothing kept. Needs scripts/migrations/2026-08-19_study_version_stamp.sql.
+      study_version: STUDY_VERSION,
       consent: { ...consent, formVersion: CONSENT_FORM_VERSION },
       consent_transcripts: Boolean(consentTranscripts),
       supporter_present: typeof supporterPresent === 'boolean' ? supporterPresent : null,

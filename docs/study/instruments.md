@@ -83,11 +83,16 @@ letter grade — with n < 20 the precision implied would be false.
 
 ---
 
-## 5. After each arm — four Likert items
+## 5. After each arm — six Likert items
 
 Five-point, **1 = Strongly disagree** to **5 = Strongly agree**. These carry the
 constructs SUS does not: trust and engagement matter here in a way they would not
 for a general productivity tool.
+
+### 5.1 The pre-registered four
+
+These are the composite in the declared usability criterion (`protocol.md` §7.1,
+"mean Likert ≥ 4 on Arm A").
 
 | Construct | Item |
 |---|---|
@@ -95,6 +100,46 @@ for a general productivity tool.
 | Engagement | I found this way of getting answers engaging. |
 | Helpfulness | The answers I got would be helpful in a real situation. |
 | Clarity | The answers were easy to understand. |
+
+### 5.2 Two secondary constructs, added 2026-08-19
+
+Added before the first participant, and **reported separately** rather than
+folded into the composite above — see the note at the end of this section.
+
+| Construct | Item |
+|---|---|
+| Personalisation | The answers were about the situation I described, rather than general information anyone would get. |
+| Actionability | After using this, I would know what to do next. |
+
+**Why these two.** The platform's assessed outcome is *personalised resource
+navigation and management*, and neither half of that was measured on a scale.
+Personalisation appeared only as debrief question 3, which yields quotes but no
+arm-to-arm comparison; "navigation and management" was carried implicitly by task
+success, which says whether the answer was found, not whether the participant
+knew what to do with it. Trust, engagement, helpfulness and clarity can all be
+high for an answer that is generic and leaves someone stuck.
+
+**Why the wording.** "Rather than general information anyone would get" is doing
+the work in the personalisation item. Without an explicit contrast it collapses
+into a second helpfulness item — a good generic answer would be rated highly and
+the measure would say nothing about tailoring.
+
+**Why they are not in the pre-registered composite.** The criterion was declared
+over four items. Adding two more to it would change what was registered, which is
+the move a pre-registration exists to prevent — and doing so is no more defensible
+for being done before data collection than after, because the point is that the
+target was fixed in advance. They are named secondary measures instead, reported
+in Table 3b with the date they were added stated. The pre-registered criterion is
+evaluated exactly as declared, met or not.
+
+**Not extended to the PLWD set** (§7). "Rather than general information anyone
+would get" is exactly the abstract comparison the fatigue safeguard in
+`protocol.md` §3.3 exists to avoid, and that group is reported thematically
+rather than compared — so the items would add burden without a reader.
+
+Instrument changes bump `STUDY_VERSION` in `packages/core/study/studyConfig.mjs`,
+which is stamped on every session row. That is what keeps a mixed dataset
+separable; **1.1** is the first version carrying these items.
 
 ---
 

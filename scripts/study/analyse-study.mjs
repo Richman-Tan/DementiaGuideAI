@@ -15,7 +15,12 @@
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { OUT_DIR, writeText, median, range, counts, fmt } from './lib.mjs';
+import { OUT_DIR, writeText, median, range, counts, fmt, interRater } from './lib.mjs';
+import { PRE_REGISTERED_LIKERT, LIKERT_CONSTRUCTS } from '../../packages/core/study/studyConfig.mjs';
+
+// The two constructs added on 2026-08-19, before the first participant. Kept out
+// of the pre-registered composite on purpose — see PRE_REGISTERED_LIKERT.
+const SECONDARY_LIKERT = LIKERT_CONSTRUCTS.filter((k) => !PRE_REGISTERED_LIKERT.includes(k));
 
 // ─── CSV reading ─────────────────────────────────────────────────────────────
 
@@ -93,6 +98,20 @@ say(`**Participants:** ${sessions.length} enrolled · ${complete.length} complet
 const byGroup = counts(allSessions.map((s) => s.group));
 say(`**Groups:** ${Object.entries(byGroup).map(([g, n]) => `${g} ${n}`).join(' · ')}`);
 say('');
+
+// Instrument-set provenance. Silent pooling across versions is the failure this
+// guards: a participant who was never shown an item and one who skipped it look
+// identical in sus.csv, so without the version stamp nothing in the data says
+// the two halves answered different questionnaires.
+const versions = counts(allSessions.map((s) => s.study_version || '1.0'));
+if (Object.keys(versions).length > 1) {
+  say(`> **Sessions ran under more than one instrument version:** `
+    + `${Object.entries(versions).map(([v, n]) => `${v} × ${n}`).join(', ')}.`);
+  say('> These are not poolable without saying so. Report the split, and check which');
+  say('> items each version actually asked (`docs/study/instruments.md` §5) before');
+  say('> reading any table below as a single sample.');
+  say('');
+}
 say(`**Excluded from the primary comparison:** ${plwd.length} participants living with`);
 say('dementia (reported separately below — they complete a shortened, non-comparable');
 say('protocol, per protocol §3.1).');
@@ -143,6 +162,43 @@ if (!scored.length) {
     say('> information tool, not a scoring artefact.');
   }
   say('');
+
+  // ─── Scoring reliability ───────────────────────────────────────────────────
+  //
+  // Table 1 is the primary effectiveness measure and it is scored by hand. With
+  // one rater there is no way to tell a rubric from an opinion, and the one
+  // rater is the person whose project the result reflects on. This turns that
+  // into a number.
+  say('### Scoring reliability');
+  say('');
+  const double = interRater(scored.map((t) => [t.rubric_score, t.rubric_score_2]));
+  if (!double.n) {
+    say('_Single-rater._ `rubric_score_2` is empty in `tasks.csv`, so task success rests on');
+    say('one person\'s judgement with nothing to check it against. Have a second person');
+    say('score at least a fifth of the tasks — blind to the first scores and to the arm');
+    say('where the transcript allows it — and re-run. It is a short job and it is the');
+    say('difference between a rubric and an assertion.');
+    say('');
+  } else {
+    const pct = fmt(double.agreement * 100, 0);
+    say(`Double-scored: **${double.n} of ${scored.length}** tasks. Raters agreed on`
+      + ` ${double.agreed} (${pct} %).`);
+    say(`Cohen's κ: **${double.kappa === null ? 'undefined' : fmt(double.kappa, 2)}**`
+      + `${double.kappa === null ? ' — both raters used a single label, so chance agreement is 1.' : '.'}`);
+    say('');
+    if (double.kappa !== null && double.kappa < 0.6) {
+      say('> κ below 0.6 is moderate at best. Before reporting Table 1, sit down with the');
+      say('> disagreements and decide whether the rubric in `docs/study/tasks.md` §2 is');
+      say('> ambiguous — then re-score every task under the clarified rubric, not just the');
+      say('> ones that disagreed.');
+      say('');
+    }
+    if (double.n < Math.ceil(scored.length * 0.2)) {
+      say(`> Fewer than a fifth double-scored (${double.n} of ${scored.length}). Report the`);
+      say('> figure with its n and do not lean on it.');
+      say('');
+    }
+  }
 }
 
 // ─── Table 2 — efficiency ────────────────────────────────────────────────────
@@ -163,6 +219,36 @@ for (const [arm, label] of ARMS) {
 }
 say('');
 
+// ─── Manipulation check: did Arm A actually run through the avatar? ──────────
+//
+// The avatar screen keeps a message bar, deliberately: a participant who finds
+// speaking hard must have a way through, and removing it would suppress an
+// accessibility finding rather than record it. But a typed turn in Arm A carries
+// no speech recognition, no synthesis and no lip sync, so it is not evidence
+// about the interface under test. Counted here so the Arm A comparison is
+// qualified by how much of it was actually spoken.
+const armATasks = armTasks('A');
+const typedA = armATasks.reduce((n, t) => n + (num(t.typed_turns) || 0), 0);
+const allA = armATasks.reduce((n, t) => n + (num(t.turns) || 0), 0);
+say(`**Arm A turns taken by typing rather than speaking:** ${typedA} of ${allA}.`);
+if (typedA > 0) {
+  const affected = armATasks.filter((t) => num(t.typed_turns) > 0);
+  say('');
+  say(`Across ${affected.length} tasks. Arm A is the avatar condition, so these turns were`);
+  say('not conducted through the interface being tested. Two things follow. First, they');
+  say('are a finding in their own right — someone chose to type on the screen built for');
+  say('talking, and the debrief answers will usually say why. Second, the Arm A usability');
+  say('and latency figures are diluted by them: if the count is more than a handful,');
+  say('report Table 3 again over the tasks with no typed turns and say whether it moved.');
+  say('');
+} else if (allA > 0) {
+  say('');
+  say('Every Arm A turn was spoken, so the arm comparison is clean on this axis.');
+  say('');
+} else {
+  say('');
+}
+
 const pairs = pairedByParticipant(tasks);
 say(`**Paired observations:** ${pairs.length} participants with a median time in both arms.`);
 if (pairs.length >= 10) {
@@ -181,23 +267,62 @@ say('');
 
 say('## Table 3 — SUS and Likert by arm');
 say('');
-say('| | Median SUS | Min–max | n | Trust | Engagement | Helpfulness | Clarity |');
-say('|---|---|---|---|---|---|---|---|');
+say('The four Likert constructs below are the pre-registered composite');
+say('(`protocol.md` §7.1). Personalisation and actionability are in Table 3b.');
+say('');
+const armLikert = (arm, k) => median(sus.filter((r) => r.arm === arm).map((r) => num(r[k])));
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+say(`| | Median SUS | Min–max | n | ${PRE_REGISTERED_LIKERT.map(cap).join(' | ')} |`);
+say(`|---|---|---|---|${PRE_REGISTERED_LIKERT.map(() => '---').join('|')}|`);
 const medSus = {};
 for (const [arm, label] of ARMS) {
   const rows = sus.filter((r) => r.arm === arm && r.sus !== '');
   const scores = rows.map((r) => num(r.sus));
   medSus[arm] = median(scores);
   const [lo, hi] = range(scores);
-  const lk = (k) => fmt(median(sus.filter((r) => r.arm === arm).map((r) => num(r[k]))), 1);
   say(`| ${label} | ${fmt(medSus[arm], 1)} | ${fmt(lo, 1)}–${fmt(hi, 1)} | ${rows.length}`
-    + ` | ${lk('trust')} | ${lk('engagement')} | ${lk('helpfulness')} | ${lk('clarity')} |`);
+    + ` | ${PRE_REGISTERED_LIKERT.map((k) => fmt(armLikert(arm, k), 1)).join(' | ')} |`);
 }
 say('');
 const partial = sus.filter((r) => r.sus === '' && r.answered !== '10');
 if (partial.length) {
   say(`_${partial.length} SUS instruments were incomplete and are excluded — a SUS scored`);
   say('from fewer than ten items is not a SUS._');
+  say('');
+}
+
+// ─── Table 3b — the two secondary constructs ─────────────────────────────────
+//
+// Reported apart from Table 3 rather than merged into it, because they are not
+// part of the criterion declared in protocol §7.1 and a reader skimming one wide
+// table would not know which columns were pre-registered and which were not.
+
+say('## Table 3b — Personalisation and actionability by arm');
+say('');
+say('Added 2026-08-19, before the first participant, and **not** part of the');
+say('pre-registered usability composite. These are the two halves of the assessed');
+say('outcome the platform is built against — personalised resource navigation and');
+say('management — which the original four items did not measure. Report them as');
+say('named secondary measures and say when they were added.');
+say('');
+const hasSecondary = sus.some((r) => SECONDARY_LIKERT.some((k) => num(r[k]) !== null));
+if (!hasSecondary) {
+  say('_No answers recorded. Sessions run on study version 1.0 predate these items._');
+  say('');
+} else {
+  say(`| | ${SECONDARY_LIKERT.map(cap).join(' | ')} | n |`);
+  say(`|---|${SECONDARY_LIKERT.map(() => '---').join('|')}|---|`);
+  for (const [arm, label] of ARMS) {
+    const rows = sus.filter((r) => r.arm === arm
+      && SECONDARY_LIKERT.some((k) => num(r[k]) !== null));
+    say(`| ${label} | ${SECONDARY_LIKERT.map((k) => fmt(armLikert(arm, k), 1)).join(' | ')}`
+      + ` | ${rows.length} |`);
+  }
+  say('');
+  say('Read alongside debrief question 3 ("did the answers feel like they were written');
+  say('for someone in your situation?"), which is the same construct in the');
+  say('participant\'s own words. A high rating with no supporting quote, or the');
+  say('reverse, is worth a sentence in the write-up either way.');
   say('');
 }
 
@@ -230,7 +355,12 @@ say('');
 
 say('## Table 4 — Voice pipeline latency, live sessions');
 say('');
-const armA = latency.filter((r) => r.arm === 'A');
+// Spoken turns only. A typed turn in Arm A skips speech recognition entirely and
+// has no `stt_ms`, so including it would not merely add noise — it would drag the
+// median of every stage toward a pipeline that did not run. Rows with no modality
+// recorded are kept: they can only come from a build that predates the field.
+const armA = latency.filter((r) => r.arm === 'A' && r.modality !== 'typed');
+const typedLatencyA = latency.filter((r) => r.arm === 'A' && r.modality === 'typed').length;
 if (!armA.length) {
   say('_No instrumented Arm A turns._');
   say('');
@@ -257,6 +387,11 @@ if (!armA.length) {
   if (armB.length) {
     say(`**Arm B, time to first token:** median ${fmt(median(armB))} ms over ${armB.length} turns —`);
     say('the text arm\'s analogue of end-to-end time to first audio.');
+    say('');
+  }
+  if (typedLatencyA) {
+    say(`${typedLatencyA} Arm A turns were typed and are excluded from this table — they`);
+    say('never entered the speech pipeline, so their timings are not voice timings.');
     say('');
   }
   say('Browsers, devices and networks varied between participants and were recorded');
@@ -372,7 +507,11 @@ say('');
 say('| Criterion | Target | Result | Met? |');
 say('|---|---|---|---|');
 
-const likertA = ['trust', 'engagement', 'helpfulness', 'clarity']
+// The declared four, not all six. Folding personalisation and actionability into
+// this composite would change the criterion after it was registered, even though
+// they were added before any data existed — so they are reported in Table 3b and
+// left out of here.
+const likertA = PRE_REGISTERED_LIKERT
   .map((k) => median(sus.filter((r) => r.arm === 'A').map((r) => num(r[k]))))
   .filter((x) => x !== null);
 const meanLikertA = likertA.length ? likertA.reduce((a, b) => a + b, 0) / likertA.length : null;

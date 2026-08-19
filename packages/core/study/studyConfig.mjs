@@ -184,5 +184,52 @@ export function sequenceFor(participantNumber, group = 'caregiver') {
   }));
 }
 
-export const STUDY_VERSION = '1.0';
+/**
+ * The per-arm Likert constructs, in the order they are shown.
+ *
+ * Here rather than in `instruments.js` because the export and analysis scripts
+ * need the same list and cannot import a browser module. The wording lives in
+ * `apps/web/src/study/instruments.js`; `apps/web/tests/studyInstruments.test.js`
+ * fails if the two drift apart.
+ */
+export const LIKERT_CONSTRUCTS = [
+  'trust', 'engagement', 'helpfulness', 'clarity',
+  // Added 2026-08-19, before the first participant. The assessed outcome names
+  // "personalised resource navigation and management", and nothing in the four
+  // above measures either half of that quantitatively — personalisation was
+  // carried only by one free-text debrief question.
+  'personalisation', 'actionability',
+];
+
+/**
+ * The four that make up the declared usability criterion (protocol.md §7.1,
+ * "mean Likert ≥ 4 on Arm A").
+ *
+ * Deliberately NOT all six. The criterion was pre-registered over these four, so
+ * folding two more into the composite would change what was declared — even
+ * though no data had been collected when they were added. The new items are
+ * reported as named secondary measures instead, which is the honest way to get
+ * evidence for a construct the pre-registration under-served.
+ */
+export const PRE_REGISTERED_LIKERT = ['trust', 'engagement', 'helpfulness', 'clarity'];
+
+/**
+ * How the participant put the question: spoken through the microphone, or typed.
+ *
+ * Recorded per turn because the two are NOT the same as the two arms. Arm A
+ * keeps its message bar on purpose — a participant who finds speaking hard can
+ * type, and forcing speech on them would suppress the accessibility finding
+ * rather than record it. But an Arm A turn that was typed is not evidence about
+ * the voice interface, and without this field it is indistinguishable from a
+ * spoken one after the fact.
+ */
+export const MODALITY_SPOKEN = 'spoken';
+export const MODALITY_TYPED = 'typed';
+
+/** The modality the arm is designed around, used to flag off-modality turns. */
+export const expectedModality = (arm) => (arm === ARM_A ? MODALITY_SPOKEN : MODALITY_TYPED);
+
+// 1.1 — two Likert items added and turn modality recorded, both before the first
+// participant. Stamped on every session row, so a mixed dataset stays separable.
+export const STUDY_VERSION = '1.1';
 export const CONSENT_FORM_VERSION = '1.0';

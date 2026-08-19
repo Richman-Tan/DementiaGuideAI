@@ -202,17 +202,39 @@ impression of a good answer.
 - **Time on task** — from "Start task" to "I found my answer" / "I couldn't find
   it", recorded by the application.
 - **Turns** — number of participant utterances or messages within the task window.
+- **Modality per turn** — spoken or typed, recorded on every turn.
+
+  This is not the same as the arm. The avatar screen keeps its message bar during
+  Arm A on purpose: a participant who finds speaking hard has to have a way
+  through, and removing it would suppress an accessibility finding rather than
+  record one. But a typed turn in Arm A never enters speech recognition,
+  synthesis or lip sync — it is an Arm B turn wearing an Arm A label, and pooling
+  it into the Arm A usability and latency figures measures the text pipeline and
+  reports it under the avatar's name. `tasks.csv` carries `typed_turns` beside
+  `turns`, and `analyse-study.mjs` reports the Arm A count as a manipulation
+  check before any arm comparison is read.
 
 ### 5.3 Usability and satisfaction
 
 - **System Usability Scale**, once per arm (10 items, standard wording).
-- **Four Likert items per arm** (1–5): trust, engagement, helpfulness, clarity.
+- **Six Likert items per arm** (1–5). Four pre-registered — trust, engagement,
+  helpfulness, clarity — plus two secondary constructs added 2026-08-19, before
+  the first participant: **personalisation** and **actionability**. The secondary
+  pair is reported in its own table and is deliberately **not** part of the
+  composite in §7.1; rationale in `instruments.md` §5.2.
 
-### 5.4 Accessibility and personalisation (qualitative)
+### 5.4 Accessibility and personalisation
 
-Five free-text debrief questions on clarity, cognitive load, whether responses felt
-tailored to their role, and which interface they would choose and why. Full wording
-in `instruments.md`.
+Quantitative: the personalisation and actionability items in §5.3, per arm. These
+are the only scaled measure of the outcome this platform is assessed against —
+*personalised resource navigation and management* — and they exist because
+nothing else in the instrument set measured either half of it.
+
+Qualitative: five free-text debrief questions on clarity, cognitive load, whether
+responses felt tailored to their role, and which interface they would choose and
+why. Full wording in `instruments.md`. Debrief question 3 is the personalisation
+item in the participant's own words and is read alongside it: a high rating with
+no supporting quote, or the reverse, is worth reporting either way.
 
 ### 5.5 Technical measures (automatic)
 
@@ -250,7 +272,7 @@ dataset — from real sessions rather than a scripted run.
    withdrawal request must quote.
 8. **Background questions** — group, age band, self-rated confidence with
    technology, prior use of AI assistants.
-9. **Arm 1** — one-screen briefing, three tasks, then SUS and the four Likert items.
+9. **Arm 1** — one-screen briefing, three tasks, then SUS and the six Likert items.
 10. **Arm 2** — same structure, other interface, other task set.
 11. **Debrief** — five free-text questions.
 12. **Close** — thank-you, support numbers, contact details for questions or
@@ -278,7 +300,7 @@ Declared before data collection. Recorded honestly whether met or not.
 
 | Criterion | Operationalisation |
 |---|---|
-| Usability > 4/5 | SUS ≥ 68 on Arm A, and mean Likert ≥ 4 on Arm A |
+| Usability > 4/5 | SUS ≥ 68 on Arm A, and mean Likert ≥ 4 on Arm A over the **four pre-registered items** (trust, engagement, helpfulness, clarity) |
 | ≥ 30 % reduction in time on task | Median time on task, Arm A vs Arm B |
 | Zero unsafe answers | No hit from the safety gates in `scripts/eval/safety-checks.mjs` across all study transcripts |
 

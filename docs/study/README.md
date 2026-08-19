@@ -133,17 +133,29 @@ into the shell first.
 | `session_start` | group, arm order, set order, whether resumed, transcript consent |
 | `background_done` | background questionnaire answers |
 | `task_start` | task id, arm, set |
-| `turn` | question, answer, retrieved source ids, stage timings |
+| `turn_start` | `modality` (spoken / typed), question length — emitted at submit |
+| `turn` | `modality`, question, answer, retrieved source ids |
 | `turn_error` | error name and message (chat arm) |
-| `latency` | the six stage timings, plus `to_first_token_ms` |
+| `latency` | the stage timings, plus `to_first_token_ms` and `modality` |
 | `stt_empty` | speech recognition returned nothing |
-| `task_end` | duration, whether the participant gave up |
+| `task_end` | duration, whether the participant gave up, `stoppedMidTask` |
+| `responses_snapshot` | whatever was on screen when a participant stopped early |
+| `posttask_response` | per-task self-report and effort |
 | `sus_done`, `likert_done` | questionnaire answers for that arm |
+| `consent_rechecked` | PLWD halfway re-confirmation (protocol §3.3) |
 | `debrief_done` | free-text answers |
 | `session_complete` / `session_stopped` | — |
 
-Time on task is `task_end.durationMs`; turns are counted as `turn` events falling
-between a task's `task_start` and `task_end` sequence numbers.
+Time on task is `task_end.durationMs`. **Turns are counted from `turn_start`, not
+`turn`**: the completing `turn` event fires after the spoken answer finishes
+playing and can land after `task_end`, which undercounted — and undercounted more
+in Arm A, where the answers are longer.
+
+`modality` is on both turn events because it is not implied by the arm. The avatar
+screen keeps a message bar during Arm A so that a participant who finds speaking
+hard has a way through; those turns are real turns, and they are also not evidence
+about the voice interface. `tasks.csv` carries `typed_turns` beside `turns` for
+exactly that split.
 
 ---
 

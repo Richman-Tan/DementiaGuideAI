@@ -21,6 +21,7 @@ import { ELEVEN_STREAM_SAMPLE_RATE, VOICE_SPECULATIVE_RAG } from '@core/voice/vo
 import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
 import { detectSentiment } from '@core/sentiment/detectSentiment';
 import { createSentenceSplitter } from '@core/voice/sentenceTracker';
+import { MODALITY_SPOKEN, MODALITY_TYPED } from '@core/study/studyConfig.mjs';
 
 const MAX_QUERY_CHARS = 1000;
 
@@ -77,7 +78,15 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
 
   // ─── Core conversation loop (producer/consumer, mobile parity) ─────────────
-  const processQuery = useCallback(async (userText, preRetrievedChunks = null, timer = null) => {
+  //
+  // Options object rather than three trailing positionals: `modality` has to
+  // reach every event this turn emits, and a fourth optional positional is the
+  // kind of thing that gets passed in the wrong slot exactly once, silently, in
+  // a live session.
+  const processQuery = useCallback(async (
+    userText,
+    { preRetrievedChunks = null, timer = null, modality = MODALITY_SPOKEN } = {},
+  ) => {
     if (!userText.trim()) return;
     if (userText.length > MAX_QUERY_CHARS) userText = userText.slice(0, MAX_QUERY_CHARS);
 
@@ -92,7 +101,11 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     const turn = timer || createTurnTimer(arm, taskId);
     // Emitted at submit, not at completion. Turn counts are derived from these:
     // the completing `turn` event can land after task_end and would be missed.
-    emit('turn_start', { arm, taskId, chars: userText.length });
+    //
+    // `modality` is on the START event as well as the completing one because the
+    // task-window turn count is built from turn_start alone — without it here,
+    // the count could not be split into spoken and typed.
+    emit('turn_start', { arm, taskId, modality, chars: userText.length });
 
     // Shared async queue — also the fallback target for a mid-stream WS failure.
     const queue = { promises: [], done: false, notify: null };
@@ -275,7 +288,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           sources: citedSources,
           safety: false,
         });
-        turn.finish({ streaming: streamingActive && !streamFailed, aborted: abortRef.current });
+        turn.finish({ modality, streaming: streamingActive && !streamFailed, aborted: abortRef.current });
         // Transcript capture for rubric scoring and the safety scan. Retrieved
         // chunk ids travel with it so the analysis can check whether the two
         // arms retrieved differently — speech recognition changes the query, so
@@ -284,6 +297,12 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         emit('turn', {
           arm,
           taskId,
+          // Spoken or typed. The avatar screen keeps its message bar on purpose
+          // (a participant who finds speaking hard must have a way through), so
+          // an Arm A turn is not automatically a spoken one — and a typed turn
+          // scored as evidence about the voice interface would confound the
+          // headline comparison with no trace in the data.
+          modality,
           // Withheld at source when the participant declined — see the chat arm.
           ...transcriptFields({ question: userText, answer: fullText }),
           sourceIds: (citedSources || []).map((c) => c.id ?? c.num ?? null),
@@ -421,7 +440,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         if (spec.status === 'hit') preRetrievedChunks = spec.chunks;
       }
 
-      await processQuery(transcript, preRetrievedChunks, turn);
+      await processQuery(transcript, { preRetrievedChunks, timer: turn, modality: MODALITY_SPOKEN });
 
       // Hands-free: re-arm listening after a completed (not interrupted) reply.
       if (settingsRef.current.handsFree && !abortRef.current) {
@@ -490,6 +509,11 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
   // Typed question through the same pipeline (the avatar screen's message
   // bar): barge-in if speaking, ignore while listening/thinking. The send
   // click is the AudioContext unlock gesture, same as the mic tap.
+  //
+  // Kept available during a study session rather than hidden in Arm A. Removing
+  // it would force speech on the participants least able to produce it, which is
+  // the opposite of what an accessibility study should do; the turn is tagged
+  // MODALITY_TYPED instead so the analysis can see it.
   const askText = useCallback(async (text) => {
     const t = (text ?? '').trim();
     if (!t) return;
@@ -498,7 +522,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     if (stateRef.current === 'speaking') stopAudio();
     avatar?.unlockAudio?.();
     abortRef.current = false;
-    await processQuery(t);
+    await processQuery(t, { modality: MODALITY_TYPED });
   }, [avatar, processQuery, stopAudio]);
 
   return { vState, vTranscript, vDone, vSubtitle, micTap, askText, repeatLast, stop, error, clearError: () => setError(null) };

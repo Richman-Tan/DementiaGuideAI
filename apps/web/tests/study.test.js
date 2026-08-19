@@ -121,8 +121,12 @@ describe('instruments', () => {
     });
   });
 
-  it('carries the four constructs SUS does not', () => {
-    expect(LIKERT_ITEMS.map((i) => i.construct)).toEqual(
+  it('still carries the four constructs SUS does not, first and in order', () => {
+    // Not an equality check on the whole list any more: the set grew by two on
+    // 2026-08-19. Position matters because the pre-registered composite is these
+    // four, and `PRE_REGISTERED_LIKERT` selects them by id — see
+    // studyInstruments.test.js, which pins the full set and the composite.
+    expect(LIKERT_ITEMS.slice(0, 4).map((i) => i.construct)).toEqual(
       ['trust', 'engagement', 'helpfulness', 'clarity']
     );
   });

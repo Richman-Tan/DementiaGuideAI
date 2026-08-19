@@ -73,18 +73,48 @@ export const SUS_ITEMS = [
   { id: 'q10', positive: false, text: 'I needed to learn a lot of things before I could get going with this way of using the app.' },
 ];
 
-// The four constructs SUS does not carry. Trust and engagement matter here in a
-// way they would not for a general productivity tool.
+/**
+ * The constructs SUS does not carry, asked once per arm.
+ *
+ * The first four are the pre-registered composite (protocol.md §7.1). The last
+ * two were added on 2026-08-19, before the first participant, and are reported
+ * separately rather than folded into that composite — see PRE_REGISTERED_LIKERT
+ * in @core/study/studyConfig.mjs for why.
+ *
+ * Trust and engagement matter here in a way they would not for a general
+ * productivity tool. Personalisation and actionability are the two halves of the
+ * assessed outcome this platform is being built against — "personalised resource
+ * navigation and management" — and until these items existed, the only evidence
+ * for either was a single free-text debrief answer, which yields quotes but no
+ * arm-to-arm comparison.
+ *
+ * Ids must match LIKERT_CONSTRUCTS; `apps/web/tests/studyInstruments.test.js`
+ * fails if they drift.
+ */
 export const LIKERT_ITEMS = [
   { id: 'trust', construct: 'trust', text: 'I would trust the information this gave me.', options: AGREE_5 },
   { id: 'engagement', construct: 'engagement', text: 'I found this way of getting answers engaging.', options: AGREE_5 },
   { id: 'helpfulness', construct: 'helpfulness', text: 'The answers I got would be helpful in a real situation.', options: AGREE_5 },
   { id: 'clarity', construct: 'clarity', text: 'The answers were easy to understand.', options: AGREE_5 },
+  // "Rather than general information" is the contrast that makes this a
+  // personalisation item and not a second helpfulness item. Without it, someone
+  // who got a good generic answer would rate it high and the measure would say
+  // nothing about tailoring.
+  { id: 'personalisation', construct: 'personalisation', text: 'The answers were about the situation I described, rather than general information anyone would get.', options: AGREE_5 },
+  // The "navigation and management" half: an answer that is trusted, clear and
+  // on-topic can still leave someone with no idea what to do on Monday morning.
+  { id: 'actionability', construct: 'actionability', text: 'After using this, I would know what to do next.', options: AGREE_5 },
 ];
 
 // Shortened set for participants living with dementia (instruments.md §7). Ten
 // mixed-polarity abstract statements are a poor instrument for this group, and
 // the aim here is accessibility feedback rather than a comparable score.
+//
+// Deliberately NOT extended with the two new Likert items. "Rather than general
+// information anyone would get" is exactly the kind of abstract comparison the
+// fatigue safeguard in protocol §3.3 exists to avoid, and this group's data is
+// reported separately and thematically anyway — so the items would add burden
+// without adding a comparison anyone will make.
 export const PLWD_ITEMS = [
   {
     id: 'easy', text: 'Was that easy or hard to use?',

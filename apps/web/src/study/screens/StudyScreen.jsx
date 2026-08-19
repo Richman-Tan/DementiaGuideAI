@@ -25,13 +25,15 @@ function StopBar({ onStop }) {
 /**
  * Hands the device to the next participant.
  *
- * Only ever rendered on a finished session. The fallback screen further down
- * must not offer this while a session is live — that was the old behaviour and
- * it silently discarded progress. Two steps rather than one so that a tap does
- * not clear the participant code before the participant has written it down.
+ * Rendered in exactly two places: at the end of a finished session, and behind
+ * the "I'm someone else" branch of the resume gate. It must NOT sit on an
+ * ordinary screen of a live session — that was the old behaviour of the fallback
+ * screen further down, and it silently discarded progress. Two steps rather than
+ * one so that a tap does not clear the participant code before the participant
+ * has written it down.
  */
-function NextParticipant({ onReset }) {
-  const [armed, setArmed] = useState(false);
+function NextParticipant({ onReset, startArmed = false, onCancel = null }) {
+  const [armed, setArmed] = useState(startArmed);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState(0);
 
@@ -73,9 +75,59 @@ function NextParticipant({ onReset }) {
         <Button onClick={clear} disabled={busy}>
           {busy ? 'Checking…' : pending > 0 ? 'Try again' : 'Clear this device'}
         </Button>
-        <Button variant="quiet" onClick={() => setArmed(false)}>Cancel</Button>
+        <Button variant="quiet" onClick={onCancel || (() => setArmed(false))}>Cancel</Button>
       </div>
     </div>
+  );
+}
+
+/**
+ * "Is this still you?" — shown once per page load when the device restored a
+ * session that has not finished.
+ *
+ * The study runs on a single link the supervisor forwards, so more than one
+ * person will open it on the same browser. Without this the second person is
+ * resumed silently into the first person's session: their code, their answers,
+ * their arm assignment. Two participants become one row and nothing in the data
+ * records that it happened.
+ *
+ * The two choices are deliberately not weighted. "Carry on" is one tap for the
+ * genuine returner, and the other branch reuses the same guarded clear as the
+ * end-of-session control, so a half-finished handover cannot discard a queue of
+ * unsent events.
+ */
+function ResumeGate({ code, onCarryOn, onReset }) {
+  const [handover, setHandover] = useState(false);
+  return (
+    <Page
+      title="Welcome back"
+      lead={code
+        ? `This device has a session in progress for participant ${code}.`
+        : 'This device has a session already in progress.'}
+    >
+      {!handover ? (
+        <>
+          <div style={card}>
+            <p style={{ margin: '0 0 1.25rem', fontSize: '1.05rem', lineHeight: 1.7, color: 'var(--text)' }}>
+              If that is you, carry on from where you stopped. If you are a different
+              person, start a fresh session so your answers are kept separate.
+            </p>
+            <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
+              <Button onClick={onCarryOn}>Yes, that’s me — carry on</Button>
+              <Button variant="secondary" onClick={() => setHandover(true)}>
+                I’m someone else
+              </Button>
+            </div>
+          </div>
+          <p style={{ marginTop: '1rem', fontSize: '.95rem', color: 'var(--text2)', lineHeight: 1.6 }}>
+            Not sure? Choosing “carry on” changes nothing — you can start fresh from
+            this screen next time you open the link.
+          </p>
+        </>
+      ) : (
+        <NextParticipant onReset={onReset} startArmed onCancel={() => setHandover(false)} />
+      )}
+    </Page>
   );
 }
 
@@ -92,6 +144,18 @@ export default function StudyScreen() {
   // scroll offset — so a participant who clicks "Continue" at the bottom of one
   // screen lands halfway down the next one and may never see its heading.
   useEffect(() => { window.scrollTo(0, 0); }, [step, st.stageIndex, st.taskIndex]);
+
+  // Before every step: a restored session has to be claimed by whoever is at the
+  // keyboard, or the next person inherits it. See ResumeGate.
+  if (st.needsResumeCheck) {
+    return (
+      <ResumeGate
+        code={st.participantCode}
+        onCarryOn={st.acknowledgeResume}
+        onReset={st.reset}
+      />
+    );
+  }
 
   const answer = (k) => responses[k];
   const set = (k) => (v) => st.setResponse(k, v);

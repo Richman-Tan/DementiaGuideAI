@@ -41,7 +41,7 @@ function VoiceStage({ profile, showAvatar, state }) {
   }
   if (profile.renderer === 'unity') {
     return (
-      <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name}>
+      <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} state={state}>
         {bigBust}
       </UnityAvatarMount>
     );

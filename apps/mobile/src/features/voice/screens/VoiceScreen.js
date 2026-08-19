@@ -322,7 +322,14 @@ export const VoiceScreen = ({ navigation }) => {
         {avatarEnabled && isUnityRenderer ? (
           // Unity/CC4 renderer — Phase 3: stub renders nothing, VoiceScreen shows
           // its own placeholder. Phase 5: AvatarUnity mounts the native UaaL view.
-          <AvatarUnity ref={avatarRef} characterId={activeProfile.unityCharacterId} style={styles.avatarVRM} />
+          <AvatarUnity
+            ref={avatarRef}
+            characterId={activeProfile.unityCharacterId}
+            isListening={voiceState === VoiceState.LISTENING}
+            isSpeaking={voiceState === VoiceState.SPEAKING}
+            isThinking={voiceState === VoiceState.PROCESSING}
+            style={styles.avatarVRM}
+          />
         ) : avatarEnabled && modelUri ? (
           <AvatarVRM
             ref={avatarRef}

@@ -22,17 +22,30 @@ import { UnityAvatarNativeView, isUnityAvatarAvailable } from '../../../../modul
  * conversation keeps working audio-only.
  */
 export const AvatarUnity = forwardRef(function AvatarUnity(props, ref) {
-  const { characterId } = props;
+  const { characterId, isListening, isSpeaking, isThinking, isEmpathetic, isWaiting } = props;
 
   useEffect(() => {
     if (characterId) UnityAvatarBridge.setCharacter(characterId);
   }, [characterId]);
+
+  // Same state derivation and precedence as AvatarVRM, so both renderers agree
+  // on what the avatar is doing. Drives IdleAnimator's six-way blend Unity-side.
+  useEffect(() => {
+    const next = isSpeaking    ? 'speaking'
+      : isThinking   ? 'thinking'
+        : isEmpathetic ? 'empathy'
+          : isListening  ? 'listening'
+            : isWaiting    ? 'waiting'
+              : 'idle';
+    UnityAvatarBridge.setAvatarState(next);
+  }, [isListening, isSpeaking, isThinking, isEmpathetic, isWaiting]);
 
   useImperativeHandle(ref, () => ({
     playAudio:       UnityAvatarBridge.playAudio,
     stopAudio:       UnityAvatarBridge.stopAudio,
     setOnAudioStart: UnityAvatarBridge.setOnAudioStart,
     setCharacter:    UnityAvatarBridge.setCharacter,
+    setAvatarState:  UnityAvatarBridge.setAvatarState,
     setDebugMode:    UnityAvatarBridge.setDebugMode,
   }), []);
 

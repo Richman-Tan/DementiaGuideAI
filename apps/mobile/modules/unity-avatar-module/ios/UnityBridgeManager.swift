@@ -1,6 +1,14 @@
 import Foundation
+#if canImport(UnityFramework)
 import UnityFramework
+#endif
 
+/// Builds with or without UnityFramework. The committed framework is a device
+/// slice only, so Simulator builds omit it (plugins/withUnityFramework.js gates
+/// every iOS mod); `canImport` then compiles this down to a stub whose start()
+/// returns nil and whose sends are dropped. UnityAvatarModule reports the module
+/// unavailable and the JS falls back to the Three.js WebView avatar.
+///
 /// Lazily boots the embedded Unity player and owns the singleton `UnityFramework`
 /// instance. Deliberately NOT started from AppDelegate.didFinishLaunchingWithOptions
 /// — Unity only boots on the first call from JS (via UnityAvatarModule.initialize()),
@@ -17,7 +25,9 @@ public final class UnityBridgeManager: NSObject {
     public static let shared = UnityBridgeManager()
 
     public private(set) var isStarted = false
+#if canImport(UnityFramework)
     private var unityFramework: UnityFramework?
+#endif
 
     private override init() {
         super.init()
@@ -27,6 +37,10 @@ public final class UnityBridgeManager: NSObject {
     /// Returns the root UIView Unity renders into, for UnityAvatarView to embed.
     @discardableResult
     public func start() -> UIView? {
+#if !canImport(UnityFramework)
+        NSLog("[UnityBridgeManager] built without UnityFramework — using the Three.js avatar instead.")
+        return nil
+#else
         if isStarted {
             return unityFramework?.appController()?.rootView
         }
@@ -65,6 +79,7 @@ public final class UnityBridgeManager: NSObject {
 
         isStarted = true
         return framework.appController()?.rootView
+#endif
     }
 
     // ── App lifecycle forwarding ─────────────────────────────────────────────
@@ -75,19 +90,27 @@ public final class UnityBridgeManager: NSObject {
     // the common case for users who never open the avatar screen.
 
     public func appWillResignActive() {
+#if canImport(UnityFramework)
         unityFramework?.appController()?.applicationWillResignActive(UIApplication.shared)
+#endif
     }
 
     public func appDidEnterBackground() {
+#if canImport(UnityFramework)
         unityFramework?.appController()?.applicationDidEnterBackground(UIApplication.shared)
+#endif
     }
 
     public func appWillEnterForeground() {
+#if canImport(UnityFramework)
         unityFramework?.appController()?.applicationWillEnterForeground(UIApplication.shared)
+#endif
     }
 
     public func appDidBecomeActive() {
+#if canImport(UnityFramework)
         unityFramework?.appController()?.applicationDidBecomeActive(UIApplication.shared)
+#endif
     }
 
     /// Forwards a JSON message to a GameObject in the running Unity scene.
@@ -100,7 +123,9 @@ public final class UnityBridgeManager: NSObject {
             NSLog("[UnityBridgeManager] sendMessage called before start() — dropping message.")
             return
         }
+#if canImport(UnityFramework)
         unityFramework?.sendMessageToGO(withName: goName, functionName: methodName, message: json)
+#endif
     }
 
     // ── Character selection ──────────────────────────────────────────────────
@@ -141,14 +166,39 @@ public final class UnityBridgeManager: NSObject {
         guard isStarted else { return }
         sendMessage(json: "{\"type\":\"setCharacter\",\"id\":\"\(id)\"}")
     }
+
+    // ── Conversational state ─────────────────────────────────────────────────
+    // Drives IdleAnimator's six-way blend (listening nod, brow raises, thinking
+    // gaze aversion, head tilts). Same converge-idempotently approach as
+    // setCharacter, and deliberately does NOT boot Unity: a state change alone
+    // shouldn't change the lazy-boot timing that keeps app startup fast. State
+    // sent before boot is stored and replayed by ensureState() on the next play,
+    // and nothing is visible before Unity is up anyway.
+
+    private var desiredState: String?
+
+    public func setAvatarState(state: String) {
+        desiredState = state
+        guard isStarted else { return }
+        sendMessage(json: "{\"type\":\"setState\",\"state\":\"\(state)\"}")
+    }
+
+    /// Re-sends the stored state (no-op when none). Called before every play
+    /// message, so a state set during the pre-boot window still lands.
+    public func ensureState() {
+        guard let state = desiredState, isStarted else { return }
+        sendMessage(json: "{\"type\":\"setState\",\"state\":\"\(state)\"}")
+    }
 }
 
 // UnityFrameworkListener: required by UnityFramework.register(_:) to receive
 // lifecycle callbacks (e.g. app-quit requests from the Unity side). No-ops for
 // v1 — this app never unloads Unity mid-session.
+#if canImport(UnityFramework)
 extension UnityBridgeManager: UnityFrameworkListener {
     public func unityDidUnload(_ notification: Notification!) {
         isStarted = false
         unityFramework = nil
     }
 }
+#endif

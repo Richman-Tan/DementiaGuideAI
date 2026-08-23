@@ -1,0 +1,11 @@
+{
+  "name": "@dementiaguide/api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Backend service: holds the provider credentials, proxies AI calls, and owns study and conversation data. Deployed as a Vercel Service alongside apps/web — see the root vercel.json.",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@dementiaguide/core": "1.0.0"
+  }
+}

@@ -42,9 +42,10 @@ module.exports = [
     },
   },
   {
-    // Node-context files: build scripts and tool configs. eslint-config-expo
-    // loads browser globals, so these need Node's declared explicitly.
-    files: ['**/*.config.{js,mjs}', 'apps/web/scripts/**/*.mjs', 'apps/web/vite.config.js'],
+    // Node-context files: build scripts, tool configs, and the web app's
+    // serverless API routes. eslint-config-expo loads browser globals, so these
+    // need Node's declared explicitly.
+    files: ['**/*.config.{js,mjs}', 'apps/web/scripts/**/*.mjs', 'apps/web/vite.config.js', 'apps/api/**/*.js'],
     languageOptions: {
       globals: {
         __dirname: 'readonly',
@@ -71,6 +72,20 @@ module.exports = [
         beforeAll: 'readonly',
         afterAll: 'readonly',
         jest: 'readonly',
+      },
+    },
+  },
+  {
+    // Module-path globals for the CommonJS test surfaces only — a test that
+    // reads a fixture off disk needs them, and `require` alone is not enough.
+    // Deliberately NOT repo-wide: apps/web is `"type": "module"`, so its tests
+    // are ESM where __dirname genuinely does not exist. Declaring it there
+    // would silence a real no-undef rather than allow a legitimate one.
+    files: ['apps/mobile/**/*.test.{js,jsx}', 'packages/core/**/*.test.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
       },
     },
   },

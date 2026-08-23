@@ -152,6 +152,32 @@ object UnityBridgeManager : IUnityPlayerLifecycleEvents {
         sendMessage("{\"type\":\"setCharacter\",\"id\":\"$id\"}")
     }
 
+    // ── Conversational state ─────────────────────────────────────────────────
+    // Drives IdleAnimator's six-way blend (listening nod, brow raises, thinking
+    // gaze aversion, head tilts). Same converge-idempotently approach as
+    // setCharacter, and deliberately does NOT boot Unity: a state change alone
+    // shouldn't change the lazy-boot timing that keeps app startup fast. State
+    // sent before boot is stored and replayed by ensureState() on the next play,
+    // and nothing is visible before Unity is up anyway.
+
+    private var desiredState: String? = null
+
+    fun setAvatarState(state: String) {
+        desiredState = state
+        if (!isStarted) return
+        sendMessage("{\"type\":\"setState\",\"state\":\"$state\"}")
+    }
+
+    /**
+     * Re-sends the stored state (no-op when none). Called before every play
+     * message, so a state set during the pre-boot window still lands.
+     */
+    fun ensureState() {
+        val state = desiredState ?: return
+        if (!isStarted) return
+        sendMessage("{\"type\":\"setState\",\"state\":\"$state\"}")
+    }
+
     // ── IUnityPlayerLifecycleEvents ──────────────────────────────────────────
     // No-ops for v1 — this app never unloads Unity mid-session (parity with
     // the UnityFrameworkListener extension in the Swift manager).

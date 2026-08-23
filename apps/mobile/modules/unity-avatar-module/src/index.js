@@ -36,6 +36,7 @@ function resolveNativeModule() {
       playAudio: async () => warnOnce(),
       stopAudio: async () => {},
       setCharacter: async () => {},
+      setAvatarState: async () => {},
       setDebugMode: async () => {},
     };
   }

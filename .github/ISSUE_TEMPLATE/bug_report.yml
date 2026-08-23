@@ -1,0 +1,80 @@
+name: Bug report
+description: Something behaves differently from what it should
+labels: ["type: bug", "status: needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The most useful thing you can give us is **the exact command you ran and its full output** — this project spans three surfaces with different toolchains, so a copied error beats a description of one.
+
+        Please don't paste API keys. The app stores OpenAI/ElevenLabs keys client-side, so they can show up in logs and network traces — redact before pasting.
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface
+      description: Where does it happen? Pick every one you've confirmed.
+      multiple: true
+      options:
+        - Mobile app (Expo / React Native)
+        - Web app (Vite)
+        - Shared core (packages/core)
+        - Unity avatar
+        - RAG pipeline / knowledge base
+        - Scripts and tooling (ingest, eval, migrations)
+        - Build, CI, or dependencies
+        - Docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Number them. Start from a clean state (`npm ci`) if you can — it separates real bugs from stale local state.
+      placeholder: |
+        1. npm ci
+        2. npm run web
+        3. Open the Voice screen and press the mic
+        4. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Command output, logs, or stack trace
+      description: Paste the whole thing rather than the line you think matters. This is rendered as a code block — no backticks needed.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        Paste the output of `node --version && npm --version && git rev-parse --short HEAD`. Add OS, and device or simulator if it's mobile.
+      render: shell
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I re-ran after `npm ci` at the repo root (not inside a workspace — that creates a nested `node_modules` and causes its own failures)
+          required: false
+        - label: I searched existing issues
+          required: false
+        - label: I removed any API keys from the output above
+          required: true

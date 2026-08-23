@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Richman-Tan/DementiaGuideAI/security/advisories/new
+    about: Report privately. Do NOT open a public issue for anything involving API keys, user data, or the Supabase anon key.
+  - name: Setup and contribution guide
+    url: https://github.com/Richman-Tan/DementiaGuideAI/blob/main/CONTRIBUTING.md
+    about: How to install, where code goes, the checks to run before pushing, and the traps that will bite you.

@@ -4,7 +4,7 @@ Notes for anyone working in this repo — including future me.
 
 ## Setup
 
-Node 20 (see `.nvmrc`). This is an npm-workspaces monorepo — one lockfile, one
+Node 20.19.4 (see `.nvmrc`). This is an npm-workspaces monorepo — one lockfile, one
 install, from the repo root:
 
 ```bash
@@ -13,7 +13,7 @@ npm install
 
 That covers `apps/mobile`, `apps/web` and `packages/core`. Don't run `npm install`
 inside a workspace; it will create a nested `node_modules` and undo the hoisting
-that keeps `react`, `three` and `@supabase/supabase-js` at a single shared copy.
+that keeps `react` and `@supabase/supabase-js` at a single shared copy.
 
 The Unity project is a submodule and is only needed for avatar work:
 
@@ -28,7 +28,7 @@ git submodule update --init
 | `packages/core/` | have **no platform imports and no outward dependencies** — it runs on mobile, web and in Node. See [`packages/core/README.md`](packages/core/README.md). |
 | `apps/mobile/src/` | be mobile-only (React Native, Expo APIs, native modules) |
 | `apps/web/src/` | be web-only (DOM, browser audio, Vite) |
-| `assets/` | be a binary asset both apps load (`@assets/…`). App icons go in `apps/mobile/assets/`. |
+| `assets/` | be a binary asset both apps load (`@assets/…`). App icons go in `apps/mobile/assets/` — but every icon and favicon in both apps is **generated**, so change `packages/core/brand/mark.js` and run `npm run brand:icons` rather than editing an image. `scripts/brand/build-icons.test.js` fails if the committed files fall behind. |
 
 If two surfaces need the same logic, it belongs in `packages/core` — not
 copy-pasted, and not imported across app boundaries.
@@ -83,6 +83,38 @@ web app does, so a broken alias or a stray platform import fails there first.
   submitted academic work. Don't reorganise that folder, and note that it cites
   `scripts/parse-latency.mjs` and `scripts/make-figures.py`, which is why those
   two stay at the top level of `scripts/`.
+
+## Issues
+
+Open one from the [templates](https://github.com/Richman-Tan/DementiaGuideAI/issues/new/choose)
+— **Bug report**, **Task**, or **Feature request**. They're forms, so the fields
+we always end up asking for are asked up front.
+
+Security problems don't go here. Use a
+[private advisory](https://github.com/Richman-Tan/DementiaGuideAI/security/advisories/new);
+[SECURITY.md](SECURITY.md) covers what's in scope, including prompt injection
+that defeats answer grounding.
+
+Labels are prefixed so they group in the sidebar and can be filtered on:
+
+| Prefix | Means | Values |
+|---|---|---|
+| `type:` | What kind of work | `bug`, `feature`, `chore`, `docs`, `security` |
+| `area:` | Which surface | `mobile`, `web`, `core`, `unity`, `rag`, `tooling` |
+| `priority:` | How urgent | `high` (blocks work or breaks a documented command), `medium` (workaround exists), `low` |
+| `status:` | Workflow state | `needs-triage`, `blocked`, `question`, `duplicate`, `invalid`, `wontfix` |
+
+Every new issue arrives as `status: needs-triage`. Triage means adding an `area:`
+and a `priority:` and removing that label — not necessarily doing the work.
+
+Don't apply `good first issue`. GitHub indexes that label globally and feeds it
+to contribution-discovery surfaces, so an issue carrying it tends to attract a
+drive-by PR within the hour — usually before anyone here has decided what the
+right fix is. Two of the open PRs arrived that way.
+
+An issue is worth opening even for something you don't intend to fix. Several of
+the open ones are latent problems that were only found because a restructure
+happened to walk past them — writing them down is what stops that being luck.
 
 ## Commits and branches
 

@@ -10,6 +10,9 @@ import { tts } from '../services/ttsClient.js';
 import { selectTtsMode, markTtsDegraded } from '../services/ttsModeWeb.js';
 import { startSttSession } from '../services/sttWeb.js';
 import { getElevenKey } from '../state/keysStore.js';
+import { createTurnTimer } from '../study/latency.js';
+import { emit } from '../study/events.js';
+import { currentArm, currentTaskId, transcriptFields } from '../study/studyStore.js';
 import { mapSettingsToRag, speechRateFor } from '../state/mapSettingsToRag.js';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { createElevenLabsStream } from '@core/tts/elevenLabsStreamService';
@@ -18,6 +21,7 @@ import { ELEVEN_STREAM_SAMPLE_RATE, VOICE_SPECULATIVE_RAG } from '@core/voice/vo
 import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
 import { detectSentiment } from '@core/sentiment/detectSentiment';
 import { createSentenceSplitter } from '@core/voice/sentenceTracker';
+import { MODALITY_SPOKEN, MODALITY_TYPED } from '@core/study/studyConfig.mjs';
 
 const MAX_QUERY_CHARS = 1000;
 
@@ -74,7 +78,15 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
 
   // ─── Core conversation loop (producer/consumer, mobile parity) ─────────────
-  const processQuery = useCallback(async (userText, preRetrievedChunks = null) => {
+  //
+  // Options object rather than three trailing positionals: `modality` has to
+  // reach every event this turn emits, and a fourth optional positional is the
+  // kind of thing that gets passed in the wrong slot exactly once, silently, in
+  // a live session.
+  const processQuery = useCallback(async (
+    userText,
+    { preRetrievedChunks = null, timer = null, modality = MODALITY_SPOKEN } = {},
+  ) => {
     if (!userText.trim()) return;
     if (userText.length > MAX_QUERY_CHARS) userText = userText.slice(0, MAX_QUERY_CHARS);
 
@@ -84,6 +96,16 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     abortRef.current = false;
 
     const audioOn = settingsRef.current.audioResponses && !mutedRef.current;
+    const arm = currentArm();
+    const taskId = currentTaskId();
+    const turn = timer || createTurnTimer(arm, taskId);
+    // Emitted at submit, not at completion. Turn counts are derived from these:
+    // the completing `turn` event can land after task_end and would be missed.
+    //
+    // `modality` is on the START event as well as the completing one because the
+    // task-window turn count is built from turn_start alone — without it here,
+    // the count could not be split into spoken and typed.
+    emit('turn_start', { arm, taskId, modality, chars: userText.length });
 
     // Shared async queue — also the fallback target for a mid-stream WS failure.
     const queue = { promises: [], done: false, notify: null };
@@ -156,6 +178,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
             sessionStarted = true;
             avatar?.setOnAudioStart(() => {
               audioStartWallclock = Date.now();
+              turn.mark('firstAudio');
               setVState('speaking');
               scheduleSubtitles();
             });
@@ -189,8 +212,15 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       const clean = text.trim();
       if (!clean || !audioOn) return;
       const emotion = detectSentiment(clean);
+      turn.mark('ttsRequest');
       queue.promises.push(
-        tts(clean, { speechRate, visemeWeights, ...ttsVoiceOptions }).then((result) => ({ ...result, text: clean, emotion }))
+        tts(clean, { speechRate, visemeWeights, ...ttsVoiceOptions }).then((result) => {
+          // The audio has ARRIVED, which is not the same as the participant
+          // hearing it — it still waits its turn in the queue and has to decode.
+          // `firstAudio` is marked by the consumer at actual playback start.
+          turn.mark('ttsResponse');
+          return { ...result, text: clean, emotion };
+        })
       );
       wake();
     };
@@ -198,6 +228,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     const handleSentence = (text) => {
       const clean = text.trim();
       if (!clean) return;
+      turn.mark('firstSentence');
       if (!audioOn) {
         // Audio off: still surface sentences as subtitles-in-order via the queue.
         queue.promises.push(Promise.resolve({ text: clean, emotion: 'neutral', audio: null }));
@@ -220,13 +251,18 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       let fullText = '';
       const splitter = createSentenceSplitter();
       try {
-        const timingCbs = { onSources: (sources) => { citedSources = sources ?? []; } };
+        const timingCbs = {
+          onRagDone: () => turn.mark('ragDone'),
+          onLlmSend: () => turn.mark('llmSend'),
+          onSources: (sources) => { citedSources = sources ?? []; },
+        };
         for await (const chunk of openaiClient.chatStream(userText, history, timingCbs, {
           ...mapSettingsToRag(settingsRef.current),
           skipThrottle: true,
           preRetrievedChunks,
         })) {
           if (abortRef.current) break;
+          turn.mark('firstToken');
           fullText += chunk;
           if (streamingActive && !streamFailed && audioOn) ttsStream.sendText(chunk);
           for (const sentence of splitter.push(chunk)) handleSentence(sentence);
@@ -252,6 +288,26 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           sources: citedSources,
           safety: false,
         });
+        turn.finish({ modality, streaming: streamingActive && !streamFailed, aborted: abortRef.current });
+        // Transcript capture for rubric scoring and the safety scan. Retrieved
+        // chunk ids travel with it so the analysis can check whether the two
+        // arms retrieved differently — speech recognition changes the query, so
+        // a divergence there would mean the study measured STT, not interface
+        // (docs/study/analysis-plan.md §7).
+        emit('turn', {
+          arm,
+          taskId,
+          // Spoken or typed. The avatar screen keeps its message bar on purpose
+          // (a participant who finds speaking hard must have a way through), so
+          // an Arm A turn is not automatically a spoken one — and a typed turn
+          // scored as evidence about the voice interface would confound the
+          // headline comparison with no trace in the data.
+          modality,
+          // Withheld at source when the participant declined — see the chat arm.
+          ...transcriptFields({ question: userText, answer: fullText }),
+          sourceIds: (citedSources || []).map((c) => c.id ?? c.num ?? null),
+          aborted: abortRef.current,
+        });
         queue.done = true;
         wake();
       }
@@ -275,6 +331,11 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         avatar?.setSpeechEmotion?.(segment.emotion);
 
         if (segment.audio && avatar) {
+          // Time-to-audible, measured where the participant experiences it. The
+          // timer keeps the first call only, so later segments do not overwrite
+          // this. The streaming path marks the same name from the avatar's own
+          // onAudioStart callback, so both paths mean the same thing.
+          turn.mark('firstAudio');
           await avatar.playAudio(segment);
         } else if (!segment.audio) {
           // Audio off: pace subtitles by reading speed (~55ms/char, min 1.4s).
@@ -358,9 +419,12 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     setVState('thinking');
     setVDone(true);
 
+    const turn = createTurnTimer(currentArm(), currentTaskId());
     try {
       const { transcript } = await session.stop();
+      turn.mark('sttDone');
       if (!transcript) {
+        emit('stt_empty', { arm: currentArm(), taskId: currentTaskId() });
         speculativeRef.current?.cancel();
         speculativeRef.current = null;
         setError("I didn't catch that — try again a little closer to the microphone.");
@@ -376,7 +440,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         if (spec.status === 'hit') preRetrievedChunks = spec.chunks;
       }
 
-      await processQuery(transcript, preRetrievedChunks);
+      await processQuery(transcript, { preRetrievedChunks, timer: turn, modality: MODALITY_SPOKEN });
 
       // Hands-free: re-arm listening after a completed (not interrupted) reply.
       if (settingsRef.current.handsFree && !abortRef.current) {
@@ -445,6 +509,11 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
   // Typed question through the same pipeline (the avatar screen's message
   // bar): barge-in if speaking, ignore while listening/thinking. The send
   // click is the AudioContext unlock gesture, same as the mic tap.
+  //
+  // Kept available during a study session rather than hidden in Arm A. Removing
+  // it would force speech on the participants least able to produce it, which is
+  // the opposite of what an accessibility study should do; the turn is tagged
+  // MODALITY_TYPED instead so the analysis can see it.
   const askText = useCallback(async (text) => {
     const t = (text ?? '').trim();
     if (!t) return;
@@ -453,7 +522,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     if (stateRef.current === 'speaking') stopAudio();
     avatar?.unlockAudio?.();
     abortRef.current = false;
-    await processQuery(t);
+    await processQuery(t, { modality: MODALITY_TYPED });
   }, [avatar, processQuery, stopAudio]);
 
   return { vState, vTranscript, vDone, vSubtitle, micTap, askText, repeatLast, stop, error, clearError: () => setError(null) };

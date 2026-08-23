@@ -65,6 +65,11 @@ content/sources/*
 # pre-prune DB backups (bulky, reproducible) — keep local, do not commit
 docs/report/backup/
 
+# Study data — participant records never enter the repository.
+# See docs/study/ethics/data-management-plan.md §6: transcripts are not shared
+# with the project partner, not committed, and not published.
+docs/study/results/
+
 # MS Office lock files
 ~$*
 **/~$*

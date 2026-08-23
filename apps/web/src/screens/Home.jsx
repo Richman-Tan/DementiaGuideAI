@@ -40,7 +40,7 @@ export default function Home() {
   const card = { background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '16px', boxShadow: 'var(--shadow)' };
 
   return (
-    <section style={{ height: isMobile ? 'calc(100dvh - 96px)' : '100dvh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: isMobile ? '10px' : '14px', padding: isMobile ? '12px 0 4px' : '20px 0 18px', overflow: 'hidden' }}>
+    <section style={{ height: isMobile ? 'calc(100dvh - 96px - var(--study-overlay-h, 0px))' : 'calc(100dvh - var(--study-overlay-h, 0px))', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: isMobile ? '10px' : '14px', padding: isMobile ? '12px 0 4px' : '20px 0 18px', overflow: 'hidden' }}>
       <div style={{ flexShrink: 0 }}>
         <h1 style={{ fontSize: 'clamp(1.25rem, 2.4vw, 1.8rem)', margin: 0, letterSpacing: '-.01em' }}>{greeting}</h1>
         {!isMobile && (

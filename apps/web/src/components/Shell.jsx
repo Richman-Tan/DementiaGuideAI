@@ -31,9 +31,9 @@ export default function Shell({ active, isDesktop, isTablet, isMobile, children 
   const talkTo = `Talk to ${useEffectiveAvatarProfile(settings.avatarId).name}`;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - var(--study-overlay-h, 0px))' }}>
       {isDesktop && (
-        <aside style={{ width: '260px', flexShrink: '0', position: 'sticky', top: '0', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '4px', background: 'var(--surface)', borderRight: 'var(--bw) solid var(--border)', padding: '22px 14px 16px' }}>
+        <aside style={{ width: '260px', flexShrink: '0', position: 'sticky', top: 'var(--study-overlay-h, 0px)', height: 'calc(100vh - var(--study-overlay-h, 0px))', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '4px', background: 'var(--surface)', borderRight: 'var(--bw) solid var(--border)', padding: '22px 14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 10px 18px' }}>
             <BrandMark size={34} tile />
             <strong style={{ fontSize: '1.02rem' }}>DementiaGuide AI</strong>
@@ -54,7 +54,7 @@ export default function Shell({ active, isDesktop, isTablet, isMobile, children 
         </aside>
       )}
       {isTablet && (
-        <aside style={{ width: '72px', flexShrink: '0', position: 'sticky', top: '0', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', background: 'var(--surface)', borderRight: 'var(--bw) solid var(--border)', padding: '20px 0 16px' }}>
+        <aside style={{ width: '72px', flexShrink: '0', position: 'sticky', top: 'var(--study-overlay-h, 0px)', height: 'calc(100vh - var(--study-overlay-h, 0px))', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', background: 'var(--surface)', borderRight: 'var(--bw) solid var(--border)', padding: '20px 0 16px' }}>
           <BrandMark size={36} tile style={{ marginBottom: '14px' }} />
           {NAV.slice(0, 2).map(([key, label, route, icon]) => {
             const n = navStyle(active === key);

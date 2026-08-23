@@ -25,11 +25,16 @@ class UnityAvatarModule : Module() {
         AsyncFunction("playAudio") { payloadJson: String ->
             appContext.currentActivity?.let { UnityBridgeManager.start(it) }
             UnityBridgeManager.ensureCharacter()
+            UnityBridgeManager.ensureState()
             UnityBridgeManager.sendMessage(payloadJson)
         }.runOnQueue(Queues.MAIN)
 
         AsyncFunction("setCharacter") { id: String ->
             UnityBridgeManager.setCharacter(id)
+        }.runOnQueue(Queues.MAIN)
+
+        AsyncFunction("setAvatarState") { state: String ->
+            UnityBridgeManager.setAvatarState(state)
         }.runOnQueue(Queues.MAIN)
 
         AsyncFunction("stopAudio") {

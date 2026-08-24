@@ -1,7 +1,10 @@
-// DementiaGuide AI — library content + mock service layer (from the Claude Design
-// prototype, kept verbatim). CATS/ARTICLES/bodyFor are the real library content;
+// DementiaGuide AI — library metadata + mock service layer. CATS/ARTICLES hold
+// the library index; full article bodies live in ./articles/ (lazy-loaded per
+// category, grounded and cited — see docs/web/library-source-map.md);
 // mockReply/seedThread power mock mode (no API keys / VITE_FORCE_MOCK / ?mock=1).
 // The real chat path lives in src/services/ (OpenAI gpt-4o + Supabase pgvector).
+
+import { searchTextOf } from './articles/index.js';
 
 export const CATS = [
   { id: 'caregiving', name: 'Caregiving Advice', desc: 'Practical daily care tips and strategies', accent: '#E8956D', pale: '#FBEEE6', dk: '#3A2A20' },
@@ -13,7 +16,7 @@ export const CATS = [
   { id: 'prevention', name: 'Prevention & Early Detection', desc: 'Risk factors, warning signs, and brain health strategies', accent: '#5B9BD5', pale: '#E7F0FA', dk: '#1B2A3A' }
 ];
 
-const A = (id, cat, title, sum, mins) => ({ id, cat, title, sum, mins });
+const A = (id, cat, title, sum, mins, tags) => ({ id, cat, title, sum, mins, tags });
 export const ARTICLES = [
   A('managing-sundowning', 'caregiving', 'Managing Sundowning Behaviour', 'Why late-day restlessness happens and calm ways to respond', 7),
   A('safe-home', 'caregiving', 'Creating a Safe Home Environment', 'Simple changes that prevent accidents and reduce worry', 6),
@@ -72,41 +75,15 @@ export const relatedTo = (a) => ARTICLES.filter((x) => x.cat === a.cat && x.id !
 export const searchArticles = (q) => {
   const t = q.trim().toLowerCase();
   if (!t) return ARTICLES;
-  return ARTICLES.filter((a) => (a.title + ' ' + a.sum + ' ' + getCat(a.cat).name).toLowerCase().includes(t));
+  return ARTICLES.filter(
+    (a) =>
+      (a.title + ' ' + a.sum + ' ' + (a.tags || []).join(' ') + ' ' + getCat(a.cat).name).toLowerCase().includes(t) ||
+      searchTextOf(a.id).includes(t)
+  );
 };
 
-const SUNDOWNING = [
-  { t: 'p', x: 'Many people living with dementia become more restless, confused or upset as the afternoon turns into evening. Carers often describe pacing, calling out, wanting to "go home" (even at home), or becoming suspicious or tearful. This pattern is called sundowning, and it is one of the most common — and most exhausting — parts of dementia care.' },
-  { t: 'p', x: 'If evenings are hard in your house, you are not doing anything wrong. Sundowning is driven by changes in the brain, not by anything you have failed to do.' },
-  { t: 'h', x: 'Why it happens' },
-  { t: 'p', x: 'The body clock that tells us when to be alert and when to wind down is often damaged by dementia. Add in end-of-day tiredness, fading light, long shadows, household busy-ness around dinner time, and unmet needs like hunger, thirst, pain or needing the toilet — and late afternoon becomes a perfect storm.' },
-  { t: 'tip', x: 'Try this: for a week, jot down when the restlessness starts and what was happening just before. Patterns — a certain time, the TV news, an empty stomach — usually appear quickly, and they tell you what to change.' },
-  { t: 'h', x: 'What you can try in the late afternoon' },
-  { t: 'p', x: 'Keep the second half of the day calm and predictable. A quiet activity after lunch, a light snack around 3pm, and curtains closed with warm lamps on before dusk (so the light change is gentle, not sudden) all help. Turn off background noise you are not actively listening to — a radio and a TV at once is a lot for a tired brain.' },
-  { t: 'tip', x: 'Try this: a short walk or time in natural light around midday helps reset the body clock and often makes evenings noticeably calmer.' },
-  { t: 'h', x: 'In the moment' },
-  { t: 'p', x: 'Stay calm and keep your voice low and warm — your mood is contagious. Do not argue with what they believe is happening; respond to the feeling instead ("You sound worried. I\'m here, you\'re safe"). Redirection works better than correction: offer a cup of tea, a familiar task like folding washing, or a favourite piece of music.' },
-  { t: 'p', x: 'If they want to walk, walking with them for a few minutes is usually safer and kinder than trying to stop them.' },
-  { t: 'warn', x: 'When to seek help: if agitation regularly puts anyone at risk, or if confusion worsens suddenly over a day or two (this can signal an infection or delirium), contact your GP or call Healthline on 0800 611 116. In an emergency, call 111.' },
-  { t: 'h', x: 'Look after yourself too' },
-  { t: 'p', x: 'Sundowning lands at exactly the time of day when you are most tired yourself. If evenings are consistently hard, that is a good reason to ask about respite or an evening support worker — see the Carer Wellbeing section of this library. Needing help with the hardest hours is normal, not a failure.' }
-];
-
-export function bodyFor(a) {
-  if (a.id === 'managing-sundowning') return SUNDOWNING;
-  const c = getCat(a.cat);
-  return [
-    { t: 'p', x: a.sum + '. This guide brings together practical, plain-language advice from trusted ' + c.name.toLowerCase() + ' sources, written for family carers, care workers and health professionals in Aotearoa New Zealand.' },
-    { t: 'h', x: 'What helps' },
-    { t: 'p', x: 'Start small. Choose one change that feels manageable this week and give it a few days before judging whether it helps. Most strategies work best when they become part of a steady routine rather than a one-off fix, and every person with dementia is different — expect a little trial and error.' },
-    { t: 'tip', x: 'Try this: keep short notes about what you tried and what happened. Patterns often show up within a week or two, and your notes are genuinely useful to share with your GP or nurse.' },
-    { t: 'p', x: 'If something does not work today, it may still work on a calmer day. And if you are unsure where to start, ask Aria — she can point you to the most relevant part of this library, with sources.' },
-    { t: 'warn', x: 'When to seek help: if there is a sudden change in behaviour, alertness or ability, contact your GP or call Healthline on 0800 611 116. In an emergency, call 111.' }
-  ];
-}
-
-export const tagsFor = (a) => a.id === 'managing-sundowning' ? ['Evening routine', 'Behaviour', 'Agitation'] : [getCat(a.cat).name, 'Practical guide'];
-export const excerptFor = (a) => bodyFor(a).find((b) => b.t === 'p').x;
+export const tagsFor = (a) => a.tags || [getCat(a.cat).name, 'Practical guide'];
+export const excerptFor = (a) => a.sum;
 
 export const QUICK_QUESTIONS = [
   'How do I manage sundowning?',
@@ -117,10 +94,8 @@ export const QUICK_QUESTIONS = [
   'What respite care options are available?'
 ];
 
-export const FEATURED = [
-  { id: 'stages', mins: 8 }, { id: 'safe-home', mins: 6 },
-  { id: 'memory-loss-communication', mins: 5 }, { id: 'burnout', mins: 10 }
-];
+export const FEATURED = ['stages', 'safe-home', 'memory-loss-communication', 'burnout']
+  .map((id) => ({ id, mins: getArticle(id).mins }));
 
 export const SAFETY_NOTE = 'If anyone is in immediate danger, call 111. For urgent health advice any time, call Healthline on 0800 611 116 — free, 24 hours.';
 

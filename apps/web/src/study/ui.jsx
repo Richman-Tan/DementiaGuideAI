@@ -13,6 +13,34 @@ export const card = {
   padding: '1.5rem',
 };
 
+// Participant information sheets, rendered from docs/study/ethics/ by
+// scripts/study/render-pis.mjs. Protocol §6 requires the sheet to be available
+// on screen and downloadable, so these open in a new tab (print → Save as PDF)
+// rather than replacing the session in progress.
+export const PIS = {
+  caregiver: { href: '/study/pis-caregiver.html', label: 'For family carers' },
+  worker: { href: '/study/pis-careworker.html', label: 'For care and health workers' },
+  plwd: { href: '/study/pis-plwd.html', label: 'For people living with dementia' },
+  supporter: { href: '/study/pis-supporter.html', label: 'For support people' },
+};
+// A participant helping test the study reads the carer sheet: the pilot group is
+// a rehearsal of that arm, and there is no separate approved sheet for it.
+PIS.pilot = PIS.caregiver;
+
+export function PisLink({ group = 'caregiver', children }) {
+  const sheet = PIS[group] || PIS.caregiver;
+  return (
+    <a
+      href={sheet.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ color: 'var(--primary-d)', fontWeight: 600, textDecoration: 'underline' }}
+    >
+      {children || sheet.label}
+    </a>
+  );
+}
+
 export function Page({ title, lead, children, footer }) {
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--bg)', padding: '2rem 1rem 4rem' }}>

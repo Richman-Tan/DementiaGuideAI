@@ -1,6 +1,8 @@
 -- ============================================================
 -- Study tables — usability study session capture
--- Date: 2026-08-18 · Status: NOT YET RUN
+-- Date: 2026-08-18 · Status: RUN (verified 2026-08-24 — the anon key gets
+--   PostgreSQL 42501 "permission denied" on study_events and study_sessions,
+--   which is VERIFY step 4's pass condition and pilot go/no-go gate 3)
 --
 -- Why: the usability study (docs/study/) is unmoderated and remote, so the
 -- application itself has to record what happens. Today nothing is persisted

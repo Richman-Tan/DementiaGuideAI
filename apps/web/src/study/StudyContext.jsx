@@ -8,6 +8,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { loadStudy, saveStudy, clearStudy, isStudyMode } from './studyStore.js';
 import { needsResumeCheck } from './guards.js';
 import { emit, flush, installUnloadFlush, pendingCount, resetQueue } from './events.js';
+import { closeSession } from './closeSession.js';
 import { apiUrl } from '../services/apiBase.js';
 import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
 import { navigate } from '../state/router.js';
@@ -175,6 +176,11 @@ export function StudyProvider({ children }) {
       ...(data.resumed ? {} : { responses: {}, taskId: '', taskStartedAt: null }),
     });
 
+    // The session row is created before the participant reaches this screen, so
+    // without this a refresh on the very first questionnaire resumes to whatever
+    // step the row was born with.
+    checkpoint({ step: data.resumed ? (resumeStep || 'background') : 'background' });
+
     emit('session_start', {
       group: data.group,
       armOrder: data.armOrder,
@@ -187,7 +193,7 @@ export function StudyProvider({ children }) {
     });
     flush();
     return data;
-  }, [update, state.step, state.stageIndex, state.taskIndex]);
+  }, [update, checkpoint, state.step, state.stageIndex, state.taskIndex]);
 
   const setResponse = useCallback((key, value) => {
     setState((prev) => saveStudy({ responses: { ...prev.responses, [key]: value } }));
@@ -259,12 +265,12 @@ export function StudyProvider({ children }) {
     emit(stoppedEarly ? 'session_stopped' : 'session_complete', {});
     update({ step: stoppedEarly ? 'stopped' : 'done', taskStartedAt: null });
     navigate('#/study');
-    try {
-      await flush();
-      if (s.sessionId) await post('/api/study/complete', { sessionId: s.sessionId, stoppedEarly }, s.accessCode);
-    } catch (err) {
-      console.warn(`[study] could not close session: ${err?.message ?? err}`);
-    }
+    await closeSession({
+      flush,
+      complete: s.sessionId
+        ? () => post('/api/study/complete', { sessionId: s.sessionId, stoppedEarly }, s.accessCode)
+        : null,
+    });
     // stage/task are needed to close an open task above.
   }, [update, stage, task]);
 
@@ -275,7 +281,9 @@ export function StudyProvider({ children }) {
       case 'info': return update({ step: 'group' });
       case 'group': return update({ step: 'consent' });
       case 'consent': return update({ step: 'setup' });
-      case 'setup': return update({ step: 'background' });
+      case 'setup':
+        checkpoint({ step: 'background' });
+        return update({ step: 'background' });
       case 'background':
         emit('background_done', { responses: s.responses });
         checkpoint({ step: 'armbrief' });
@@ -302,7 +310,9 @@ export function StudyProvider({ children }) {
         }
         // Participants living with dementia get three plain-language questions
         // instead of SUS (instruments.md §7).
-        return update({ step: s.group === 'plwd' ? 'likert' : 'sus' });
+        const afterTasks = s.group === 'plwd' ? 'likert' : 'sus';
+        checkpoint({ step: afterTasks });
+        return update({ step: afterTasks });
       }
       case 'sus':
         emit('sus_done', { arm: stage?.arm, responses: s.responses });

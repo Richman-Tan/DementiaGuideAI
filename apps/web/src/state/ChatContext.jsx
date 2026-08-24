@@ -13,6 +13,7 @@ import { navigate } from './router.js';
 import { useSettings } from './SettingsContext.jsx';
 import { isMockMode, generateReply } from '../services/chatService.js';
 import { isStudyMode, currentArm, currentTaskId, transcriptFields } from '../study/studyStore.js';
+import { useStudy } from '../study/StudyContext.jsx';
 import { createTurnTimer } from '../study/latency.js';
 import { emit } from '../study/events.js';
 import { MODALITY_TYPED } from '@core/study/studyConfig.mjs';
@@ -70,7 +71,16 @@ export function ChatProvider({ children }) {
   // Clearing on the transition rather than on `studyOn` itself is deliberate. A
   // reload mid-task mounts with isStudyMode() already true, and must keep the
   // messages the participant has legitimately accumulated.
-  const studyOn = isStudyMode();
+  //
+  // Read through the context, NOT straight from the store. This provider is
+  // handed to StudyProvider as `children`, so a study state change re-renders
+  // StudyProvider and then bails out before re-rendering us — the element is
+  // referentially identical. A localStorage read during render therefore stayed
+  // false right through begin(), the effect below never saw the transition, and
+  // the seed reached task 1. Context consumption is exempt from that bail-out.
+  // The same staleness applied to currentArm() below, which decides which
+  // conversation an arm's messages are written to.
+  const studyOn = useStudy().active;
   const wasStudyOn = useRef(studyOn);
   useEffect(() => {
     const entering = studyOn && !wasStudyOn.current;

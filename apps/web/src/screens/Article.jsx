@@ -11,21 +11,25 @@ export default function Article({ artId }) {
   const { effDark } = useSettings();
   const { askNow } = useChat();
   const art = S.getArticle(artId);
-  const [body, setBody] = useState(null);
-  const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  // Keyed by article id rather than cleared on navigation: resetting in the
+  // effect body would set state during render, and the stale body would flash
+  // on screen for a frame before it did.
+  const [loaded, setLoaded] = useState({ id: null, body: null, failed: false });
 
   useEffect(() => {
     if (!art) return undefined;
     let live = true;
-    setBody(null);
-    setFailed(false);
     loadBody(art.id, art.cat).then(
-      (b) => { if (live) { setBody(b); setFailed(!b); } },
-      () => { if (live) setFailed(true); }
+      (b) => { if (live) setLoaded({ id: art.id, body: b, failed: !b }); },
+      () => { if (live) setLoaded({ id: art.id, body: null, failed: true }); }
     );
     return () => { live = false; };
-  }, [artId, attempt]);
+  }, [art, attempt]);
+
+  const settled = loaded.id === artId;
+  const body = settled ? loaded.body : null;
+  const failed = settled && loaded.failed;
 
   if (!art) {
     return (

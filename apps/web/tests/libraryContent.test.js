@@ -34,6 +34,12 @@ const WARN_REQUIRED = new Set(['caregiving', 'clinical', 'safety', 'best']);
 const textOf = (body) => body.blocks.map((b) => (Array.isArray(b.x) ? b.x.join(' ') : b.x)).join(' ');
 const wordsOf = (body) => textOf(body).trim().split(/\s+/).length;
 
+// The shared scanner regexes were written for chat answers, which rarely contain
+// grouped thousands. Article prose does ("an estimated 70,000 people"), and
+// \b000\b happily matches inside it. Joining the groups keeps a real "call 000"
+// detectable while removing that false positive.
+const scannable = (body) => textOf(body).replace(/(\d),(?=\d{3}\b)/g, '$1');
+
 describe('library content integrity', () => {
   it('every article has a body and no orphan bodies exist', () => {
     const ids = ARTICLES.map((a) => a.id);
@@ -103,7 +109,7 @@ describe('library content integrity', () => {
 describe('library content safety (NZ localisation)', () => {
   it('never gives a foreign emergency number, AU service, dosing advice, or foreign health-system term', () => {
     for (const a of ARTICLES) {
-      const text = textOf(ALL[a.id]);
+      const text = scannable(ALL[a.id]);
       expect(text, `${a.id} foreign emergency number`).not.toMatch(FOREIGN_EMERGENCY);
       expect(text, `${a.id} AU region leak`).not.toMatch(AU_REGION_LEAK);
       expect(text, `${a.id} dosing advice`).not.toMatch(DOSE_PATTERN);

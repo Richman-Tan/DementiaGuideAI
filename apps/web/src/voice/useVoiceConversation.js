@@ -404,13 +404,13 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       setVState('listening');
     } catch (err) {
       if (err?.code === 'permission-denied') {
-        setError('Microphone access is blocked — allow it in your browser settings to talk with Aria.');
+        setError(`Microphone access is blocked — allow it in your browser settings to talk with ${profile.name}.`);
         return;
       }
       console.error('[useVoiceConversation] startRecording:', err);
       setError(err.message ?? 'Could not start listening.');
     }
-  }, [avatar]);
+  }, [avatar, profile.name]);
 
   const stopAndTranscribe = useCallback(async () => {
     const session = sttSessionRef.current;

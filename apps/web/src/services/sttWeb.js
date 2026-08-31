@@ -17,6 +17,7 @@ import {
   HANDS_FREE_MAX_LEAD_SILENCE_MS,
 } from '@core/voice/voiceConfig';
 import { openaiClient } from './openaiClient.js';
+import { emit } from '../study/events.js';
 
 const RMS_SILENCE_THRESHOLD = 0.012; // normalized RMS below this ≈ inaudible
 const RMS_INTERVAL_MS = 150;
@@ -186,6 +187,7 @@ async function startLiveSession({ handsFree, onPartial, onEndOfSpeech, onError }
           if (rescued) return { transcript: rescued, source: 'whisper-rescue' };
         } catch (err) {
           console.warn(`[STT] whisper rescue failed: ${err?.message ?? err}`);
+          emit('fallback', { kind: 'stt_rescue_failed', reason: String(err?.message ?? err).slice(0, 120) });
         }
       }
       return { transcript: '', source: 'live' };
@@ -219,6 +221,9 @@ export async function startSttSession(opts = {}) {
     } catch (err) {
       if (err?.code === 'permission-denied') throw err;
       console.warn(`[STT] live recognition failed to start (${err?.message ?? err}) — using Whisper fallback from now on`);
+      // Sticky for the rest of the session, so record it once: it removes the
+      // live interim transcript, which changes what Arm A actually is.
+      emit('fallback', { kind: 'stt_whisper', reason: String(err?.message ?? err).slice(0, 120) });
       sttDegraded = true;
     }
   }

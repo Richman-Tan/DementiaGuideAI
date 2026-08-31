@@ -6,8 +6,10 @@
 // it stays out of the initial bundle until the first spoken reply.
 import { normalizeSpokenText } from '@core/tts/normalizeSpokenText';
 import { timeoutSignal } from '@core/net/withTimeout';
-import { getElevenKey } from '../state/keysStore.js';
+import { elevenTransport } from './transport.js';
+import { apiUrl } from './apiBase.js';
 import { openaiClient } from './openaiClient.js';
+import { emit } from '../study/events.js';
 
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io';
 const DEFAULT_MODEL_ID = 'eleven_turbo_v2_5';
@@ -15,34 +17,37 @@ const REQUEST_TIMEOUT_MS = 10000;
 const WARM_FEMALE_ELEVEN_VOICE = 'EXAVITQu4vr4xnSDxMaL'; // Bella
 
 async function elevenTtsWithAlignment(text, voiceId, speechRate, visemeWeights) {
-  const apiKey = getElevenKey();
-  if (!apiKey) throw new Error('No ElevenLabs API key configured');
+  const transport = elevenTransport();
+  if (!transport) throw new Error('No ElevenLabs API key configured');
+
+  // Proxied: model, format and voice settings are fixed server-side, so only the
+  // text, voice and rate travel. Direct: the original request, unchanged.
+  const url = transport.proxied
+    ? apiUrl('/api/eleven-tts')
+    : `${ELEVENLABS_BASE}/v1/text-to-speech/${encodeURIComponent(voiceId)}/with-timestamps`;
+  const body = transport.proxied
+    ? { text, voiceId, speechRate }
+    : {
+        text,
+        model_id: DEFAULT_MODEL_ID,
+        output_format: 'mp3_44100_64',
+        voice_settings: {
+          stability: 0.40,
+          similarity_boost: 0.75,
+          style: 0.20,
+          speed: speechRate,
+        },
+      };
 
   const t = timeoutSignal(REQUEST_TIMEOUT_MS);
   let resp;
   try {
-    resp = await fetch(
-      `${ELEVENLABS_BASE}/v1/text-to-speech/${encodeURIComponent(voiceId)}/with-timestamps`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: DEFAULT_MODEL_ID,
-          output_format: 'mp3_44100_64',
-          voice_settings: {
-            stability: 0.40,
-            similarity_boost: 0.75,
-            style: 0.20,
-            speed: speechRate,
-          },
-        }),
-        signal: t.signal,
-      }
-    );
+    resp = await fetch(url, {
+      method: 'POST',
+      headers: { ...transport.headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: t.signal,
+    });
   } finally {
     t.cancel();
   }
@@ -70,7 +75,7 @@ export async function tts(text, options = {}) {
   text = normalizeSpokenText(text);
   const speechRate = options.speechRate ?? 0.78;
 
-  if (getElevenKey()) {
+  if (elevenTransport()) {
     const elevenVoice = options.elevenVoiceId ?? WARM_FEMALE_ELEVEN_VOICE;
     try {
       const { audioBase64, visemeTimeline } = await elevenTtsWithAlignment(
@@ -78,6 +83,9 @@ export async function tts(text, options = {}) {
       return { audio: `data:audio/mpeg;base64,${audioBase64}`, visemeTimeline };
     } catch (err) {
       console.warn(`[TTS] elevenlabs failed: ${err?.message ?? err} — falling back to OpenAI TTS`);
+      // A low Arm A usability score alongside a high fallback count is a
+      // reliability finding, not an avatar finding (analysis-plan §4.3).
+      emit('fallback', { kind: 'tts_openai', reason: String(err?.message ?? err).slice(0, 120) });
     }
   }
 

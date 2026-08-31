@@ -44,7 +44,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-71aF7bp3UvyjHhO0WNMxTRokwviJ8A8B6s/dOOL901M='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' data: blob: https://api.openai.com https://api.elevenlabs.io wss://api.elevenlabs.io https://*.supabase.co; frame-ancestors 'none'"
+          "value": "default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-71aF7bp3UvyjHhO0WNMxTRokwviJ8A8B6s/dOOL901M='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' data: blob: https://api.openai.com https://api.elevenlabs.io wss://api.elevenlabs.io https://*.supabase.co https://dementiaguide-api.vercel.app; frame-ancestors 'none'"
         },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },

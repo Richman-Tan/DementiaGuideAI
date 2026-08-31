@@ -1,0 +1,7 @@
+"Stage","Median (ms)","Range (ms)","n"
+"Speech-to-text","812","812 to 812","1"
+"Retrieval","240","240 to 240","1"
+"LLM time to first token","430","430 to 430","1"
+"First token → first sentence","120","120 to 120","1"
+"TTS request → first audio","300","300 to 300","1"
+"End to end → first avatar audio","1500","1500 to 1500","1"

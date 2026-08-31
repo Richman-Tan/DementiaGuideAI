@@ -1,0 +1,5 @@
+# Written by `vercel link`. The negation is ours: .env.example carries no
+# secrets and documents what the deployment needs, so it must stay tracked.
+.vercel
+.env*
+!.env.example

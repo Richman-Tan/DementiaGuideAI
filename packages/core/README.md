@@ -14,6 +14,7 @@ convention, all of which must stay in step:
 | Web (dev + build) | `apps/web/vite.config.js` → `resolve.alias` |
 | Web types + lint | `apps/web/tsconfig.json` → `paths` |
 | Node scripts | plain relative `require('../../packages/core/…')` |
+| Backend (`apps/api`) | `@dementiaguide/core/…` — a real workspace dependency, so the bundler includes it |
 
 **Inside this directory, imports are relative** (`./voiceConfig`,
 `../voice/voiceConfig`) — never `@core/…`. That is what lets `scripts/eval/*` and
@@ -29,6 +30,13 @@ so a new CommonJS module here has to be added there as well, or Vite ships raw
 `module.exports` to the browser. `apps/web/tests/interop.test.js` is the canary. The
 `voice/`, `tts/`, `lipsync/` and `avatar/` files use ESM syntax and are only ever
 consumed by a bundler (Metro or Vite), which resolves them regardless.
+
+`study/studyConfig.mjs` is the exception that needs an explicit extension: it is
+imported by `apps/api` in **plain Node**, where a `.js` file containing `export`
+fails to parse in a package without `"type": "module"`. Anything else the backend
+and a client must agree on belongs here on the same terms — the study's arm
+assignment lives here precisely so what a participant is shown and what is written
+to the database cannot drift apart.
 
 ## The rule for what belongs here
 

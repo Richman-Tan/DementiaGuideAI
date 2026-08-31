@@ -25,6 +25,12 @@
  * @property {function(cb: function): void} setOnAudioStart
  *   Register a one-shot callback fired when audio actually begins.
  *
+ * @property {function(state: string): void} [setAvatarState]
+ *   Push the conversational state (idle|listening|speaking|thinking|empathy|
+ *   waiting) to the renderer. Unity-only imperative form; AvatarVRM derives the
+ *   same value from its isListening/isSpeaking/... props instead. Both renderers
+ *   accept those props, so call sites normally don't need this method.
+ *
  * @property {function(on: boolean): void} setDebugMode
  *   Toggle the renderer's debug overlay (viseme weights, timing, etc.).
  */

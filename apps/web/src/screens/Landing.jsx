@@ -26,7 +26,7 @@ export default function Landing({ openApp, browseLibrary }) {
         </div>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', paddingBottom: '40px' }}>
-        {['Grounded answers with sources', 'Private — conversations stay on your device', 'Designed with accessibility first'].map((t) => (
+        {['Grounded answers with sources', 'Private — anonymous by default, delete any time', 'Designed with accessibility first'].map((t) => (
           <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', minHeight: '44px', padding: '0 18px', borderRadius: '999px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '500' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)' }} />{t}
           </span>

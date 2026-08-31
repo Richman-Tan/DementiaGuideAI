@@ -1,13 +1,20 @@
 // Chat facade: mock (prototype-parity canned replies, word-streamed) vs real
-// (phase b: gpt-4o + Supabase RAG). Mock is active when no OpenAI key is stored,
-// when VITE_FORCE_MOCK is set, or with ?mock=1 in the URL.
+// (phase b: gpt-4o + Supabase RAG). Mock is active when no credentials are
+// available — neither a stored OpenAI key nor a study access code — when
+// VITE_FORCE_MOCK is set, or with ?mock=1 in the URL. Never during a study
+// session.
 import * as S from '../data/services.js';
-import { getOpenaiKey } from '../state/keysStore.js';
+import { hasCredentials } from './transport.js';
+import { isStudyMode } from '../study/studyStore.js';
 
 export function isMockMode() {
+  // A study participant must never land in mock mode: canned replies would mean
+  // the session measured a prototype instead of the RAG pipeline, and there is
+  // no in-app indicator that would tell them (or us) it had happened.
+  if (isStudyMode()) return false;
   if (import.meta.env.VITE_FORCE_MOCK) return true;
   if (typeof location !== 'undefined' && /[?&]mock=1/.test(location.search)) return true;
-  return !getOpenaiKey();
+  return !hasCredentials();
 }
 
 const sleep = (ms, signal) =>

@@ -15,11 +15,16 @@ public class UnityAvatarModule: Module {
         AsyncFunction("playAudio") { (payloadJson: String) in
             _ = UnityBridgeManager.shared.start()
             UnityBridgeManager.shared.ensureCharacter()
+            UnityBridgeManager.shared.ensureState()
             UnityBridgeManager.shared.sendMessage(json: payloadJson)
         }
 
         AsyncFunction("setCharacter") { (id: String) in
             UnityBridgeManager.shared.setCharacter(id: id)
+        }
+
+        AsyncFunction("setAvatarState") { (state: String) in
+            UnityBridgeManager.shared.setAvatarState(state: state)
         }
 
         AsyncFunction("stopAudio") {

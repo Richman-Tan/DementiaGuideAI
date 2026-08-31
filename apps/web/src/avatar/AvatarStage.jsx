@@ -45,7 +45,7 @@ export function ThreeAvatarMount({ state = 'idle', children }) {
 
   if (wantUnity) {
     return (
-      <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} compact>
+      <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} state={state} compact>
         {children}
       </UnityAvatarMount>
     );

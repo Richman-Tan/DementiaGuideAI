@@ -81,6 +81,10 @@ async function playAudio(payload) {
           // engine. blendshapes kept as the legacy fallback path.
           visemes:     cc4Payload.visemes,
           blendshapes: cc4Payload.blendshapes,
+          // Sentence sentiment (positive|warm|concern|question|neutral) drives
+          // IdleAnimator's brow/smile layer. The web bridge has always sent this;
+          // mobile omitted it, so the face was flat on the platform most users are on.
+          emotion:     cc4Payload.emotion,
         })).catch((err) => console.warn('[UnityAvatarBridge] native playAudio failed:', err));
       }
 
@@ -111,6 +115,20 @@ async function setCharacter(id) {
   );
 }
 
+/**
+ * Pushes the conversational state (idle|listening|speaking|thinking|empathy|
+ * waiting) into IdleAnimator's six-way blend, which drives the listening nod,
+ * brow raises, thinking gaze aversion and head tilts. Fire-and-forget: the
+ * native side stores it and replays it before the next play message, so a state
+ * set before Unity has booted still lands.
+ */
+function setAvatarState(state) {
+  if (!state) return;
+  NativeUnityAvatarModule.setAvatarState(state).catch((err) =>
+    console.warn('[UnityAvatarBridge] native setAvatarState failed:', err)
+  );
+}
+
 function setDebugMode(on) {
   NativeUnityAvatarModule.setDebugMode(on).catch(() => {});
 }
@@ -120,5 +138,6 @@ export const UnityAvatarBridge = {
   stopAudio,
   setOnAudioStart,
   setCharacter,
+  setAvatarState,
   setDebugMode,
 };

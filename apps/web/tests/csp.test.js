@@ -16,6 +16,9 @@ import { fileURLToPath } from 'node:url';
 
 const webRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const html = readFileSync(join(webRoot, 'index.html'), 'utf8');
+// Routing and headers belong to the web deployment again: apps/web and apps/api
+// are two separate Vercel projects, so each owns its own vercel.json and there
+// is no root file to inherit from.
 const vercel = JSON.parse(readFileSync(join(webRoot, 'vercel.json'), 'utf8'));
 
 const csp = (vercel.headers ?? [])

@@ -1,7 +1,9 @@
 // Web twin of src/lib/openaiService.js (mobile). Kept deliberately parallel:
 // same class shape, same reused RAG modules, same timeouts and error classes.
 // Differences from mobile, and nothing else:
-//   - keys come from localStorage (state/keysStore) instead of expo-secure-store
+//   - credentials are resolved by services/transport.js: a personal key from
+//     localStorage (state/keysStore), or, during the usability study, a study
+//     access code with the key held server-side in apps/web/api/
 //   - chatStream reads fetch's ReadableStream instead of the RN XHR workaround
 //   - transcribe() takes a Blob instead of an RN file-uri descriptor
 //   - device telemetry (recordRetrieval) is dropped
@@ -23,8 +25,9 @@ import { capBySourceFamily } from '@core/rag/retrieval';
 import { extractCitations, createMarkerStripper } from '@core/rag/citations';
 import { timeoutSignal } from '@core/net/withTimeout';
 import { getOpenaiKey, loadKeys, saveKeys } from '../state/keysStore.js';
+import { openaiTransport, openaiUrl } from './transport.js';
+import { emit } from '../study/events.js';
 
-const OPENAI_BASE = 'https://api.openai.com/v1';
 const EMBED_CACHE_MAX = 20;
 const MIN_REQUEST_INTERVAL_MS = 750;
 
@@ -39,6 +42,41 @@ class OpenAIAuthError extends Error {
 }
 class OpenAIRateLimitError extends Error {
   constructor(msg) { super(msg); this.name = 'OpenAIRateLimitError'; }
+}
+// Proxied mode only. A 401 there means the participant's study access code was
+// refused — telling them their API key is invalid would be nonsense, since they
+// never had one.
+class StudyAccessError extends Error {
+  constructor(msg) { super(msg); this.name = 'StudyAccessError'; }
+}
+
+// Shared response mapping so every call site reports the same thing.
+//
+// Only 401 is an auth error: OpenAI also returns 403 for region blocks and
+// org-verification, where "your API key looks invalid" sends the user off to
+// re-enter a key that was fine.
+async function throwForStatus(resp, transport, label) {
+  if (resp.status === 401) {
+    throw transport.proxied
+      ? new StudyAccessError('Study access code was not accepted')
+      : new OpenAIAuthError('Invalid API key');
+  }
+  if (resp.status === 429) throw new OpenAIRateLimitError('Rate limit reached');
+  if (resp.status === 403) {
+    throw new Error(`${label}: refused (403) — the key may be unavailable in your region`);
+  }
+  if (!resp.ok) {
+    // Keep the upstream body: it carries the reason (model_not_found, context
+    // length, unsupported audio format) that the status code alone does not.
+    const detail = transport.proxied ? '' : await resp.text().catch(() => '');
+    throw new Error(`${label}: ${detail || `HTTP ${resp.status}`}`);
+  }
+}
+
+// A personal key overrides the transport; used by the key-validation path.
+function transportFor(apiKey) {
+  if (apiKey) return { proxied: false, headers: { Authorization: `Bearer ${apiKey}` } };
+  return openaiTransport();
 }
 
 class OpenAIClient {
@@ -62,22 +100,24 @@ class OpenAIClient {
   async clearApiKey() { saveKeys({ ...loadKeys(), openai: '' }); }
   async hasApiKey() {
     const k = getOpenaiKey();
-    return !!k && k.length > 10;
+    if (k && k.length > 10) return true;
+    // A study participant has no key of their own but can still reach the model.
+    return Boolean(openaiTransport());
   }
 
   // ─── Raw OpenAI Calls ──────────────────────────────────────────────────────
 
   async _callOpenAI(endpoint, body, apiKey, { timeoutMs = null } = {}) {
-    const key = apiKey ?? (await this.getApiKey());
-    if (!key) throw new OpenAIAuthError('No API key configured');
+    const transport = transportFor(apiKey);
+    if (!transport) throw new OpenAIAuthError('No API key configured');
     const t = timeoutMs ? timeoutSignal(timeoutMs) : null;
     let resp;
     try {
-      resp = await fetch(`${OPENAI_BASE}${endpoint}`, {
+      resp = await fetch(openaiUrl(transport, endpoint), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
+          ...transport.headers,
         },
         body: JSON.stringify(body),
         ...(t ? { signal: t.signal } : {}),
@@ -86,12 +126,7 @@ class OpenAIClient {
       t?.cancel();
     }
 
-    if (resp.status === 401) throw new OpenAIAuthError('Invalid API key');
-    if (resp.status === 429) throw new OpenAIRateLimitError('Rate limit reached');
-    if (!resp.ok) {
-      const err = await resp.text().catch(() => `HTTP ${resp.status}`);
-      throw new Error(`OpenAI error: ${err}`);
-    }
+    await throwForStatus(resp, transport, 'OpenAI error');
     return resp.json();
   }
 
@@ -145,8 +180,8 @@ class OpenAIClient {
                     { conciseMode = false, responseStyle = 'balanced', jargonMode = 'explain',
                       ariaPersonality = 'warm', isCaregiversSetup = false,
                       skipThrottle = false, preRetrievedChunks = null, signal = null } = {}) {
-    const apiKey = await this.getApiKey();
-    if (!apiKey) throw new OpenAIAuthError('No API key configured');
+    const transport = openaiTransport();
+    if (!transport) throw new OpenAIAuthError('No API key configured');
 
     if (skipThrottle) {
       this._lastRequestAt = Date.now();
@@ -163,8 +198,10 @@ class OpenAIClient {
         chunks = await this.search(userMessage, TOP_K);
       } catch (err) {
         console.warn(`[RAG] retrieval failed (${err.message ?? err}) — answering without passages`);
+        emit('fallback', { kind: 'empty_retrieval', reason: String(err?.message ?? err).slice(0, 120) });
       }
     }
+    if (chunks.length === 0) emit('fallback', { kind: 'no_passages' });
     timingCbs?.onRagDone?.();
     const userContent = buildUserContent(userMessage, chunks);
 
@@ -195,11 +232,11 @@ class OpenAIClient {
     try {
       let resp;
       try {
-        resp = await fetch(`${OPENAI_BASE}/chat/completions`, {
+        resp = await fetch(openaiUrl(transport, '/chat/completions'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
+            ...transport.headers,
           },
           body: JSON.stringify({
             model: CHAT_MODEL,
@@ -216,9 +253,7 @@ class OpenAIClient {
       }
       timingCbs?.onLlmSend?.();
 
-      if (resp.status === 401) throw new OpenAIAuthError('Invalid API key');
-      if (resp.status === 429) throw new OpenAIRateLimitError('Rate limit reached');
-      if (!resp.ok) throw new Error(`OpenAI error: HTTP ${resp.status}`);
+      await throwForStatus(resp, transport, 'OpenAI error');
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -241,10 +276,17 @@ class OpenAIClient {
           if (!t.startsWith('data:')) continue;
           const d = t.slice(5).trim();
           if (d === '[DONE]') continue;
-          let content;
+          let parsed;
           try {
-            content = JSON.parse(d)?.choices?.[0]?.delta?.content;
+            parsed = JSON.parse(d);
           } catch { continue; }
+          // The proxy emits this when the upstream stream broke after headers
+          // were already sent. Treating it as end-of-stream would render a
+          // truncated answer as a complete one.
+          if (parsed?.error === 'stream_interrupted') {
+            throw new Error('The answer was cut off — please try again.');
+          }
+          const content = parsed?.choices?.[0]?.delta?.content;
           if (!content) continue;
           if (stripper) {
             rawFull += content;
@@ -273,24 +315,24 @@ class OpenAIClient {
   // ─── OpenAI TTS (RMS-lipsync fallback voice) ───────────────────────────────
 
   async tts(text, voice = 'nova') {
-    const apiKey = await this.getApiKey();
-    if (!apiKey) throw new OpenAIAuthError('No API key configured');
+    const transport = openaiTransport();
+    if (!transport) throw new OpenAIAuthError('No API key configured');
 
-    const resp = await fetch(`${OPENAI_BASE}/audio/speech`, {
+    // The proxy fixes model and format server-side, so only voice and input go up.
+    const body = transport.proxied
+      ? { voice, input: text }
+      : { model: 'tts-1', voice, input: text, response_format: 'mp3' };
+
+    const resp = await fetch(openaiUrl(transport, '/audio/speech'), {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        ...transport.headers,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ model: 'tts-1', voice, input: text, response_format: 'mp3' }),
+      body: JSON.stringify(body),
     });
 
-    if (resp.status === 401) throw new OpenAIAuthError('Invalid API key');
-    if (resp.status === 429) throw new OpenAIRateLimitError('Rate limit reached');
-    if (!resp.ok) {
-      const err = await resp.text().catch(() => `HTTP ${resp.status}`);
-      throw new Error(`TTS error: ${err}`);
-    }
+    await throwForStatus(resp, transport, 'TTS error');
 
     const buffer = await resp.arrayBuffer();
     const bytes = new Uint8Array(buffer);
@@ -304,8 +346,8 @@ class OpenAIClient {
   // ─── Whisper Transcription ─────────────────────────────────────────────────
 
   async transcribe(blob, filename = 'recording.webm') {
-    const apiKey = await this.getApiKey();
-    if (!apiKey) throw new OpenAIAuthError('No API key configured');
+    const transport = openaiTransport();
+    if (!transport) throw new OpenAIAuthError('No API key configured');
 
     const formData = new FormData();
     formData.append('file', blob, filename);
@@ -315,9 +357,9 @@ class OpenAIClient {
     const t = timeoutSignal(WHISPER_TIMEOUT_MS);
     let resp;
     try {
-      resp = await fetch(`${OPENAI_BASE}/audio/transcriptions`, {
+      resp = await fetch(openaiUrl(transport, '/audio/transcriptions'), {
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: { ...transport.headers },
         body: formData,
         signal: t.signal,
       });
@@ -329,12 +371,7 @@ class OpenAIClient {
       t.cancel();
     }
 
-    if (resp.status === 401) throw new OpenAIAuthError('Invalid API key');
-    if (resp.status === 429) throw new OpenAIRateLimitError('Rate limit reached');
-    if (!resp.ok) {
-      const err = await resp.text().catch(() => `HTTP ${resp.status}`);
-      throw new Error(`Whisper error: ${err}`);
-    }
+    await throwForStatus(resp, transport, 'Whisper error');
 
     const data = await resp.json();
     return data.text?.trim() ?? '';
@@ -342,7 +379,7 @@ class OpenAIClient {
 }
 
 export const openaiClient = new OpenAIClient();
-export { OpenAIAuthError, OpenAIRateLimitError };
+export { OpenAIAuthError, OpenAIRateLimitError, StudyAccessError };
 
 // ─── Chat-screen entry point (used by services/chatService.js) ───────────────
 // Streams cleaned text into onToken; resolves with the final transcript text
@@ -370,7 +407,7 @@ export function mapSourcesToCitations(sources) {
   });
 }
 
-export async function realGenerate({ question, settings, history, signal, onToken }) {
+export async function realGenerate({ question, settings, history, signal, onToken, onStage }) {
   const opts = { ...mapSettingsToRag(settings), signal };
   const apiHistory = (history || [])
     .filter((m) => m.text && !m.streaming)
@@ -383,10 +420,15 @@ export async function realGenerate({ question, settings, history, signal, onToke
 
   let final = null;
   let acc = '';
+  // onStage carries the same stage boundaries the voice path marks, so the text
+  // arm of the study is measured on the same clock as the avatar arm.
   const stream = openaiClient.chatStream(question, apiHistory, {
+    onRagDone: () => onStage?.('ragDone'),
+    onLlmSend: () => onStage?.('llmSend'),
     onFinal: (f) => { final = f; },
   }, opts);
   for await (const piece of stream) {
+    onStage?.('firstToken');
     acc += piece;
     onToken(acc);
   }

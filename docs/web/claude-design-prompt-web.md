@@ -1,6 +1,11 @@
 # Prompt for Claude Design — copy everything below the line
 # Attach when submitting (optional but recommended): app screenshots of Home / Chat / Voice / Library / Settings from the iOS or Android build, plus the pipeline/retrieval Mermaid diagrams at the top of README.md as reference.
 # Goal: the WEB build of DementiaGuide AI — same product, same brand, adapted to desktop/tablet/mobile-web layouts.
+# SUPERSEDED IN PART (2026-08-18): this is the prompt as it was sent, and it
+# describes the pre-backend design in which conversations lived in localStorage
+# only ("stored only on this device", "no accounts, no server-side storage").
+# Conversations now go to an anonymous server-side account. Do not regenerate the
+# privacy or data-security copy from this file — see apps/web/src/screens/Privacy.jsx.
 
 ---
 

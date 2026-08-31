@@ -173,7 +173,9 @@ export function StudyProvider({ children }) {
       // which would otherwise pre-fill this participant's questionnaires and be
       // re-emitted under the new participant's code — including for items this
       // participant never saw.
-      ...(data.resumed ? {} : { responses: {}, taskId: '', taskStartedAt: null }),
+      // convoIds included: leftover thread ids would rejoin the previous
+      // participant's conversation, putting their chat on this person's screen.
+      ...(data.resumed ? {} : { responses: {}, taskId: '', taskStartedAt: null, convoIds: {} }),
     });
 
     // The session row is created before the participant reaches this screen, so

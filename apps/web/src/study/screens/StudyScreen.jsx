@@ -10,14 +10,32 @@ import { navigate } from '../../state/router.js';
 import { CONSENT_ITEMS, SUS_ITEMS, LIKERT_ITEMS, BACKGROUND, POST_TASK, DEBRIEF, PLWD_ITEMS, PLWD_DEBRIEF, SUPPORTER_DEBRIEF } from '../instruments.js';
 
 function StopBar({ onStop }) {
+  // Two-step, matching the task overlay's stop. A stopped session cannot be
+  // resumed, so a single stray tap here used to end a participant permanently.
+  const [confirming, setConfirming] = useState(false);
   return (
     <div style={{ marginTop: '2.5rem', paddingTop: '1.25rem', borderTop: 'var(--bw) solid var(--border)' }}>
-      <Button variant="quiet" onClick={onStop} style={{ padding: 0, minHeight: 44 }}>
+      <Button variant="quiet" onClick={() => setConfirming(true)} style={{ padding: 0, minHeight: 44 }}>
         I need to stop
       </Button>
       <p style={{ fontSize: '.88rem', color: 'var(--text2)', margin: '.25rem 0 0' }}>
         You can stop at any time, for any reason. You don’t have to say why.
       </p>
+      {confirming && (
+        <div
+          role="alertdialog"
+          aria-label="Stop the session"
+          style={{ marginTop: '.75rem', padding: '.9rem 1rem', borderRadius: 12, background: 'var(--amber-bg)', border: 'var(--bw) solid var(--amber-bd)' }}
+        >
+          <p style={{ margin: '0 0 .75rem', lineHeight: 1.6, color: 'var(--text)' }}>
+            Stop the session? Nothing more will be recorded. You don’t have to give a reason.
+          </p>
+          <div style={{ display: 'flex', gap: '.6rem' }}>
+            <Button onClick={onStop}>Yes, stop</Button>
+            <Button variant="quiet" onClick={() => setConfirming(false)}>Keep going</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

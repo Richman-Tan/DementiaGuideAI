@@ -22,8 +22,11 @@ frontend's own API routes. That is the wrong shape here for three reasons:
 
 ## How it deploys
 
-`apps/web` and `apps/api` are **two separate Vercel projects**, each with its own
-`vercel.json` and its own root directory.
+`apps/web` and `apps/api` are **two separate Vercel projects** (`dementiaguide-web`
+and `dementiaguide-api`), each with its own root directory. Only `apps/web` has a
+`vercel.json`, for the SPA rewrite and the CSP; this project needs no routing file
+because Vercel's zero-config convention already maps `api/*.js` to functions, and
+its CORS headers are set in code (`_lib/guard.js`), not in configuration.
 
 An earlier attempt declared them as two [Vercel Services](https://vercel.com/docs/services)
 in a root `vercel.json`, which would have kept them on one domain and same-origin.

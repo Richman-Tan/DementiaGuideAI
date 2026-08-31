@@ -23,7 +23,7 @@ base: **Arm A**, the voice/avatar assistant, against **Arm B**, the same retriev
 pipeline as text-only chat. Each participant does three resource-finding tasks in each
 arm, with arm order and task-set order crossed in a Latin square. Sessions are
 **unmoderated and remote** on the public web app. Measures are task success against a
-rubric, time on task, turns, SUS and four Likert items per arm, and a five-question
+rubric, time on task, turns, SUS and six Likert items per arm, and a five-question
 debrief. Target 8–12 family carers, 4–6 care workers, and 3–5 people living with
 dementia in a supported, shortened variant.
 
@@ -90,10 +90,11 @@ All three are now addressed.
 
 | Piece | Where |
 |---|---|
-| Credential proxy — keys server-side, callers admitted by study access code | `apps/web/api/` |
+| Credential proxy — keys server-side, callers admitted by study access code | `apps/api/api/` |
 | Study flow — consent, tasks, questionnaires, the stop pathway | `apps/web/src/study/` |
 | Task band shown over the app, and the time-on-task boundaries | `apps/web/src/study/screens/StudyTaskOverlay.jsx` |
-| Counterbalancing and task content, shared by client and server | `apps/web/src/study/studyConfig.js` |
+| Counterbalancing and task content, shared by client and server | `packages/core/study/studyConfig.mjs` |
+| Participant information sheets served to participants | `scripts/study/render-pis.mjs` → `apps/web/public/study/` |
 | Per-turn latency capture | `apps/web/src/study/latency.js` |
 | Database tables and the RLS lockdown | `scripts/migrations/2026-08-18_study_tables.sql` |
 | Export, analysis, safety scan, figures | `scripts/study/` |
@@ -103,12 +104,17 @@ All three are now addressed.
 1. Run `scripts/migrations/2026-08-18_study_tables.sql` in the Supabase SQL editor and
    work through its VERIFY block — **including step 4**, which is the only one that
    proves the anonymous key cannot read study data.
-2. Set the server-side variables from `apps/web/.env.example` in the Vercel project.
-   Never with a `VITE_` prefix: that would inline them into the browser bundle.
+2. Set the server-side variables from `apps/api/.env.example` in the **`dementiaguide-api`**
+   Vercel project. Never with a `VITE_` prefix: that would inline them into the browser
+   bundle.
 3. Set a **hard spend cap** on the OpenAI account. The per-code meter is a convenience;
    the spend cap is the actual backstop.
-4. Deploy. `vercel build` picks up `api/` with no extra configuration.
-5. Work through `pilot-checklist.md`.
+4. Deploy. Web and API are two separate Vercel projects (`dementiaguide-web`,
+   `dementiaguide-api`), so they deploy independently; the browser reaches the API at
+   `VITE_API_BASE_URL`, which must be set on the web project at build time.
+5. Run `node scripts/study/render-pis.mjs` after any edit to the information sheets in
+   `ethics/`, so the copies participants read stay in step with the approved documents.
+6. Work through `pilot-checklist.md`.
 
 Locally, `npm run web` serves the API routes too (a dev middleware in
 `apps/web/vite.config.js` mounts them, since `vite dev` has no notion of serverless

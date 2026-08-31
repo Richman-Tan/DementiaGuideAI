@@ -14,7 +14,7 @@ const AGREE_5 = [
 
 /**
  * Consent ticks — one per numbered item on the approved consent form
- * (docs/study/ethics/ethics/consent-form.md), in the same order.
+ * (docs/study/ethics/consent-form.md), in the same order.
  *
  * The correspondence is the point, not a nicety. `session.js` stamps every
  * session with `formVersion: CONSENT_FORM_VERSION`, so a recorded consent event

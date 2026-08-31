@@ -10,6 +10,7 @@ import { needsResumeCheck } from './guards.js';
 import { emit, flush, installUnloadFlush, pendingCount, resetQueue } from './events.js';
 import { closeSession } from './closeSession.js';
 import { apiUrl } from '../services/apiBase.js';
+import { warmStudyProxy } from '../services/transport.js';
 import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
 import { navigate } from '../state/router.js';
 import { getUnityAvailability, getUnityLoadState, probeUnity } from '../avatar/unity/unityBridge.js';
@@ -178,6 +179,10 @@ export function StudyProvider({ children }) {
       ...(data.resumed ? {} : { responses: {}, taskId: '', taskStartedAt: null, convoIds: {} }),
     });
 
+    // First chance the transport is armed (sessionId + code now stored). Boot
+    // the proxy functions while the participant reads the background questions.
+    warmStudyProxy();
+
     // The session row is created before the participant reaches this screen, so
     // without this a refresh on the very first questionnaire resumes to whatever
     // step the row was born with.
@@ -208,6 +213,11 @@ export function StudyProvider({ children }) {
     update({ step: 'task', taskStartedAt: Date.now(), taskId: task.id });
     checkpoint({ step: 'task' });
     emit('task_start', { arm: stage.arm, taskId: task.id, set: stage.set });
+    // The participant now reads the task and composes a question — enough idle
+    // time for the proxy functions to have gone cold. Wake them so the first
+    // turn isn't the slow one (task timing starts now, so a cold start would
+    // land inside time-on-task).
+    warmStudyProxy();
     navigate(stage.arm === 'A' ? '#/app/voice' : '#/app/chat');
   }, [stage, task, update, checkpoint]);
 

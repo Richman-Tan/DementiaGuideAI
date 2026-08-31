@@ -54,3 +54,26 @@ export function elevenTransport() {
 }
 
 export const hasCredentials = () => Boolean(openaiTransport());
+
+/**
+ * Wake the study proxy before the first real turn.
+ *
+ * The pre-launch dry run measured ~20s to first token on task 1 — nearly all
+ * of it before the LLM call, in the retrieval leg riding on cold serverless
+ * functions. One tiny authenticated embedding plus a one-token chat boots
+ * /api/embed and /api/chat (and their OpenAI connections) so the participant's
+ * first question doesn't pay the cold start. Fire-and-forget by design: a
+ * failed warm-up costs nothing and must never surface to the participant.
+ */
+export function warmStudyProxy() {
+  const t = openaiTransport();
+  if (!t?.proxied) return;
+  const post = (path, body) =>
+    fetch(openaiUrl(t, path), {
+      method: 'POST',
+      headers: { ...t.headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).catch(() => { /* warming is best-effort */ });
+  post('/embeddings', { model: 'text-embedding-3-small', input: 'warm-up' });
+  post('/chat/completions', { model: 'gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'ok' }] });
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as S from '../data/services.js';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { useChat } from '../state/ChatContext.jsx';
@@ -6,6 +6,8 @@ import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
 import { AvatarBust } from '../avatar/AvatarStage.jsx';
 import { useStudy } from '../study/StudyContext.jsx';
+import { GrowTextArea } from '../components/GrowTextArea.jsx';
+import { CitationText } from '../components/CitationText.jsx';
 
 const Dots = () => (
   <div style={{ alignSelf: 'flex-start', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '18px 18px 18px 4px', padding: '16px 20px', display: 'flex', gap: '6px', boxShadow: 'var(--shadow)' }}>
@@ -35,6 +37,8 @@ export default function Chat({ isDesktop, isMobile }) {
   useEffect(() => { scrollCb.current && scrollCb.current(); }, [messages, typing, scrollCb]);
 
   const submit = () => { if (chatInput.trim()) { send(chatInput); setChatInput(''); } };
+  // Keep the last message visible when the composer grows and shrinks the transcript.
+  const growCb = useCallback(() => { scrollCb.current && scrollCb.current(); }, [scrollCb]);
   const chatEmpty = messages.length === 0 && !typing;
   const showPanel = panel && isDesktop && !armB;
 
@@ -76,13 +80,13 @@ export default function Chat({ isDesktop, isMobile }) {
               <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {isUser ? (
                   <>
-                    <div title={m.time} style={{ alignSelf: 'flex-end', maxWidth: '82%', background: 'var(--primary)', color: '#fff', borderRadius: '18px 18px 4px 18px', padding: '12px 16px', lineHeight: '1.55' }}>{m.text}</div>
+                    <div title={m.time} style={{ alignSelf: 'flex-end', maxWidth: '82%', background: 'var(--primary)', color: '#fff', borderRadius: '18px 18px 4px 18px', padding: '12px 16px', lineHeight: '1.55', whiteSpace: 'pre-wrap' }}>{m.text}</div>
                     <div style={{ alignSelf: 'flex-end', color: 'var(--text2)', fontSize: '.75rem', paddingRight: '4px' }}>{m.time}</div>
                   </>
                 ) : (
                   <>
-                    <div title={m.time} style={{ alignSelf: 'flex-start', maxWidth: '86%', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderLeft: m.safety ? '4px solid var(--amber)' : 'var(--bw) solid var(--border)', borderRadius: '18px 18px 18px 4px', padding: '14px 18px', lineHeight: '1.6', boxShadow: 'var(--shadow)' }}>
-                      {m.text}
+                    <div title={m.time} style={{ alignSelf: 'flex-start', maxWidth: '86%', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderLeft: m.safety ? '4px solid var(--amber)' : 'var(--bw) solid var(--border)', borderRadius: '18px 18px 18px 4px', padding: '14px 18px', lineHeight: '1.6', boxShadow: 'var(--shadow)', whiteSpace: 'pre-wrap' }}>
+                      <CitationText text={m.text} citations={m.citations} onCite={setDrawer} />
                       {m.safety && (
                         <div style={{ marginTop: '12px', background: 'var(--amber-bg)', border: 'var(--bw) solid var(--amber-bd)', borderLeft: '4px solid var(--amber)', borderRadius: '12px', padding: '12px 14px', color: 'var(--text)' }}><strong>If you need help now:</strong> {S.SAFETY_NOTE}</div>
                       )}
@@ -111,8 +115,8 @@ export default function Chat({ isDesktop, isMobile }) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <div style={{ textAlign: 'center', color: 'var(--text2)', fontSize: '.8rem' }}>General information only — not medical advice.</div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '18px', padding: '8px', boxShadow: 'var(--shadow)' }}>
-            <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') submit(); }} placeholder="Type your question…" aria-label="Type your question" style={{ flex: '1', minWidth: '0', minHeight: '44px', padding: '0 12px', border: 'none', background: 'transparent', color: 'var(--text)', fontSize: '1rem', outlineOffset: '-2px' }} />
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '18px', padding: '8px', boxShadow: 'var(--shadow)' }}>
+            <GrowTextArea value={chatInput} onChange={setChatInput} onSubmit={submit} onGrow={growCb} maxLength={500} placeholder="Type your question…" aria-label="Type your question" style={{ flex: '1', minWidth: '0', minHeight: '44px', padding: '10px 12px', border: 'none', background: 'transparent', outlineOffset: '-2px' }} />
             <button onClick={go('#/app/voice')} aria-label="Switch to voice" style={{ width: '44px', height: '44px', flexShrink: '0', borderRadius: '12px', border: 'none', background: 'var(--tint)', color: 'var(--primary-d)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="hv7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M6 11a6 6 0 0 0 12 0" /><path d="M12 17v4" /></svg></button>
             <button onClick={submit} aria-label="Send" style={{ width: '44px', height: '44px', flexShrink: '0', borderRadius: '12px', border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="hv2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12h14" /><path d="M13 6l6 6-6 6" /></svg></button>
           </div>

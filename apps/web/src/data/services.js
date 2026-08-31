@@ -1,7 +1,10 @@
-// DementiaGuide AI — library content + mock service layer (from the Claude Design
-// prototype, kept verbatim). CATS/ARTICLES/bodyFor are the real library content;
+// DementiaGuide AI — library metadata + mock service layer. CATS/ARTICLES hold
+// the library index; full article bodies live in ./articles/ (lazy-loaded per
+// category, grounded and cited — see docs/web/library-source-map.md);
 // mockReply/seedThread power mock mode (no API keys / VITE_FORCE_MOCK / ?mock=1).
 // The real chat path lives in src/services/ (OpenAI gpt-4o + Supabase pgvector).
+
+import { searchTextOf } from './articles/index.js';
 
 export const CATS = [
   { id: 'caregiving', name: 'Caregiving Advice', desc: 'Practical daily care tips and strategies', accent: '#E8956D', pale: '#FBEEE6', dk: '#3A2A20' },
@@ -13,57 +16,57 @@ export const CATS = [
   { id: 'prevention', name: 'Prevention & Early Detection', desc: 'Risk factors, warning signs, and brain health strategies', accent: '#5B9BD5', pale: '#E7F0FA', dk: '#1B2A3A' }
 ];
 
-const A = (id, cat, title, sum, mins) => ({ id, cat, title, sum, mins });
+const A = (id, cat, title, sum, mins, tags) => ({ id, cat, title, sum, mins, tags });
 export const ARTICLES = [
-  A('managing-sundowning', 'caregiving', 'Managing Sundowning Behaviour', 'Why late-day restlessness happens and calm ways to respond', 7),
-  A('safe-home', 'caregiving', 'Creating a Safe Home Environment', 'Simple changes that prevent accidents and reduce worry', 6),
-  A('hygiene-bathing', 'caregiving', 'Personal Hygiene and Bathing Assistance', 'Respectful, low-stress approaches to washing and grooming', 6),
-  A('mealtimes', 'caregiving', 'Mealtimes and Nutrition Support', 'Encouraging eating and drinking without pressure', 5),
-  A('daily-routine', 'caregiving', 'Building a Daily Routine That Works', 'Structure that reassures without feeling rigid', 5),
-  A('continence', 'caregiving', 'Continence Care with Dignity', 'Practical help while protecting self-respect', 6),
-  A('sleep-rest', 'caregiving', 'Supporting Sleep and Rest', 'Gentle ways to improve nights for everyone', 5),
-  A('stages', 'clinical', 'Understanding the Stages of Dementia', 'What mild, moderate and severe stages usually look like', 8),
-  A('medications', 'clinical', 'Medications Used in Dementia', 'Common medicines, what they do, and what to watch for', 7),
-  A('urgent-review', 'clinical', 'When to Seek Urgent Medical Review', 'Changes that need a doctor today, not next week', 4),
-  A('types', 'clinical', 'Types of Dementia Explained', "Alzheimer's, vascular, Lewy body and others in plain language", 7),
-  A('gp-specialists', 'clinical', 'Working with Your GP and Specialists', 'Getting the most from appointments and referrals', 5),
-  A('pain', 'clinical', 'Pain Recognition and Management', 'Spotting pain when someone cannot say they hurt', 6),
-  A('diagnosis', 'clinical', 'Understanding a Dementia Diagnosis', 'What the diagnosis means and sensible next steps', 6),
-  A('repetitive', 'best', 'Responding to Repetitive Questions and Actions', 'Why repetition happens and kind ways to respond', 5),
-  A('aggression', 'best', 'Handling Physical Aggression and Agitation', 'Staying safe and calm when behaviour escalates', 8),
-  A('burnout', 'best', 'Carer Wellbeing and Burnout Prevention', 'Recognising burnout early and protecting yourself', 10),
-  A('person-centred', 'best', 'Person-Centred Care Principles', 'Seeing the person first, the dementia second', 6),
-  A('music-reminiscence', 'best', 'Using Music and Reminiscence', 'Memory-friendly activities that lift mood', 5),
-  A('refusals', 'best', 'Managing Refusals of Care', 'What to do when help is turned down', 6),
-  A('validation', 'best', 'Validation Instead of Correction', 'Meeting someone in their reality, not arguing with it', 5),
-  A('memory-loss-communication', 'communication', 'Communicating with Memory Loss', 'Conversation techniques that reduce frustration', 5),
-  A('talking-diagnosis', 'communication', 'Talking About the Diagnosis', 'Honest, gentle conversations with the person and whānau', 6),
-  A('non-verbal', 'communication', 'Non-Verbal Communication Cues', 'Tone, touch and body language when words fade', 5),
-  A('driving', 'communication', 'Difficult Conversations About Driving', 'Raising driving safety without a battle', 6),
-  A('staying-connected', 'communication', 'Keeping Connections with Family and Friends', 'Helping relationships survive the diagnosis', 5),
-  A('later-stages-communication', 'communication', 'Communicating in Later Stages', 'Staying connected when speech is largely gone', 6),
-  A('visiting', 'communication', 'Visiting Someone with Dementia', 'Making visits calm, positive and worthwhile', 4),
-  A('wandering', 'safety', 'Wandering Prevention and Safe-Return Strategies', 'Reducing risk and planning for if someone goes missing', 7),
-  A('anxiety-environment', 'safety', 'Reducing Anxiety Through Environment Design', 'How light, noise and layout affect behaviour', 6),
-  A('kitchen-bathroom', 'safety', 'Kitchen and Bathroom Safety', 'Managing the two highest-risk rooms in the house', 5),
-  A('falls', 'safety', 'Preventing Falls at Home', 'Simple fixes that dramatically cut fall risk', 6),
-  A('wayfinding', 'safety', 'Lighting, Signage and Wayfinding', 'Helping someone find their way around home', 5),
-  A('home-technology', 'safety', 'Technology That Can Help at Home', 'Sensors, locators and reminders — what is worth it', 6),
-  A('doors', 'safety', 'Securing Doors Without Locking Someone In', 'Balancing safety with freedom and dignity', 5),
-  A('carer-stress', 'wellbeing', 'Recognising Carer Stress', 'Early warning signs that you need more support', 5),
-  A('respite', 'wellbeing', 'What Respite Care Options Are Available', 'In-home, day programme and residential respite in NZ', 7),
-  A('accepting-help', 'wellbeing', 'Asking For and Accepting Help', 'Why it is hard, and scripts that make it easier', 5),
-  A('grief', 'wellbeing', 'Grief and Anticipatory Loss', 'Grieving someone who is still here', 6),
-  A('own-health', 'wellbeing', 'Looking After Your Own Health', 'Your health checks matter as much as theirs', 5),
-  A('support-groups', 'wellbeing', 'Support Groups in New Zealand', 'Finding your people through Dementia NZ and Alzheimers NZ', 4),
-  A('work-caring', 'wellbeing', 'Balancing Work and Caring', 'Your rights, flexible work and realistic limits', 6),
-  A('early-signs', 'prevention', 'What Are the Early Signs of Dementia', 'Changes that go beyond normal ageing', 6),
-  A('risk-factors', 'prevention', 'Risk Factors You Can Change', 'The 12 modifiable risks and what they mean for you', 7),
-  A('brain-habits', 'prevention', 'Brain-Healthy Habits', 'Everyday choices that support brain health', 5),
-  A('hearing-vision', 'prevention', 'Hearing, Vision and Dementia Risk', 'Why treating hearing loss protects the brain', 5),
-  A('normal-ageing', 'prevention', 'When Forgetfulness Is Normal Ageing', 'Telling everyday lapses apart from warning signs', 4),
-  A('memory-assessment', 'prevention', 'Getting a Memory Assessment', 'What happens at a memory clinic and how to prepare', 6),
-  A('heart-brain', 'prevention', 'Heart Health and Brain Health', 'Blood pressure, exercise and dementia risk', 5)
+  A('managing-sundowning', 'caregiving', 'Managing Sundowning Behaviour', 'Why late-day restlessness happens and calm ways to respond', 7, ['Evening routine', 'Behaviour', 'Agitation']),
+  A('safe-home', 'caregiving', 'Creating a Safe Home Environment', 'Simple changes that prevent accidents and reduce worry', 6, ['Home setup', 'Preventing accidents']),
+  A('hygiene-bathing', 'caregiving', 'Personal Hygiene and Bathing Assistance', 'Respectful, low-stress approaches to washing and grooming', 5, ['Bathing', 'Dignity', 'Refusals']),
+  A('mealtimes', 'caregiving', 'Mealtimes and Nutrition Support', 'Encouraging eating and drinking without pressure', 5, ['Eating', 'Nutrition']),
+  A('daily-routine', 'caregiving', 'Building a Daily Routine That Works', 'Structure that reassures without feeling rigid', 5, ['Routine', 'Structure']),
+  A('continence', 'caregiving', 'Continence Care with Dignity', 'Practical help while protecting self-respect', 5, ['Toileting', 'Dignity']),
+  A('sleep-rest', 'caregiving', 'Supporting Sleep and Rest', 'Gentle ways to improve nights for everyone', 5, ['Sleep', 'Night-time']),
+  A('stages', 'clinical', 'Understanding the Stages of Dementia', 'What mild, moderate and severe stages usually look like', 4, ['Stages', 'What to expect']),
+  A('medications', 'clinical', 'Medications Used in Dementia', 'Common medicines, what they do, and what to watch for', 5, ['Medicines', 'Side effects', 'Ask your GP']),
+  A('urgent-review', 'clinical', 'When to Seek Urgent Medical Review', 'Changes that need a doctor today, not next week', 5, ['Urgent signs', 'Delirium']),
+  A('types', 'clinical', 'Types of Dementia Explained', "Alzheimer's, vascular, Lewy body and others in plain language", 5, ['Types of dementia', 'Diagnosis']),
+  A('gp-specialists', 'clinical', 'Working with Your GP and Specialists', 'Getting the most from appointments and referrals', 5, ['Appointments', 'Referrals']),
+  A('pain', 'clinical', 'Pain Recognition and Management', 'Spotting pain when someone cannot say they hurt', 5, ['Pain', 'Spotting the signs']),
+  A('diagnosis', 'clinical', 'Understanding a Dementia Diagnosis', 'What the diagnosis means and sensible next steps', 5, ['Diagnosis', 'Next steps']),
+  A('repetitive', 'best', 'Responding to Repetitive Questions and Actions', 'Why repetition happens and kind ways to respond', 5, ['Repetition', 'Responding calmly']),
+  A('aggression', 'best', 'Handling Physical Aggression and Agitation', 'Staying safe and calm when behaviour escalates', 6, ['Aggression', 'Staying safe', 'De-escalation']),
+  A('burnout', 'best', 'Carer Wellbeing and Burnout Prevention', 'Recognising burnout early and protecting yourself', 5, ['Burnout', 'Carer health']),
+  A('person-centred', 'best', 'Person-Centred Care Principles', 'Seeing the person first, the dementia second', 4, ['Person-centred care', 'Principles']),
+  A('music-reminiscence', 'best', 'Using Music and Reminiscence', 'Memory-friendly activities that lift mood', 4, ['Music', 'Reminiscence', 'Activities']),
+  A('refusals', 'best', 'Managing Refusals of Care', 'What to do when help is turned down', 4, ['Refusals', 'Resistance to care']),
+  A('validation', 'best', 'Validation Instead of Correction', 'Meeting someone in their reality, not arguing with it', 4, ['Validation', 'Communication']),
+  A('memory-loss-communication', 'communication', 'Communicating with Memory Loss', 'Conversation techniques that reduce frustration', 5, ['Conversation', 'Memory loss']),
+  A('talking-diagnosis', 'communication', 'Talking About the Diagnosis', 'Honest, gentle conversations with the person and whānau', 6, ['Diagnosis', 'Whānau', 'Difficult talks']),
+  A('non-verbal', 'communication', 'Non-Verbal Communication Cues', 'Tone, touch and body language when words fade', 5, ['Body language', 'Tone and touch']),
+  A('driving', 'communication', 'Difficult Conversations About Driving', 'Raising driving safety without a battle', 6, ['Driving', 'Difficult talks']),
+  A('staying-connected', 'communication', 'Keeping Connections with Family and Friends', 'Helping relationships survive the diagnosis', 5, ['Family', 'Friendships']),
+  A('later-stages-communication', 'communication', 'Communicating in Later Stages', 'Staying connected when speech is largely gone', 6, ['Later stages', 'Staying connected']),
+  A('visiting', 'communication', 'Visiting Someone with Dementia', 'Making visits calm, positive and worthwhile', 4, ['Visiting', 'Family']),
+  A('wandering', 'safety', 'Wandering Prevention and Safe-Return Strategies', 'Reducing risk and planning for if someone goes missing', 7, ['Wandering', 'Safe return']),
+  A('anxiety-environment', 'safety', 'Reducing Anxiety Through Environment Design', 'How light, noise and layout affect behaviour', 6, ['Environment', 'Anxiety']),
+  A('kitchen-bathroom', 'safety', 'Kitchen and Bathroom Safety', 'Managing the two highest-risk rooms in the house', 5, ['Kitchen', 'Bathroom']),
+  A('falls', 'safety', 'Preventing Falls at Home', 'Simple fixes that dramatically cut fall risk', 5, ['Falls', 'Mobility']),
+  A('wayfinding', 'safety', 'Lighting, Signage and Wayfinding', 'Helping someone find their way around home', 4, ['Lighting', 'Signage']),
+  A('home-technology', 'safety', 'Technology That Can Help at Home', 'Sensors, locators and reminders — what is worth it', 5, ['Technology', 'Sensors and locators']),
+  A('doors', 'safety', 'Securing Doors Without Locking Someone In', 'Balancing safety with freedom and dignity', 4, ['Doors', 'Dignity']),
+  A('carer-stress', 'wellbeing', 'Recognising Carer Stress', 'Early warning signs that you need more support', 5, ['Stress', 'Warning signs']),
+  A('respite', 'wellbeing', 'What Respite Care Options Are Available', 'In-home, day programme and residential respite in NZ', 6, ['Respite', 'NASC', 'Taking a break']),
+  A('accepting-help', 'wellbeing', 'Asking For and Accepting Help', 'Why it is hard, and scripts that make it easier', 5, ['Asking for help', 'Support']),
+  A('grief', 'wellbeing', 'Grief and Anticipatory Loss', 'Grieving someone who is still here', 5, ['Grief', 'Emotional support']),
+  A('own-health', 'wellbeing', 'Looking After Your Own Health', 'Your health checks matter as much as theirs', 4, ['Your health', 'Self-care']),
+  A('support-groups', 'wellbeing', 'Support Groups in New Zealand', 'Finding your people through Dementia NZ and Alzheimers NZ', 3, ['Support groups', 'New Zealand']),
+  A('work-caring', 'wellbeing', 'Balancing Work and Caring', 'Your rights, flexible work and realistic limits', 5, ['Work', 'Balance']),
+  A('early-signs', 'prevention', 'What Are the Early Signs of Dementia', 'Changes that go beyond normal ageing', 6, ['Early signs', 'When to act']),
+  A('risk-factors', 'prevention', 'Risk Factors You Can Change', 'The 14 modifiable risks and what they mean for you', 6, ['Risk factors', 'Brain health']),
+  A('brain-habits', 'prevention', 'Brain-Healthy Habits', 'Everyday choices that support brain health', 5, ['Brain health', 'Daily habits']),
+  A('hearing-vision', 'prevention', 'Hearing, Vision and Dementia Risk', 'Why treating hearing loss protects the brain', 5, ['Hearing', 'Vision']),
+  A('normal-ageing', 'prevention', 'When Forgetfulness Is Normal Ageing', 'Telling everyday lapses apart from warning signs', 4, ['Normal ageing', 'Memory']),
+  A('memory-assessment', 'prevention', 'Getting a Memory Assessment', 'What happens at a memory clinic and how to prepare', 5, ['Memory clinic', 'Preparing']),
+  A('heart-brain', 'prevention', 'Heart Health and Brain Health', 'Blood pressure, exercise and dementia risk', 5, ['Heart health', 'Blood pressure'])
 ];
 
 export const getArticle = (id) => ARTICLES.find((a) => a.id === id);
@@ -72,41 +75,15 @@ export const relatedTo = (a) => ARTICLES.filter((x) => x.cat === a.cat && x.id !
 export const searchArticles = (q) => {
   const t = q.trim().toLowerCase();
   if (!t) return ARTICLES;
-  return ARTICLES.filter((a) => (a.title + ' ' + a.sum + ' ' + getCat(a.cat).name).toLowerCase().includes(t));
+  return ARTICLES.filter(
+    (a) =>
+      (a.title + ' ' + a.sum + ' ' + (a.tags || []).join(' ') + ' ' + getCat(a.cat).name).toLowerCase().includes(t) ||
+      searchTextOf(a.id).includes(t)
+  );
 };
 
-const SUNDOWNING = [
-  { t: 'p', x: 'Many people living with dementia become more restless, confused or upset as the afternoon turns into evening. Carers often describe pacing, calling out, wanting to "go home" (even at home), or becoming suspicious or tearful. This pattern is called sundowning, and it is one of the most common — and most exhausting — parts of dementia care.' },
-  { t: 'p', x: 'If evenings are hard in your house, you are not doing anything wrong. Sundowning is driven by changes in the brain, not by anything you have failed to do.' },
-  { t: 'h', x: 'Why it happens' },
-  { t: 'p', x: 'The body clock that tells us when to be alert and when to wind down is often damaged by dementia. Add in end-of-day tiredness, fading light, long shadows, household busy-ness around dinner time, and unmet needs like hunger, thirst, pain or needing the toilet — and late afternoon becomes a perfect storm.' },
-  { t: 'tip', x: 'Try this: for a week, jot down when the restlessness starts and what was happening just before. Patterns — a certain time, the TV news, an empty stomach — usually appear quickly, and they tell you what to change.' },
-  { t: 'h', x: 'What you can try in the late afternoon' },
-  { t: 'p', x: 'Keep the second half of the day calm and predictable. A quiet activity after lunch, a light snack around 3pm, and curtains closed with warm lamps on before dusk (so the light change is gentle, not sudden) all help. Turn off background noise you are not actively listening to — a radio and a TV at once is a lot for a tired brain.' },
-  { t: 'tip', x: 'Try this: a short walk or time in natural light around midday helps reset the body clock and often makes evenings noticeably calmer.' },
-  { t: 'h', x: 'In the moment' },
-  { t: 'p', x: 'Stay calm and keep your voice low and warm — your mood is contagious. Do not argue with what they believe is happening; respond to the feeling instead ("You sound worried. I\'m here, you\'re safe"). Redirection works better than correction: offer a cup of tea, a familiar task like folding washing, or a favourite piece of music.' },
-  { t: 'p', x: 'If they want to walk, walking with them for a few minutes is usually safer and kinder than trying to stop them.' },
-  { t: 'warn', x: 'When to seek help: if agitation regularly puts anyone at risk, or if confusion worsens suddenly over a day or two (this can signal an infection or delirium), contact your GP or call Healthline on 0800 611 116. In an emergency, call 111.' },
-  { t: 'h', x: 'Look after yourself too' },
-  { t: 'p', x: 'Sundowning lands at exactly the time of day when you are most tired yourself. If evenings are consistently hard, that is a good reason to ask about respite or an evening support worker — see the Carer Wellbeing section of this library. Needing help with the hardest hours is normal, not a failure.' }
-];
-
-export function bodyFor(a) {
-  if (a.id === 'managing-sundowning') return SUNDOWNING;
-  const c = getCat(a.cat);
-  return [
-    { t: 'p', x: a.sum + '. This guide brings together practical, plain-language advice from trusted ' + c.name.toLowerCase() + ' sources, written for family carers, care workers and health professionals in Aotearoa New Zealand.' },
-    { t: 'h', x: 'What helps' },
-    { t: 'p', x: 'Start small. Choose one change that feels manageable this week and give it a few days before judging whether it helps. Most strategies work best when they become part of a steady routine rather than a one-off fix, and every person with dementia is different — expect a little trial and error.' },
-    { t: 'tip', x: 'Try this: keep short notes about what you tried and what happened. Patterns often show up within a week or two, and your notes are genuinely useful to share with your GP or nurse.' },
-    { t: 'p', x: 'If something does not work today, it may still work on a calmer day. And if you are unsure where to start, ask Aria — she can point you to the most relevant part of this library, with sources.' },
-    { t: 'warn', x: 'When to seek help: if there is a sudden change in behaviour, alertness or ability, contact your GP or call Healthline on 0800 611 116. In an emergency, call 111.' }
-  ];
-}
-
-export const tagsFor = (a) => a.id === 'managing-sundowning' ? ['Evening routine', 'Behaviour', 'Agitation'] : [getCat(a.cat).name, 'Practical guide'];
-export const excerptFor = (a) => bodyFor(a).find((b) => b.t === 'p').x;
+export const tagsFor = (a) => a.tags || [getCat(a.cat).name, 'Practical guide'];
+export const excerptFor = (a) => a.sum;
 
 export const QUICK_QUESTIONS = [
   'How do I manage sundowning?',
@@ -117,10 +94,8 @@ export const QUICK_QUESTIONS = [
   'What respite care options are available?'
 ];
 
-export const FEATURED = [
-  { id: 'stages', mins: 8 }, { id: 'safe-home', mins: 6 },
-  { id: 'memory-loss-communication', mins: 5 }, { id: 'burnout', mins: 10 }
-];
+export const FEATURED = ['stages', 'safe-home', 'memory-loss-communication', 'burnout']
+  .map((id) => ({ id, mins: getArticle(id).mins }));
 
 export const SAFETY_NOTE = 'If anyone is in immediate danger, call 111. For urgent health advice any time, call Healthline on 0800 611 116 — free, 24 hours.';
 

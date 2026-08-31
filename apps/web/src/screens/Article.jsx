@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import * as S from '../data/services.js';
+import ArticleBody from '../components/ArticleBody.jsx';
+import { loadBody } from '../data/articles/index.js';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { useChat } from '../state/ChatContext.jsx';
 import { go } from '../state/router.js';
@@ -9,6 +11,25 @@ export default function Article({ artId }) {
   const { effDark } = useSettings();
   const { askNow } = useChat();
   const art = S.getArticle(artId);
+  const [attempt, setAttempt] = useState(0);
+  // Keyed by article id rather than cleared on navigation: resetting in the
+  // effect body would set state during render, and the stale body would flash
+  // on screen for a frame before it did.
+  const [loaded, setLoaded] = useState({ id: null, body: null, failed: false });
+
+  useEffect(() => {
+    if (!art) return undefined;
+    let live = true;
+    loadBody(art.id, art.cat).then(
+      (b) => { if (live) setLoaded({ id: art.id, body: b, failed: !b }); },
+      () => { if (live) setLoaded({ id: art.id, body: null, failed: true }); }
+    );
+    return () => { live = false; };
+  }, [art, attempt]);
+
+  const settled = loaded.id === artId;
+  const body = settled ? loaded.body : null;
+  const failed = settled && loaded.failed;
 
   if (!art) {
     return (
@@ -21,7 +42,6 @@ export default function Article({ artId }) {
 
   const y = catStyle(art.cat, effDark);
   const catName = S.getCat(art.cat).name;
-  const blocks = S.bodyFor(art);
   const related = S.relatedTo(art);
 
   return (
@@ -38,14 +58,14 @@ export default function Article({ artId }) {
         </div>
       </header>
       <div style={{ maxWidth: '680px' }}>
-        {blocks.map((b, i) => (
-          <div key={i}>
-            {b.t === 'h' && <h2 style={{ fontSize: '1.35rem', margin: '30px 0 10px' }}>{b.x}</h2>}
-            {b.t === 'p' && <p style={{ margin: '0 0 16px', lineHeight: '1.7', textWrap: 'pretty' }}>{b.x}</p>}
-            {b.t === 'tip' && <div style={{ background: 'var(--tint)', border: 'var(--bw) solid var(--border)', borderRadius: '14px', padding: '16px 18px', margin: '0 0 16px', lineHeight: '1.65' }}>{b.x}</div>}
-            {b.t === 'warn' && <div style={{ background: 'var(--amber-bg)', border: 'var(--bw) solid var(--amber-bd)', borderLeft: '4px solid var(--amber)', borderRadius: '14px', padding: '16px 18px', margin: '0 0 16px', lineHeight: '1.65' }}>{b.x}</div>}
+        {body && <ArticleBody blocks={body.blocks} />}
+        {!body && !failed && <p style={{ color: 'var(--text2)', margin: '0 0 16px' }}>Loading article…</p>}
+        {failed && (
+          <div style={{ background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '16px', padding: '20px', margin: '0 0 16px' }}>
+            <p style={{ margin: '0 0 12px', lineHeight: '1.65' }}>This article couldn't be loaded. Check your connection and try again.</p>
+            <button onClick={() => setAttempt((n) => n + 1)} style={{ minHeight: '44px', padding: '0 18px', borderRadius: '12px', border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: '600', cursor: 'pointer' }} className="hv2">Try again</button>
           </div>
-        ))}
+        )}
         <button onClick={() => askNow('Tell me more about ' + art.title.toLowerCase())} style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', minHeight: '52px', padding: '0 24px', borderRadius: '14px', border: 'none', background: 'var(--primary)', color: '#fff', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', margin: '18px 0 30px' }} className="hv2">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5h16v11H9l-5 4z" /></svg>
           Ask Aria about this
@@ -63,7 +83,19 @@ export default function Article({ artId }) {
             );
           })}
         </div>
-        <p style={{ color: 'var(--text2)', fontSize: '.88rem', margin: '0' }}>Reviewed content · Last updated June 2026</p>
+        {body && body.sources && body.sources.length > 0 && (
+          <div style={{ borderTop: 'var(--bw) solid var(--border)', paddingTop: '16px' }}>
+            <h2 style={{ fontSize: '1.05rem', margin: '0 0 8px' }}>Sources</h2>
+            <ul style={{ margin: '0 0 10px', paddingLeft: '22px', lineHeight: '1.7' }}>
+              {body.sources.map((s, i) => (
+                <li key={i} style={{ marginBottom: '4px', fontSize: '.92rem' }}>
+                  <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-d)' }}>{s.org} — {s.title}</a>
+                </li>
+              ))}
+            </ul>
+            <p style={{ color: 'var(--text2)', fontSize: '.88rem', margin: '0' }}>Adapted for Aotearoa New Zealand · Last updated {body.updated}</p>
+          </div>
+        )}
       </div>
     </section>
   );

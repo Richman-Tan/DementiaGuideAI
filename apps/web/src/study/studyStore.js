@@ -10,7 +10,7 @@ const EMPTY = {
   accessCode: '',      // authorises the server-side credential proxy
   participantCode: '', // e.g. 'P07' — the only identifier we hold
   sessionId: '',
-  group: 'caregiver',
+  group: '',           // set the first time the participant actively chooses
   armOrder: '',
   setOrder: '',
   step: 'intro',

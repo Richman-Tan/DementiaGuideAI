@@ -12,7 +12,7 @@ import { useAuth } from './AuthContext.jsx';
 import { navigate } from './router.js';
 import { useSettings } from './SettingsContext.jsx';
 import { isMockMode, generateReply } from '../services/chatService.js';
-import { isStudyMode, currentArm, currentTaskId, transcriptFields } from '../study/studyStore.js';
+import { isStudyMode, currentArm, currentTaskId, transcriptFields, studyConversationId, rememberStudyConversation } from '../study/studyStore.js';
 import { useStudy } from '../study/StudyContext.jsx';
 import { createTurnTimer } from '../study/latency.js';
 import { emit } from '../study/events.js';
@@ -100,7 +100,21 @@ export function ChatProvider({ children }) {
     if (authStatus !== 'ready' || !userId) return undefined;
     let cancelled = false;
     (async () => {
-      const id = await getOrCreateConversation(userId, { surface: 'chat', studyArm: studyArm || null });
+      let id;
+      if (isStudyMode() && studyArm) {
+        // A fresh thread per (session, arm). getOrCreateConversation reuses the
+        // anon user's most recent arm thread — on a shared study device that is
+        // the PREVIOUS participant's conversation, shown on screen and fed to
+        // the model as context. The session-scoped id lives in dg_study, so a
+        // reload rejoins this thread and "Clear this device" retires it.
+        id = studyConversationId(studyArm);
+        if (!id) {
+          id = await startNewConversation(userId, { surface: 'chat', studyArm });
+          if (id) rememberStudyConversation(studyArm, id);
+        }
+      } else {
+        id = await getOrCreateConversation(userId, { surface: 'chat', studyArm: null });
+      }
       if (cancelled || !id) return;
       setConversationId(id);
       // Not during a study: importing a participant's own prior history into an

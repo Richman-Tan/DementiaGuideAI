@@ -19,6 +19,7 @@ const EMPTY = {
   taskId: '',          // the task in progress, read by emit() from shared code
   consentTranscripts: false,
   responses: {},       // questionnaire answers, keyed by instrument id
+  convoIds: {},        // conversation thread per arm, scoped to THIS session
   seq: 0,              // monotonic event counter, survives a reload
 };
 
@@ -51,6 +52,23 @@ export const studyAccessCode = () => loadStudy().accessCode.trim();
 export function isStudyMode() {
   const s = loadStudy();
   return Boolean(s.sessionId && s.accessCode);
+}
+
+/**
+ * One conversation thread per (session, arm). The id lives in dg_study so a
+ * mid-session reload rejoins the same thread, while "Clear this device" — which
+ * removes dg_study — retires it. Without this, the chat context reused the anon
+ * user's most recent arm thread, which on a shared study device is the PREVIOUS
+ * participant's conversation: visible on screen and fed to the model as context.
+ */
+export function studyConversationId(arm) {
+  const s = loadStudy();
+  return (s.convoIds || {})[arm] || null;
+}
+
+export function rememberStudyConversation(arm, id) {
+  const s = loadStudy();
+  saveStudy({ convoIds: { ...(s.convoIds || {}), [arm]: id } });
 }
 
 /** The arm the participant is currently in, or null outside a study session. */

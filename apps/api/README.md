@@ -28,6 +28,20 @@ and `dementiaguide-api`), each with its own root directory. Only `apps/web` has 
 because Vercel's zero-config convention already maps `api/*.js` to functions, and
 its CORS headers are set in code (`_lib/guard.js`), not in configuration.
 
+Deploy from this directory with the same prebuilt flow the web app uses:
+
+```bash
+vercel build --prod --yes
+vercel deploy --prebuilt --prod --yes
+```
+
+A plain `vercel deploy` fails: the CLI uploads only this directory, so the cloud
+builder's `npm install` tries to fetch `@dementiaguide/core` from the npm
+registry — where it does not exist — and dies with `Command "npm install" exited
+with 1`. Built locally, npm walks up to the monorepo root and resolves the
+workspace dependency, which is the same property the Layout section relies on
+for bundling.
+
 An earlier attempt declared them as two [Vercel Services](https://vercel.com/docs/services)
 in a root `vercel.json`, which would have kept them on one domain and same-origin.
 That does not work for this backend, and the failure is silent: a service is a

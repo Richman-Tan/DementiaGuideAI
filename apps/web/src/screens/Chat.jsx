@@ -5,6 +5,7 @@ import { useChat } from '../state/ChatContext.jsx';
 import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
 import { AvatarBust } from '../avatar/AvatarStage.jsx';
+import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { useStudy } from '../study/StudyContext.jsx';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
 import { CitationText } from '../components/CitationText.jsx';
@@ -19,6 +20,9 @@ const Dots = () => (
 
 export default function Chat({ isDesktop, isMobile }) {
   const { settings, effDark } = useSettings();
+  // Whichever avatar actually resolved — Aaron by default, Aria on fallback.
+  // The study brief names the assistant, so this screen must agree with it.
+  const who = useEffectiveAvatarProfile(settings.avatarId).name;
   const { messages, typing, chatError, chatErrorMsg, send, retry, newConvo, setDrawer, scrollCb } = useChat();
   const [chatInput, setChatInput] = useState('');
   const study = useStudy();
@@ -46,10 +50,10 @@ export default function Chat({ isDesktop, isMobile }) {
     <section style={{ display: 'flex', gap: '20px', height: isMobile ? 'calc(100vh - 100px - var(--study-overlay-h, 0px))' : 'calc(100vh - 16px - var(--study-overlay-h, 0px))', padding: '14px 0', boxSizing: 'border-box' }}>
       <div style={{ flex: '1', minWidth: '0', maxWidth: '760px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-          <h1 style={{ margin: '0', fontSize: '1.35rem' }}>Chat with Aria</h1>
+          <h1 style={{ margin: '0', fontSize: '1.35rem' }}>{`Chat with ${who}`}</h1>
           <div style={{ display: 'flex', gap: '8px' }}>
             {isDesktop && !panel && !armB && (
-              <button onClick={() => setPanel(true)} style={{ minHeight: '44px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv3">Show Aria panel</button>
+              <button onClick={() => setPanel(true)} style={{ minHeight: '44px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv3">{`Show ${who} panel`}</button>
             )}
             <button onClick={newConvo} style={{ minHeight: '44px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv4">New conversation</button>
           </div>
@@ -58,7 +62,7 @@ export default function Chat({ isDesktop, isMobile }) {
           {chatEmpty && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', padding: '36px 16px', textAlign: 'center' }}>
               {!armB && <AvatarBust size={90} />}
-              <div style={{ fontWeight: '700', fontSize: '1.15rem' }}>Kia ora, I'm Aria</div>
+              <div style={{ fontWeight: '700', fontSize: '1.15rem' }}>{`Kia ora, I'm ${who}`}</div>
               <p style={{ margin: '0', color: 'var(--text2)', maxWidth: '30em', textWrap: 'pretty' }}>Ask me anything about dementia care — I'll answer in plain language, with sources from the trusted library.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '420px' }}>
                 {S.QUICK_QUESTIONS.slice(0, 3).map((q) => (
@@ -127,8 +131,8 @@ export default function Chat({ isDesktop, isMobile }) {
           {settings.showAvatar && (
             <div style={{ animation: 'dgBreathe 5.5s ease-in-out infinite' }}><AvatarBust size={96} /></div>
           )}
-          <div style={{ fontWeight: '700' }}>Aria</div>
-          <div style={{ color: 'var(--text2)', fontSize: '.9rem' }}>{typing ? 'Aria is thinking…' : 'Aria is listening'}</div>
+          <div style={{ fontWeight: '700' }}>{who}</div>
+          <div style={{ color: 'var(--text2)', fontSize: '.9rem' }}>{typing ? `${who} is thinking…` : `${who} is listening`}</div>
           <button onClick={() => setPanel(false)} style={{ minHeight: '40px', padding: '0 14px', borderRadius: '10px', border: 'none', background: 'none', color: 'var(--text2)', fontSize: '.85rem', fontWeight: '600', cursor: 'pointer' }} className="hv4">Hide panel</button>
         </aside>
       )}

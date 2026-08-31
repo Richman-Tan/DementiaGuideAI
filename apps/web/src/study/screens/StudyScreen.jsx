@@ -333,7 +333,7 @@ export default function StudyScreen() {
     return (
       <Page
         title="How was that to use?"
-        lead={`These ten questions are about ${armLabel(stage.arm, assistant).toLowerCase()}. There are no right answers — go with your first reaction.`}
+        lead={`These ten questions are about ${(() => { const l = armLabel(stage.arm, assistant); return l.charAt(0).toLowerCase() + l.slice(1); })()}. There are no right answers — go with your first reaction.`}
       >
         {SUS_ITEMS.map((item, i) => (
           <LikertItem

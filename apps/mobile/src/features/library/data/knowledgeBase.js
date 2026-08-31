@@ -1,4 +1,4 @@
-// Dementia care knowledge base — 77 chunks (10 per category, plus extensions).
+// Dementia care knowledge base — 78 chunks (10 per category, plus extensions).
 // Content paraphrased from authoritative sources; see source_url per chunk.
 // `embedding` is null at build time; populated at runtime from cache or API.
 
@@ -1123,7 +1123,7 @@ Non-verbal cultural connection through music from the person's country of origin
     embedding: null,
   },
 
-  // ─── CAREGIVER WELLBEING (extended: 008–010) ─────────────────────────────────
+  // ─── CAREGIVER WELLBEING (extended: 008–011) ─────────────────────────────────
   {
     id: 'wellbeing_008',
     category: 'wellbeing',
@@ -1170,6 +1170,24 @@ When care needs progress to rest-home or hospital-level care, the NASC assessmen
     tags: ['NASC', 'needs assessment', 'home support', 'Health NZ', 'Te Whatu Ora', 'residential care', 'Residential Care Subsidy', 'funding'],
     source_url: 'https://www.govt.nz/browse/health/help-in-your-home/needs-assessment/',
     source_org: 'Health New Zealand – Te Whatu Ora',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_011',
+    category: 'wellbeing',
+    title: 'Mindfulness and Box Breathing for Carer Stress',
+    content: `Alongside the practical supports covered elsewhere in this library, brief self-care practices you can use in the moment — when stress, frustration, or overwhelm builds up during caregiving — are an important part of sustaining yourself over the long term. iSupport, the WHO-endorsed self-help programme for dementia carers, recommends mindfulness and box breathing as two simple, evidence-informed techniques that take only a few minutes and require no equipment.
+
+Box breathing is a structured breathing pattern that helps calm the body's stress response quickly. Breathe in slowly through the nose for a count of four, hold the breath for a count of four, breathe out slowly through the mouth for a count of four, then hold again for a count of four before repeating the cycle. Doing this for two to three minutes — for example, before a difficult conversation, after a distressing incident, or whenever tension is rising — can noticeably reduce physical and emotional stress in the moment.
+
+Mindfulness involves gently bringing attention to the present moment — noticing what you can see, hear, feel, and breathe, without judging the experience — rather than being carried along by worry about the future or replaying difficult moments from the past. Even a minute or two of focused attention on the breath or the surrounding environment, practised regularly, can reduce the background level of stress carers experience and make it easier to respond calmly to challenging moments.
+
+These techniques are most effective when practised regularly, not only during acute stress, so that they become an accessible habit in difficult moments. They complement, rather than replace, the broader supports covered elsewhere in this library — GP support, sleep, exercise, social connection, and accepting help from others.`,
+    tags: ['mindfulness', 'box breathing', 'self-care', 'iSupport', 'carer stress', 'relaxation', 'stress management'],
+    // TODO: replace with the direct iSupport mindfulness/box breathing video URL once provided —
+    // this is the citation link this chunk's [n] badge will open, same as every other chunk.
+    source_url: 'https://isupportfordementia.org/',
+    source_org: 'iSupport / World Health Organization',
     embedding: null,
   },
 

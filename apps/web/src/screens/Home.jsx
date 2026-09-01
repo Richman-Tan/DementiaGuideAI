@@ -10,6 +10,7 @@ import { go, useWidth } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
 import { AvatarBust, AvatarHomeStage } from '../avatar/AvatarStage.jsx';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { GrowTextArea } from '../components/GrowTextArea.jsx';
 
 const MicIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M6 11a6 6 0 0 0 12 0" /><path d="M12 17v4" /></svg>
@@ -66,8 +67,8 @@ export default function Home() {
         <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', gap: isMobile ? '10px' : '14px', overflowY: 'auto' }}>
           <div style={{ ...card, padding: isMobile ? '12px 14px' : '16px 18px', flexShrink: 0 }}>
             {!isMobile && <label htmlFor="dg-ask" style={{ display: 'block', fontWeight: 600, marginBottom: '10px' }}>What would you like to know?</label>}
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <input id="dg-ask" value={homeQ} onChange={(e) => setHomeQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') submit(); }} placeholder="Type your question…" aria-label="What would you like to know?" style={{ flex: 1, minWidth: 0, minHeight: '48px', padding: '0 16px', borderRadius: '13px', border: 'var(--bw) solid var(--border)', background: 'var(--elev)', color: 'var(--text)', fontSize: '1rem', boxSizing: 'border-box' }} />
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+              <GrowTextArea id="dg-ask" value={homeQ} onChange={setHomeQ} onSubmit={submit} maxLength={500} placeholder="Type your question…" aria-label="What would you like to know?" style={{ flex: 1, minWidth: 0, minHeight: '48px', padding: '12px 16px', borderRadius: '13px', border: 'var(--bw) solid var(--border)', background: 'var(--elev)' }} />
               <button onClick={submit} aria-label="Send question" style={{ width: '48px', height: '48px', flexShrink: 0, borderRadius: '13px', border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="hv2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12h14" /><path d="M13 6l6 6-6 6" /></svg></button>
               <button onClick={go('#/app/voice')} aria-label={`Ask ${who} by voice`} style={{ width: '48px', height: '48px', flexShrink: 0, borderRadius: '13px', border: 'var(--bw) solid var(--border)', background: 'var(--tint)', color: 'var(--primary-d)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="hv7"><MicIcon /></button>
             </div>

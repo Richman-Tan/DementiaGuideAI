@@ -5,19 +5,37 @@ import { useStudy, detectBrowser, SUPPORTED_BROWSERS } from '../StudyContext.jsx
 import { armLabel, GROUPS, IDENTITY_WARNING } from '@core/study/studyConfig.mjs';
 import { useSettings } from '../../state/SettingsContext.jsx';
 import { useEffectiveAvatarProfile } from '../../avatar/effectiveProfile.js';
-import { Page, Button, Choice, LikertItem, TextArea, SupportNumbers, Disclaimer, card } from '../ui.jsx';
+import { Page, Button, Choice, LikertItem, TextArea, SupportNumbers, Disclaimer, card, PIS, PisLink } from '../ui.jsx';
 import { navigate } from '../../state/router.js';
 import { CONSENT_ITEMS, SUS_ITEMS, LIKERT_ITEMS, BACKGROUND, POST_TASK, DEBRIEF, PLWD_ITEMS, PLWD_DEBRIEF, SUPPORTER_DEBRIEF } from '../instruments.js';
 
 function StopBar({ onStop }) {
+  // Two-step, matching the task overlay's stop. A stopped session cannot be
+  // resumed, so a single stray tap here used to end a participant permanently.
+  const [confirming, setConfirming] = useState(false);
   return (
     <div style={{ marginTop: '2.5rem', paddingTop: '1.25rem', borderTop: 'var(--bw) solid var(--border)' }}>
-      <Button variant="quiet" onClick={onStop} style={{ padding: 0, minHeight: 44 }}>
+      <Button variant="quiet" onClick={() => setConfirming(true)} style={{ padding: 0, minHeight: 44 }}>
         I need to stop
       </Button>
       <p style={{ fontSize: '.88rem', color: 'var(--text2)', margin: '.25rem 0 0' }}>
         You can stop at any time, for any reason. You don’t have to say why.
       </p>
+      {confirming && (
+        <div
+          role="alertdialog"
+          aria-label="Stop the session"
+          style={{ marginTop: '.75rem', padding: '.9rem 1rem', borderRadius: 12, background: 'var(--amber-bg)', border: 'var(--bw) solid var(--amber-bd)' }}
+        >
+          <p style={{ margin: '0 0 .75rem', lineHeight: 1.6, color: 'var(--text)' }}>
+            Stop the session? Nothing more will be recorded. You don’t have to give a reason.
+          </p>
+          <div style={{ display: 'flex', gap: '.6rem' }}>
+            <Button onClick={onStop}>Yes, stop</Button>
+            <Button variant="quiet" onClick={() => setConfirming(false)}>Keep going</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -315,7 +333,7 @@ export default function StudyScreen() {
     return (
       <Page
         title="How was that to use?"
-        lead={`These ten questions are about ${armLabel(stage.arm, assistant).toLowerCase()}. There are no right answers — go with your first reaction.`}
+        lead={`These ten questions are about ${(() => { const l = armLabel(stage.arm, assistant); return l.charAt(0).toLowerCase() + l.slice(1); })()}. There are no right answers — go with your first reaction.`}
       >
         {SUS_ITEMS.map((item, i) => (
           <LikertItem
@@ -514,6 +532,20 @@ function InfoStep({ onNext, onStop }) {
         securely for six years before being destroyed. Nothing that could identify you
         will ever be published.
       </p>
+
+      <div style={{ ...card, marginTop: '1.5rem' }}>
+        <h2 style={{ margin: '0 0 .5rem', fontSize: '1.05rem' }}>The full information sheet</h2>
+        <p style={{ margin: '0 0 .9rem', lineHeight: 1.6, color: 'var(--text)' }}>
+          The summary above is the short version. The full information sheet opens in a new
+          tab, and you can save or print a copy to keep.
+        </p>
+        <ul style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: 2 }}>
+          {Object.entries(PIS)
+            .filter(([g]) => g !== 'pilot')
+            .map(([g]) => <li key={g}><PisLink group={g} /></li>)}
+        </ul>
+      </div>
+
       <div style={{ marginTop: '1.5rem' }}><Button onClick={onNext}>I’ve read this</Button></div>
       <StopBar onStop={onStop} />
       <Disclaimer />
@@ -582,6 +614,10 @@ function PlwdConsentStep({ onNext, onStop }) {
         <p style={{ margin: '0 0 1rem', fontSize: '1.05rem', lineHeight: 1.7, color: 'var(--text)' }}>
           If you have not done that yet, please stop here and do it together first.
         </p>
+        <p style={{ margin: '0 0 1rem', fontSize: '1.05rem', lineHeight: 1.7, color: 'var(--text2)' }}>
+          You can read the sheets again here: <PisLink group="plwd">the sheet for you</PisLink>,
+          and <PisLink group="supporter">the one for your support person</PisLink>.
+        </p>
         <label style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', cursor: 'pointer' }}>
           <input
             type="checkbox"
@@ -637,6 +673,9 @@ function ConsentStep({ onNext, onStop }) {
 
   return (
     <Page title="Your consent" lead="Please tick each box to show you understand and agree.">
+      <p style={{ margin: '0 0 1.25rem', lineHeight: 1.65, color: 'var(--text2)' }}>
+        You can re-read the full information sheet at any time: <PisLink group={st.group} />.
+      </p>
       {CONSENT_ITEMS.map((item) => (
         <label
           key={item.id}

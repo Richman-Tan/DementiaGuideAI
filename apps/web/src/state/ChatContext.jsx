@@ -12,7 +12,8 @@ import { useAuth } from './AuthContext.jsx';
 import { navigate } from './router.js';
 import { useSettings } from './SettingsContext.jsx';
 import { isMockMode, generateReply } from '../services/chatService.js';
-import { isStudyMode, currentArm, currentTaskId, transcriptFields } from '../study/studyStore.js';
+import { isStudyMode, currentArm, currentTaskId, transcriptFields, studyConversationId, rememberStudyConversation } from '../study/studyStore.js';
+import { useStudy } from '../study/StudyContext.jsx';
 import { createTurnTimer } from '../study/latency.js';
 import { emit } from '../study/events.js';
 import { MODALITY_TYPED } from '@core/study/studyConfig.mjs';
@@ -70,7 +71,16 @@ export function ChatProvider({ children }) {
   // Clearing on the transition rather than on `studyOn` itself is deliberate. A
   // reload mid-task mounts with isStudyMode() already true, and must keep the
   // messages the participant has legitimately accumulated.
-  const studyOn = isStudyMode();
+  //
+  // Read through the context, NOT straight from the store. This provider is
+  // handed to StudyProvider as `children`, so a study state change re-renders
+  // StudyProvider and then bails out before re-rendering us — the element is
+  // referentially identical. A localStorage read during render therefore stayed
+  // false right through begin(), the effect below never saw the transition, and
+  // the seed reached task 1. Context consumption is exempt from that bail-out.
+  // The same staleness applied to currentArm() below, which decides which
+  // conversation an arm's messages are written to.
+  const studyOn = useStudy().active;
   const wasStudyOn = useRef(studyOn);
   useEffect(() => {
     const entering = studyOn && !wasStudyOn.current;
@@ -90,7 +100,21 @@ export function ChatProvider({ children }) {
     if (authStatus !== 'ready' || !userId) return undefined;
     let cancelled = false;
     (async () => {
-      const id = await getOrCreateConversation(userId, { surface: 'chat', studyArm: studyArm || null });
+      let id;
+      if (isStudyMode() && studyArm) {
+        // A fresh thread per (session, arm). getOrCreateConversation reuses the
+        // anon user's most recent arm thread — on a shared study device that is
+        // the PREVIOUS participant's conversation, shown on screen and fed to
+        // the model as context. The session-scoped id lives in dg_study, so a
+        // reload rejoins this thread and "Clear this device" retires it.
+        id = studyConversationId(studyArm);
+        if (!id) {
+          id = await startNewConversation(userId, { surface: 'chat', studyArm });
+          if (id) rememberStudyConversation(studyArm, id);
+        }
+      } else {
+        id = await getOrCreateConversation(userId, { surface: 'chat', studyArm: null });
+      }
       if (cancelled || !id) return;
       setConversationId(id);
       // Not during a study: importing a participant's own prior history into an

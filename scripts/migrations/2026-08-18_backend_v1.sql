@@ -1,6 +1,7 @@
 -- ============================================================
 -- Backend v1 — identity, conversations, usage metering
--- Date: 2026-08-18 · Status: NOT YET RUN
+-- Date: 2026-08-18 · Status: RUN (verified 2026-08-24 — `conversations` answers
+--   an anon-key select with an empty set rather than PGRST205 "table not found")
 --
 -- Why: until now both clients held their own provider keys and kept
 -- conversation history in device storage only (docs/architecture/backend-plan.md,

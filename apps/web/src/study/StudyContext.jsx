@@ -8,7 +8,9 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { loadStudy, saveStudy, clearStudy, isStudyMode } from './studyStore.js';
 import { needsResumeCheck } from './guards.js';
 import { emit, flush, installUnloadFlush, pendingCount, resetQueue } from './events.js';
+import { closeSession } from './closeSession.js';
 import { apiUrl } from '../services/apiBase.js';
+import { warmStudyProxy } from '../services/transport.js';
 import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
 import { navigate } from '../state/router.js';
 import { getUnityAvailability, getUnityLoadState, probeUnity } from '../avatar/unity/unityBridge.js';
@@ -172,8 +174,19 @@ export function StudyProvider({ children }) {
       // which would otherwise pre-fill this participant's questionnaires and be
       // re-emitted under the new participant's code — including for items this
       // participant never saw.
-      ...(data.resumed ? {} : { responses: {}, taskId: '', taskStartedAt: null }),
+      // convoIds included: leftover thread ids would rejoin the previous
+      // participant's conversation, putting their chat on this person's screen.
+      ...(data.resumed ? {} : { responses: {}, taskId: '', taskStartedAt: null, convoIds: {} }),
     });
+
+    // First chance the transport is armed (sessionId + code now stored). Boot
+    // the proxy functions while the participant reads the background questions.
+    warmStudyProxy();
+
+    // The session row is created before the participant reaches this screen, so
+    // without this a refresh on the very first questionnaire resumes to whatever
+    // step the row was born with.
+    checkpoint({ step: data.resumed ? (resumeStep || 'background') : 'background' });
 
     emit('session_start', {
       group: data.group,
@@ -187,7 +200,7 @@ export function StudyProvider({ children }) {
     });
     flush();
     return data;
-  }, [update, state.step, state.stageIndex, state.taskIndex]);
+  }, [update, checkpoint, state.step, state.stageIndex, state.taskIndex]);
 
   const setResponse = useCallback((key, value) => {
     setState((prev) => saveStudy({ responses: { ...prev.responses, [key]: value } }));
@@ -200,6 +213,11 @@ export function StudyProvider({ children }) {
     update({ step: 'task', taskStartedAt: Date.now(), taskId: task.id });
     checkpoint({ step: 'task' });
     emit('task_start', { arm: stage.arm, taskId: task.id, set: stage.set });
+    // The participant now reads the task and composes a question — enough idle
+    // time for the proxy functions to have gone cold. Wake them so the first
+    // turn isn't the slow one (task timing starts now, so a cold start would
+    // land inside time-on-task).
+    warmStudyProxy();
     navigate(stage.arm === 'A' ? '#/app/voice' : '#/app/chat');
   }, [stage, task, update, checkpoint]);
 
@@ -259,12 +277,12 @@ export function StudyProvider({ children }) {
     emit(stoppedEarly ? 'session_stopped' : 'session_complete', {});
     update({ step: stoppedEarly ? 'stopped' : 'done', taskStartedAt: null });
     navigate('#/study');
-    try {
-      await flush();
-      if (s.sessionId) await post('/api/study/complete', { sessionId: s.sessionId, stoppedEarly }, s.accessCode);
-    } catch (err) {
-      console.warn(`[study] could not close session: ${err?.message ?? err}`);
-    }
+    await closeSession({
+      flush,
+      complete: s.sessionId
+        ? () => post('/api/study/complete', { sessionId: s.sessionId, stoppedEarly }, s.accessCode)
+        : null,
+    });
     // stage/task are needed to close an open task above.
   }, [update, stage, task]);
 
@@ -275,7 +293,9 @@ export function StudyProvider({ children }) {
       case 'info': return update({ step: 'group' });
       case 'group': return update({ step: 'consent' });
       case 'consent': return update({ step: 'setup' });
-      case 'setup': return update({ step: 'background' });
+      case 'setup':
+        checkpoint({ step: 'background' });
+        return update({ step: 'background' });
       case 'background':
         emit('background_done', { responses: s.responses });
         checkpoint({ step: 'armbrief' });
@@ -302,7 +322,9 @@ export function StudyProvider({ children }) {
         }
         // Participants living with dementia get three plain-language questions
         // instead of SUS (instruments.md §7).
-        return update({ step: s.group === 'plwd' ? 'likert' : 'sus' });
+        const afterTasks = s.group === 'plwd' ? 'likert' : 'sus';
+        checkpoint({ step: afterTasks });
+        return update({ step: afterTasks });
       }
       case 'sus':
         emit('sus_done', { arm: stage?.arm, responses: s.responses });

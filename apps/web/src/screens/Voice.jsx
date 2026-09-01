@@ -265,7 +265,10 @@ export default function Voice() {
           )}
 
           <div style={{ position: 'relative', pointerEvents: 'auto' }}>
-            {vListening && <span aria-hidden="true" style={{ position: 'absolute', inset: '-6px', borderRadius: '50%', border: '3px solid var(--primary)', animation: 'dgPulse 1.6s ease-out infinite' }} />}
+            {/* pointerEvents none is load-bearing: the positioned ring paints OVER
+                the static button and, left interactive, swallowed every tap while
+                listening — "Tap when finished" did nothing. */}
+            {vListening && <span aria-hidden="true" style={{ position: 'absolute', inset: '-6px', borderRadius: '50%', border: '3px solid var(--primary)', animation: 'dgPulse 1.6s ease-out infinite', pointerEvents: 'none' }} />}
             <button onClick={micTap} aria-label={micLabel} title={micLabel} className="hv2" style={{ width: '72px', height: '72px', borderRadius: '50%', border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 22px rgba(45,95,112,.45)' }}>
               <MicIcon />
             </button>

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as S from '../data/services.js';
+import { warmAll } from '../data/articles/index.js';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
@@ -8,6 +9,11 @@ export default function Library() {
   const { effDark } = useSettings();
   const [libQ, setLibQ] = useState('');
   const [libCat, setLibCat] = useState(null);
+  const [, setWarmed] = useState(false);
+
+  // Pre-load the article body chunks so search can match body text; the state
+  // bump re-runs searchArticles once the text cache is populated.
+  useEffect(() => { warmAll().then(() => setWarmed(true)); }, []);
 
   const filtered = S.searchArticles(libQ).filter((a) => !libCat || a.cat === libCat);
   const libCatName = libCat ? S.getCat(libCat).name : '';

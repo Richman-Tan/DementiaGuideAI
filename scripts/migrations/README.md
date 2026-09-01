@@ -21,6 +21,10 @@ dated files.
 | `2026-07-16_production_snapshot.sql` | 📄 reference (do NOT run) | Verbatim capture of the live objects from that dump — the source of truth for F-14 |
 | `2026-07-17_a_provenance_columns.sql` | ✅ run 2026-07-17 | Added provenance columns; backfilled from tags[] (0 NULL document_id; iSupport → country/module/chunk_level; curated → document_id='curated') |
 | `2026-07-17_b_canonical_match_chunks.sql` | ✅ run 2026-07-17 | Canonical `match_chunks`: production scoring verbatim (0.7 cosine / 0.3 ts_rank_cd), filters on provenance columns, returns document_id/chunk_level. **Verified: all 32 labelled eval questions return byte-identical retrieved ids vs the frozen baseline.** |
+| `2026-08-18_backend_v1.sql` | ✅ run (verified 2026-08-24) | Identity, server-side `conversations`, `usage_events` |
+| `2026-08-18_study_tables.sql` | ✅ run (verified 2026-08-24) | `study_sessions`, `study_events`, `study_usage` + `bump_study_usage()`; RLS on with no policies, `service_role` only |
+| `2026-08-18_participant_allocation.sql` | ⏳ apply with study_tables | `study_participant_seq` + `claim_participant_number()`. Not verifiable with the anon key — check with the service role before enrolling |
+| `2026-08-19_study_version_stamp.sql` | ⏳ verify before enrolling | Adds `study_sessions.study_version`. `apps/api/api/study/session.js` selects **and** inserts this column, so if it is missing every session create fails |
 
 After any corpus replacement (Stage 9), rebuild the ivfflat index so its
 training clusters match the new data: `reindex index knowledge_chunks_embedding_idx;`

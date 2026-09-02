@@ -65,6 +65,18 @@ describe('a fresh session inherits no threads', () => {
   });
 });
 
+describe('chat turns are tagged with the arm at call time', () => {
+  it('run() reads currentArm(), not the render closure', () => {
+    // The regression: `send` is memoized once at mount and calls the first
+    // render's `run`, whose captured studyArm is whatever the store held at
+    // page load — null for a chat-first participant, mis-tagging their
+    // turn/latency events (2026-09-02 regression run).
+    const chatContext = src('../src/state/ChatContext.jsx');
+    expect(chatContext).toMatch(/const arm = currentArm\(\);/);
+    expect(chatContext).not.toMatch(/const arm = studyArm;/);
+  });
+});
+
 describe('study-page stop is two-step', () => {
   it('StopBar confirms before ending the session', () => {
     const screen = src('../src/study/screens/StudyScreen.jsx');

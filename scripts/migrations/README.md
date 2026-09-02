@@ -28,3 +28,8 @@ dated files.
 
 After any corpus replacement (Stage 9), rebuild the ivfflat index so its
 training clusters match the new data: `reindex index knowledge_chunks_embedding_idx;`
+
+- `2026-09-02_claim_skips_existing.sql` — ✅ applied to production 2026-09-02 via the
+  management API and verified with live claims (skipped an occupied number 5 → returned 6).
+  Replaces `claim_participant_number()` so a claim can never collide with a row that
+  already holds that number (typed participant codes insert rows ahead of the sequence).

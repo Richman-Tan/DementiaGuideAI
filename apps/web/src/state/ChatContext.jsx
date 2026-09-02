@@ -157,7 +157,13 @@ export function ChatProvider({ children }) {
     // Text arm of the study. No STT or TTS stage here, so the turn timer records
     // retrieval and time-to-first-token only — which is the fair comparison
     // against the voice arm's to-first-audio.
-    const arm = studyArm;
+    //
+    // Read at call time, NOT from the render closure: `send` is memoized once
+    // at mount and calls the first render's `run`, whose captured studyArm is
+    // whatever the store held at page load — null for a participant whose chat
+    // arm comes first, which mis-tagged their turn/latency events (found in
+    // the 2026-09-02 regression run).
+    const arm = currentArm();
     const taskId = currentTaskId();
     const turn = createTurnTimer(arm, taskId);
     // Always typed: this screen has no microphone. Recorded explicitly rather

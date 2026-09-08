@@ -9,6 +9,7 @@ import { openaiClient, mapSourcesToCitations } from '../services/openaiClient.js
 import { tts } from '../services/ttsClient.js';
 import { selectTtsMode, markTtsDegraded } from '../services/ttsModeWeb.js';
 import { startSttSession } from '../services/sttWeb.js';
+import { sttErrorPresentation } from './sttErrorCopy.js';
 import { getElevenKey } from '../state/keysStore.js';
 import { createTurnTimer } from '../study/latency.js';
 import { emit } from '../study/events.js';
@@ -396,15 +397,31 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           stopAndTranscribeRef.current?.();
         },
         onError: (err) => {
+          // A recognizer error after start (mid-session revoke, 'network',
+          // 'audio-capture') otherwise left the screen on "Listening…" with
+          // nothing visible anywhere but the console — the participant's read
+          // of that is "the mic doesn't work", and the data recorded nothing.
           console.warn('[useVoiceConversation] STT session error:', err?.message ?? err);
+          sttSessionRef.current?.cancel();
+          sttSessionRef.current = null;
+          speculativeRef.current?.cancel();
+          speculativeRef.current = null;
+          const { kind, copy } = sttErrorPresentation(err);
+          emit(kind, { arm: currentArm(), taskId: currentTaskId(), reason: String(err?.message ?? err).slice(0, 120) });
+          setError(copy);
+          setVState('idle');
         },
       });
 
       sttSessionRef.current = session;
       setVState('listening');
     } catch (err) {
+      // Same event kinds as the mid-session path: without them a participant
+      // whose mic never worked at all left no trace in the study data.
+      const { kind } = sttErrorPresentation(err);
+      emit(kind, { arm: currentArm(), taskId: currentTaskId(), reason: String(err?.message ?? err).slice(0, 120) });
       if (err?.code === 'permission-denied') {
-        setError(`Microphone access is blocked — allow it in your browser settings to talk with ${profile.name}.`);
+        setError(`Microphone access is blocked — allow it in your browser settings to talk with ${profile.name}, or type your question below.`);
         return;
       }
       console.error('[useVoiceConversation] startRecording:', err);
@@ -467,6 +484,8 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     if (stateRef.current === 'idle') await startRecording();
     else if (stateRef.current === 'listening') await stopAndTranscribe();
     else if (stateRef.current === 'speaking') { stopAudio(); setVState('idle'); setVSubtitle(''); }
+    // 'thinking' is a deliberate no-op: a tap can't cancel a turn already in
+    // flight, so the button dims and the "One moment…" label carries the state.
   }, [startRecording, stopAndTranscribe, stopAudio]);
 
   const repeatLast = useCallback(async () => {

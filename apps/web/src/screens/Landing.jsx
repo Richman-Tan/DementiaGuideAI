@@ -1,8 +1,15 @@
 import React from 'react';
 import { AvatarStageCard } from '../avatar/AvatarStage.jsx';
 import BrandMark from '../components/BrandMark.jsx';
+import { useSettings } from '../state/SettingsContext.jsx';
+import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 
 export default function Landing({ openApp, browseLibrary }) {
+  const { settings } = useSettings();
+  // Whichever avatar actually resolved — naming one the visitor won't meet
+  // (the Unity build can fail to load, swapping in the fallback avatar) broke
+  // trust on the very first screen.
+  const who = useEffectiveAvatarProfile(settings.avatarId).name;
   return (
     <section style={{ maxWidth: '1160px', margin: '0 auto', padding: '0 24px 40px' }}>
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '20px 0' }}>
@@ -15,7 +22,7 @@ export default function Landing({ openApp, browseLibrary }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '36px', alignItems: 'center', padding: '32px 0 44px' }}>
         <div style={{ flex: '1 1 380px', minWidth: '300px' }}>
           <h1 style={{ fontSize: '2.5rem', lineHeight: '1.15', margin: '0 0 16px', letterSpacing: '-.015em', textWrap: 'pretty' }}>Dementia care answers you can actually talk to.</h1>
-          <p style={{ fontSize: '1.15rem', color: 'var(--text2)', margin: '0 0 26px', maxWidth: '34em', textWrap: 'pretty' }}>Aria is a caring AI guide who answers your questions with trusted, cited information — by text or voice.</p>
+          <p style={{ fontSize: '1.15rem', color: 'var(--text2)', margin: '0 0 26px', maxWidth: '34em', textWrap: 'pretty' }}>{`${who} is a caring AI guide who answers your questions with trusted, cited information — by text or voice.`}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
             <button onClick={openApp} style={{ minHeight: '52px', padding: '0 26px', borderRadius: '14px', border: 'none', background: 'var(--primary)', color: '#fff', fontSize: '1.05rem', fontWeight: '600', cursor: 'pointer' }} className="hv2">Open the app</button>
             <button onClick={browseLibrary} style={{ minHeight: '52px', padding: '0 26px', borderRadius: '14px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '1.05rem', fontWeight: '600', cursor: 'pointer' }} className="hv3">Browse the library</button>
@@ -43,7 +50,7 @@ export default function Landing({ openApp, browseLibrary }) {
         </div>
         <div style={{ background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '20px', boxShadow: 'var(--shadow)', padding: '24px' }}>
           <h3 style={{ margin: '0 0 6px', fontSize: '1.15rem' }}>Voice</h3>
-          <p style={{ margin: '0 0 16px', color: 'var(--text2)' }}>Hands-free conversation — just talk, and Aria answers aloud with captions.</p>
+          <p style={{ margin: '0 0 16px', color: 'var(--text2)' }}>{`Hands-free conversation — just talk, and ${who} answers aloud with captions.`}</p>
           <div style={{ background: 'var(--elev)', border: 'var(--bw) solid var(--border)', borderRadius: '14px', padding: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', height: '56px', boxSizing: 'border-box' }}>
             {[['var(--primary)', 0], ['var(--primary)', 0.15], ['var(--primary-l)', 0.3], ['var(--primary)', 0.45], ['var(--primary-l)', 0.6]].map(([c, d], i) => (
               <span key={i} style={{ width: '5px', height: '26px', borderRadius: '3px', background: c, animation: `dgBar 1s ease-in-out ${d}s infinite` }} />
@@ -52,7 +59,7 @@ export default function Landing({ openApp, browseLibrary }) {
         </div>
         <div style={{ background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '20px', boxShadow: 'var(--shadow)', padding: '24px' }}>
           <h3 style={{ margin: '0 0 6px', fontSize: '1.15rem' }}>Library</h3>
-          <p style={{ margin: '0 0 16px', color: 'var(--text2)' }}>49 curated articles across 7 dementia-care categories — the same knowledge Aria uses.</p>
+          <p style={{ margin: '0 0 16px', color: 'var(--text2)' }}>{`49 curated articles across 7 dementia-care categories — the same knowledge ${who} uses.`}</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '6px' }}>
             {['#E8956D', '#4A7C8E', '#F0C070', '#9B8DC4', '#D4756B', '#7FB5A0', '#5B9BD5'].map((c) => (
               <span key={c} style={{ height: '26px', borderRadius: '8px', background: c, opacity: '.75' }} />
@@ -64,7 +71,7 @@ export default function Landing({ openApp, browseLibrary }) {
       <div style={{ background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '20px', padding: '28px', marginBottom: '44px' }}>
         <h2 style={{ margin: '0 0 20px', fontSize: '1.4rem', textAlign: 'center' }}>How it works</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '20px' }}>
-          {[['1', 'Ask', 'Type or speak your question in everyday words.'], ['2', 'Aria checks the trusted library', 'Every answer is grounded in curated, reviewed articles.'], ['3', 'You get a clear answer', 'Plain language, with sources you can read in full.']].map(([n, t, d]) => (
+          {[['1', 'Ask', 'Type or speak your question in everyday words.'], ['2', `${who} checks the trusted library`, 'Every answer is grounded in curated, reviewed articles.'], ['3', 'You get a clear answer', 'Plain language, with sources you can read in full.']].map(([n, t, d]) => (
             <div key={n} style={{ textAlign: 'center' }}>
               <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--tint)', color: 'var(--primary-d)', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>{n}</div>
               <strong>{t}</strong>

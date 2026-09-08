@@ -106,7 +106,9 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     // `modality` is on the START event as well as the completing one because the
     // task-window turn count is built from turn_start alone — without it here,
     // the count could not be split into spoken and typed.
-    emit('turn_start', { arm, taskId, modality, chars: userText.length });
+    // `avatar` is the resolved profile, not the stored setting — a mid-session
+    // Unity failure swaps the face and voice, and each turn records who it was.
+    emit('turn_start', { arm, taskId, modality, chars: userText.length, avatar: profile.id });
 
     // Shared async queue — also the fallback target for a mid-stream WS failure.
     const queue = { promises: [], done: false, notify: null };
@@ -304,6 +306,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           // scored as evidence about the voice interface would confound the
           // headline comparison with no trace in the data.
           modality,
+          avatar: profile.id,
           // Withheld at source when the participant declined — see the chat arm.
           ...transcriptFields({ question: userText, answer: fullText }),
           sourceIds: (citedSources || []).map((c) => c.id ?? c.num ?? null),

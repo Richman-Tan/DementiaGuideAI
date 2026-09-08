@@ -20,7 +20,7 @@ const Dots = () => (
 
 export default function Chat({ isDesktop, isMobile }) {
   const { settings, effDark } = useSettings();
-  // Whichever avatar actually resolved — Aaron by default, Aria on fallback.
+  // Whichever avatar actually resolved — the default, or the fallback.
   // The study brief names the assistant, so this screen must agree with it.
   const who = useEffectiveAvatarProfile(settings.avatarId).name;
   const { messages, typing, chatError, chatErrorMsg, send, retry, newConvo, setDrawer, scrollCb } = useChat();

@@ -16,6 +16,7 @@ import { isStudyMode, currentArm, currentTaskId, transcriptFields, studyConversa
 import { useStudy } from '../study/StudyContext.jsx';
 import { createTurnTimer } from '../study/latency.js';
 import { emit } from '../study/events.js';
+import { resolveEffectiveProfile } from '../avatar/effectiveProfile.js';
 import { MODALITY_TYPED } from '@core/study/studyConfig.mjs';
 
 const ChatCtx = createContext(null);
@@ -169,7 +170,10 @@ export function ChatProvider({ children }) {
     // Always typed: this screen has no microphone. Recorded explicitly rather
     // than inferred from the arm, so that "how did they ask?" is one field in
     // both arms and neither has to be reconstructed from which code path ran.
-    emit('turn_start', { arm, taskId, modality: MODALITY_TYPED, chars: q.length });
+    // `avatar` is the resolved profile at call time (Arm B shows no avatar,
+    // but the same field in both arms keeps "which avatar" one column).
+    const avatar = resolveEffectiveProfile(settingsRef.current.avatarId).id;
+    emit('turn_start', { arm, taskId, modality: MODALITY_TYPED, chars: q.length, avatar });
     try {
       const result = await generateReply({
         question: q,
@@ -207,6 +211,7 @@ export function ChatProvider({ children }) {
         arm,
         taskId,
         modality: MODALITY_TYPED,
+        avatar,
         // A participant who declines has their words withheld here, not at
         // export: declining means the text never reaches the database. The turn
         // is still recorded — turn count is a primary effectiveness measure and

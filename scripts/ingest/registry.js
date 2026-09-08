@@ -54,11 +54,11 @@ const REGISTRY = [
     country: 'NZ',
     licence: 'internal',
     licence_url: null,
-    source_version: '2026-09-draft',
+    source_version: '2026-09',
     loader: 'text',
     local_path: 'content/sources/dg-curated-delirium-2026-09.txt',
     category: 'clinical',
-    enabled: false, // SIGN-OFF GATE: clinician (Sarah) approval required; also remove the file's draft header first.
+    enabled: true, // Clinician (Sarah) sign-off recorded 2026-09-09; draft header removed, MANIFEST re-hashed.
     notes: 'Closes the sleepiness→delirium retrieval gap found in the 2026-09-08 pilot: the corpus framed delirium only as sudden confusion/agitation, so "excessive sleepiness" retrieved insomnia-side chunks. Adapted from the web library articles; v2-nz-safety framing.',
   },
   {

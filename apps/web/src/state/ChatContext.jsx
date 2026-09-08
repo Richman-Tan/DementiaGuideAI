@@ -16,6 +16,7 @@ import { isStudyMode, currentArm, currentTaskId, transcriptFields, studyConversa
 import { useStudy } from '../study/StudyContext.jsx';
 import { createTurnTimer } from '../study/latency.js';
 import { emit } from '../study/events.js';
+import { shouldAdoptServerThread } from './threadAdoption.js';
 import { resolveEffectiveProfile } from '../avatar/effectiveProfile.js';
 import { MODALITY_TYPED } from '@core/study/studyConfig.mjs';
 
@@ -101,6 +102,9 @@ export function ChatProvider({ children }) {
     if (authStatus !== 'ready' || !userId) return undefined;
     let cancelled = false;
     (async () => {
+      // Captured before setConversationId below: whether we are SWITCHING
+      // threads decides if an empty server copy may replace the screen.
+      const prevId = convIdRef.current;
       let id;
       if (isStudyMode() && studyArm) {
         // A fresh thread per (session, arm). getOrCreateConversation reuses the
@@ -122,7 +126,14 @@ export function ChatProvider({ children }) {
       // arm would contaminate it.
       if (!isStudyMode()) await migrateLegacyHistory(userId, id);
       const server = await loadMessages(id);
-      if (cancelled || !server.length) return;
+      if (cancelled) return;
+      // A different thread replaces the screen even when its server copy is
+      // empty — the arm switch is exactly that case, and keeping the previous
+      // arm's messages visible let a participant re-read arm A during arm B
+      // while run() fed them to the model as context. Same-thread emptiness
+      // still keeps the cached render (a hiccup must not blank a real
+      // conversation). See threadAdoption.js.
+      if (!shouldAdoptServerThread(prevId, id, server.length)) return;
       setMessages(server);
       saveCached(server);
     })();

@@ -66,6 +66,7 @@ change against it. Metric definitions and known limitations are in the
 | [rag-evaluation-plan.md](rag-evaluation-plan.md) | Metric definitions, method, known limitations |
 | [rag-improvement-results.md](rag-improvement-results.md) | Measured before/after results |
 | [rag-source-inventory.md](rag-source-inventory.md) | Every knowledge-base source and its review verdict |
+| [adding-content.md](adding-content.md) | How the research team adds its own content (file → manifest → registry → sign-off → ingest) |
 
 ## Where this is heading
 

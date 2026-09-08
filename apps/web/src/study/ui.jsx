@@ -86,6 +86,18 @@ export function Button({ children, onClick, variant = 'primary', disabled, style
   );
 }
 
+/** Tap the selected option again to clear it. Questionnaire answers are
+ *  voluntary (the lead copy says every question can be skipped), but until this
+ *  existed a stray tap was permanent — the pilot tester's "some of the options
+ *  cannot be left unticked". `null` means unanswered, same as never touched. */
+export const nextChoiceValue = (current, tapped) => (current === tapped ? null : tapped);
+
+/** Add or remove a tapped value; always returns a new array. */
+export const toggleMulti = (list, tapped) => {
+  const arr = Array.isArray(list) ? list : [];
+  return arr.includes(tapped) ? arr.filter((v) => v !== tapped) : [...arr, tapped];
+};
+
 /** Labelled radio buttons rather than a slider: bigger targets, no ambiguity
  *  about the selected value (docs/study/instruments.md §8). */
 export function Choice({ name, options, value, onChange, columns = 1 }) {
@@ -105,7 +117,52 @@ export function Choice({ name, options, value, onChange, columns = 1 }) {
             type="button"
             role="radio"
             aria-checked={on}
-            onClick={() => onChange(val)}
+            onClick={() => onChange(nextChoiceValue(value, val))}
+            style={{
+              minHeight: 52,
+              textAlign: 'left',
+              padding: '.75rem 1rem',
+              borderRadius: 12,
+              cursor: 'pointer',
+              fontSize: '1rem',
+              lineHeight: 1.4,
+              background: on ? 'var(--tint)' : 'var(--surface)',
+              color: 'var(--text)',
+              border: `${on ? 2 : 'var(--bw)'} solid ${on ? 'var(--primary)' : 'var(--border)'}`,
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** The multi-select sibling of Choice — same targets, checkbox semantics.
+ *  Not yet wired to any instrument: which questions allow several answers is a
+ *  research decision (docs/study/instruments.md is the approved wording), so
+ *  this exists for the amendment that adds one, not ahead of it. `value` is an
+ *  array; an empty array means unanswered. */
+export function MultiChoice({ name, options, value = [], onChange, columns = 1 }) {
+  const selected = Array.isArray(value) ? value : [];
+  return (
+    <div
+      role="group"
+      aria-label={name}
+      style={{ display: 'grid', gap: '.6rem', gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))` }}
+    >
+      {options.map((o) => {
+        const val = typeof o === 'object' ? o.value : o;
+        const label = typeof o === 'object' ? o.label : o;
+        const on = selected.includes(val);
+        return (
+          <button
+            key={String(val)}
+            type="button"
+            role="checkbox"
+            aria-checked={on}
+            onClick={() => onChange(toggleMulti(selected, val))}
             style={{
               minHeight: 52,
               textAlign: 'left',

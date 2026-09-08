@@ -521,10 +521,18 @@ export const ChatScreen = ({ navigation, route }) => {
             <View style={styles.citationExcerptBox}>
               <Text style={styles.citationExcerpt}>"{activeCitation.excerpt}"</Text>
             </View>
-            {activeCitation.url && (
+            {activeCitation.url ? (
               <TouchableOpacity onPress={() => Linking.openURL(activeCitation.url)}>
-                <Text style={styles.citationLink}>View source ↗</Text>
+                <Text style={styles.citationLink}>View source (opens in your browser)</Text>
               </TouchableOpacity>
+            ) : (
+              // Web parity (SourceDrawerBody): a source with no link says so
+              // instead of offering nothing — 85% of the live corpus has no URL.
+              <Text style={styles.citationOrg}>
+                {activeCitation.org
+                  ? `This source doesn’t have a public link — it comes from ${activeCitation.org}’s materials.`
+                  : 'This source doesn’t have a public link.'}
+              </Text>
             )}
           </TouchableOpacity>
         </TouchableOpacity>

@@ -33,3 +33,8 @@ training clusters match the new data: `reindex index knowledge_chunks_embedding_
   management API and verified with live claims (skipped an occupied number 5 → returned 6).
   Replaces `claim_participant_number()` so a claim can never collide with a row that
   already holds that number (typed participant codes insert rows ahead of the sequence).
+
+- `2026-09-09_backfill_isupport_source_urls.sql` — ⏳ not yet run. Stamps the WHO IRIS
+  URL (+ source_org) onto the 148 legacy `isupport-who` chunks so citations can link out
+  (F-13: 85% of the corpus cites with no way to the publisher). The `isupport-nz` block is
+  commented out — NEEDS CONFIRMATION of the NZ adaptation's publisher before linking.

@@ -47,6 +47,21 @@ const REGISTRY = [
     notes: 'Replaces the provenance-free isupport-who chunks currently in production. Prune old isupport-who ids only after the new set passes rag:eval:retrieval.',
   },
   {
+    document_id: 'dg-delirium-v2026-09',
+    title: 'Sudden sleepiness and delirium in dementia',
+    source_org: 'DementiaGuideAI',
+    source_url: null,
+    country: 'NZ',
+    licence: 'internal',
+    licence_url: null,
+    source_version: '2026-09-draft',
+    loader: 'text',
+    local_path: 'content/sources/dg-curated-delirium-2026-09.txt',
+    category: 'clinical',
+    enabled: false, // SIGN-OFF GATE: clinician (Sarah) approval required; also remove the file's draft header first.
+    notes: 'Closes the sleepiness→delirium retrieval gap found in the 2026-09-08 pilot: the corpus framed delirium only as sudden confusion/agitation, so "excessive sleepiness" retrieved insomnia-side chunks. Adapted from the web library articles; v2-nz-safety framing.',
+  },
+  {
     document_id: 'isupport-nz-v2026',
     title: 'iSupport NZ adaptation (official distribution to be identified)',
     source_org: 'TBD — NZ adaptation publisher',

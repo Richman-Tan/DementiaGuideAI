@@ -1,0 +1,47 @@
+DRAFT — FOR CLINICIAN (SARAH) SIGN-OFF — DO NOT INGEST
+Remove this header block (everything above the first "#" heading) after
+sign-off, before flipping enabled:true in scripts/ingest/registry.js.
+Provenance: adapted from the DementiaGuide web library articles
+(clinical: stages / medications / urgent-review; safety: anxiety, home)
+whose warn-blocks already carry this guidance; those articles are grounded
+in NHS UK, Mayo Clinic and Alzheimer's Society material per
+docs/web/library-source-map.md. Written to the v2-nz-safety framing:
+NZ services only (GP, Healthline 0800 611 116, 111), no medicine names or
+doses, no diagnosis. Prompted by pilot feedback (2026-09-08): an answer on
+excessive sleepiness did not raise delirium as a possible cause.
+
+# Sudden sleepiness or drowsiness can signal delirium
+
+Excessive sleepiness that comes on suddenly — over hours or days — is not how
+dementia normally changes. Dementia progresses slowly, over months. If a person
+with dementia becomes much drowsier than usual, sleeps through most of the day,
+is hard to wake, or seems unusually flat and withdrawn, a common cause is
+delirium: a sudden disturbance of thinking and attention sitting on top of the
+dementia. Delirium is not always agitated and restless. The quiet form —
+sometimes called hypoactive delirium — shows up as sleepiness, drowsiness and
+withdrawal, and it is the form most often missed, because a sleepy person is
+easier to overlook than a distressed one. Delirium usually signals a treatable
+physical problem, such as an infection (urinary tract infections are a common
+trigger), dehydration, constipation, pain, or a recent change in medicines.
+Left untreated, the underlying cause can become serious, so new excessive
+sleepiness deserves prompt medical attention rather than watchful waiting. It
+can look as though the dementia has jumped forward a stage overnight, but with
+the cause found and treated, delirium is usually reversible.
+
+# What to do about sudden drowsiness in a person with dementia
+
+If a person with dementia becomes suddenly and unusually drowsy, treat it as a
+change that needs same-day medical advice. Contact their GP and ask for an
+appointment that day, or call Healthline on 0800 611 116 for free 24/7 advice
+from a registered nurse. Mention how quickly the sleepiness came on, whether
+they have signs of infection (fever, pain passing urine, a cough), how much
+they are drinking, and whether any medicine was recently started, stopped or
+changed — a sudden change after a medicine change deserves same-day advice in
+its own right. Call 111 immediately if the person cannot be woken, is not
+responding normally, has collapsed, or has new weakness, facial drooping or
+trouble speaking. While waiting for advice, keep the person safe and
+comfortable, offer fluids if they can swallow safely, and do not put the change
+down to "the dementia getting worse" — a rapid change over hours or days almost
+always has a physical cause that can be found and treated. Ordinary gradual
+changes in sleep — napping a little more with age, or a slowly shifting sleep
+pattern — are different, and can be discussed with the GP at a routine visit.

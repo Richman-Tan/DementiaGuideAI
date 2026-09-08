@@ -4,7 +4,7 @@
 // status chip top-center, repeat/transcript icons top-right, captions above a
 // bottom cluster of mic + type-or-talk message bar (oshikoi-style). There is
 // NO demo mode — without an OpenAI key a setup card sits over the stage.
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { useChat } from '../state/ChatContext.jsx';
 import { useVoiceConversation } from '../voice/useVoiceConversation.js';
@@ -13,8 +13,14 @@ import { navigate, useWidth } from '../state/router.js';
 import { AvatarBust, ThreeAvatarMount } from '../avatar/AvatarStage.jsx';
 import { UnityAvatarMount } from '../avatar/unity/UnityAvatarStage.jsx';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { loadKeys, saveKeys } from '../state/keysStore.js';
 import { hasCredentials } from '../services/transport.js';
+import { emit } from '../study/events.js';
+
+// Once per page load: the Unity→fallback swap is a property of the session,
+// not of this component's mount count (mirrors the stt_whisper pattern).
+let fallbackAnnounced = false;
 
 // Translucent chrome over the live scene; readable in both themes.
 const glass = {
@@ -148,6 +154,18 @@ export default function Voice() {
 
   const profile = useEffectiveAvatarProfile(settings.avatarId);
   const who = profile.name;
+  // The silent identity swap that confused a pilot tester: the stored choice
+  // is a Unity profile, the ~240MB build fails to load, and the fallback appears with
+  // no explanation — a different name, face and voice. Say so, once, and
+  // record it so the analysis can tell which avatar each session actually saw.
+  const storedProfile = getAvatarProfile(settings.avatarId);
+  const avatarFallback = storedProfile.renderer === 'unity' && profile.id !== storedProfile.id;
+  useEffect(() => {
+    if (avatarFallback && !fallbackAnnounced) {
+      fallbackAnnounced = true;
+      emit('fallback', { kind: 'avatar_fallback', from: storedProfile.id, to: profile.id });
+    }
+  }, [avatarFallback, storedProfile.id, profile.id]);
   // A study participant reaches the model through the server-side proxy with an
   // access code, so there is nothing for them to set up — and showing them a
   // raw `sk-…` field would be both confusing and a dead end.
@@ -219,7 +237,16 @@ export default function Voice() {
       {/* Top overlay */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '16px', pointerEvents: 'none' }}>
         <button onClick={closeVoice} aria-label="Close voice conversation" className="hv3" style={{ ...iconBtn, position: 'absolute', left: '16px', top: '16px', fontSize: '1.1rem', pointerEvents: 'auto' }}>✕</button>
-        {hasKey && <div style={{ pointerEvents: 'auto' }}><StatusChip vState={vState} who={who} /></div>}
+        {hasKey && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', pointerEvents: 'auto' }}>
+            <StatusChip vState={vState} who={who} />
+            {avatarFallback && (
+              <div style={{ ...glass, borderRadius: '999px', padding: '6px 16px', fontSize: '.9rem', color: 'var(--text2)', maxWidth: '36em', textAlign: 'center' }}>
+                {`${storedProfile.name} isn’t available right now, so you’ll talk with ${who} instead — everything else works the same.`}
+              </div>
+            )}
+          </div>
+        )}
         {hasKey && (
           <div style={{ position: 'absolute', right: '16px', top: '16px', display: 'flex', gap: '10px', pointerEvents: 'auto' }}>
             <button onClick={repeatLast} title="Repeat last answer" aria-label="Repeat last answer" className="hv3" style={iconBtn}><RepeatIcon /></button>

@@ -3,12 +3,15 @@ import * as S from '../data/services.js';
 import ArticleBody from '../components/ArticleBody.jsx';
 import { loadBody } from '../data/articles/index.js';
 import { useSettings } from '../state/SettingsContext.jsx';
+import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { useChat } from '../state/ChatContext.jsx';
 import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
 
 export default function Article({ artId }) {
-  const { effDark } = useSettings();
+  const { settings, effDark } = useSettings();
+  // Resolved name, not a hard-coded one — this screen is reachable mid-study.
+  const who = useEffectiveAvatarProfile(settings.avatarId).name;
   const { askNow } = useChat();
   const art = S.getArticle(artId);
   const [attempt, setAttempt] = useState(0);
@@ -68,7 +71,7 @@ export default function Article({ artId }) {
         )}
         <button onClick={() => askNow('Tell me more about ' + art.title.toLowerCase())} style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', minHeight: '52px', padding: '0 24px', borderRadius: '14px', border: 'none', background: 'var(--primary)', color: '#fff', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', margin: '18px 0 30px' }} className="hv2">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5h16v11H9l-5 4z" /></svg>
-          Ask Aria about this
+          {`Ask ${who} about this`}
         </button>
         <h2 style={{ fontSize: '1.2rem', margin: '0 0 12px' }}>Related articles</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '12px', marginBottom: '22px' }}>

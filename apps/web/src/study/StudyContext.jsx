@@ -14,6 +14,8 @@ import { warmStudyProxy } from '../services/transport.js';
 import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
 import { navigate } from '../state/router.js';
 import { getUnityAvailability, getUnityLoadState, probeUnity } from '../avatar/unity/unityBridge.js';
+import { getSettingSnapshot } from '../state/settingsSnapshot.js';
+import { resolveEffectiveProfile } from '../avatar/effectiveProfile.js';
 import { useAuth } from '../state/AuthContext.jsx';
 
 const Ctx = createContext(null);
@@ -203,6 +205,12 @@ export function StudyProvider({ children }) {
       micAck,
       renderer: await detectRenderer(),
       avatarLoad: getUnityLoadState?.() ?? null,
+      // Stored choice vs what actually resolved. The renderer alone couldn't
+      // say WHICH avatar a session saw — and the Unity build failing swaps
+      // Aaron for Aria (new name, face, voice) with only this as the record.
+      avatarId: getSettingSnapshot().avatarId,
+      effectiveAvatarId: resolveEffectiveProfile(getSettingSnapshot().avatarId).id,
+      effectiveAvatarName: resolveEffectiveProfile(getSettingSnapshot().avatarId).name,
     });
     flush();
     return data;

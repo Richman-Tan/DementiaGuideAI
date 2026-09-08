@@ -6,6 +6,7 @@ import { armLabel, GROUPS, IDENTITY_WARNING } from '@core/study/studyConfig.mjs'
 import { useSettings } from '../../state/SettingsContext.jsx';
 import { useEffectiveAvatarProfile } from '../../avatar/effectiveProfile.js';
 import { Page, Button, Choice, LikertItem, TextArea, SupportNumbers, Disclaimer, card, PIS, PisLink } from '../ui.jsx';
+import { setupStartDisabled } from '../guards.js';
 import { navigate } from '../../state/router.js';
 import { CONSENT_ITEMS, SUS_ITEMS, LIKERT_ITEMS, BACKGROUND, POST_TASK, DEBRIEF, PLWD_ITEMS, PLWD_DEBRIEF, SUPPORTER_DEBRIEF } from '../instruments.js';
 
@@ -747,6 +748,7 @@ function SetupStep({ onStop }) {
   // Chosen on the group step, before consent — see GroupStep.
   const group = st.group || 'caregiver';
   const [mic, setMic] = useState(null);
+  const [micAck, setMicAck] = useState(false);
   const [supporterPresent, setSupporterPresent] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -775,6 +777,10 @@ function SetupStep({ onStop }) {
         consent: st.consent || {},
         consentTranscripts: st.consentTranscripts,
         supporterPresent,
+        // Rides on session_start — the event queue is dead until begin()
+        // succeeds, so this is the only way the check's outcome reaches the data.
+        micStatus: mic ?? 'skipped',
+        micAck,
       });
     } catch (err) {
       // Don't leave a rejected code sitting in localStorage — see transport.js.
@@ -858,6 +864,21 @@ function SetupStep({ onStop }) {
                 usually change this from the padlock icon in the address bar.
               </p>
             )}
+            {/* The explicit way past a mic that won't work. Start waits for the
+                check or this tick (see setupStartDisabled): the first tester to
+                skip the optional check found out mid-task that her mic was dead,
+                which read as the app being broken. Typing is a supported path
+                through every speaking task, so nobody is locked out — it just
+                can't be a surprise any more. */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '.9rem', cursor: 'pointer', lineHeight: 1.6 }}>
+              <input
+                type="checkbox"
+                checked={micAck}
+                onChange={(e) => setMicAck(e.target.checked)}
+                style={{ width: 22, height: 22, marginTop: 2, flexShrink: 0 }}
+              />
+              <span>Continue without the microphone — I’ll type my questions instead.</span>
+            </label>
           </>
         )}
       </div>
@@ -907,11 +928,7 @@ function SetupStep({ onStop }) {
       <div style={{ marginTop: '1.25rem' }}>
         <Button
           onClick={start}
-          disabled={
-            busy || !accessCode.trim() || !GROUPS.includes(group)
-            // A PLWD session cannot proceed without a support person present.
-            || (group === 'plwd' && supporterPresent !== true)
-          }
+          disabled={setupStartDisabled({ busy, accessCode, group, supporterPresent, micStatus: mic, micAck })}
         >
           {busy ? 'Starting…' : 'Start the study'}
         </Button>

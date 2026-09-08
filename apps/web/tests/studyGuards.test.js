@@ -7,7 +7,7 @@
 // the analysis will claim — so the checks live here rather than in a manual
 // walkthrough nobody will repeat before every session.
 import { describe, it, expect } from 'vitest';
-import { wrongArmRedirect, needsResumeCheck, ARM_ROUTE } from '../src/study/guards.js';
+import { wrongArmRedirect, needsResumeCheck, setupStartDisabled, ARM_ROUTE } from '../src/study/guards.js';
 
 /** A live session standing in `arm`, at `step`. */
 const live = (arm, step = 'task') => ({ active: true, step, stage: { arm } });
@@ -87,5 +87,49 @@ describe('claiming a restored session', () => {
     // The likeliest handover of all: the previous person stopped without
     // pressing anything, leaving the session open on the task they were doing.
     expect(needsResumeCheck({ sessionId: 'abc', step: 'task' }, false)).toBe(true);
+  });
+});
+
+describe('letting a session start', () => {
+  /** A setup form with everything in order except what the test overrides. */
+  const form = (over = {}) => ({
+    busy: false,
+    accessCode: 'abc123',
+    group: 'caregiver',
+    supporterPresent: null,
+    micStatus: 'ok',
+    micAck: false,
+    ...over,
+  });
+
+  it('starts when the basics and the mic check are in order', () => {
+    expect(setupStartDisabled(form())).toBe(false);
+  });
+
+  it('still requires a code, a known group, and a settled request', () => {
+    expect(setupStartDisabled(form({ accessCode: '  ' }))).toBe(true);
+    expect(setupStartDisabled(form({ accessCode: null }))).toBe(true);
+    expect(setupStartDisabled(form({ group: 'nope' }))).toBe(true);
+    expect(setupStartDisabled(form({ busy: true }))).toBe(true);
+  });
+
+  it('still requires a support person for a PLWD session', () => {
+    expect(setupStartDisabled(form({ group: 'plwd' }))).toBe(true);
+    expect(setupStartDisabled(form({ group: 'plwd', supporterPresent: false }))).toBe(true);
+    expect(setupStartDisabled(form({ group: 'plwd', supporterPresent: true }))).toBe(false);
+  });
+
+  it('waits for the mic check when it has not been run', () => {
+    // The gap the first tester fell through: the check was optional, so a dead
+    // mic was discovered mid-task and read as the app being broken.
+    expect(setupStartDisabled(form({ micStatus: null }))).toBe(true);
+    expect(setupStartDisabled(form({ micStatus: 'denied' }))).toBe(true);
+  });
+
+  it('lets an explicit "continue without the microphone" through', () => {
+    // Typing is a supported path through every Arm A task; the tick just makes
+    // the tradeoff a decision instead of a surprise.
+    expect(setupStartDisabled(form({ micStatus: 'denied', micAck: true }))).toBe(false);
+    expect(setupStartDisabled(form({ micStatus: null, micAck: true }))).toBe(false);
   });
 });

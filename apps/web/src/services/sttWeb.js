@@ -73,32 +73,17 @@ function startRecorder(stream) {
 async function startLiveSession({ handsFree, onPartial, onEndOfSpeech, onError }) {
   const Ctor = SpeechRecognitionCtor();
   const stream = await getMicStream();
-  const recorder = startRecorder(stream); // parallel capture for whisper-rescue
+  let recorder;
+  try {
+    recorder = startRecorder(stream); // parallel capture for whisper-rescue
+  } catch (err) {
+    stream.getTracks().forEach((t) => t.stop());
+    throw err;
+  }
 
-  // RMS meter for hands-free endpointing.
   let audioCtx = null;
   let rmsTimer = null;
   let lastRms = 1;
-  if (handsFree) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const srcNode = audioCtx.createMediaStreamSource(stream);
-    const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 512;
-    srcNode.connect(analyser);
-    const buf = new Float32Array(analyser.fftSize);
-    rmsTimer = setInterval(() => {
-      analyser.getFloatTimeDomainData(buf);
-      let sum = 0;
-      for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-      lastRms = Math.sqrt(sum / buf.length);
-    }, RMS_INTERVAL_MS);
-  }
-
-  const rec = new Ctor();
-  rec.lang = 'en-NZ';
-  rec.interimResults = true;
-  rec.continuous = true;
-
   let latestTranscript = '';
   let lastChangeAt = Date.now();
   let finalized = false;
@@ -106,57 +91,89 @@ async function startLiveSession({ handsFree, onPartial, onEndOfSpeech, onError }
   let endTimer = null;
   const startedAt = Date.now();
 
-  rec.onresult = (event) => {
-    let text = '';
-    for (let i = 0; i < event.results.length; i++) text += event.results[i][0].transcript;
-    text = text.trim();
-    if (text && text !== latestTranscript) {
-      latestTranscript = text;
-      lastChangeAt = Date.now();
-      onPartial?.(text);
-    }
-  };
-  rec.onerror = (event) => {
-    // 'no-speech'/'aborted' are routine; real errors go to onError.
-    if (event.error === 'not-allowed') {
-      const e = new Error('Microphone permission denied');
-      e.code = 'permission-denied';
-      onError?.(e);
-    } else if (event.error && event.error !== 'no-speech' && event.error !== 'aborted') {
-      onError?.(new Error(`speech recognition error: ${event.error}`));
-    }
-  };
-  rec.onend = () => {
-    finalized = true;
-    if (finalResolve) finalResolve();
-  };
-  rec.start();
-
-  // Hands-free endpointing: no transcript change for HANDS_FREE_SILENCE_MS AND
-  // low RMS → end of speech. Nothing at all for the lead window → give up.
-  if (handsFree) {
-    endTimer = setInterval(() => {
-      const now = Date.now();
-      if (!latestTranscript) {
-        if (now - startedAt > HANDS_FREE_MAX_LEAD_SILENCE_MS) {
-          clearInterval(endTimer);
-          onEndOfSpeech?.({ reason: 'lead-silence' });
-        }
-        return;
-      }
-      if (now - lastChangeAt > HANDS_FREE_SILENCE_MS && lastRms < RMS_SILENCE_THRESHOLD) {
-        clearInterval(endTimer);
-        onEndOfSpeech?.({ reason: 'silence' });
-      }
-    }, RMS_INTERVAL_MS);
-  }
-
   const teardown = () => {
     clearInterval(endTimer);
     clearInterval(rmsTimer);
     try { audioCtx?.close(); } catch { /* closed */ }
     stream.getTracks().forEach((t) => t.stop());
   };
+
+  // Everything from here to a running recognizer can throw (AudioContext caps,
+  // a recognizer already-started error). Without the catch the mic stream and
+  // timers stayed live — the browser's mic indicator stuck on — while the
+  // facade fell back and opened a SECOND capture via getUserMedia.
+  let rec;
+  try {
+    // RMS meter for hands-free endpointing.
+    if (handsFree) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const srcNode = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      srcNode.connect(analyser);
+      const buf = new Float32Array(analyser.fftSize);
+      rmsTimer = setInterval(() => {
+        analyser.getFloatTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+        lastRms = Math.sqrt(sum / buf.length);
+      }, RMS_INTERVAL_MS);
+    }
+
+    rec = new Ctor();
+    rec.lang = 'en-NZ';
+    rec.interimResults = true;
+    rec.continuous = true;
+
+    rec.onresult = (event) => {
+      let text = '';
+      for (let i = 0; i < event.results.length; i++) text += event.results[i][0].transcript;
+      text = text.trim();
+      if (text && text !== latestTranscript) {
+        latestTranscript = text;
+        lastChangeAt = Date.now();
+        onPartial?.(text);
+      }
+    };
+    rec.onerror = (event) => {
+      // 'no-speech'/'aborted' are routine; real errors go to onError.
+      if (event.error === 'not-allowed') {
+        const e = new Error('Microphone permission denied');
+        e.code = 'permission-denied';
+        onError?.(e);
+      } else if (event.error && event.error !== 'no-speech' && event.error !== 'aborted') {
+        onError?.(new Error(`speech recognition error: ${event.error}`));
+      }
+    };
+    rec.onend = () => {
+      finalized = true;
+      if (finalResolve) finalResolve();
+    };
+    rec.start();
+
+    // Hands-free endpointing: no transcript change for HANDS_FREE_SILENCE_MS AND
+    // low RMS → end of speech. Nothing at all for the lead window → give up.
+    if (handsFree) {
+      endTimer = setInterval(() => {
+        const now = Date.now();
+        if (!latestTranscript) {
+          if (now - startedAt > HANDS_FREE_MAX_LEAD_SILENCE_MS) {
+            clearInterval(endTimer);
+            onEndOfSpeech?.({ reason: 'lead-silence' });
+          }
+          return;
+        }
+        if (now - lastChangeAt > HANDS_FREE_SILENCE_MS && lastRms < RMS_SILENCE_THRESHOLD) {
+          clearInterval(endTimer);
+          onEndOfSpeech?.({ reason: 'silence' });
+        }
+      }, RMS_INTERVAL_MS);
+    }
+  } catch (err) {
+    recorder.abort();
+    teardown();
+    throw err;
+  }
 
   return {
     provider: 'web-speech',
@@ -198,7 +215,13 @@ async function startLiveSession({ handsFree, onPartial, onEndOfSpeech, onError }
 // ─── Whisper fallback provider ────────────────────────────────────────────────
 async function startWhisperSession() {
   const stream = await getMicStream();
-  const recorder = startRecorder(stream);
+  let recorder;
+  try {
+    recorder = startRecorder(stream);
+  } catch (err) {
+    stream.getTracks().forEach((t) => t.stop());
+    throw err;
+  }
   const teardown = () => stream.getTracks().forEach((t) => t.stop());
   return {
     provider: 'whisper',

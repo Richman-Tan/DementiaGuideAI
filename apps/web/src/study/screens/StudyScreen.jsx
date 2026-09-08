@@ -740,6 +740,7 @@ function ConsentStep({ onNext, onStop }) {
 // participant never discovers halfway through that voice cannot work.
 function SetupStep({ onStop }) {
   const st = useStudy();
+  const { setSetting } = useSettings();
   const [participantCode, setParticipantCode] = useState(st.participantCode || '');
   // Open by default only when a code is already on file, i.e. this really is a
   // resume — otherwise the field stays out of a first-timer's way.
@@ -770,7 +771,7 @@ function SetupStep({ onStop }) {
     setBusy(true);
     setError('');
     try {
-      await st.begin({
+      const data = await st.begin({
         participantCode,
         accessCode,
         group,
@@ -782,6 +783,10 @@ function SetupStep({ onStop }) {
         micStatus: mic ?? 'skipped',
         micAck,
       });
+      // dg_settings survives "Clear this device" (deliberately — it is not
+      // study state), so on a shared laptop the previous participant's text
+      // size would otherwise carry over. A resumed session keeps its own.
+      if (!data.resumed) setSetting('textScale', 1);
     } catch (err) {
       // Don't leave a rejected code sitting in localStorage — see transport.js.
       st.update({ accessCode: '' });

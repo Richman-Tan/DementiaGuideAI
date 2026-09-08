@@ -9,6 +9,7 @@ import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { useStudy } from '../study/StudyContext.jsx';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
 import { CitationText } from '../components/CitationText.jsx';
+import { makeStickTracker } from '../lib/autoscroll.js';
 
 const Dots = () => (
   <div style={{ alignSelf: 'flex-start', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '18px 18px 18px 4px', padding: '16px 20px', display: 'flex', gap: '6px', boxShadow: 'var(--shadow)' }}>
@@ -33,12 +34,39 @@ export default function Chat({ isDesktop, isMobile }) {
   const [panel, setPanel] = useState(true);
   const chatEl = useRef(null);
 
+  // Follow new content only while the reader is at the bottom. Every streamed
+  // token fires scrollCb (ChatContext), and unconditionally jumping made the
+  // transcript unreadable mid-stream — scroll up to reread and the view is
+  // yanked back down ("the script goes whizzing by"). The tracker holds the
+  // decision; the "Jump to latest" pill is the way back once detached.
+  const stickRef = useRef(makeStickTracker());
+  const [detached, setDetached] = useState(false);
+
   useEffect(() => {
-    scrollCb.current = () => { if (chatEl.current) chatEl.current.scrollTop = chatEl.current.scrollHeight; };
+    scrollCb.current = () => {
+      if (chatEl.current && stickRef.current.stuck()) chatEl.current.scrollTop = chatEl.current.scrollHeight;
+    };
     scrollCb.current();
     return () => { scrollCb.current = null; };
   }, [scrollCb]);
-  useEffect(() => { scrollCb.current && scrollCb.current(); }, [messages, typing, scrollCb]);
+  useEffect(() => {
+    // A cleared transcript has no bottom to be away from — re-stick so the
+    // next conversation follows its first answer.
+    if (messages.length === 0) stickRef.current.jump();
+    scrollCb.current && scrollCb.current();
+  }, [messages, typing, scrollCb]);
+
+  const onTranscriptScroll = () => {
+    const el = chatEl.current;
+    if (!el) return;
+    stickRef.current.onScroll(el);
+    setDetached(!stickRef.current.stuck());
+  };
+  const jumpToLatest = () => {
+    stickRef.current.jump();
+    setDetached(false);
+    if (chatEl.current) chatEl.current.scrollTop = chatEl.current.scrollHeight;
+  };
 
   const submit = () => { if (chatInput.trim()) { send(chatInput); setChatInput(''); } };
   // Keep the last message visible when the composer grows and shrinks the transcript.
@@ -55,10 +83,11 @@ export default function Chat({ isDesktop, isMobile }) {
             {isDesktop && !panel && !armB && (
               <button onClick={() => setPanel(true)} style={{ minHeight: '44px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv3">{`Show ${who} panel`}</button>
             )}
-            <button onClick={newConvo} style={{ minHeight: '44px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv4">New conversation</button>
+            <button onClick={() => { stickRef.current.jump(); setDetached(false); newConvo(); }} style={{ minHeight: '44px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv4">New conversation</button>
           </div>
         </div>
-        <div ref={chatEl} style={{ flex: '1', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', padding: '6px 4px 16px' }}>
+        <div style={{ position: 'relative', flex: '1', minHeight: '0', display: 'flex', flexDirection: 'column' }}>
+        <div ref={chatEl} onScroll={onTranscriptScroll} style={{ flex: '1', minHeight: '0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', padding: '6px 4px 16px' }}>
           {chatEmpty && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', padding: '36px 16px', textAlign: 'center' }}>
               {!armB && <AvatarBust size={90} />}
@@ -116,6 +145,12 @@ export default function Chat({ isDesktop, isMobile }) {
               <button onClick={retry} style={{ minHeight: '44px', padding: '0 18px', borderRadius: '12px', border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: '600', cursor: 'pointer' }} className="hv2">Retry</button>
             </div>
           )}
+        </div>
+        {detached && !chatEmpty && (
+          <button onClick={jumpToLatest} className="hv2" style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', minHeight: '44px', padding: '0 18px', borderRadius: '999px', border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: '600', fontSize: '.95rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(28,48,58,.25)' }}>
+            Jump to latest ↓
+          </button>
+        )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <div style={{ textAlign: 'center', color: 'var(--text2)', fontSize: '.8rem' }}>General information only — not medical advice.</div>

@@ -34,7 +34,9 @@ training clusters match the new data: `reindex index knowledge_chunks_embedding_
   Replaces `claim_participant_number()` so a claim can never collide with a row that
   already holds that number (typed participant codes insert rows ahead of the sequence).
 
-- `2026-09-09_backfill_isupport_source_urls.sql` — ⏳ not yet run. Stamps the WHO IRIS
-  URL (+ source_org) onto the 148 legacy `isupport-who` chunks so citations can link out
-  (F-13: 85% of the corpus cites with no way to the publisher). The `isupport-nz` block is
-  commented out — NEEDS CONFIRMATION of the NZ adaptation's publisher before linking.
+- `2026-09-09_backfill_isupport_source_urls.sql` — ✅ run 2026-09-09 (via the service
+  role, supabase-js). Preflight found production ahead of the 2026-07 snapshot: the 152
+  `isupport-who` chunks already carried the WHO IRIS URL (WHO block = verified no-op), and
+  the 176 `isupport-nz` chunks already had `source_org='Alzheimers NZ'` — so the NZ block
+  stamps the org-level `https://alzheimers.org.nz/` (matching the curated convention).
+  After it: zero chunks corpus-wide with a NULL source_url. Deep links remain content work.

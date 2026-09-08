@@ -89,10 +89,12 @@ const QUESTIONS = [
   { id: 'A29', set: 'A', category: 'prevention', relevant: ['prevention_007'], acceptable: [],
     question: 'The doctor said my mum has mild cognitive impairment. What does that mean?' },
   // 2026-09-08 pilot: the answer to an excessive-sleepiness question never
-  // raised delirium — every sleep chunk is insomnia-side, and the delirium
-  // chunks are keyed on sudden CONFUSION. Labels land with the ingest of
-  // dg-delirium-v2026-09 (fill `relevant` with the real chunk ids then).
-  { id: 'A33', set: 'A', category: 'clinical', relevant: [], acceptable: ['clinical_004', 'clinical_008'], pendingContent: true,
+  // raised delirium — every sleep chunk was insomnia-side, and the delirium
+  // chunks were keyed on sudden CONFUSION. Closed by dg-delirium-v2026-09
+  // (signed off 2026-09-09); ids are the ingester's deterministic chunk ids.
+  { id: 'A33', set: 'A', category: 'clinical',
+    relevant: ['dg_delirium_v2026_09_736cfad1'],
+    acceptable: ['dg_delirium_v2026_09_9d3492c4', 'clinical_004', 'clinical_008'],
     question: 'My mother with dementia has suddenly become very drowsy and hard to wake today — is this just the dementia getting worse?' },
 
   // ── A-neighbour — several plausible chunks ─────────────────────────────────

@@ -1,6 +1,7 @@
 {
-  "generatedAt": "2026-09-12T09:52:28.706Z",
+  "generatedAt": "2026-09-12T23:43:24.434Z",
   "sources": [
+    "live knowledge_chunks (453 rows)",
     "local knowledgeBase.js + content/sources/*.txt",
     "v2 system prompt",
     "prompt/assertion helplines"

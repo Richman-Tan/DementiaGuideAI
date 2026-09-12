@@ -33,6 +33,13 @@ plus an index of the six research documents behind it.
 Config lives in `packages/core/rag/`; tooling in `scripts/eval/` and
 `scripts/ingest/`.
 
+## Evaluation
+
+| Doc | What it covers |
+|---|---|
+| [eval/evaluation-plan.md](eval/evaluation-plan.md) | The final-project evaluation design: claims, experiments (prompt/RAG ablation, safety, latency, lip-sync, user study), statistics, priorities |
+| [eval/README.md](eval/README.md) | How to run the harness: `scripts/eval/`, `scripts/lipsync/`, outputs under `docs/report/eval/` |
+
 ## Subsystems
 
 | Doc | What it covers |

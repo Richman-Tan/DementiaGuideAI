@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2026-09-12T09:52:28.706Z",
+  "sources": [
+    "local knowledgeBase.js + content/sources/*.txt",
+    "v2 system prompt",
+    "prompt/assertion helplines"
+  ],
+  "count": 6,
+  "numbers": [
+    "0508828865",
+    "0800004001",
+    "0800543354",
+    "0800611116",
+    "111",
+    "1737"
+  ]
+}

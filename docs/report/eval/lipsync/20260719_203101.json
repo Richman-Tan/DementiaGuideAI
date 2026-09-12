@@ -1,0 +1,153 @@
+{
+  "runId": "20260719_203101",
+  "extractedAt": "2026-09-12T10:00:24.572Z",
+  "totals": {
+    "passed": 11,
+    "total": 11
+  },
+  "minSamples": 218,
+  "suspect": false,
+  "byType": {
+    "peak": {
+      "passed": 4,
+      "total": 4,
+      "min": 0.6544190049171448,
+      "max": 0.7646108269691467
+    },
+    "tongue": {
+      "passed": 4,
+      "total": 4,
+      "min": 0.4420308768749237,
+      "max": 0.7144034504890442
+    },
+    "silence": {
+      "passed": 1,
+      "total": 1,
+      "min": 0.009599491022527218,
+      "max": 0.009599491022527218
+    },
+    "labiodental": {
+      "passed": 1,
+      "total": 1,
+      "min": 0.949165403842926,
+      "max": 0.949165403842926
+    },
+    "end": {
+      "passed": 1,
+      "total": 1,
+      "min": 0.0962522029876709,
+      "max": 0.0962522029876709
+    }
+  },
+  "fixtures": [
+    {
+      "fixture": "hello",
+      "passed": true,
+      "passedChecks": 11,
+      "totalChecks": 11,
+      "jitterRms": 0.014718477614223957,
+      "sampleCount": 218,
+      "checks": [
+        {
+          "time": 0.28600001335144043,
+          "type": "peak",
+          "label": "AH-hello",
+          "passed": true,
+          "value": 0.6727932691574097,
+          "secondary": 0.05819767713546753,
+          "detail": "V_Open=0.67 lead=58ms"
+        },
+        {
+          "time": 0.40799999237060547,
+          "type": "tongue",
+          "label": "L-hello",
+          "passed": true,
+          "value": 0.5580263137817383,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.56"
+        },
+        {
+          "time": 0.7910000085830688,
+          "type": "silence",
+          "label": "pause",
+          "passed": true,
+          "value": 0.009599491022527218,
+          "secondary": 0,
+          "detail": "maxLip=0.01"
+        },
+        {
+          "time": 1.1030000448226929,
+          "type": "peak",
+          "label": "AW-how",
+          "passed": true,
+          "value": 0.6799676418304443,
+          "secondary": 0.07686173915863037,
+          "detail": "V_Open=0.68 lead=77ms"
+        },
+        {
+          "time": 1.8639999628067017,
+          "type": "labiodental",
+          "label": "F-feeling",
+          "passed": true,
+          "value": 0.949165403842926,
+          "secondary": 0,
+          "detail": "V_Dental_Lip=0.95"
+        },
+        {
+          "time": 1.9919999837875366,
+          "type": "peak",
+          "label": "IY-feeling",
+          "passed": true,
+          "value": 0.7646108269691467,
+          "secondary": 0.050379157066345215,
+          "detail": "V_Wide=0.76 lead=50ms"
+        },
+        {
+          "time": 2.114000082015991,
+          "type": "tongue",
+          "label": "L-feeling",
+          "passed": true,
+          "value": 0.4420308768749237,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.44"
+        },
+        {
+          "time": 2.4739999771118164,
+          "type": "tongue",
+          "label": "T-today",
+          "passed": true,
+          "value": 0.7144034504890442,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.71"
+        },
+        {
+          "time": 2.5829999446868896,
+          "type": "peak",
+          "label": "AH-today",
+          "passed": true,
+          "value": 0.6544190049171448,
+          "secondary": 0.24146080017089844,
+          "detail": "V_Open=0.65 lead=241ms"
+        },
+        {
+          "time": 2.691999912261963,
+          "type": "tongue",
+          "label": "D-today",
+          "passed": true,
+          "value": 0.6774146556854248,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.68"
+        },
+        {
+          "time": 3.193000078201294,
+          "type": "end",
+          "label": "segment-end",
+          "passed": true,
+          "value": 0.0962522029876709,
+          "secondary": 0,
+          "detail": "decay=96ms"
+        }
+      ]
+    }
+  ]
+}

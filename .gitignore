@@ -88,3 +88,6 @@ apps/web/public/unity/Build/
 # sibling `build.gradle` is source and must stay tracked.
 .gradle/
 **/android/build/
+
+# Evaluation scratch: fetched passage text for the judges (regenerable)
+.cache/

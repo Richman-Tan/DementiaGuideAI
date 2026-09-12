@@ -11,14 +11,29 @@
  * Usage:
  *   node scripts/parse-latency.mjs path/to/console.log
  *   pbpaste | node scripts/parse-latency.mjs           # from clipboard / stdin
+ *   node scripts/parse-latency.mjs log.txt --out docs/report/eval/final/latency_web_wifi.csv --group-by mode --raw-csv turns.csv
  *
- * Writes docs/report/latency_results.csv (matches Table 3) and prints a summary.
+ * Reports median, mean, p90, p95, sd and range per stage (n stated). Stages
+ * present in the summaries but not in the Table 3 list (playback_wait_ms,
+ * to_first_token_ms, turn_total_ms, ws_open_ms, tts_first_chunk_ms) are appended
+ * automatically. --group-by splits the table by a summary field such as `mode`
+ * (streaming | streaming-degraded | legacy) or a bench label.
+ * Writes docs/report/latency_results.csv by default (override with --out).
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { createRequire } from 'node:module';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const require = createRequire(import.meta.url);
+const { summary } = require('./eval/lib/stats.js');
+
+const args = process.argv.slice(2);
+const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
+const GROUP_BY = argVal('--group-by');
+const OUT = argVal('--out');
+const RAW_CSV = argVal('--raw-csv');
 
 // stage key → human label (order = Table 3 order)
 const STAGES = [
@@ -29,18 +44,19 @@ const STAGES = [
   ['tts_first_ms',      'TTS request → first audio'],
   ['to_first_audio_ms', 'End to end → first avatar audio'],
 ];
+const EXTRA_STAGES = [
+  ['playback_wait_ms',   'Audio received → audible'],
+  ['to_first_token_ms',  'End to end → first text token'],
+  ['turn_total_ms',      'End to end → audio finished'],
+  ['ws_open_ms',         'TTS WebSocket open'],
+  ['tts_first_chunk_ms', 'TTS first streamed chunk'],
+];
 
 function readInput() {
-  const arg = process.argv[2];
+  const flagArgs = new Set(['--group-by', '--out', '--raw-csv']);
+  const arg = args.find((a, i) => !a.startsWith('--') && !flagArgs.has(args[i - 1]));
   if (arg) return readFileSync(arg, 'utf8');
   try { return readFileSync(0, 'utf8'); } catch { return ''; }
-}
-
-function median(xs) {
-  if (!xs.length) return null;
-  const s = [...xs].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
 }
 
 const text = readInput();
@@ -59,18 +75,33 @@ if (!summaries.length) {
   process.exit(1);
 }
 
-const csv = ['"Stage","Median (ms)","Range (ms)","n"'];
-console.log(`Parsed ${summaries.length} latency summaries.\n`);
-console.log('Stage                              Median   Range          n');
-for (const [key, label] of STAGES) {
-  const vals = summaries.map(s => s[key]).filter(v => typeof v === 'number');
-  const med = median(vals);
-  const range = vals.length ? `${Math.min(...vals)} to ${Math.max(...vals)}` : '';
-  csv.push(`"${label}","${med ?? ''}","${range}","${vals.length}"`);
-  console.log(`${label.padEnd(34)} ${String(med ?? '—').padStart(6)}   ${range.padEnd(14)} ${vals.length}`);
+const present = new Set(summaries.flatMap(s => Object.keys(s)));
+const stages = [...STAGES, ...EXTRA_STAGES.filter(([k]) => present.has(k))];
+const groups = GROUP_BY ? [...new Set(summaries.map(s => String(s[GROUP_BY] ?? 'unknown')))] : [null];
+
+const csv = ['"Group","Stage","Median (ms)","Range (ms)","n","Mean (ms)","P90 (ms)","P95 (ms)","SD (ms)"'];
+console.log(`Parsed ${summaries.length} latency summaries${GROUP_BY ? ` (grouped by ${GROUP_BY}: ${groups.join(', ')})` : ''}.\n`);
+const f = (x) => (x == null ? '' : String(Math.round(x)));
+for (const g of groups) {
+  const subset = g == null ? summaries : summaries.filter(s => String(s[GROUP_BY] ?? 'unknown') === g);
+  console.log(`${g == null ? '' : `[${GROUP_BY} = ${g}] `}Stage                              Median    Mean     p90     p95      SD   Range          n`);
+  for (const [key, label] of stages) {
+    const vals = subset.map(s => s[key]).filter(v => typeof v === 'number' && Number.isFinite(v));
+    const st = summary(vals);
+    const range = vals.length ? `${st.min} to ${st.max}` : '';
+    csv.push([g ?? '', label, f(st.median), range, vals.length, f(st.mean), f(st.p90), f(st.p95), f(st.sd)].map(v => `"${v}"`).join(','));
+    console.log(`${label.padEnd(34)} ${f(st.median).padStart(6)} ${f(st.mean).padStart(7)} ${f(st.p90).padStart(7)} ${f(st.p95).padStart(7)} ${f(st.sd).padStart(7)}   ${range.padEnd(14)} ${vals.length}`);
+  }
+  console.log('');
 }
 
-const out = resolve(ROOT, 'docs/report/latency_results.csv');
+if (RAW_CSV) {
+  const keys = [...new Set(summaries.flatMap(s => Object.keys(s)))];
+  const raw = [keys.join(','), ...summaries.map(s => keys.map(k => (s[k] == null ? '' : JSON.stringify(s[k]).replace(/^"|"$/g, ''))).join(','))];
+  writeFileSync(resolve(process.cwd(), RAW_CSV), raw.join('\n') + '\n');
+  console.log(`Wrote raw turns to ${RAW_CSV}`);
+}
+const out = OUT ? resolve(process.cwd(), OUT) : resolve(ROOT, 'docs/report/latency_results.csv');
 writeFileSync(out, csv.join('\n') + '\n');
-console.log(`\nWrote ${out} — paste these into Table 3 (report §4.2).`);
-console.log('State n, device, and network conditions alongside the numbers.');
+console.log(`Wrote ${out}.`);
+console.log('State n, device, network conditions, renderer and TTS mode alongside the numbers.');

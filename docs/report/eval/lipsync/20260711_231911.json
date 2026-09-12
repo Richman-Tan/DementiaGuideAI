@@ -1,0 +1,885 @@
+{
+  "runId": "20260711_231911",
+  "extractedAt": "2026-09-12T10:00:24.539Z",
+  "totals": {
+    "passed": 37,
+    "total": 85
+  },
+  "minSamples": 151,
+  "suspect": false,
+  "byType": {
+    "bilabial": {
+      "passed": 3,
+      "total": 10,
+      "min": 0.5824811458587646,
+      "max": 0.9394280314445496
+    },
+    "peak": {
+      "passed": 29,
+      "total": 29,
+      "min": 0.39880070090293884,
+      "max": 0.8169131278991699
+    },
+    "tongue": {
+      "passed": 0,
+      "total": 27,
+      "min": 0,
+      "max": 0
+    },
+    "end": {
+      "passed": 0,
+      "total": 7,
+      "min": 0.31338024139404297,
+      "max": 0.3242604732513428
+    },
+    "silence": {
+      "passed": 0,
+      "total": 3,
+      "min": 0.1460653692483902,
+      "max": 0.5407576560974121
+    },
+    "labiodental": {
+      "passed": 5,
+      "total": 9,
+      "min": 0.5245535969734192,
+      "max": 0.8996630907058716
+    }
+  },
+  "fixtures": [
+    {
+      "fixture": "bilabials",
+      "passed": false,
+      "passedChecks": 6,
+      "totalChecks": 17,
+      "jitterRms": 0.012510018423199654,
+      "sampleCount": 172,
+      "checks": [
+        {
+          "time": 0.1379999965429306,
+          "type": "bilabial",
+          "label": "P-peter",
+          "passed": true,
+          "value": 0.9151518940925598,
+          "secondary": 0,
+          "detail": "V_Explosive=0.92 openMin=0.00 jawMin=0.00"
+        },
+        {
+          "time": 0.24699999392032623,
+          "type": "peak",
+          "label": "IY-peter",
+          "passed": true,
+          "value": 0.48940926790237427,
+          "secondary": 0.11247320473194122,
+          "detail": "V_Tight=0.49 lead=112ms"
+        },
+        {
+          "time": 0.35600000619888306,
+          "type": "tongue",
+          "label": "T-peter",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 0.6140000224113464,
+          "type": "bilabial",
+          "label": "P-put",
+          "passed": false,
+          "value": 0.8157658576965332,
+          "secondary": 0.0213574580848217,
+          "detail": "V_Explosive=0.82 openMin=0.02 jawMin=0.02"
+        },
+        {
+          "time": 0.7229999899864197,
+          "type": "peak",
+          "label": "UH-put",
+          "passed": true,
+          "value": 0.5825796127319336,
+          "secondary": 0.1229480504989624,
+          "detail": "V_Tight_O=0.58 lead=123ms"
+        },
+        {
+          "time": 0.8320000171661377,
+          "type": "tongue",
+          "label": "T-put",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 1.1299999952316284,
+          "type": "bilabial",
+          "label": "P-pumpkin",
+          "passed": false,
+          "value": 0.8215068578720093,
+          "secondary": 0.14682848751544952,
+          "detail": "V_Explosive=0.82 openMin=0.15 jawMin=0.09"
+        },
+        {
+          "time": 1.2389999628067017,
+          "type": "peak",
+          "label": "AH-pumpkin",
+          "passed": true,
+          "value": 0.45899420976638794,
+          "secondary": 0.12237417697906494,
+          "detail": "V_Open=0.46 lead=122ms"
+        },
+        {
+          "time": 1.3550000190734863,
+          "type": "bilabial",
+          "label": "M-pumpkin",
+          "passed": true,
+          "value": 0.9394280314445496,
+          "secondary": 0.016074037179350853,
+          "detail": "V_Explosive=0.94 openMin=0.02 jawMin=0.01"
+        },
+        {
+          "time": 1.437999963760376,
+          "type": "bilabial",
+          "label": "P-pumpkin",
+          "passed": false,
+          "value": 0.6982595324516296,
+          "secondary": 0.12088800966739655,
+          "detail": "V_Explosive=0.70 openMin=0.12 jawMin=0.08"
+        },
+        {
+          "time": 1.7389999628067017,
+          "type": "tongue",
+          "label": "N-pumpkin",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 1.8630000352859497,
+          "type": "bilabial",
+          "label": "B-by",
+          "passed": false,
+          "value": 0.5824811458587646,
+          "secondary": 0.06481163203716278,
+          "detail": "V_Explosive=0.58 openMin=0.06 jawMin=0.04"
+        },
+        {
+          "time": 2.190999984741211,
+          "type": "tongue",
+          "label": "DH-the",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_Out=0.00"
+        },
+        {
+          "time": 2.4679999351501465,
+          "type": "bilabial",
+          "label": "B-barn",
+          "passed": false,
+          "value": 0.8254833817481995,
+          "secondary": 0.13690388202667236,
+          "detail": "V_Explosive=0.83 openMin=0.14 jawMin=0.08"
+        },
+        {
+          "time": 2.5769999027252197,
+          "type": "peak",
+          "label": "AA-barn",
+          "passed": true,
+          "value": 0.39880070090293884,
+          "secondary": 0.12726545333862305,
+          "detail": "V_Open=0.40 lead=127ms"
+        },
+        {
+          "time": 2.7950000762939453,
+          "type": "tongue",
+          "label": "N-barn",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 3.109999895095825,
+          "type": "end",
+          "label": "segment-end",
+          "passed": false,
+          "value": 0.3164663314819336,
+          "secondary": 0,
+          "detail": "decay=316ms"
+        }
+      ]
+    },
+    {
+      "fixture": "dental",
+      "passed": false,
+      "passedChecks": 4,
+      "totalChecks": 13,
+      "jitterRms": 0.005597296636551619,
+      "sampleCount": 191,
+      "checks": [
+        {
+          "time": 0.15800000727176666,
+          "type": "tongue",
+          "label": "DH-this",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_Out=0.00"
+        },
+        {
+          "time": 0.28600001335144043,
+          "type": "peak",
+          "label": "IH-this",
+          "passed": true,
+          "value": 0.5729380249977112,
+          "secondary": 0.15141892433166504,
+          "detail": "V_Wide=0.57 lead=151ms"
+        },
+        {
+          "time": 0.5690000057220459,
+          "type": "tongue",
+          "label": "TH-thing",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_Out=0.00"
+        },
+        {
+          "time": 0.6980000138282776,
+          "type": "peak",
+          "label": "IH-thing",
+          "passed": true,
+          "value": 0.5901493430137634,
+          "secondary": 0.13949018716812134,
+          "detail": "V_Wide=0.59 lead=139ms"
+        },
+        {
+          "time": 1.2519999742507935,
+          "type": "tongue",
+          "label": "TH-thicker",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_Out=0.00"
+        },
+        {
+          "time": 1.3799999952316284,
+          "type": "peak",
+          "label": "IH-thicker",
+          "passed": true,
+          "value": 0.5900223255157471,
+          "secondary": 0.13600337505340576,
+          "detail": "V_Wide=0.59 lead=136ms"
+        },
+        {
+          "time": 1.7660000324249268,
+          "type": "tongue",
+          "label": "DH-than",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_Out=0.00"
+        },
+        {
+          "time": 2.009999990463257,
+          "type": "tongue",
+          "label": "N-than",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 2.1530001163482666,
+          "type": "tongue",
+          "label": "DH-that",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_Out=0.00"
+        },
+        {
+          "time": 2.390000104904175,
+          "type": "tongue",
+          "label": "T-that",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 2.5260000228881836,
+          "type": "tongue",
+          "label": "TH-thing",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_Out=0.00"
+        },
+        {
+          "time": 2.6540000438690186,
+          "type": "peak",
+          "label": "IH-thing",
+          "passed": true,
+          "value": 0.5870094299316406,
+          "secondary": 0.14674639701843262,
+          "detail": "V_Wide=0.59 lead=147ms"
+        },
+        {
+          "time": 3.0840001106262207,
+          "type": "end",
+          "label": "segment-end",
+          "passed": false,
+          "value": 0.31794071197509766,
+          "secondary": 0,
+          "detail": "decay=318ms"
+        }
+      ]
+    },
+    {
+      "fixture": "hello",
+      "passed": false,
+      "passedChecks": 4,
+      "totalChecks": 11,
+      "jitterRms": 0.007285689003765583,
+      "sampleCount": 203,
+      "checks": [
+        {
+          "time": 0.28600001335144043,
+          "type": "peak",
+          "label": "AH-hello",
+          "passed": true,
+          "value": 0.5679542422294617,
+          "secondary": 0.13857054710388184,
+          "detail": "V_Open=0.57 lead=139ms"
+        },
+        {
+          "time": 0.40799999237060547,
+          "type": "tongue",
+          "label": "L-hello",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 0.7910000085830688,
+          "type": "silence",
+          "label": "pause",
+          "passed": false,
+          "value": 0.16852933168411255,
+          "secondary": 0,
+          "detail": "maxLip=0.17"
+        },
+        {
+          "time": 1.1030000448226929,
+          "type": "peak",
+          "label": "AW-how",
+          "passed": true,
+          "value": 0.6244947910308838,
+          "secondary": 0.17330491542816162,
+          "detail": "V_Open=0.62 lead=173ms"
+        },
+        {
+          "time": 1.8639999628067017,
+          "type": "labiodental",
+          "label": "F-feeling",
+          "passed": false,
+          "value": 0.7813608646392822,
+          "secondary": 0,
+          "detail": "V_Dental_Lip=0.78"
+        },
+        {
+          "time": 1.9919999837875366,
+          "type": "peak",
+          "label": "IY-feeling",
+          "passed": true,
+          "value": 0.6198291182518005,
+          "secondary": 0.1456998586654663,
+          "detail": "V_Tight=0.62 lead=146ms"
+        },
+        {
+          "time": 2.114000082015991,
+          "type": "tongue",
+          "label": "L-feeling",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 2.4739999771118164,
+          "type": "tongue",
+          "label": "T-today",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 2.5829999446868896,
+          "type": "peak",
+          "label": "AH-today",
+          "passed": true,
+          "value": 0.5289285182952881,
+          "secondary": 0.2359778881072998,
+          "detail": "V_Open=0.53 lead=236ms"
+        },
+        {
+          "time": 2.691999912261963,
+          "type": "tongue",
+          "label": "D-today",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 3.193000078201294,
+          "type": "end",
+          "label": "segment-end",
+          "passed": false,
+          "value": 0.31734681129455566,
+          "secondary": 0,
+          "detail": "decay=317ms"
+        }
+      ]
+    },
+    {
+      "fixture": "labiodental",
+      "passed": false,
+      "passedChecks": 9,
+      "totalChecks": 16,
+      "jitterRms": 0.009168609976768494,
+      "sampleCount": 209,
+      "checks": [
+        {
+          "time": 0.15800000727176666,
+          "type": "labiodental",
+          "label": "F-five",
+          "passed": true,
+          "value": 0.8217095136642456,
+          "secondary": 0,
+          "detail": "V_Dental_Lip=0.82"
+        },
+        {
+          "time": 0.31200000643730164,
+          "type": "peak",
+          "label": "AY-five",
+          "passed": true,
+          "value": 0.5602495670318604,
+          "secondary": 0.16491863131523132,
+          "detail": "V_Open=0.56 lead=165ms"
+        },
+        {
+          "time": 0.4650000035762787,
+          "type": "labiodental",
+          "label": "V-five",
+          "passed": true,
+          "value": 0.8945730328559875,
+          "secondary": 0,
+          "detail": "V_Dental_Lip=0.89"
+        },
+        {
+          "time": 0.6209999918937683,
+          "type": "labiodental",
+          "label": "V-very",
+          "passed": true,
+          "value": 0.8996630907058716,
+          "secondary": 0,
+          "detail": "V_Dental_Lip=0.90"
+        },
+        {
+          "time": 0.7490000128746033,
+          "type": "peak",
+          "label": "EH-very",
+          "passed": true,
+          "value": 0.6462293267250061,
+          "secondary": 0.13650840520858765,
+          "detail": "V_Wide=0.65 lead=137ms"
+        },
+        {
+          "time": 1.1610000133514404,
+          "type": "labiodental",
+          "label": "F-fine",
+          "passed": false,
+          "value": 0.7877905964851379,
+          "secondary": 0,
+          "detail": "V_Dental_Lip=0.79"
+        },
+        {
+          "time": 1.315000057220459,
+          "type": "peak",
+          "label": "AY-fine",
+          "passed": true,
+          "value": 0.5981229543685913,
+          "secondary": 0.16597604751586914,
+          "detail": "V_Open=0.60 lead=166ms"
+        },
+        {
+          "time": 1.4559999704360962,
+          "type": "tongue",
+          "label": "N-fine",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 1.5980000495910645,
+          "type": "labiodental",
+          "label": "V-views",
+          "passed": true,
+          "value": 0.8126703500747681,
+          "secondary": 0,
+          "detail": "V_Dental_Lip=0.81"
+        },
+        {
+          "time": 1.8289999961853027,
+          "type": "peak",
+          "label": "UW-views",
+          "passed": true,
+          "value": 0.6986762285232544,
+          "secondary": 0.15003061294555664,
+          "detail": "V_Tight_O=0.70 lead=150ms"
+        },
+        {
+          "time": 2.253999948501587,
+          "type": "labiodental",
+          "label": "V-of",
+          "passed": false,
+          "value": 0.5245535969734192,
+          "secondary": 0,
+          "detail": "V_Dental_Lip=0.52"
+        },
+        {
+          "time": 2.4089999198913574,
+          "type": "tongue",
+          "label": "DH-the",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_Out=0.00"
+        },
+        {
+          "time": 2.7049999237060547,
+          "type": "labiodental",
+          "label": "V-valley",
+          "passed": false,
+          "value": 0.7785004377365112,
+          "secondary": 0,
+          "detail": "V_Dental_Lip=0.78"
+        },
+        {
+          "time": 2.8340001106262207,
+          "type": "peak",
+          "label": "AE-valley",
+          "passed": true,
+          "value": 0.5559963583946228,
+          "secondary": 0.15409326553344727,
+          "detail": "V_Open=0.56 lead=154ms"
+        },
+        {
+          "time": 2.9549999237060547,
+          "type": "tongue",
+          "label": "L-valley",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 3.4179999828338623,
+          "type": "end",
+          "label": "segment-end",
+          "passed": false,
+          "value": 0.3242604732513428,
+          "secondary": 0,
+          "detail": "decay=324ms"
+        }
+      ]
+    },
+    {
+      "fixture": "rounded",
+      "passed": false,
+      "passedChecks": 4,
+      "totalChecks": 6,
+      "jitterRms": 0.006469185464084148,
+      "sampleCount": 151,
+      "checks": [
+        {
+          "time": 0.28600001335144043,
+          "type": "peak",
+          "label": "UW-who",
+          "passed": true,
+          "value": 0.7947068810462952,
+          "secondary": 0.11591410636901855,
+          "detail": "V_Tight_O=0.79 lead=116ms"
+        },
+        {
+          "time": 0.5690000057220459,
+          "type": "peak",
+          "label": "UH-would",
+          "passed": true,
+          "value": 0.8169131278991699,
+          "secondary": 0.19100165367126465,
+          "detail": "V_Tight_O=0.82 lead=191ms"
+        },
+        {
+          "time": 0.6779999732971191,
+          "type": "tongue",
+          "label": "D-would",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 0.9430000185966492,
+          "type": "peak",
+          "label": "UW-choose",
+          "passed": true,
+          "value": 0.7044787406921387,
+          "secondary": 0.14606207609176636,
+          "detail": "V_Tight_O=0.70 lead=146ms"
+        },
+        {
+          "time": 1.7410000562667847,
+          "type": "peak",
+          "label": "UW-shoes",
+          "passed": true,
+          "value": 0.7086135149002075,
+          "secondary": 0.14285361766815186,
+          "detail": "V_Tight_O=0.71 lead=143ms"
+        },
+        {
+          "time": 2.197000026702881,
+          "type": "end",
+          "label": "segment-end",
+          "passed": false,
+          "value": 0.31338024139404297,
+          "secondary": 0,
+          "detail": "decay=313ms"
+        }
+      ]
+    },
+    {
+      "fixture": "sibilant_rhotic",
+      "passed": false,
+      "passedChecks": 6,
+      "totalChecks": 13,
+      "jitterRms": 0.008844266645610332,
+      "sampleCount": 209,
+      "checks": [
+        {
+          "time": 0.28600001335144043,
+          "type": "peak",
+          "label": "IH-sister",
+          "passed": true,
+          "value": 0.657600462436676,
+          "secondary": 0.13549304008483887,
+          "detail": "V_Wide=0.66 lead=135ms"
+        },
+        {
+          "time": 0.5099999904632568,
+          "type": "tongue",
+          "label": "T-sister",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 0.902999997138977,
+          "type": "peak",
+          "label": "AH-runs",
+          "passed": true,
+          "value": 0.5746418237686157,
+          "secondary": 0.13837826251983643,
+          "detail": "V_Open=0.57 lead=138ms"
+        },
+        {
+          "time": 1.0180000066757202,
+          "type": "tongue",
+          "label": "N-runs",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 1.2890000343322754,
+          "type": "peak",
+          "label": "EH-errands",
+          "passed": true,
+          "value": 0.6630517840385437,
+          "secondary": 0.1751694679260254,
+          "detail": "V_Wide=0.66 lead=175ms"
+        },
+        {
+          "time": 1.6480000019073486,
+          "type": "tongue",
+          "label": "N-errands",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 1.7309999465942383,
+          "type": "tongue",
+          "label": "D-errands",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 1.996000051498413,
+          "type": "peak",
+          "label": "EH-every",
+          "passed": true,
+          "value": 0.6582465171813965,
+          "secondary": 0.18233084678649902,
+          "detail": "V_Wide=0.66 lead=182ms"
+        },
+        {
+          "time": 2.124000072479248,
+          "type": "labiodental",
+          "label": "V-every",
+          "passed": true,
+          "value": 0.8094806671142578,
+          "secondary": 0,
+          "detail": "V_Dental_Lip=0.81"
+        },
+        {
+          "time": 2.509999990463257,
+          "type": "bilabial",
+          "label": "M-morning",
+          "passed": false,
+          "value": 0.8301671743392944,
+          "secondary": 0.03253825008869171,
+          "detail": "V_Explosive=0.83 openMin=0.03 jawMin=0.03"
+        },
+        {
+          "time": 2.625,
+          "type": "peak",
+          "label": "AO-morning",
+          "passed": true,
+          "value": 0.47502052783966064,
+          "secondary": 0.12547874450683594,
+          "detail": "V_Open=0.48 lead=125ms"
+        },
+        {
+          "time": 2.8429999351501465,
+          "type": "tongue",
+          "label": "N-morning",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 3.3889999389648438,
+          "type": "end",
+          "label": "segment-end",
+          "passed": false,
+          "value": 0.3184323310852051,
+          "secondary": 0,
+          "detail": "decay=318ms"
+        }
+      ]
+    },
+    {
+      "fixture": "silence_gaps",
+      "passed": false,
+      "passedChecks": 4,
+      "totalChecks": 9,
+      "jitterRms": 0.007171564735472202,
+      "sampleCount": 157,
+      "checks": [
+        {
+          "time": 0.27300000190734863,
+          "type": "peak",
+          "label": "EH-yes",
+          "passed": true,
+          "value": 0.6299564838409424,
+          "secondary": 0.12538838386535645,
+          "detail": "V_Wide=0.63 lead=125ms"
+        },
+        {
+          "time": 0.6489999890327454,
+          "type": "silence",
+          "label": "pause",
+          "passed": false,
+          "value": 0.1460653692483902,
+          "secondary": 0,
+          "detail": "maxLip=0.15"
+        },
+        {
+          "time": 0.9440000057220459,
+          "type": "tongue",
+          "label": "N-no",
+          "passed": false,
+          "value": 0,
+          "secondary": 0,
+          "detail": "V_Tongue_up=0.00"
+        },
+        {
+          "time": 1.0850000381469727,
+          "type": "peak",
+          "label": "OW-no",
+          "passed": true,
+          "value": 0.453730970621109,
+          "secondary": 0.23781871795654297,
+          "detail": "V_Open=0.45 lead=238ms"
+        },
+        {
+          "time": 1.371000051498413,
+          "type": "silence",
+          "label": "pause",
+          "passed": false,
+          "value": 0.5407576560974121,
+          "secondary": 0,
+          "detail": "maxLip=0.54"
+        },
+        {
+          "time": 1.6660000085830688,
+          "type": "bilabial",
+          "label": "M-maybe",
+          "passed": true,
+          "value": 0.9058994054794312,
+          "secondary": 0.03484306484460831,
+          "detail": "V_Explosive=0.91 openMin=0.03 jawMin=0.02"
+        },
+        {
+          "time": 1.8070000410079956,
+          "type": "peak",
+          "label": "EY-maybe",
+          "passed": true,
+          "value": 0.6086093783378601,
+          "secondary": 0.14086997509002686,
+          "detail": "V_Tight=0.61 lead=141ms"
+        },
+        {
+          "time": 1.9420000314712524,
+          "type": "bilabial",
+          "label": "B-maybe",
+          "passed": false,
+          "value": 0.8469409346580505,
+          "secondary": 0.016599439084529877,
+          "detail": "V_Explosive=0.85 openMin=0.02 jawMin=0.02"
+        },
+        {
+          "time": 2.3910000324249268,
+          "type": "end",
+          "label": "segment-end",
+          "passed": false,
+          "value": 0.3182556629180908,
+          "secondary": 0,
+          "detail": "decay=318ms"
+        }
+      ]
+    }
+  ]
+}

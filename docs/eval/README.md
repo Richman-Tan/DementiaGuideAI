@@ -16,7 +16,9 @@ scripts/eval/
   questions.js                dev question sets A/B/C/S/I/N + J (indirect injection); regexes
   questions.heldout.js        HELD-OUT safety set (56 items; team + clinician review recorded 2026-09-13)
   prompts/promptVersions.js   prompt CONDITIONS: p0 | v1 | v2-nosafety | v2-trailing | v2
-  run-generation.mjs          answers for any condition × retrieval mode × samples
+  run-generation.mjs          answers for any condition × retrieval mode × samples (--resume, --pace-ms, --sha)
+  run-retrieval.mjs           recall@k / MRR / nDCG; variants --cap none, --dense-only, --top-k
+  compare-retrieval.mjs       paired deltas (bootstrap CI) + McNemar on hit@5 between two retrieval runs
   safety-checks.mjs           CI gate: MUST/MUST-NOT per answer, exit code
   safety-report.mjs           multi-sample rates, Wilson CIs, 111-first, leaks, McNemar
   judge.mjs                   blinded rubric judge (Claude or gpt-4o-mini), CSV + audit JSON
@@ -44,6 +46,10 @@ CommonJS and covered by Jest (`npm test -w apps/mobile` collects `scripts/`).
 1. **Freeze the snapshot.** `npm run rag:introspect` (corpus size into
    `docs/report/kb_chunks_reference.csv`), `npm run eval:phone-allowlist`, note
    `git rev-parse --short HEAD`. Do not change the prompt after this point.
+   Pass that sha as `--sha <label>` to every later generation run: a matrix takes
+   hours, and commits made meanwhile would otherwise rename later files (the
+   header still records the actual HEAD as `actualGitSha`). The 2026-09-13
+   snapshot is `8a92ecd` (453 chunks).
 2. **Generate.** One seeded run per condition for comparability with the July
    artefacts, then a 3-sample run at the production temperature for rates:
 
@@ -57,6 +63,12 @@ CommonJS and covered by Jest (`npm test -w apps/mobile` collects `scripts/`).
    ```
    `--dry-run` prints the plan and a cost estimate first. Set J appends its
    poisoned passage automatically (`--no-inject` for the control).
+
+   **Rate limit.** The project's gpt-4o tier allows 30k tokens per minute, about
+   eight to ten answers a minute in total. Run conditions one after another
+   (never in parallel), keep `--pace-ms 3000`, and use `--resume`: the file is
+   checkpointed every ten answers and a 429 is retried after the wait the API
+   asks for. A 130-item condition takes ~13 minutes; a 3-sample condition ~40.
 3. **Deterministic gates and safety report.**
 
    ```bash
@@ -81,6 +93,18 @@ CommonJS and covered by Jest (`npm test -w apps/mobile` collects `scripts/`).
 Costs at 2026 rates: ~US$0.02 per gpt-4o answer, ~US$0.03 per Claude Opus 5
 judge call, ~US$0.001 per gpt-4o-mini judge call. The full matrix (≈130 items ×
 6 conditions × 4 answers) is roughly US$60 of generation plus US$50 of Opus judging.
+
+## Retrieval configurations (E1)
+
+```bash
+npm run rag:eval:retrieval                    # production: hybrid score, iSupport cap 2
+npm run rag:eval:retrieval -- --cap none      # pre-2026-07-13 behaviour (no source-family cap)
+npm run rag:eval:retrieval -- --dense-only    # cosine-only ordering (empty query_text → lexical term 0)
+npm run eval:compare-retrieval -- docs/report/eval/retrieval_<sha>_v2.json docs/report/eval/retrieval_<sha>_v2_cap-none.json
+```
+
+The comparison prints per-metric paired deltas with a seeded bootstrap CI and a
+McNemar test on hit@5, and names the discordant questions.
 
 ## Latency (E4)
 

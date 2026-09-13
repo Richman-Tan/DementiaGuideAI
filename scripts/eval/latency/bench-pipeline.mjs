@@ -18,8 +18,13 @@
 //
 //   node scripts/eval/latency/bench-pipeline.mjs [--questions 30] [--repeats 3] [--sets A] [--style balanced|brief|detailed]
 //        [--prompt v2] [--no-rag] [--tts] [--voice nPczCjzI2devNBz1zQrb] [--whisper clip.wav] [--tag wifi-home] [--dry-run]
-//        [--out-dir docs/report/eval/final]
-import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+//        [--out-dir docs/report/eval/final] [--resume] [--pace-ms 300] [--summarise-only]
+// --summarise-only rebuilds the markdown table from the raw CSV without any API calls.
+// Keep --pace-ms at ~4000 on a 30k tokens-per-minute gpt-4o tier; a 429 is retried
+// after the wait the API asks for and the successful attempt is what gets timed.
+// Rows are appended to the raw CSV as they complete; --resume reloads that CSV
+// and skips (question, repeat) pairs already measured, so a killed run loses nothing.
+import { writeFileSync, mkdirSync, readFileSync, appendFileSync, existsSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 import { createRequire } from 'node:module';
 import { performance } from 'node:perf_hooks';
@@ -32,6 +37,7 @@ const { EMBEDDING_MODEL, CHAT_MODEL, TOP_K, RETRIEVAL_OVERSAMPLE, MIN_SIMILARITY
 const { capBySourceFamily } = require('../../../packages/core/rag/retrieval.js');
 const { resolveCondition } = require('../prompts/promptVersions.js');
 const { summary } = require('../lib/stats.js');
+const { parseCsv } = require('../lib/csv.js');
 const { loadModule } = require('../../../unity-avatar/tools/esm-loader.js');
 const { createSentenceSplitter } = loadModule(resolve(ROOT, 'packages/core/voice/sentenceTracker.js'));
 
@@ -51,10 +57,36 @@ const TAG = argVal('--tag') ?? 'bench';
 const DRY_RUN = has('--dry-run');
 const OUT_DIR = resolve(ROOT, argVal('--out-dir') ?? 'docs/report/eval/final');
 const ELEVEN_KEY = env.ELEVENLABS_API_KEY;
+const SUMMARISE_ONLY = has('--summarise-only');
+const RESUME = has('--resume') || SUMMARISE_ONLY;
+const PACE_MS = Number(argVal('--pace-ms') ?? 300);
 
 const questions = QUESTIONS.filter(q => SETS.includes(q.set)).slice(0, N_QUESTIONS);
+mkdirSync(OUT_DIR, { recursive: true });
+const sha = gitSha();
+const base = resolve(OUT_DIR, `latency-bench_${sha}_${TAG}`);
+const RAW = `${base}_raw.csv`;
+const RAW_HEADER = 'question_id,repeat,cold,stage,ms,note';
 const rows = []; // { qid, repeat, cold, stage, ms, note }
-const record = (qid, repeat, cold, stage, ms, note = '') => rows.push({ qid, repeat, cold, stage, ms: Math.round(ms), note });
+if (RESUME && existsSync(RAW)) {
+  // Proper CSV parse: error notes are quoted and may span lines.
+  for (const r of parseCsv(readFileSync(RAW, 'utf8'))) {
+    rows.push({ qid: r.question_id, repeat: Number(r.repeat), cold: r.cold === '1', stage: r.stage, ms: Number(r.ms), note: r.note ?? '', loaded: true });
+  }
+  console.log(`resuming: ${rows.length} rows already in ${RAW}`);
+} else if (!DRY_RUN) {
+  writeFileSync(RAW, RAW_HEADER + '\n');
+}
+// A pair counts as measured once its terminal LLM stage was recorded; pairs that
+// errored before that are re-run on resume. Their earlier embed/rpc rows are
+// kept as valid measurements and not recorded a second time.
+const measured = new Set(rows.filter(r => r.stage === 'llm_total').map(r => `${r.qid}#${r.repeat}`));
+const hasRetrievalRows = new Set(rows.filter(r => r.stage === 'rpc').map(r => `${r.qid}#${r.repeat}`));
+const record = (qid, repeat, cold, stage, ms, note = '') => {
+  const row = { qid, repeat, cold, stage, ms: Math.round(ms), note };
+  rows.push(row);
+  appendFileSync(RAW, [qid, repeat, cold ? 1 : 0, stage, row.ms, note].map(csvEscape).join(',') + '\n');
+};
 
 async function timedEmbed(text) {
   const t0 = performance.now();
@@ -74,7 +106,25 @@ async function timedRpc(embedding, text) {
   return { ms: performance.now() - t0, chunks: capBySourceFamily(all, TOP_K, MAX_PER_SOURCE_FAMILY) };
 }
 
-async function timedLlm(systemPrompt, userContent) {
+const sleepMs = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Retry a rate-limited request after the API's suggested wait; the timing that
+// is recorded belongs to the attempt that succeeded, measured from its own start.
+async function timedLlm(systemPrompt, userContent, attempt = 0) {
+  try {
+    return await timedLlmOnce(systemPrompt, userContent);
+  } catch (e) {
+    const suggested = /try again in ([\d.]+)\s*s/i.exec(String(e.message));
+    if (attempt < 6 && /\b429\b|\b5\d\d\b/.test(String(e.message))) {
+      const wait = suggested ? Math.ceil(Number(suggested[1]) * 1000) + 750 : 4000 * (attempt + 1);
+      await sleepMs(wait);
+      return timedLlm(systemPrompt, userContent, attempt + 1);
+    }
+    throw e;
+  }
+}
+
+async function timedLlmOnce(systemPrompt, userContent) {
   const t0 = performance.now();
   const r = await fetch(`${OPENAI_BASE}/chat/completions`, {
     method: 'POST',
@@ -148,18 +198,20 @@ async function main() {
   const systemPrompt = condition.system({});
   console.log(`Latency bench — ${questions.length} questions × ${REPEATS} repeats, condition ${condition.id}, retrieval ${NO_RAG ? 'none' : 'production'}, style ${STYLE}, tts ${TTS ? (ELEVEN_KEY ? 'on' : 'requested but ELEVENLABS_API_KEY missing → skipped') : 'off'}, whisper ${WHISPER ?? 'off'}, tag ${TAG}`);
   if (DRY_RUN) { console.log(`${questions.length * REPEATS} pipeline runs (~US$${(questions.length * REPEATS * 0.02).toFixed(2)} in gpt-4o tokens${TTS ? ' + ElevenLabs characters' : ''}).`); return; }
-  requireEnv({ supabase: !NO_RAG });
+  if (!SUMMARISE_ONLY) requireEnv({ supabase: !NO_RAG });
 
-  let first = true;
-  for (const q of questions) {
+  let first = rows.length === 0;
+  for (const q of SUMMARISE_ONLY ? [] : questions) {
     const text = questionText(q, 'v2');
     for (let rep = 0; rep < REPEATS; rep++) {
+      if (measured.has(`${q.id}#${rep}`)) continue;
       const cold = first; first = false;
+      const rerun = hasRetrievalRows.has(`${q.id}#${rep}`);
       let chunks = [];
       try {
         if (!NO_RAG) {
-          const e = await timedEmbed(text); record(q.id, rep, cold, 'embed', e.ms);
-          const rpc = await timedRpc(e.embedding, text); record(q.id, rep, cold, 'rpc', rpc.ms, `chunks=${rpc.chunks.length}`);
+          const e = await timedEmbed(text); if (!rerun) record(q.id, rep, cold, 'embed', e.ms);
+          const rpc = await timedRpc(e.embedding, text); if (!rerun) record(q.id, rep, cold, 'rpc', rpc.ms, `chunks=${rpc.chunks.length}`);
           chunks = rpc.chunks;
         }
         const llm = await timedLlm(systemPrompt, condition.userContent(text, chunks));
@@ -172,20 +224,19 @@ async function main() {
           record(q.id, rep, cold, 'tts_total', t.total, `alignedChars=${t.alignedChars}`);
         }
         if (WHISPER) { const w = await timedWhisper(WHISPER); record(q.id, rep, cold, 'whisper', w.ms, `chars=${w.text.length}`); }
-        console.log(`${q.id.padEnd(5)}#${rep}${cold ? ' cold' : ''}  ` + rows.filter(r => r.qid === q.id && r.repeat === rep).map(r => `${r.stage}=${r.ms}`).join(' '));
+        console.log(`${q.id.padEnd(5)}#${rep}${cold ? ' cold' : ''}  ` + rows.filter(r => r.qid === q.id && r.repeat === rep && r.stage !== 'error').map(r => `${r.stage}=${r.ms}`).join(' '));
       } catch (e) {
-        record(q.id, rep, cold, 'error', NaN, e.message.slice(0, 100));
-        console.warn(`${q.id}#${rep} error: ${e.message.slice(0, 100)}`);
+        const brief = e.message.replace(/\s+/g, ' ').slice(0, 100);
+        record(q.id, rep, cold, 'error', NaN, brief);
+        console.warn(`${q.id}#${rep} error: ${brief}`);
       }
-      await sleep(300);
+      await sleep(PACE_MS);
     }
   }
 
-  mkdirSync(OUT_DIR, { recursive: true });
-  const sha = gitSha();
-  const base = resolve(OUT_DIR, `latency-bench_${sha}_${TAG}`);
-  writeFileSync(`${base}_raw.csv`, ['question_id,repeat,cold,stage,ms,note', ...rows.map(r => [r.qid, r.repeat, r.cold ? 1 : 0, r.stage, r.ms, r.note].map(csvEscape).join(','))].join('\n') + '\n');
-
+  // A pair that was re-measured on resume supersedes its earlier error row.
+  const okPairs = new Set(rows.filter(r => r.stage === 'llm_total').map(r => `${r.qid}#${r.repeat}`));
+  const errors = rows.filter(r => r.stage === 'error' && !okPairs.has(`${r.qid}#${r.repeat}`));
   const stages = [...new Set(rows.map(r => r.stage))].filter(s => s !== 'error');
   const md = [`# Headless latency benchmark — ${TAG} (${sha}, ${new Date().toISOString().slice(0, 10)})`, '',
     `Condition ${condition.id}, retrieval ${NO_RAG ? 'none' : 'production'}, style ${STYLE}, ${questions.length} questions × ${REPEATS} repeats. Warm rows exclude the first (cold) run. State the network and location alongside these numbers.`, '',
@@ -197,10 +248,9 @@ async function main() {
     const f = (x) => (x == null ? '—' : Math.round(x));
     md.push(`| ${s} | ${st.n} | ${f(st.median)} | ${f(st.mean)} | ${f(st.p90)} | ${f(st.p95)} | ${f(st.sd)} | ${f(st.min)} | ${f(st.max)} | ${cold ?? '—'} |`);
   }
-  const errors = rows.filter(r => r.stage === 'error');
-  if (errors.length) md.push('', `${errors.length} run(s) errored: ` + errors.map(e => `${e.qid}#${e.repeat} ${e.note}`).join('; '));
+  if (errors.length) md.push('', `${errors.length} run(s) errored and were not re-measured: ` + errors.map(e => `${e.qid}#${e.repeat} ${e.note.slice(0, 60)}`).join('; '));
   writeFileSync(`${base}.md`, md.join('\n') + '\n');
   console.log('\n' + md.join('\n'));
-  console.log(`\nWrote ${base}.md and ${base}_raw.csv`);
+  console.log(`\nWrote ${base}.md and ${RAW}`);
 }
 main().catch(e => { console.error(e); process.exit(1); });

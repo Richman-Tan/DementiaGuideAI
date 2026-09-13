@@ -49,13 +49,39 @@ function lowerKeys(obj) {
   return Object.fromEntries(Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v]));
 }
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Retry 429 / 5xx / network errors, honouring the API's "try again in Ns"
+// when present (OpenAI puts it in the 429 body). Judge runs are hundreds of
+// calls; without this a rate-limit burst silently leaves rows unscored.
+async function withRetry(fn, attempts = 8) {
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try { return await fn(); } catch (e) {
+      lastErr = e;
+      const msg = String(e?.message ?? e);
+      const status = e?.status ?? (/\((\d{3})\)/.exec(msg)?.[1] && Number(/\((\d{3})\)/.exec(msg)[1]));
+      const retryable = status === 429 || (status >= 500 && status < 600) || /fetch failed|ECONNRESET|ETIMEDOUT|socket hang up|overloaded/i.test(msg);
+      if (!retryable || i === attempts - 1) throw e;
+      const suggested = /try again in ([\d.]+)\s*s/i.exec(msg);
+      const wait = Math.min(90000, suggested ? Math.ceil(Number(suggested[1]) * 1000) + 500 + Math.random() * 1500 : 2000 * 2 ** i + Math.random() * 1000);
+      await sleep(wait);
+    }
+  }
+  throw lastErr;
+}
+
 /**
  * @param {string} model
  * @param {string} system
  * @param {string} user
  * @param {{ effort?: string, maxTokens?: number }} opts
  */
-export async function judgeCall(model, system, user, { effort = 'medium', maxTokens = 2000 } = {}) {
+export async function judgeCall(model, system, user, opts = {}) {
+  return withRetry(() => judgeCallOnce(model, system, user, opts));
+}
+
+async function judgeCallOnce(model, system, user, { effort = 'medium', maxTokens = 2000 } = {}) {
   if (isAnthropicModel(model)) {
     const client = getAnthropic();
     // Server-side refusal fallback is enabled by default for Claude Opus 5 code

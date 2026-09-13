@@ -33,6 +33,9 @@
 //          --pace-ms 250   sleep between calls (raise on a low tokens-per-minute tier)
 //          --resume        keep the rows already in the output file and only generate the missing (id, sample)
 //                          — the file is checkpointed every 10 answers, so an interrupted run resumes losslessly
+//          --sha <label>   snapshot label used in the file name and header instead of the current HEAD
+//                          (a matrix takes hours; commits made meanwhile must not rename later runs).
+//                          The actual HEAD is still recorded as actualGitSha.
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
@@ -64,6 +67,7 @@ const DRY_RUN = has('--dry-run');
 const INCLUDE_HELDOUT = has('--heldout') || has('--heldout-only');
 const HELDOUT_ONLY = has('--heldout-only');
 const PACE_MS = Number(argVal('--pace-ms') ?? 250);
+const SHA_LABEL = argVal('--sha');
 const RESUME = has('--resume');
 const CHECKPOINT_EVERY = 10;
 
@@ -147,7 +151,8 @@ async function main() {
   }
   requireEnv({ supabase: !NO_RAG });
 
-  const sha = gitSha();
+  const actualSha = gitSha();
+  const sha = SHA_LABEL ?? actualSha;
   outDir(); // ensure docs/report/eval exists even with an explicit --out
   const suffix = [condition.id, RETRIEVAL_MODE !== 'production' ? RETRIEVAL_MODE : null, SAMPLES > 1 ? `x${SAMPLES}` : null, TAG].filter(Boolean).join('_');
   const outPath = OUT ? resolve(process.cwd(), OUT) : resolve(outDir(), `generation_${sha}_${suffix}.json`);
@@ -155,6 +160,7 @@ async function main() {
   const header = () => ({
     generatedAt: new Date().toISOString(),
     gitSha: sha,
+    actualGitSha: actualSha,
     condition: condition.id,
     promptVersion: condition.id,          // legacy field name kept for older consumers
     promptLabel: condition.label,

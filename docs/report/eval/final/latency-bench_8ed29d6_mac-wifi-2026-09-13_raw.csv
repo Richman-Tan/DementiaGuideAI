@@ -1,0 +1,301 @@
+question_id,repeat,cold,stage,ms,note
+A1,0,1,embed,214,
+A1,0,1,rpc,796,chunks=5
+A1,0,1,llm_ttft,571,promptTokens=2851
+A1,0,1,llm_total,3400,completionTokens=411 chars=2032
+A1,1,0,embed,185,
+A1,1,0,rpc,811,chunks=5
+A1,1,0,llm_ttft,609,promptTokens=2851
+A1,1,0,llm_total,3089,completionTokens=292 chars=1496
+A2,0,0,embed,225,
+A2,0,0,rpc,910,chunks=3
+A2,0,0,llm_ttft,521,promptTokens=2199
+A2,0,0,llm_total,2783,completionTokens=362 chars=1736
+A2,1,0,embed,199,
+A2,1,0,rpc,571,chunks=3
+A2,1,0,llm_ttft,525,promptTokens=2199
+A2,1,0,llm_total,2361,completionTokens=266 chars=1321
+A3,0,0,embed,170,
+A3,0,0,rpc,554,chunks=5
+A3,0,0,llm_ttft,554,promptTokens=2893
+A3,0,0,llm_total,2325,completionTokens=261 chars=1334
+A3,1,0,embed,224,
+A3,1,0,rpc,545,chunks=5
+A3,1,0,llm_ttft,547,promptTokens=2893
+A3,1,0,llm_total,2596,completionTokens=292 chars=1483
+A4,0,0,embed,225,
+A4,0,0,rpc,538,chunks=5
+A4,0,0,llm_ttft,528,promptTokens=2928
+A4,0,0,llm_total,2779,completionTokens=335 chars=1715
+A4,1,0,embed,223,
+A4,1,0,rpc,543,chunks=5
+A4,1,0,llm_ttft,589,promptTokens=2928
+A4,1,0,llm_total,2742,completionTokens=315 chars=1609
+A5,0,0,embed,179,
+A5,0,0,rpc,533,chunks=5
+A5,0,0,llm_ttft,764,promptTokens=2866
+A5,0,0,llm_total,3229,completionTokens=389 chars=1933
+A5,1,0,embed,174,
+A5,1,0,rpc,558,chunks=5
+A5,1,0,llm_ttft,722,promptTokens=2866
+A5,1,0,llm_total,2789,completionTokens=298 chars=1576
+A6,0,0,embed,223,
+A6,0,0,rpc,726,chunks=5
+A6,0,0,llm_ttft,584,promptTokens=2302
+A6,0,0,llm_total,2113,completionTokens=209 chars=1069
+A6,1,0,embed,204,
+A6,1,0,rpc,547,chunks=5
+A6,1,0,llm_ttft,547,promptTokens=2302
+A6,1,0,llm_total,1869,completionTokens=205 chars=1060
+A7,0,0,embed,223,
+A7,0,0,rpc,530,chunks=5
+A7,0,0,llm_ttft,547,promptTokens=2645
+A7,0,0,llm_total,2299,completionTokens=292 chars=1562
+A7,1,0,embed,199,
+A7,1,0,rpc,455,chunks=5
+A7,1,0,llm_ttft,580,promptTokens=2645
+A7,1,0,llm_total,2502,completionTokens=290 chars=1555
+A8,0,0,embed,222,
+A8,0,0,rpc,556,chunks=5
+A8,0,0,llm_ttft,653,promptTokens=2738
+A8,0,0,llm_total,2317,completionTokens=292 chars=1533
+A8,1,0,embed,178,
+A8,1,0,rpc,537,chunks=5
+A8,1,0,llm_ttft,534,promptTokens=2738
+A8,1,0,llm_total,2978,completionTokens=273 chars=1467
+A9,0,0,embed,164,
+A9,0,0,rpc,543,chunks=5
+A9,0,0,llm_ttft,759,promptTokens=2360
+A9,0,0,llm_total,2313,completionTokens=247 chars=1172
+A9,1,0,embed,162,
+A9,1,0,rpc,544,chunks=5
+A9,1,0,llm_ttft,535,promptTokens=2360
+A9,1,0,llm_total,2107,completionTokens=232 chars=1071
+A10,0,0,embed,172,
+A10,0,0,rpc,670,chunks=5
+A10,0,0,llm_ttft,742,promptTokens=2407
+A10,0,0,llm_total,2201,completionTokens=254 chars=1262
+A10,1,0,embed,185,
+A10,1,0,rpc,475,chunks=5
+A10,1,0,llm_ttft,589,promptTokens=2407
+A10,1,0,llm_total,2055,completionTokens=197 chars=1007
+A11,0,0,embed,166,
+A11,0,0,rpc,526,chunks=5
+A11,0,0,llm_ttft,595,promptTokens=2302
+A11,0,0,llm_total,2064,completionTokens=217 chars=1178
+A11,1,0,embed,192,
+A11,1,0,rpc,536,chunks=5
+A11,1,0,llm_ttft,866,promptTokens=2302
+A11,1,0,llm_total,2673,completionTokens=219 chars=1159
+A12,0,0,embed,178,
+A12,0,0,rpc,541,chunks=4
+A12,0,0,llm_ttft,839,promptTokens=2577
+A12,0,0,llm_total,3101,completionTokens=357 chars=1709
+A12,1,0,embed,222,
+A12,1,0,rpc,538,chunks=4
+A12,1,0,llm_ttft,533,promptTokens=2577
+A12,1,0,llm_total,2640,completionTokens=315 chars=1538
+A13,0,0,embed,267,
+A13,0,0,rpc,648,chunks=5
+A13,0,0,llm_ttft,782,promptTokens=2835
+A13,0,0,llm_total,2579,completionTokens=243 chars=1105
+A13,1,0,embed,286,
+A13,1,0,rpc,811,chunks=5
+A13,1,0,llm_ttft,526,promptTokens=2835
+A13,1,0,llm_total,2361,completionTokens=251 chars=1236
+A14,0,0,embed,166,
+A14,0,0,rpc,684,chunks=5
+A14,0,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A14,1,0,embed,158,
+A14,1,0,rpc,553,chunks=5
+A14,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A15,0,0,embed,224,
+A15,0,0,rpc,524,chunks=5
+A15,0,0,llm_ttft,563,promptTokens=2466
+A15,0,0,llm_total,2093,completionTokens=240 chars=1229
+A15,1,0,embed,224,
+A15,1,0,rpc,525,chunks=5
+A15,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A16,0,0,embed,170,
+A16,0,0,rpc,535,chunks=5
+A16,0,0,llm_ttft,530,promptTokens=2361
+A16,0,0,llm_total,4335,completionTokens=301 chars=1454
+A16,1,0,embed,172,
+A16,1,0,rpc,567,chunks=5
+A16,1,0,llm_ttft,808,promptTokens=2361
+A16,1,0,llm_total,2045,completionTokens=250 chars=1272
+A17,0,0,embed,163,
+A17,0,0,rpc,545,chunks=4
+A17,0,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A17,1,0,embed,215,
+A17,1,0,rpc,713,chunks=4
+A17,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A18,0,0,embed,170,
+A18,0,0,rpc,549,chunks=5
+A18,0,0,llm_ttft,715,promptTokens=2781
+A18,0,0,llm_total,2374,completionTokens=258 chars=1265
+A18,1,0,embed,241,
+A18,1,0,rpc,542,chunks=5
+A18,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A19,0,0,embed,181,
+A19,0,0,rpc,536,chunks=5
+A19,0,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A19,1,0,embed,168,
+A19,1,0,rpc,530,chunks=5
+A19,1,0,llm_ttft,547,promptTokens=2573
+A19,1,0,llm_total,3253,completionTokens=375 chars=1798
+A20,0,0,embed,166,
+A20,0,0,rpc,569,chunks=5
+A20,0,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A20,1,0,embed,165,
+A20,1,0,rpc,557,chunks=5
+A20,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A21,0,0,embed,182,
+A21,0,0,rpc,538,chunks=5
+A21,0,0,llm_ttft,553,promptTokens=2682
+A21,0,0,llm_total,2079,completionTokens=238 chars=1293
+A21,1,0,embed,223,
+A21,1,0,rpc,839,chunks=5
+A21,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A22,0,0,embed,178,
+A22,0,0,rpc,523,chunks=5
+A22,0,0,llm_ttft,543,promptTokens=2274
+A22,0,0,llm_total,3551,completionTokens=367 chars=1792
+A22,1,0,embed,193,
+A22,1,0,rpc,494,chunks=5
+A22,1,0,llm_ttft,699,promptTokens=2274
+A22,1,0,llm_total,3133,completionTokens=340 chars=1620
+A23,0,0,embed,193,
+A23,0,0,rpc,460,chunks=5
+A23,0,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A23,1,0,embed,222,
+A23,1,0,rpc,529,chunks=5
+A23,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A24,0,0,embed,167,
+A24,0,0,rpc,539,chunks=5
+A24,0,0,llm_ttft,600,promptTokens=2843
+A24,0,0,llm_total,2725,completionTokens=301 chars=1628
+A24,1,0,embed,166,
+A24,1,0,rpc,583,chunks=5
+A24,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A25,0,0,embed,189,
+A25,0,0,rpc,617,chunks=5
+A25,0,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A25,1,0,embed,172,
+A25,1,0,rpc,544,chunks=5
+A25,1,0,llm_ttft,715,promptTokens=2657
+A25,1,0,llm_total,2421,completionTokens=263 chars=1266
+A26,0,0,embed,263,
+A26,0,0,rpc,528,chunks=5
+A26,0,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A26,1,0,embed,202,
+A26,1,0,rpc,538,chunks=5
+A26,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A27,0,0,embed,178,
+A27,0,0,rpc,530,chunks=5
+A27,0,0,llm_ttft,576,promptTokens=2881
+A27,0,0,llm_total,4311,completionTokens=466 chars=2300
+A27,1,0,embed,231,
+A27,1,0,rpc,588,chunks=5
+A27,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A28,0,0,embed,193,
+A28,0,0,rpc,527,chunks=5
+A28,0,0,llm_ttft,2269,promptTokens=2552
+A28,0,0,llm_total,4032,completionTokens=281 chars=1395
+A28,1,0,embed,188,
+A28,1,0,rpc,566,chunks=5
+A28,1,0,llm_ttft,488,promptTokens=2552
+A28,1,0,llm_total,1975,completionTokens=216 chars=1073
+A29,0,0,embed,184,
+A29,0,0,rpc,457,chunks=5
+A29,0,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A29,1,0,embed,186,
+A29,1,0,rpc,543,chunks=5
+A29,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A33,0,0,embed,176,
+A33,0,0,rpc,555,chunks=5
+A33,0,0,llm_ttft,582,promptTokens=2298
+A33,0,0,llm_total,2043,completionTokens=214 chars=1048
+A33,1,0,embed,207,
+A33,1,0,rpc,527,chunks=5
+A33,1,0,error,NaN,"chat 429: {
+    ""error"": {
+        ""message"": ""Rate limit reached for gpt-4o in organization org-lon"
+A14,0,0,llm_ttft,718,promptTokens=2723
+A14,0,0,llm_total,2807,completionTokens=334 chars=1732
+A14,1,0,llm_ttft,591,promptTokens=2723
+A14,1,0,llm_total,2681,completionTokens=354 chars=1836
+A15,1,0,llm_ttft,695,promptTokens=2466
+A15,1,0,llm_total,1983,completionTokens=231 chars=1249
+A17,0,0,llm_ttft,827,promptTokens=2707
+A17,0,0,llm_total,2119,completionTokens=213 chars=1084
+A17,1,0,llm_ttft,723,promptTokens=2707
+A17,1,0,llm_total,2122,completionTokens=244 chars=1303
+A18,1,0,llm_ttft,524,promptTokens=2781
+A18,1,0,llm_total,2227,completionTokens=254 chars=1286
+A19,0,0,llm_ttft,555,promptTokens=2573
+A19,0,0,llm_total,3141,completionTokens=394 chars=1864
+A20,0,0,llm_ttft,593,promptTokens=2834
+A20,0,0,llm_total,2513,completionTokens=301 chars=1567
+A20,1,0,llm_ttft,581,promptTokens=2834
+A20,1,0,llm_total,2554,completionTokens=308 chars=1579
+A21,1,0,llm_ttft,655,promptTokens=2682
+A21,1,0,llm_total,2201,completionTokens=261 chars=1436
+A23,0,0,llm_ttft,622,promptTokens=2400
+A23,0,0,llm_total,2647,completionTokens=301 chars=1493
+A23,1,0,llm_ttft,572,promptTokens=2400
+A23,1,0,llm_total,2131,completionTokens=242 chars=1187
+A24,1,0,llm_ttft,518,promptTokens=2843
+A24,1,0,llm_total,2888,completionTokens=364 chars=1887
+A25,0,0,llm_ttft,709,promptTokens=2657
+A25,0,0,llm_total,2711,completionTokens=272 chars=1403
+A26,0,0,llm_ttft,1105,promptTokens=2767
+A26,0,0,llm_total,2605,completionTokens=285 chars=1407
+A26,1,0,llm_ttft,516,promptTokens=2767
+A26,1,0,llm_total,2601,completionTokens=283 chars=1445
+A27,1,0,llm_ttft,518,promptTokens=2881
+A27,1,0,llm_total,2149,completionTokens=268 chars=1398
+A29,0,0,llm_ttft,519,promptTokens=2439
+A29,0,0,llm_total,2262,completionTokens=298 chars=1499
+A29,1,0,llm_ttft,868,promptTokens=2439
+A29,1,0,llm_total,2191,completionTokens=249 chars=1214
+A33,1,0,llm_ttft,544,promptTokens=2298
+A33,1,0,llm_total,2091,completionTokens=245 chars=1249

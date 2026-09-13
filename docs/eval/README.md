@@ -2,7 +2,8 @@
 
 How the final-project evaluation is run, what each script produces, and how the
 numbers get into the report. The design, priorities and statistics behind it
-are in **[evaluation-plan.md](evaluation-plan.md)** (approved 2026-09-12).
+are in **[evaluation-plan.md](evaluation-plan.md)** (approved 2026-09-12); the
+results collected so far are in **[results-2026-09-13.md](results-2026-09-13.md)**.
 
 Conventions: every generated artefact is stamped with the git sha and written
 under `docs/report/eval/` (raw, one file per run) or `docs/report/eval/final/`

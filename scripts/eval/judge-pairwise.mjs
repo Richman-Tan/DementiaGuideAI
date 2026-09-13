@@ -118,7 +118,27 @@ async function main() {
     await sleep(150);
     return out;
   });
-  let results = await runPool(tasks, CONCURRENCY);
+  // Checkpoint: every 10 completed pairs the JSON is rewritten with the pairs
+  // done so far, the rest marked as errored, so --retry-missing can finish a
+  // run that was interrupted (e.g. by an exhausted API balance).
+  mkdirSync(OUT_DIR, { recursive: true });
+  const jsonPath = resolve(OUT_DIR, `${base}.json`);
+  const allPairs = previous ? previous.rows : runA.rows
+    .filter(r => byId[r.id] && (!SETS || SETS.includes(byId[r.id].set)) && bIndex.has(`${r.id}#${r.sample ?? 0}`))
+    .map(r => ({ id: r.id, sample: r.sample ?? 0, set: byId[r.id].set, category: byId[r.id].category, error: true, verdicts: {} }));
+  const completed = new Map();
+  let sinceCheckpoint = 0;
+  const checkpoint = () => {
+    const rows = allPairs.map(r => completed.get(`${r.id}#${r.sample}`) ?? r);
+    writeFileSync(jsonPath, JSON.stringify({ generatedAt: new Date().toISOString(), gitSha: gitSha(), judgeModel: MODEL, effort: EFFORT, a: { file: basename(A), key: keyA }, b: { file: basename(B), key: keyB }, partial: true, rows }, null, 2));
+  };
+  const wrapped = tasks.map(t => async () => {
+    const out = await t();
+    completed.set(`${out.id}#${out.sample}`, out);
+    if (++sinceCheckpoint >= 10) { checkpoint(); sinceCheckpoint = 0; }
+    return out;
+  });
+  let results = await runPool(wrapped, CONCURRENCY);
   if (previous) {
     const fresh = new Map(results.map(r => [`${r.id}#${r.sample}`, r]));
     results = previous.rows.map(r => fresh.get(`${r.id}#${r.sample}`) ?? r);
@@ -138,11 +158,10 @@ async function main() {
       `win rate ${keyA} among decisive = ${summary[dim].winRateA.p == null ? '—' : (100 * summary[dim].winRateA.p).toFixed(1) + '%'} [${summary[dim].winRateA.lo == null ? '' : (100 * summary[dim].winRateA.lo).toFixed(1)}–${summary[dim].winRateA.hi == null ? '' : (100 * summary[dim].winRateA.hi).toFixed(1)}], sign test p = ${summary[dim].signTest.p.toFixed(4)}`);
   }
 
-  mkdirSync(OUT_DIR, { recursive: true });
   const lines = ['id,sample,set,category,dimension,first_order,second_order,consistent,final,reason_first,reason_second'];
   for (const r of results.filter(r => !r.error)) for (const [dim, v] of Object.entries(r.verdicts)) lines.push([r.id, r.sample, r.set, r.category, dim, v.first, v.second, v.consistent ? 1 : 0, v.final, v.reason1, v.reason2].map(csvEscape).join(','));
   writeFileSync(resolve(OUT_DIR, `${base}.csv`), lines.join('\n') + '\n');
-  writeFileSync(resolve(OUT_DIR, `${base}.json`), JSON.stringify({ generatedAt: new Date().toISOString(), gitSha: gitSha(), judgeModel: MODEL, effort: EFFORT, a: { file: basename(A), key: keyA }, b: { file: basename(B), key: keyB }, summary, rows: results }, null, 2));
+  writeFileSync(jsonPath, JSON.stringify({ generatedAt: new Date().toISOString(), gitSha: gitSha(), judgeModel: MODEL, effort: EFFORT, a: { file: basename(A), key: keyA }, b: { file: basename(B), key: keyB }, partial: errored > 0, summary, rows: results }, null, 2));
   console.log(`\nWrote ${resolve(OUT_DIR, base)}.{csv,json}`);
 }
 main().catch(e => { console.error(e); process.exit(1); });

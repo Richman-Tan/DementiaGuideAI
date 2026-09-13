@@ -39,6 +39,7 @@ Config lives in `packages/core/rag/`; tooling in `scripts/eval/` and
 |---|---|
 | [eval/evaluation-plan.md](eval/evaluation-plan.md) | The final-project evaluation design: claims, experiments (prompt/RAG ablation, safety, latency, lip-sync, user study), statistics, priorities |
 | [eval/README.md](eval/README.md) | How to run the harness: `scripts/eval/`, `scripts/lipsync/`, outputs under `docs/report/eval/` |
+| [eval/results-2026-09-13.md](eval/results-2026-09-13.md) | Results at snapshot 8a92ecd: retrieval, the prompt/RAG matrix, held-out safety, latency, lip-sync — and what is still pending |
 
 ## Subsystems
 

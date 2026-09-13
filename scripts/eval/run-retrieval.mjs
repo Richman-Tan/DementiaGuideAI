@@ -7,6 +7,9 @@
 //   node scripts/eval/run-retrieval.mjs --from-audit docs/report/baseline/rag_eval_results.audit.json
 //                                                       # recompute metrics from a saved run (no API calls)
 //   node scripts/eval/run-retrieval.mjs --out <path.json>
+//   node scripts/eval/run-retrieval.mjs --cap none        # no source-family cap (pre-2026-07-13 behaviour)
+//   node scripts/eval/run-retrieval.mjs --dense-only      # cosine-only ordering (no lexical term)
+//   node scripts/eval/run-retrieval.mjs --top-k 8         # wider result list (metrics still @1/3/5)
 //
 // Metrics per labelled question: recall@{1,3,5}, precision@5, MRR, nDCG@5
 // (relevant gain 2, acceptable gain 1). Aggregated per set and overall.
@@ -26,12 +29,16 @@ const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null 
 const QUESTION_VERSION = argVal('--questions') ?? 'v2';
 const FROM_AUDIT = argVal('--from-audit');
 const OUT = argVal('--out');
+const CAP = argVal('--cap') == null ? undefined : (argVal('--cap') === 'none' ? Infinity : Number(argVal('--cap')));
+const DENSE_ONLY = args.includes('--dense-only');
+const TOP_K_ARG = argVal('--top-k') ? Number(argVal('--top-k')) : undefined;
+const VARIANT = [CAP !== undefined ? `cap-${CAP === Infinity ? 'none' : CAP}` : null, DENSE_ONLY ? 'dense' : null, TOP_K_ARG ? `top${TOP_K_ARG}` : null].filter(Boolean).join('_');
 
 // Labelled questions only (A / A-neighbour, plus N once labels exist).
 const labelled = QUESTIONS.filter(q => (q.relevant.length || q.acceptable.length) && !q.pendingContent);
 
 async function retrievedIdsLive(q) {
-  const rows = await retrieve(questionText(q, QUESTION_VERSION));
+  const rows = await retrieve(questionText(q, QUESTION_VERSION), { ...(CAP !== undefined ? { cap: CAP } : {}), denseOnly: DENSE_ONLY, ...(TOP_K_ARG ? { topK: TOP_K_ARG } : {}) });
   return { ids: rows.map(r => r.id), topSimilarity: rows[0]?.similarity ?? null };
 }
 
@@ -54,7 +61,7 @@ async function main() {
     console.log(`Recomputing metrics from ${FROM_AUDIT} (${Object.keys(source).length} rows)…`);
   } else {
     requireEnv();
-    console.log(`Live retrieval eval — question wording ${QUESTION_VERSION}, ${labelled.length} labelled questions…`);
+    console.log(`Live retrieval eval — question wording ${QUESTION_VERSION}, ${labelled.length} labelled questions${VARIANT ? `, variant ${VARIANT}` : ''}…`);
   }
 
   const perQuestion = [];
@@ -84,6 +91,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     gitSha: sha,
     questionVersion: FROM_AUDIT ? `audit:${FROM_AUDIT}` : QUESTION_VERSION,
+    variant: VARIANT || 'production',
     n: perQuestion.length,
     overall,
     perSet,
@@ -91,7 +99,7 @@ async function main() {
   };
 
   outDir(); // ensure docs/report/eval exists even with an explicit --out
-  const outPath = OUT ? resolve(process.cwd(), OUT) : resolve(outDir(), `retrieval_${sha}${FROM_AUDIT ? '_backfill' : `_${QUESTION_VERSION}`}.json`);
+  const outPath = OUT ? resolve(process.cwd(), OUT) : resolve(outDir(), `retrieval_${sha}${FROM_AUDIT ? '_backfill' : `_${QUESTION_VERSION}`}${VARIANT ? `_${VARIANT}` : ''}.json`);
   writeFileSync(outPath, JSON.stringify(result, null, 2));
 
   // Companion CSV for the report.

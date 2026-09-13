@@ -68,14 +68,20 @@ export async function embed(text) {
 }
 
 // Mirrors openaiService.search() exactly: hybrid RPC + source-family cap.
-export async function retrieve(question) {
+// Evaluation-only options (never used by the apps):
+//   cap        source-family cap (default production MAX_PER_SOURCE_FAMILY; Infinity = no cap)
+//   denseOnly  send an empty query_text so the lexical term of the hybrid score is
+//              zero for every row and the ordering is pure cosine (the RPC's SQL:
+//              0.7·cosine + 0.3·ts_rank_cd; ts_rank_cd of an empty tsquery is 0)
+//   topK       number of passages returned (default production TOP_K)
+export async function retrieve(question, { cap = MAX_PER_SOURCE_FAMILY, denseOnly = false, topK = TOP_K } = {}) {
   const queryEmbedding = await embed(question);
   const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/match_chunks`, {
     method: 'POST',
     headers: SB_HEADERS(),
     body: JSON.stringify({
       query_embedding: queryEmbedding,
-      query_text: question,
+      query_text: denseOnly ? '' : question,
       match_count: TOP_K * RETRIEVAL_OVERSAMPLE,
       min_similarity: MIN_SIMILARITY,
     }),
@@ -86,7 +92,7 @@ export async function retrieve(question) {
     try { const j = JSON.parse(text); msg = `${j.code}: ${j.message}`; } catch {}
     throw new Error(`match_chunks failed (HTTP ${r.status}) ${msg}`);
   }
-  return capBySourceFamily(JSON.parse(text), TOP_K, MAX_PER_SOURCE_FAMILY);
+  return capBySourceFamily(JSON.parse(text), topK, cap);
 }
 
 // Fetch chunk rows by id (for the groundedness judge).

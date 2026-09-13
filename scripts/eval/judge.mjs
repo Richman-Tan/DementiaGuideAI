@@ -16,6 +16,7 @@
 //   node scripts/eval/judge.mjs docs/report/eval/generation_<sha>_v2.json [more.json ...]
 //        [--model claude-opus-5|gpt-4o-mini|gpt-4o] [--dims groundedness,correctness,helpfulness,tone,safety,scope]
 //        [--sets A,B] [--limit N] [--effort low|medium|high] [--concurrency 2] [--dry-run] [--tag t] [--out-dir docs/report/eval] [--heldout]
+//        [--retry-missing]   re-judge only the rows whose previous output has a null score and merge into the existing files
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 import { createRequire } from 'node:module';
@@ -45,6 +46,7 @@ const DRY_RUN = args.includes('--dry-run');
 const TAG = argVal('--tag');
 const OUT_DIR = resolve(ROOT, argVal('--out-dir') ?? 'docs/report/eval');
 const CACHE_PATH = resolve(ROOT, argVal('--cache') ?? '.cache/eval/chunks.json');
+const RETRY_MISSING = args.includes('--retry-missing');
 
 const pool = [...QUESTIONS];
 if (args.includes('--heldout')) {
@@ -90,6 +92,17 @@ async function judgeFile(file) {
   const run = JSON.parse(readFileSync(resolve(ROOT, file), 'utf8'));
   const column = columnKey(run);
   let rows = run.rows.filter(r => byId[r.id] && (!SETS || SETS.includes(byId[r.id].set))).slice(0, LIMIT);
+  const modelShort = MODEL.replace(/[^a-z0-9]+/gi, '-');
+  const base = `judge_${modelShort}_${column.replace(/:/g, '_')}${TAG ? `_${TAG}` : ''}`;
+  let previous = null;
+  if (RETRY_MISSING) {
+    const prevPath = resolve(OUT_DIR, `${base}.json`);
+    if (!existsSync(prevPath)) { console.error(`--retry-missing: ${prevPath} not found`); process.exit(1); }
+    previous = JSON.parse(readFileSync(prevPath, 'utf8'));
+    const incomplete = new Set(previous.rows.filter(r => Object.values(r.scores).some(s => s.score == null)).map(r => `${r.id}#${r.sample}`));
+    rows = rows.filter(r => incomplete.has(`${r.id}#${r.sample ?? 0}`));
+    console.log(`  retry-missing: ${incomplete.size} of ${previous.rows.length} rows had a null score`);
+  }
   const plan = rows.map(r => ({ row: r, q: byId[r.id], dims: applicableDimensions(byId[r.id], r, DIMS) })).filter(p => p.dims.length);
   const dimCounts = {};
   for (const p of plan) for (const d of p.dims) dimCounts[d] = (dimCounts[d] ?? 0) + 1;
@@ -117,15 +130,17 @@ async function judgeFile(file) {
     await sleep(150);
     return { id: row.id, sample: row.sample ?? 0, set: q.set, category: q.category, dims, scores, judgeInput: user, judgeRaw: res.text, usage: res.usage ?? null, judgeModel: res.model ?? MODEL };
   });
-  const results = await runPool(tasks, CONCURRENCY);
+  let results = await runPool(tasks, CONCURRENCY);
+  if (previous) {
+    const fresh = new Map(results.map(r => [`${r.id}#${r.sample}`, r]));
+    results = previous.rows.map(r => fresh.get(`${r.id}#${r.sample}`) ?? r);
+  }
 
   const dist = {};
   for (const r of results) for (const [d, s] of Object.entries(r.scores)) { dist[d] ??= {}; dist[d][s.score ?? 'null'] = (dist[d][s.score ?? 'null'] ?? 0) + 1; }
   console.log(`  distribution: ${JSON.stringify(dist)}`);
 
   mkdirSync(OUT_DIR, { recursive: true });
-  const modelShort = MODEL.replace(/[^a-z0-9]+/gi, '-');
-  const base = `judge_${modelShort}_${column.replace(/:/g, '_')}${TAG ? `_${TAG}` : ''}`;
   const csvLines = ['column,id,sample,set,category,dimension,score,reason'];
   for (const r of results) for (const [d, s] of Object.entries(r.scores)) csvLines.push([column, r.id, r.sample, r.set, r.category, d, s.score ?? '', s.reason].map(csvEscape).join(','));
   writeFileSync(resolve(OUT_DIR, `${base}.csv`), csvLines.join('\n') + '\n');

@@ -34,6 +34,7 @@
     "eval:human-sheet": "node scripts/eval/human-sheet.mjs",
     "eval:agreement": "node scripts/eval/agreement.mjs",
     "eval:tables": "node scripts/eval/report-tables.mjs",
+    "eval:compare-retrieval": "node scripts/eval/compare-retrieval.mjs",
     "eval:phone-allowlist": "node scripts/eval/build-phone-allowlist.mjs",
     "eval:latency:bench": "node scripts/eval/latency/bench-pipeline.mjs",
     "eval:latency:parse": "node scripts/parse-latency.mjs",

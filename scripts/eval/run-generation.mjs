@@ -30,7 +30,13 @@
 //   node scripts/eval/run-generation.mjs --heldout-only            # only the held-out items
 //   node scripts/eval/run-generation.mjs --dry-run                # plan only, no API calls
 //   flags: --questions v1|v2  --limit N  --temperature T  --seed S  --model id  --tag label  --out path  --no-inject
-import { writeFileSync, existsSync } from 'node:fs';
+//          --pace-ms 250   sleep between calls (raise on a low tokens-per-minute tier)
+//          --resume        keep the rows already in the output file and only generate the missing (id, sample)
+//                          — the file is checkpointed every 10 answers, so an interrupted run resumes losslessly
+//          --sha <label>   snapshot label used in the file name and header instead of the current HEAD
+//                          (a matrix takes hours; commits made meanwhile must not rename later runs).
+//                          The actual HEAD is still recorded as actualGitSha.
+import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
@@ -60,6 +66,10 @@ const NO_INJECT = has('--no-inject');
 const DRY_RUN = has('--dry-run');
 const INCLUDE_HELDOUT = has('--heldout') || has('--heldout-only');
 const HELDOUT_ONLY = has('--heldout-only');
+const PACE_MS = Number(argVal('--pace-ms') ?? 250);
+const SHA_LABEL = argVal('--sha');
+const RESUME = has('--resume');
+const CHECKPOINT_EVERY = 10;
 
 if (NO_RAG && ORACLE) { console.error('--no-rag and --oracle are mutually exclusive'); process.exit(1); }
 
@@ -81,15 +91,20 @@ function loadQuestionPool() {
   return pool;
 }
 
-async function withRetry(fn, label, attempts = 3) {
+// Retries 429 / 5xx / network errors. A 429 carries "Please try again in Ns" —
+// honour it (plus jitter) instead of a fixed backoff; the gpt-4o tier used for
+// these runs allows ~30k tokens/min, i.e. eight or nine answers a minute.
+async function withRetry(fn, label, attempts = 8) {
   let lastErr;
   for (let i = 0; i < attempts; i++) {
     try { return await fn(); } catch (e) {
       lastErr = e;
-      const retryable = /\(429\)|\(5\d\d\)|fetch failed|ECONNRESET|ETIMEDOUT/.test(String(e.message));
+      const msg = String(e.message);
+      const retryable = /\(429\)|\(5\d\d\)|fetch failed|ECONNRESET|ETIMEDOUT|socket hang up/.test(msg);
       if (!retryable || i === attempts - 1) throw e;
-      const wait = 1500 * 2 ** i;
-      console.warn(`  ${label}: ${e.message.slice(0, 80)} — retrying in ${wait} ms`);
+      const suggested = /try again in ([\d.]+)\s*s/i.exec(msg);
+      const wait = Math.min(90000, suggested ? Math.ceil(Number(suggested[1]) * 1000) + 500 + Math.random() * 1500 : 2000 * 2 ** i);
+      console.warn(`  ${label}: ${msg.replace(/\s+/g, ' ').slice(0, 70)} — retrying in ${Math.round(wait)} ms (attempt ${i + 2}/${attempts})`);
       await sleep(wait);
     }
   }
@@ -136,15 +151,60 @@ async function main() {
   }
   requireEnv({ supabase: !NO_RAG });
 
-  const rows = [];
+  const actualSha = gitSha();
+  const sha = SHA_LABEL ?? actualSha;
+  outDir(); // ensure docs/report/eval exists even with an explicit --out
+  const suffix = [condition.id, RETRIEVAL_MODE !== 'production' ? RETRIEVAL_MODE : null, SAMPLES > 1 ? `x${SAMPLES}` : null, TAG].filter(Boolean).join('_');
+  const outPath = OUT ? resolve(process.cwd(), OUT) : resolve(outDir(), `generation_${sha}_${suffix}.json`);
+
+  const header = () => ({
+    generatedAt: new Date().toISOString(),
+    gitSha: sha,
+    actualGitSha: actualSha,
+    condition: condition.id,
+    promptVersion: condition.id,          // legacy field name kept for older consumers
+    promptLabel: condition.label,
+    region: condition.region,
+    citationMode: condition.citationMode,
+    retrievalMode: RETRIEVAL_MODE,
+    injection: !NO_INJECT,
+    questionVersion: QUESTION_VERSION,
+    heldout: INCLUDE_HELDOUT,
+    model: MODEL,
+    temperature: TEMPERATURE,
+    seed: SEED,
+    samples: SAMPLES,
+    tag: TAG ?? null,
+    systemPromptSha256,
+    methodologyNote: SAMPLES > 1
+      ? 'Multi-sample run at the production temperature; passages retrieved once per question and reused across samples so variance is generation-only. Seeds are per-sample offsets when a seed is set.'
+      : 'Eval runs at temperature 0 + fixed seed for comparability; production runs at 0.7.',
+  });
+
+  let rows = [];
+  if (RESUME && existsSync(outPath)) {
+    const prev = JSON.parse(readFileSync(outPath, 'utf8'));
+    if (prev.systemPromptSha256 !== systemPromptSha256 || prev.retrievalMode !== RETRIEVAL_MODE || prev.model !== MODEL || prev.temperature !== TEMPERATURE) {
+      console.error(`--resume: ${outPath} was produced with a different configuration — refusing to mix runs`);
+      process.exit(1);
+    }
+    rows = prev.rows;
+    console.log(`  resuming: ${rows.length} answers already in ${outPath}`);
+  }
+  const done = new Set(rows.map(r => `${r.id}#${r.sample ?? 0}`));
+  const checkpoint = (partial) => writeFileSync(outPath, JSON.stringify({ ...header(), partial, rows }, null, 2));
+  let sinceCheckpoint = 0;
+
   for (const q of questions) {
+    const pending = Array.from({ length: SAMPLES }, (_, k) => k).filter(k => !done.has(`${q.id}#${k}`));
+    if (!pending.length) continue;
     const text = questionText(q, QUESTION_VERSION);
     const { chunks: base, mode } = await passagesFor(q, text);
     const injected = injectedChunks(q);
     const chunks = [...base, ...injected];
     const userContent = condition.userContent(text, chunks);
 
-    for (let sample = 0; sample < SAMPLES; sample++) {
+    for (const sample of pending) {
       const body = {
         model: MODEL,
         messages: [
@@ -175,38 +235,16 @@ async function main() {
         systemFingerprint: data.system_fingerprint ?? null,
       });
       console.log(`${q.id.padEnd(5)}${SAMPLES > 1 ? `#${sample}` : ''} retrieved=${chunks.length}${injected.length ? ` (+${injected.length} injected)` : ''}  answer=${answer.length} chars${choice.finish_reason === 'length' ? '  [TRUNCATED]' : ''}`);
-      await sleep(250);
+      done.add(`${q.id}#${sample}`);
+      if (++sinceCheckpoint >= CHECKPOINT_EVERY) { checkpoint(true); sinceCheckpoint = 0; }
+      await sleep(PACE_MS);
     }
   }
 
-  const sha = gitSha();
-  const result = {
-    generatedAt: new Date().toISOString(),
-    gitSha: sha,
-    condition: condition.id,
-    promptVersion: condition.id,          // legacy field name kept for older consumers
-    promptLabel: condition.label,
-    region: condition.region,
-    citationMode: condition.citationMode,
-    retrievalMode: RETRIEVAL_MODE,
-    injection: !NO_INJECT,
-    questionVersion: QUESTION_VERSION,
-    heldout: INCLUDE_HELDOUT,
-    model: MODEL,
-    temperature: TEMPERATURE,
-    seed: SEED,
-    samples: SAMPLES,
-    tag: TAG ?? null,
-    systemPromptSha256,
-    methodologyNote: SAMPLES > 1
-      ? 'Multi-sample run at the production temperature; passages retrieved once per question and reused across samples so variance is generation-only. Seeds are per-sample offsets when a seed is set.'
-      : 'Eval runs at temperature 0 + fixed seed for comparability; production runs at 0.7.',
-    rows,
-  };
-  outDir(); // ensure docs/report/eval exists even with an explicit --out
-  const suffix = [condition.id, RETRIEVAL_MODE !== 'production' ? RETRIEVAL_MODE : null, SAMPLES > 1 ? `x${SAMPLES}` : null, TAG].filter(Boolean).join('_');
-  const outPath = OUT ? resolve(process.cwd(), OUT) : resolve(outDir(), `generation_${sha}_${suffix}.json`);
-  writeFileSync(outPath, JSON.stringify(result, null, 2));
+  // Keep the file in question order regardless of resume order.
+  const order = new Map(questions.map((q, i) => [q.id, i]));
+  rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0) || (a.sample ?? 0) - (b.sample ?? 0));
+  checkpoint(false);
   const totalTokens = rows.reduce((s, r) => s + (r.promptTokens ?? 0) + (r.completionTokens ?? 0), 0);
   const truncated = rows.filter(r => r.finishReason === 'length').length;
   console.log(`\nWrote ${outPath} (${rows.length} answers, ~${totalTokens} tokens total${truncated ? `, ${truncated} truncated at max_tokens` : ''})`);

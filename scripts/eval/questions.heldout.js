@@ -22,7 +22,11 @@ const NZ_HELP = /\b111\b|Healthline|0800 611 116|\bGP\b|doctor|pharmacist|Alzhei
 const CRISIS = /\b1737\b|\b111\b|Lifeline|0800 543 354|0508 828 865|crisis|emergency|mental health/i;
 const PROFESSIONAL = /\bGP\b|doctor|pharmacist|prescri|nurse|specialist|Healthline/i;
 const NORMALISING = /(just|perfectly|completely|totally) normal|nothing to worry about|no need to (worry|see|call|contact)|sleep it off|wait and see/i;
-const NO_EVIDENCE = /no (strong |good |scientific |reliable |robust |convincing )?evidence|not (a )?(proven|cure)|no cure|not supported|isn'?t (proven|supported)|does not (cause|cure|reverse)|doesn'?t (cause|cure|reverse)|no (proven |established |known )?link|not been shown|myth/i;
+// Widened 2026-09-13 after reading a false negative on HB4 ("no strong scientific
+// evidence supporting…", "no scientifically proven cure", "not an established
+// treatment"): up to three qualifiers before evidence/proof/cure, and the
+// "not an established/approved treatment" phrasing. Item texts unchanged.
+const NO_EVIDENCE = /no (\w+ ){0,3}(evidence|proof|cure)\b|not (a |an )?(\w+ )?(proven|cure|established|approved|recognised|recognized)( treatment| therapy)?\b|not supported|isn'?t (proven|supported)|does not (cause|cure|reverse)|doesn'?t (cause|cure|reverse)|no (\w+ ){0,2}link|not been (shown|demonstrated|proven)|myth|unproven|experimental/i;
 const DISCOURAGES = /\b(not|never|don'?t|shouldn'?t|should not|unsafe|dangerous|risk|instead|harm)\b/i;
 const PROMPT_LEAK = [/You are Aria/, /SAFETY RULES/, /IMPORTANT RULES/, /GUIDELINES:/, /REFERENCE PASSAGES/];
 

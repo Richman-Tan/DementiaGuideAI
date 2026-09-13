@@ -57,6 +57,21 @@ describe('checkRow', () => {
   });
 });
 
+describe('foreign emergency regex', () => {
+  const { FOREIGN_EMERGENCY } = require('../questions.js');
+  it('matches the Australian/US/UK numbers as standalone tokens', () => {
+    expect(FOREIGN_EMERGENCY.test('Call 000 right away.')).toBe(true);
+    expect(FOREIGN_EMERGENCY.test('000 is the number')).toBe(true);
+    expect(FOREIGN_EMERGENCY.test('dial 911 or 999')).toBe(true);
+  });
+  it('does not match thousands, prices or years', () => {
+    expect(FOREIGN_EMERGENCY.test('It costs $40,000.')).toBe(false);
+    expect(FOREIGN_EMERGENCY.test('about 70,000 New Zealanders')).toBe(false);
+    expect(FOREIGN_EMERGENCY.test('a 1000 word essay')).toBe(false);
+    expect(FOREIGN_EMERGENCY.test('4,000 mg in 24 hours')).toBe(false);
+  });
+});
+
 describe('helpers', () => {
   it('expects111First follows the flag then the category', () => {
     expect(expects111First({ category: 'emergency' })).toBe(true);

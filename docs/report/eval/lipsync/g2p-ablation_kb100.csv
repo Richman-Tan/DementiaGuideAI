@@ -1,0 +1,101 @@
+text,words,oov,seqLenG2p,seqLenHeur,editDistance,normalised,bilabialExpected,bilabialMissedHeur,labiodentalExpected,labiodentalMissedHeur,dentalExpected,dentalMissedHeur
+"Many carers ultimately find that caregiving, despite its intensity and difficulty, becomes one of the most meaningful experiences of their lives.",21,2,103,110,46,0.41818181818181815,7,0,6,0,3,0
+"Remove matches, lighters, and candles from accessible areas.",8,0,41,43,18,0.4186046511627907,4,0,2,0,0,0
+"Suitable activities include brisk walking, swimming, cycling, dancing, and water aerobics.",11,1,62,67,22,0.3283582089552239,3,0,1,0,0,0
+"Dementia-related changes are more persistent, worsen over time, and begin to meaningfully interfere with daily life.",17,2,78,88,36,0.4090909090909091,5,0,3,0,1,0
+Communication with a person with dementia is a skill that improves with practice.,13,0,58,60,21,0.35,5,0,1,0,4,0
+Keep skin clean and dry after accidents to prevent irritation and breakdown.,12,0,51,57,20,0.3508771929824561,3,0,2,0,0,0
+Pain is frequently undertreated in people with dementia because cognitive impairment affects the ability to report pain in familiar ways.,20,1,99,106,37,0.3490566037735849,9,0,4,0,2,0
+"After any fall, arrange a medical review and, where possible, an occupational therapy home assessment.",15,0,67,73,35,0.4794520547945205,6,0,3,0,1,0
+"Early diagnosis means earlier access to support, treatment, and the opportunity for the person to participate in planning their own care.",21,0,87,96,41,0.4270833333333333,7,0,1,0,3,0
+They are among the most stressful aspects of caregiving and a common reason families consider residential care.,17,1,78,83,27,0.3253012048192771,5,0,3,0,2,0
+Effective redirection requires identifying the emotion behind the behaviour rather than its literal content.,14,0,72,81,40,0.49382716049382713,3,0,3,0,4,0
+"In advanced dementia, the ability to use and understand spoken language may be severely reduced or absent.",17,0,73,80,32,0.4,6,0,2,0,1,0
+"In the early stages, supervise and prompt tooth brushing twice daily using a soft-bristled toothbrush and fluoride toothpaste.",19,1,79,86,28,0.32558139534883723,5,0,3,0,4,0
+"Recognising symptoms early enables earlier diagnosis, earlier access to support, and time for the person to participate in planning their own care.",22,0,97,105,47,0.44761904761904764,7,0,1,0,2,0
+"Ask how the person would like to be helped rather than assuming, and respect their preferred method wherever safely possible.",20,0,77,88,35,0.3977272727272727,8,0,3,0,5,0
+A sudden introduction of monitoring technology without explanation can feel invasive and damage trust.,14,0,75,79,40,0.5063291139240507,3,0,3,0,1,0
+Assume all communication has meaning and try to identify and address the underlying need.,14,0,55,61,31,0.5081967213114754,3,0,1,0,1,0
+"Difficulty with eating, drinking, and moving around becomes prominent, and professional care is usually required.",15,0,77,85,39,0.4588235294117647,4,0,3,0,1,0
+"In New Zealand, an occupational therapy home assessment can be arranged on GP referral or through a NASC needs assessment.",20,2,77,84,35,0.4166666666666667,6,0,1,0,2,0
+"This atypical presentation frequently delays diagnosis, sometimes by years.",9,0,54,59,25,0.423728813559322,4,0,1,0,1,0
+Seeking counselling or support group connection normalises them and prevents the social isolation that makes caregiving harder.,17,3,88,94,28,0.2978723404255319,5,0,1,0,3,0
+Encourage regular sips of water throughout the day and ask the pharmacist about saliva substitutes if dryness is significant.,19,1,87,88,26,0.29545454545454547,4,0,5,0,3,0
+The NHS emphasises that carers who neglect their own health cannot sustain high-quality care over time.,17,4,66,70,24,0.34285714285714286,1,0,1,0,4,0
+"They involve observing facial expression, body language, vocalisation, and response to movement at rest and during care.",17,1,82,91,36,0.3956043956043956,5,0,4,0,1,0
+"Research highlights that the physical environment plays a powerful role in reducing anxiety, agitation, and confusion for people with dementia.",20,0,99,104,50,0.4807692307692308,5,0,5,0,3,0
+"Use absorbent pads or underwear discreetly as needed, choosing the most dignified option available.",14,3,71,74,20,0.2702702702702703,4,0,1,0,1,0
+This is typically the longest stage and places the greatest demands on carers and support networks.,16,1,68,72,25,0.3472222222222222,4,0,0,0,3,0
+Familiar scents associated with the person's life can also be meaningful.,11,0,49,52,19,0.36538461538461536,4,0,3,0,2,0
+"For oral hygiene, supervise or assist with brushing using a soft-bristled toothbrush and fluoride toothpaste.",16,1,72,79,24,0.3037974683544304,4,0,4,0,3,0
+Not being recognised does not mean the person does not feel connection.,12,0,47,53,29,0.5471698113207547,3,0,1,0,1,0
+Remove the stove knobs or install a stove guard if unsupervised cooking is a safety risk.,16,1,63,67,14,0.208955223880597,2,0,5,0,1,0
+"There are some less common, 'atypical' types of Alzheimer's that do not cause memory problems at first.",17,1,66,75,28,0.37333333333333335,6,0,2,0,2,0
+Balance and coordination exercises such as tai chi and yoga reduce fall risk and have cognitive benefits.,17,0,73,77,31,0.4025974025974026,2,0,4,0,0,0
+Ensure all heaters have automatic tip-over switches and are kept at least one metre from curtains and furniture.,19,0,71,85,28,0.32941176470588235,5,0,4,0,0,0
+Understanding non-verbal signals becomes the primary means of connection and care.,12,0,58,65,31,0.47692307692307695,4,0,2,0,1,0
+This community-based proactive screening model reflects the direction of best practice globally.,13,0,73,75,30,0.4,7,0,3,0,2,0
+Store documents where they can be found quickly and share them with the GP.,14,1,46,50,20,0.4,3,0,1,0,4,0
+Even short bouts of movement help.,6,0,23,25,11,0.44,3,0,3,0,0,0
+Temporary side effects may include headaches and dizziness.,8,0,37,40,18,0.45,2,0,1,0,0,0
+"Care approaches need to respect collective family decision-making, the importance of maintaining face, and traditional understandings of illness and care responsibility.",22,0,113,124,55,0.4435483870967742,7,0,5,0,1,0
+A light nutritious snack before the sundowning period often helps.,10,1,43,47,20,0.425531914893617,3,0,2,0,1,0
+"Dementia with Lewy bodies is characterised by fluctuating alertness, detailed visual hallucinations, and problems with movement and sleep.",18,5,102,107,23,0.21495327102803738,6,0,2,0,2,0
+Moderate intensity means your heart rate increases and you can hold a conversation but not easily sing.,17,0,68,77,35,0.45454545454545453,3,0,1,0,0,0
+Use flameless LED candles where candles serve a cultural or religious purpose.,12,1,52,60,25,0.4166666666666667,1,0,1,0,0,0
+Falls are among the most serious and frequent safety incidents in dementia care.,13,0,56,60,26,0.43333333333333335,3,0,3,0,1,0
+Prevention is more effective than responding after the fact.,9,0,42,46,16,0.34782608695652173,3,0,4,0,2,0
+Grief about this loss is real and legitimate.,8,0,29,31,10,0.3225806451612903,2,0,1,0,1,0
+"This information is critical for any medical assessment, particularly in an emergency.",12,0,66,67,30,0.44776119402985076,5,0,2,0,1,0
+Introduce assistive technology collaboratively and transparently.,6,3,52,53,10,0.18867924528301888,0,0,0,0,0,0
+"While the condition affects each person differently, sundowning is one of the most widely reported and challenging caregiving experiences.",19,2,93,100,42,0.42,4,0,3,0,2,0
+Try to understand the feeling or need behind the question rather than its literal content.,15,0,58,66,28,0.42424242424242425,1,0,1,0,4,0
+"Offer drinks regularly throughout the day, not only at mealtimes.",10,1,42,43,16,0.37209302325581395,0,0,1,0,2,0
+The Alzheimer's Society notes that people with higher cognitive reserve sustain more brain damage before symptoms become apparent.,18,0,83,97,38,0.3917525773195876,9,0,3,0,3,0
+"Common pain sources include arthritis, dental problems, urinary tract infections, constipation, pressure sores, and undetected fractures from falls.",18,1,109,117,50,0.42735042735042733,6,0,4,0,1,0
+This does not make the hard moments less real or less valid.,12,0,38,42,16,0.38095238095238093,2,0,1,0,2,0
+More information on needs assessments is at govt.nz.,9,2,35,39,14,0.358974358974359,3,0,1,0,0,0
+Cultural and linguistic factors play a significant role in this gap.,11,0,48,53,16,0.3018867924528302,2,0,2,0,1,0
+There are many ways to help someone live as well as possible with Alzheimer's disease.,15,0,54,62,29,0.46774193548387094,5,0,1,0,2,0
+New Zealand also has active dementia research.,7,0,31,35,12,0.34285714285714286,1,0,1,0,0,0
+"Hearing a familiar, calm voice provides comfort regardless of whether the language is fully comprehended.",15,1,68,74,21,0.28378378378378377,4,0,6,0,2,0
+"They provide prioritised, specific recommendations and can prescribe and arrange funded equipment.",12,1,70,77,31,0.4025974025974026,5,0,3,0,1,0
+The core principle is that all behaviour has meaning and that feelings are valid regardless of whether their content is factually accurate.,22,1,90,99,32,0.32323232323232326,3,0,4,0,5,0
+These significantly reduce medication errors in early to moderate dementia without requiring constant carer supervision.,15,1,83,97,42,0.4329896907216495,4,0,2,0,2,0
+"Guide them gently back to bed rather than engaging in lengthy conversation or turning on bright lights, which can stimulate wakefulness.",21,1,88,94,42,0.44680851063829785,5,0,1,0,4,0
+"Someone who is frightened, however irrationally, deserves to have that fear acknowledged and responded to with genuine warmth rather than argued away.",22,1,95,103,40,0.3883495145631068,3,0,5,0,5,0
+A raised toilet seat with arms makes sitting and rising safer.,11,0,38,42,12,0.2857142857142857,2,0,1,0,1,0
+Around two out of three people living with dementia have Alzheimer's disease.,12,0,44,53,22,0.41509433962264153,3,0,3,0,2,0
+"Mayo Clinic notes that when a reversible cause is identified and treated promptly, cognitive function can improve substantially or normalise entirely.",21,1,104,117,47,0.4017094017094017,5,0,5,0,1,0
+"If you or someone you care for has worsening memory or thinking problems, see your GP.",16,2,55,60,21,0.35,3,0,2,0,1,0
+Alzheimer's disease is the most common cause of dementia.,9,0,38,42,16,0.38095238095238093,4,0,1,0,1,0
+Schedule medical appointments and more demanding activities during mid-morning when the person is typically most alert and rested.,19,0,91,101,36,0.3564356435643564,9,0,1,0,1,0
+Maintain social connections even when it is difficult to get out.,11,0,43,45,24,0.5333333333333333,1,0,2,0,0,0
+"Getting an early diagnosis has many benefits, giving the person and family time to adjust and to arrange the support they need.",22,0,82,88,42,0.4772727272727273,6,0,3,0,3,0
+For most people it starts in and around the part of the brain involved in memory.,16,0,55,61,22,0.36065573770491804,5,0,3,0,2,0
+The NHS recommends several practical approaches that carers find effective.,10,2,52,56,16,0.2857142857142857,3,0,3,0,2,0
+Social connection is a separate but equally important protective factor.,10,0,51,56,24,0.42857142857142855,4,0,2,0,0,0
+A bath seat or shower chair and a handheld showerhead make seated showering safer and reduce the anxiety associated with standing.,21,2,76,85,23,0.27058823529411763,2,0,1,0,3,0
+"As dementia progresses, abstract language, complex sentences, and implied meanings become increasingly difficult to process.",15,0,88,88,37,0.42045454545454547,8,0,1,0,0,0
+Dementia and positive-ageing organisations identify fall prevention as a priority component of safe dementia care.,16,1,84,93,45,0.4838709677419355,6,0,6,0,0,0
+Practical and financial support flows through two main channels.,9,0,43,45,18,0.4,3,0,2,0,1,0
+"Common triggers include pain during physical care tasks, feeling threatened during personal care, being startled, or misinterpreting what is happening.",20,2,102,111,31,0.27927927927927926,5,0,2,0,1,0
+"The most common causes are urinary tract infections, chest infections, dehydration, constipation, uncontrolled pain, and medication side effects.",18,0,103,113,56,0.49557522123893805,5,0,3,0,1,0
+"If something is not understood, rephrase it rather than simply repeating at a higher volume.",15,1,58,64,20,0.3125,4,0,2,0,3,0
+Mirror the person's body language subtly to create a sense of connection and ease.,14,1,52,60,25,0.4166666666666667,3,0,1,0,1,0
+"Keep a written record of what has been modified and when, so that future reassessments can track progress and identify gaps.",21,1,82,89,27,0.30337078651685395,5,0,4,0,1,0
+Remove large mirrors in corridors if the person is startled or distressed by their own reflection.,16,1,66,74,26,0.35135135135135137,4,0,3,0,2,0
+Contact chineseservices@dementiaauckland.org.nz for enquiries.,7,4,46,47,4,0.0851063829787234,0,0,1,0,0,0
+These lifestyle modifications are the most evidence-based approach currently available for slowing progression.,14,0,76,86,42,0.4883720930232558,6,0,5,0,2,0
+A nightlight in the hallway between bedroom and bathroom helps the person orient themselves if they wake without becoming fully alert.,21,1,85,91,30,0.32967032967032966,7,0,3,0,6,0
+"Language is deeply tied to identity, emotional memory, and sense of self.",12,0,49,54,25,0.46296296296296297,3,0,2,0,0,0
+"Involvement can include cognitive assessments, lifestyle and health evaluations, brain imaging, and blood tests, usually repeated every couple of years.",20,0,107,114,58,0.5087719298245614,7,0,6,0,1,0
+Incontinence is common in moderate to advanced dementia and requires sensitive management that preserves the person's dignity.,17,0,88,98,43,0.4387755102040816,6,0,3,0,2,0
+Face the person directly at their eye level before speaking.,10,0,37,43,19,0.4418604651162791,3,0,3,0,2,0
+"Use short, simple sentences with one idea at a time.",10,0,35,35,16,0.45714285714285713,2,0,0,0,1,0
+Carers who want to begin an assessment themselves can use checklists published by Alzheimers NZ as a starting framework.,19,2,80,90,33,0.36666666666666664,7,0,2,0,1,0
+"When the resulting problems with memory and thinking make everyday tasks difficult, this is called dementia.",16,0,71,79,31,0.3924050632911392,4,0,2,0,4,0
+"Non-medication approaches including cognitive stimulation therapy, cognitive rehabilitation, and reminiscence work have good evidence for improving mood and quality of life.",22,1,124,133,53,0.39849624060150374,7,0,8,0,1,0
+"Antipsychotic medications may be considered as an absolute last resort under specialist supervision, given their significant risks in older people with dementia.",22,1,119,132,49,0.3712121212121212,8,0,3,0,2,0
+Use their preferred name at the start of sentences to gain and hold attention.,14,0,49,56,26,0.4642857142857143,2,0,2,0,2,0
+Check smoke detectors and carbon monoxide alarms regularly.,8,0,46,49,21,0.42857142857142855,4,0,0,0,0,0

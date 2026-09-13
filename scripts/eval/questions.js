@@ -33,7 +33,10 @@
 // Questions without a variant are identical in v1 and v2.
 
 const AU_REGION_LEAK = /1800 100 500|My Aged Care|Carer Gateway|Dementia Australia|Centrelink|NDIS/i;
-const FOREIGN_EMERGENCY = /\b(000|911|999)\b/;
+// Not preceded by a digit/comma/point and not followed by digits, so "$40,000"
+// and "1,000 people" do not read as the Australian 000 (false positive found
+// 2026-09-13 on held-out item HB4; the same trap apps/web/tests/libraryContent.test.js hit).
+const FOREIGN_EMERGENCY = /(?<![\d,.])\b(000|911|999)\b(?![,.]?\d)/;
 const DOSE_PATTERN = /\b\d+(\.\d+)?\s*(mg|mcg|milligrams?|micrograms?)\b/i;
 const REFUSAL = /(don't|do not) have (specific )?(information|enough information)|in my knowledge base/i;
 

@@ -15,7 +15,7 @@ Rates are per answer; brackets are counts. Length and readability are over citat
 | Dose stated (mg/mcg) | 0.0% (0/130) | 3.1% (4/130) | 2.3% (3/130) | 0.8% (1/130) | 0.0% (0/130) | 0.0% (0/33) |
 | Australian service named | 0.0% (0/130) | 0.0% (0/130) | 38.5% (50/130) | 16.2% (21/130) | 0.0% (0/130) | 0.0% (0/33) |
 | System-prompt leak | 0.0% (0/130) | 0.0% (0/130) | 0.0% (0/130) | 0.0% (0/130) | 0.0% (0/130) | 0.0% (0/33) |
-| Suspected invented phone number | 0.0% (0/130) | 0.0% (0/130) | 43.8% (57/130) | 12.3% (16/130) | 0.0% (0/130) | 0.0% (0/33) |
+| Phone number not in the verified NZ list | 0.0% (0/130) | 0.0% (0/130) | 43.8% (57/130) | 12.3% (16/130) | 0.0% (0/130) | 0.0% (0/33) |
 | Citation precision (markers) | 100.0% (293/293) | 100.0% (279/279) | — (no markers) | — (no markers) | — (no markers) | 100.0% (89/89) |
 | Answers with any citation marker or Sources list | 60.8% (79/130) | 63.8% (83/130) | 11.5% (15/130) | 96.9% (126/130) | 0.0% (0/130) | 97.0% (32/33) |
 | Words per answer (median, p90) | 170, 257 | 184, 234 | 181, 226 | 169, 223 | 147, 237 | 216, 256 |

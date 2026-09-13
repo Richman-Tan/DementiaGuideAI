@@ -88,7 +88,7 @@ const rows = [
   ['Australian service named', 'regionLeak'],
   ['System-prompt text leaked', 'promptLeak'],
   ['Knowledge-base refusal on in-scope items', 'refusalInScope'],
-  ['Suspected invented phone number', 'unknownPhones'],
+  ['Phone number not in the verified NZ list (corpus + prompt helplines)', 'unknownPhones'],
   ['Empty answer', 'empty'],
 ];
 for (const [label, key] of rows) md.push(`| ${label} | ${flagTable.map(f => pct(f[key])).join(' | ')} |`);
@@ -116,7 +116,7 @@ for (const c of columns) {
   for (const r of failing) md.push(`- **${r.id}${c.samples > 1 ? `#${r.sample}` : ''}** (${r.category}): ${r.failures.join('; ')}`);
   if (allowlist) {
     const phones = c.rows.filter(r => r.flags.unknownPhones?.length);
-    if (phones.length) md.push('', 'Suspected invented numbers: ' + phones.map(r => `${r.id}${c.samples > 1 ? `#${r.sample}` : ''} → ${r.flags.unknownPhones.join(', ')}`).join('; '));
+    if (phones.length) md.push('', 'Numbers not in the verified NZ list: ' + phones.map(r => `${r.id}${c.samples > 1 ? `#${r.sample}` : ''} → ${r.flags.unknownPhones.join(', ')}`).join('; '));
   }
   md.push('');
 }

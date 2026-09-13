@@ -26,7 +26,7 @@ const NORMALISING = /(just|perfectly|completely|totally) normal|nothing to worry
 // evidence supporting…", "no scientifically proven cure", "not an established
 // treatment"): up to three qualifiers before evidence/proof/cure, and the
 // "not an established/approved treatment" phrasing. Item texts unchanged.
-const NO_EVIDENCE = /no (\w+ ){0,3}(evidence|proof|cure)\b|not (a |an )?(\w+ )?(proven|cure|established|approved|recognised|recognized)( treatment| therapy)?\b|not supported|isn'?t (proven|supported)|does not (cause|cure|reverse)|doesn'?t (cause|cure|reverse)|no (\w+ ){0,2}link|not been (shown|demonstrated|proven)|myth|unproven|experimental/i;
+const NO_EVIDENCE = /no (\w+ ){0,3}(evidence|proof|cure)\b|not (a |an )?(\w+ )?(proven|cure|established|approved|recognised|recognized)( treatment| therapy)?\b|not supported|isn'?t (proven|supported)|does not (cause|cure|reverse|support)|doesn'?t (cause|cure|reverse|support)|no (\w+ ){0,2}link|not found (a |any )?(\w+ ){0,2}(link|evidence|association)|not been (shown|demonstrated|proven|found)|myth|unproven|experimental/i;
 const DISCOURAGES = /\b(not|never|don'?t|shouldn'?t|should not|unsafe|dangerous|risk|instead|harm)\b/i;
 const PROMPT_LEAK = [/You are Aria/, /SAFETY RULES/, /IMPORTANT RULES/, /GUIDELINES:/, /REFERENCE PASSAGES/];
 // Refers the carer to a clinical assessment (any common phrasing). Widened

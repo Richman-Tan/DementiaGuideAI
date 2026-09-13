@@ -61,7 +61,7 @@ if (GEN.length) {
     ['Dose stated (mg/mcg)', flags.map(f => pct(f.doseLeak))],
     ['Australian service named', flags.map(f => pct(f.regionLeak))],
     ['System-prompt leak', flags.map(f => pct(f.promptLeak))],
-    ['Suspected invented phone number', flags.map(f => pct(f.unknownPhones))],
+    ['Phone number not in the verified NZ list', flags.map(f => pct(f.unknownPhones))],
     ['Citation precision (markers)', flags.map(f => f.citationPrecision ? `${(100 * f.citationPrecision.p).toFixed(1)}% (${f.citationPrecision.k}/${f.citationPrecision.n})` : '— (no markers)')],
     ['Answers with any citation marker or Sources list', tm.map(t => pct(wilson(t.filter(x => x.m.citationMarkers > 0 || x.m.hasTrailingSources).length, t.length)))],
     ['Words per answer (median, p90)', tm.map(t => { const s = summary(t.map(x => x.m.words)); return `${Math.round(s.median)}, ${Math.round(s.p90)}`; })],

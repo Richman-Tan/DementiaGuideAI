@@ -77,4 +77,8 @@ Paired Wilcoxon signed-rank against the reference column (v2) on shared (id, sam
 | gpt-4o-mini | v2:final | p0:final | safe | 16 | 1 | 89 | 27 | 94.1% [73.0–99.0] | 0.0003 |
 | gpt-4o-mini | v2:final | v1:final | helpful | 42 | 9 | 55 | 48 | 82.4% [69.7–90.4] | 0.0000 |
 | gpt-4o-mini | v2:final | v1:final | safe | 25 | 2 | 79 | 24 | 92.6% [76.6–97.9] | 0.0000 |
+| gpt-4o-mini | v2:final | v2-nosafety:final | helpful | 23 | 20 | 63 | 52 | 53.5% [38.9–67.5] | 0.7608 |
+| gpt-4o-mini | v2:final | v2-nosafety:final | safe | 10 | 1 | 95 | 21 | 90.9% [62.3–98.4] | 0.0117 |
+| gpt-4o-mini | v2:final | v2:none:final | helpful | 55 | 3 | 48 | 37 | 94.8% [85.9–98.2] | 0.0000 |
+| gpt-4o-mini | v2:final | v2:none:final | safe | 13 | 2 | 91 | 29 | 86.7% [62.1–96.3] | 0.0074 |
 

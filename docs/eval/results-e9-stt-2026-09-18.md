@@ -10,7 +10,7 @@
 | Speakers | 156 (78 dementia / 78 control; 108 train + 48 test); MMSE for all but one control (`NA` in the source) |
 | Unit | participant (`PAR`) utterance, aligned by CHAT time bullets; WER aggregated per speaker |
 | Input condition (a) — utterance cuts | 2,063 utterances cut from the full enhanced recording by their time bullets, pauses included: 2.6 h of audio. The closest analogue to what the app's Whisper fallback receives (a whole recording uploaded after the user stops) |
-| Input condition (b) — VAD chunks | the challenge's `Normalised_audio-chunks` (silence removed, ≤10 s), 4,009 sub-chunks grouped back to 1,973 utterances by the span in the file name, hypotheses concatenated before scoring: 1.36 h of audio. The analogue of an endpointed segment. 155 speakers (S073's chunk spans do not match its transcript timings) |
+| Input condition (b) — VAD chunks, concatenated | the challenge's `Normalised_audio-chunks` (silence removed by VAD, ≤10 s fragments), grouped back to their source utterance by the span in the file name and **concatenated into one silence-trimmed clip per utterance** before decoding: 1,973 clips, 1.36 h of audio (`--join chunks-concat`). The analogue of an endpointed segment. Decoding the 4,009 one-second fragments separately was tried first and abandoned: it is its own hallucination trigger and doubles the decoder calls. 155 speakers (S073's chunk spans do not match its transcript timings) |
 | Recogniser | Whisper large-v2, open weights, MLX 8-bit build (`mlx-community/whisper-large-v2-mlx-8bit`), `language:'en'`, no prompt, default decoding (temperature fallback on) — the model family OpenAI states `whisper-1` is based on. 8-bit because fp16 swaps on an 8 GB machine; output identical to fp16 on probe clips. Nothing uploaded |
 | Normalisation | both sides: CHAT codes stripped, lowercase, punctuation removed, small numbers spelled, contractions expanded, apostrophes removed; two filler policies (stripped / kept) |
 | Statistics | bootstrap 95 % CI over speakers; Mann–Whitney U with Cliff's δ; Spearman ρ vs MMSE |
@@ -39,7 +39,7 @@ Reading: about a third of the raw group gap is decoder behaviour on pauses rathe
 
 ## 3. Condition (b) — VAD chunks
 
-*Running; filled in from `wer_<sha>_local-large-v2-mlx-8bit_chunks.md` when the run completes. Nothing is claimed here until then.*
+*Running; filled in from the `chunkcat` report when the run completes. Nothing is claimed here until then.*
 
 ## 4. Comparators
 

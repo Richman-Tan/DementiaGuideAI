@@ -49,6 +49,7 @@
     "eval:load:proxy": "node scripts/eval/load/proxy-load.mjs",
     "eval:stt:prepare": ".venv/bin/python scripts/eval/stt/prepare-adress.py",
     "eval:stt:transcribe": "node scripts/eval/stt/transcribe.mjs",
+    "eval:stt:local": ".venv/bin/python scripts/eval/stt/transcribe-local.py",
     "eval:stt:wer": "node scripts/eval/stt/wer-report.mjs",
     "eval:stt:perturb": "node scripts/eval/stt/perturb-questions.mjs",
     "lipsync:summarise": "node scripts/lipsync/summarise-testresults.mjs",

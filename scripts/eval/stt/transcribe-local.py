@@ -127,9 +127,6 @@ def main() -> int:
     if not refs_path.exists():
         print(f"references file not found: {refs_path} (run prepare-adress.py first)", file=sys.stderr)
         return 1
-    out = Path(a.out) if a.out else DATA / f"hyps_local-{cache_model}{'_prompt' if a.prompt else ''}.csv"
-    if not out.is_absolute():
-        out = ROOT / out
     if a.backend == "mlx":
         if not a.repo:
             a.repo = f"mlx-community/whisper-{a.model}-mlx"
@@ -138,6 +135,9 @@ def main() -> int:
     else:
         model_label = a.label or f"local:{a.model}"
     cache_model = model_label.split(":", 1)[1]
+    out = Path(a.out) if a.out else DATA / f"hyps_local-{cache_model}{'_prompt' if a.prompt else ''}.csv"
+    if not out.is_absolute():
+        out = ROOT / out
 
     refs = read_refs(refs_path, a.limit)
     files = [ROOT / r["chunk_path"] for r in refs]

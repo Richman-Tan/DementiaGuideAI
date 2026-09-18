@@ -57,3 +57,18 @@ non-storage option is in force**. Therefore:
 production-primary recogniser on a 20-speaker subset; it runs in the browser and
 sends nothing anywhere except Chrome's own recogniser, which is itself a web
 service — treat it under the same rule as the API path.
+
+## Which local backend
+
+On an 8 GB Apple-silicon Mac the CPU path (`faster-whisper`, int8) swapped and ran at
+RTF ≈ 9, and fp16 `large-v2` under MLX at RTF ≈ 4.6 for the same reason. The 8-bit MLX
+build of `large-v2` (`mlx-community/whisper-large-v2-mlx-8bit`) fits in memory and runs at
+RTF ≈ 0.21 with output identical to fp16 on the probe clips, so it is the primary run:
+
+```
+.venv/bin/python scripts/eval/stt/transcribe-local.py --backend mlx --repo mlx-community/whisper-large-v2-mlx-8bit --resume
+.venv/bin/python scripts/eval/stt/transcribe-local.py --backend mlx --repo mlx-community/whisper-medium-mlx --resume
+```
+
+The model label in the CSV carries the repo suffix (`local:large-v2-mlx-8bit`) so a
+quantised run is never confused with an fp16 one. State the quantisation in the report.

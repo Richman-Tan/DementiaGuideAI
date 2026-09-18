@@ -505,8 +505,8 @@ Consequences: the **primary E9 run uses local open-weights Whisper on the develo
 
 | Condition | What | Why |
 |---|---|---|
-| **local `large-v2`** (primary) | `faster-whisper`, `language:'en'`, no prompt, beam 5 — the open-weights family behind `whisper-1`; runs on the Mac, no upload | the closest measurement of the deployed fallback model that the Ground Rules allow without a retention agreement |
-| local `medium`, `large-v3` | same, model swapped | free comparators; size/accuracy trade-off |
+| **local `large-v2`** (primary) | MLX 8-bit build (`mlx-community/whisper-large-v2-mlx-8bit`) on the Mac's GPU, `language:'en'`, no prompt — the open-weights family behind `whisper-1`; no upload. 8-bit because fp16 swaps on an 8 GB machine; output identical to fp16 on probe clips | the closest measurement of the deployed fallback model that the Ground Rules allow without a retention agreement |
+| local `medium` (MLX fp16) | same, model swapped | free comparator; size/accuracy trade-off |
 | `whisper-1` (API) — conditional | `language:'en'`, no prompt, default format — byte-identical to `apps/api/api/transcribe.js` | the deployed fallback model itself; **runs after supervisor sign-off on the non-storage basis (or ZDR)** |
 | `gpt-4o-transcribe`, `gpt-4o-mini-transcribe` (API) — conditional | same call, model swapped | drop-in alternatives on the same path; price per minute known; same retention condition |
 | `whisper-1` + domain prompt (optional) | `prompt:` seeded with dementia-care vocabulary | the lever the proxy currently pins off; if it helps it is a recommendation |

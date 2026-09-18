@@ -113,7 +113,27 @@ Dementia vs control p < 0.001, δ = 0.31; ρ(WER, MMSE) = −0.23, p = 0.004. Pa
 
 Dementia vs control p = 0.002, δ = 0.29; ρ(WER, MMSE) = −0.23. Paired per speaker against `whisper-1` on the same clips it is **7.0 points worse** (p < 0.001, r = 0.75). The failure mode is the opposite of Whisper's: it almost never inserts or hallucinates (stock phrases 0.1–0.2 %, insertions ≈ 1 %) but it deletes — 42 % of the dementia group's words are simply missing, and 10 % of their utterances come back empty. For a caregiver assistant that is not obviously the safer failure: a hallucinated phrase is visible and correctable, a silently dropped clause is not. It is not a drop-in improvement on this population.
 
-*`gpt-4o-mini-transcribe` on condition (b): running; filled in on completion.*
+**`gpt-4o-mini-transcribe`, condition (b)** — `wer_b5b0401_gpt-4o-mini-transcribe.md`; 1,973 clips, 0 failed.
+
+| Group | Pooled WER | Sub | Del | Ins | Stock phrase | Empty | Pooled WER excl. |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| control | 31.6 % | 12.8 % | 16.0 % | 2.7 % | 0.7 % | 6.4 % | 30.3 % |
+| dementia | 46.2 % | 16.5 % | 27.3 % | 2.3 % | 0.9 % | 12.7 % | 45.5 % |
+
+Dementia vs control p = 0.003, δ = 0.28; ρ(WER, MMSE) = −0.20. Paired against `whisper-1`: +0.3 points, **not distinguishable** (p = 0.10, r = 0.16), at half the per-minute price (US$0.003 vs 0.006). Same deletion-heavy profile as its larger sibling, milder: 12.7 % of dementia utterances come back empty.
+
+### 4.1 Recogniser comparison on endpointed speech (condition b, same 1,973 clips, per-speaker pairing against `whisper-1`)
+
+| Recogniser | Control WER | Dementia WER | Gap | Δ vs `whisper-1` (per speaker) | Insertions (dem.) | Deletions (dem.) | Empty (dem.) | Stock phrase (dem.) | Price |
+|---|---:|---:|---:|---|---:|---:|---:|---:|---|
+| `whisper-1` (deployed fallback) | 31.4 % | 44.7 % | 13.3 | — | 4.7 % | 20.7 % | 4.1 % | 3.8 % | US$0.006/min |
+| `gpt-4o-mini-transcribe` | 31.6 % | 46.2 % | 14.6 | +0.3 pp, p = 0.10 | 2.3 % | 27.3 % | 12.7 % | 0.9 % | US$0.003/min |
+| `gpt-4o-transcribe` | 37.6 % | 54.5 % | 16.9 | +7.0 pp, p < 0.001 | 1.2 % | 42.3 % | 10.1 % | 0.2 % | US$0.006/min |
+| local large-v2, MLX 8-bit | 33.0 % | 48.1 % | 15.1 | +2.6 pp, p < 0.001 | 6.8 % | 21.9 % | 5.1 % | 3.8 % | US$0 |
+
+And with pauses included (condition a): `whisper-1` 26.3 % / 41.9 %; local medium 28.4 % / 45.7 %; local large-v2 8-bit 34.6 % / 59.7 % (runaway-inflated).
+
+**What to conclude.** (1) Every recogniser tested transcribes dementia speech 13–17 points worse than control speech, significantly, with a weak MMSE gradient; the gap is a property of the speech, not of one model. (2) The deployed `whisper-1` is the best or joint-best option on this population; the newer gpt-4o family trades hallucination for deletion, and the large one deletes a great deal. (3) `gpt-4o-mini-transcribe` is a defensible cost halving for the fallback path with no measured accuracy loss, but a higher empty-utterance rate that the app would need to surface ("I didn't catch that") rather than pass silently to retrieval. (4) For `whisper-1`, energy-threshold trimming inside utterances is a net loss; keep whole utterances and endpoint on trailing silence, as the app's hands-free mode already does.
 
 ## 5. Downstream effect on the app — error-profile perturbation
 

@@ -35,7 +35,7 @@ Dementia vs control, per-speaker WER: Mann–Whitney U = 2295.5, p = 0.008, Clif
 | control | 1,045 | 2.8 % | 4.6 % | 1.0 % | 3.9 % | **24.6 %** | 3.6 % |
 | dementia | 1,018 | 2.9 % | 9.9 % | 1.5 % | 4.3 % | **35.8 %** | 4.2 % |
 
-Reading: about a third of the raw group gap is decoder behaviour on pauses rather than misrecognition, and stock-phrase hallucination is twice as frequent on dementia utterances. The excluded figures are in line with published Whisper-large results on this corpus (≈30 % overall). Deletions are 59 % function words.
+Reading: about a third of the raw group gap is decoder behaviour on pauses rather than misrecognition, and stock-phrase hallucination is twice as frequent on dementia utterances. The excluded figures are in line with published Whisper-large results on this corpus (≈30 % overall). Deletions are 59 % function words. **See §4: the production `whisper-1` model does not produce the runaway loops at this rate — the raw figures here overstate the deployed model's error by ~12 points per speaker; the stock-phrase finding holds.**
 
 ## 3. Condition (b) — VAD chunks, concatenated per utterance — `wer_4c732bf_local-large-v2-mlx-8bit.md`
 
@@ -65,7 +65,9 @@ Dementia vs control: Mann–Whitney U = 2201.0, p = 0.004, Cliff's δ = 0.27. WE
 | Empty hypotheses | 3.9 % → 3.4 % | 4.3 % → 5.1 % |
 | Group gap (pooled) | 25.1 points | 15.1 points |
 
-Reading. Removing the pauses barely changes the control speakers and removes a fifth of the dementia speakers' error: the insertion rate falls to a third and stock-phrase hallucination halves. The pause-driven decoder behaviour identified in §2 was hitting the dementia group specifically, which is what one expects from speech with long word-finding pauses. What endpointing does not fix, and slightly worsens, is deletion: the challenge's VAD (65 dB energy threshold) trims quiet onsets, and the dementia group's deletions rise to 21.9 %. Net, the group gap shrinks from 25 to 15 points but does not close, and it is significant under both conditions with a small-to-medium effect (δ ≈ 0.25) and a weak, significant MMSE gradient. For the app, this is a direct argument for the hands-free endpointer (already generous at 1,200 ms of silence) over whole-recording upload, and against any tighter VAD threshold.
+Reading, for the local 8-bit model. Removing the pauses barely changes the control speakers and removes a fifth of the dementia speakers' error: the insertion rate falls to a third and stock-phrase hallucination halves. What endpointing does not fix, and slightly worsens, is deletion: the challenge's VAD (65 dB energy threshold) trims quiet onsets, and the dementia group's deletions rise to 21.9 %.
+
+**Corrected by the production model (§4).** `whisper-1` itself does not produce the runaway loops the local 8-bit build did: on condition (a) its insertion rate is 4.9 % / 7.6 %, not 10.9 % / 22.0 %, and its pooled WER is 26.3 % / 41.9 %. On condition (b) it scores 31.4 % / 44.7 % — *worse* than with the pauses left in, because the VAD's deletions (8.7 → 12.6 % control, 16.2 → 20.7 % dementia) cost more than the hallucinations it removes (stock phrases 5.7 → 2.8 % and 11.4 → 3.8 %). So the net "endpointing helps" reading above was a property of the quantised proxy, not of the deployed model. What survives under the production model is: (i) a significant dementia–control gap of 13–16 points under both conditions (δ ≈ 0.26–0.31), with a weak MMSE gradient; (ii) stock-phrase hallucination twice as frequent on dementia utterances; (iii) an energy-threshold VAD that cuts inside utterances is not a free improvement — it trades hallucinated phrases for deleted quiet speech. The app's hands-free endpointer (1,200 ms of trailing silence, whole utterance kept) is a different mechanism from the challenge's within-utterance trimming and is not what condition (b) tests.
 
 Condition (b) is the analogue of what the app's live recogniser and endpointer deliver; condition (a) of the Whisper-upload fallback. The perturbation study in §5 used the condition (a) profile, i.e. the harsher one.
 
@@ -91,7 +93,18 @@ Dementia vs control p = 0.001, δ = 0.30; ρ(WER, MMSE) = −0.21, p = 0.008. Pa
 
 Dementia vs control p = 0.006, δ = 0.26; ρ(WER, MMSE) = −0.18, p = 0.023. **Parity with the local run:** paired per speaker against local large-v2 8-bit on the same clips, `whisper-1` is 2.6 points better (Wilcoxon p < 0.001, rank-biserial −0.42) — the local 8-bit build was a faithful, slightly pessimistic proxy for the production model, and every conclusion drawn from it stands. The group gap under the production model is 13 points on endpointed speech.
 
-*`whisper-1` on condition (a), and `gpt-4o-transcribe` / `gpt-4o-mini-transcribe` on condition (b): running; filled in on completion.*
+**`whisper-1`, condition (a) — pauses included** — `wer_57ad032_whisper-1.md`; 2,063 utterances, 0 failed.
+
+| Group | Pooled WER | Sub | Del | Ins | Stock phrase | Runaway | Empty | Pooled WER excl. |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| control | **26.3 %** | 12.7 % | 8.7 % | 4.9 % | 5.7 % | 1.2 % | 1.3 % | 21.8 % |
+| dementia | **41.9 %** | 18.2 % | 16.2 % | 7.6 % | 11.4 % | 1.7 % | 3.0 % | 33.1 % |
+
+Dementia vs control p < 0.001, δ = 0.31; ρ(WER, MMSE) = −0.23, p = 0.004. Paired per speaker on the same clips: `whisper-1` is **12.2 points better than local large-v2 8-bit** (p < 0.001, r = −0.53) and 2.4 points better than local medium (p = 0.002). The gap to the 8-bit proxy is almost entirely runaway decoding, which the production model does not exhibit at this rate; the quantised build's condition (a) figures in §2 are therefore an upper bound, and the production model's are the ones to quote. In line with the published Whisper-large figure of ≈ 30 % on this corpus.
+
+**Which numbers to quote for the deployed model.** Pauses included (the Whisper-upload analogue): 26.3 % control / 41.9 % dementia. Endpointed by energy VAD: 31.4 % / 44.7 %. Stock-phrase hallucination on dementia speech: 11.4 % of utterances with pauses, 3.8 % trimmed.
+
+*`gpt-4o-transcribe` / `gpt-4o-mini-transcribe` on condition (b): running; filled in on completion.*
 
 ## 5. Downstream effect on the app — error-profile perturbation
 

@@ -1,0 +1,8 @@
+"Group","Stage","Median (ms)","Range (ms)","n","Mean (ms)","P90 (ms)","P95 (ms)","SD (ms)"
+"","Speech-to-text","","","0","","","",""
+"","Retrieval","","","0","","","",""
+"","LLM time to first token","22","2 to 170","30","36","69","103","35"
+"","First token → first sentence","","","0","","","",""
+"","TTS request → first audio","","","0","","","",""
+"","End to end → first avatar audio","","","0","","","",""
+"","End to end → first text token","3040","2249 to 4867","30","3058","3560","3846","533"

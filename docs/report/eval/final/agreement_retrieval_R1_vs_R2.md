@@ -1,6 +1,6 @@
 # Retrieval relevance labels — first annotator vs R2 — snapshot e97b0ef
 
-Generated 2026-09-18T22:10:46.270Z by `scripts/eval/import-labels.mjs` from `data/labelpool/retrieval-labels_JooHyun.json`. Pool: 33 questions, 294 judged (question, passage) pairs out of 294 shown (0 left unmarked). The pool is the union of the hybrid top-10, the dense-only top-10 and the existing labels, shuffled; the second annotator saw no marks. Scale: relevant / partly (= existing "acceptable") / not.
+Generated 2026-09-18T22:10:46.270Z by `scripts/eval/import-labels.mjs` from `data/labelpool/retrieval-labels_JooHyun.json`. Pool: 33 questions, 294 judged (question, passage) pairs out of 294 shown (0 left unmarked). The pool is the union of the hybrid top-10, the dense-only top-10 and the existing labels, shuffled; the second annotator saw no marks. Scale: relevant / partly (= existing "acceptable") / not. Annotators: R1 = Richman Tan (July 2026, primary-passage labels in `questions.js`); R2 = JooHyun Kang (2026-09-19, exhaustive marks over the pool).
 
 | Agreement | Value |
 |---|---:|

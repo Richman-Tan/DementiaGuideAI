@@ -59,7 +59,7 @@ Text chat (Arm B) shares everything from embed to citation extraction; `apps/web
 
 | Asset | Location | State |
 |---|---|---|
-| Labelled question set, 70 items (A 30, A-neighbour 3, B 4, C 6, S 11, I 8, N 8); 33 with relevance labels; 7 N items `pendingContent` | `scripts/eval/questions.js` | Exists; single annotator |
+| Labelled question set, 70 items (A 30, A-neighbour 3, B 4, C 6, S 11, I 8, N 8); 33 with relevance labels; 7 N items `pendingContent` | `scripts/eval/questions.js` | Exists; **second annotator added 2026-09-19** (`docs/report/eval/human/retrieval-labels_R2.json`, primary confirmed 32/33) |
 | Retrieval metrics (recall@k, MRR, nDCG@5, precision@5), Jest-tested | `scripts/eval/metrics.js` | Exists |
 | Runners: retrieval, generation (temp 0, seed 42, single-turn), safety regex gates (exit-code), groundedness judge (gpt-4o-mini, 0/1/2, A-set only), sweep, introspect | `scripts/eval/*.mjs`, npm `rag:eval:*` | Exist |
 | Frozen retrieval results | `docs/report/eval/retrieval_654b328_v1|v2.json`, `retrieval_cc972a9_v2.json` | recall@5 0.969 (Jul) → 0.970 (Sep, n=33); recall@1 drifted 0.844 → 0.758 as corpus grew (unreported) |

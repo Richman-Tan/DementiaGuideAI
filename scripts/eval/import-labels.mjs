@@ -78,6 +78,14 @@ const addedR = pooled.reduce((a, q) => a + q.added.relevant.length, 0);
 const addedA = pooled.reduce((a, q) => a + q.added.acceptable.length, 0);
 const r1OnlyRelevant = pooled.reduce((a, q) => a + QUESTIONS.find(x => x.id === q.id).relevant.filter(c => (r2[q.id] ?? {})[c] && (r2[q.id] ?? {})[c] !== 'relevant').length, 0);
 
+// How the second annotator judged the first annotator's PRIMARY passage(s).
+const prim = { relevant: 0, partial: 0, not: 0, unmarked: 0, total: 0 };
+for (const q of QUESTIONS.filter(x => x.relevant?.length)) {
+  for (const cid of q.relevant) { prim.total++; const m = (r2[q.id] ?? {})[cid]; if (m == null) prim.unmarked++; else prim[m] = (prim[m] ?? 0) + 1; }
+}
+const r2RelevantPerQ = QUESTIONS.filter(x => x.relevant?.length).map(q => (poolQ[q.id]?.candidates ?? []).filter(c => (r2[q.id] ?? {})[c] === 'relevant').length);
+const meanR2Relevant = r2RelevantPerQ.reduce((a, b) => a + b, 0) / Math.max(1, r2RelevantPerQ.length);
+
 const fmt = (x) => (x == null || Number.isNaN(x) ? 'n/a' : x.toFixed(2));
 const sha = gitSha();
 const md = `# Retrieval relevance labels — first annotator vs ${rater} — snapshot ${sha}
@@ -92,6 +100,8 @@ Generated ${new Date().toISOString()} by \`scripts/eval/import-labels.mjs\` from
 | Cohen's κ, quadratic weights | ${fmt(k3q)} |
 | Agreement on *relevant* vs not, binary | ${(100 * pctBin).toFixed(1)} % |
 | Cohen's κ, binary relevant | ${fmt(kbin)} |
+
+**Read the κ with the design in mind.** The first annotator's set marks ONE primary passage per question (plus an occasional alternate); every other passage in the pool counts as "not" for it, whether or not anyone judged it. ${rater} marked every passage shown. The 3-level κ therefore measures how exhaustive the July labels are, not whether the two people disagree about what is relevant. The statistic that answers the second question is the primary-confirmation rate: **${rater} marked the first annotator's primary passage relevant in ${prim.relevant} of ${prim.total}** (partly ${prim.partial}, not ${prim.not}, unmarked ${prim.unmarked}), and found on average ${meanR2Relevant.toFixed(1)} relevant passages per question. Recall@k against the single primary label is therefore a conservative measure; the pooled labels below give the fuller one.
 
 Confusion (rows: first annotator; columns: ${rater}; not / partly / relevant):
 

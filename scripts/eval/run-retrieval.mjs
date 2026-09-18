@@ -36,7 +36,13 @@ const DENSE_ONLY = args.includes('--dense-only');
 const TOP_K_ARG = argVal('--top-k') ? Number(argVal('--top-k')) : undefined;
 const QUESTIONS_FILE = argVal('--questions-file');
 const ONLY_FILE = args.includes('--only-file');
-const VARIANT = [CAP !== undefined ? `cap-${CAP === Infinity ? 'none' : CAP}` : null, DENSE_ONLY ? 'dense' : null, TOP_K_ARG ? `top${TOP_K_ARG}` : null].filter(Boolean).join('_');
+// --labels <json>: override each question's relevant/acceptable with the pooled
+// labels written by import-labels.mjs ({pooled:[{id, relevant, acceptable}]}),
+// so recall@k can be reported against two annotators' judgements. The output
+// file name carries a `_pooled` variant so it never overwrites the single-label run.
+const LABELS_FILE = argVal('--labels');
+const LABELS_OVERRIDE = LABELS_FILE ? Object.fromEntries(JSON.parse(readFileSync(resolve(process.cwd(), LABELS_FILE), 'utf8')).pooled.map(q => [q.id, q])) : null;
+const VARIANT = [CAP !== undefined ? `cap-${CAP === Infinity ? 'none' : CAP}` : null, DENSE_ONLY ? 'dense' : null, TOP_K_ARG ? `top${TOP_K_ARG}` : null, argVal('--labels') ? 'pooled' : null].filter(Boolean).join('_');
 
 function loadQuestionFile(path) {
   const abs = resolve(process.cwd(), path);
@@ -91,7 +97,8 @@ async function main() {
       got = await retrievedIdsLive(q);
       await sleep(200);
     }
-    const scores = scoreQuestion({ retrieved: got.ids, relevant: q.relevant, acceptable: q.acceptable });
+    const lab = LABELS_OVERRIDE?.[q.id];
+    const scores = scoreQuestion({ retrieved: got.ids, relevant: lab ? lab.relevant : q.relevant, acceptable: lab ? lab.acceptable : q.acceptable });
     perQuestion.push({ id: q.id, set: q.set, category: q.category, ...(q.level ? { level: q.level, sourceId: q.sourceId } : {}), retrieved: got.ids, topSimilarity: got.topSimilarity, ...scores });
     if (!FROM_AUDIT) console.log(`${q.id.padEnd(4)} recall@5=${scores['recall@5']}  mrr=${scores['mrr']?.toFixed(3)}  ndcg@5=${scores['ndcg@5']?.toFixed(3)}`);
   }

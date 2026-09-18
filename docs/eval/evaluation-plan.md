@@ -526,7 +526,7 @@ Consequences: the **primary E9 run uses local open-weights Whisper on the develo
 
 **Tooling** (built 2026-09-18, validated on synthetic fixtures): `scripts/eval/stt/prepare-adress.py` (pylangacq; CHAT → normalised utterances → chunk join → `references.csv`), `scripts/eval/stt/transcribe-local.py` (faster-whisper, cached, resumable — the primary path), `scripts/eval/stt/transcribe.mjs` (production-exact API call, cached, resumable — conditional), `scripts/eval/lib/wer.js` (+ tests cross-checked against jiwer), `scripts/eval/stt/wer-report.mjs`, `scripts/eval/stt/perturb-questions.mjs`, `--questions-file` on `run-generation.mjs` / `run-retrieval.mjs`. **Contingency:** the data is available now, so the only contingency is the API condition: if sign-off is not given, the report presents local `large-v2` as the measurement of the deployed model family and states the gap explicitly.
 
-**Results:** [results-e9-stt-2026-09-18.md](results-e9-stt-2026-09-18.md) — condition (a) run 2026-09-18: pooled WER control 34.6 % / dementia 59.7 % (p = 0.008), 24.6 % / 35.8 % excluding hallucinations; retrieval recall@5 0.97 → 0.85 at the dementia-speaker error rate, unchanged under disfluency alone.
+**Results:** [results-e9-stt-2026-09-18.md](results-e9-stt-2026-09-18.md) — condition (a) run 2026-09-18: pooled WER control 34.6 % / dementia 59.7 % (p = 0.008), 24.6 % / 35.8 % excluding hallucinations; retrieval recall@5 0.97 → 0.85 at the dementia-speaker error rate and citation markers −30 %, answers still pass every safety gate; unchanged under disfluency alone.
 
 ### 17.2 E10 — Functional verification — MUST
 

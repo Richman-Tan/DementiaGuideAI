@@ -231,6 +231,13 @@ class OpenAIClient {
 
     try {
       let resp;
+      // Mark the send BEFORE the request leaves. This used to sit after the
+      // fetch promise resolved, which for a streamed response is when the
+      // headers arrive — so llm_to_token_ms measured headers-to-first-chunk
+      // (~20 ms) instead of request-to-first-token, and the model's real
+      // time-to-first-token was hidden inside the gap before llmSend.
+      // to_first_token_ms was never affected (it is marked on the first chunk).
+      timingCbs?.onLlmSend?.();
       try {
         resp = await fetch(openaiUrl(transport, '/chat/completions'), {
           method: 'POST',
@@ -251,7 +258,6 @@ class OpenAIClient {
         if (timedOut) throw new Error(timedOut);
         throw err;
       }
-      timingCbs?.onLlmSend?.();
 
       await throwForStatus(resp, transport, 'OpenAI error');
 

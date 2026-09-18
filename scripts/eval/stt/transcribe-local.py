@@ -112,6 +112,10 @@ def main() -> int:
     ap.add_argument("--language", default="en")
     ap.add_argument("--prompt", default="")
     ap.add_argument("--beam-size", type=int, default=5)
+    ap.add_argument("--backend", default="faster-whisper", choices=["faster-whisper", "mlx"],
+                    help="mlx = Apple-silicon GPU via mlx-whisper (needed on 8 GB machines: fp16 large-v2 on CPU swaps)")
+    ap.add_argument("--repo", default="", help="mlx only: Hugging Face repo, e.g. mlx-community/whisper-large-v2-mlx-8bit")
+    ap.add_argument("--label", default="", help="override the model label written to the CSV (default local:<model> or local:<repo suffix>)")
     ap.add_argument("--limit", type=int)
     ap.add_argument("--resume", action="store_true", help="keep rows already in --out; only transcribe the missing ones")
     ap.add_argument("--dry-run", action="store_true")
@@ -123,10 +127,17 @@ def main() -> int:
     if not refs_path.exists():
         print(f"references file not found: {refs_path} (run prepare-adress.py first)", file=sys.stderr)
         return 1
-    out = Path(a.out) if a.out else DATA / f"hyps_local-{a.model}{'_prompt' if a.prompt else ''}.csv"
+    out = Path(a.out) if a.out else DATA / f"hyps_local-{cache_model}{'_prompt' if a.prompt else ''}.csv"
     if not out.is_absolute():
         out = ROOT / out
-    model_label = f"local:{a.model}"
+    if a.backend == "mlx":
+        if not a.repo:
+            a.repo = f"mlx-community/whisper-{a.model}-mlx"
+        suffix = a.repo.split("/")[-1].replace("whisper-", "", 1)
+        model_label = a.label or f"local:{suffix}"
+    else:
+        model_label = a.label or f"local:{a.model}"
+    cache_model = model_label.split(":", 1)[1]
 
     refs = read_refs(refs_path, a.limit)
     files = [ROOT / r["chunk_path"] for r in refs]
@@ -152,14 +163,37 @@ def main() -> int:
     if a.dry_run:
         return 0
 
-    try:
-        from faster_whisper import WhisperModel  # noqa: WPS433 (deliberately late: --dry-run needs no model)
-    except ImportError:
-        print("faster-whisper is not installed in this interpreter; run .venv/bin/pip install -r scripts/eval/stt/requirements.txt", file=sys.stderr)
-        return 1
-
     t_load = time.perf_counter()
-    model = WhisperModel(a.model, device=a.device, compute_type=a.compute_type)
+    if a.backend == "mlx":
+        try:
+            import mlx_whisper  # noqa: WPS433
+        except ImportError:
+            print("mlx-whisper is not installed in this interpreter; run .venv/bin/pip install mlx-whisper", file=sys.stderr)
+            return 1
+        # Warm the model holder once so the first clip is not charged with the load.
+        mlx_whisper.transcribe(str(files[0]), path_or_hf_repo=a.repo, language=a.language, condition_on_previous_text=False, fp16=True, verbose=None)
+
+        def decode(path: str) -> str:
+            out = mlx_whisper.transcribe(path, path_or_hf_repo=a.repo, language=a.language,
+                                         condition_on_previous_text=False, fp16=True, verbose=None,
+                                         initial_prompt=a.prompt or None)
+            return (out.get("text") or "").strip()
+        print(f"  mlx repo {a.repo}")
+    else:
+        try:
+            from faster_whisper import WhisperModel  # noqa: WPS433 (deliberately late: --dry-run needs no model)
+        except ImportError:
+            print("faster-whisper is not installed in this interpreter; run .venv/bin/pip install -r scripts/eval/stt/requirements.txt", file=sys.stderr)
+            return 1
+        model = WhisperModel(a.model, device=a.device, compute_type=a.compute_type)
+
+        def decode(path: str) -> str:
+            segments, _info = model.transcribe(
+                path, language=a.language, beam_size=a.beam_size,
+                condition_on_previous_text=False, vad_filter=False,
+                initial_prompt=a.prompt or None,
+            )
+            return " ".join(s.text.strip() for s in segments).strip()
     print(f"  model loaded in {time.perf_counter() - t_load:.1f} s")
 
     rows: list[dict | None] = [None] * len(refs)
@@ -173,19 +207,14 @@ def main() -> int:
             done += 1
             continue
         data = f.read_bytes()
-        cp = cache_path(a.model, a.prompt, data)
+        cp = cache_path(cache_model, a.prompt, data)
         try:
             if cp.exists():
                 hit = json.loads(cp.read_text())
                 rows[i] = {"chunk_path": cp_key, "model": model_label, "prompt": a.prompt, "hyp_text": hit["text"], "ms": hit["ms"], "cached": "true", "error": ""}
             else:
                 t0 = time.perf_counter()
-                segments, _info = model.transcribe(
-                    str(f), language=a.language, beam_size=a.beam_size,
-                    condition_on_previous_text=False, vad_filter=False,
-                    initial_prompt=a.prompt or None,
-                )
-                text = " ".join(s.text.strip() for s in segments).strip()
+                text = decode(str(f))
                 ms = round((time.perf_counter() - t0) * 1000)
                 decode_s += ms / 1000
                 audio_s_decoded += wav_duration_seconds(f) or 0.0

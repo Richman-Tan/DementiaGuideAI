@@ -1,0 +1,2 @@
+pylangacq>=0.19
+jiwer>=3.0

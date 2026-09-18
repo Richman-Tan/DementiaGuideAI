@@ -119,6 +119,17 @@ Synthetic by construction. The error profile (`docs/report/eval/stt/error-profil
 | dementia-rate ASR error | 53 % | 0.848 | 0.970 | 0.715 | 0.833 | 0.743 | 0.860 | 4 / 0 | 0.125 |
 | 1.5× dementia rate | 71 % | 0.758 | 0.970 | 0.571 | 0.833 | 0.604 | 0.860 | 7 / 0 | 0.016 |
 
+**Re-derived from the production model (added after §4).** The profile above came from the local 8-bit run, whose runaway insertions made its levels harsher than the deployed model's. Re-deriving it from the `whisper-1` alignments (`error-profile_57ad032_whisper-1.json`: control sub/del/ins 12.7 / 8.7 / 4.9 %, dementia 18.2 / 16.2 / 7.6 %) and re-running retrieval (`retrieval_3a4dde3_v2_perturbed-whisper1.json`; achieved WER control 25.6 %, dementia 39.8 %, 1.5× 55.0 %, disfluent 6.8 %):
+
+| Level (production-model profile) | WER vs clean | recall@5 | clean | MRR | clean | hits lost / gained | McNemar p |
+|---|---:|---:|---:|---:|---:|---|---:|
+| disfluent | 7 % | 0.970 | 0.970 | 0.864 | 0.833 | 0 / 0 | 1.000 |
+| control-rate | 26 % | 0.909 | 0.970 | 0.783 | 0.833 | 2 / 0 | 0.500 |
+| dementia-rate | 40 % | 0.939 | 0.970 | 0.737 | 0.833 | 1 / 0 | 1.000 |
+| 1.5× dementia | 55 % | 0.758 | 0.970 | 0.531 | 0.833 | 7 / 0 | 0.016 |
+
+At the deployed model's actual dementia-speaker error rate the right passage is still in the top five for 31 of 33 questions and the cost shows in rank (MRR 0.83 → 0.74) rather than in recall; the earlier table is the conservative bound. The two "control" draws differ by one hit (0.939 vs 0.909) with the same seed and a slightly different rate — that is the resolution of n = 33.
+
 Reading: disfluency alone (what a person with dementia adds to a correctly transcribed question) costs retrieval nothing — the embedder is indifferent to fillers and repetitions. Recognition errors are what cost: at the raw dementia-speaker rate, recall@5 falls from 0.97 to 0.85 (four of 33 labelled questions lose their passage), and MRR from 0.83 to 0.72. No hit was ever gained. With n = 33 only the 1.5× level reaches significance; the direction is monotone across levels.
 
 ### 5.2 Answer quality — `docs/report/eval/stt/answer-quality_under_asr-error_8a92ecd.md`

@@ -22,6 +22,7 @@
     "test:mobile": "npm test -w apps/mobile",
     "test:web": "npm test -w apps/web",
     "test:api": "npm test -w apps/api",
+    "test:e2e": "npm run test:e2e -w apps/web",
     "test:coverage": "npm run test:coverage:mobile && npm run test:coverage:web && npm run test:coverage:api && node scripts/eval/coverage-summary.mjs",
     "test:coverage:mobile": "cd apps/mobile && npx jest -c jest.coverage.config.js --coverage",
     "test:coverage:web": "npm test -w apps/web -- --coverage",

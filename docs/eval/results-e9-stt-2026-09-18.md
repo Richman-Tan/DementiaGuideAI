@@ -47,7 +47,22 @@ Reading: about a third of the raw group gap is decoder behaviour on pauses rathe
 
 ## 5. Downstream effect on the app — error-profile perturbation
 
-*Pending: the error profile derived from the dementia-speaker alignments is applied to the development question set; retrieval recall@5 and judged answer quality versus the clean questions are reported here. Synthetic by construction; labelled as such.*
+Synthetic by construction. The error profile (`docs/report/eval/stt/error-profile_ecdceaf_local-large-v2-mlx-8bit.json`) is measured from the dementia speakers' alignments in condition (a): substitution / deletion / insertion rates at three levels (`control` = the control speakers' rates, `ad` = the dementia speakers' rates, `ad150` = 1.5× those), the 30 most frequent confusion pairs, and filler / repetition / retracing rates per 100 words from the CHAT transcripts (3.9 / 1.4 / 0.7). Applied with seed 42 to the 45 development questions in sets A, A-neighbour, B and N (`scripts/eval/questions.perturbed.js`, 180 variants; achieved WER against the clean wording: control 28.7 %, ad 53.4 %, ad150 71.2 %, disfluent 7.2 %). Note that the `ad` rates include the hallucination-inflated insertions of §2, so `ad` (53 %) is the *raw* dementia-speaker error rate and `control` (29 %) is close to the dementia rate after excluding hallucinations (35.8 %).
+
+### 5.1 Retrieval — `docs/report/eval/retrieval_5131155_v2_perturbed.json`, 33 labelled items per level, paired against the clean run (`retrieval_8a92ecd_v2.json`)
+
+| Level | WER vs clean | recall@5 | clean | MRR | clean | nDCG@5 | clean | hits lost / gained | McNemar exact p |
+|---|---:|---:|---:|---:|---:|---:|---:|---|---:|
+| disfluent (fillers, repetitions, no ASR error) | 7 % | 0.970 | 0.970 | 0.833 | 0.833 | 0.859 | 0.860 | 0 / 0 | 1.000 |
+| control-rate ASR error | 29 % | 0.939 | 0.970 | 0.780 | 0.833 | 0.812 | 0.860 | 1 / 0 | 1.000 |
+| dementia-rate ASR error | 53 % | 0.848 | 0.970 | 0.715 | 0.833 | 0.743 | 0.860 | 4 / 0 | 0.125 |
+| 1.5× dementia rate | 71 % | 0.758 | 0.970 | 0.571 | 0.833 | 0.604 | 0.860 | 7 / 0 | 0.016 |
+
+Reading: disfluency alone (what a person with dementia adds to a correctly transcribed question) costs retrieval nothing — the embedder is indifferent to fillers and repetitions. Recognition errors are what cost: at the raw dementia-speaker rate, recall@5 falls from 0.97 to 0.85 (four of 33 labelled questions lose their passage), and MRR from 0.83 to 0.72. No hit was ever gained. With n = 33 only the 1.5× level reaches significance; the direction is monotone across levels.
+
+### 5.2 Answer quality
+
+*Running: v2 answers for the 180 variants, judged with the same gpt-4o-mini rubric as the matrix and paired against the clean answers per level; deterministic gates per level. Filled in from `docs/report/eval/stt/answer-quality_under_asr-error_<sha>.md`.*
 
 ## 6. Threats to validity
 

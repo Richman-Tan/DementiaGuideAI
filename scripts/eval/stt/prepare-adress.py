@@ -17,9 +17,10 @@ media.talkbank.org/dementia/English/0extra/ADReSS-2020):
   <root>/train/{cc,cd}_meta_data.txt          ID ; age ; gender ; mmse
   <root>/test/Full_wave_enhanced_audio/S160.wav
   <root>/test/transcription/S160.cha
-  <root>/test/meta_data.txt                   ID ; age ; gender ; Label ; mmse
+  <root>/test/meta_data.txt                   ID ; age ; gender        (no label in the zip)
+  <root>/2020Labels.txt                       ID ; age ; gender(0/1) ; Label ; mmse   (separate public download)
 
-  cc = control, cd = dementia. The test split carries the label in meta_data.
+  cc = control, cd = dementia. The test split's label and MMSE come from 2020Labels.txt.
 
 Join strategies (--join):
 
@@ -205,6 +206,22 @@ def prepare(root: Path, join: str, out_dir: Path, participant: str = "PAR"):
                     rec["group"] = {"1": "dementia", "0": "control"}.get(rec.get("label", ""), rec.get("label", ""))
                 rec["split"] = split
                 metas[sid] = rec
+    # The test split's labels are NOT in the zip: ADReSS-2020 publishes them
+    # separately as 2020Labels.txt (ID ; age ; gender(0/1) ; Label ; mmse).
+    # Overlay label + mmse (and gender only if the zip's meta lacked it).
+    for lp in (root / "2020Labels.txt", root / "test" / "2020Labels.txt"):
+        for sid, rec in read_meta(lp).items():
+            cur = metas.get(sid, {"split": "test"})
+            lab = rec.get("label", "")
+            if lab in ("0", "1"):
+                cur["group"] = {"1": "dementia", "0": "control"}[lab]
+                cur["label"] = lab
+            if rec.get("mmse"):
+                cur["mmse"] = rec["mmse"]
+            cur.setdefault("age", rec.get("age", ""))
+            if not cur.get("gender"):
+                cur["gender"] = {"1": "female", "0": "male"}.get(rec.get("gender", ""), rec.get("gender", ""))
+            metas[sid] = cur
     for split, group_dir, sid, cha, full, chunks in discover(root):
         meta = metas.get(sid, {})
         group = meta.get("group") or {"cc": "control", "cd": "dementia"}.get(group_dir or "", "unknown")

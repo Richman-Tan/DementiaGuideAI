@@ -3,6 +3,11 @@
 > Approved 2026-09-12. Design document for the evaluation chapter; the tooling it
 > calls for is documented in [README.md](README.md). Section numbers are
 > referenced from the scripts.
+>
+> **Addendum 2026-09-18 (§17):** supervisor review asked for DementiaBank, functional
+> verification, scalability and cost. EQ10–EQ13 and E9–E12 are defined in §17;
+> the detailed designs live in [functional-verification.md](functional-verification.md)
+> and [scalability.md](scalability.md).
 
 ## Context
 
@@ -69,7 +74,7 @@ Text chat (Arm B) shares everything from embed to citation extraction; `apps/web
 | Latency data | `docs/report/midyear-technical-report.md` Table 4: n=4 turns, one iPhone, Wi-Fi | **`docs/report/latency_results.csv` is synthetic (n=1, values copied from the parser docstring) — never cite it** |
 | Latency parser | `scripts/parse-latency.mjs` | Median + range only |
 | User study: protocol, instruments, ethics pack, harness, export/analyse/safety-scan scripts, 137 harness tests | `docs/study/*`, `apps/web/src/study/*`, `scripts/study/*` | Built, dry-run passed 2026-09-01/02/09; **no data**; ethics amendment unfiled |
-| Automated tests | 39 files / 347 tests (Jest 134, Vitest 213), CI typecheck+lint+test+prebuild-smoke | Green |
+| Automated tests | 47 files / ~402 cases at `5a1a880` (Jest ~197 over mobile+core+scripts, Vitest 205 over web; the earlier "39 files / 347" figure was 2026-09-12), CI typecheck+lint+test+prebuild-smoke | Green; **no coverage instrumentation and zero tests in `apps/api` until the 2026-09-18 addendum** |
 
 ### 2.3 Baselines that genuinely exist in git
 
@@ -98,6 +103,10 @@ Text chat (Arm B) shares everything from embed to citation extraction; `apps/web
 - **EQ7 Articulation.** Does the avatar produce correct mouth shapes at the right times, and is that perceptible?
 - **EQ8 Interface value.** Does the avatar interaction improve usability, trust, engagement and clarity for caregivers relative to text?
 - **EQ9 Reliability.** Is the delivered system stable enough that the above results describe it (tests, CI, dry runs) — reported as methodology, not a result.
+- **EQ10 Impaired speech (added 2026-09-18).** How accurately does the app's speech-to-text transcribe the speech of people with dementia, and what do those errors do to retrieval and answers?
+- **EQ11 Functional verification (added 2026-09-18).** Does the delivered system do what it is specified to do — requirement by requirement, with the evidence named?
+- **EQ12 Scalability (added 2026-09-18).** How many concurrent users can the deployed system serve, which dependency limits it, and how does retrieval behave under load and corpus growth?
+- **EQ13 Cost (added 2026-09-18).** What does a turn, a session and a month of use cost per service, and what does the cost/quality trade-off look like?
 
 ---
 
@@ -112,7 +121,11 @@ Text chat (Arm B) shares everything from embed to citation extraction; `apps/web
 | E5 | Lip-sync objective | EQ7 | Re-run Unity harness (both characters), commit summaries; G2P vs heuristic viseme-sequence metric; bridge offset | check pass rate, per-check values, jitter, viseme edit distance, bilabial-miss rate, offset ms | legacy keyframe track; heuristic G2P | Component tables + figures | Should |
 | E6 | Lip-sync perceptual | EQ7 | Blinded pairwise preference + 5-pt sync/naturalness, ~15 raters, 8–10 clips | preference rate + binomial CI, rating medians | legacy track vs engine | Links metric gains to perception | Could |
 | E7 | User study | EQ8 | As designed (within-subjects, Latin square, SUS + Likert + tasks + debrief) | SUS, Likert, task success, time, turns, preference, real-session latency, safety scan | Arm B text | Human-evaluation chapter | **Must** |
-| E8 | Reliability | EQ9 | Report test/CI/dry-run evidence | counts, pass rate, incidents | — | Methodology paragraph | Must (as methodology) |
+| E8 | Reliability | EQ9 | Report test/CI/dry-run evidence | counts, pass rate, incidents | — | Methodology paragraph — **superseded by E10 (§17)** | Must (as methodology) |
+| E9 | DementiaBank: STT on dementia speech | EQ10 | ADReSS-2020 participant chunks through the production-exact `whisper-1` call and two drop-in alternatives; Web Speech subset via audio loopback; error-profile perturbation of the question set | WER (S/D/I) per speaker and group with bootstrap CI, AD vs control (Mann–Whitney, Cliff's δ), WER vs MMSE (Spearman), confusion table; recall@5 and judged correctness vs perturbation level | control speakers; gpt-4o-transcribe / mini-transcribe; clean questions | STT accuracy table + degradation curve | **Must** (API models); Should (Web Speech, perturbation) |
+| E10 | Functional verification | EQ11 | Requirements-to-evidence matrix; coverage measurement; new tests for `apps/api`, client parity, STT cascade, committed-artefact tripwire; Playwright e2e | verified / verified-manual / not-verified per requirement; coverage % per subsystem; CI gates | — | [functional-verification.md](functional-verification.md), `coverage_<sha>.md` | **Must** (matrix, coverage, api tests); Should (e2e) |
+| E11 | Scalability | EQ12 | Capacity model per dependency from enforced limits and plan tiers; measured RPC and proxy load tests; client load; optional corpus-scaling test | concurrent users / turns per min per dependency; p50/p95/p99 and error rate vs concurrency; load time vs bandwidth | plan tiers | [scalability.md](scalability.md), `load_*_<sha>.md` | **Must** (model + RPC/proxy); Should (client, corpus) |
+| E12 | Cost of operation | EQ13 | Price the measured tokens/characters in the generation artefacts; per turn, session, user-month, scale table; `gpt-4o-mini` condition in the E2 matrix | US$/NZ$ per typed and spoken turn (p50/p90) per condition; fixed vs variable; quality delta of the cheaper model | v2 on gpt-4o vs gpt-4o-mini; ElevenLabs vs tts-1 | `cost_<sha>.md` + a matrix column | **Must** |
 
 ---
 
@@ -238,9 +251,9 @@ Difficulty **Low–Medium**. Value **Medium**. Claim: "Recall@5 0.97 on n labell
 
 Run `docs/study/protocol.md` unchanged (instrument freeze). Hypotheses already pre-registered: SUS ≥ 68 and Likert ≥ 4 on Arm A; ≥30% time reduction (expected to fail — report as a legitimate result); zero safety-gate hits on transcripts. Additional reporting: paired per-participant plots (fig4–6 scripts exist), preference counts from debrief Q1, thematic coding of debrief Q2–Q5 by two coders, real-session latency table, renderer/fallback counts. Do not add instruments now.
 
-### E8 — Reliability — methodology paragraph
+### E8 — Reliability — methodology paragraph (superseded by E10, §17)
 
-Report: 347 automated tests (categories table from the audit), CI gates, 95-check Unity harness, three documented end-to-end dry runs of the study flow, incident log. State that the eval scripts (`safety-checks.mjs`) are exit-code gated. Do not present unit-test counts as an evaluation result.
+Original text: report the automated tests (categories table from the audit), CI gates, 95-check Unity harness, three documented end-to-end dry runs of the study flow, incident log; state that the eval scripts (`safety-checks.mjs`) are exit-code gated; do not present unit-test counts as an evaluation result. The 2026-09-18 supervisor review asked for the test suite to be *part of* the evaluation, so this becomes a full section (E10) built around a requirements-to-evidence matrix — see §17 and [functional-verification.md](functional-verification.md). The rule stands: counts are context, the matrix is the result.
 
 ---
 
@@ -398,10 +411,13 @@ Known safety facts to state in the report: safety is prompt-only (no classifier,
    5.5  Conversational performance (E4) — stage benchmark, end-to-end, ablation, study-session latency
    5.6  Avatar articulation (E5/E6) — acceptance criteria, G2P ablation, offset, [perceptual]
    5.7  Usability study (E7) — design recap, participants, effectiveness, efficiency, usability, qualitative
-   5.8  Engineering reliability (E8) — tests, CI, dry runs (short)
-   5.9  Threats to validity — per evaluation, incl. in-sample safety items, judge bias, format leakage,
-        author-designed fixtures, small n, single device
-   5.10 Synthesis — answers to EQ1–EQ9; what is and is not claimed
+   5.8  Speech recognition on dementia speech (E9) — ADReSS WER, recogniser comparison, error propagation
+   5.9  Functional verification (E10) — requirements matrix, coverage, test levels, CI, unverified items
+   5.10 Scalability (E11) — capacity model, binding constraint, measured load, client load
+   5.11 Cost of operation (E12) — per turn / session / month, cost–quality trade-off
+   5.12 Threats to validity — per evaluation, incl. in-sample safety items, judge bias, format leakage,
+        author-designed fixtures, small n, single device, US-English clinical audio for E9
+   5.13 Synthesis — answers to EQ1–EQ13; what is and is not claimed
 ```
 
 ---
@@ -463,3 +479,69 @@ Week 6 — write-up
 - [ ] Chapter per §15; every number traceable to a sha-stamped artefact; state explicitly which claims are *not* made (perceived realism if E6 skipped; streaming TTS; historical latency)
 
 **Verification of the tooling itself (before trusting any result):** unit tests for `promptVersions.js` (byte-frozen P0/v1; `v2-nosafety` = v2 minus exactly the SAFETY block), `text-metrics.mjs` (phone allowlist on planted numbers), `safety-report.mjs` (planted 000/mg/AU failures caught, Wilson CI hand-checked), `agreement.mjs` (κ on a textbook example); `judge.mjs` piloted with position-swap consistency ≥ 0.8 before full runs; `bench-pipeline.mjs` cross-checked against one manual timing; `summarise-testresults.mjs` reproduces 37/85 and 95/95 from the existing run folders.
+
+---
+
+## 17. Addendum 2026-09-18 — supervisor review: DementiaBank, functional verification, scalability, cost
+
+Jing Sun's review of the plan (meeting 2026-09-18) found four gaps: DementiaBank must be included; the test suite in the codebase must be part of the evaluation (functional testing); scalability is not evaluated; cost of operation is not evaluated. E1–E8 stand unchanged. This section adds E9–E12 and the questions EQ10–EQ13 they answer. Repo facts below are at `5a1a880`.
+
+### 17.1 E9 — DementiaBank: speech recognition on dementia speech — MUST
+
+**Why this use of the corpus.** The app has a stated user group — people living with dementia, enrolled as voice users in the study (`docs/study/protocol.md` §3.3, §4) — whose speech is known to be transcribed worse by every published ASR system, and the repo has never measured speech-recognition *accuracy* on anyone (only latency; `docs/eval/README.md` E4). The analysis plan already asserts that *"speech recognition errors change the query"* (`docs/study/analysis-plan.md`) without a number. DementiaBank is the standard corpus for exactly this measurement. DementiaBank, TalkBank, ADReSS and WER had zero mentions in the repo before this addendum.
+
+**Access and data handling.** Access is granted: Jing Sun is a DementiaBank member and both students were added by TalkBank on 2026-08-29 (reconfirmed 2026-09-18; access runs to 2027-01-01). Each student registers as a "New User" at a protected link with their university email. The TalkBank Ground Rules (talkbank.org/0share/rules.html) set the handling constraints, and they change the E9 design:
+
+- Password-protected data may not be posted elsewhere or shared with anyone without access; downloaded data is stored on a local device for analysis only and not circulated.
+- **Data may not be uploaded to web-based systems unless the non-storage option is specifically selected** (the rules name OpenAI, Anthropic and Google). OpenAI's data-controls page (developers.openai.com/api/docs/guides/your-data, read 2026-09-18) states that API inputs are not used for training, that abuse-monitoring logs are kept up to 30 days for API usage in general, **but that `/v1/audio/transcriptions` has no abuse-monitoring retention and no application-state retention.** On that documented basis the transcription API is a non-storage service for the audio we would send; the transcripts it returns are never forwarded to a chat endpoint. This is a policy reading, so it goes to the supervisor for sign-off with the page cited, and **the local run remains the primary measurement** because it involves no third party at all.
+- The licence (CC BY-NC-SA) precludes incorporating the data into commercial products or models; we do neither.
+- Cite the corpus and, for Pitt-derived data, the NIA grants AG03705 and AG05133.
+
+Consequences: the **primary E9 run uses local open-weights Whisper on the development Mac** (`faster-whisper`, `large-v2` — the family OpenAI has stated `whisper-1` is based on — with `medium`/`large-v3` as free comparators), so no audio leaves the machine. The API conditions (`whisper-1`, `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`) run once the supervisor has signed off on the non-storage reading above (or zero data retention is confirmed for the organisation, which makes the question moot); they are labelled with that basis in the report. Audio, reference transcripts and hypothesis transcripts stay in the git-ignored `data/dementiabank/`; only aggregates are committed under `docs/report/eval/stt/`; no transcript text appears in the report beyond single confusion word pairs.
+
+**Dataset.** ADReSS-2020 (`media.talkbank.org/dementia/English/0extra/ADReSS-2020`): 156 speakers, 78 AD / 78 controls matched for age and gender, one Cookie Theft recording each, CHAT transcripts, MMSE, and pre-segmented participant-only chunks (VAD, ≤10 s; ~4,077 segments). Published comparators exist (Whisper-large ≈ 30 % WER on the ADReSS-M variant; 23–44 % across commercial systems; AD speakers consistently worse than controls).
+
+**Conditions.**
+
+| Condition | What | Why |
+|---|---|---|
+| **local `large-v2`** (primary) | MLX 8-bit build (`mlx-community/whisper-large-v2-mlx-8bit`) on the Mac's GPU, `language:'en'`, no prompt — the open-weights family behind `whisper-1`; no upload. 8-bit because fp16 swaps on an 8 GB machine; output identical to fp16 on probe clips | the closest measurement of the deployed fallback model that the Ground Rules allow without a retention agreement |
+| local `medium` (MLX fp16) | same, model swapped | free comparator; size/accuracy trade-off |
+| `whisper-1` (API) — conditional | `language:'en'`, no prompt, default format — byte-identical to `apps/api/api/transcribe.js` | the deployed fallback model itself; **runs after supervisor sign-off on the non-storage basis (or ZDR)** |
+| `gpt-4o-transcribe`, `gpt-4o-mini-transcribe` (API) — conditional | same call, model swapped | drop-in alternatives on the same path; price per minute known; same retention condition |
+| `whisper-1` + domain prompt (optional) | `prompt:` seeded with dementia-care vocabulary | the lever the proxy currently pins off; if it helps it is a recommendation |
+| Web Speech API `en-NZ` (Should) | 20-speaker stratified subset fed through Chrome via a virtual audio device with the `sttWeb.js` recogniser settings | the production-*primary* recogniser cannot run headless; this is what a Chrome participant gets. Date-stamped: it is a server-side model that changes |
+
+**Two input conditions, same audio.** (a) **Utterance cuts**: every participant utterance cut from the full enhanced recording by its CHAT time bullets, pauses included — the closest analogue to what the app's Whisper fallback receives (a whole recording, uploaded after the user stops). (b) **VAD chunks**: the challenge's own `Normalised_audio-chunks` (silence removed, ≤10 s sub-chunks), grouped back to their source utterance by the span encoded in the file name and scored after concatenating the sub-chunk hypotheses — the analogue of an endpointed segment. On inspection the partial utterance-cut run showed the deployed model family's known failure on pause-heavy or very short audio: hallucinated phrases ("Thank you."), runaway repetition, and investigator speech captured inside long participant spans. The report therefore carries a hallucination/runaway section and a WER-with-runaways-excluded column, and the gap between (a) and (b) is itself a finding about endpointing, not something to normalise away. Half the utterance-cut audio is pause (2.6 h vs 1.36 h after VAD).
+
+**Unit of analysis and normalisation.** Participant utterance; WER aggregated per speaker (n = 156; 155 in the chunk condition because one speaker's chunk names do not match its transcript timings). Both sides normalised the same way: CHAT codes stripped (retracing, pauses, `xxx`, `&-` fillers, `+...`), lowercase, punctuation removed, numbers spelled, contractions expanded. Two filler policies reported: stripped from both sides (primary — `whisper-1` drops fillers by design) and retained (secondary — the app passes whatever is returned into RAG unmodified; `packages/core/rag/prompt.js` wraps the transcript verbatim). If chunk↔utterance alignment is unreliable on inspection, fall back to full-recording WER against the PAR+INV transcript and say so.
+
+**Measures.** WER with S/D/I decomposition; per-group mean with bootstrap 95 % CI over speakers; Mann–Whitney AD vs control with Cliff's δ; Spearman ρ of WER vs MMSE; top-30 substitutions; function-word vs content-word deletion rate; paired Wilcoxon between models over speakers. Local runs cost nothing but time (large-v2 int8 on an Apple-silicon CPU is roughly real-time or better; ~5–6 h of audio); API runs, if permitted, ≈ US$2 per model at ~50 RPM (~80 min). Both are resumable and cached by content hash.
+
+**Downstream (Should).** From the AD-speaker alignments derive an error profile (S/D/I rates, confusion table, function-word deletion rate) and from the CHAT transcripts the filler/repetition/retracing rates; apply it, seeded, to the 74 development questions at `control`, `ad`, `ad150` WER levels plus a `disfluent` (no ASR error) variant; run `run-retrieval` (recall@5, MRR vs clean; McNemar on hit@5) and `run-generation` v2 + judge on a 30-item subset (reference correctness, helpfulness vs clean; Wilcoxon). Report the degradation curve. Synthetic; labelled as such; not a user result.
+
+**Not doing.** Dementia *detection* (a different project). Feeding Cookie Theft descriptions to the chatbot and judging the replies — that measures out-of-scope handling on non-questions, which set C already covers; if the supervisor wants it, the conversational subsets (Kempler, Lanzi, VAS) are the right source, not Pitt.
+
+**Threats.** US-English clinical recordings from a picture-description task, 1980s–2000s, denoised: this bounds robustness to *impaired speech*, not NZ accent or caregiver vocabulary. No fine-tuning; the app uses the API model as-is.
+
+**Tooling** (built 2026-09-18, validated on synthetic fixtures): `scripts/eval/stt/prepare-adress.py` (pylangacq; CHAT → normalised utterances → chunk join → `references.csv`), `scripts/eval/stt/transcribe-local.py` (faster-whisper, cached, resumable — the primary path), `scripts/eval/stt/transcribe.mjs` (production-exact API call, cached, resumable — conditional), `scripts/eval/lib/wer.js` (+ tests cross-checked against jiwer), `scripts/eval/stt/wer-report.mjs`, `scripts/eval/stt/perturb-questions.mjs`, `--questions-file` on `run-generation.mjs` / `run-retrieval.mjs`. **Contingency:** the data is available now, so the only contingency is the API condition: if sign-off is not given, the report presents local `large-v2` as the measurement of the deployed model family and states the gap explicitly.
+
+**Results:** [results-e9-stt-2026-09-18.md](results-e9-stt-2026-09-18.md) — run 2026-09-18/19: condition (a), pauses included, pooled WER control 34.6 % / dementia 59.7 % (p = 0.008), 24.6 % / 35.8 % excluding hallucinations; condition (b), VAD-trimmed, 33.0 % / 48.1 % (p = 0.004) — endpointing removes a fifth of the dementia group's error, the residual 15-point gap is the speech; retrieval recall@5 0.97 → 0.85 at the dementia-speaker error rate and citation markers −30 %, answers still pass every safety gate; unchanged under disfluency alone.
+
+### 17.2 E10 — Functional verification — MUST
+
+Replaces E8's "methodology paragraph" with a section whose spine is a **requirements-to-evidence matrix** ([functional-verification.md](functional-verification.md)): each functional requirement → verification method (unit / parity / contract / byte-freeze / eval gate / e2e / dry-run checklist / device check) → evidence path → status (verified / verified-manual / not verified). Supporting evidence: measured coverage per subsystem (`docs/report/eval/final/coverage_<sha>.md`; none existed before), the CI gate (typecheck, lint, three test suites, Expo prebuild smoke), the Unity harness summaries, dry-run records, the incident log.
+
+New tests added by this addendum where the gap was dangerous: `apps/api` had **zero tests** including the hand-rolled multipart parser and the auth/CORS/metering guard (`apps/api/tests/`); a client-parity contract between `openaiClient.js` and `openaiService.js` (two parallel implementations, no tripwire); the STT cascade (`sttWeb.js`); and a tripwire that re-runs the deterministic safety gates over the committed v2 artefact and asserts the recorded counts (`scripts/eval/artefacts.test.js`) so the safety evidence is CI-verified without an API key. Playwright e2e over the assembled web app with mocked providers is Should. Rules: test counts are context; no coverage threshold is set on legacy code (report, don't gate); unverified requirements are listed as such.
+
+### 17.3 E11 — Scalability — MUST (model, RPC/proxy load) / SHOULD (client, corpus)
+
+Design in [scalability.md](scalability.md). A capacity model per dependency from limits enforced in code and plan tiers (ElevenLabs TTS concurrency, OpenAI TPM tier, Supabase Free, Vercel Pro transfer, the per-code daily meter), naming the binding constraint; then measured, free, read-only load tests: `match_chunks` under concurrency 1–50 (`scripts/eval/load/rpc-load.mjs`), the proxy + Postgres meter path via `/api/embed` at bounded volume, Unity WebGL load time and memory vs bandwidth; optionally retrieval latency vs corpus size on a scratch table. `/api/chat` is deliberately not load-tested: it costs money and the ceiling it would hit is the TPM tier already in the table.
+
+### 17.4 E12 — Cost of operation — MUST
+
+`scripts/eval/cost-model.mjs` prices the tokens and characters **already measured** in the generation artefacts (`promptTokens`/`completionTokens` per row; billed TTS characters by replaying the sentence splitter and spoken-text normaliser over each answer) against a dated, sourced price table (`scripts/eval/pricing.2026-09.json`), producing per-turn (typed / spoken, per condition, p50/p90), per-session, per-user-month and 10/100/1,000-user tables with fixed costs, plus one-off ingestion and evaluation spend. The cost/quality trade-off is measured, not asserted: `v2` on `gpt-4o-mini` is added to the E2 matrix and scored with the same gates and judge. The output is `docs/report/eval/final/cost_<sha>.md`; every number traces to an artefact file or a price key. Validation against one real session's provider dashboards is recorded with a date; the proxy's `usage_events` cannot do this for anonymous participants.
+
+### 17.5 Order of work
+
+Now: register at the TalkBank protected link, download ADReSS-2020, and ask the supervisor to sign off the API condition on the documented non-storage basis. Week 1: E12 (no external dependency) and E10. Week 2: E11 and the E9 tooling on synthetic fixtures. Week 3: E9 runs, Web Speech subset, perturbation, e2e. Week 4: dry-run record, fallback drills, Unity re-run, write-up. Week 5: buffer, chapter integration.

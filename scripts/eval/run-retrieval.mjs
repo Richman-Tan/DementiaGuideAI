@@ -10,12 +10,14 @@
 //   node scripts/eval/run-retrieval.mjs --cap none        # no source-family cap (pre-2026-07-13 behaviour)
 //   node scripts/eval/run-retrieval.mjs --dense-only      # cosine-only ordering (no lexical term)
 //   node scripts/eval/run-retrieval.mjs --top-k 8         # wider result list (metrics still @1/3/5)
+//   node scripts/eval/run-retrieval.mjs --questions-file scripts/eval/questions.perturbed.js [--only-file]
+//                                                       # + labelled items from an extra file (E9 §2.5); --only-file scores just those
 //
 // Metrics per labelled question: recall@{1,3,5}, precision@5, MRR, nDCG@5
 // (relevant gain 2, acceptable gain 1). Aggregated per set and overall.
 // Zero LLM involvement — see docs/rag/rag-evaluation-plan.md.
-import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { resolve, basename } from 'node:path';
 import { createRequire } from 'node:module';
 
 import { requireEnv, retrieve, gitSha, outDir, csvEscape, sleep, ROOT } from './lib.mjs';
@@ -32,10 +34,25 @@ const OUT = argVal('--out');
 const CAP = argVal('--cap') == null ? undefined : (argVal('--cap') === 'none' ? Infinity : Number(argVal('--cap')));
 const DENSE_ONLY = args.includes('--dense-only');
 const TOP_K_ARG = argVal('--top-k') ? Number(argVal('--top-k')) : undefined;
+const QUESTIONS_FILE = argVal('--questions-file');
+const ONLY_FILE = args.includes('--only-file');
 const VARIANT = [CAP !== undefined ? `cap-${CAP === Infinity ? 'none' : CAP}` : null, DENSE_ONLY ? 'dense' : null, TOP_K_ARG ? `top${TOP_K_ARG}` : null].filter(Boolean).join('_');
 
+function loadQuestionFile(path) {
+  const abs = resolve(process.cwd(), path);
+  if (!existsSync(abs)) { console.error(`--questions-file ${path} does not exist`); process.exit(1); }
+  const mod = require(abs);
+  const list = mod.HELDOUT_QUESTIONS ?? mod.PERTURBED_QUESTIONS ?? mod.QUESTIONS ?? (Array.isArray(mod) ? mod : null);
+  if (!Array.isArray(list)) { console.error(`${path} must export an array as HELDOUT_QUESTIONS, PERTURBED_QUESTIONS or QUESTIONS`); process.exit(1); }
+  for (const q of list) {
+    if (QUESTIONS.some(p => p.id === q.id)) { console.error(`duplicate question id ${q.id} between questions.js and ${path}`); process.exit(1); }
+  }
+  return list;
+}
+
 // Labelled questions only (A / A-neighbour, plus N once labels exist).
-const labelled = QUESTIONS.filter(q => (q.relevant.length || q.acceptable.length) && !q.pendingContent);
+const pool = [...(ONLY_FILE ? [] : QUESTIONS), ...(QUESTIONS_FILE ? loadQuestionFile(QUESTIONS_FILE) : [])];
+const labelled = pool.filter(q => ((q.relevant ?? []).length || (q.acceptable ?? []).length) && !q.pendingContent);
 
 async function retrievedIdsLive(q) {
   const rows = await retrieve(questionText(q, QUESTION_VERSION), { ...(CAP !== undefined ? { cap: CAP } : {}), denseOnly: DENSE_ONLY, ...(TOP_K_ARG ? { topK: TOP_K_ARG } : {}) });
@@ -75,7 +92,7 @@ async function main() {
       await sleep(200);
     }
     const scores = scoreQuestion({ retrieved: got.ids, relevant: q.relevant, acceptable: q.acceptable });
-    perQuestion.push({ id: q.id, set: q.set, category: q.category, retrieved: got.ids, topSimilarity: got.topSimilarity, ...scores });
+    perQuestion.push({ id: q.id, set: q.set, category: q.category, ...(q.level ? { level: q.level, sourceId: q.sourceId } : {}), retrieved: got.ids, topSimilarity: got.topSimilarity, ...scores });
     if (!FROM_AUDIT) console.log(`${q.id.padEnd(4)} recall@5=${scores['recall@5']}  mrr=${scores['mrr']?.toFixed(3)}  ndcg@5=${scores['ndcg@5']?.toFixed(3)}`);
   }
 
@@ -92,6 +109,7 @@ async function main() {
     gitSha: sha,
     questionVersion: FROM_AUDIT ? `audit:${FROM_AUDIT}` : QUESTION_VERSION,
     variant: VARIANT || 'production',
+    questionsFile: QUESTIONS_FILE ?? null,
     n: perQuestion.length,
     overall,
     perSet,
@@ -99,7 +117,7 @@ async function main() {
   };
 
   outDir(); // ensure docs/report/eval exists even with an explicit --out
-  const outPath = OUT ? resolve(process.cwd(), OUT) : resolve(outDir(), `retrieval_${sha}${FROM_AUDIT ? '_backfill' : `_${QUESTION_VERSION}`}${VARIANT ? `_${VARIANT}` : ''}.json`);
+  const outPath = OUT ? resolve(process.cwd(), OUT) : resolve(outDir(), `retrieval_${sha}${FROM_AUDIT ? '_backfill' : `_${QUESTION_VERSION}`}${VARIANT ? `_${VARIANT}` : ''}${QUESTIONS_FILE ? '_' + basename(QUESTIONS_FILE).replace(/^questions\.|\.js$/g, '') : ''}.json`);
   writeFileSync(outPath, JSON.stringify(result, null, 2));
 
   // Companion CSV for the report.

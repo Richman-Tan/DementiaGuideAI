@@ -130,6 +130,23 @@ Three.js profiles if measured at all.
 * Re-running the Unity harness itself is manual: Editor → Tools › LipSync › Run
   All Fixtures (no captures), with `Time.captureFramerate = 60`.
 
+## Speech recognition on dementia speech (E9)
+
+Corpus: DementiaBank ADReSS-2020, members only; download the two zips and `2020Labels.txt` into the git-ignored `data/dementiabank/ADReSS-IS2020-data/` (`train/`, `test/`). Nothing under `data/` is ever committed; the reports under `docs/report/eval/stt/` carry aggregates only. Design and data-handling rules: `evaluation-plan.md` §17.1; results: `results-e9-stt-2026-09-18.md`.
+
+```
+python3 -m venv .venv && .venv/bin/pip install -r scripts/eval/stt/requirements.txt   # pylangacq, jiwer, faster-whisper; plus mlx-whisper on Apple silicon
+npm run eval:stt:prepare -- --adress data/dementiabank/ADReSS-IS2020-data --join utterance      --out data/dementiabank           # condition (a): utterance cuts, pauses included
+npm run eval:stt:prepare -- --adress data/dementiabank/ADReSS-IS2020-data --join chunks-concat  --out data/dementiabank/chunkcat  # condition (b): VAD-trimmed, one clip per utterance
+npm run eval:stt:local -- --backend mlx --repo mlx-community/whisper-large-v2-mlx-8bit --references data/dementiabank/references.csv --resume
+npm run eval:stt:wer   -- --references data/dementiabank/references.csv --hyps data/dementiabank/hyps_local-large-v2-mlx-8bit.csv --out-dir docs/report/eval/stt --sha <sha> --profile-out data/dementiabank/error-profile.json
+npm run eval:stt:perturb -- --profile data/dementiabank/error-profile.json --seed 42            # → scripts/eval/questions.perturbed.js
+node scripts/eval/run-retrieval.mjs  --questions-file scripts/eval/questions.perturbed.js --only-file
+node scripts/eval/run-generation.mjs --questions-file scripts/eval/questions.perturbed.js --prompt v2 ...   # then judge as for the matrix
+```
+
+The local run is the primary measurement: the TalkBank Ground Rules only allow uploading protected data to services with non-storage selected. `transcribe.mjs` (the production-exact API call) runs only after supervisor sign-off; OpenAI documents no retention on the transcription endpoint, which is the basis for that request. On an 8 GB Apple-silicon Mac use the MLX 8-bit build: the CPU path and fp16 both swap (RTF ≈ 9 and 4.6 measured), 8-bit runs at RTF ≈ 0.2 on an idle machine. Every transcription is cached by content hash under `data/dementiabank/cache/`, so re-runs and `--resume` are free. `wer-report.mjs --self-test` and `prepare-adress.py --self-test` validate the pipeline on synthetic fixtures without the corpus.
+
 ## Not automated
 
 Human ratings, clinician review of the held-out items, device/browser latency

@@ -29,6 +29,9 @@
 //   node scripts/eval/run-generation.mjs --sets S,I,J --heldout   # + scripts/eval/questions.heldout.js
 //   node scripts/eval/run-generation.mjs --heldout-only            # only the held-out items
 //   node scripts/eval/run-generation.mjs --dry-run                # plan only, no API calls
+//   node scripts/eval/run-generation.mjs --questions-file scripts/eval/questions.perturbed.js --sets A,N [--only-file]
+//                                                                  # + an extra question file (E9 §2.5 perturbed variants);
+//                                                                  #   must export an array as HELDOUT_QUESTIONS, PERTURBED_QUESTIONS or QUESTIONS
 //   flags: --questions v1|v2  --limit N  --temperature T  --seed S  --model id  --tag label  --out path  --no-inject
 //          --pace-ms 250   sleep between calls (raise on a low tokens-per-minute tier)
 //          --resume        keep the rows already in the output file and only generate the missing (id, sample)
@@ -68,6 +71,8 @@ const INCLUDE_HELDOUT = has('--heldout') || has('--heldout-only');
 const HELDOUT_ONLY = has('--heldout-only');
 const PACE_MS = Number(argVal('--pace-ms') ?? 250);
 const SHA_LABEL = argVal('--sha');
+const QUESTIONS_FILE = argVal('--questions-file');
+const ONLY_FILE = has('--only-file'); // with --questions-file: generate only the items from that file
 const RESUME = has('--resume');
 const CHECKPOINT_EVERY = 10;
 
@@ -88,7 +93,28 @@ function loadQuestionPool() {
       pool.push(q);
     }
   }
+  if (QUESTIONS_FILE) {
+    for (const q of loadQuestionFile(QUESTIONS_FILE)) {
+      if (pool.some(p => p.id === q.id)) throw new Error(`duplicate question id ${q.id} between the built-in sets and ${QUESTIONS_FILE}`);
+      q.fromFile = true;
+      pool.push(q);
+    }
+  }
   return pool;
+}
+
+// An extra question file (CommonJS) exporting an array under one of the known
+// names. Items need at least { id, set, category, question }.
+function loadQuestionFile(path) {
+  const abs = resolve(process.cwd(), path);
+  if (!existsSync(abs)) { console.error(`--questions-file ${path} does not exist`); process.exit(1); }
+  const mod = require(abs);
+  const list = mod.HELDOUT_QUESTIONS ?? mod.PERTURBED_QUESTIONS ?? mod.QUESTIONS ?? (Array.isArray(mod) ? mod : null);
+  if (!Array.isArray(list)) { console.error(`${path} must export an array as HELDOUT_QUESTIONS, PERTURBED_QUESTIONS or QUESTIONS`); process.exit(1); }
+  for (const q of list) {
+    if (!q?.id || !q.set || !q.question) { console.error(`${path}: every item needs id, set and question (bad item: ${JSON.stringify(q).slice(0, 80)})`); process.exit(1); }
+  }
+  return list;
 }
 
 // Retries 429 / 5xx / network errors. A 429 carries "Please try again in Ns" —
@@ -135,7 +161,7 @@ function injectedChunks(q) {
 
 async function main() {
   const pool = loadQuestionPool();
-  const questions = pool.filter(q => SETS.includes(q.set) && (!HELDOUT_ONLY || q.heldout)).slice(0, LIMIT);
+  const questions = pool.filter(q => SETS.includes(q.set) && (!HELDOUT_ONLY || q.heldout) && (!ONLY_FILE || q.fromFile)).slice(0, LIMIT);
   const systemPrompt = condition.system({});
   const systemPromptSha256 = createHash('sha256').update(systemPrompt).digest('hex');
   const maxTokens = maxTokensForStyle('balanced', false);
@@ -170,6 +196,7 @@ async function main() {
     injection: !NO_INJECT,
     questionVersion: QUESTION_VERSION,
     heldout: INCLUDE_HELDOUT,
+    questionsFile: QUESTIONS_FILE ?? null,
     model: MODEL,
     temperature: TEMPERATURE,
     seed: SEED,

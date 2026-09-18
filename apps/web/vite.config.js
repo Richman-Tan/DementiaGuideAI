@@ -222,6 +222,14 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'node',
       include: ['tests/**/*.test.js'],
+      // Opt-in (`npx vitest run --coverage`); reported, never gated.
+      coverage: {
+        provider: 'v8',
+        include: ['src/**'],
+        exclude: ['tests/**', '**/*.test.*'],
+        reporter: ['json-summary', 'text-summary'],
+        reportsDirectory: 'coverage',
+      },
     },
   };
 });

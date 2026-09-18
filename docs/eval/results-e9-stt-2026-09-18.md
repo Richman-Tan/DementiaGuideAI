@@ -80,7 +80,18 @@ Condition (b) is the analogue of what the app's live recogniser and endpointer d
 
 Dementia vs control p = 0.001, δ = 0.30; ρ(WER, MMSE) = −0.21, p = 0.008. Paired against large-v2 8-bit per speaker: **medium is 9.8 points better** (Wilcoxon p = 0.026, rank-biserial −0.21). The difference is almost entirely insertions (4.1 / 6.6 % vs 10.9 / 22.0 %): the smaller model returns an empty hypothesis where the larger one hallucinates. Whether that is a property of large-v2 or of the 8-bit quantisation is decided by the `whisper-1` API run below, which is the unquantised production model; until then the large-v2 figures in §2 should be read as an upper bound on the deployed model's error.
 
-*API conditions (`whisper-1`, `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`): **Jing Sun signed off the non-storage reading on 2026-09-19** (OpenAI's data-controls page: no abuse-monitoring log and no application state on `/v1/audio/transcriptions`). Running: `whisper-1` on both conditions, the two gpt-4o transcription models on condition (b); ≈ US$2.20 total. Filled in on completion.*
+**API conditions** — Jing Sun signed off the non-storage reading on 2026-09-19 (OpenAI's data-controls page: no abuse-monitoring log and no application state on `/v1/audio/transcriptions`); the audio was sent under that basis and nothing is retained by the provider.
+
+**`whisper-1` (the deployed fallback model), condition (b)** — `wer_0419750_whisper-1.md`; 1,973 clips, 0 failed, API round trip median 991 ms (RTF 0.46 from this machine).
+
+| Group | Pooled WER | Sub | Del | Ins | Stock phrase | Empty | Pooled WER excl. |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| control | 31.4 % | 14.0 % | 12.6 % | 4.8 % | 2.8 % | 2.6 % | 28.2 % |
+| dementia | 44.7 % | 19.3 % | 20.7 % | 4.7 % | 3.8 % | 4.1 % | 41.4 % |
+
+Dementia vs control p = 0.006, δ = 0.26; ρ(WER, MMSE) = −0.18, p = 0.023. **Parity with the local run:** paired per speaker against local large-v2 8-bit on the same clips, `whisper-1` is 2.6 points better (Wilcoxon p < 0.001, rank-biserial −0.42) — the local 8-bit build was a faithful, slightly pessimistic proxy for the production model, and every conclusion drawn from it stands. The group gap under the production model is 13 points on endpointed speech.
+
+*`whisper-1` on condition (a), and `gpt-4o-transcribe` / `gpt-4o-mini-transcribe` on condition (b): running; filled in on completion.*
 
 ## 5. Downstream effect on the app — error-profile perturbation
 

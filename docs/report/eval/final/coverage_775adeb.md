@@ -1,4 +1,4 @@
-# Test coverage — 5a1a880 (2026-09-18)
+# Test coverage — 775adeb (2026-09-18)
 
 Statement, branch, function and line coverage as reported by the test runners
 themselves (Jest V8 provider via `apps/mobile/jest.coverage.config.js`; Vitest V8
@@ -14,10 +14,10 @@ Regenerate: `npm run test:coverage && node scripts/eval/coverage-summary.mjs`.
 
 | Runner | test files | cases |
 |---|---:|---:|
-| Jest (apps/mobile, packages/core, scripts) | 25 | 218 |
+| Jest (apps/mobile, packages/core, scripts) | 25 | 219 |
 | Vitest (apps/web) | 27 | 217 |
 | Vitest (apps/api) | 5 | 66 |
-| **Total** | **57** | **501** |
+| **Total** | **57** | **502** |
 
 `it.each` rows count once here; the runners' own totals are higher by the number
 of table rows they expand.
@@ -26,8 +26,8 @@ of table rows they expand.
 
 | Workspace | files | statements | branches | functions | lines |
 |---|---:|---|---|---|---|
-| jest (apps/mobile + packages/core + scripts) | 75 | 17.4% (2846/16353) | 74.5% (699/938) | 68.1% (128/188) | 17.4% (2846/16353) |
-| vitest (apps/web) | 77 | 28.6% (3104/10839) | 74.8% (232/310) | 51.8% (73/141) | 28.6% (3104/10839) |
+| jest (apps/mobile + packages/core + scripts) | 75 | 17.4% (2850/16357) | 74.6% (702/941) | 68.1% (128/188) | 17.4% (2850/16357) |
+| vitest (apps/web) | 77 | 30.4% (3292/10839) | 73.3% (275/375) | 57.1% (92/161) | 30.4% (3292/10839) |
 | vitest (apps/api) | 12 | 64.8% (689/1063) | 80.1% (193/241) | 81.5% (22/27) | 64.8% (689/1063) |
 
 ## By subsystem
@@ -40,11 +40,11 @@ of table rows they expand.
 | packages/core/tts | 2 | 89.3% (357/400) | 60.0% (60/100) | 86.4% (19/22) | 89.3% (357/400) |
 | packages/core/study | 1 | 0.0% (0/235) | 0.0% (0/1) | 0.0% (0/1) | 0.0% (0/235) |
 | packages/core (other) | 4 | 50.2% (261/520) | 81.8% (18/22) | 50.0% (4/8) | 50.2% (261/520) |
-| scripts/eval/lib | 7 | 87.8% (860/980) | 80.1% (327/408) | 96.6% (57/59) | 87.8% (860/980) |
+| scripts/eval/lib | 7 | 87.8% (864/984) | 80.3% (330/411) | 96.6% (57/59) | 87.8% (864/984) |
 | scripts/ingest | 3 | 34.1% (230/674) | 84.0% (79/94) | 85.7% (12/14) | 34.1% (230/674) |
 | apps/mobile src/lib | 14 | 0.0% (0/1572) | 0.0% (0/14) | 0.0% (0/14) | 0.0% (0/1572) |
 | apps/mobile src/features | 32 | 0.0% (0/10732) | 0.0% (0/32) | 0.0% (0/32) | 0.0% (0/10732) |
-| apps/web src/services | 9 | 6.6% (60/916) | 55.2% (16/29) | 30.0% (3/10) | 6.6% (60/916) |
+| apps/web src/services | 9 | 27.1% (248/916) | 62.8% (59/94) | 73.3% (22/30) | 27.1% (248/916) |
 | apps/web src/study | 11 | 40.0% (801/2003) | 83.1% (128/154) | 66.7% (36/54) | 40.0% (801/2003) |
 | apps/web src/voice | 2 | 3.4% (18/526) | 80.0% (4/5) | 50.0% (1/2) | 3.4% (18/526) |
 | apps/web src/avatar | 14 | 0.0% (0/2962) | 21.4% (3/14) | 21.4% (3/14) | 0.0% (0/2962) |

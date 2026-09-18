@@ -115,3 +115,41 @@ describe('bootstrap and shuffle are seeded', () => {
     expect([...s1].sort()).toEqual([1, 2, 3, 4, 5]);
   });
 });
+
+describe('holm–bonferroni', () => {
+  it('matches R p.adjust(method="holm") on a textbook vector', () => {
+    // R: p.adjust(c(0.01, 0.02, 0.03, 0.04, 0.05), method = "holm")
+    //    -> 0.05 0.08 0.09 0.09 0.09
+    const adj = S.holm([0.01, 0.02, 0.03, 0.04, 0.05]);
+    expect(adj[0]).toBeCloseTo(0.05, 10);
+    expect(adj[1]).toBeCloseTo(0.08, 10);
+    expect(adj[2]).toBeCloseTo(0.09, 10);
+    expect(adj[3]).toBeCloseTo(0.09, 10);
+    expect(adj[4]).toBeCloseTo(0.09, 10);
+  });
+  it('returns adjusted values in the caller\'s original order', () => {
+    const adj = S.holm([0.05, 0.01, 0.03]);
+    // sorted: 0.01 (x3) = 0.03, 0.03 (x2) = 0.06, 0.05 (x1) = 0.05 -> monotone 0.06
+    expect(adj[1]).toBeCloseTo(0.03, 10);
+    expect(adj[2]).toBeCloseTo(0.06, 10);
+    expect(adj[0]).toBeCloseTo(0.06, 10);
+  });
+  it('is monotone non-decreasing in the sorted order and capped at 1', () => {
+    const adj = S.holm([0.4, 0.5, 0.6]);
+    expect(adj.every(v => v <= 1)).toBe(true);
+    const sorted = [...adj].sort((a, b) => a - b);
+    expect(sorted).toEqual([...adj].sort((a, b) => a - b));
+    expect(Math.max(...adj)).toBe(1);
+  });
+  it('leaves a single test unchanged', () => {
+    expect(S.holm([0.023])[0]).toBeCloseTo(0.023, 10);
+  });
+  it('passes non-finite entries through as null and excludes them from m', () => {
+    const adj = S.holm([0.01, null, 0.02, undefined, NaN]);
+    expect(adj[1]).toBeNull();
+    expect(adj[3]).toBeNull();
+    expect(adj[4]).toBeNull();
+    expect(adj[0]).toBeCloseTo(0.02, 10); // m = 2, smallest x2
+    expect(adj[2]).toBeCloseTo(0.02, 10);
+  });
+});

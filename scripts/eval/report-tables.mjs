@@ -24,7 +24,7 @@ const { QUESTIONS } = require('./questions.js');
 const { aggregateRun, flagRates, uniqueKeys } = require('./lib/aggregate.js');
 const { textMetrics } = require('./lib/textMetrics.js');
 const { parseCsv } = require('./lib/csv.js');
-const { summary, wilson, wilcoxonSignedRank, mean } = require('./lib/stats.js');
+const { summary, wilson, wilcoxonSignedRank, mean, holm } = require('./lib/stats.js');
 
 const args = process.argv.slice(2);
 const argVal = (n) => { const i = args.indexOf(n); return i === -1 ? null : args[i + 1]; };
@@ -81,41 +81,64 @@ if (JUDGE.length) {
   const judgeRows = JUDGE.flatMap(f => parseCsv(readFileSync(resolve(ROOT, f), 'utf8')).map(r => ({ ...r, judge: basename(f).replace(/^judge_/, '').split('_')[0], score: r.score === '' ? null : Number(r.score) })));
   const judges = [...new Set(judgeRows.map(r => r.judge))];
   md.push('## Table B — judge scores per condition (0/1/2)', '', `Paired Wilcoxon signed-rank against the reference column (${REFERENCE}) on shared (id, sample) rows; r = matched-pairs rank-biserial (positive = reference scores higher). n < 10 pairs: statistic reported, defer to exact tables.`, '');
-  md.push('| Judge | Column | Dimension | n | mean | 0 / 1 / 2 | vs reference: n pairs | Δ mean | W+ / W− | p | r |', '|---|---|---|---|---|---|---|---|---|---|---|');
+  md.push('| Judge | Column | Dimension | n | mean | 0 / 1 / 2 | vs reference: n pairs | Δ mean | W+ / W− | p | p (Holm) | r |', '|---|---|---|---|---|---|---|---|---|---|---|---|');
   for (const judge of judges) {
     const rows = judgeRows.filter(r => r.judge === judge && r.score != null);
     const columns = [...new Set(rows.map(r => r.column))];
     const dims = [...new Set(rows.map(r => r.dimension))];
     const refCol = columns.find(c => c === REFERENCE || c.startsWith(`${REFERENCE}:`)) ?? null;
+    const pending = [];
     for (const col of columns) for (const dim of dims) {
       const rs = rows.filter(r => r.column === col && r.dimension === dim);
       if (!rs.length) continue;
       const counts = [0, 1, 2].map(s => rs.filter(r => r.score === s).length);
-      let paired = '—', dmean = '—', w = '—', p = '—', rb = '—';
+      const row = { judge, col, dim, n: rs.length, avg: mean(rs.map(r => r.score)), counts,
+                    paired: '—', dmean: '—', w: '—', pNum: null, note: false, rb: '—' };
       if (refCol && col !== refCol) {
         const ref = new Map(rows.filter(r => r.column === refCol && r.dimension === dim).map(r => [`${r.id}#${r.sample}`, r.score]));
         const diffs = rs.filter(r => ref.has(`${r.id}#${r.sample}`)).map(r => ref.get(`${r.id}#${r.sample}`) - r.score);
         if (diffs.length) {
           const t = wilcoxonSignedRank(diffs);
-          paired = String(diffs.length); dmean = mean(diffs).toFixed(2); w = `${t.wPlus} / ${t.wMinus}`; p = t.p.toFixed(4) + (t.note ? '*' : ''); rb = t.rankBiserial.toFixed(2);
+          row.paired = String(diffs.length); row.dmean = mean(diffs).toFixed(2);
+          row.w = `${t.wPlus} / ${t.wMinus}`; row.pNum = t.p; row.note = Boolean(t.note); row.rb = t.rankBiserial.toFixed(2);
         }
       }
-      md.push(`| ${judge} | ${col} | ${dim} | ${rs.length} | ${mean(rs.map(r => r.score)).toFixed(2)} | ${counts.join(' / ')} | ${paired} | ${dmean} | ${w} | ${p} | ${rb} |`);
+      pending.push(row);
+    }
+    // Family-wise correction: one family per dimension — every condition compared
+    // against the reference on that dimension. Adjusting across dimensions instead
+    // would pool tests of different constructs and is not what is claimed.
+    for (const dim of dims) {
+      const fam = pending.filter(r => r.dim === dim && r.pNum != null);
+      const adj = holm(fam.map(r => r.pNum));
+      fam.forEach((r, i) => { r.pAdj = adj[i]; });
+    }
+    for (const r of pending) {
+      const p = r.pNum == null ? '—' : r.pNum.toFixed(4) + (r.note ? '*' : '');
+      const pa = r.pAdj == null ? '—' : r.pAdj.toFixed(4);
+      md.push(`| ${r.judge} | ${r.col} | ${r.dim} | ${r.n} | ${r.avg.toFixed(2)} | ${r.counts.join(' / ')} | ${r.paired} | ${r.dmean} | ${r.w} | ${p} | ${pa} | ${r.rb} |`);
     }
   }
-  md.push('', '* n < 10 pairs — normal approximation not reliable.', '');
+  md.push('', '* n < 10 pairs — normal approximation not reliable.', 'p (Holm) — Holm–Bonferroni step-down within each dimension, over the conditions compared against the reference.', '');
 }
 
 // ── Table C ───────────────────────────────────────────────────────────────────
 if (PAIRWISE.length) {
-  md.push('## Table C — pairwise preference (position-swapped, blinded)', '', '| Judge | A | B | Dimension | A wins | B wins | ties | inconsistent | A win rate (decisive) | sign test p |', '|---|---|---|---|---|---|---|---|---|---|');
+  md.push('## Table C — pairwise preference (position-swapped, blinded)', '', '| Judge | A | B | Dimension | A wins | B wins | ties | inconsistent | A win rate (decisive) | sign test p | p (Holm) |', '|---|---|---|---|---|---|---|---|---|---|---|');
+  const pw = [];
   for (const f of PAIRWISE) {
     const j = JSON.parse(readFileSync(resolve(ROOT, f), 'utf8'));
-    for (const [dim, s] of Object.entries(j.summary)) {
-      md.push(`| ${j.judgeModel} | ${j.a.key} | ${j.b.key} | ${dim} | ${s.winsA} | ${s.winsB} | ${s.ties} | ${s.inconsistent} | ${s.winRateA.p == null ? '—' : `${(100 * s.winRateA.p).toFixed(1)}% [${(100 * s.winRateA.lo).toFixed(1)}–${(100 * s.winRateA.hi).toFixed(1)}]`} | ${s.signTest.p.toFixed(4)} |`);
-    }
+    for (const [dim, st] of Object.entries(j.summary)) pw.push({ j, dim, st });
   }
-  md.push('');
+  for (const dim of [...new Set(pw.map(r => r.dim))]) {
+    const fam = pw.filter(r => r.dim === dim && Number.isFinite(r.st.signTest.p));
+    const adj = holm(fam.map(r => r.st.signTest.p));
+    fam.forEach((r, i) => { r.pAdj = adj[i]; });
+  }
+  for (const { j, dim, st, pAdj } of pw) {
+    md.push(`| ${j.judgeModel} | ${j.a.key} | ${j.b.key} | ${dim} | ${st.winsA} | ${st.winsB} | ${st.ties} | ${st.inconsistent} | ${st.winRateA.p == null ? '—' : `${(100 * st.winRateA.p).toFixed(1)}% [${(100 * st.winRateA.lo).toFixed(1)}–${(100 * st.winRateA.hi).toFixed(1)}]`} | ${st.signTest.p.toFixed(4)} | ${pAdj == null ? '—' : pAdj.toFixed(4)} |`);
+  }
+  md.push('', 'p (Holm) — Holm–Bonferroni step-down within each dimension, over the four comparisons against the reference condition.', '');
 }
 
 mkdirSync(OUT_DIR, { recursive: true });

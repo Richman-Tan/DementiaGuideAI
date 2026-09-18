@@ -71,7 +71,14 @@ Condition (b) is the analogue of what the app's live recogniser and endpointer d
 
 ## 4. Comparators
 
-*Local `medium` (MLX fp16, `mlx-community/whisper-medium-mlx`) on condition (a): **partial — 1,276 of 2,063 utterances decoded by 2026-09-19 07:36** (the 8 GB machine was swapping and slept overnight; the run is cached by content hash and resumes with `npm run eval:stt:local -- --backend mlx --repo mlx-community/whisper-medium-mlx --resume`). No figure is reported from a partial run; the section is filled in when it completes. It is a size comparator and changes no conclusion above.*
+**Local `medium` (MLX fp16, `mlx-community/whisper-medium-mlx`), condition (a)** — `wer_0419750_local-medium-mlx.md`; 2,063 utterances, 0 failed, RTF 0.27 on an idle machine.
+
+| Group | Pooled WER | Sub | Del | Ins | Stock phrase | Empty | Pooled WER excl. |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| control | 28.4 % | 12.0 % | 12.3 % | 4.1 % | 4.6 % | 5.6 % | 24.1 % |
+| dementia | 45.7 % | 16.5 % | 22.6 % | 6.6 % | 7.6 % | 12.3 % | 39.1 % |
+
+Dementia vs control p = 0.001, δ = 0.30; ρ(WER, MMSE) = −0.21, p = 0.008. Paired against large-v2 8-bit per speaker: **medium is 9.8 points better** (Wilcoxon p = 0.026, rank-biserial −0.21). The difference is almost entirely insertions (4.1 / 6.6 % vs 10.9 / 22.0 %): the smaller model returns an empty hypothesis where the larger one hallucinates. Whether that is a property of large-v2 or of the 8-bit quantisation is decided by the `whisper-1` API run below, which is the unquantised production model; until then the large-v2 figures in §2 should be read as an upper bound on the deployed model's error.
 
 *API conditions (`whisper-1`, `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`): **Jing Sun signed off the non-storage reading on 2026-09-19** (OpenAI's data-controls page: no abuse-monitoring log and no application state on `/v1/audio/transcriptions`). Running: `whisper-1` on both conditions, the two gpt-4o transcription models on condition (b); ≈ US$2.20 total. Filled in on completion.*
 

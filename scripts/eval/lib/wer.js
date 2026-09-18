@@ -39,7 +39,7 @@ const FILLERS = new Set(['uh', 'um', 'er', 'ah', 'mm', 'hmm', 'mhm', 'uhm', 'umm
 
 const CONTRACTIONS = [
   [/\bwon't\b/g, 'will not'], [/\bcan't\b/g, 'can not'], [/\bshan't\b/g, 'shall not'],
-  [/\bain't\b/g, 'is not'], [/\bn't\b/g, ' not'],
+  [/\bain't\b/g, 'is not'], [/n't\b/g, ' not'], // no leading \b: "don't" has no boundary before the n
   [/\b(\w+)'re\b/g, '$1 are'], [/\b(\w+)'ve\b/g, '$1 have'], [/\b(\w+)'ll\b/g, '$1 will'],
   [/\b(\w+)'d\b/g, '$1 would'], [/\bi'm\b/g, 'i am'], [/\b(it|he|she|that|there|what|who|where|here)'s\b/g, '$1 is'],
   [/\blet's\b/g, 'let us'],
@@ -62,6 +62,10 @@ function normalize(text, { fillers = 'strip' } = {}) {
   let s = String(text ?? '').toLowerCase();
   s = s.replace(/[’‘`]/g, "'");
   for (const [re, rep] of CONTRACTIONS) s = s.replace(re, rep);
+  // Apostrophes left inside a word after expansion are possessives or the
+  // recogniser's spelling choice ("window's" vs "windows", "mother's" vs
+  // "mothers"): drop them so the two are not scored as a substitution.
+  s = s.replace(/(\w)'+(\w)/g, '$1$2');
   s = s.replace(/\b(\d{1,3})\b/g, (_, d) => numberToWords(Number(d)));
   s = s.replace(/-/g, ' ');
   s = s.replace(/[^a-z0-9' ]+/g, ' ');

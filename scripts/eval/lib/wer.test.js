@@ -54,6 +54,13 @@ describe('wer.js — normalisation', () => {
       ['i', 'can', 'not', 'do', 'twenty', 'five', 'things', 'it', 'is', 'a', 'three', 'step', 'plan'],
     );
   });
+  it('drops apostrophes inside words after contraction expansion, so possessives match either spelling', () => {
+    expect(normalize("the window's open")).toEqual(['the', 'windows', 'open']);
+    expect(normalize("the mother's washing")).toEqual(normalize('the mothers washing'));
+    expect(wer("the mother's washing the dishes", 'the mothers washing the dishes').wer).toBe(0);
+    // contractions are still expanded first, not mangled into one token
+    expect(normalize("it's raining, don't go")).toEqual(['it', 'is', 'raining', 'do', 'not', 'go']);
+  });
   it('strips fillers by default and keeps them on request', () => {
     expect(normalize('um so uh yes')).toEqual(['so', 'yes']);
     expect(normalize('um so uh yes', { fillers: 'keep' })).toEqual(['um', 'so', 'uh', 'yes']);

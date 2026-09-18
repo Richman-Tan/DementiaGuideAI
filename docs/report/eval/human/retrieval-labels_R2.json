@@ -1,0 +1,1206 @@
+{
+ "rater": "R2",
+ "importedAt": "2026-09-18T22:10:46.270Z",
+ "gitSha": "e97b0ef",
+ "poolSha": "e9999c0",
+ "judged": 294,
+ "unmarked": 0,
+ "labels": {
+  "A1": {
+   "bestpractices_003": "relevant",
+   "caregiving_007": "partial",
+   "caregiving_005": "partial",
+   "bestpractices_002": "relevant",
+   "caregiving_002": "partial",
+   "isupport_nz_c078": "relevant",
+   "caregiving_001": "relevant",
+   "isupport_nz_c120": "partial"
+  },
+  "A2": {
+   "isupport_nz_c113": "relevant",
+   "isupport_who_c119": "relevant",
+   "caregiving_002": "relevant"
+  },
+  "A3": {
+   "wellbeing_006": "not",
+   "communication_001": "partial",
+   "bestpractices_009": "partial",
+   "dg_delirium_v2026_09_9d3492c4": "not",
+   "caregiving_003": "not",
+   "isupport_nz_c086": "relevant",
+   "isupport_who_c065": "relevant",
+   "caregiving_004": "relevant"
+  },
+  "A4": {
+   "caregiving_001": "partial",
+   "dg_delirium_v2026_09_736cfad1": "not",
+   "dg_delirium_v2026_09_9d3492c4": "not",
+   "homesafety_005": "partial",
+   "bestpractices_005": "partial",
+   "caregiving_008": "partial",
+   "caregiving_007": "partial",
+   "isupport_who_c113": "relevant",
+   "caregiving_005": "relevant",
+   "isupport_nz_c121": "relevant"
+  },
+  "A5": {
+   "homesafety_002": "partial",
+   "homesafety_005": "not",
+   "caregiving_003": "partial",
+   "homesafety_007": "partial",
+   "bestpractices_010": "partial",
+   "isupport_nz_c096": "relevant",
+   "isupport_who_c072": "relevant",
+   "caregiving_006": "relevant"
+  },
+  "A6": {
+   "clinical_010": "not",
+   "bestpractices_007": "partial",
+   "wellbeing_001": "relevant",
+   "wellbeing_010": "relevant",
+   "wellbeing_006": "partial",
+   "isupport_nz_c020": "relevant",
+   "isupport_nz_c019": "relevant",
+   "wellbeing_004": "relevant",
+   "caregiving_009": "relevant",
+   "wellbeing_003": "partial"
+  },
+  "A7": {
+   "clinical_002": "partial",
+   "alzheimers_disease_002": "not",
+   "clinical_005": "not",
+   "alzheimers_disease_001": "partial",
+   "wellbeing_002": "not",
+   "clinical_009": "not",
+   "clinical_011": "not",
+   "isupport_nz_c010": "relevant",
+   "clinical_001": "relevant",
+   "isupport_who_c010": "relevant"
+  },
+  "A8": {
+   "clinical_008": "not",
+   "dg_delirium_v2026_09_736cfad1": "partial",
+   "clinical_011": "partial",
+   "isupport_nz_c009": "relevant",
+   "bestpractices_008": "partial",
+   "bestpractices_009": "partial",
+   "isupport_nz_c013": "partial",
+   "homesafety_003": "partial",
+   "clinical_003": "partial",
+   "clinical_002": "partial"
+  },
+  "A9": {
+   "prevention_002": "not",
+   "caregiving_006": "partial",
+   "dg_delirium_v2026_09_736cfad1": "partial",
+   "isupport_nz_c130": "not",
+   "isupport_nz_c135": "partial",
+   "homesafety_006": "not",
+   "caregiving_008": "partial",
+   "dg_delirium_v2026_09_9d3492c4": "relevant",
+   "clinical_004": "relevant",
+   "wellbeing_008": "partial"
+  },
+  "A10": {
+   "prevention_006": "relevant",
+   "homesafety_011": "not",
+   "wellbeing_004": "partial",
+   "wellbeing_011": "relevant",
+   "caregiving_010": "relevant",
+   "homesafety_010": "not",
+   "clinical_001": "partial",
+   "isupport_nz_c042": "partial",
+   "clinical_007": "relevant",
+   "isupport_nz_c017": "relevant"
+  },
+  "A11": {
+   "clinical_004": "relevant",
+   "prevention_002": "partial",
+   "isupport_nz_c009": "partial",
+   "isupport_nz_c139": "not",
+   "clinical_002": "partial",
+   "clinical_005": "relevant",
+   "bestpractices_006": "partial",
+   "clinical_011": "partial",
+   "clinical_008": "relevant",
+   "dg_delirium_v2026_09_736cfad1": "relevant"
+  },
+  "A12": {
+   "bestpractices_001": "relevant",
+   "bestpractices_003": "relevant",
+   "isupport_who_c099": "relevant",
+   "isupport_who_c100": "relevant"
+  },
+  "A13": {
+   "caregiving_002": "partial",
+   "bestpractices_006": "partial",
+   "bestpractices_004": "relevant",
+   "communication_006": "not",
+   "isupport_nz_c141": "relevant",
+   "isupport_who_c117": "relevant"
+  },
+  "A14": {
+   "isupport_nz_c125": "relevant",
+   "caregiving_005": "partial",
+   "bestpractices_002": "partial",
+   "homesafety_007": "partial",
+   "homesafety_011": "partial",
+   "homesafety_008": "relevant",
+   "homesafety_004": "not",
+   "bestpractices_005": "relevant",
+   "isupport_who_c122": "relevant",
+   "homesafety_005": "relevant"
+  },
+  "A15": {
+   "caregiving_002": "partial",
+   "isupport_who_c058": "partial",
+   "wellbeing_006": "partial",
+   "isupport_nz_c063": "partial",
+   "prevention_002": "not",
+   "caregiving_001": "not",
+   "wellbeing_005": "relevant",
+   "bestpractices_007": "relevant",
+   "wellbeing_002": "partial"
+  },
+  "A16": {
+   "communication_002": "partial",
+   "communication_010": "partial",
+   "communication_009": "relevant",
+   "communication_005": "relevant",
+   "communication_007": "partial",
+   "caregiving_002": "partial",
+   "bestpractices_012": "partial",
+   "isupport_who_c020": "relevant",
+   "communication_001": "relevant",
+   "isupport_nz_c032": "relevant"
+  },
+  "A17": {
+   "communication_003": "relevant",
+   "bestpractices_006": "partial",
+   "caregiving_002": "partial",
+   "isupport_who_c096": "not",
+   "isupport_who_c073": "not"
+  },
+  "A18": {
+   "bestpractices_006": "partial",
+   "isupport_who_c104": "partial",
+   "prevention_002": "partial",
+   "communication_006": "relevant",
+   "isupport_who_c122": "not"
+  },
+  "A19": {
+   "isupport_who_c072": "partial",
+   "caregiving_003": "relevant",
+   "homesafety_010": "partial",
+   "isupport_nz_c094": "relevant",
+   "bestpractices_010": "partial",
+   "homesafety_005": "not",
+   "homesafety_009": "partial",
+   "homesafety_007": "partial",
+   "homesafety_002": "relevant",
+   "bestpractices_008": "relevant"
+  },
+  "A20": {
+   "bestpractices_008": "not",
+   "homesafety_011": "not",
+   "bestpractices_010": "not",
+   "clinical_003": "not",
+   "homesafety_008": "relevant",
+   "bestpractices_005": "not",
+   "homesafety_001": "relevant",
+   "isupport_nz_c089": "partial",
+   "homesafety_003": "relevant",
+   "isupport_nz_c109": "partial"
+  },
+  "A21": {
+   "prevention_006": "partial",
+   "bestpractices_003": "not",
+   "bestpractices_010": "not",
+   "wellbeing_006": "not",
+   "homesafety_011": "not",
+   "caregiving_005": "not",
+   "prevention_002": "partial",
+   "isupport_nz_c131": "relevant",
+   "homesafety_006": "relevant",
+   "isupport_who_c126": "relevant"
+  },
+  "A22": {
+   "bestpractices_007": "partial",
+   "wellbeing_007": "not",
+   "wellbeing_006": "partial",
+   "caregiving_009": "relevant",
+   "wellbeing_005": "partial",
+   "wellbeing_003": "not",
+   "wellbeing_004": "partial",
+   "isupport_nz_c020": "relevant",
+   "wellbeing_001": "relevant",
+   "isupport_nz_p037": "partial"
+  },
+  "A23": {
+   "wellbeing_001": "relevant",
+   "wellbeing_005": "not",
+   "wellbeing_003": "not",
+   "isupport_nz_c019": "partial",
+   "bestpractices_007": "not",
+   "wellbeing_002": "not",
+   "wellbeing_006": "partial",
+   "isupport_nz_c020": "relevant",
+   "caregiving_009": "relevant",
+   "caregiving_016": "not",
+   "caregiving_012": "partial",
+   "caregiving_015": "not",
+   "wellbeing_004": "relevant"
+  },
+  "A24": {
+   "homesafety_010": "partial",
+   "wellbeing_001": "partial",
+   "homesafety_011": "partial",
+   "wellbeing_008": "partial",
+   "caregiving_008": "partial",
+   "bestpractices_010": "partial",
+   "clinical_001": "partial",
+   "isupport_who_c015": "partial",
+   "wellbeing_007": "relevant",
+   "isupport_nz_c130": "not"
+  },
+  "A25": {
+   "wellbeing_006": "partial",
+   "wellbeing_003": "not",
+   "wellbeing_007": "partial",
+   "isupport_nz_c019": "relevant",
+   "isupport_nz_c020": "partial",
+   "wellbeing_001": "partial",
+   "clinical_010": "not",
+   "wellbeing_004": "relevant",
+   "wellbeing_010": "relevant",
+   "caregiving_009": "relevant"
+  },
+  "A26": {
+   "isupport_nz_c011": "relevant",
+   "bestpractices_005": "not",
+   "wellbeing_011": "not",
+   "clinical_004": "not",
+   "clinical_001": "relevant",
+   "alzheimers_disease_001": "relevant",
+   "clinical_011": "partial",
+   "clinical_002": "relevant",
+   "prevention_002": "relevant",
+   "isupport_who_c010": "relevant"
+  },
+  "A27": {
+   "prevention_003": "relevant",
+   "homesafety_011": "not",
+   "prevention_004": "relevant",
+   "bestpractices_002": "not",
+   "bestpractices_008": "not",
+   "caregiving_004": "not",
+   "prevention_008": "relevant",
+   "prevention_001": "relevant",
+   "isupport_nz_c014": "relevant",
+   "isupport_nz_c015": "relevant"
+  },
+  "A28": {
+   "wellbeing_003": "partial",
+   "prevention_006": "partial",
+   "isupport_who_c130": "partial",
+   "isupport_nz_c044": "partial",
+   "clinical_005": "partial",
+   "wellbeing_009": "partial",
+   "caregiving_009": "partial",
+   "caregiving_010": "relevant",
+   "prevention_005": "relevant",
+   "prevention_010": "not"
+  },
+  "A29": {
+   "prevention_002": "partial",
+   "clinical_009": "not",
+   "alzheimers_disease_002": "partial",
+   "clinical_005": "partial",
+   "isupport_nz_c013": "partial",
+   "bestpractices_011": "partial",
+   "isupport_who_c029": "not",
+   "clinical_001": "not",
+   "prevention_007": "relevant",
+   "clinical_008": "partial"
+  },
+  "A33": {
+   "caregiving_005": "not",
+   "clinical_008": "partial",
+   "caregiving_001": "not",
+   "isupport_who_c010": "not",
+   "isupport_who_c109": "not",
+   "prevention_002": "not",
+   "clinical_001": "not",
+   "dg_delirium_v2026_09_9d3492c4": "relevant",
+   "dg_delirium_v2026_09_736cfad1": "relevant",
+   "clinical_004": "relevant"
+  },
+  "A30": {
+   "homesafety_002": "relevant",
+   "homesafety_010": "relevant",
+   "bestpractices_005": "relevant",
+   "isupport_who_c122": "partial",
+   "bestpractices_010": "relevant",
+   "bestpractices_001": "not",
+   "homesafety_005": "not",
+   "homesafety_007": "relevant",
+   "bestpractices_008": "relevant",
+   "isupport_who_c120": "not"
+  },
+  "A31": {
+   "homesafety_007": "partial",
+   "bestpractices_005": "relevant",
+   "isupport_nz_c125": "relevant",
+   "homesafety_005": "relevant",
+   "isupport_who_c122": "relevant"
+  },
+  "A32": {
+   "isupport_nz_c137": "partial",
+   "wellbeing_006": "partial",
+   "bestpractices_003": "partial",
+   "bestpractices_001": "relevant",
+   "clinical_004": "relevant",
+   "caregiving_001": "partial",
+   "homesafety_010": "not",
+   "caregiving_008": "relevant",
+   "wellbeing_008": "relevant",
+   "isupport_nz_c105": "partial"
+  }
+ },
+ "pooled": [
+  {
+   "id": "A1",
+   "relevant": [
+    "caregiving_001",
+    "bestpractices_003",
+    "bestpractices_002",
+    "isupport_nz_c078"
+   ],
+   "acceptable": [
+    "caregiving_007",
+    "caregiving_005",
+    "caregiving_002",
+    "isupport_nz_c120"
+   ],
+   "added": {
+    "relevant": [
+     "bestpractices_003",
+     "bestpractices_002",
+     "isupport_nz_c078"
+    ],
+    "acceptable": [
+     "caregiving_007",
+     "caregiving_005",
+     "caregiving_002",
+     "isupport_nz_c120"
+    ]
+   }
+  },
+  {
+   "id": "A2",
+   "relevant": [
+    "caregiving_002",
+    "isupport_nz_c113",
+    "isupport_who_c119"
+   ],
+   "acceptable": [],
+   "added": {
+    "relevant": [
+     "isupport_nz_c113",
+     "isupport_who_c119"
+    ],
+    "acceptable": []
+   }
+  },
+  {
+   "id": "A3",
+   "relevant": [
+    "caregiving_004",
+    "isupport_nz_c086",
+    "isupport_who_c065"
+   ],
+   "acceptable": [
+    "communication_001",
+    "bestpractices_009"
+   ],
+   "added": {
+    "relevant": [
+     "isupport_nz_c086",
+     "isupport_who_c065"
+    ],
+    "acceptable": [
+     "communication_001",
+     "bestpractices_009"
+    ]
+   }
+  },
+  {
+   "id": "A4",
+   "relevant": [
+    "caregiving_005",
+    "isupport_who_c113",
+    "isupport_nz_c121"
+   ],
+   "acceptable": [
+    "caregiving_001",
+    "homesafety_005",
+    "bestpractices_005",
+    "caregiving_008",
+    "caregiving_007"
+   ],
+   "added": {
+    "relevant": [
+     "isupport_who_c113",
+     "isupport_nz_c121"
+    ],
+    "acceptable": [
+     "caregiving_001",
+     "homesafety_005",
+     "bestpractices_005",
+     "caregiving_008",
+     "caregiving_007"
+    ]
+   }
+  },
+  {
+   "id": "A5",
+   "relevant": [
+    "caregiving_006",
+    "isupport_nz_c096",
+    "isupport_who_c072"
+   ],
+   "acceptable": [
+    "homesafety_002",
+    "caregiving_003",
+    "homesafety_007",
+    "bestpractices_010"
+   ],
+   "added": {
+    "relevant": [
+     "isupport_nz_c096",
+     "isupport_who_c072"
+    ],
+    "acceptable": [
+     "homesafety_002",
+     "caregiving_003",
+     "homesafety_007",
+     "bestpractices_010"
+    ]
+   }
+  },
+  {
+   "id": "A6",
+   "relevant": [
+    "caregiving_009",
+    "wellbeing_001",
+    "wellbeing_010",
+    "isupport_nz_c020",
+    "isupport_nz_c019",
+    "wellbeing_004"
+   ],
+   "acceptable": [
+    "bestpractices_007",
+    "wellbeing_006",
+    "wellbeing_003"
+   ],
+   "added": {
+    "relevant": [
+     "wellbeing_001",
+     "wellbeing_010",
+     "isupport_nz_c020",
+     "isupport_nz_c019",
+     "wellbeing_004"
+    ],
+    "acceptable": [
+     "bestpractices_007",
+     "wellbeing_006",
+     "wellbeing_003"
+    ]
+   }
+  },
+  {
+   "id": "A7",
+   "relevant": [
+    "clinical_001",
+    "isupport_nz_c010",
+    "isupport_who_c010"
+   ],
+   "acceptable": [
+    "clinical_002",
+    "alzheimers_disease_001"
+   ],
+   "added": {
+    "relevant": [
+     "isupport_nz_c010",
+     "isupport_who_c010"
+    ],
+    "acceptable": [
+     "clinical_002",
+     "alzheimers_disease_001"
+    ]
+   }
+  },
+  {
+   "id": "A8",
+   "relevant": [
+    "clinical_003",
+    "isupport_nz_c009"
+   ],
+   "acceptable": [
+    "dg_delirium_v2026_09_736cfad1",
+    "clinical_011",
+    "bestpractices_008",
+    "bestpractices_009",
+    "isupport_nz_c013",
+    "homesafety_003",
+    "clinical_002"
+   ],
+   "added": {
+    "relevant": [
+     "isupport_nz_c009"
+    ],
+    "acceptable": [
+     "dg_delirium_v2026_09_736cfad1",
+     "clinical_011",
+     "bestpractices_008",
+     "bestpractices_009",
+     "isupport_nz_c013",
+     "homesafety_003",
+     "clinical_002"
+    ]
+   }
+  },
+  {
+   "id": "A9",
+   "relevant": [
+    "clinical_004",
+    "dg_delirium_v2026_09_9d3492c4"
+   ],
+   "acceptable": [
+    "caregiving_006",
+    "dg_delirium_v2026_09_736cfad1",
+    "isupport_nz_c135",
+    "caregiving_008",
+    "wellbeing_008"
+   ],
+   "added": {
+    "relevant": [
+     "dg_delirium_v2026_09_9d3492c4"
+    ],
+    "acceptable": [
+     "caregiving_006",
+     "dg_delirium_v2026_09_736cfad1",
+     "isupport_nz_c135",
+     "caregiving_008",
+     "wellbeing_008"
+    ]
+   }
+  },
+  {
+   "id": "A10",
+   "relevant": [
+    "clinical_007",
+    "prevention_006",
+    "wellbeing_011",
+    "caregiving_010",
+    "isupport_nz_c017"
+   ],
+   "acceptable": [
+    "wellbeing_004",
+    "clinical_001",
+    "isupport_nz_c042"
+   ],
+   "added": {
+    "relevant": [
+     "prevention_006",
+     "wellbeing_011",
+     "caregiving_010",
+     "isupport_nz_c017"
+    ],
+    "acceptable": [
+     "wellbeing_004",
+     "clinical_001",
+     "isupport_nz_c042"
+    ]
+   }
+  },
+  {
+   "id": "A11",
+   "relevant": [
+    "clinical_008",
+    "clinical_004",
+    "clinical_005",
+    "dg_delirium_v2026_09_736cfad1"
+   ],
+   "acceptable": [
+    "prevention_002",
+    "isupport_nz_c009",
+    "clinical_002",
+    "bestpractices_006",
+    "clinical_011"
+   ],
+   "added": {
+    "relevant": [
+     "clinical_004",
+     "clinical_005",
+     "dg_delirium_v2026_09_736cfad1"
+    ],
+    "acceptable": [
+     "prevention_002",
+     "isupport_nz_c009",
+     "clinical_002",
+     "bestpractices_006",
+     "clinical_011"
+    ]
+   }
+  },
+  {
+   "id": "A12",
+   "relevant": [
+    "bestpractices_003",
+    "bestpractices_001",
+    "isupport_who_c099",
+    "isupport_who_c100"
+   ],
+   "acceptable": [],
+   "added": {
+    "relevant": [
+     "bestpractices_001",
+     "isupport_who_c099",
+     "isupport_who_c100"
+    ],
+    "acceptable": []
+   }
+  },
+  {
+   "id": "A13",
+   "relevant": [
+    "bestpractices_004",
+    "isupport_nz_c141",
+    "isupport_who_c117"
+   ],
+   "acceptable": [
+    "caregiving_002",
+    "bestpractices_006"
+   ],
+   "added": {
+    "relevant": [
+     "isupport_nz_c141",
+     "isupport_who_c117"
+    ],
+    "acceptable": [
+     "caregiving_002",
+     "bestpractices_006"
+    ]
+   }
+  },
+  {
+   "id": "A14",
+   "relevant": [
+    "bestpractices_005",
+    "isupport_nz_c125",
+    "homesafety_008",
+    "isupport_who_c122",
+    "homesafety_005"
+   ],
+   "acceptable": [
+    "caregiving_005",
+    "bestpractices_002",
+    "homesafety_007",
+    "homesafety_011"
+   ],
+   "added": {
+    "relevant": [
+     "isupport_nz_c125",
+     "homesafety_008",
+     "isupport_who_c122",
+     "homesafety_005"
+    ],
+    "acceptable": [
+     "caregiving_005",
+     "bestpractices_002",
+     "homesafety_007",
+     "homesafety_011"
+    ]
+   }
+  },
+  {
+   "id": "A15",
+   "relevant": [
+    "bestpractices_007",
+    "wellbeing_005"
+   ],
+   "acceptable": [
+    "caregiving_002",
+    "isupport_who_c058",
+    "wellbeing_006",
+    "isupport_nz_c063",
+    "wellbeing_002"
+   ],
+   "added": {
+    "relevant": [
+     "wellbeing_005"
+    ],
+    "acceptable": [
+     "caregiving_002",
+     "isupport_who_c058",
+     "wellbeing_006",
+     "isupport_nz_c063",
+     "wellbeing_002"
+    ]
+   }
+  },
+  {
+   "id": "A16",
+   "relevant": [
+    "communication_001",
+    "communication_009",
+    "communication_005",
+    "isupport_who_c020",
+    "isupport_nz_c032"
+   ],
+   "acceptable": [
+    "communication_002",
+    "communication_010",
+    "communication_007",
+    "caregiving_002",
+    "bestpractices_012"
+   ],
+   "added": {
+    "relevant": [
+     "communication_009",
+     "communication_005",
+     "isupport_who_c020",
+     "isupport_nz_c032"
+    ],
+    "acceptable": [
+     "communication_002",
+     "communication_010",
+     "communication_007",
+     "caregiving_002",
+     "bestpractices_012"
+    ]
+   }
+  },
+  {
+   "id": "A17",
+   "relevant": [
+    "communication_003"
+   ],
+   "acceptable": [
+    "bestpractices_006",
+    "caregiving_002"
+   ],
+   "added": {
+    "relevant": [],
+    "acceptable": [
+     "bestpractices_006",
+     "caregiving_002"
+    ]
+   }
+  },
+  {
+   "id": "A18",
+   "relevant": [
+    "communication_006"
+   ],
+   "acceptable": [
+    "bestpractices_006",
+    "isupport_who_c104",
+    "prevention_002"
+   ],
+   "added": {
+    "relevant": [],
+    "acceptable": [
+     "bestpractices_006",
+     "isupport_who_c104",
+     "prevention_002"
+    ]
+   }
+  },
+  {
+   "id": "A19",
+   "relevant": [
+    "homesafety_002",
+    "caregiving_003",
+    "isupport_nz_c094",
+    "bestpractices_008"
+   ],
+   "acceptable": [
+    "isupport_who_c072",
+    "homesafety_010",
+    "bestpractices_010",
+    "homesafety_009",
+    "homesafety_007"
+   ],
+   "added": {
+    "relevant": [
+     "caregiving_003",
+     "isupport_nz_c094",
+     "bestpractices_008"
+    ],
+    "acceptable": [
+     "isupport_who_c072",
+     "homesafety_010",
+     "bestpractices_010",
+     "homesafety_009",
+     "homesafety_007"
+    ]
+   }
+  },
+  {
+   "id": "A20",
+   "relevant": [
+    "homesafety_003",
+    "homesafety_008",
+    "homesafety_001"
+   ],
+   "acceptable": [
+    "isupport_nz_c089",
+    "isupport_nz_c109"
+   ],
+   "added": {
+    "relevant": [
+     "homesafety_008",
+     "homesafety_001"
+    ],
+    "acceptable": [
+     "isupport_nz_c089",
+     "isupport_nz_c109"
+    ]
+   }
+  },
+  {
+   "id": "A21",
+   "relevant": [
+    "homesafety_006",
+    "isupport_nz_c131",
+    "isupport_who_c126"
+   ],
+   "acceptable": [
+    "prevention_006",
+    "prevention_002"
+   ],
+   "added": {
+    "relevant": [
+     "isupport_nz_c131",
+     "isupport_who_c126"
+    ],
+    "acceptable": [
+     "prevention_006",
+     "prevention_002"
+    ]
+   }
+  },
+  {
+   "id": "A22",
+   "relevant": [
+    "wellbeing_001",
+    "caregiving_009",
+    "isupport_nz_c020"
+   ],
+   "acceptable": [
+    "bestpractices_007",
+    "wellbeing_006",
+    "wellbeing_005",
+    "wellbeing_004",
+    "isupport_nz_p037"
+   ],
+   "added": {
+    "relevant": [
+     "caregiving_009",
+     "isupport_nz_c020"
+    ],
+    "acceptable": [
+     "bestpractices_007",
+     "wellbeing_006",
+     "wellbeing_005",
+     "wellbeing_004",
+     "isupport_nz_p037"
+    ]
+   }
+  },
+  {
+   "id": "A23",
+   "relevant": [
+    "wellbeing_004",
+    "wellbeing_001",
+    "isupport_nz_c020",
+    "caregiving_009"
+   ],
+   "acceptable": [
+    "isupport_nz_c019",
+    "wellbeing_006",
+    "caregiving_012"
+   ],
+   "added": {
+    "relevant": [
+     "wellbeing_001",
+     "isupport_nz_c020",
+     "caregiving_009"
+    ],
+    "acceptable": [
+     "isupport_nz_c019",
+     "wellbeing_006",
+     "caregiving_012"
+    ]
+   }
+  },
+  {
+   "id": "A24",
+   "relevant": [
+    "wellbeing_007"
+   ],
+   "acceptable": [
+    "homesafety_010",
+    "wellbeing_001",
+    "homesafety_011",
+    "wellbeing_008",
+    "caregiving_008",
+    "bestpractices_010",
+    "clinical_001",
+    "isupport_who_c015"
+   ],
+   "added": {
+    "relevant": [],
+    "acceptable": [
+     "homesafety_010",
+     "wellbeing_001",
+     "homesafety_011",
+     "wellbeing_008",
+     "caregiving_008",
+     "bestpractices_010",
+     "clinical_001",
+     "isupport_who_c015"
+    ]
+   }
+  },
+  {
+   "id": "A25",
+   "relevant": [
+    "wellbeing_010",
+    "isupport_nz_c019",
+    "wellbeing_004",
+    "caregiving_009"
+   ],
+   "acceptable": [
+    "wellbeing_006",
+    "wellbeing_007",
+    "isupport_nz_c020",
+    "wellbeing_001"
+   ],
+   "added": {
+    "relevant": [
+     "isupport_nz_c019",
+     "wellbeing_004",
+     "caregiving_009"
+    ],
+    "acceptable": [
+     "wellbeing_006",
+     "wellbeing_007",
+     "isupport_nz_c020",
+     "wellbeing_001"
+    ]
+   }
+  },
+  {
+   "id": "A26",
+   "relevant": [
+    "prevention_002",
+    "isupport_nz_c011",
+    "clinical_001",
+    "alzheimers_disease_001",
+    "clinical_002",
+    "isupport_who_c010"
+   ],
+   "acceptable": [
+    "clinical_011"
+   ],
+   "added": {
+    "relevant": [
+     "isupport_nz_c011",
+     "clinical_001",
+     "alzheimers_disease_001",
+     "clinical_002",
+     "isupport_who_c010"
+    ],
+    "acceptable": [
+     "clinical_011"
+    ]
+   }
+  },
+  {
+   "id": "A27",
+   "relevant": [
+    "prevention_001",
+    "prevention_003",
+    "prevention_004",
+    "prevention_008",
+    "isupport_nz_c014",
+    "isupport_nz_c015"
+   ],
+   "acceptable": [],
+   "added": {
+    "relevant": [
+     "prevention_003",
+     "prevention_004",
+     "prevention_008",
+     "isupport_nz_c014",
+     "isupport_nz_c015"
+    ],
+    "acceptable": []
+   }
+  },
+  {
+   "id": "A28",
+   "relevant": [
+    "prevention_005",
+    "caregiving_010"
+   ],
+   "acceptable": [
+    "wellbeing_003",
+    "prevention_006",
+    "isupport_who_c130",
+    "isupport_nz_c044",
+    "clinical_005",
+    "wellbeing_009",
+    "caregiving_009"
+   ],
+   "added": {
+    "relevant": [
+     "caregiving_010"
+    ],
+    "acceptable": [
+     "wellbeing_003",
+     "prevention_006",
+     "isupport_who_c130",
+     "isupport_nz_c044",
+     "clinical_005",
+     "wellbeing_009",
+     "caregiving_009"
+    ]
+   }
+  },
+  {
+   "id": "A29",
+   "relevant": [
+    "prevention_007"
+   ],
+   "acceptable": [
+    "prevention_002",
+    "alzheimers_disease_002",
+    "clinical_005",
+    "isupport_nz_c013",
+    "bestpractices_011",
+    "clinical_008"
+   ],
+   "added": {
+    "relevant": [],
+    "acceptable": [
+     "prevention_002",
+     "alzheimers_disease_002",
+     "clinical_005",
+     "isupport_nz_c013",
+     "bestpractices_011",
+     "clinical_008"
+    ]
+   }
+  },
+  {
+   "id": "A33",
+   "relevant": [
+    "dg_delirium_v2026_09_736cfad1",
+    "dg_delirium_v2026_09_9d3492c4",
+    "clinical_004"
+   ],
+   "acceptable": [
+    "clinical_008"
+   ],
+   "added": {
+    "relevant": [
+     "dg_delirium_v2026_09_9d3492c4",
+     "clinical_004"
+    ],
+    "acceptable": []
+   }
+  },
+  {
+   "id": "A30",
+   "relevant": [
+    "bestpractices_008",
+    "homesafety_002",
+    "homesafety_010",
+    "bestpractices_005",
+    "bestpractices_010",
+    "homesafety_007"
+   ],
+   "acceptable": [
+    "isupport_who_c122"
+   ],
+   "added": {
+    "relevant": [
+     "homesafety_002",
+     "homesafety_010",
+     "bestpractices_005",
+     "bestpractices_010",
+     "homesafety_007"
+    ],
+    "acceptable": [
+     "isupport_who_c122"
+    ]
+   }
+  },
+  {
+   "id": "A31",
+   "relevant": [
+    "homesafety_005",
+    "bestpractices_005",
+    "isupport_nz_c125",
+    "isupport_who_c122"
+   ],
+   "acceptable": [
+    "homesafety_007"
+   ],
+   "added": {
+    "relevant": [
+     "bestpractices_005",
+     "isupport_nz_c125",
+     "isupport_who_c122"
+    ],
+    "acceptable": [
+     "homesafety_007"
+    ]
+   }
+  },
+  {
+   "id": "A32",
+   "relevant": [
+    "wellbeing_008",
+    "bestpractices_001",
+    "clinical_004",
+    "caregiving_008"
+   ],
+   "acceptable": [
+    "isupport_nz_c137",
+    "wellbeing_006",
+    "bestpractices_003",
+    "caregiving_001",
+    "isupport_nz_c105"
+   ],
+   "added": {
+    "relevant": [
+     "bestpractices_001",
+     "clinical_004",
+     "caregiving_008"
+    ],
+    "acceptable": [
+     "isupport_nz_c137",
+     "wellbeing_006",
+     "bestpractices_003",
+     "caregiving_001",
+     "isupport_nz_c105"
+    ]
+   }
+  }
+ ]
+}

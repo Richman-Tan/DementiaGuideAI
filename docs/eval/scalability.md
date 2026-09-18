@@ -75,5 +75,20 @@ Reading: throughput saturates around 50 req/s on the Free tier while p50 rises f
 
 Reading: per-request latency does not rise with concurrency and throughput scales roughly linearly as Vercel adds instances, so the single-row `bump_study_usage` meter is **not** serialising at this scale (the concern in §2 is bounded, not confirmed). The ~1.2 s floor is the NZ→US round trip plus the guard's Postgres RPC plus the OpenAI embedding call; the 6.5 s maximum at 25 concurrent is instance cold start, which is the user-visible cost of a serverless proxy for the first request of a burst.
 
-### 4.3 Client load, 4.4 corpus scaling
-Not yet run.
+### 4.3 Client load — measured 2026-09-19 from a Chrome instance connected to the account (**a Windows machine, not the MacBook**; hardware and network unrecorded — corrected after the fact, see note)
+Read from the Resource Timing API on the deployed site (`dementiaguide-web.vercel.app`), which loads the Unity avatar on the landing page.
+
+| | Cold (no cache) | Warm (same day, `max-age=86400`) |
+|---|---:|---:|
+| `unity.data.unityweb` transfer | 244.5 MB (brotli) → 308.8 MB decoded | served from cache (300 B of headers) |
+| `unity.data.unityweb` fetch time | **6.4 s** (≈ 305 Mbit/s effective on this connection) | 35 ms |
+| `unity.wasm.unityweb` | 9.4 MB → 51.9 MB decoded, 0.53 s | cache, 0.49 s |
+| DOMContentLoaded / load event | 260 / 276 ms | 156 / 166 ms |
+| JS heap after the avatar is up | 829 MB | 715 MB |
+
+**Provenance note.** The Claude-in-Chrome extension was connected to two browsers at the time; the measurement went to the Windows one. The transfer sizes and the brotli/native-decode evidence are machine-independent; the 6.4 s fetch time, the ~305 Mbit/s effective rate and the JS heap figures describe that Windows machine and its network, not the Mac. Re-run on the Mac before quoting the timing.
+
+Decoded size exceeding transfer size confirms the brotli `Content-Encoding` header is honoured and the decode is native (FR-20); the JS fallback would be a ~20-minute stall. Time on slower links is arithmetic from the transfer size (the browser tools cannot throttle): 244.5 MB is 1,956 Mbit, so **≈ 39 s at 50 Mbit/s and ≈ 3.3 min at 10 Mbit/s**, plus decode. The study protocol already warms this download during the information and consent screens; these numbers say why, and put a floor on the device: ~0.8 GB of JS heap on top of the WebGL allocation rules out low-memory phones for the avatar arm.
+
+### 4.4 Corpus scaling
+Not run (optional).

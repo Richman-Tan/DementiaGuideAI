@@ -35,7 +35,7 @@
 | FR-06 | Instructions inside retrieved passages are treated as data (indirect injection resisted) | E3 set J | eval gate | `safety-report_samples.md` set J; `PROMPT_LEAK` check | verified |
 | FR-07 | Production prompt and the frozen rollback prompt cannot drift silently | RAG audit F-20 | byte-freeze | `packages/core/rag/prompt.test.js`; `scripts/eval/prompts/promptVersions.test.js` | verified |
 | FR-08 | Retrieval returns top-5 after capping each source family at 2 | `ragConfig.js` | unit | `packages/core/rag/retrieval.test.js` | verified |
-| FR-09 | Retrieval quality on labelled questions (recall@5) | E1 | eval | `docs/report/eval/retrieval_8a92ecd_v2*.json`; `scripts/eval/metrics.test.js` | verified |
+| FR-09 | Retrieval quality on labelled questions (recall@5) | E1 | eval | `docs/report/eval/retrieval_8a92ecd_v2*.json`, `retrieval_e97b0ef_v2_pooled.json` (two annotators); `scripts/eval/metrics.test.js` | verified |
 | FR-10 | Ingestion chunks deterministically and re-embeds only changed content | `scripts/ingest/ingest.mjs` | unit (chunking) + code review | `scripts/ingest/chunking.test.js`; content-hash diff is reviewed, not tested | verified (chunking) / verified-manual (idempotence) |
 | FR-11 | Streamed answers are split into sentences for TTS exactly as the original inline logic did | latency overhaul | parity | `packages/core/voice/sentenceTracker.test.js` | verified |
 | FR-12 | Speculative retrieval is reused only when the partial transcript matches the final | same | unit | `packages/core/voice/speculativeRetrieval.test.js` | verified |

@@ -95,7 +95,8 @@ apps/web/public/unity/Build/
 # DementiaBank / ADReSS audio, transcripts and recognition hypotheses stay
 # local under the TalkBank ground rules; only aggregate WER tables are
 # committed (docs/report/eval/stt/). Python venv for scripts/eval/stt/.
-data/dementiabank/
+# DementiaBank audio + derived files, label pools with KB text: never committed
+data/
 .venv/
 
 # Test coverage output (summarised into docs/report/eval/final/coverage_*.md)

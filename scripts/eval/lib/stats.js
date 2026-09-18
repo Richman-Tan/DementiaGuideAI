@@ -207,8 +207,36 @@ function seededShuffle(items, seed = 42) {
   return out;
 }
 
+// Holm–Bonferroni step-down adjustment. Takes p-values in any order and returns
+// adjusted p-values in the SAME order, so a caller can zip them back onto its
+// rows. Adjusted values are monotone in the sorted order and capped at 1, which
+// is what makes Holm uniformly more powerful than Bonferroni while controlling
+// the family-wise error rate under arbitrary dependence.
+//
+// The family is the caller's choice and it is the part that matters: adjusting
+// across an arbitrary pile of tests is as misleading as not adjusting at all.
+// Non-finite entries are passed through as null and excluded from the family
+// size, so a table with "—" cells adjusts over its real tests only.
+function holm(pvalues) {
+  const live = [];
+  for (let i = 0; i < pvalues.length; i++) {
+    const v = pvalues[i];
+    if (typeof v === 'number' && Number.isFinite(v)) live.push([v, i]);
+  }
+  const m = live.length;
+  const out = new Array(pvalues.length).fill(null);
+  live.sort((a, b) => a[0] - b[0]);
+  let running = 0;
+  live.forEach(([v, idx], k) => {
+    running = Math.max(running, Math.min(1, (m - k) * v));
+    out[idx] = running;
+  });
+  return out;
+}
+
 module.exports = {
   mean, sd, quantile, median, summary,
   wilson, binomialTwoSidedP, signTest, mcnemar,
   wilcoxonSignedRank, cohenKappa, bootstrapCI, seededShuffle, mulberry32,
+  holm,
 };

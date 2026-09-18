@@ -29,7 +29,7 @@
 //   node scripts/eval/run-generation.mjs --sets S,I,J --heldout   # + scripts/eval/questions.heldout.js
 //   node scripts/eval/run-generation.mjs --heldout-only            # only the held-out items
 //   node scripts/eval/run-generation.mjs --dry-run                # plan only, no API calls
-//   node scripts/eval/run-generation.mjs --questions-file scripts/eval/questions.perturbed.js --sets A,N
+//   node scripts/eval/run-generation.mjs --questions-file scripts/eval/questions.perturbed.js --sets A,N [--only-file]
 //                                                                  # + an extra question file (E9 §2.5 perturbed variants);
 //                                                                  #   must export an array as HELDOUT_QUESTIONS, PERTURBED_QUESTIONS or QUESTIONS
 //   flags: --questions v1|v2  --limit N  --temperature T  --seed S  --model id  --tag label  --out path  --no-inject
@@ -72,6 +72,7 @@ const HELDOUT_ONLY = has('--heldout-only');
 const PACE_MS = Number(argVal('--pace-ms') ?? 250);
 const SHA_LABEL = argVal('--sha');
 const QUESTIONS_FILE = argVal('--questions-file');
+const ONLY_FILE = has('--only-file'); // with --questions-file: generate only the items from that file
 const RESUME = has('--resume');
 const CHECKPOINT_EVERY = 10;
 
@@ -95,6 +96,7 @@ function loadQuestionPool() {
   if (QUESTIONS_FILE) {
     for (const q of loadQuestionFile(QUESTIONS_FILE)) {
       if (pool.some(p => p.id === q.id)) throw new Error(`duplicate question id ${q.id} between the built-in sets and ${QUESTIONS_FILE}`);
+      q.fromFile = true;
       pool.push(q);
     }
   }
@@ -159,7 +161,7 @@ function injectedChunks(q) {
 
 async function main() {
   const pool = loadQuestionPool();
-  const questions = pool.filter(q => SETS.includes(q.set) && (!HELDOUT_ONLY || q.heldout)).slice(0, LIMIT);
+  const questions = pool.filter(q => SETS.includes(q.set) && (!HELDOUT_ONLY || q.heldout) && (!ONLY_FILE || q.fromFile)).slice(0, LIMIT);
   const systemPrompt = condition.system({});
   const systemPromptSha256 = createHash('sha256').update(systemPrompt).digest('hex');
   const maxTokens = maxTokensForStyle('balanced', false);

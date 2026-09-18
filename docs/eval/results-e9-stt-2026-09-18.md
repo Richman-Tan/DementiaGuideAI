@@ -60,9 +60,31 @@ Synthetic by construction. The error profile (`docs/report/eval/stt/error-profil
 
 Reading: disfluency alone (what a person with dementia adds to a correctly transcribed question) costs retrieval nothing — the embedder is indifferent to fillers and repetitions. Recognition errors are what cost: at the raw dementia-speaker rate, recall@5 falls from 0.97 to 0.85 (four of 33 labelled questions lose their passage), and MRR from 0.83 to 0.72. No hit was ever gained. With n = 33 only the 1.5× level reaches significance; the direction is monotone across levels.
 
-### 5.2 Answer quality
+### 5.2 Answer quality — `docs/report/eval/stt/answer-quality_under_asr-error_8a92ecd.md`
 
-*Running: v2 answers for the 180 variants, judged with the same gpt-4o-mini rubric as the matrix and paired against the clean answers per level; deterministic gates per level. Filled in from `docs/report/eval/stt/answer-quality_under_asr-error_<sha>.md`.*
+v2 on gpt-4o (temperature 0, seed 42) answered all 180 variants (`generation_8a92ecd_v2_perturbed.json`, 0 errors); the gpt-4o-mini judge scored them under rubric 2026-09-14 (`judge_gpt-4o-mini_v2_perturbed.json`); each variant is paired with its clean source answer. Spend ≈ US$1.67.
+
+| Level | Correctness clean → perturbed (items dropped, n = 33) | Groundedness (dropped / rose, n = 45) | Helpfulness (dropped) | Tone (dropped) |
+|---|---|---|---|---|
+| disfluent (7 % WER) | 2.00 → 2.00 (0) | 1.96 → 1.98 (0 / 1) | 2.00 → 2.00 (0) | 2.00 → 2.00 (0) |
+| control-rate (29 %) | 2.00 → 1.97 (1) | 1.96 → 1.93 (2 / 1) | 2.00 → 1.98 (1) | 2.00 → 2.00 (0) |
+| dementia-rate (53 %) | 2.00 → 1.97 (1) | 1.95 → 1.89 (4 / 1) | 2.00 → 1.98 (1) | 2.00 → 2.00 (0) |
+| 1.5× dementia (71 %) | 2.00 → 1.91 (2) | 1.95 → 1.93 (3 / 2) | 2.00 → 1.93 (2) | 2.00 → 1.96 (2) |
+
+Every Wilcoxon p ≥ 0.23 with fewer than ten non-zero differences per cell: the counts are the evidence, not the p-values. The judge's ceiling on helpfulness and tone (κ ≈ 0 against the human raters, §2.4 of the main results) applies here too, so the trustworthy signals are the deterministic gates and the citation count below, together with the retrieval drop in §5.1.
+
+Deterministic gates per level (45 answers each; clean sources 100 % pass, 196 citation markers, 0 hallucinated markers, 214 words mean):
+
+| Level | Gate pass | Refusal / region / foreign-emergency / dose / prompt-leak / unknown-phone | Citation markers | Hallucinated markers | Mean words |
+|---|---:|---|---:|---:|---:|
+| disfluent | 100 % | all 0 | 200 | 0 | 213 |
+| control-rate | 100 % | all 0 | 169 | 0 | 204 |
+| dementia-rate | 97.8 % | all 0 | 137 | 0 | 200 |
+| 1.5× dementia | 97.8 % | all 0 | 149 | 0 | 197 |
+
+The two gate failures are one item, B2 (the coconut-oil "cure" myth), at the two highest levels: the garbled wording no longer reads as a cure claim, so the answer never says there is no evidence for a cure. That is a comprehension consequence of the recognition error, not a safety leak — no unsafe content appears at any level.
+
+Reading, consistent with §5.1: disfluency alone costs nothing anywhere. Recognition error at the dementia-speaker rate mainly erodes **citation density** (196 → 137 markers, −30 %) and groundedness on a handful of items, while the answers stay safe and on topic. For the app this says the risk from impaired speech is not unsafe answers but *less grounded, less specific* answers and, per §5.1, the wrong passage being retrieved for about one question in eight.
 
 ## 6. Threats to validity
 

@@ -17,6 +17,7 @@
 //        [--model claude-opus-5|gpt-4o-mini|gpt-4o] [--dims groundedness,correctness,helpfulness,tone,safety,scope]
 //        [--sets A,B] [--limit N] [--effort low|medium|high] [--concurrency 2] [--dry-run] [--tag t] [--out-dir docs/report/eval] [--heldout]
 //        [--retry-missing]   re-judge only the rows whose previous output has a null score and merge into the existing files
+//        [--questions-file scripts/eval/questions.perturbed.js]   extra question file, same contract as run-generation.mjs
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 import { createRequire } from 'node:module';
@@ -32,7 +33,7 @@ const { columnKey } = require('./lib/aggregate.js');
 
 const args = process.argv.slice(2);
 const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
-const flagArgs = new Set(['--model', '--dims', '--sets', '--limit', '--effort', '--concurrency', '--tag', '--out-dir', '--cache']);
+const flagArgs = new Set(['--model', '--dims', '--sets', '--limit', '--effort', '--concurrency', '--tag', '--out-dir', '--cache', '--questions-file']);
 const files = args.filter((a, i) => !a.startsWith('--') && !flagArgs.has(args[i - 1]));
 if (!files.length) { console.error('Usage: node scripts/eval/judge.mjs <generation.json> [...] [--model claude-opus-5]'); process.exit(1); }
 
@@ -52,6 +53,16 @@ const pool = [...QUESTIONS];
 if (args.includes('--heldout')) {
   const p = resolve(ROOT, 'scripts/eval/questions.heldout.js');
   if (existsSync(p)) pool.push(...require(p).HELDOUT_QUESTIONS);
+}
+// An extra question file (E9 §2.5 perturbed variants), same contract as run-generation.mjs.
+const QUESTIONS_FILE = argVal('--questions-file');
+if (QUESTIONS_FILE) {
+  const abs = resolve(ROOT, QUESTIONS_FILE);
+  if (!existsSync(abs)) { console.error(`--questions-file ${QUESTIONS_FILE} does not exist`); process.exit(1); }
+  const mod = require(abs);
+  const list = mod.HELDOUT_QUESTIONS ?? mod.PERTURBED_QUESTIONS ?? mod.QUESTIONS ?? (Array.isArray(mod) ? mod : null);
+  if (!Array.isArray(list)) { console.error(`${QUESTIONS_FILE} must export an array as HELDOUT_QUESTIONS, PERTURBED_QUESTIONS or QUESTIONS`); process.exit(1); }
+  pool.push(...list);
 }
 const byId = Object.fromEntries(pool.map(q => [q.id, q]));
 

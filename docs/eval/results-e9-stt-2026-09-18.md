@@ -37,13 +37,41 @@ Dementia vs control, per-speaker WER: Mann–Whitney U = 2295.5, p = 0.008, Clif
 
 Reading: about a third of the raw group gap is decoder behaviour on pauses rather than misrecognition, and stock-phrase hallucination is twice as frequent on dementia utterances. The excluded figures are in line with published Whisper-large results on this corpus (≈30 % overall). Deletions are 59 % function words.
 
-## 3. Condition (b) — VAD chunks
+## 3. Condition (b) — VAD chunks, concatenated per utterance — `wer_4c732bf_local-large-v2-mlx-8bit.md`
 
-*Running; filled in from the `chunkcat` report when the run completes. Nothing is claimed here until then.*
+Same model, same normalisation; 1,973 utterances, 155 speakers, 1.36 h of silence-trimmed audio. Fillers stripped from both sides:
+
+| Group | Speakers | Ref words | Mean WER (95 % CI over speakers) | Median | Pooled WER | Sub | Del | Ins |
+|---|---:|---:|---|---:|---:|---:|---:|---:|
+| control | 77 | 8,571 | 36.3 % (29.2–44.3) | 21.7 % | **33.0 %** | 14.4 % | 13.8 % | 4.8 % |
+| dementia | 78 | 7,500 | 48.1 % (40.0–56.4) | 38.5 % | **48.1 %** | 19.5 % | 21.9 % | 6.8 % |
+
+Dementia vs control: Mann–Whitney U = 2201.0, p = 0.004, Cliff's δ = 0.27. WER vs MMSE: Spearman ρ = −0.19, p = 0.021, n = 154. Fillers kept: p = 0.007, δ = 0.25.
+
+| Group | Utterances | Runaway | Stock phrase | Repetition | Empty | Pooled WER excl. runaway + phrase | Ins excl. |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| control | 992 | 1.3 % | 2.4 % | 0.4 % | 3.4 % | 29.7 % | 2.9 % |
+| dementia | 981 | 1.5 % | 3.8 % | 0.4 % | 5.1 % | 42.9 % | 3.7 % |
+
+### 3.1 What endpointing changes — (a) versus (b)
+
+| | Control (a) → (b) | Dementia (a) → (b) |
+|---|---|---|
+| Pooled WER | 34.6 % → 33.0 % | **59.7 % → 48.1 %** |
+| Insertions | 10.9 % → 4.8 % | **22.0 % → 6.8 %** |
+| Deletions | 10.8 % → 13.8 % | 18.6 % → 21.9 % |
+| Stock-phrase hallucination | 4.6 % → 2.4 % | **9.9 % → 3.8 %** |
+| Runaway decoding | 2.8 % → 1.3 % | 2.9 % → 1.5 % |
+| Empty hypotheses | 3.9 % → 3.4 % | 4.3 % → 5.1 % |
+| Group gap (pooled) | 25.1 points | 15.1 points |
+
+Reading. Removing the pauses barely changes the control speakers and removes a fifth of the dementia speakers' error: the insertion rate falls to a third and stock-phrase hallucination halves. The pause-driven decoder behaviour identified in §2 was hitting the dementia group specifically, which is what one expects from speech with long word-finding pauses. What endpointing does not fix, and slightly worsens, is deletion: the challenge's VAD (65 dB energy threshold) trims quiet onsets, and the dementia group's deletions rise to 21.9 %. Net, the group gap shrinks from 25 to 15 points but does not close, and it is significant under both conditions with a small-to-medium effect (δ ≈ 0.25) and a weak, significant MMSE gradient. For the app, this is a direct argument for the hands-free endpointer (already generous at 1,200 ms of silence) over whole-recording upload, and against any tighter VAD threshold.
+
+Condition (b) is the analogue of what the app's live recogniser and endpointer deliver; condition (a) of the Whisper-upload fallback. The perturbation study in §5 used the condition (a) profile, i.e. the harsher one.
 
 ## 4. Comparators
 
-*Local `medium` (MLX fp16): pending. API conditions (`whisper-1`, `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`): not run — awaiting supervisor sign-off on the non-storage basis (§17.1).*
+*Local `medium` (MLX fp16): running on condition (a); filled in when complete. API conditions (`whisper-1`, `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`): not run — awaiting supervisor sign-off on the non-storage basis (§17.1).*
 
 ## 5. Downstream effect on the app — error-profile perturbation
 

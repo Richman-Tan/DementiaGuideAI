@@ -73,7 +73,7 @@ Condition (b) is the analogue of what the app's live recogniser and endpointer d
 
 *Local `medium` (MLX fp16, `mlx-community/whisper-medium-mlx`) on condition (a): **partial — 1,276 of 2,063 utterances decoded by 2026-09-19 07:36** (the 8 GB machine was swapping and slept overnight; the run is cached by content hash and resumes with `npm run eval:stt:local -- --backend mlx --repo mlx-community/whisper-medium-mlx --resume`). No figure is reported from a partial run; the section is filled in when it completes. It is a size comparator and changes no conclusion above.*
 
-*API conditions (`whisper-1`, `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`): not run — awaiting supervisor sign-off on the non-storage basis (§17.1). Command once signed off: `npm run eval:stt:transcribe -- --model whisper-1 --references data/dementiabank/chunkcat/references.csv` (≈ US$2 per model).*
+*API conditions (`whisper-1`, `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`): **Jing Sun signed off the non-storage reading on 2026-09-19** (OpenAI's data-controls page: no abuse-monitoring log and no application state on `/v1/audio/transcriptions`). Running: `whisper-1` on both conditions, the two gpt-4o transcription models on condition (b); ≈ US$2.20 total. Filled in on completion.*
 
 ## 5. Downstream effect on the app — error-profile perturbation
 

@@ -104,7 +104,16 @@ Dementia vs control p < 0.001, δ = 0.31; ρ(WER, MMSE) = −0.23, p = 0.004. Pa
 
 **Which numbers to quote for the deployed model.** Pauses included (the Whisper-upload analogue): 26.3 % control / 41.9 % dementia. Endpointed by energy VAD: 31.4 % / 44.7 %. Stock-phrase hallucination on dementia speech: 11.4 % of utterances with pauses, 3.8 % trimmed.
 
-*`gpt-4o-transcribe` / `gpt-4o-mini-transcribe` on condition (b): running; filled in on completion.*
+**`gpt-4o-transcribe`, condition (b)** — `wer_7b44f14_gpt-4o-transcribe.md`; 1,973 clips, 0 failed.
+
+| Group | Pooled WER | Sub | Del | Ins | Stock phrase | Empty | Pooled WER excl. |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| control | 37.6 % | 9.1 % | 27.6 % | 1.0 % | 0.1 % | 4.9 % | 37.0 % |
+| dementia | 54.5 % | 11.1 % | 42.3 % | 1.2 % | 0.2 % | 10.1 % | 54.1 % |
+
+Dementia vs control p = 0.002, δ = 0.29; ρ(WER, MMSE) = −0.23. Paired per speaker against `whisper-1` on the same clips it is **7.0 points worse** (p < 0.001, r = 0.75). The failure mode is the opposite of Whisper's: it almost never inserts or hallucinates (stock phrases 0.1–0.2 %, insertions ≈ 1 %) but it deletes — 42 % of the dementia group's words are simply missing, and 10 % of their utterances come back empty. For a caregiver assistant that is not obviously the safer failure: a hallucinated phrase is visible and correctable, a silently dropped clause is not. It is not a drop-in improvement on this population.
+
+*`gpt-4o-mini-transcribe` on condition (b): running; filled in on completion.*
 
 ## 5. Downstream effect on the app — error-profile perturbation
 

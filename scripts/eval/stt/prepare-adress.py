@@ -29,6 +29,9 @@ Join strategies (--join):
              reference for each cut is exactly the utterance text, so the
              alignment is by construction. Cuts are written with the stdlib
              wave module (no ffmpeg) to data/dementiabank/cuts/.
+  chunks-concat  Same grouping, but the sub-chunks of an utterance are concatenated into one
+             silence-trimmed clip (data/dementiabank/chunkcat/<sid>-<n>.wav), one row per
+             utterance. The endpointed-segment analogue; preferred over `chunks`.
   chunks     Use the distributed Normalised_audio-chunks (VAD-trimmed, <=10 s), grouped by the
              utterance span encoded in the file name; each sub-chunk row carries the whole
              utterance reference and sub_index/sub_count so the report can concatenate. Was: match chunk i
@@ -169,6 +172,26 @@ def cut_wav(src: Path, t0_ms: int, t1_ms: int, dst: Path):
     return (end - start) / rate
 
 
+def concat_wavs(parts: list, dst: Path) -> float:
+    """Concatenate WAV files with identical format into dst; returns duration in seconds."""
+    frames = []
+    fmt = None
+    for p in parts:
+        with wave.open(str(p), "rb") as w:
+            f = (w.getframerate(), w.getnchannels(), w.getsampwidth())
+            if fmt is None:
+                fmt = f
+            elif f != fmt:
+                raise ValueError(f"format mismatch in {p}: {f} vs {fmt}")
+            frames.append(w.readframes(w.getnframes()))
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    data = b"".join(frames)
+    with wave.open(str(dst), "wb") as o:
+        o.setframerate(fmt[0]); o.setnchannels(fmt[1]); o.setsampwidth(fmt[2])
+        o.writeframes(data)
+    return len(data) / (fmt[1] * fmt[2]) / fmt[0]
+
+
 def wav_duration(path: Path):
     with wave.open(str(path), "rb") as w:
         return w.getnframes() / w.getframerate()
@@ -264,11 +287,23 @@ def prepare(root: Path, join: str, out_dir: Path, participant: str = "PAR"):
                 if not subs:
                     unmatched += 1
                     continue
-                for k, (idx, off, f) in enumerate(subs):
-                    r = row(sid, split, group, meta, ids, n, f, u, wav_duration(f))
-                    r["sub_index"] = k
-                    r["sub_count"] = len(subs)
+                if join == "chunks-concat":
+                    # One silence-trimmed clip per utterance: the sub-chunks joined
+                    # back together in order. This is the endpointed-segment analogue;
+                    # decoding 1-second fragments separately is its own hallucination
+                    # trigger and doubles the decoder calls.
+                    dst = out_dir / "chunkcat" / f"{sid}-{n}.wav"
+                    dur = concat_wavs([f for _, _, f in subs], dst)
+                    r = row(sid, split, group, meta, ids, n, dst, u, dur)
+                    r["sub_index"] = 0
+                    r["sub_count"] = 1
                     refs.append(r)
+                else:
+                    for k, (idx, off, f) in enumerate(subs):
+                        r = row(sid, split, group, meta, ids, n, f, u, wav_duration(f))
+                        r["sub_index"] = k
+                        r["sub_count"] = len(subs)
+                        refs.append(r)
                 n += 1
             if unmatched or by_span:
                 skipped.append({"speaker": sid, "reason": f"{unmatched} utterances without chunks; {len(by_span)} chunk spans without a timed PAR utterance (kept the matched ones)"})
@@ -379,6 +414,10 @@ def self_test():
     two = [r for r in refs2 if r["sub_count"] == 2]
     assert len(two) == 2 and sorted(r["sub_index"] for r in two) == [0, 1] and two[0]["ref_text"] == two[1]["ref_text"], two
     assert all(r["ref_text"] == par[[u["t0"] for u in par].index(r["t0"])]["ref"] for r in refs2)
+    refs2c, skipped2c = prepare(root, "chunks-concat", tmp / "out-chunkcat")
+    assert len(refs2c) == 6 and not skipped2c, (len(refs2c), skipped2c)
+    cat = [r for r in refs2c if r["t0"] == two[0]["t0"]][0]
+    assert abs(cat["duration_s"] - 2.0) < 0.01 and cat["sub_count"] == 1, cat
     make_synthetic_wav(cdir / "S999-1-1-2-1-0-500.wav", 0.5, tone_hz=300)
     refs3, skipped3 = prepare(root, "chunks", tmp / "out-mismatch")
     assert len(refs3) == 7 and skipped3 and "1 chunk spans without a timed PAR utterance" in skipped3[0]["reason"], skipped3
@@ -414,7 +453,7 @@ def jiwer_check():
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--adress", help="root of the ADReSS-2020 download")
-    ap.add_argument("--join", choices=["utterance", "chunks"], default="utterance")
+    ap.add_argument("--join", choices=["utterance", "chunks", "chunks-concat"], default="utterance")
     ap.add_argument("--out", default=str(DATA))
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--jiwer-check", action="store_true")

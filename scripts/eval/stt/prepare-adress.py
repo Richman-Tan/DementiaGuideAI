@@ -12,7 +12,7 @@ Expected ADReSS-2020 layout (as distributed at
 media.talkbank.org/dementia/English/0extra/ADReSS-2020):
 
   <root>/train/Full_wave_enhanced_audio/{cc,cd}/S001.wav
-  <root>/train/Normalised_audio-chunks/{cc,cd}/S001-0.wav ...
+  <root>/train/Normalised_audio-chunks/{cc,cd}/S001-<n>-<utt_t0>-<utt_t1>-<sub>-<off0>-<off1>.wav ...
   <root>/train/transcription/{cc,cd}/S001.cha
   <root>/train/{cc,cd}_meta_data.txt          ID ; age ; gender ; mmse
   <root>/test/Full_wave_enhanced_audio/S160.wav
@@ -29,7 +29,9 @@ Join strategies (--join):
              reference for each cut is exactly the utterance text, so the
              alignment is by construction. Cuts are written with the stdlib
              wave module (no ffmpeg) to data/dementiabank/cuts/.
-  chunks     Use the distributed Normalised_audio-chunks and match chunk i
+  chunks     Use the distributed Normalised_audio-chunks (VAD-trimmed, <=10 s), grouped by the
+             utterance span encoded in the file name; each sub-chunk row carries the whole
+             utterance reference and sub_index/sub_count so the report can concatenate. Was: match chunk i
              of speaker S to the i-th PAR utterance in time order. This
              assumes the chunking followed the transcript's PAR turns one to
              one, which the ADReSS README states (VAD-segmented, ≤10 s) but
@@ -241,12 +243,35 @@ def prepare(root: Path, join: str, out_dir: Path, participant: str = "PAR"):
             if chunks is None:
                 skipped.append({"speaker": sid, "reason": "no chunk dir"})
                 continue
-            files = sorted(chunks.glob(f"{sid}-*.wav"), key=lambda p: int(p.stem.split("-")[-1]))
-            if len(files) != len(timed):
-                skipped.append({"speaker": sid, "reason": f"chunk/utterance count mismatch {len(files)} vs {len(timed)}"})
-                continue
-            for n, (f, u) in enumerate(zip(files, timed)):
-                refs.append(row(sid, split, group, meta, ids, n, f, u, wav_duration(f)))
+            # ADReSS chunk names encode the source utterance span and the VAD
+            # sub-chunk position: S160-211-0-3957-1-380-1010.wav =
+            # speaker S160, utterance 0_3957 ms, sub-chunk 1 at 380-1010 ms within
+            # it. Several sub-chunks share one utterance (pauses were cut out), so
+            # each sub-chunk row carries the WHOLE utterance reference and the
+            # report concatenates hypotheses per (speaker, t0, t1) before scoring.
+            by_span = {}
+            for f in chunks.glob(f"{sid}-*.wav"):
+                parts = f.stem.split("-")
+                if len(parts) < 7:
+                    skipped.append({"speaker": sid, "reason": f"unexpected chunk name {f.name}"})
+                    continue
+                span = (int(parts[2]), int(parts[3]))
+                by_span.setdefault(span, []).append((int(parts[4]), int(parts[5]), f))
+            n = 0
+            unmatched = 0
+            for u in timed:
+                subs = sorted(by_span.pop((u["t0"], u["t1"]), []))
+                if not subs:
+                    unmatched += 1
+                    continue
+                for k, (idx, off, f) in enumerate(subs):
+                    r = row(sid, split, group, meta, ids, n, f, u, wav_duration(f))
+                    r["sub_index"] = k
+                    r["sub_count"] = len(subs)
+                    refs.append(r)
+                n += 1
+            if unmatched or by_span:
+                skipped.append({"speaker": sid, "reason": f"{unmatched} utterances without chunks; {len(by_span)} chunk spans without a timed PAR utterance (kept the matched ones)"})
     write_outputs(refs, skipped, per_speaker, out_dir, join, root)
     return refs, skipped
 
@@ -265,12 +290,12 @@ def row(sid, split, group, meta, ids, n, path, u, dur):
 
 def write_outputs(refs, skipped, per_speaker, out_dir, join, root):
     cols = ["chunk_path", "speaker_id", "split", "group", "mmse", "age", "gender", "chunk_index", "t0", "t1",
-            "duration_s", "ref_text", "ref_text_fillers_kept", "unintelligible"]
+            "duration_s", "ref_text", "ref_text_fillers_kept", "unintelligible", "sub_index", "sub_count"]
     with open(out_dir / "references.csv", "w", newline="", encoding="utf8") as f:
         w = csv.DictWriter(f, fieldnames=cols)
         w.writeheader()
         for r in refs:
-            w.writerow(r)
+            w.writerow({**{"sub_index": 0, "sub_count": 1}, **r})
     manifest = {
         "preparedAt": time.strftime("%Y-%m-%dT%H:%M:%S"), "source": str(root), "join": join,
         "chunks": len(refs), "speakers": len({r["speaker_id"] for r in refs}),
@@ -312,15 +337,21 @@ def self_test():
     shutil.copy(FIXTURES / "synthetic.cha", root / "train" / "transcription" / "cd" / "S999.cha")
     (root / "train" / "cd_meta_data.txt").write_text("ID   ; age ; gender ;  mmse\nS999 ;  71 ;   1    ;  18\n")
     make_synthetic_wav(root / "train" / "Full_wave_enhanced_audio" / "cd" / "S999.wav", 20.0)
-    # two tiny 1-second chunks for the transcribe.mjs smoke test + a chunk set for --join chunks
-    for i in range(6):
-        make_synthetic_wav(root / "train" / "Normalised_audio-chunks" / "cd" / f"S999-{i}.wav", 1.0, tone_hz=220 + 40 * i)
-
     # 1. cleaning
     utts = read_utterances(root / "train" / "transcription" / "cd" / "S999.cha")
     assert len(utts) == 8, f"expected 8 utterances, got {len(utts)}"
     par = [u for u in utts if u["speaker"] == "PAR"]
     assert len(par) == 6, len(par)
+    # ADReSS-style VAD sub-chunks named S<id>-<n>-<utt_t0>-<utt_t1>-<sub>-<off0>-<off1>.wav:
+    # one per PAR utterance, and a second sub-chunk for the third utterance.
+    cdir = root / "train" / "Normalised_audio-chunks" / "cd"
+    chunk_files = []
+    for i, u in enumerate(par):
+        f = cdir / f"S999-1-{u['t0']}-{u['t1']}-1-0-1000.wav"
+        make_synthetic_wav(f, 1.0, tone_hz=220 + 40 * i)
+        chunk_files.append(f)
+        if i == 2:
+            make_synthetic_wav(cdir / f"S999-1-{u['t0']}-{u['t1']}-2-1200-2200.wav", 1.0, tone_hz=500)
     assert par[0]["ref"] == "well the the the little boy is he's getting cookies", par[0]["ref"]
     assert par[0]["ref_fillers"] == "well the uh the the little boy is he's getting cookies", par[0]["ref_fillers"]
     assert par[1]["ref"] == "and the stool is falling over" and par[1]["unintelligible"] == 1, par[1]
@@ -339,20 +370,24 @@ def self_test():
     assert (out / "cuts" / "S999-0.wav").exists()
     assert json.loads((out / "manifest.json").read_text())["speakers"] == 1
 
-    # 3. chunk join with matching counts, then a deliberate mismatch
+    # 3. chunk join grouped by utterance span, then a chunk whose span matches no utterance
     out2 = tmp / "out-chunks"
     refs2, skipped2 = prepare(root, "chunks", out2)
-    assert len(refs2) == 6 and not skipped2, (len(refs2), skipped2)
-    (root / "train" / "Normalised_audio-chunks" / "cd" / "S999-6.wav").write_bytes(
-        (root / "train" / "Normalised_audio-chunks" / "cd" / "S999-0.wav").read_bytes())
+    assert len(refs2) == 7 and not skipped2, (len(refs2), skipped2)
+    spans = {(r["t0"], r["t1"]) for r in refs2}
+    assert len(spans) == 6, spans
+    two = [r for r in refs2 if r["sub_count"] == 2]
+    assert len(two) == 2 and sorted(r["sub_index"] for r in two) == [0, 1] and two[0]["ref_text"] == two[1]["ref_text"], two
+    assert all(r["ref_text"] == par[[u["t0"] for u in par].index(r["t0"])]["ref"] for r in refs2)
+    make_synthetic_wav(cdir / "S999-1-1-2-1-0-500.wav", 0.5, tone_hz=300)
     refs3, skipped3 = prepare(root, "chunks", tmp / "out-mismatch")
-    assert len(refs3) == 0 and skipped3 and "mismatch" in skipped3[0]["reason"], skipped3
+    assert len(refs3) == 7 and skipped3 and "1 chunk spans without a timed PAR utterance" in skipped3[0]["reason"], skipped3
 
     # 4. leave two synthetic 1-second WAVs where transcribe.mjs can find them for its smoke test
     smoke = DATA / "selftest"
     smoke.mkdir(parents=True, exist_ok=True)
     for i in range(2):
-        shutil.copy(root / "train" / "Normalised_audio-chunks" / "cd" / f"S999-{i}.wav", smoke / f"S999-{i}.wav")
+        shutil.copy(chunk_files[i], smoke / f"S999-{i}.wav")
     with open(smoke / "references.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(refs[0].keys()))
         w.writeheader()
@@ -361,7 +396,7 @@ def self_test():
             r["chunk_path"] = str((smoke / f"S999-{i}.wav").relative_to(ROOT))
             w.writerow(r)
     shutil.rmtree(tmp)
-    print("self-test OK: 8 utterances (6 PAR), codes stripped as expected, utterance cuts 6/6, chunk join 6/6, mismatch flagged")
+    print("self-test OK: 8 utterances (6 PAR), codes stripped as expected, utterance cuts 6/6, chunk join 7 sub-chunks/6 utterances, unmatched span flagged")
 
 
 def jiwer_check():

@@ -100,3 +100,7 @@ data/dementiabank/
 
 # Test coverage output (summarised into docs/report/eval/final/coverage_*.md)
 coverage/
+
+# Playwright
+apps/web/playwright-report/
+apps/web/test-results/

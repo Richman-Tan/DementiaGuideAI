@@ -74,3 +74,41 @@ jobs:
 
       - name: Prebuild iOS
         run: npx expo prebuild --platform ios --no-install
+
+  e2e:
+    # The assembled web app in a real browser with every provider mocked at the
+    # network layer (apps/web/e2e/support.js): OpenAI, the Supabase retrieval
+    # RPC and the study API are answered by fixtures, and the Unity build is
+    # refused. No secrets are needed. Five flows: chat with citations and the
+    # source drawer, the safety callout, the response-length setting, the
+    # study's text arm end to end, and the arm guard.
+    name: End-to-end (Playwright, mocked providers)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx --workspace apps/web playwright install --with-deps chromium
+
+      - name: Run e2e
+        run: npm run test:e2e
+        env:
+          CI: 'true'
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7

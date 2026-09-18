@@ -42,7 +42,9 @@ const pfmt = (p) => (p == null ? '—' : p < 0.001 ? '<0.001' : p.toFixed(3));
 
 function loadRows(refPath, hypPath) {
   const refs = parseCsv(readFileSync(refPath, 'utf8'));
-  const hyps = new Map(parseCsv(readFileSync(hypPath, 'utf8')).filter(h => !h.error).map(h => [h.chunk_path, h]));
+  const hypRows = parseCsv(readFileSync(hypPath, 'utf8')).filter(h => !h.error);
+  const hyps = new Map(hypRows.map(h => [h.chunk_path, h]));
+  const modelLabel = hypRows.find(h => h.model)?.model ?? null;
   const rows = [];
   let missing = 0;
   for (const r of refs) {
@@ -53,7 +55,7 @@ function loadRows(refPath, hypPath) {
       ref: r.ref_text_fillers_kept || r.ref_text, hyp: h.hyp_text, ms: Number(h.ms) || null, durationS: Number(r.duration_s) || null,
     });
   }
-  return { rows, missing, chunks: refs.length };
+  return { rows, missing, chunks: refs.length, modelLabel };
 }
 
 function analyse(rows, { seed = 42 } = {}) {
@@ -236,10 +238,14 @@ function main() {
 
   const perModel = [];
   for (const hp of hypFiles) {
-    const model = basename(hp).replace(/^hyps_|\.csv$/g, '');
+    // Label from the CSV's own `model` column when it has one (the local path
+    // writes `local:<name>`, the API path the OpenAI model id); the file name
+    // is the fallback. File names never carry the colon.
+    const fromFile = basename(hp).replace(/^hyps_|\.csv$/g, '');
     const meta = loadRows(REFERENCES, hp);
+    const model = meta.modelLabel || fromFile;
     const res = analyse(meta.rows);
-    perModel.push({ model, meta, res });
+    perModel.push({ model, fileTag: model.replace(/[^A-Za-z0-9._-]+/g, '-'), meta, res });
   }
   for (const m of perModel) {
     const paired = [];
@@ -249,8 +255,8 @@ function main() {
       const diffs = o.res.strip.speakers.filter(s => mine.has(s.speaker) && s.wer != null && mine.get(s.speaker) != null).map(s => mine.get(s.speaker) - s.wer);
       if (diffs.length) paired.push({ other: o.model, n: diffs.length, delta: mean(diffs), w: wilcoxonSignedRank(diffs) });
     }
-    const mdPath = resolve(OUT_DIR, `wer_${SHA}_${m.model}.md`);
-    const csvPath = resolve(OUT_DIR, `wer_${SHA}_${m.model}.csv`);
+    const mdPath = resolve(OUT_DIR, `wer_${SHA}_${m.fileTag}.md`);
+    const csvPath = resolve(OUT_DIR, `wer_${SHA}_${m.fileTag}.csv`);
     writeFileSync(mdPath, reportMarkdown(m.model, m.meta, m.res, paired));
     writeFileSync(csvPath, speakerCsv(m.res));
     const g = m.res.strip.groups;

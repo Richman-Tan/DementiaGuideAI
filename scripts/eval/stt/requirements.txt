@@ -1,2 +1,3 @@
 pylangacq>=0.19
 jiwer>=3.0
+faster-whisper>=1.1

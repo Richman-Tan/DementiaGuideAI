@@ -16,6 +16,10 @@
 --   • ivfflat lists = 10; GIN index named knowledge_chunks_search_idx.
 --   • match_chunks is the 8-arg weighted-sum hybrid (0.7 vector / 0.3 keyword)
 --     filtering on the provenance columns.
+-- Folded in from scripts/migrations/2026-09-16_display_title.sql:
+--   • display_title — a caregiver-facing plain-language title generated at
+--     ingest time, separate from `title` (which stays technical because it's
+--     also the embedding input). See that file for the full rationale.
 -- ============================================================
 
 -- 1. Enable the pgvector extension
@@ -29,6 +33,7 @@ create table if not exists knowledge_chunks (
   id              text primary key,
   category        text        not null,
   title           text        not null,
+  display_title   text,
   content         text        not null,
   tags            text[]      default '{}',
   source_url      text,
@@ -112,7 +117,7 @@ create or replace function match_chunks(
   filter_module integer default null::integer
 )
 returns table(
-  id text, category text, title text, content text, tags text[],
+  id text, category text, title text, display_title text, content text, tags text[],
   source_url text, source_org text,
   document_id text, chunk_level text,
   similarity double precision
@@ -134,7 +139,7 @@ language sql stable as $$
       and (filter_module         is null or kc.module               = filter_module)
   )
   select
-    f.id, f.category, f.title, f.content, f.tags, f.source_url, f.source_org,
+    f.id, f.category, f.title, f.display_title, f.content, f.tags, f.source_url, f.source_org,
     f.document_id, f.chunk_level,
     (
       0.7 * (1 - (f.embedding <=> query_embedding)) +

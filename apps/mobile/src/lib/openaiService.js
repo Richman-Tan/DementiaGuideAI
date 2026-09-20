@@ -457,10 +457,12 @@ class OpenAIService {
     // No fallback to retrieved chunk titles: if the model listed no sources, it
     // answered from general knowledge and showing source chips would be misleading.
 
-    // Enrich titles with source_url and source_org from matched chunks
+    // Enrich titles with source_url and source_org from matched chunks. Keyed
+    // by the technical `title` (what the model was shown and echoes back in
+    // the Sources: list), but displayed as display_title where available.
     const chunkByTitle = new Map(chunks.map(c => [c.title, c]));
     const sources = sourceTitles.map(title => ({
-      title,
+      title: chunkByTitle.get(title)?.display_title ?? title,
       url: chunkByTitle.get(title)?.source_url ?? null,
       org: chunkByTitle.get(title)?.source_org ?? null,
     }));

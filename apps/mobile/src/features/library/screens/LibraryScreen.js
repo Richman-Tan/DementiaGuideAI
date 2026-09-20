@@ -112,6 +112,9 @@ export const LibraryScreen = ({ navigation }) => {
 
     const mapResource = (item) => ({
       ...item,
+      // display_title is the caregiver-facing plain-language title
+      // (2026-09-16_display_title.sql); `title` stays available for search.
+      title: item.display_title ?? item.title,
       category: normalizeCategory(item.category),
       tags: Array.isArray(item.tags) ? item.tags : [],
       type: item.type ?? 'article',
@@ -123,7 +126,7 @@ export const LibraryScreen = ({ navigation }) => {
       try {
         const { data, error } = await supabase
           .from('knowledge_chunks')
-          .select('id, category, title, content, tags, source_url, source_org')
+          .select('id, category, title, display_title, content, tags, source_url, source_org')
           .order('id', { ascending: true });
         if (!isMounted) return;
         if (error) throw error;

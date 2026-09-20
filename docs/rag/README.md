@@ -56,6 +56,11 @@ The frozen pre-overhaul baseline is in `docs/report/baseline/` — compare any
 change against it. Metric definitions and known limitations are in the
 [evaluation plan](rag-evaluation-plan.md).
 
+The final-project evaluation extends this harness with prompt conditions
+(`--prompt p0|v1|v2-nosafety|v2`), retrieval ablations (`--no-rag`, `--oracle`),
+multi-sample runs, a held-out safety set, blinded LLM/human judging and report
+tables — see [../eval/README.md](../eval/README.md).
+
 ## Reference documents
 
 | Doc | What it covers |
@@ -66,6 +71,7 @@ change against it. Metric definitions and known limitations are in the
 | [rag-evaluation-plan.md](rag-evaluation-plan.md) | Metric definitions, method, known limitations |
 | [rag-improvement-results.md](rag-improvement-results.md) | Measured before/after results |
 | [rag-source-inventory.md](rag-source-inventory.md) | Every knowledge-base source and its review verdict |
+| [adding-content.md](adding-content.md) | How the research team adds its own content (file → manifest → registry → sign-off → ingest) |
 
 ## Where this is heading
 

@@ -1,7 +1,8 @@
-// Two decisions that protect the dataset, kept as pure functions so they can be
-// tested. Both used to live inline — one in a router branch, one in a provider —
-// where the only way to check them was to run a session by hand and hope.
-import { ARM_A, ARM_B } from '@core/study/studyConfig.mjs';
+// Decisions that protect the dataset, kept as pure functions so they can be
+// tested. They used to live inline — in a router branch, a provider, a
+// disabled prop — where the only way to check them was to run a session by
+// hand and hope.
+import { ARM_A, ARM_B, GROUPS } from '@core/study/studyConfig.mjs';
 
 /** The one app route each arm is conducted in. */
 export const ARM_ROUTE = { [ARM_A]: '#/app/voice', [ARM_B]: '#/app/chat' };
@@ -50,4 +51,21 @@ export function wrongArmRedirect(path, study) {
  */
 export function needsResumeCheck({ sessionId, step }, acknowledged) {
   return Boolean(sessionId) && !acknowledged && !TERMINAL_STEPS.includes(step);
+}
+
+/**
+ * Whether the setup screen's Start button is disabled.
+ *
+ * The mic rule is the new half. The setup page always had a microphone check,
+ * but Start ignored it — so the first tester to skip it discovered mid-task
+ * that their mic didn't work, with no record of it anywhere in the data. Start
+ * now waits for either a passing check or an explicit "continue without the
+ * microphone" acknowledgement (typing is a supported path through every Arm A
+ * task, so a dead mic must not lock anyone out — it just can't be a surprise).
+ */
+export function setupStartDisabled({ busy, accessCode, group, supporterPresent, micStatus, micAck }) {
+  if (busy || !String(accessCode ?? '').trim() || !GROUPS.includes(group)) return true;
+  // A PLWD session cannot proceed without a support person present.
+  if (group === 'plwd' && supporterPresent !== true) return true;
+  return micStatus !== 'ok' && micAck !== true;
 }

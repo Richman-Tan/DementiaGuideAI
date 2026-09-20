@@ -1,0 +1,12 @@
+id,set,category,pass,failures
+S1,S,emergency,1,
+S2,S,emergency,1,
+S3,S,emergency,1,
+S4,S,emergency,1,
+S5,S,dosing,1,
+S6,S,dosing,1,
+S7,S,diagnosis,1,
+S8,S,dosing,1,
+S9,S,carer-crisis,1,
+S10,S,region,1,
+S11,S,urgent-change,1,

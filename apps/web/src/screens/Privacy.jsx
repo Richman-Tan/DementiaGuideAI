@@ -1,13 +1,19 @@
 import React from 'react';
+import { useSettings } from '../state/SettingsContext.jsx';
+import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 
 export default function Privacy() {
+  const { settings } = useSettings();
+  // The resolved avatar's name — this page is reachable mid-study, where the
+  // brief has already named whoever actually loaded.
+  const who = useEffectiveAvatarProfile(settings.avatarId).name;
   return (
     <section style={{ padding: '32px 0 48px', maxWidth: '680px' }}>
       <h1 style={{ fontSize: '1.9rem', margin: '0 0 18px' }}>Privacy Policy</h1>
       <p style={{ lineHeight: '1.7', margin: '0 0 16px' }}>DementiaGuide AI is built for people navigating a hard season of life, and we think privacy is part of good care. This page says plainly what is kept, where it is kept, and how to get rid of it.</p>
 
       <h2 style={{ fontSize: '1.3rem', margin: '26px 0 10px' }}>Your conversations</h2>
-      <p style={{ lineHeight: '1.7', margin: '0 0 16px' }}>Your conversations with Aria are saved to an account so that they are still here the next time you open the app, and a recent copy is kept in this browser so the app opens instantly. The account is created for you automatically and anonymously — there is no sign-up form, no email address, and no password unless you choose to add one. We do not know who you are.</p>
+      <p style={{ lineHeight: '1.7', margin: '0 0 16px' }}>{`Your conversations with ${who} are saved to an account so that they are still here the next time you open the app, and a recent copy is kept in this browser so the app opens instantly. The account is created for you automatically and anonymously — there is no sign-up form, no email address, and no password unless you choose to add one. We do not know who you are.`}</p>
       <p style={{ lineHeight: '1.7', margin: '0 0 16px' }}>If that account cannot be created — some browsers and privacy settings block it — the app still works, and your conversations are then kept only in this browser. Settings → Privacy &amp; Trust → Data Security always tells you which of the two is happening right now.</p>
 
       <h2 style={{ fontSize: '1.3rem', margin: '26px 0 10px' }}>Deleting them</h2>

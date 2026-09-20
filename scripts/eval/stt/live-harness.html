@@ -1,0 +1,148 @@
+<!doctype html>
+<!--
+  Web Speech API harness for the DementiaBank/ADReSS subset (E9 §2.4).
+
+  The production-primary recogniser on the web is the browser's
+  SpeechRecognition (apps/web/src/services/sttWeb.js: lang en-NZ, continuous,
+  interimResults). It cannot run headless, but it can be fed: route Chrome's
+  microphone input through a virtual audio device (BlackHole on macOS) and
+  play each chunk from this page. The page uses the SAME recogniser
+  configuration as sttWeb.js, records the final transcript per chunk, and
+  exports a hyps_webspeech.csv in the format wer-report.mjs expects.
+
+  Setup (local only, never deployed):
+    1. Install BlackHole 2ch; in Audio MIDI Setup create a Multi-Output Device
+       (built-in output + BlackHole) so you can hear playback while Chrome
+       records it. Set the Multi-Output as system output.
+    2. chrome://settings/content/microphone → default device BlackHole 2ch.
+    3. Serve this file locally (python3 -m http.server from the repo root) and
+       open it in Chrome — SpeechRecognition needs a secure or localhost origin.
+    4. Load references.csv (a 20-speaker subset), press Run. Each chunk is
+       played, recognised, and the final transcript captured; then Export.
+
+  Chrome's recogniser is a server-side Google model that changes without
+  notice — date-stamp the run in the report.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Web Speech harness</title>
+<style>
+  body { font: 14px/1.4 system-ui, sans-serif; margin: 24px; max-width: 900px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+  td, th { border: 1px solid #ccc; padding: 4px 6px; text-align: left; font-size: 12px; }
+  .ok { color: #2f5a4b; } .bad { color: #a33; }
+  button { margin-right: 8px; }
+</style>
+</head>
+<body>
+<h1>Web Speech API harness (en-NZ, continuous, interim)</h1>
+<p>Status: <span id="status">idle</span></p>
+<p>
+  <label>references.csv <input type="file" id="refs" accept=".csv"></label>
+  <label>audio folder <input type="file" id="audio" webkitdirectory multiple></label>
+</p>
+<p>
+  <button id="run">Run</button>
+  <button id="stop">Stop</button>
+  <button id="export">Export hyps_webspeech.csv</button>
+  <label>settle ms <input id="settle" type="number" value="1500" style="width:70px"></label>
+</p>
+<table><thead><tr><th>#</th><th>chunk</th><th>seconds</th><th>final transcript</th><th>ms</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+// ── same configuration as apps/web/src/services/sttWeb.js ────────────────────
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+function makeRecognizer(onFinal, onPartial) {
+  const rec = new SR();
+  rec.lang = 'en-NZ';
+  rec.interimResults = true;
+  rec.continuous = true;
+  let finalText = '';
+  rec.onresult = (event) => {
+    let interim = '';
+    finalText = '';
+    for (let i = 0; i < event.results.length; i++) {
+      const r = event.results[i];
+      if (r.isFinal) finalText += r[0].transcript + ' ';
+      else interim += r[0].transcript + ' ';
+    }
+    onPartial((finalText + interim).trim());
+  };
+  rec.onend = () => onFinal(finalText.trim());
+  rec.onerror = (e) => onFinal(finalText.trim(), e.error);
+  return rec;
+}
+
+// ── minimal CSV ───────────────────────────────────────────────────────────────
+function parseCsv(text) {
+  const rows = []; let row = [], field = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; } else field += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(field); field = ''; rows.push(row); row = []; }
+    else field += c;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  const h = rows.shift();
+  return rows.filter(r => r.some(v => v !== '')).map(r => Object.fromEntries(h.map((k, i) => [k, r[i] ?? ''])));
+}
+const esc = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
+
+let refs = [], files = new Map(), results = [], running = false;
+const status = (t) => { document.getElementById('status').textContent = t; };
+
+document.getElementById('refs').onchange = async (e) => { refs = parseCsv(await e.target.files[0].text()); status(`${refs.length} reference rows`); };
+document.getElementById('audio').onchange = (e) => { files = new Map([...e.target.files].map(f => [f.name, f])); status(`${files.size} audio files`); };
+document.getElementById('stop').onclick = () => { running = false; };
+
+async function recogniseOne(file, settleMs) {
+  return new Promise((resolve) => {
+    const t0 = performance.now();
+    let done = false;
+    const finish = (text, err) => { if (done) return; done = true; resolve({ text, err, ms: Math.round(performance.now() - t0) }); };
+    const rec = makeRecognizer(finish, () => {});
+    const audio = new Audio(URL.createObjectURL(file));
+    audio.onended = () => setTimeout(() => { try { rec.stop(); } catch {} }, settleMs);
+    rec.onstart = () => audio.play();
+    try { rec.start(); } catch (e) { finish('', String(e)); }
+    setTimeout(() => { try { rec.stop(); } catch {} }, 30000); // hard cap per chunk
+  });
+}
+
+document.getElementById('run').onclick = async () => {
+  if (!SR) { status('SpeechRecognition not available in this browser'); return; }
+  running = true; results = [];
+  const tbody = document.getElementById('rows'); tbody.innerHTML = '';
+  const settle = Number(document.getElementById('settle').value) || 1500;
+  for (let i = 0; i < refs.length && running; i++) {
+    const r = refs[i];
+    const name = r.chunk_path.split('/').pop();
+    const file = files.get(name);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i + 1}</td><td>${name}</td><td>${r.duration_s}</td><td>…</td><td></td>`;
+    tbody.appendChild(tr);
+    if (!file) { tr.cells[3].textContent = 'audio file not loaded'; tr.className = 'bad'; results.push({ chunk_path: r.chunk_path, hyp_text: '', ms: '', error: 'missing audio' }); continue; }
+    status(`recognising ${i + 1}/${refs.length}`);
+    const out = await recogniseOne(file, settle);
+    tr.cells[3].textContent = out.text || (out.err ? `[${out.err}]` : '[empty]');
+    tr.cells[4].textContent = out.ms;
+    tr.className = out.err ? 'bad' : 'ok';
+    results.push({ chunk_path: r.chunk_path, hyp_text: out.text, ms: out.ms, error: out.err ?? '' });
+  }
+  status(running ? 'done' : 'stopped');
+  running = false;
+};
+
+document.getElementById('export').onclick = () => {
+  const cols = ['chunk_path', 'model', 'prompt', 'hyp_text', 'ms', 'cached', 'error'];
+  const lines = [cols.join(','), ...results.map(r => [r.chunk_path, `webspeech-chrome-${navigator.userAgent.match(/Chrome\/(\d+)/)?.[1] ?? '?'}-${new Date().toISOString().slice(0, 10)}`, '', r.hyp_text, r.ms, 'false', r.error].map(esc).join(','))];
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n') + '\n'], { type: 'text/csv' }));
+  a.download = 'hyps_webspeech.csv';
+  a.click();
+};
+</script>
+</body>
+</html>

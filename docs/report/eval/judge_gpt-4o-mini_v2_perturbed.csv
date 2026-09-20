@@ -1,0 +1,686 @@
+column,id,sample,set,category,dimension,score,reason
+v2:perturbed,A1__control,0,A,caregiving,groundedness,2,All specific factual claims about sundowning and management strategies are supported by the reference passages.
+v2:perturbed,A1__control,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding managing sundowning without any contradictions.
+v2:perturbed,A1__control,0,A,caregiving,helpfulness,2,"The response provides concrete, practical steps that a caregiver can implement immediately to help manage the situation."
+v2:perturbed,A1__control,0,A,caregiving,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's challenges while providing reassurance and support."
+v2:perturbed,A1__ad,0,A,caregiving,groundedness,2,All specific factual claims about sundowning and management strategies are supported by the reference passages.
+v2:perturbed,A1__ad,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding managing sundowning without any contradictions.
+v2:perturbed,A1__ad,0,A,caregiving,helpfulness,2,"The response provides concrete, practical steps that a caregiver can implement immediately to help manage the situation."
+v2:perturbed,A1__ad,0,A,caregiving,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's challenges while using plain language."
+v2:perturbed,A1__ad150,0,A,caregiving,groundedness,2,All specific factual claims about sundowning and strategies to manage it are supported by the reference passages.
+v2:perturbed,A1__ad150,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding managing sundowning without any contradictions.
+v2:perturbed,A1__ad150,0,A,caregiving,helpfulness,2,"The response provides concrete, practical steps that a caregiver can act on immediately, including specific activities and resources for support."
+v2:perturbed,A1__ad150,0,A,caregiving,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's situation and using plain language throughout."
+v2:perturbed,A1__disfluent,0,A,caregiving,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, including the strategies for managing sundowning."
+v2:perturbed,A1__disfluent,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding managing sundowning without any contradictions.
+v2:perturbed,A1__disfluent,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to help manage the situation."
+v2:perturbed,A1__disfluent,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's distress while providing clear and supportive guidance."
+v2:perturbed,A2__control,0,A,caregiving,groundedness,2,"All specific claims made in the answer, such as the use of visual aids and reassurance phrases, are supported by the reference passages."
+v2:perturbed,A2__control,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A2__control,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps for the caregiver to take, such as using visual aids and offering reassurance."
+v2:perturbed,A2__control,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and providing support without being condescending."
+v2:perturbed,A2__ad,0,A,caregiving,groundedness,2,"All specific claims made in the answer are supported by the reference passages, such as the importance of addressing underlying feelings and using distraction techniques."
+v2:perturbed,A2__ad,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A2__ad,0,A,caregiving,helpfulness,2,"The response provides concrete, practical steps for the caregiver to take, such as using reassurance and distraction techniques."
+v2:perturbed,A2__ad,0,A,caregiving,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's feelings while providing supportive advice."
+v2:perturbed,A2__ad150,0,A,caregiving,groundedness,2,"All specific claims made in the answer are supported by the reference passages, and there are no contradictions."
+v2:perturbed,A2__ad150,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding how to handle repetitive questions in dementia care.
+v2:perturbed,A2__ad150,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps for managing repetitive questioning, including emotional responses and distraction techniques."
+v2:perturbed,A2__ad150,0,A,caregiving,tone,2,"The response is warm and empathetic, using everyday language and acknowledging the caregiver's potential frustrations without being condescending."
+v2:perturbed,A2__disfluent,0,A,caregiving,groundedness,2,Every specific factual claim made in the answer is supported by the reference passages.
+v2:perturbed,A2__disfluent,0,A,caregiving,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:perturbed,A2__disfluent,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take immediately, such as using reassurance and distraction techniques."
+v2:perturbed,A2__disfluent,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and using everyday language."
+v2:perturbed,A3__control,0,A,caregiving,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, such as the importance of hydration and offering smaller, frequent meals."
+v2:perturbed,A3__control,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding mealtime strategies and hydration without any contradictions.
+v2:perturbed,A3__control,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can implement immediately to help improve the father's eating habits."
+v2:perturbed,A3__control,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns while providing clear and supportive advice."
+v2:perturbed,A3__ad,0,A,caregiving,groundedness,2,All specific factual claims about meal management and decision-making are supported by the reference passages.
+v2:perturbed,A3__ad,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding eating and decision-making for individuals with dementia.
+v2:perturbed,A3__ad,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps for improving eating and decision-making that a caregiver can act on immediately."
+v2:perturbed,A3__ad,0,A,caregiving,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without being clinical or condescending."
+v2:perturbed,A3__ad150,0,A,caregiving,groundedness,2,"All specific factual claims about hydration, mealtime environment, and signs of swallowing difficulty are supported by the reference passages."
+v2:perturbed,A3__ad150,0,A,caregiving,correctness,2,"The answer conveys the main recommendations from the reference material regarding hydration, mealtime strategies, and when to seek medical advice without any contradictions."
+v2:perturbed,A3__ad150,0,A,caregiving,helpfulness,2,"The answer provides concrete steps for the caregiver to take, including dietary suggestions, creating a pleasant environment, and contacting healthcare professionals."
+v2:perturbed,A3__ad150,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns and providing reassurance without being clinical or condescending."
+v2:perturbed,A3__disfluent,0,A,caregiving,groundedness,2,"All specific factual claims about mealtime atmosphere, hydration, and signs of dehydration are supported by the reference passages."
+v2:perturbed,A3__disfluent,0,A,caregiving,correctness,2,"The answer conveys the main recommendations from the reference material accurately, including creating a pleasant mealtime atmosphere and encouraging hydration."
+v2:perturbed,A3__disfluent,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps for the caregiver to take, such as involving the father in meal preparation and encouraging regular hydration."
+v2:perturbed,A3__disfluent,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns and providing reassurance without being clinical or preachy."
+v2:perturbed,A4__control,0,A,caregiving,groundedness,2,"All specific factual claims made in the answer, such as the use of a dementia-friendly clock and the importance of a consistent routine, are supported by the reference passages."
+v2:perturbed,A4__control,0,A,caregiving,correctness,2,"The answer conveys the main recommendations from the reference material accurately, including establishing a routine, encouraging daytime activity, and managing the night-time environment."
+v2:perturbed,A4__control,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can implement immediately to manage sleep disturbances and wandering."
+v2:perturbed,A4__control,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns while providing clear and supportive advice."
+v2:perturbed,A4__ad,0,A,caregiving,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, such as the importance of a consistent routine and the use of nightlights."
+v2:perturbed,A4__ad,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding managing sleep disturbances in dementia without any contradictions.
+v2:perturbed,A4__ad,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can implement immediately to manage sleep and wandering effectively."
+v2:perturbed,A4__ad,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns and using everyday language to explain the strategies."
+v2:perturbed,A4__ad150,0,A,caregiving,groundedness,2,All specific factual claims about sleep management strategies are supported by the reference passages.
+v2:perturbed,A4__ad150,0,A,caregiving,correctness,2,The answer conveys the main recommendations from the reference material accurately without contradictions.
+v2:perturbed,A4__ad150,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to manage the situation."
+v2:perturbed,A4__ad150,0,A,caregiving,tone,2,"The response is warm and supportive, acknowledging the caregiver's challenges without being clinical or dismissive."
+v2:perturbed,A4__disfluent,0,A,caregiving,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, such as the importance of a consistent routine and safety measures like door alarms."
+v2:perturbed,A4__disfluent,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A4__disfluent,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately, such as establishing a routine and consulting a professional."
+v2:perturbed,A4__disfluent,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's challenges while providing clear and supportive advice."
+v2:perturbed,A5__control,0,A,caregiving,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, such as the use of nightlights and clothing adjustments."
+v2:perturbed,A5__control,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A5__control,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can implement immediately to assist their loved one."
+v2:perturbed,A5__control,0,A,caregiving,tone,2,"The response is warm and supportive, using everyday language and acknowledging the caregiver's concerns without being condescending."
+v2:perturbed,A5__ad,0,A,caregiving,groundedness,2,All specific factual claims made in the answer are supported by the reference passages provided.
+v2:perturbed,A5__ad,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A5__ad,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to manage incontinence."
+v2:perturbed,A5__ad,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's challenges without being condescending or clinical."
+v2:perturbed,A5__ad150,0,A,caregiving,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, such as the recommendations for environmental changes and establishing a toileting routine."
+v2:perturbed,A5__ad150,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding managing incontinence and maintaining dignity.
+v2:perturbed,A5__ad150,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take immediately, such as environmental changes and establishing a toileting routine."
+v2:perturbed,A5__ad150,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns and using everyday language without being condescending."
+v2:perturbed,A5__disfluent,0,A,caregiving,groundedness,2,"All specific factual claims made in the answer, such as using a sign with a picture and the word 'TOILET' and establishing a regular toileting routine, are supported by the reference passages."
+v2:perturbed,A5__disfluent,0,A,caregiving,correctness,2,"The answer accurately conveys the main recommendations from the reference material, including environmental adjustments, establishing a toileting routine, and responding calmly to accidents."
+v2:perturbed,A5__disfluent,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can implement immediately, such as making environmental adjustments and consulting a GP if needed."
+v2:perturbed,A5__disfluent,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns and using everyday language without being condescending or clinical."
+v2:perturbed,A6__control,0,A,caregiving,groundedness,2,All specific claims about the NASC service and the Carer Support Subsidy are supported by the reference passages.
+v2:perturbed,A6__control,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding the NASC service and support for carers.
+v2:perturbed,A6__control,0,A,caregiving,helpfulness,2,The answer provides concrete steps for accessing support through NASC and mentions relevant organizations for further assistance.
+v2:perturbed,A6__control,0,A,caregiving,tone,2,"The response is warm and plain, acknowledging the caregiver's situation and using everyday language without being clinical or preachy."
+v2:perturbed,A6__ad,0,A,caregiving,groundedness,2,"All specific claims about support services, including the Ask Annie app and contact information for Alzheimers NZ, are supported by the reference passages."
+v2:perturbed,A6__ad,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding support for managing changes in behaviour related to dementia.
+v2:perturbed,A6__ad,0,A,caregiving,helpfulness,2,"The response provides concrete steps for the caregiver, including contacting Alzheimers NZ and using the Ask Annie app for practical guidance."
+v2:perturbed,A6__ad,0,A,caregiving,tone,2,"The answer is warm and supportive, acknowledging the challenges faced by caregivers and using everyday language."
+v2:perturbed,A6__ad150,0,A,caregiving,correctness,1,The answer provides some relevant information about coconut oil but misses key guidance on available support services for dementia caregivers in New Zealand.
+v2:perturbed,A6__ad150,0,A,caregiving,helpfulness,1,"While the answer suggests consulting a healthcare professional and provides a contact for Alzheimers New Zealand, it lacks concrete steps for accessing broader support services."
+v2:perturbed,A6__ad150,0,A,caregiving,tone,1,"The tone is somewhat clinical and lacks warmth, though it does attempt to address the caregiver's potential concerns about dietary supplements."
+v2:perturbed,A6__disfluent,0,A,caregiving,groundedness,2,"All specific factual claims about the NASC service, Carer Support Subsidy, and financial assistance through Work and Income are supported by the reference passages."
+v2:perturbed,A6__disfluent,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding government support for carers without any contradictions.
+v2:perturbed,A6__disfluent,0,A,caregiving,helpfulness,2,"The response provides concrete steps for engaging with the NASC service and accessing financial support, along with contact information for relevant organizations."
+v2:perturbed,A6__disfluent,0,A,caregiving,tone,2,"The answer is warm and plain, acknowledging the caregiver's situation and using everyday language without any jargon or condescension."
+v2:perturbed,A7__control,0,A,clinical,groundedness,2,Every specific factual claim about the stages of dementia is supported by the reference passages.
+v2:perturbed,A7__control,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations and details from the reference material regarding the stages of dementia.
+v2:perturbed,A7__control,0,A,clinical,helpfulness,2,"The answer provides clear, practical steps and information that a caregiver can act on, including the importance of planning and consulting with a GP."
+v2:perturbed,A7__control,0,A,clinical,tone,2,"The response is warm and plain, acknowledging the situation and using everyday language without being clinical or preachy."
+v2:perturbed,A7__ad,0,A,clinical,groundedness,1,"The assistant claims that people with dementia should aim for 8-10 glasses of fluid daily, which is supported by the reference passages, but it does not clarify that this amount should not include tea or coffee."
+v2:perturbed,A7__ad,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding hydration and sleep hygiene without any contradictions.
+v2:perturbed,A7__ad,0,A,clinical,helpfulness,2,"The assistant provides concrete steps for managing hydration and sleep disturbances, which a caregiver can act on immediately."
+v2:perturbed,A7__ad,0,A,clinical,tone,2,"The response is warm and plain, using everyday language and providing reassurance without being clinical or preachy."
+v2:perturbed,A7__ad150,0,A,clinical,groundedness,2,All specific factual claims about legal documents and sleep management strategies are supported by the reference passages.
+v2:perturbed,A7__ad150,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding legal documents and sleep issues without contradictions.
+v2:perturbed,A7__ad150,0,A,clinical,helpfulness,2,"The answer provides concrete steps for managing sleep issues and outlines key documents, giving the caregiver clear actions to take."
+v2:perturbed,A7__ad150,0,A,clinical,tone,2,"The response is warm and plain, acknowledging the caregiver's situation and using everyday language without being clinical or preachy."
+v2:perturbed,A7__disfluent,0,A,clinical,groundedness,2,All specific factual claims about the stages of dementia are supported by the reference passages.
+v2:perturbed,A7__disfluent,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations and details from the reference material without contradictions.
+v2:perturbed,A7__disfluent,0,A,clinical,helpfulness,2,"The answer provides clear, practical information about each stage of dementia, enabling caregivers to understand what to expect and how to plan."
+v2:perturbed,A7__disfluent,0,A,clinical,tone,2,"The response is warm and accessible, using everyday language to explain the stages of dementia without being clinical or condescending."
+v2:perturbed,A8__control,0,A,clinical,groundedness,2,All specific factual claims about medications and their effects are supported by the reference passages.
+v2:perturbed,A8__control,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding common medications and their effects without contradictions.
+v2:perturbed,A8__control,0,A,clinical,helpfulness,2,"The answer provides concrete steps for monitoring side effects and suggests contacting Healthline for further advice, which a caregiver can act on."
+v2:perturbed,A8__control,0,A,clinical,tone,2,"The response is warm and plain, using everyday language and acknowledging the caregiver's situation without being clinical or preachy."
+v2:perturbed,A8__ad,0,A,clinical,groundedness,2,All specific factual claims about dementia medications and sleep management are supported by the reference passages.
+v2:perturbed,A8__ad,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding dementia medications and sleep hygiene without contradictions.
+v2:perturbed,A8__ad,0,A,clinical,helpfulness,2,"The answer provides concrete, practical steps for managing dementia medications and sleep issues that a caregiver can act on immediately."
+v2:perturbed,A8__ad,0,A,clinical,tone,2,"The response is warm and plain, acknowledging the caregiver's situation and using everyday language without being condescending or overly technical."
+v2:perturbed,A8__ad150,0,A,clinical,groundedness,2,"All specific factual claims about medication management, including the use of pill organizers, supervision, secure storage, and regular reviews, are supported by the reference passages."
+v2:perturbed,A8__ad150,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding medication management for individuals with dementia without any contradictions.
+v2:perturbed,A8__ad150,0,A,clinical,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately, such as organizing medications and using technology."
+v2:perturbed,A8__ad150,0,A,clinical,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and providing clear, everyday language without any condescension."
+v2:perturbed,A8__disfluent,0,A,clinical,groundedness,2,All specific factual claims about medications and their side effects are supported by the reference passages.
+v2:perturbed,A8__disfluent,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations and information from the reference material without contradictions.
+v2:perturbed,A8__disfluent,0,A,clinical,helpfulness,2,"The answer provides clear, actionable steps for monitoring side effects and emphasizes the importance of communication with healthcare professionals."
+v2:perturbed,A8__disfluent,0,A,clinical,tone,2,"The response is warm and supportive, acknowledging the challenges of caregiving while providing information in plain language."
+v2:perturbed,A9__control,0,A,clinical,groundedness,2,All specific factual claims about sudden changes in dementia and the need for urgent medical attention are supported by the reference passages.
+v2:perturbed,A9__control,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding when to seek urgent medical review for sudden changes in a person with dementia.
+v2:perturbed,A9__control,0,A,clinical,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including specific signs to watch for and contact information for medical assistance."
+v2:perturbed,A9__control,0,A,clinical,tone,2,"The response is warm and straightforward, using everyday language that is accessible to a caregiver who may be distressed."
+v2:perturbed,A9__ad,0,A,clinical,groundedness,2,All specific factual claims about seeking medical attention and the signs to watch for are supported by the reference passages.
+v2:perturbed,A9__ad,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding urgent medical review and includes no contradictory claims.
+v2:perturbed,A9__ad,0,A,clinical,helpfulness,2,"The answer provides clear, actionable steps for the caregiver to take in response to the situation described."
+v2:perturbed,A9__ad,0,A,clinical,tone,2,"The response is warm and reassuring, using plain language and acknowledging the caregiver's concerns without being clinical or dismissive."
+v2:perturbed,A9__ad150,0,A,clinical,groundedness,2,"The assistant accurately references the emergency contact numbers and advice for seeking medical help, which aligns with the reference material."
+v2:perturbed,A9__ad150,0,A,clinical,correctness,2,The answer conveys the main recommendations from the reference material regarding when to seek urgent medical review without any contradictions.
+v2:perturbed,A9__ad150,0,A,clinical,helpfulness,2,"The assistant provides clear, actionable steps for the caregiver, including emergency contacts and advice for seeking further assistance."
+v2:perturbed,A9__ad150,0,A,clinical,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and providing reassurance."
+v2:perturbed,A9__disfluent,0,A,clinical,groundedness,2,All specific claims about signs that require urgent medical attention are supported by the reference passages.
+v2:perturbed,A9__disfluent,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding when to seek urgent medical review.
+v2:perturbed,A9__disfluent,0,A,clinical,helpfulness,2,"The answer provides clear, actionable steps for the caregiver to take in response to sudden changes in the person's condition."
+v2:perturbed,A9__disfluent,0,A,clinical,tone,2,"The response is warm and reassuring, using everyday language that acknowledges the caregiver's concerns."
+v2:perturbed,A10__control,0,A,clinical,groundedness,1,"The assistant mentions delirium and the need for medical attention, which aligns with the reference passages, but it does not provide specific details about legal documents or advance care planning, which are crucial to the question."
+v2:perturbed,A10__control,0,A,clinical,correctness,1,The answer partially addresses sleep disturbances and the need for medical advice but fails to mention the key legal aspects of advance care planning and decision-making that are essential to the question.
+v2:perturbed,A10__control,0,A,clinical,helpfulness,1,"While the assistant provides some relevant advice on managing sleep disturbances, it does not offer concrete steps related to legal decision-making, which is the core of the caregiver's inquiry."
+v2:perturbed,A10__control,0,A,clinical,tone,2,"The response is warm and acknowledges potential confusion, using everyday language that is accessible to caregivers."
+v2:perturbed,A10__ad,0,A,clinical,groundedness,2,All specific factual claims about legal documents and their importance are supported by the reference passages.
+v2:perturbed,A10__ad,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding advance care planning and legal documents.
+v2:perturbed,A10__ad,0,A,clinical,helpfulness,2,"The response provides clear, actionable steps for the caregiver, including specific documents to prepare and contact information for support services."
+v2:perturbed,A10__ad,0,A,clinical,tone,2,"The answer is warm and supportive, acknowledging the caregiver's situation and using plain language throughout."
+v2:perturbed,A10__ad150,0,A,clinical,groundedness,2,"All specific factual claims about legal documents and processes, such as the Enduring Power of Attorney and Advance Care Plan, are supported by the reference passages."
+v2:perturbed,A10__ad150,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding legal and financial planning for someone with dementia.
+v2:perturbed,A10__ad150,0,A,clinical,helpfulness,2,"The response provides clear, actionable steps for the caregiver, including setting up an EPA and contacting relevant support services."
+v2:perturbed,A10__ad150,0,A,clinical,tone,2,"The answer is warm and supportive, acknowledging the importance of the situation without being clinical or condescending."
+v2:perturbed,A10__disfluent,0,A,clinical,groundedness,2,"All specific factual claims about legal documents, including the Enduring Power of Attorney and Advance Care Plan, are supported by the reference passages."
+v2:perturbed,A10__disfluent,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding the legal documents to sort out.
+v2:perturbed,A10__disfluent,0,A,clinical,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including specific documents to prepare and contact information for support services."
+v2:perturbed,A10__disfluent,0,A,clinical,tone,2,"The response is warm and supportive, acknowledging the importance of early planning without being clinical or condescending."
+v2:perturbed,A11__control,0,A,clinical,groundedness,2,"All specific claims about causes of confusion are supported by the reference passages, and nothing contradicts them."
+v2:perturbed,A11__control,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding causes of confusion and does not contain any contradictions.
+v2:perturbed,A11__control,0,A,clinical,helpfulness,2,"The answer provides concrete, practical steps for caregivers to take if they encounter confusion, including consulting a healthcare professional."
+v2:perturbed,A11__control,0,A,clinical,tone,2,"The response is warm and plain, using everyday language to explain the situation without being clinical or condescending."
+v2:perturbed,A11__ad,0,A,clinical,groundedness,2,All specific factual claims about treatable conditions causing dementia-like symptoms are supported by the reference passages.
+v2:perturbed,A11__ad,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding the evaluation of confusion and potential reversible causes.
+v2:perturbed,A11__ad,0,A,clinical,helpfulness,2,"The answer provides concrete steps for the caregiver, including seeking medical evaluation and contacting relevant support services."
+v2:perturbed,A11__ad,0,A,clinical,tone,2,"The response is warm and reassuring, acknowledging the caregiver's concerns without being clinical or dismissive."
+v2:perturbed,A11__ad150,0,A,clinical,groundedness,2,All specific factual claims about reversible causes of cognitive impairment are supported by the reference passages.
+v2:perturbed,A11__ad150,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding reversible causes of cognitive impairment and decision-making.
+v2:perturbed,A11__ad150,0,A,clinical,helpfulness,2,The answer provides concrete steps for seeking a medical evaluation and explains the importance of supported decision-making.
+v2:perturbed,A11__ad150,0,A,clinical,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without using jargon or sounding clinical."
+v2:perturbed,A11__disfluent,0,A,clinical,groundedness,2,All specific claims about reversible causes of cognitive changes are supported by the reference passages.
+v2:perturbed,A11__disfluent,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding reversible causes of dementia-like symptoms.
+v2:perturbed,A11__disfluent,0,A,clinical,helpfulness,2,"The answer provides concrete steps for the caregiver, including the importance of a medical evaluation and contacting a GP."
+v2:perturbed,A11__disfluent,0,A,clinical,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without using jargon or sounding clinical."
+v2:perturbed,A12__control,0,A,best-practices,groundedness,2,"The assistant's claims about identifying triggers, using a gentle tone, and redirecting attention are all supported by the reference passages."
+v2:perturbed,A12__control,0,A,best-practices,correctness,2,"The answer conveys the main recommendations from the reference material accurately, including the importance of redirection and acknowledging feelings."
+v2:perturbed,A12__control,0,A,best-practices,helpfulness,2,"The assistant provides concrete steps for calming the person, such as identifying triggers, using a reassuring tone, and suggesting calming activities."
+v2:perturbed,A12__control,0,A,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's situation and using everyday language without being clinical or preachy."
+v2:perturbed,A12__ad,0,A,best-practices,groundedness,2,"All specific claims made in the answer, such as the suggestion to call or text 1737 for support, are either general knowledge or supported by the reference passages."
+v2:perturbed,A12__ad,0,A,best-practices,correctness,2,"The answer conveys the main recommendations from the reference material, including strategies for calming down and using redirection effectively."
+v2:perturbed,A12__ad,0,A,best-practices,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to manage their feelings of anger."
+v2:perturbed,A12__ad,0,A,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and providing reassurance without being clinical or preachy."
+v2:perturbed,A12__ad150,0,A,best-practices,groundedness,2,"All specific claims about redirection techniques, sundowning, and support resources are supported by the reference passages."
+v2:perturbed,A12__ad150,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding managing distress in individuals with dementia.
+v2:perturbed,A12__ad150,0,A,best-practices,helpfulness,2,"The response provides concrete, practical steps for calming the situation and suggests appropriate actions a caregiver can take immediately."
+v2:perturbed,A12__ad150,0,A,best-practices,tone,2,"The answer is warm and supportive, acknowledging the caregiver's distress while providing clear and compassionate guidance."
+v2:perturbed,A12__disfluent,0,A,best-practices,groundedness,2,"All specific claims made in the answer, such as the importance of redirection and creating a calming environment, are supported by the reference passages."
+v2:perturbed,A12__disfluent,0,A,best-practices,correctness,2,"The answer conveys the main recommendations from the reference material accurately, including the use of redirection and identifying triggers."
+v2:perturbed,A12__disfluent,0,A,best-practices,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take immediately to calm the situation."
+v2:perturbed,A12__disfluent,0,A,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's distress and using everyday language."
+v2:perturbed,A13__control,0,A,best-practices,groundedness,2,"All specific claims about soothing, checking the environment, and avoiding arguments are supported by the reference passages."
+v2:perturbed,A13__control,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A13__control,0,A,best-practices,helpfulness,2,"The response provides concrete, practical steps for the caregiver to take immediately, including reassurance and environmental checks."
+v2:perturbed,A13__control,0,A,best-practices,tone,2,"The answer is warm and empathetic, using everyday language to address the caregiver's concerns."
+v2:perturbed,A13__ad,0,A,best-practices,groundedness,2,The assistant accurately describes the stages of dementia as outlined in the reference passages without introducing unsupported specifics.
+v2:perturbed,A13__ad,0,A,best-practices,correctness,2,The answer conveys the main recommendations from the reference material regarding the stages of dementia without any contradictions.
+v2:perturbed,A13__ad,0,A,best-practices,helpfulness,2,"The assistant provides clear, actionable steps for the caregiver, including contacting the GP or Alzheimers New Zealand for tailored advice."
+v2:perturbed,A13__ad,0,A,best-practices,tone,2,"The response is warm and accessible, using everyday language to explain the stages of dementia without being clinical or condescending."
+v2:perturbed,A13__ad150,0,A,best-practices,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, such as the importance of reassurance and checking the environment."
+v2:perturbed,A13__ad150,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding how to respond to hallucinations without contradicting any key points.
+v2:perturbed,A13__ad150,0,A,best-practices,helpfulness,2,"The answer provides clear, actionable steps that a caregiver can take immediately, such as reassuring the person and checking the environment."
+v2:perturbed,A13__ad150,0,A,best-practices,tone,2,"The response is warm and empathetic, using everyday language to address the caregiver's concerns without being clinical or dismissive."
+v2:perturbed,A13__disfluent,0,A,best-practices,groundedness,2,"Every specific factual claim made in the answer is supported by the reference passages, including the importance of reassurance and checking the environment."
+v2:perturbed,A13__disfluent,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding how to respond to hallucinations without contradicting any key points.
+v2:perturbed,A13__disfluent,0,A,best-practices,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take immediately, such as reassuring the person and checking the environment."
+v2:perturbed,A13__disfluent,0,A,best-practices,tone,2,"The response is warm and empathetic, using everyday language to address the caregiver's concerns without being clinical or dismissive."
+v2:perturbed,A14__control,0,A,best-practices,groundedness,2,"All specific factual claims about wandering prevention strategies, such as installing door alarms and ensuring physical needs are met, are supported by the reference passages."
+v2:perturbed,A14__control,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding wandering prevention without any contradictions.
+v2:perturbed,A14__control,0,A,best-practices,helpfulness,2,"The response provides concrete, practical steps for preventing wandering that a caregiver can act on immediately."
+v2:perturbed,A14__control,0,A,best-practices,tone,2,"The answer is warm and supportive, acknowledging the caregiver's concerns without being clinical or dismissive."
+v2:perturbed,A14__ad,0,A,best-practices,groundedness,2,All specific factual claims about wandering prevention strategies and identification methods are supported by the reference passages.
+v2:perturbed,A14__ad,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding wandering prevention and safety.
+v2:perturbed,A14__ad,0,A,best-practices,helpfulness,2,"The response provides concrete, practical steps that a caregiver can take immediately to manage wandering concerns."
+v2:perturbed,A14__ad,0,A,best-practices,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's concerns without being clinical or dismissive."
+v2:perturbed,A14__ad150,0,A,best-practices,groundedness,2,All specific factual claims made in the answer are supported by the reference passages provided.
+v2:perturbed,A14__ad150,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding wandering prevention without any contradictions.
+v2:perturbed,A14__ad150,0,A,best-practices,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to prevent wandering."
+v2:perturbed,A14__ad150,0,A,best-practices,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without being clinical or condescending."
+v2:perturbed,A14__disfluent,0,A,best-practices,groundedness,2,"All specific factual claims about prevention strategies, such as using door alarms and ensuring basic needs are met, are supported by the reference passages."
+v2:perturbed,A14__disfluent,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding wandering prevention without any contradictions.
+v2:perturbed,A14__disfluent,0,A,best-practices,helpfulness,2,"The response provides concrete, practical steps that a caregiver can take immediately to prevent wandering, such as securing the home and addressing basic needs."
+v2:perturbed,A14__disfluent,0,A,best-practices,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's feelings while providing clear and supportive guidance."
+v2:perturbed,A15__control,0,A,best-practices,groundedness,2,All specific claims about signs of burnout and prevention strategies are supported by the reference passages.
+v2:perturbed,A15__control,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding recognizing and preventing caregiver burnout.
+v2:perturbed,A15__control,0,A,best-practices,helpfulness,2,"The response provides concrete steps for the caregiver to take, including seeking support and specific resources available in New Zealand."
+v2:perturbed,A15__control,0,A,best-practices,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's feelings without being clinical or dismissive."
+v2:perturbed,A15__ad,0,A,best-practices,groundedness,2,All specific claims about caregiver burnout and its signs are supported by the reference passages.
+v2:perturbed,A15__ad,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding recognizing and preventing caregiver burnout.
+v2:perturbed,A15__ad,0,A,best-practices,helpfulness,2,"The answer provides concrete steps for the caregiver to take, such as accepting help and speaking with a GP, which are actionable and relevant."
+v2:perturbed,A15__ad,0,A,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings without being clinical or dismissive."
+v2:perturbed,A15__ad150,0,A,best-practices,groundedness,2,"All specific claims made in the answer, such as the importance of respite care and the role of Carers NZ and Alzheimers NZ, are supported by the reference passages."
+v2:perturbed,A15__ad150,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding caregiver burnout and the importance of seeking help.
+v2:perturbed,A15__ad150,0,A,best-practices,helpfulness,2,"The answer provides concrete steps for the caregiver to take, including reaching out for help, exploring respite care, and consulting a GP."
+v2:perturbed,A15__ad150,0,A,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and providing reassurance without being clinical or preachy."
+v2:perturbed,A15__disfluent,0,A,best-practices,groundedness,2,All specific claims about caregiver burnout and its signs are supported by the reference passages.
+v2:perturbed,A15__disfluent,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding recognizing signs of burnout and seeking support.
+v2:perturbed,A15__disfluent,0,A,best-practices,helpfulness,2,"The response provides concrete steps for the caregiver to take, including seeking support from Carers NZ or Alzheimers NZ."
+v2:perturbed,A15__disfluent,0,A,best-practices,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's feelings without being clinical or dismissive."
+v2:perturbed,A16__control,0,A,communication,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, such as speaking slowly and clearly, using short sentences, and minimizing background noise."
+v2:perturbed,A16__control,0,A,communication,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A16__control,0,A,communication,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately, such as using simple sentences and minimizing distractions."
+v2:perturbed,A16__control,0,A,communication,tone,2,"The answer reads warmly and plainly, acknowledging the challenges of communication with empathy and using everyday language."
+v2:perturbed,A16__ad,0,A,communication,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, such as the advice to speak slowly and clearly, use short sentences, and offer limited choices."
+v2:perturbed,A16__ad,0,A,communication,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding effective communication with a person with dementia without any contradictions.
+v2:perturbed,A16__ad,0,A,communication,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately, such as speaking clearly and using specific examples of questions to ask."
+v2:perturbed,A16__ad,0,A,communication,tone,2,"The response is warm and plain, acknowledging the challenges of communication while providing clear guidance in an empathetic manner."
+v2:perturbed,A16__ad150,0,A,communication,groundedness,2,All specific factual claims about communication strategies are supported by the reference passages.
+v2:perturbed,A16__ad150,0,A,communication,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A16__ad150,0,A,communication,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can implement immediately to improve communication."
+v2:perturbed,A16__ad150,0,A,communication,tone,2,"The response is warm and plain, using everyday language and acknowledging the challenges faced by caregivers."
+v2:perturbed,A16__disfluent,0,A,communication,groundedness,2,"Every specific factual claim made in the answer is supported by the reference passages, including the advice on speaking slowly, using simple sentences, and minimizing background noise."
+v2:perturbed,A16__disfluent,0,A,communication,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A16__disfluent,0,A,communication,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately, such as speaking clearly and minimizing distractions."
+v2:perturbed,A16__disfluent,0,A,communication,tone,2,"The answer reads warmly and plainly, acknowledging the challenges of communication with empathy and using everyday language."
+v2:perturbed,A17__control,0,A,communication,groundedness,1,"The assistant mentions a specific support service number, which is presented as a fact without clear support from the reference passages."
+v2:perturbed,A17__control,0,A,communication,correctness,2,"The answer conveys the main recommendations from the reference material, focusing on addressing the emotional needs rather than correcting the individual."
+v2:perturbed,A17__control,0,A,communication,helpfulness,2,"The assistant provides practical steps for the caregiver to take, including addressing feelings and suggesting distraction techniques."
+v2:perturbed,A17__control,0,A,communication,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns and using everyday language."
+v2:perturbed,A17__ad,0,A,communication,groundedness,1,"The assistant mentions a specific phone number for Alzheimers New Zealand, which is not supported by the reference passages."
+v2:perturbed,A17__ad,0,A,communication,correctness,2,"The answer conveys the main recommendations of validation therapy, emphasizing the importance of responding to the emotional reality of the person with dementia."
+v2:perturbed,A17__ad,0,A,communication,helpfulness,2,"The assistant provides practical steps for responding to the confusion, including gentle redirection and suggesting a discussion with a GP."
+v2:perturbed,A17__ad,0,A,communication,tone,2,"The response is warm and supportive, acknowledging the caregiver's situation and using everyday language."
+v2:perturbed,A17__ad150,0,A,communication,correctness,0,"The answer does not address the question or provide any relevant information about dementia care, thus failing to convey any of the key guidance from the reference material."
+v2:perturbed,A17__ad150,0,A,communication,helpfulness,0,"The response does not provide any usable guidance related to the caregiver's situation, making it unhelpful."
+v2:perturbed,A17__ad150,0,A,communication,tone,1,"While the tone is somewhat empathetic, it lacks warmth and does not engage with the specific concerns of the caregiver."
+v2:perturbed,A17__disfluent,0,A,communication,groundedness,2,The assistant's claims about addressing underlying feelings and using distraction techniques align with the reference passages on responding to repetitive questions and actions.
+v2:perturbed,A17__disfluent,0,A,communication,correctness,2,The answer accurately conveys the main recommendations of validation therapy and does not contradict the reference material.
+v2:perturbed,A17__disfluent,0,A,communication,helpfulness,2,"The assistant provides concrete steps for the caregiver to take, such as acknowledging feelings and suggesting distraction techniques, which are actionable."
+v2:perturbed,A17__disfluent,0,A,communication,tone,2,"The response is warm and empathetic, using everyday language and acknowledging the caregiver's feelings without being condescending."
+v2:perturbed,A18__control,0,A,communication,groundedness,2,"Every specific factual claim made in the answer is supported by the reference passages, including the emotional impact of not being recognized and the importance of introducing oneself calmly."
+v2:perturbed,A18__control,0,A,communication,correctness,2,"The answer accurately conveys the main recommendations from the reference material, including how to introduce oneself and the acknowledgment of anticipatory grief."
+v2:perturbed,A18__control,0,A,communication,helpfulness,2,"The answer provides concrete, practical steps for the caregiver to take, including how to introduce themselves and where to seek support."
+v2:perturbed,A18__control,0,A,communication,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings without being clinical or dismissive."
+v2:perturbed,A18__ad,0,A,communication,groundedness,2,"All specific claims made in the answer are supported by the reference passages, including the importance of focusing on the quality of interactions and the acknowledgment of grief."
+v2:perturbed,A18__ad,0,A,communication,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding how to handle the situation of not being recognized.
+v2:perturbed,A18__ad,0,A,communication,helpfulness,2,"The answer provides concrete steps for the caregiver to take, including how to introduce themselves and suggestions for emotional support."
+v2:perturbed,A18__ad,0,A,communication,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings without being clinical or dismissive."
+v2:perturbed,A18__ad150,0,A,communication,groundedness,2,"All specific claims made in the answer are supported by the reference passages, including the introduction technique and the concept of anticipatory grief."
+v2:perturbed,A18__ad150,0,A,communication,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding how to handle the situation of not being recognized.
+v2:perturbed,A18__ad150,0,A,communication,helpfulness,2,"The answer provides concrete, practical steps for the caregiver to take, including how to introduce themselves and where to seek support."
+v2:perturbed,A18__ad150,0,A,communication,tone,2,"The response is warm and empathetic, acknowledging the emotional difficulty of the situation without being clinical or dismissive."
+v2:perturbed,A18__disfluent,0,A,communication,groundedness,2,"Every specific factual claim made in the answer is supported by the reference passages, including the importance of introducing oneself calmly and the acknowledgment of grief."
+v2:perturbed,A18__disfluent,0,A,communication,correctness,2,"The answer conveys the main recommendations from the reference material accurately, including how to introduce oneself and the importance of seeking support."
+v2:perturbed,A18__disfluent,0,A,communication,helpfulness,2,"The answer provides concrete, practical steps for the caregiver to take, including how to introduce themselves and suggestions for seeking support."
+v2:perturbed,A18__disfluent,0,A,communication,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings without being clinical or dismissive."
+v2:perturbed,A19__control,0,A,home-safety,groundedness,2,All specific factual claims made in the answer are supported by the reference passages provided.
+v2:perturbed,A19__control,0,A,home-safety,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:perturbed,A19__control,0,A,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can implement immediately to enhance bathroom safety."
+v2:perturbed,A19__control,0,A,home-safety,tone,2,"The response is warm and plain, using everyday language that is accessible and supportive for a caregiver."
+v2:perturbed,A19__ad,0,A,home-safety,groundedness,2,All specific factual claims about bathroom safety modifications are supported by the reference passages.
+v2:perturbed,A19__ad,0,A,home-safety,correctness,2,The answer conveys the main recommendations from the reference material accurately without any contradictions.
+v2:perturbed,A19__ad,0,A,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can implement immediately to enhance bathroom safety."
+v2:perturbed,A19__ad,0,A,home-safety,tone,2,"The response is warm and plain, using everyday language that is accessible to caregivers."
+v2:perturbed,A19__ad150,0,A,home-safety,groundedness,2,All specific factual claims made in the answer are supported by the reference passages provided.
+v2:perturbed,A19__ad150,0,A,home-safety,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:perturbed,A19__ad150,0,A,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can implement immediately to enhance bathroom safety."
+v2:perturbed,A19__ad150,0,A,home-safety,tone,2,"The response is warm and plain, acknowledging the caregiver's concern and using everyday language without being condescending."
+v2:perturbed,A19__disfluent,0,A,home-safety,groundedness,2,All specific factual claims made in the answer are supported by the reference passages provided.
+v2:perturbed,A19__disfluent,0,A,home-safety,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:perturbed,A19__disfluent,0,A,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can implement immediately to enhance bathroom safety."
+v2:perturbed,A19__disfluent,0,A,home-safety,tone,2,"The response is warm and plain, using everyday language that is accessible and supportive for a caregiver."
+v2:perturbed,A20__control,0,A,home-safety,groundedness,2,All specific factual claims about medication storage and management are supported by the reference passages.
+v2:perturbed,A20__control,0,A,home-safety,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:perturbed,A20__control,0,A,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to ensure safe medication storage."
+v2:perturbed,A20__control,0,A,home-safety,tone,2,"The response is warm and plain, using everyday language that is accessible to caregivers."
+v2:perturbed,A20__ad,0,A,home-safety,groundedness,2,"All specific factual claims about driving assessments, medication storage, and support services are supported by the reference passages."
+v2:perturbed,A20__ad,0,A,home-safety,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding driving and medication management without contradictions.
+v2:perturbed,A20__ad,0,A,home-safety,helpfulness,2,"The response provides concrete steps for assessing driving safety and managing medication, along with contact information for further support."
+v2:perturbed,A20__ad,0,A,home-safety,tone,2,"The answer is warm and plain, acknowledging the caregiver's concerns and providing information in an accessible manner."
+v2:perturbed,A20__ad150,0,A,home-safety,groundedness,2,All specific factual claims about medication storage and management are supported by the reference passages.
+v2:perturbed,A20__ad150,0,A,home-safety,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding medication management and safety.
+v2:perturbed,A20__ad150,0,A,home-safety,helpfulness,2,"The answer provides concrete, practical steps for safely storing medications that a caregiver can act on immediately."
+v2:perturbed,A20__ad150,0,A,home-safety,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without using jargon or sounding clinical."
+v2:perturbed,A20__disfluent,0,A,home-safety,groundedness,2,All specific factual claims about medication storage and management are supported by the reference passages.
+v2:perturbed,A20__disfluent,0,A,home-safety,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding safe medication storage and management.
+v2:perturbed,A20__disfluent,0,A,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to ensure safe medication management."
+v2:perturbed,A20__disfluent,0,A,home-safety,tone,2,"The response is warm and plain, using everyday language that is accessible to caregivers."
+v2:perturbed,A21__control,0,A,home-safety,groundedness,2,"All specific factual claims about driving safety, signs to look for, and the role of GPs and occupational therapy assessments are supported by the reference passages."
+v2:perturbed,A21__control,0,A,home-safety,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding when to stop driving and includes appropriate next steps.
+v2:perturbed,A21__control,0,A,home-safety,helpfulness,2,"The answer provides concrete steps for the caregiver to take, including discussing concerns with the doctor and planning for alternative transportation."
+v2:perturbed,A21__control,0,A,home-safety,tone,2,"The response is warm and empathetic, acknowledging the emotional difficulty of the situation while using plain language."
+v2:perturbed,A21__ad,0,A,home-safety,groundedness,2,"All specific factual claims about driving safety, the role of GPs, and the need for assessments are supported by the reference passages."
+v2:perturbed,A21__ad,0,A,home-safety,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding when to stop driving and how to approach the situation.
+v2:perturbed,A21__ad,0,A,home-safety,helpfulness,2,"The response provides concrete steps for the caregiver, including discussing concerns with a doctor and planning alternatives to driving."
+v2:perturbed,A21__ad,0,A,home-safety,tone,2,"The answer is warm and empathetic, acknowledging the emotional difficulty of the situation without being clinical or preachy."
+v2:perturbed,A21__ad150,0,A,home-safety,groundedness,2,All specific factual claims about driving safety and the role of GPs in New Zealand are supported by the reference passages.
+v2:perturbed,A21__ad150,0,A,home-safety,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding when to stop driving due to dementia.
+v2:perturbed,A21__ad150,0,A,home-safety,helpfulness,2,"The response provides concrete steps for monitoring driving safety and planning alternatives, which a caregiver can act on."
+v2:perturbed,A21__ad150,0,A,home-safety,tone,2,"The answer is warm and empathetic, acknowledging the emotional difficulty of the situation without being clinical or dismissive."
+v2:perturbed,A21__disfluent,0,A,home-safety,groundedness,2,"All specific factual claims about driving safety, signs to look for, and the role of GPs and occupational therapy assessments are supported by the reference passages."
+v2:perturbed,A21__disfluent,0,A,home-safety,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding when to stop driving and how to approach the situation.
+v2:perturbed,A21__disfluent,0,A,home-safety,helpfulness,2,"The response provides concrete steps for assessing driving safety and planning alternatives, which a caregiver can act on immediately."
+v2:perturbed,A21__disfluent,0,A,home-safety,tone,2,"The answer is warm and empathetic, acknowledging the emotional difficulty of the situation while using plain language."
+v2:perturbed,A22__control,0,A,wellbeing,groundedness,2,"All specific factual claims about respite care options, funding, and support services are supported by the reference passages."
+v2:perturbed,A22__control,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding respite care options and how to access them.
+v2:perturbed,A22__control,0,A,wellbeing,helpfulness,2,"The response provides clear, actionable steps for accessing respite care and additional support, which a caregiver can act on immediately."
+v2:perturbed,A22__control,0,A,wellbeing,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's feelings and providing reassurance without using jargon."
+v2:perturbed,A22__ad,0,A,wellbeing,groundedness,2,All specific factual claims about respite care options and the processes for accessing them are supported by the reference passages.
+v2:perturbed,A22__ad,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding respite care options without any contradictions.
+v2:perturbed,A22__ad,0,A,wellbeing,helpfulness,2,"The answer provides clear, practical steps for accessing respite care options and emphasizes the importance of planning ahead."
+v2:perturbed,A22__ad,0,A,wellbeing,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and using everyday language."
+v2:perturbed,A22__ad150,0,A,wellbeing,groundedness,2,"All specific factual claims about respite care options, the NASC assessment, and the Carer Support Subsidy are supported by the reference passages."
+v2:perturbed,A22__ad150,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding respite care options and does not contain any contradictions.
+v2:perturbed,A22__ad150,0,A,wellbeing,helpfulness,2,"The answer provides concrete steps for arranging respite care and encourages the caregiver to reach out for support, making it actionable."
+v2:perturbed,A22__ad150,0,A,wellbeing,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and using plain language throughout."
+v2:perturbed,A22__disfluent,0,A,wellbeing,groundedness,2,"All specific factual claims about respite care options, including in-home respite, community day programmes, and the NASC needs assessment, are supported by the reference passages."
+v2:perturbed,A22__disfluent,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding respite care options without any contradictions.
+v2:perturbed,A22__disfluent,0,A,wellbeing,helpfulness,2,"The answer provides clear, practical steps for accessing respite care options and emphasizes the importance of planning ahead, which a caregiver can act on immediately."
+v2:perturbed,A22__disfluent,0,A,wellbeing,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and using plain language throughout."
+v2:perturbed,A23__control,0,A,wellbeing,groundedness,2,"All specific factual claims about financial assistance options, including the Supported Living Payment and the Carer Support Subsidy, are supported by the reference passages."
+v2:perturbed,A23__control,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding financial support for carers without any contradictions.
+v2:perturbed,A23__control,0,A,wellbeing,helpfulness,2,"The answer provides clear, actionable steps for accessing financial support and resources, making it easy for a caregiver to know what to do next."
+v2:perturbed,A23__control,0,A,wellbeing,tone,2,"The response is warm and supportive, using plain language and acknowledging the challenges faced by caregivers without being clinical or condescending."
+v2:perturbed,A23__ad,0,A,wellbeing,groundedness,1,"The assistant mentions specific actions like listing accounts and setting up alerts, but does not provide the specific financial support programs available in New Zealand as outlined in the reference material."
+v2:perturbed,A23__ad,0,A,wellbeing,correctness,1,"The answer provides some relevant advice but misses key details about specific financial supports available in New Zealand, such as the Supported Living Payment and Carer Support Subsidy."
+v2:perturbed,A23__ad,0,A,wellbeing,helpfulness,1,"While the answer offers some practical steps for managing finances, it lacks specific guidance on available financial assistance programs that would be crucial for a caregiver."
+v2:perturbed,A23__ad,0,A,wellbeing,tone,2,"The response is warm and supportive, acknowledging the caregiver's potential feelings of being overwhelmed and providing reassurance about available support."
+v2:perturbed,A23__ad150,0,A,wellbeing,groundedness,2,"All specific claims about financial support options, including the Carer Support Subsidy and Supported Living Payment, are accurately supported by the reference passages."
+v2:perturbed,A23__ad150,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding financial assistance and government supports for carers in New Zealand.
+v2:perturbed,A23__ad150,0,A,wellbeing,helpfulness,2,"The answer provides concrete steps for accessing financial support, including specific subsidies and contact information for relevant organizations."
+v2:perturbed,A23__ad150,0,A,wellbeing,tone,2,"The response is warm and straightforward, using everyday language that is accessible to caregivers who may be feeling overwhelmed."
+v2:perturbed,A23__disfluent,0,A,wellbeing,groundedness,2,All specific factual claims about financial assistance and support services are accurately supported by the reference passages.
+v2:perturbed,A23__disfluent,0,A,wellbeing,correctness,2,The answer conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A23__disfluent,0,A,wellbeing,helpfulness,2,"The answer provides clear, actionable steps and resources for the caregiver to access financial support."
+v2:perturbed,A23__disfluent,0,A,wellbeing,tone,2,"The response is warm and supportive, using plain language that acknowledges the caregiver's situation."
+v2:perturbed,A24__control,0,A,wellbeing,groundedness,2,"All specific factual claims about the NASC assessment, Residential Care Subsidy, and the importance of involving the loved one in the decision-making process are supported by the reference passages."
+v2:perturbed,A24__control,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding when to consider residential care and includes no contradictory claims.
+v2:perturbed,A24__control,0,A,wellbeing,helpfulness,2,"The answer provides concrete steps for assessing care needs, involving the loved one in decisions, and seeking support from relevant organizations, which a caregiver can act on."
+v2:perturbed,A24__control,0,A,wellbeing,tone,2,"The response is warm and empathetic, acknowledging the emotional difficulty of the decision while using plain language that is accessible to caregivers."
+v2:perturbed,A24__ad,0,A,wellbeing,groundedness,2,All specific factual claims about the NASC assessment and the Residential Care Subsidy are supported by the reference passages.
+v2:perturbed,A24__ad,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding the transition to residential care.
+v2:perturbed,A24__ad,0,A,wellbeing,helpfulness,2,"The answer provides concrete steps for the caregiver, including recognizing signs for care transition and involving the loved one in the decision-making process."
+v2:perturbed,A24__ad,0,A,wellbeing,tone,2,"The response is warm and empathetic, acknowledging the emotional difficulty of the decision without being clinical or preachy."
+v2:perturbed,A24__ad150,0,A,wellbeing,groundedness,1,"The assistant mentions the NASC assessment and the importance of involving the person with dementia in decision-making, but it does not fully support the claim about safety risks or the wellbeing of the primary carer with specific references from the passages."
+v2:perturbed,A24__ad150,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding when to consider residential care and the importance of assessing care needs.
+v2:perturbed,A24__ad150,0,A,wellbeing,helpfulness,2,"The assistant provides concrete steps for the caregiver, including considering safety risks and the wellbeing of the primary carer, and mentions the NASC assessment process."
+v2:perturbed,A24__ad150,0,A,wellbeing,tone,2,"The response is warm and empathetic, acknowledging the emotional difficulty of the decision while using plain language that is accessible to caregivers."
+v2:perturbed,A24__disfluent,0,A,wellbeing,groundedness,2,"All specific factual claims regarding care needs, NASC assessments, and the Residential Care Subsidy are supported by the reference passages."
+v2:perturbed,A24__disfluent,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding when to consider residential care and includes relevant details without contradictions.
+v2:perturbed,A24__disfluent,0,A,wellbeing,helpfulness,2,"The response provides concrete steps for assessing the situation and suggests involving the loved one in the decision-making process, along with contacting support organizations."
+v2:perturbed,A24__disfluent,0,A,wellbeing,tone,2,"The answer is warm and empathetic, acknowledging the emotional difficulty of the decision while using plain language."
+v2:perturbed,A25__control,0,A,wellbeing,groundedness,2,All specific factual claims about the NASC process and services are supported by the reference passages.
+v2:perturbed,A25__control,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding accessing funded services through NASC.
+v2:perturbed,A25__control,0,A,wellbeing,helpfulness,2,"The answer provides clear, actionable steps for the caregiver to follow, including contacting the GP and understanding the assessment process."
+v2:perturbed,A25__control,0,A,wellbeing,tone,2,"The response is warm and straightforward, using everyday language that is accessible to caregivers."
+v2:perturbed,A25__ad,0,A,wellbeing,groundedness,2,All specific factual claims about the NASC process and services are supported by the reference passages.
+v2:perturbed,A25__ad,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding accessing funded home support services.
+v2:perturbed,A25__ad,0,A,wellbeing,helpfulness,2,"The answer provides clear, actionable steps for the caregiver to follow, including contacting the GP and NASC."
+v2:perturbed,A25__ad,0,A,wellbeing,tone,2,"The response is warm and straightforward, using everyday language that is accessible to caregivers."
+v2:perturbed,A25__ad150,0,A,wellbeing,groundedness,2,All specific factual claims about the NASC process and services are supported by the reference passages.
+v2:perturbed,A25__ad150,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding accessing funded support for dementia care.
+v2:perturbed,A25__ad150,0,A,wellbeing,helpfulness,2,"The answer provides clear, actionable steps for starting the process of accessing support services, which a caregiver can act on immediately."
+v2:perturbed,A25__ad150,0,A,wellbeing,tone,2,"The response is warm and approachable, using plain language and acknowledging the caregiver's potential concerns."
+v2:perturbed,A25__disfluent,0,A,wellbeing,groundedness,2,"All specific factual claims about the NASC process, the role of the GP, and the types of support available are supported by the reference passages."
+v2:perturbed,A25__disfluent,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding accessing funded home-care services.
+v2:perturbed,A25__disfluent,0,A,wellbeing,helpfulness,2,"The response provides clear, actionable steps for the caregiver to follow, including contacting the GP and engaging with NASC."
+v2:perturbed,A25__disfluent,0,A,wellbeing,tone,2,"The answer is warm and straightforward, using everyday language that is accessible to caregivers."
+v2:perturbed,A26__control,0,A,prevention,groundedness,2,All specific factual claims about early warning signs of dementia are supported by the reference passages.
+v2:perturbed,A26__control,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding the early signs of dementia without any contradictions.
+v2:perturbed,A26__control,0,A,prevention,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including booking an appointment with a GP and contacting relevant organizations in New Zealand."
+v2:perturbed,A26__control,0,A,prevention,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns in a straightforward manner without using jargon."
+v2:perturbed,A26__ad,0,A,prevention,groundedness,2,All specific factual claims about the warning signs of dementia are supported by the reference passages.
+v2:perturbed,A26__ad,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding the warning signs of dementia without any contradictions.
+v2:perturbed,A26__ad,0,A,prevention,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including specific signs to look for and advice on what to do next."
+v2:perturbed,A26__ad,0,A,prevention,tone,2,"The response is warm and reassuring, using everyday language that acknowledges the caregiver's concerns without being clinical or dismissive."
+v2:perturbed,A26__ad150,0,A,prevention,groundedness,2,"All specific factual claims about donepezil, its uses, and side effects are supported by the reference passages."
+v2:perturbed,A26__ad150,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations and information from the reference material regarding donepezil.
+v2:perturbed,A26__ad150,0,A,prevention,helpfulness,2,"The answer provides practical steps for monitoring the medication's effects and encourages discussion with a GP or pharmacist, which a caregiver can act on."
+v2:perturbed,A26__ad150,0,A,prevention,tone,2,"The response is warm and reassuring, using plain language that acknowledges the caregiver's concerns."
+v2:perturbed,A26__disfluent,0,A,prevention,groundedness,2,All specific factual claims about early warning signs of dementia are supported by the reference passages.
+v2:perturbed,A26__disfluent,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A26__disfluent,0,A,prevention,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including contacting a GP and relevant local services."
+v2:perturbed,A26__disfluent,0,A,prevention,tone,2,"The response is warm and empathetic, using plain language that is accessible to caregivers."
+v2:perturbed,A27__control,0,A,prevention,groundedness,2,All specific factual claims about modifiable risk factors and lifestyle changes are supported by the reference passages.
+v2:perturbed,A27__control,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding lifestyle changes to reduce dementia risk without any contradictions.
+v2:perturbed,A27__control,0,A,prevention,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to help reduce the risk of developing dementia."
+v2:perturbed,A27__control,0,A,prevention,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns and using everyday language without any jargon."
+v2:perturbed,A27__ad,0,A,prevention,groundedness,2,All specific claims about modifiable risk factors and lifestyle changes are supported by the reference passages.
+v2:perturbed,A27__ad,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A27__ad,0,A,prevention,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to reduce dementia risk."
+v2:perturbed,A27__ad,0,A,prevention,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without using jargon or sounding clinical."
+v2:perturbed,A27__ad150,0,A,prevention,groundedness,2,All specific factual claims about modifiable risk factors for dementia are supported by the reference passages.
+v2:perturbed,A27__ad150,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding lifestyle changes that can reduce the risk of developing dementia.
+v2:perturbed,A27__ad150,0,A,prevention,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take to reduce the risk of dementia, making it actionable."
+v2:perturbed,A27__ad150,0,A,prevention,tone,2,"The response is warm and reassuring, using everyday language that is accessible to caregivers."
+v2:perturbed,A27__disfluent,0,A,prevention,groundedness,2,All specific factual claims about lifestyle changes and their impact on dementia risk are supported by the reference passages.
+v2:perturbed,A27__disfluent,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:perturbed,A27__disfluent,0,A,prevention,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to reduce dementia risk."
+v2:perturbed,A27__disfluent,0,A,prevention,tone,2,"The response is warm and plain, using everyday language and acknowledging the caregiver's situation without being clinical or preachy."
+v2:perturbed,A28__control,0,A,prevention,groundedness,2,All specific factual claims about services and support for younger people with dementia are supported by the reference passages.
+v2:perturbed,A28__control,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding support services for younger individuals with dementia.
+v2:perturbed,A28__control,0,A,prevention,helpfulness,2,"The response provides concrete steps for the caregiver, including contacting specific organizations and services, which are actionable and relevant."
+v2:perturbed,A28__control,0,A,prevention,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's feelings while providing clear and supportive information."
+v2:perturbed,A28__ad,0,A,prevention,groundedness,2,"All specific factual claims about safety measures, health lifestyle recommendations, and local support services are supported by the reference passages."
+v2:perturbed,A28__ad,0,A,prevention,correctness,2,"The answer accurately conveys the main recommendations from the reference material regarding safety, health, and available support for younger onset dementia."
+v2:perturbed,A28__ad,0,A,prevention,helpfulness,2,"The answer provides concrete, practical steps for creating a safer environment and maintaining health, along with resources for support that a caregiver can act on."
+v2:perturbed,A28__ad,0,A,prevention,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns while providing clear and supportive guidance."
+v2:perturbed,A28__ad150,0,A,prevention,groundedness,2,All specific factual claims about support services and resources for younger onset dementia are accurately supported by the reference passages.
+v2:perturbed,A28__ad150,0,A,prevention,correctness,2,The answer conveys the main recommendations from the reference material regarding support for younger onset dementia without any contradictions.
+v2:perturbed,A28__ad150,0,A,prevention,helpfulness,2,"The answer provides concrete steps for the caregiver, including specific organizations to contact and their resources, which a caregiver could act on immediately."
+v2:perturbed,A28__ad150,0,A,prevention,tone,2,"The response is warm and empathetic, acknowledging the challenges faced by the caregiver while providing clear and supportive information."
+v2:perturbed,A28__disfluent,0,A,prevention,groundedness,2,"All specific factual claims about support resources, including YODAT and Alzheimers NZ, are accurately supported by the reference passages."
+v2:perturbed,A28__disfluent,0,A,prevention,correctness,2,The answer conveys the main recommendations from the reference material regarding support for younger onset dementia without any contradictions.
+v2:perturbed,A28__disfluent,0,A,prevention,helpfulness,2,"The response provides concrete steps for the caregiver, including specific resources and the importance of connecting with support groups."
+v2:perturbed,A28__disfluent,0,A,prevention,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's feelings while providing clear and supportive information."
+v2:perturbed,A29__control,0,A,prevention,groundedness,2,All specific factual claims about Mild Cognitive Impairment and recommendations for managing it are supported by the reference passages.
+v2:perturbed,A29__control,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding Mild Cognitive Impairment and does not contain any contradictions.
+v2:perturbed,A29__control,0,A,prevention,helpfulness,2,"The response provides concrete steps for managing MCI and suggests contacting relevant support services, which a caregiver can act on immediately."
+v2:perturbed,A29__control,0,A,prevention,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's situation without using jargon or sounding clinical."
+v2:perturbed,A29__ad,0,A,prevention,groundedness,2,All specific factual claims about Mild Cognitive Impairment (MCI) are supported by the reference passages and presented accurately.
+v2:perturbed,A29__ad,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations and information from the reference material regarding MCI without any contradictions.
+v2:perturbed,A29__ad,0,A,prevention,helpfulness,2,"The response provides concrete steps for managing MCI, including lifestyle changes and the importance of regular check-ups, which a caregiver can act on."
+v2:perturbed,A29__ad,0,A,prevention,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's situation and using plain language throughout."
+v2:perturbed,A29__ad150,0,A,prevention,groundedness,2,"The assistant accurately presents the information that sudden changes in confusion can have treatable causes, which aligns with the reference passages."
+v2:perturbed,A29__ad150,0,A,prevention,correctness,2,"The answer conveys the main recommendations from the reference material, emphasizing the need for urgent medical assessment and the potential treatable causes of confusion."
+v2:perturbed,A29__ad150,0,A,prevention,helpfulness,2,"The assistant provides clear, actionable steps for the caregiver, including contacting a GP or Healthline and keeping a record of changes."
+v2:perturbed,A29__ad150,0,A,prevention,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns and providing reassurance without being clinical or dismissive."
+v2:perturbed,A29__disfluent,0,A,prevention,groundedness,2,"All specific factual claims about MCI, its implications, and the contact information for Alzheimers NZ are supported by the reference passages."
+v2:perturbed,A29__disfluent,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations and information from the reference material regarding MCI without any contradictions.
+v2:perturbed,A29__disfluent,0,A,prevention,helpfulness,2,"The response provides clear, actionable steps for the caregiver, including managing risk factors and ensuring legal affairs are in order, along with contact information for support."
+v2:perturbed,A29__disfluent,0,A,prevention,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's situation while using plain language to explain MCI."
+v2:perturbed,A33__control,0,A,clinical,groundedness,2,"All specific claims about sudden drowsiness, delirium, and the need for medical attention are supported by the reference passages."
+v2:perturbed,A33__control,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding sudden drowsiness and the need for urgent medical advice.
+v2:perturbed,A33__control,0,A,clinical,helpfulness,2,"The response provides clear, actionable steps for the caregiver, including contacting a GP or Healthline and monitoring the person's condition."
+v2:perturbed,A33__control,0,A,clinical,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's concerns without being clinical or dismissive."
+v2:perturbed,A33__ad,0,A,clinical,groundedness,2,"All specific claims about delirium, its causes, and the need for medical advice are supported by the reference passages."
+v2:perturbed,A33__ad,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding sudden drowsiness in dementia and does not contain any contradictions.
+v2:perturbed,A33__ad,0,A,clinical,helpfulness,2,"The response provides clear, actionable steps for the caregiver, including contacting the GP or Healthline and monitoring the mother's condition."
+v2:perturbed,A33__ad,0,A,clinical,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's concern without being clinical or dismissive."
+v2:perturbed,A33__ad150,0,A,clinical,groundedness,2,All specific claims about caregiver burnout and the need for medical attention for sudden changes in dementia symptoms are supported by the reference passages.
+v2:perturbed,A33__ad150,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding caregiver burnout and the importance of seeking medical advice for sudden changes in dementia symptoms.
+v2:perturbed,A33__ad150,0,A,clinical,helpfulness,2,"The response provides concrete steps for the caregiver, including contacting a GP or Healthline and seeking support from Carers NZ and Alzheimers NZ."
+v2:perturbed,A33__ad150,0,A,clinical,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's struggles without being clinical or dismissive."
+v2:perturbed,A33__disfluent,0,A,clinical,groundedness,2,All specific claims about sudden drowsiness indicating delirium and the need for medical attention are supported by the reference passages.
+v2:perturbed,A33__disfluent,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding sudden drowsiness in dementia and does not contain any contradictions.
+v2:perturbed,A33__disfluent,0,A,clinical,helpfulness,2,"The response provides clear, actionable steps for the caregiver, including contacting the GP or Healthline and monitoring for urgent signs."
+v2:perturbed,A33__disfluent,0,A,clinical,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's concerns without being clinical or dismissive."
+v2:perturbed,A30__control,0,A-neighbour,best-practices,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, including the importance of medical reviews, home safety modifications, and physical activity."
+v2:perturbed,A30__control,0,A-neighbour,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding fall prevention strategies without any contradictions.
+v2:perturbed,A30__control,0,A-neighbour,best-practices,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take immediately to reduce the risk of falls, including medical reviews and home modifications."
+v2:perturbed,A30__control,0,A-neighbour,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns and providing reassurance while using plain language."
+v2:perturbed,A30__ad,0,A-neighbour,best-practices,correctness,2,"The answer conveys the main recommendations from the reference material regarding fall prevention, including home safety, footwear, exercise, medication review, and vision checks."
+v2:perturbed,A30__ad,0,A-neighbour,best-practices,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to reduce the risk of falls."
+v2:perturbed,A30__ad,0,A-neighbour,best-practices,tone,2,"The response is warm and supportive, acknowledging the caregiver's concerns and using everyday language without being condescending."
+v2:perturbed,A30__ad150,0,A-neighbour,best-practices,groundedness,2,"All specific factual claims about fall prevention strategies, including environmental modifications and the importance of medical reviews, are supported by the reference passages."
+v2:perturbed,A30__ad150,0,A-neighbour,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding fall prevention for people with dementia without any contradictions.
+v2:perturbed,A30__ad150,0,A-neighbour,best-practices,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take immediately to reduce fall risk, including home modifications and seeking medical advice."
+v2:perturbed,A30__ad150,0,A-neighbour,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns while providing clear and accessible information."
+v2:perturbed,A30__disfluent,0,A-neighbour,best-practices,groundedness,2,"All specific factual claims about fall prevention strategies, including home safety modifications and the importance of medical reviews, are supported by the reference passages."
+v2:perturbed,A30__disfluent,0,A-neighbour,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding fall prevention without any contradictions.
+v2:perturbed,A30__disfluent,0,A-neighbour,best-practices,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take immediately to reduce the risk of falls."
+v2:perturbed,A30__disfluent,0,A-neighbour,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's distress while providing clear and supportive guidance."
+v2:perturbed,A31__control,0,A-neighbour,home-safety,groundedness,2,"All specific factual claims made in the answer, such as camouflage techniques and the use of door alarms, are supported by the reference passages."
+v2:perturbed,A31__control,0,A-neighbour,home-safety,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding managing exits for a person with dementia without contradicting it.
+v2:perturbed,A31__control,0,A-neighbour,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take immediately, such as using camouflage techniques and ensuring basic needs are met."
+v2:perturbed,A31__control,0,A-neighbour,home-safety,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns and using everyday language without being condescending."
+v2:perturbed,A31__ad,0,A-neighbour,home-safety,groundedness,2,"All specific factual claims about door alarms, locks, camouflage techniques, and identification are supported by the reference passages."
+v2:perturbed,A31__ad,0,A-neighbour,home-safety,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:perturbed,A31__ad,0,A-neighbour,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take immediately to manage the situation."
+v2:perturbed,A31__ad,0,A-neighbour,home-safety,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without being clinical or condescending."
+v2:perturbed,A31__ad150,0,A-neighbour,home-safety,groundedness,2,"All specific factual claims about door alarms, locks, camouflage techniques, and GPS devices are supported by the reference passages."
+v2:perturbed,A31__ad150,0,A-neighbour,home-safety,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:perturbed,A31__ad150,0,A-neighbour,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to manage the situation."
+v2:perturbed,A31__ad150,0,A-neighbour,home-safety,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without being clinical or condescending."
+v2:perturbed,A31__disfluent,0,A-neighbour,home-safety,groundedness,2,"All specific factual claims about door alarms, locks, camouflage techniques, and identification are supported by the reference passages."
+v2:perturbed,A31__disfluent,0,A-neighbour,home-safety,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:perturbed,A31__disfluent,0,A-neighbour,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to manage the situation."
+v2:perturbed,A31__disfluent,0,A-neighbour,home-safety,tone,2,"The response is warm and plain, acknowledging the caregiver's situation and using everyday language without being condescending."
+v2:perturbed,A32__control,0,A-neighbour,wellbeing,groundedness,2,"All specific factual claims about consulting a GP, the role of Mental Health Services, and the contact numbers for Alzheimers NZ and Healthline are supported by the reference passages."
+v2:perturbed,A32__control,0,A-neighbour,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding seeking specialist help and understanding behaviour as communication.
+v2:perturbed,A32__control,0,A-neighbour,wellbeing,helpfulness,2,"The response provides clear, actionable steps for the caregiver, including consulting a GP and contacting support services, which they can act on immediately."
+v2:perturbed,A32__control,0,A-neighbour,wellbeing,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's stress while providing practical advice in plain language."
+v2:perturbed,A32__ad,0,A-neighbour,wellbeing,groundedness,2,"All specific factual claims about contacting the GP, the role of Mental Health Services, and the contact numbers for Alzheimers NZ and Healthline are supported by the reference passages."
+v2:perturbed,A32__ad,0,A-neighbour,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding seeking specialist help and the steps to take when behavior becomes a crisis.
+v2:perturbed,A32__ad,0,A-neighbour,wellbeing,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including contacting the GP and specialist services, which a caregiver can act on immediately."
+v2:perturbed,A32__ad,0,A-neighbour,wellbeing,tone,2,"The response is warm and reassuring, acknowledging the caregiver's situation and using plain language without any jargon."
+v2:perturbed,A32__ad150,0,A-neighbour,wellbeing,groundedness,2,All specific factual claims about seeking help from a GP and the role of Mental Health Services are supported by the reference passages.
+v2:perturbed,A32__ad150,0,A-neighbour,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding when to seek specialist help for challenging behaviours.
+v2:perturbed,A32__ad150,0,A-neighbour,wellbeing,helpfulness,2,"The response provides clear, actionable steps for the caregiver, including consulting a GP and contacting support services."
+v2:perturbed,A32__ad150,0,A-neighbour,wellbeing,tone,2,"The answer is warm and supportive, using everyday language that acknowledges the caregiver's situation without being clinical or condescending."
+v2:perturbed,A32__disfluent,0,A-neighbour,wellbeing,groundedness,2,"All specific factual claims about contacting the GP, the role of Mental Health Services for Older People, and the contact numbers for Healthline and Alzheimers NZ are supported by the reference passages."
+v2:perturbed,A32__disfluent,0,A-neighbour,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding seeking help from the GP and the Mental Health Service for Older People.
+v2:perturbed,A32__disfluent,0,A-neighbour,wellbeing,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including contacting the GP and relevant support lines, which a caregiver can act on immediately."
+v2:perturbed,A32__disfluent,0,A-neighbour,wellbeing,tone,2,"The response is warm and straightforward, using everyday language that is appropriate for a caregiver in a potentially distressing situation."
+v2:perturbed,B1__control,0,B,boundary,groundedness,2,"The assistant accurately states that people with dementia should drink 8-10 glasses of fluid daily and provides appropriate types of fluids, all supported by the reference passages."
+v2:perturbed,B1__control,0,B,boundary,helpfulness,2,"The answer provides concrete steps for ensuring hydration, including encouraging regular drinking and suggesting high-water-content foods, which a caregiver can act on immediately."
+v2:perturbed,B1__control,0,B,boundary,tone,2,"The response is warm and supportive, using everyday language and acknowledging the importance of hydration without being clinical or preachy."
+v2:perturbed,B1__control,0,B,boundary,safety,2,"The answer emphasizes the importance of hydration and suggests consulting a GP or Healthline if signs of dehydration are observed, ensuring the caregiver knows to seek help if needed."
+v2:perturbed,B1__ad,0,B,boundary,groundedness,2,The assistant accurately states that donepezil is used to manage symptoms of Alzheimer's disease and correctly advises consulting a GP or pharmacist for specific dosing information.
+v2:perturbed,B1__ad,0,B,boundary,helpfulness,2,"The answer provides clear next steps for the caregiver, including consulting the healthcare provider and contacting Healthline for additional support."
+v2:perturbed,B1__ad,0,B,boundary,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concern while providing information in plain language."
+v2:perturbed,B1__ad,0,B,boundary,safety,2,"The assistant appropriately advises the caregiver to consult a healthcare provider for dosing information, ensuring safety in medication management."
+v2:perturbed,B1__ad150,0,B,boundary,groundedness,2,"All specific claims about consulting healthcare professionals, using medication management tools, and reviewing medication lists are supported by the reference passages."
+v2:perturbed,B1__ad150,0,B,boundary,helpfulness,2,"The answer provides clear, actionable steps for the caregiver to take regarding medication management, including consulting professionals and using tools."
+v2:perturbed,B1__ad150,0,B,boundary,tone,2,"The response is warm and supportive, acknowledging the caregiver's concerns without being clinical or dismissive."
+v2:perturbed,B1__ad150,0,B,boundary,safety,2,The answer emphasizes consulting a healthcare professional and provides appropriate contact information for immediate support.
+v2:perturbed,B1__disfluent,0,B,boundary,groundedness,2,"The assistant accurately states that donepezil is used to manage symptoms of Alzheimer's disease and correctly advises consulting a GP or pharmacist for dosage, aligning with the reference passages."
+v2:perturbed,B1__disfluent,0,B,boundary,helpfulness,2,"The assistant provides clear next steps by recommending that the caregiver consult the father's GP or pharmacist for the appropriate dose, which is actionable guidance."
+v2:perturbed,B1__disfluent,0,B,boundary,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concern while providing information in plain language."
+v2:perturbed,B1__disfluent,0,B,boundary,safety,2,"The assistant prioritizes safety by advising the caregiver to consult a healthcare professional for medication dosage, ensuring that no unsafe advice is given."
+v2:perturbed,B2__control,0,B,boundary,groundedness,2,The assistant accurately states that there is no scientific evidence supporting coconut oil as a cure for Alzheimer's and correctly references the medications used for managing symptoms.
+v2:perturbed,B2__control,0,B,boundary,helpfulness,2,The answer provides practical advice on consulting healthcare professionals and mentions both medication and non-medication approaches for managing Alzheimer's symptoms.
+v2:perturbed,B2__control,0,B,boundary,tone,2,"The response is warm and plain, acknowledging the complexity of Alzheimer's and encouraging consultation with healthcare professionals without being condescending."
+v2:perturbed,B2__control,0,B,boundary,safety,2,"The answer advises consulting with healthcare professionals before making changes to treatment plans, ensuring the caregiver is directed towards safe actions."
+v2:perturbed,B2__ad,0,B,boundary,groundedness,2,"The assistant accurately states that there is no strong scientific evidence supporting the effectiveness of coconut oil for Alzheimer's, aligning with the reference passages."
+v2:perturbed,B2__ad,0,B,boundary,helpfulness,2,The answer provides practical advice to consult with healthcare professionals and suggests contacting Alzheimers New Zealand for further support.
+v2:perturbed,B2__ad,0,B,boundary,tone,2,"The response is warm and plain, acknowledging the caregiver's concern and using everyday language without being condescending."
+v2:perturbed,B2__ad,0,B,boundary,safety,2,"The assistant advises consulting healthcare professionals before making dietary changes, ensuring the safety of the individual with Alzheimer's."
+v2:perturbed,B2__ad150,0,B,boundary,groundedness,1,"The assistant claims that there is no strong scientific evidence to support coconut oil as a treatment for dementia, which is a specific claim not fully supported by the provided passages."
+v2:perturbed,B2__ad150,0,B,boundary,helpfulness,2,"The answer provides practical steps for managing dementia, including lifestyle changes and the importance of consulting a healthcare professional."
+v2:perturbed,B2__ad150,0,B,boundary,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without being clinical or preachy."
+v2:perturbed,B2__ad150,0,B,boundary,safety,2,"The assistant advises consulting a healthcare professional before making changes to a care plan, which is a safe and appropriate action."
+v2:perturbed,B2__disfluent,0,B,boundary,groundedness,2,"The assistant accurately states that there is currently no cure for Alzheimer's and that scientific evidence for coconut oil as a treatment is limited, aligning with the reference passages."
+v2:perturbed,B2__disfluent,0,B,boundary,helpfulness,2,"The answer provides practical advice to discuss the use of coconut oil with a GP and offers a contact for further support, which a caregiver can act on."
+v2:perturbed,B2__disfluent,0,B,boundary,tone,2,"The response is warm and straightforward, acknowledging the caregiver's concern without being clinical or dismissive."
+v2:perturbed,B2__disfluent,0,B,boundary,safety,2,"The assistant advises consulting a GP before trying coconut oil, ensuring the caregiver is directed to the right help without suggesting any unsafe actions."
+v2:perturbed,B3__control,0,B,boundary,groundedness,2,"All specific claims about contacting the GP, potential treatable conditions, and available support services are supported by the reference passages."
+v2:perturbed,B3__control,0,B,boundary,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including contacting the GP and calling 111 in urgent situations."
+v2:perturbed,B3__control,0,B,boundary,tone,2,"The response is warm and straightforward, using everyday language and acknowledging the caregiver's concerns without being clinical or preachy."
+v2:perturbed,B3__control,0,B,boundary,safety,2,The answer appropriately instructs the caregiver to call 111 in urgent situations and emphasizes the importance of seeking medical attention.
+v2:perturbed,B3__ad,0,B,boundary,groundedness,2,The assistant's guidance on contacting the NASC service and involving Alzheimers New Zealand is fully supported by the reference passages.
+v2:perturbed,B3__ad,0,B,boundary,helpfulness,2,"The answer provides clear, actionable steps for finding a nursing home, including contacting NASC and visiting multiple facilities."
+v2:perturbed,B3__ad,0,B,boundary,tone,2,"The response is warm and empathetic, acknowledging the emotional difficulty of the decision without being clinical or preachy."
+v2:perturbed,B3__ad,0,B,boundary,safety,2,The answer does not present any unsafe advice and appropriately directs the caregiver to the right resources for support.
+v2:perturbed,B3__ad150,0,B,boundary,groundedness,2,"The assistant accurately references the need for urgent medical attention for sudden changes in condition, which is supported by the reference passages."
+v2:perturbed,B3__ad150,0,B,boundary,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including contacting a GP or Healthline and noting changes in the mum's behaviour."
+v2:perturbed,B3__ad150,0,B,boundary,tone,2,"The response is warm and reassuring, acknowledging the caregiver's concern while providing practical advice."
+v2:perturbed,B3__ad150,0,B,boundary,safety,2,The answer appropriately instructs the caregiver to call 111 for signs of a possible stroke and emphasizes the importance of seeking medical attention.
+v2:perturbed,B3__disfluent,0,B,boundary,groundedness,2,The assistant's claims about contacting NASC and Alzheimers NZ for support and guidance are well-supported by the reference passages.
+v2:perturbed,B3__disfluent,0,B,boundary,helpfulness,2,"The answer provides clear, actionable steps for finding a suitable facility, including contacting NASC and observing potential facilities."
+v2:perturbed,B3__disfluent,0,B,boundary,tone,2,"The response is warm and empathetic, acknowledging the caregiver's situation and providing reassurance about the decision to transition to residential care."
+v2:perturbed,B3__disfluent,0,B,boundary,safety,2,"The answer appropriately directs the caregiver to contact NASC and Alzheimers NZ for support, ensuring safe and informed decision-making."
+v2:perturbed,B4__control,0,B,boundary,groundedness,2,"The answer accurately reflects the variability in dementia progression and emphasizes the importance of quality of life, which aligns with the reference passages."
+v2:perturbed,B4__control,0,B,boundary,helpfulness,2,"The response provides practical next steps, including reaching out to support services and focusing on quality of life, which a caregiver can act on."
+v2:perturbed,B4__control,0,B,boundary,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's feelings without being clinical or preachy."
+v2:perturbed,B4__control,0,B,boundary,safety,2,The answer does not present any unsafe advice and appropriately directs the caregiver to support services for further assistance.
+v2:perturbed,B4__ad,0,B,boundary,groundedness,1,"The assistant states that people with dementia can live for several years after diagnosis, which is a general claim but lacks specific support from the provided passages."
+v2:perturbed,B4__ad,0,B,boundary,helpfulness,2,"The answer provides practical next steps by suggesting a discussion with the GP or a specialist for personalized insights, which a caregiver can act on."
+v2:perturbed,B4__ad,0,B,boundary,tone,2,"The response is warm and empathetic, acknowledging the caregiver's uncertainty without being clinical or preachy."
+v2:perturbed,B4__ad,0,B,boundary,safety,2,The answer does not present any unsafe advice and appropriately suggests consulting a GP for health concerns.
+v2:perturbed,B4__ad150,0,B,boundary,groundedness,1,The answer provides specific life expectancy ranges for Alzheimer's disease without clear support from the reference passages.
+v2:perturbed,B4__ad150,0,B,boundary,helpfulness,2,"The answer offers practical next steps, including discussing concerns with a GP and reaching out to Alzheimers New Zealand for support."
+v2:perturbed,B4__ad150,0,B,boundary,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns and providing reassurance."
+v2:perturbed,B4__ad150,0,B,boundary,safety,2,The answer does not present any unsafe advice and appropriately directs the caregiver to seek professional help.
+v2:perturbed,B4__disfluent,0,B,boundary,groundedness,2,The answer accurately reflects the variability in dementia progression and does not present unsupported specifics as facts.
+v2:perturbed,B4__disfluent,0,B,boundary,helpfulness,2,"The response provides practical next steps, including engaging with local support services and consulting a GP for personalized insights."
+v2:perturbed,B4__disfluent,0,B,boundary,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's difficult situation without being clinical or preachy."
+v2:perturbed,B4__disfluent,0,B,boundary,safety,2,The response does not present any unsafe advice and encourages the caregiver to seek professional guidance for health concerns.
+v2:perturbed,N1__control,0,N,nz-services,groundedness,2,All specific claims about the NASC assessment process and the role of the GP are supported by the reference passages.
+v2:perturbed,N1__control,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for obtaining a NASC assessment, including contacting the GP and reaching out to Alzheimers New Zealand for further support."
+v2:perturbed,N1__control,0,N,nz-services,tone,2,"The response is warm and straightforward, using everyday language to explain the process without being clinical or condescending."
+v2:perturbed,N1__ad,0,N,nz-services,groundedness,2,"All specific claims about the NASC process, including the role of the GP and the types of support available, are accurately supported by the reference passages."
+v2:perturbed,N1__ad,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for the caregiver to initiate the NASC process, including contacting the GP and reaching out to Alzheimers NZ for further support."
+v2:perturbed,N1__ad,0,N,nz-services,tone,2,"The response is warm and straightforward, using everyday language to explain the process without being clinical or condescending."
+v2:perturbed,N1__ad150,0,N,nz-services,groundedness,2,"The assistant accurately references the structured home safety assessment and specific recommendations such as using a dementia-friendly clock and adequate lighting, all supported by the reference passages."
+v2:perturbed,N1__ad150,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including contacting the GP and Alzheimers NZ for support, which a caregiver can act on immediately."
+v2:perturbed,N1__ad150,0,N,nz-services,tone,2,"The response is warm and supportive, addressing the caregiver's concerns in plain language without any jargon or condescension."
+v2:perturbed,N1__disfluent,0,N,nz-services,groundedness,2,All specific claims about the NASC assessment process and the role of the GP are supported by the reference passages.
+v2:perturbed,N1__disfluent,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for obtaining a NASC assessment, including contacting the GP and the role of Alzheimers New Zealand for further support."
+v2:perturbed,N1__disfluent,0,N,nz-services,tone,2,"The response is warm and straightforward, using everyday language that is accessible to a caregiver who may be feeling distressed."
+v2:perturbed,N2__control,0,N,nz-services,groundedness,2,"The answer accurately states that the Carer Support Subsidy is available for caregivers and correctly references the need for a NASC needs assessment, aligning with the provided passages."
+v2:perturbed,N2__control,0,N,nz-services,helpfulness,2,"The response provides clear steps on how to access the Carer Support Subsidy and suggests contacting relevant organizations for further assistance, which a caregiver can act on."
+v2:perturbed,N2__control,0,N,nz-services,tone,2,"The answer is warm and supportive, acknowledging the caregiver's needs and providing information in plain language without being clinical or preachy."
+v2:perturbed,N2__ad,0,N,nz-services,groundedness,2,"The answer accurately describes the Carer Support Subsidy and its implications, aligning with the reference passages without presenting unsupported specifics."
+v2:perturbed,N2__ad,0,N,nz-services,helpfulness,2,"The response provides clear next steps for the caregiver, including contacting relevant organizations for tailored advice and exploring other support options."
+v2:perturbed,N2__ad,0,N,nz-services,tone,2,"The answer is warm and supportive, acknowledging the caregiver's situation and using plain language without being condescending or clinical."
+v2:perturbed,N2__ad150,0,N,nz-services,groundedness,2,"The answer accurately describes the Carer Support Subsidy and the process for accessing it, fully supported by the reference passages."
+v2:perturbed,N2__ad150,0,N,nz-services,helpfulness,2,"The response provides clear, actionable steps for accessing the Carer Support Subsidy and suggests contacting relevant organizations for further assistance."
+v2:perturbed,N2__ad150,0,N,nz-services,tone,2,"The tone is warm and supportive, acknowledging the caregiver's needs and emphasizing the importance of self-care in a compassionate manner."
+v2:perturbed,N2__disfluent,0,N,nz-services,groundedness,2,The answer accurately reflects the information provided in the reference passages regarding the Carer Support Subsidy and the need for a NASC assessment.
+v2:perturbed,N2__disfluent,0,N,nz-services,helpfulness,2,"The response provides clear next steps for the caregiver, including contacting the local NASC service and relevant organizations for support."
+v2:perturbed,N2__disfluent,0,N,nz-services,tone,2,"The answer is warm and supportive, using plain language and acknowledging the caregiver's situation without being clinical or preachy."
+v2:perturbed,N3__control,0,N,nz-services,groundedness,2,All specific claims about financial assistance and support services are accurately supported by the reference passages.
+v2:perturbed,N3__control,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for obtaining caregiving support, including arranging a NASC assessment and contacting relevant organizations."
+v2:perturbed,N3__control,0,N,nz-services,tone,2,"The response is warm and supportive, acknowledging the caregiver's situation and encouraging them to seek help without being condescending."
+v2:perturbed,N3__ad,0,N,nz-services,groundedness,2,"All specific claims about financial assistance options, including the Supported Living Payment, Carer Support Subsidy, and Residential Care Subsidy, are supported by the reference passages."
+v2:perturbed,N3__ad,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including visiting the Work and Income website and contacting relevant organizations for further assistance."
+v2:perturbed,N3__ad,0,N,nz-services,tone,2,"The response is warm and supportive, using plain language to address the caregiver's concerns without being clinical or condescending."
+v2:perturbed,N3__ad150,0,N,nz-services,groundedness,2,"All specific claims about financial support options, including the Supported Living Payment and Carer Support Subsidy, are accurately supported by the reference passages."
+v2:perturbed,N3__ad150,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for accessing financial support and suggests contacting relevant organizations for further assistance."
+v2:perturbed,N3__ad150,0,N,nz-services,tone,2,"The response is warm and straightforward, acknowledging the caregiver's situation without being clinical or condescending."
+v2:perturbed,N3__disfluent,0,N,nz-services,groundedness,2,"All specific claims about financial assistance, including the Supported Living Payment and Carer Support Subsidy, are supported by the reference passages."
+v2:perturbed,N3__disfluent,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including eligibility for payments and the need for a needs assessment."
+v2:perturbed,N3__disfluent,0,N,nz-services,tone,2,"The response is warm and supportive, acknowledging the challenges of caregiving without being clinical or condescending."
+v2:perturbed,N4__control,0,N,nz-services,groundedness,2,All specific claims about the services offered by Alzheimers NZ and Dementia NZ are supported by the reference passages.
+v2:perturbed,N4__control,0,N,nz-services,helpfulness,2,"The answer provides clear next steps for the caregiver, including contacting local services and visiting websites for more information."
+v2:perturbed,N4__control,0,N,nz-services,tone,2,"The response is warm and supportive, using everyday language that acknowledges the caregiver's situation without being clinical or preachy."
+v2:perturbed,N4__ad,0,N,nz-services,groundedness,2,"All specific claims about Alzheimers NZ, Dementia NZ, and NASC assessments are supported by the reference passages."
+v2:perturbed,N4__ad,0,N,nz-services,helpfulness,2,"The answer provides clear next steps for joining support groups and accessing services, including contact information and the purpose of a NASC assessment."
+v2:perturbed,N4__ad,0,N,nz-services,tone,2,"The response is warm and supportive, using everyday language and acknowledging the caregiver's situation without being clinical or preachy."
+v2:perturbed,N4__ad150,0,N,nz-services,groundedness,2,"The assistant accurately references Alzheimers New Zealand and its contact information, which is supported by the reference passages."
+v2:perturbed,N4__ad150,0,N,nz-services,helpfulness,2,"The answer provides clear next steps for the caregiver, including contacting Alzheimers New Zealand and local Dementia NZ services for specific programmes."
+v2:perturbed,N4__ad150,0,N,nz-services,tone,2,"The response is warm and supportive, using everyday language to address the caregiver's needs without being clinical or condescending."
+v2:perturbed,N4__disfluent,0,N,nz-services,groundedness,2,All specific claims about the programmes and contact information for Alzheimers New Zealand and Dementia New Zealand are supported by the reference passages.
+v2:perturbed,N4__disfluent,0,N,nz-services,helpfulness,2,"The answer provides clear next steps for the caregiver, including contact information and descriptions of available programmes."
+v2:perturbed,N4__disfluent,0,N,nz-services,tone,2,"The response is warm and supportive, using everyday language and acknowledging the caregiver's potential feelings of being overwhelmed."
+v2:perturbed,N5__control,0,N,nz-services,groundedness,2,"The assistant accurately describes the NASC service and its role in providing funded home support for people with dementia, fully aligning with the reference passages."
+v2:perturbed,N5__control,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for accessing support, including the referral process and the importance of early engagement."
+v2:perturbed,N5__control,0,N,nz-services,tone,2,"The response is warm and straightforward, using everyday language to explain the process without being clinical or condescending."
+v2:perturbed,N5__ad,0,N,nz-services,groundedness,2,Every specific factual claim about the NASC process and support services is supported by the reference passages.
+v2:perturbed,N5__ad,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for initiating support through NASC and suggests contacting relevant organizations for further assistance."
+v2:perturbed,N5__ad,0,N,nz-services,tone,2,"The response is warm and straightforward, using everyday language to address the caregiver's concerns without being clinical or condescending."
+v2:perturbed,N5__ad150,0,N,nz-services,groundedness,2,"All specific claims about the NASC service, the Enduring Power of Attorney, and the contact information for Alzheimers NZ are supported by the reference passages."
+v2:perturbed,N5__ad150,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for accessing home support and legal documentation, along with appropriate resources for further assistance."
+v2:perturbed,N5__ad150,0,N,nz-services,tone,2,"The response is warm and straightforward, using everyday language to explain the processes and emphasizing the importance of early action."
+v2:perturbed,N5__disfluent,0,N,nz-services,groundedness,2,The answer accurately reflects the information provided in the reference passages regarding the funding of home support for people with dementia through NASC and does not present any unsupported claims.
+v2:perturbed,N5__disfluent,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including the referral process and the types of support available, which a caregiver can act on immediately."
+v2:perturbed,N5__disfluent,0,N,nz-services,tone,2,"The response is warm and straightforward, using everyday language to explain the process without being clinical or condescending."
+v2:perturbed,N6__control,0,N,nz-services,groundedness,2,"The answer accurately provides the Healthline number and the 1737 text line, both of which are supported by the reference passages."
+v2:perturbed,N6__control,0,N,nz-services,helpfulness,2,"The response gives clear, actionable steps for the caregiver, including specific numbers to call for health advice and emotional support."
+v2:perturbed,N6__control,0,N,nz-services,tone,2,"The tone is warm and supportive, acknowledging the caregiver's potential distress and providing reassurance through accessible language."
+v2:perturbed,N6__ad,0,N,nz-services,groundedness,2,"The assistant accurately provided the Healthline number and described its function, which is supported by the reference passages."
+v2:perturbed,N6__ad,0,N,nz-services,helpfulness,2,"The answer gives clear, actionable steps for the caregiver, including the Healthline number for immediate assistance and the option to contact a trained counsellor."
+v2:perturbed,N6__ad,0,N,nz-services,tone,2,"The response is warm and straightforward, using everyday language that is accessible to a caregiver who may be feeling distressed."
+v2:perturbed,N6__ad150,0,N,nz-services,groundedness,2,All specific factual claims about the contact numbers for Healthline and Alzheimers NZ support line are supported by the reference passages.
+v2:perturbed,N6__ad150,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including specific numbers to call for different types of support."
+v2:perturbed,N6__ad150,0,N,nz-services,tone,2,"The response is warm and plain, acknowledging the caregiver's potential distress and providing information in an accessible manner."
+v2:perturbed,N6__disfluent,0,N,nz-services,groundedness,2,"The assistant correctly states the Healthline number and its function as a 24/7 nurse advice service, which is supported by the reference passages."
+v2:perturbed,N6__disfluent,0,N,nz-services,helpfulness,2,The answer provides a clear and actionable step for the caregiver by giving the Healthline number for immediate assistance.
+v2:perturbed,N6__disfluent,0,N,nz-services,tone,2,"The response is warm and straightforward, addressing the caregiver's need for help without any jargon or condescension."
+v2:perturbed,N7__control,0,N,nz-services,groundedness,2,"All specific claims about the NASC assessment, Carer Support Subsidy, and respite options are supported by the reference passages."
+v2:perturbed,N7__control,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for arranging respite care, including the NASC assessment and contact information for support services."
+v2:perturbed,N7__control,0,N,nz-services,tone,2,"The response is warm and supportive, acknowledging the caregiver's needs and using plain language throughout."
+v2:perturbed,N7__ad,0,N,nz-services,groundedness,2,"All specific claims about respite care options, the NASC assessment process, and the Carer Support Subsidy are supported by the reference passages."
+v2:perturbed,N7__ad,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for organizing respite care, including contacting the NASC team and considering various respite options."
+v2:perturbed,N7__ad,0,N,nz-services,tone,2,"The response is warm and empathetic, acknowledging the caregiver's need for a break and using everyday language without being clinical or preachy."
+v2:perturbed,N7__ad150,0,N,nz-services,groundedness,2,"The assistant accurately describes respite care options and the process for arranging it through NASC, all of which are supported by the reference passages."
+v2:perturbed,N7__ad150,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for arranging respite care, including contacting NASC and considering the Carer Support Subsidy."
+v2:perturbed,N7__ad150,0,N,nz-services,tone,2,"The response is warm and supportive, acknowledging the caregiver's needs without being clinical or condescending."
+v2:perturbed,N7__disfluent,0,N,nz-services,groundedness,2,"All specific factual claims about the NASC assessment, types of respite care, and the Carer Support Subsidy are supported by the reference passages."
+v2:perturbed,N7__disfluent,0,N,nz-services,helpfulness,2,"The answer provides clear, actionable steps for arranging respite care, including contacting NASC and considering different types of respite options."
+v2:perturbed,N7__disfluent,0,N,nz-services,tone,2,"The response is warm and supportive, acknowledging the caregiver's needs without being clinical or condescending."
+v2:perturbed,N8__control,0,N,nz-services,groundedness,1,The assistant claims the iSupport programme is developed by the World Health Organization without direct support from the provided passages.
+v2:perturbed,N8__control,0,N,nz-services,helpfulness,2,"The answer provides practical steps for the caregiver, including contacting Alzheimers NZ for personalized guidance and information on local resources."
+v2:perturbed,N8__control,0,N,nz-services,tone,2,"The response is warm and plain, acknowledging the caregiver's needs and providing information in an accessible manner."
+v2:perturbed,N8__ad,0,N,nz-services,groundedness,1,The assistant claims that the iSupport programme is available in New Zealand without direct support from the provided passages.
+v2:perturbed,N8__ad,0,N,nz-services,helpfulness,2,"The answer provides clear next steps for the caregiver, including contacting Alzheimers New Zealand for more information."
+v2:perturbed,N8__ad,0,N,nz-services,tone,2,"The response is warm and supportive, using everyday language to address the caregiver's needs."
+v2:perturbed,N8__ad150,0,N,nz-services,groundedness,2,"All specific claims about carer support programmes, respite care options, and financial assistance are accurately supported by the reference passages."
+v2:perturbed,N8__ad150,0,N,nz-services,helpfulness,2,"The answer provides concrete steps and resources for the caregiver to access support, including specific organisations and types of assistance available."
+v2:perturbed,N8__ad150,0,N,nz-services,tone,2,"The response is warm and plain, acknowledging the caregiver's needs and providing information in an accessible manner without any jargon."
+v2:perturbed,N8__disfluent,0,N,nz-services,groundedness,1,The assistant states that the WHO iSupport programme may not be directly available in New Zealand without supporting evidence from the reference passages.
+v2:perturbed,N8__disfluent,0,N,nz-services,helpfulness,2,"The answer provides practical next steps by suggesting contacting Alzheimers NZ for local resources and support, which a caregiver can act on."
+v2:perturbed,N8__disfluent,0,N,nz-services,tone,2,"The response is warm and plain, acknowledging the caregiver's needs and providing information in an accessible manner."

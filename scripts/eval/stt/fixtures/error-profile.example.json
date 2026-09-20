@@ -1,0 +1,22 @@
+{
+  "_comment": "PLACEHOLDER error profile for scripts/eval/stt/perturb-questions.mjs. The real profile is written by wer-report.mjs (--profile-out) from the ADReSS alignments once DementiaBank access arrives; these values are illustrative only and must never be reported as measured. Rates are per reference word (ASR) or per 100 words (disfluencies).",
+  "source": "placeholder — not measured",
+  "levels": {
+    "control": { "sub": 0.10, "del": 0.08, "ins": 0.03 },
+    "ad":      { "sub": 0.16, "del": 0.14, "ins": 0.04 },
+    "ad150":   { "sub": 0.24, "del": 0.21, "ins": 0.06 }
+  },
+  "disfluencyPer100Words": { "filler": 6.0, "repetition": 3.0, "retracing": 2.0 },
+  "fillers": ["um", "uh", "er"],
+  "functionWordDeletionShare": 0.6,
+  "confusions": [
+    { "ref": "the", "hyp": "a", "n": 30 },
+    { "ref": "is", "hyp": "it's", "n": 12 },
+    { "ref": "and", "hyp": "in", "n": 10 },
+    { "ref": "he", "hyp": "she", "n": 9 },
+    { "ref": "mother", "hyp": "mother's", "n": 8 },
+    { "ref": "sink", "hyp": "think", "n": 6 },
+    { "ref": "cookies", "hyp": "cookie", "n": 6 },
+    { "ref": "over", "hyp": "of", "n": 5 }
+  ]
+}

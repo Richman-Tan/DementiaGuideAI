@@ -1,0 +1,43 @@
+{
+  "_about": "List prices used by scripts/eval/cost-model.mjs. USD unless stated. Every figure must be verified against the account's actual plan before publication; 'checked' is the date the public page was read. Sources are public pricing pages; 'unverified' means the page could not be fetched on that date and the figure comes from a secondary source.",
+  "checked": "2026-09-18",
+  "currency": {
+    "nzd_per_usd": 1.7287,
+    "checked": "2026-09-14",
+    "source": "https://pluang.com/en/tools/currency-converter/usd-nzd (mid-market, 2026-09-14; RBNZ B1 series is the citable source: https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/exchange-rates-and-the-trade-weighted-index)",
+    "note": "verify against the account's plan before publication"
+  },
+  "openai": {
+    "source": "https://developers.openai.com/api/docs/pricing",
+    "gpt-4o":                  { "unit": "per 1M tokens", "input": 2.50, "cached_input": 1.25, "output": 10.00, "note": "production chat model (packages/core/rag/ragConfig.js:9); verify against the account's plan before publication" },
+    "gpt-4o-mini":             { "unit": "per 1M tokens", "input": 0.15, "cached_input": 0.075, "output": 0.60, "note": "cost/quality comparison condition, ingestion tagger, second judge family; verify against the account's plan before publication" },
+    "text-embedding-3-small":  { "unit": "per 1M tokens", "input": 0.02, "note": "query + corpus embeddings; verify against the account's plan before publication" },
+    "whisper-1":               { "unit": "per minute of audio", "price": 0.006, "note": "STT fallback path only (browser/on-device recognition is free); not listed on the current pricing page, figure from the legacy audio pricing table — unverified on 2026-09-18; verify against the account's plan before publication" },
+    "gpt-4o-transcribe":       { "unit": "per minute of audio", "price": 0.006, "note": "drop-in alternative for the fallback path (E9 comparator); page shows an estimated per-minute figure; verify against the account's plan before publication" },
+    "gpt-4o-mini-transcribe":  { "unit": "per minute of audio", "price": 0.003, "note": "E9 comparator; verify against the account's plan before publication" },
+    "tts-1":                   { "unit": "per 1M characters", "price": 15.00, "note": "TTS cascade tail (apps/api/api/speech.js); returns no alignment, so no viseme timeline; verify against the account's plan before publication" }
+  },
+  "elevenlabs": {
+    "source": "https://elevenlabs.io/pricing and https://elevenlabs.io/pricing/api",
+    "api_per_1k_chars": { "flash_turbo": 0.05, "multilingual_v2": 0.10, "note": "pay-as-you-go API price list for Flash/Turbo (eleven_turbo_v2_5 REST and eleven_flash_v2_5 WS are both in this class); verify against the account's plan before publication" },
+    "credits_per_char": { "flash_turbo": 0.5, "multilingual_v2": 1.0, "note": "V2.5 Flash/Turbo billed at 0.5 credit per character; the production REST path uses eleven_turbo_v2_5 (apps/api/api/eleven-tts.js:14)" },
+    "plans": {
+      "free":     { "usd_per_month": 0,   "credits": 10000,   "tts_concurrency": 2,  "note": "non-commercial" },
+      "starter":  { "usd_per_month": 6,   "credits": 30000,   "tts_concurrency": 3 },
+      "creator":  { "usd_per_month": 22,  "credits": 121000,  "tts_concurrency": 5,  "note": "121k credits as shown on the pricing page 2026-09-18 (first month discounted to $11); earlier secondary sources quote 110k" },
+      "pro":      { "usd_per_month": 99,  "credits": 600000,  "tts_concurrency": 10 },
+      "scale":    { "usd_per_month": 299, "credits": 1800000, "tts_concurrency": 15 },
+      "business": { "usd_per_month": 990, "credits": 6000000, "tts_concurrency": 15 }
+    },
+    "concurrency_note": "TTS concurrency per plan from ElevenLabs help centre (help.elevenlabs.io article 14312733311761) as summarised by secondary sources; the help page returned 403 on 2026-09-18 — unverified; verify against the account's plan before publication. Limits are per model family; PAYG does not raise them."
+  },
+  "vercel": {
+    "source": "https://vercel.com/pricing",
+    "pro": { "usd_per_seat_month": 20, "fast_data_transfer_included_gb": 1000, "fast_data_transfer_overage_per_gb": 0.15, "fluid_active_cpu_per_hour": 0.128, "fluid_included_gb_hours": 360, "note": "two projects (web + api) on one team; Hobby is non-commercial and caps static uploads at 100 MB — the 233 MiB Unity data file requires Pro (apps/web/scripts/sync-unity-webgl.mjs:12-17); verify against the account's plan before publication" }
+  },
+  "supabase": {
+    "source": "https://supabase.com/pricing",
+    "free": { "usd_per_month": 0, "db_mb": 500, "egress_gb": 5, "note": "shared CPU / 500 MB RAM; projects pause after 1 week of inactivity — a reliability constraint, not just a cost one; verify against the account's plan before publication" },
+    "pro":  { "usd_per_month": 25, "compute_credit_usd": 10, "db_gb": 8, "egress_gb": 250, "egress_overage_per_gb": 0.09, "note": "verify against the account's plan before publication" }
+  }
+}

@@ -1,0 +1,35 @@
+# E4 — web, typed turns (text arm), 2026-09-19 11:09–11:13 NZST (23:09–23:13Z 2026-09-18)
+# Client: Google Chrome on the MacBook (Apple M3, 8 GB), home Wi-Fi, Auckland; deployed site dementiaguide-web.vercel.app (study build), pilot session P06 (group=pilot, excluded from analysis by design).
+# Driver: 30 Set-A questions typed one per turn by a page-side script (textarea value + Enter), next question 2 s after the app's own [LATENCY SUMMARY] line; conversation history kept (MAX_HISTORY 6). Warm session (Unity loaded, proxy warmed).
+# Fields: to_first_token_ms = turn start → first streamed token (the text arm's headline). llm_to_token_ms = llmSend → first token, but in this build llmSend was marked AFTER the fetch resolved (response headers), so it is headers-to-first-chunk, not request-to-first-token — see PR #100. rag_ms is not emitted for typed turns (it needs sttDone).
+
+23:09:16 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":21,"to_first_token_ms":4867}
+23:09:26 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":20,"to_first_token_ms":3716}
+23:09:34 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":23,"to_first_token_ms":3470}
+23:09:42 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":170,"to_first_token_ms":2900}
+23:09:50 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":94,"to_first_token_ms":3120}
+23:10:00 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":22,"to_first_token_ms":3543}
+23:10:08 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":2,"to_first_token_ms":3138}
+23:10:17 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":17,"to_first_token_ms":3492}
+23:10:24 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":66,"to_first_token_ms":3006}
+23:10:31 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":35,"to_first_token_ms":2341}
+23:10:38 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":9,"to_first_token_ms":3103}
+23:10:45 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":24,"to_first_token_ms":2285}
+23:10:52 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":21,"to_first_token_ms":2499}
+23:11:00 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":34,"to_first_token_ms":2530}
+23:11:09 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":5,"to_first_token_ms":3952}
+23:11:18 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":20,"to_first_token_ms":2933}
+23:11:28 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":64,"to_first_token_ms":3240}
+23:11:37 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":20,"to_first_token_ms":3020}
+23:11:46 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":20,"to_first_token_ms":2249}
+23:12:01 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":39,"to_first_token_ms":3233}
+23:12:17 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":111,"to_first_token_ms":3195}
+23:12:25 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":46,"to_first_token_ms":2486}
+23:12:32 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":10,"to_first_token_ms":3088}
+23:12:40 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":47,"to_first_token_ms":2721}
+23:12:50 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":11,"to_first_token_ms":2741}
+23:12:58 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":29,"to_first_token_ms":2868}
+23:13:06 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":26,"to_first_token_ms":3113}
+23:13:15 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":21,"to_first_token_ms":3019}
+23:13:23 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":20,"to_first_token_ms":3060}
+23:13:34 [LATENCY SUMMARY] {"mode":"typed","llm_to_token_ms":20,"to_first_token_ms":2816}

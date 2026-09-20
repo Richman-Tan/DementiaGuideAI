@@ -1,0 +1,183 @@
+{
+  "source": "measured — whisper-1, ADReSS-2020 dementia speakers, snapshot x",
+  "levels": {
+    "control": {
+      "sub": 0.12725690667826844,
+      "del": 0.08712203611050685,
+      "ins": 0.049053730693930826
+    },
+    "ad": {
+      "sub": 0.1815756035578145,
+      "del": 0.1618805590851334,
+      "ins": 0.0758576874205845
+    },
+    "ad150": {
+      "sub": 0.27236340533672176,
+      "del": 0.2428208386277001,
+      "ins": 0.11378653113087675
+    }
+  },
+  "disfluencyPer100Words": {
+    "filler": 3.8881829733163915,
+    "repetition": 1.372299872935197,
+    "retracing": 0.6861499364675985
+  },
+  "fillers": [
+    "um",
+    "uh",
+    "er"
+  ],
+  "functionWordDeletionShare": 0.5946987951807229,
+  "confusions": [
+    {
+      "ref": "the",
+      "hyp": "a",
+      "n": 38
+    },
+    {
+      "ref": "a",
+      "hyp": "the",
+      "n": 25
+    },
+    {
+      "ref": "gonna",
+      "hyp": "to",
+      "n": 24
+    },
+    {
+      "ref": "waters",
+      "hyp": "is",
+      "n": 18
+    },
+    {
+      "ref": "the",
+      "hyp": "thank",
+      "n": 17
+    },
+    {
+      "ref": "is",
+      "hyp": "was",
+      "n": 13
+    },
+    {
+      "ref": "the",
+      "hyp": "is",
+      "n": 12
+    },
+    {
+      "ref": "is",
+      "hyp": "thank",
+      "n": 11
+    },
+    {
+      "ref": "the",
+      "hyp": "this",
+      "n": 10
+    },
+    {
+      "ref": "is",
+      "hyp": "you",
+      "n": 9
+    },
+    {
+      "ref": "the",
+      "hyp": "to",
+      "n": 9
+    },
+    {
+      "ref": "dishes",
+      "hyp": "you",
+      "n": 9
+    },
+    {
+      "ref": "is",
+      "hyp": "it",
+      "n": 9
+    },
+    {
+      "ref": "that",
+      "hyp": "it",
+      "n": 8
+    },
+    {
+      "ref": "it",
+      "hyp": "you",
+      "n": 8
+    },
+    {
+      "ref": "is",
+      "hyp": "has",
+      "n": 7
+    },
+    {
+      "ref": "the",
+      "hyp": "you",
+      "n": 7
+    },
+    {
+      "ref": "okay",
+      "hyp": "you",
+      "n": 6
+    },
+    {
+      "ref": "and",
+      "hyp": "in",
+      "n": 6
+    },
+    {
+      "ref": "i",
+      "hyp": "thank",
+      "n": 6
+    },
+    {
+      "ref": "else",
+      "hyp": "you",
+      "n": 6
+    },
+    {
+      "ref": "mothers",
+      "hyp": "is",
+      "n": 6
+    },
+    {
+      "ref": "the",
+      "hyp": "i",
+      "n": 6
+    },
+    {
+      "ref": "is",
+      "hyp": "am",
+      "n": 6
+    },
+    {
+      "ref": "is",
+      "hyp": "boys",
+      "n": 6
+    },
+    {
+      "ref": "a",
+      "hyp": "thank",
+      "n": 6
+    },
+    {
+      "ref": "sink",
+      "hyp": "thing",
+      "n": 6
+    },
+    {
+      "ref": "she",
+      "hyp": "he",
+      "n": 6
+    },
+    {
+      "ref": "jar",
+      "hyp": "you",
+      "n": 5
+    },
+    {
+      "ref": "cookie",
+      "hyp": "cooking",
+      "n": 5
+    }
+  ]
+}

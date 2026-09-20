@@ -16,6 +16,8 @@ import { isStudyMode, currentArm, currentTaskId, transcriptFields, studyConversa
 import { useStudy } from '../study/StudyContext.jsx';
 import { createTurnTimer } from '../study/latency.js';
 import { emit } from '../study/events.js';
+import { shouldAdoptServerThread } from './threadAdoption.js';
+import { resolveEffectiveProfile } from '../avatar/effectiveProfile.js';
 import { MODALITY_TYPED } from '@core/study/studyConfig.mjs';
 
 const ChatCtx = createContext(null);
@@ -100,6 +102,9 @@ export function ChatProvider({ children }) {
     if (authStatus !== 'ready' || !userId) return undefined;
     let cancelled = false;
     (async () => {
+      // Captured before setConversationId below: whether we are SWITCHING
+      // threads decides if an empty server copy may replace the screen.
+      const prevId = convIdRef.current;
       let id;
       if (isStudyMode() && studyArm) {
         // A fresh thread per (session, arm). getOrCreateConversation reuses the
@@ -121,7 +126,14 @@ export function ChatProvider({ children }) {
       // arm would contaminate it.
       if (!isStudyMode()) await migrateLegacyHistory(userId, id);
       const server = await loadMessages(id);
-      if (cancelled || !server.length) return;
+      if (cancelled) return;
+      // A different thread replaces the screen even when its server copy is
+      // empty — the arm switch is exactly that case, and keeping the previous
+      // arm's messages visible let a participant re-read arm A during arm B
+      // while run() fed them to the model as context. Same-thread emptiness
+      // still keeps the cached render (a hiccup must not blank a real
+      // conversation). See threadAdoption.js.
+      if (!shouldAdoptServerThread(prevId, id, server.length)) return;
       setMessages(server);
       saveCached(server);
     })();
@@ -157,13 +169,22 @@ export function ChatProvider({ children }) {
     // Text arm of the study. No STT or TTS stage here, so the turn timer records
     // retrieval and time-to-first-token only — which is the fair comparison
     // against the voice arm's to-first-audio.
-    const arm = studyArm;
+    //
+    // Read at call time, NOT from the render closure: `send` is memoized once
+    // at mount and calls the first render's `run`, whose captured studyArm is
+    // whatever the store held at page load — null for a participant whose chat
+    // arm comes first, which mis-tagged their turn/latency events (found in
+    // the 2026-09-02 regression run).
+    const arm = currentArm();
     const taskId = currentTaskId();
     const turn = createTurnTimer(arm, taskId);
     // Always typed: this screen has no microphone. Recorded explicitly rather
     // than inferred from the arm, so that "how did they ask?" is one field in
     // both arms and neither has to be reconstructed from which code path ran.
-    emit('turn_start', { arm, taskId, modality: MODALITY_TYPED, chars: q.length });
+    // `avatar` is the resolved profile at call time (Arm B shows no avatar,
+    // but the same field in both arms keeps "which avatar" one column).
+    const avatar = resolveEffectiveProfile(settingsRef.current.avatarId).id;
+    emit('turn_start', { arm, taskId, modality: MODALITY_TYPED, chars: q.length, avatar });
     try {
       const result = await generateReply({
         question: q,
@@ -201,6 +222,7 @@ export function ChatProvider({ children }) {
         arm,
         taskId,
         modality: MODALITY_TYPED,
+        avatar,
         // A participant who declines has their words withheld here, not at
         // export: declining means the text never reaches the database. The turn
         // is still recorded — turn count is a primary effectiveness measure and

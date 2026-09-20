@@ -1,5 +1,5 @@
 /**
- * Node smoke tests for the G2P viseme pipeline (src/lib/lipsync/*).
+ * Node smoke tests for the G2P viseme pipeline (packages/core/lipsync/*).
  *
  * The RN sources are ESM (Metro-bundled); this runner uses a minimal
  * regex-based module loader (same spirit as generate-fixtures.js) so the
@@ -11,7 +11,8 @@
 const path = require('path');
 const { loadModule } = require('./esm-loader');
 
-const SRC = path.join(__dirname, '../../src/lib/lipsync');
+// packages/core is the post-monorepo home (2026-08-16); the old src/lib path is gone.
+const SRC = path.join(__dirname, '../../packages/core/lipsync');
 
 // ── Load production modules ────────────────────────────────────────────────────
 const { wordToPhonemes }        = loadModule('g2p/g2p.js', SRC);

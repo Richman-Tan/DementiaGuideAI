@@ -94,6 +94,10 @@ module.exports = [
       '**/node_modules/**',
       '**/dist/**',
       '**/.expo/**',
+      // Python virtual environment for the E9 speech tooling (site-packages ship JS).
+      '.venv/**',
+      // DementiaBank data directory (git-ignored; never lint or read it here).
+      'data/**',
       // Build output and vendored third-party bundles. `.vercel/output/` is the
       // built site and `public/draco/` + `public/unity/` are decoder/engine
       // blobs — multi-MB single-line files that blow up ESLint's formatter.

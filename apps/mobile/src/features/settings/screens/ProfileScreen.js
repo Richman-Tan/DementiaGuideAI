@@ -336,7 +336,7 @@ export const ProfileScreen = ({ navigation }) => {
       'DementiaGuide AI provides information for general guidance only.\n\n' +
       'It is not a substitute for professional medical advice, diagnosis, or treatment. ' +
       'Always consult a qualified healthcare provider for dementia-related concerns.\n\n' +
-      'In an emergency, call 000 (Australia) or 111 (New Zealand) immediately.',
+      'In an emergency, call 111 immediately.',
       [{ text: 'Understood' }]
     );
   };

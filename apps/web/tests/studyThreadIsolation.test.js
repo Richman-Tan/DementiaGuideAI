@@ -23,6 +23,7 @@ globalThis.localStorage = {
 
 const { studyConversationId, rememberStudyConversation, clearStudy } =
   await import('../src/study/studyStore.js');
+const { shouldAdoptServerThread } = await import('../src/state/threadAdoption.js');
 
 describe('session-scoped conversation ids', () => {
   beforeEach(() => store.clear());
@@ -57,11 +58,51 @@ describe('ChatProvider thread selection', () => {
     expect(chatContext).toMatch(/startNewConversation\(userId,\s*\{\s*surface:\s*'chat',\s*studyArm\s*\}\)/);
     expect(chatContext).toMatch(/rememberStudyConversation\(studyArm,\s*id\)/);
   });
+
+  it('adopts the new thread on an arm switch instead of bailing on emptiness', () => {
+    // The regression: `if (!server.length) return` was unconditional, so arm
+    // B's fresh empty thread never replaced the screen — arm A's conversation
+    // stayed visible in the arm B interface and was fed to the model as
+    // context (found live in the 2026-09-09 pilot run-through).
+    expect(chatContext).toMatch(/shouldAdoptServerThread\(prevId,\s*id,\s*server\.length\)/);
+    expect(chatContext).not.toMatch(/cancelled \|\| !server\.length/);
+  });
+});
+
+describe('adopting a server thread', () => {
+  it('a thread with content always replaces the screen', () => {
+    expect(shouldAdoptServerThread(null, 'conv-a', 3)).toBe(true);
+    expect(shouldAdoptServerThread('conv-a', 'conv-a', 3)).toBe(true);
+  });
+
+  it('same-thread emptiness keeps the cached render — a hiccup must not blank a real conversation', () => {
+    expect(shouldAdoptServerThread('conv-a', 'conv-a', 0)).toBe(false);
+    expect(shouldAdoptServerThread(null, 'conv-a', 0)).toBe(false);
+  });
+
+  it('a DIFFERENT empty thread replaces the screen — the arm switch', () => {
+    // Arm B's thread is brand new and empty; keeping arm A's messages on
+    // screen lets the participant re-read them and contaminates the model
+    // context for arm B's first turn.
+    expect(shouldAdoptServerThread('conv-arm-a', 'conv-arm-b', 0)).toBe(true);
+  });
 });
 
 describe('a fresh session inherits no threads', () => {
   it('begin() resets convoIds for a non-resumed session', () => {
     expect(src('../src/study/StudyContext.jsx')).toMatch(/convoIds:\s*\{\}/);
+  });
+});
+
+describe('chat turns are tagged with the arm at call time', () => {
+  it('run() reads currentArm(), not the render closure', () => {
+    // The regression: `send` is memoized once at mount and calls the first
+    // render's `run`, whose captured studyArm is whatever the store held at
+    // page load — null for a chat-first participant, mis-tagging their
+    // turn/latency events (2026-09-02 regression run).
+    const chatContext = src('../src/state/ChatContext.jsx');
+    expect(chatContext).toMatch(/const arm = currentArm\(\);/);
+    expect(chatContext).not.toMatch(/const arm = studyArm;/);
   });
 });
 

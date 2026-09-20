@@ -76,4 +76,11 @@ export function warmStudyProxy() {
     }).catch(() => { /* warming is best-effort */ });
   post('/embeddings', { model: 'text-embedding-3-small', input: 'warm-up' });
   post('/chat/completions', { model: 'gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'ok' }] });
+  // The audio functions boot for free: both validate the body only after the
+  // guard has run, so a JSON body they reject with a 400 still pays the cold
+  // start without an OpenAI call. Leaving them out meant the participant's
+  // first spoken turn raced a cold /api/transcribe against the 15s Whisper
+  // timeout — which read as "the mic doesn't work".
+  post('/audio/transcriptions', {});
+  post('/audio/speech', {});
 }

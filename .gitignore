@@ -61,6 +61,8 @@ unity-avatar/tools/.lexicon-cache/
 # Source documents: commit only when the licence permits redistribution
 content/sources/*
 !content/sources/MANIFEST.md
+# Team-authored content is ours to commit (licence: internal)
+!content/sources/dg-curated-*.txt
 
 # pre-prune DB backups (bulky, reproducible) — keep local, do not commit
 docs/report/backup/
@@ -86,3 +88,20 @@ apps/web/public/unity/Build/
 # sibling `build.gradle` is source and must stay tracked.
 .gradle/
 **/android/build/
+
+# Evaluation scratch: fetched passage text for the judges (regenerable)
+.cache/
+
+# DementiaBank / ADReSS audio, transcripts and recognition hypotheses stay
+# local under the TalkBank ground rules; only aggregate WER tables are
+# committed (docs/report/eval/stt/). Python venv for scripts/eval/stt/.
+# DementiaBank audio + derived files, label pools with KB text: never committed
+data/
+.venv/
+
+# Test coverage output (summarised into docs/report/eval/final/coverage_*.md)
+coverage/
+
+# Playwright
+apps/web/playwright-report/
+apps/web/test-results/

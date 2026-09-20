@@ -1,0 +1,183 @@
+{
+  "source": "measured — local:large-v2-mlx-8bit, ADReSS-2020 dementia speakers, snapshot 4c732bf",
+  "levels": {
+    "control": {
+      "sub": 0.14420721036051803,
+      "del": 0.1381402403453506,
+      "ins": 0.04771905261929763
+    },
+    "ad": {
+      "sub": 0.19493333333333332,
+      "del": 0.21866666666666668,
+      "ins": 0.06786666666666667
+    },
+    "ad150": {
+      "sub": 0.2924,
+      "del": 0.328,
+      "ins": 0.1018
+    }
+  },
+  "disfluencyPer100Words": {
+    "filler": 3.96,
+    "repetition": 1.3866666666666667,
+    "retracing": 0.6933333333333334
+  },
+  "fillers": [
+    "um",
+    "uh",
+    "er"
+  ],
+  "functionWordDeletionShare": 0.5934844192634561,
+  "confusions": [
+    {
+      "ref": "the",
+      "hyp": "a",
+      "n": 32
+    },
+    {
+      "ref": "a",
+      "hyp": "the",
+      "n": 21
+    },
+    {
+      "ref": "she",
+      "hyp": "he",
+      "n": 21
+    },
+    {
+      "ref": "gonna",
+      "hyp": "to",
+      "n": 14
+    },
+    {
+      "ref": "is",
+      "hyp": "was",
+      "n": 11
+    },
+    {
+      "ref": "waters",
+      "hyp": "is",
+      "n": 11
+    },
+    {
+      "ref": "the",
+      "hyp": "this",
+      "n": 11
+    },
+    {
+      "ref": "that",
+      "hyp": "it",
+      "n": 8
+    },
+    {
+      "ref": "the",
+      "hyp": "and",
+      "n": 8
+    },
+    {
+      "ref": "is",
+      "hyp": "boys",
+      "n": 8
+    },
+    {
+      "ref": "she",
+      "hyp": "you",
+      "n": 8
+    },
+    {
+      "ref": "the",
+      "hyp": "is",
+      "n": 7
+    },
+    {
+      "ref": "the",
+      "hyp": "to",
+      "n": 7
+    },
+    {
+      "ref": "is",
+      "hyp": "are",
+      "n": 7
+    },
+    {
+      "ref": "the",
+      "hyp": "i",
+      "n": 7
+    },
+    {
+      "ref": "and",
+      "hyp": "in",
+      "n": 7
+    },
+    {
+      "ref": "is",
+      "hyp": "i",
+      "n": 7
+    },
+    {
+      "ref": "the",
+      "hyp": "thank",
+      "n": 6
+    },
+    {
+      "ref": "drying",
+      "hyp": "drawing",
+      "n": 6
+    },
+    {
+      "ref": "sink",
+      "hyp": "thing",
+      "n": 6
+    },
+    {
+      "ref": "is",
+      "hyp": "you",
+      "n": 5
+    },
+    {
+      "ref": "is",
+      "hyp": "has",
+      "n": 5
+    },
+    {
+      "ref": "the",
+      "hyp": "do",
+      "n": 5
+    },
+    {
+      "ref": "the",
+      "hyp": "my",
+      "n": 5
+    },
+    {
+      "ref": "cookie",
+      "hyp": "cooking",
+      "n": 5
+    },
+    {
+      "ref": "the",
+      "hyp": "water",
+      "n": 5
+    },
+    {
+      "ref": "see",
+      "hyp": "say",
+      "n": 4
+    },
+    {
+      "ref": "is",
+      "hyp": "and",
+      "n": 4
+    },
+    {
+      "ref": "is",
+      "hyp": "doors",
+      "n": 4
+    },
+    {
+      "ref": "well",
+      "hyp": "oh",
+      "n": 4
+    }
+  ]
+}

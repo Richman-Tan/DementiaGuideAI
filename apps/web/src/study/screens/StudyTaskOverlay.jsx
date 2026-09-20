@@ -3,14 +3,19 @@
 // It carries the task, the two buttons that bound the time-on-task measurement,
 // and the stop control. Without it an unmoderated participant would have no way
 // back and no way to signal that they were done — and there would be nothing to
-// measure.
+// measure. The content itself lives in OverlayBand.jsx (presentational, tested);
+// this file owns the state, the settings wiring, and the height machinery.
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useStudy } from '../StudyContext.jsx';
-import { IDENTITY_WARNING } from '@core/study/studyConfig.mjs';
+import { useSettings } from '../../state/SettingsContext.jsx';
+import { OverlayBand, nextTextScale } from './OverlayBand.jsx';
 
 export default function StudyTaskOverlay() {
   const st = useStudy();
-  const [expanded, setExpanded] = useState(true);
+  const { settings, setSetting } = useSettings();
+  // Collapsed by default: the participant read the full situation on the arm
+  // brief seconds ago, and every line here is subtracted from the chat window.
+  const [expanded, setExpanded] = useState(false);
   const [confirmStop, setConfirmStop] = useState(false);
   const ref = useRef(null);
 
@@ -68,8 +73,6 @@ export default function StudyTaskOverlay() {
 
   if (!showing) return null;
 
-  const { task } = st;
-
   return (
     <div
       ref={ref}
@@ -89,101 +92,19 @@ export default function StudyTaskOverlay() {
         padding: '.75rem 1rem',
       }}
     >
-      <div style={{ maxWidth: 900, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '.75rem', flexWrap: 'wrap' }}>
-          <strong style={{ fontSize: '.82rem', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--primary-d)' }}>
-            Your task
-          </strong>
-          <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text)' }}>{task.title}</span>
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-            style={{
-              marginLeft: 'auto', minHeight: 44, padding: '0 .75rem', border: 'none',
-              background: 'transparent', color: 'var(--primary-d)', cursor: 'pointer',
-              fontSize: '.95rem', fontWeight: 600,
-            }}
-          >
-            {expanded ? 'Hide' : 'Show'}
-          </button>
-        </div>
-
-        {expanded && (
-          <>
-            <p style={{ margin: '.6rem 0 .4rem', fontSize: '1rem', lineHeight: 1.6, color: 'var(--text)' }}>
-              {task.situation}
-            </p>
-            <p style={{ margin: '0 0 .5rem', fontSize: '1rem', lineHeight: 1.6, fontWeight: 600, color: 'var(--text)' }}>
-              {task.goal}
-            </p>
-            <p style={{ margin: '0 0 .75rem', fontSize: '.85rem', lineHeight: 1.5, color: 'var(--text2)' }}>
-              {IDENTITY_WARNING}
-            </p>
-          </>
-        )}
-
-        <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button type="button" onClick={() => st.endTask('yes')} style={primaryBtn}>
-            I found my answer
-          </button>
-          <button type="button" onClick={() => st.endTask('no')} style={secondaryBtn}>
-            I couldn’t find it
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirmStop(true)}
-            style={{ ...secondaryBtn, border: 'none', color: 'var(--text2)', marginLeft: 'auto' }}
-          >
-            I need to stop
-          </button>
-        </div>
-
-        {confirmStop && (
-          <div
-            role="alertdialog"
-            aria-label="Stop the session"
-            style={{
-              marginTop: '.75rem', padding: '.9rem 1rem', borderRadius: 12,
-              background: 'var(--amber-bg)', border: 'var(--bw) solid var(--amber-bd)',
-            }}
-          >
-            <p style={{ margin: '0 0 .75rem', lineHeight: 1.6, color: 'var(--text)' }}>
-              Stop the session? Nothing more will be recorded. You don’t have to give a reason.
-            </p>
-            <div style={{ display: 'flex', gap: '.6rem' }}>
-              <button type="button" onClick={st.stop} style={primaryBtn}>Yes, stop</button>
-              <button type="button" onClick={() => setConfirmStop(false)} style={secondaryBtn}>
-                Keep going
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      <OverlayBand
+        task={st.task}
+        expanded={expanded}
+        onToggle={() => setExpanded((v) => !v)}
+        textScale={settings.textScale}
+        onCycleText={() => setSetting('textScale', nextTextScale(settings.textScale))}
+        onFound={() => st.endTask('yes')}
+        onNotFound={() => st.endTask('no')}
+        confirmStop={confirmStop}
+        onStopRequest={() => setConfirmStop(true)}
+        onStopConfirm={st.stop}
+        onStopCancel={() => setConfirmStop(false)}
+      />
     </div>
   );
 }
-
-const primaryBtn = {
-  minHeight: 48,
-  padding: '0 1.15rem',
-  borderRadius: 10,
-  border: '1px solid var(--primary)',
-  background: 'var(--primary)',
-  color: '#fff',
-  fontWeight: 600,
-  fontSize: '1rem',
-  cursor: 'pointer',
-};
-
-const secondaryBtn = {
-  minHeight: 48,
-  padding: '0 1.15rem',
-  borderRadius: 10,
-  border: 'var(--bw) solid var(--border)',
-  background: 'var(--surface)',
-  color: 'var(--text)',
-  fontWeight: 600,
-  fontSize: '1rem',
-  cursor: 'pointer',
-};

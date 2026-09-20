@@ -1,0 +1,19 @@
+@UTF8
+@Begin
+@Languages:	eng
+@Participants:	PAR Participant, INV Investigator
+@ID:	eng|Synthetic|PAR|71;|female|ProbableAD||Participant|18||
+@ID:	eng|Synthetic|INV|||||Investigator|||
+@Media:	synthetic, audio
+@Comment:	Synthetic fixture for scripts/eval/stt self-tests. Not real data.
+*INV:	tell me everything you see going on in that picture . 0_2100
+%mor:	verb|tell pro:obj|me pro:indef|everything pro:per|you verb|see part|go-PRESP adv|on prep|in det:dem|that n|picture .
+*PAR:	well the &-uh the [/] the little boy is [//] he's getting cookies . 2100_6300
+%mor:	co|well det:art|the det:art|the det:art|the adj|little n|boy aux|be&3S pro:sub|he aux|be&3S part|get-PRESP n|cookie-PL .
+*PAR:	and the stool is (.) xxx falling over . 6300_9000
+*PAR:	the mother's washin(g) dishes and the water's runnin(g) +... 9000_12500
+*PAR:	&=laughs it's it's [* s:r] overflowing . 12500_14000
+*INV:	mhm . 14000_14500
+*PAR:	+< um the girl@s is reaching for a cookie . 14500_17800
+*PAR:	I don't know what else . 17800_19000
+@End

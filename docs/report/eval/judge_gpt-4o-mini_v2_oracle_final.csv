@@ -1,0 +1,133 @@
+column,id,sample,set,category,dimension,score,reason
+v2:oracle:final,A1,0,A,caregiving,groundedness,2,All specific factual claims about sundowning and strategies to manage it are supported by the reference passages.
+v2:oracle:final,A1,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A1,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to help manage the situation."
+v2:oracle:final,A1,0,A,caregiving,tone,2,"The response is warm and plain, acknowledging the caregiver's situation without using jargon or sounding clinical."
+v2:oracle:final,A2,0,A,caregiving,groundedness,2,All specific factual claims made in the answer are supported by the reference passages.
+v2:oracle:final,A2,0,A,caregiving,correctness,2,The answer conveys the main recommendations from the reference material accurately without any contradictions.
+v2:oracle:final,A2,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately, including emotional reassurance and distraction techniques."
+v2:oracle:final,A2,0,A,caregiving,tone,2,"The response is warm and empathetic, using everyday language and acknowledging the caregiver's feelings without being condescending."
+v2:oracle:final,A3,0,A,caregiving,groundedness,2,"All specific factual claims made in the answer are supported by the reference passages, including recommendations for meal preparation, portion sizes, and hydration strategies."
+v2:oracle:final,A3,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding nutrition and hydration for individuals with dementia without any contradictions.
+v2:oracle:final,A3,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can take immediately to help improve the father's eating and drinking habits."
+v2:oracle:final,A3,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns while providing clear and supportive guidance."
+v2:oracle:final,A4,0,A,caregiving,groundedness,2,All specific factual claims made in the answer are supported by the reference passages.
+v2:oracle:final,A4,0,A,caregiving,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:oracle:final,A4,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to manage sleep disturbances."
+v2:oracle:final,A4,0,A,caregiving,tone,2,"The response is warm and plain, acknowledging the caregiver's situation and using everyday language without being condescending."
+v2:oracle:final,A5,0,A,caregiving,groundedness,2,All specific factual claims made in the answer are supported by the reference passages.
+v2:oracle:final,A5,0,A,caregiving,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:oracle:final,A5,0,A,caregiving,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to assist their wife."
+v2:oracle:final,A5,0,A,caregiving,tone,2,"The response is warm and empathetic, acknowledging the caregiver's situation and using everyday language."
+v2:oracle:final,A6,0,A,caregiving,groundedness,2,"All specific factual claims about the NASC service, Carer Support Subsidy, and financial assistance through Work and Income are supported by the reference passages."
+v2:oracle:final,A6,0,A,caregiving,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding government programmes for supporting carers without any contradictions.
+v2:oracle:final,A6,0,A,caregiving,helpfulness,2,"The answer provides concrete steps for accessing support, including specific programmes and contact points, which a caregiver can act on immediately."
+v2:oracle:final,A6,0,A,caregiving,tone,2,"The response is warm and straightforward, using everyday language to explain the support available without being clinical or condescending."
+v2:oracle:final,A7,0,A,clinical,groundedness,2,Every specific factual claim made in the answer is supported by the reference passages.
+v2:oracle:final,A7,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations and details from the reference material without any contradictions.
+v2:oracle:final,A7,0,A,clinical,helpfulness,2,"The answer provides clear, practical information about the stages of dementia that a caregiver can use to understand and plan for care."
+v2:oracle:final,A7,0,A,clinical,tone,2,"The answer is warm and plain, using everyday language that is accessible to caregivers."
+v2:oracle:final,A8,0,A,clinical,groundedness,2,All specific factual claims about medications and their side effects are supported by the reference passages.
+v2:oracle:final,A8,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations and information from the reference material without contradictions.
+v2:oracle:final,A8,0,A,clinical,helpfulness,2,The answer provides concrete steps for monitoring side effects and suggests contacting a GP or Healthline for further assistance.
+v2:oracle:final,A8,0,A,clinical,tone,2,"The response is warm and reassuring, acknowledging the caregiver's concerns in plain language."
+v2:oracle:final,A9,0,A,clinical,groundedness,2,All specific factual claims made in the answer are supported by the reference passages.
+v2:oracle:final,A9,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A9,0,A,clinical,helpfulness,2,"The answer provides clear, actionable steps for the caregiver to take in response to the observed changes."
+v2:oracle:final,A9,0,A,clinical,tone,2,"The response is warm and straightforward, using everyday language that is appropriate for a caregiver in a potentially distressing situation."
+v2:oracle:final,A10,0,A,clinical,groundedness,2,"All specific factual claims about legal documents, including the types of EPAs and the need for them to be completed while the person has full legal capacity, are supported by the reference passages."
+v2:oracle:final,A10,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding the legal documents needed for advance care planning.
+v2:oracle:final,A10,0,A,clinical,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including specific documents to prepare and contact information for relevant organizations."
+v2:oracle:final,A10,0,A,clinical,tone,2,"The response is warm and supportive, acknowledging the caregiver's proactive approach while using plain language to explain the necessary legal documents."
+v2:oracle:final,A11,0,A,clinical,groundedness,2,All specific claims about reversible conditions and their effects are supported by the reference passages.
+v2:oracle:final,A11,0,A,clinical,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding reversible causes of dementia-like symptoms.
+v2:oracle:final,A11,0,A,clinical,helpfulness,2,"The answer provides concrete steps for the caregiver, including the need for a medical evaluation and specific tests to consider."
+v2:oracle:final,A11,0,A,clinical,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without using jargon or sounding clinical."
+v2:oracle:final,A12,0,A,best-practices,groundedness,2,All specific factual claims about redirection and de-escalation techniques are supported by the reference passages.
+v2:oracle:final,A12,0,A,best-practices,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:oracle:final,A12,0,A,best-practices,helpfulness,2,"The answer provides concrete, practical steps for calming the situation that a caregiver can act on immediately."
+v2:oracle:final,A12,0,A,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and using everyday language."
+v2:oracle:final,A13,0,A,best-practices,groundedness,2,All specific claims about hallucinations and their management are supported by the reference passages.
+v2:oracle:final,A13,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material without contradictions.
+v2:oracle:final,A13,0,A,best-practices,helpfulness,2,"The response provides concrete steps for the caregiver to take, including acknowledging feelings and environmental adjustments."
+v2:oracle:final,A13,0,A,best-practices,tone,2,"The tone is warm and supportive, acknowledging the caregiver's concerns and using plain language."
+v2:oracle:final,A14,0,A,best-practices,groundedness,2,All specific factual claims made in the answer are supported by the reference passages.
+v2:oracle:final,A14,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A14,0,A,best-practices,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to prevent wandering."
+v2:oracle:final,A14,0,A,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns in plain language."
+v2:oracle:final,A15,0,A,best-practices,groundedness,2,All specific claims about the signs of burnout and the importance of accepting help are supported by the reference passages.
+v2:oracle:final,A15,0,A,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding recognizing and preventing caregiver burnout.
+v2:oracle:final,A15,0,A,best-practices,helpfulness,2,"The answer provides concrete steps for the caregiver to take, including specific resources and actions they can pursue immediately."
+v2:oracle:final,A15,0,A,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings without being clinical or dismissive."
+v2:oracle:final,A16,0,A,communication,groundedness,2,All specific factual claims about communication techniques are supported by the reference passages.
+v2:oracle:final,A16,0,A,communication,correctness,2,The answer conveys the main recommendations from the reference material accurately without any contradictions.
+v2:oracle:final,A16,0,A,communication,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to improve communication."
+v2:oracle:final,A16,0,A,communication,tone,2,"The response is warm and plain, acknowledging the challenges while providing clear guidance without being condescending."
+v2:oracle:final,A17,0,A,communication,groundedness,2,The assistant's answer accurately reflects the principles of validation therapy as described in the reference passages without introducing unsupported specifics.
+v2:oracle:final,A17,0,A,communication,correctness,2,"The answer conveys the main recommendations of the reference material, emphasizing the importance of validation therapy and not correcting the individual."
+v2:oracle:final,A17,0,A,communication,helpfulness,2,"The assistant provides concrete, practical steps for the caregiver to take, including specific phrases to use that align with validation therapy."
+v2:oracle:final,A17,0,A,communication,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and providing supportive guidance in plain language."
+v2:oracle:final,A18,0,A,communication,groundedness,2,"All specific claims made in the answer are supported by the reference passages, including the importance of emotional connection and the suggested way to introduce oneself."
+v2:oracle:final,A18,0,A,communication,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A18,0,A,communication,helpfulness,2,"The answer provides concrete steps for the caregiver to take, including how to introduce themselves and suggestions for self-care and support."
+v2:oracle:final,A18,0,A,communication,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings without being clinical or dismissive."
+v2:oracle:final,A19,0,A,home-safety,groundedness,2,All specific factual claims made in the answer are supported by the reference passages.
+v2:oracle:final,A19,0,A,home-safety,correctness,2,The answer conveys all the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A19,0,A,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to improve bathroom safety."
+v2:oracle:final,A19,0,A,home-safety,tone,2,"The response is warm and plain, using everyday language that is accessible to caregivers."
+v2:oracle:final,A20,0,A,home-safety,groundedness,2,All specific factual claims about medication storage and management are supported by the reference passages.
+v2:oracle:final,A20,0,A,home-safety,correctness,2,The answer conveys the main recommendations from the reference material accurately without any contradictions.
+v2:oracle:final,A20,0,A,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to ensure medication safety."
+v2:oracle:final,A20,0,A,home-safety,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without using jargon or sounding clinical."
+v2:oracle:final,A21,0,A,home-safety,groundedness,2,"All specific factual claims about driving safety, signs to look for, and the role of doctors and assessments are supported by the reference passages."
+v2:oracle:final,A21,0,A,home-safety,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A21,0,A,home-safety,helpfulness,2,"The answer provides concrete steps for assessing driving safety and planning alternatives, which a caregiver can act on."
+v2:oracle:final,A21,0,A,home-safety,tone,2,"The response is warm and empathetic, acknowledging the emotional difficulty of the situation without being clinical or preachy."
+v2:oracle:final,A22,0,A,wellbeing,groundedness,2,All specific factual claims about respite care options and the processes for arranging them are supported by the reference passages.
+v2:oracle:final,A22,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A22,0,A,wellbeing,helpfulness,2,"The answer provides clear, practical steps for arranging respite care that a caregiver can act on immediately."
+v2:oracle:final,A22,0,A,wellbeing,tone,2,"The response is warm and empathetic, acknowledging the caregiver's feelings and using plain language throughout."
+v2:oracle:final,A23,0,A,wellbeing,groundedness,2,All specific factual claims about financial assistance and support for carers are supported by the reference passages.
+v2:oracle:final,A23,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A23,0,A,wellbeing,helpfulness,2,The answer provides concrete steps and relevant information that a caregiver can act on immediately.
+v2:oracle:final,A23,0,A,wellbeing,tone,2,"The response is warm and plain, acknowledging the challenges of caregiving while providing clear and accessible information."
+v2:oracle:final,A24,0,A,wellbeing,groundedness,2,All specific factual claims made in the answer are supported by the reference passages.
+v2:oracle:final,A24,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A24,0,A,wellbeing,helpfulness,2,"The answer provides concrete steps for the caregiver to take, including assessing care needs and involving the loved one in the decision-making process."
+v2:oracle:final,A24,0,A,wellbeing,tone,2,"The response is warm and empathetic, acknowledging the emotional difficulty of the decision without being clinical or preachy."
+v2:oracle:final,A25,0,A,wellbeing,groundedness,2,"All specific factual claims about the NASC process, the role of the GP, and the types of services available are supported by the reference passages."
+v2:oracle:final,A25,0,A,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A25,0,A,wellbeing,helpfulness,2,"The answer provides clear, actionable steps for accessing funded home-care services, including contacting the GP and the role of NASC."
+v2:oracle:final,A25,0,A,wellbeing,tone,2,"The response is warm and straightforward, using everyday language that is accessible to caregivers."
+v2:oracle:final,A26,0,A,prevention,groundedness,2,All specific factual claims about early warning signs of dementia are supported by the reference passages.
+v2:oracle:final,A26,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations and details from the reference material without any contradictions.
+v2:oracle:final,A26,0,A,prevention,helpfulness,2,"The answer provides concrete, practical steps for the caregiver to take, including contacting a GP and relevant local services."
+v2:oracle:final,A26,0,A,prevention,tone,2,"The response is warm and plain, acknowledging the caregiver's concerns without using jargon or sounding clinical."
+v2:oracle:final,A27,0,A,prevention,groundedness,2,All specific factual claims about modifiable risk factors and their management are supported by the reference passages.
+v2:oracle:final,A27,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A27,0,A,prevention,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to reduce dementia risk."
+v2:oracle:final,A27,0,A,prevention,tone,2,"The response is warm and plain, acknowledging the caregiver's concern and using everyday language."
+v2:oracle:final,A28,0,A,prevention,groundedness,2,All specific factual claims about support resources and their functions are accurately supported by the reference passages.
+v2:oracle:final,A28,0,A,prevention,correctness,2,The answer conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A28,0,A,prevention,helpfulness,2,The response provides concrete steps and resources that the caregiver can act on immediately.
+v2:oracle:final,A28,0,A,prevention,tone,2,"The answer is warm and empathetic, acknowledging the caregiver's situation without being clinical or preachy."
+v2:oracle:final,A29,0,A,prevention,groundedness,2,"All specific factual claims about MCI, its implications, and management strategies are supported by the reference passages."
+v2:oracle:final,A29,0,A,prevention,correctness,2,The answer accurately conveys the main recommendations and information from the reference material without contradictions.
+v2:oracle:final,A29,0,A,prevention,helpfulness,2,The answer provides concrete steps for managing MCI and suggests relevant resources for further support.
+v2:oracle:final,A29,0,A,prevention,tone,2,"The response is warm and empathetic, using plain language to explain the condition and its implications."
+v2:oracle:final,A33,0,A,clinical,groundedness,2,"The assistant accurately reflects the information from the reference passages regarding sudden drowsiness and its potential causes, including delirium and the need for medical attention."
+v2:oracle:final,A33,0,A,clinical,correctness,2,"The answer conveys the main recommendations from the reference material, including the need for same-day medical advice and the distinction between dementia progression and sudden changes."
+v2:oracle:final,A33,0,A,clinical,helpfulness,2,"The assistant provides clear, actionable steps for the caregiver, including when to call for emergency help and how to seek medical advice."
+v2:oracle:final,A33,0,A,clinical,tone,2,"The response is warm and reassuring, using plain language and acknowledging the caregiver's concerns without being clinical or dismissive."
+v2:oracle:final,A30,0,A-neighbour,best-practices,groundedness,2,"All specific factual claims regarding fall prevention strategies, medical reviews, and environmental modifications are supported by the reference passages."
+v2:oracle:final,A30,0,A-neighbour,best-practices,correctness,2,The answer accurately conveys the main recommendations from the reference material without any contradictions.
+v2:oracle:final,A30,0,A-neighbour,best-practices,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to reduce fall risks."
+v2:oracle:final,A30,0,A-neighbour,best-practices,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns while providing clear and accessible information."
+v2:oracle:final,A31,0,A-neighbour,home-safety,groundedness,2,All specific factual claims made in the answer are supported by the reference passages.
+v2:oracle:final,A31,0,A-neighbour,home-safety,correctness,2,The answer conveys the main recommendations from the reference material accurately and does not contain any contradictions.
+v2:oracle:final,A31,0,A-neighbour,home-safety,helpfulness,2,"The answer provides concrete, practical steps that a caregiver can act on immediately to manage the situation."
+v2:oracle:final,A31,0,A-neighbour,home-safety,tone,2,"The response is warm and empathetic, acknowledging the caregiver's concerns without being clinical or condescending."
+v2:oracle:final,A32,0,A-neighbour,wellbeing,groundedness,2,"All specific factual claims about seeking help from a GP, the role of Mental Health Services for Older People, and the contact information for Alzheimers NZ and Healthline are supported by the reference passages."
+v2:oracle:final,A32,0,A-neighbour,wellbeing,correctness,2,The answer accurately conveys the main recommendations from the reference material regarding seeking specialist help and the role of the GP.
+v2:oracle:final,A32,0,A-neighbour,wellbeing,helpfulness,2,"The answer provides clear, actionable steps for the caregiver, including visiting the GP and contacting relevant support services."
+v2:oracle:final,A32,0,A-neighbour,wellbeing,tone,2,"The response is warm and empathetic, acknowledging the caregiver's challenges while providing information in plain language."

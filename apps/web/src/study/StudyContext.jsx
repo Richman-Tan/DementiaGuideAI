@@ -14,6 +14,8 @@ import { warmStudyProxy } from '../services/transport.js';
 import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
 import { navigate } from '../state/router.js';
 import { getUnityAvailability, getUnityLoadState, probeUnity } from '../avatar/unity/unityBridge.js';
+import { getSettingSnapshot } from '../state/settingsSnapshot.js';
+import { resolveEffectiveProfile } from '../avatar/effectiveProfile.js';
 import { useAuth } from '../state/AuthContext.jsx';
 
 const Ctx = createContext(null);
@@ -108,7 +110,7 @@ export function StudyProvider({ children }) {
 
   // ─── Session ──────────────────────────────────────────────────────────────
 
-  const begin = useCallback(async ({ participantCode, accessCode, group, consent, consentTranscripts, supporterPresent = null }) => {
+  const begin = useCallback(async ({ participantCode, accessCode, group, consent, consentTranscripts, supporterPresent = null, micStatus = null, micAck = false }) => {
     // The participant code is optional. A first-time participant supplies none
     // and the server allocates one; a returning participant is identified by the
     // code already in the store, or by re-typing the one they were given if they
@@ -195,8 +197,20 @@ export function StudyProvider({ children }) {
       resumed: data.resumed,
       consentTranscripts: Boolean(consentTranscripts),
       supporterPresent,
+      // The setup mic check's outcome ('ok' | 'denied' | 'skipped') and whether
+      // the participant chose to continue without a working mic. Emitted here
+      // because the queue is a no-op before the session exists — an Arm A
+      // participant typing every turn is otherwise inexplicable in the data.
+      micStatus,
+      micAck,
       renderer: await detectRenderer(),
       avatarLoad: getUnityLoadState?.() ?? null,
+      // Stored choice vs what actually resolved. The renderer alone couldn't
+      // say WHICH avatar a session saw — and the Unity build failing swaps
+      // Aaron for Aria (new name, face, voice) with only this as the record.
+      avatarId: getSettingSnapshot().avatarId,
+      effectiveAvatarId: resolveEffectiveProfile(getSettingSnapshot().avatarId).id,
+      effectiveAvatarName: resolveEffectiveProfile(getSettingSnapshot().avatarId).name,
     });
     flush();
     return data;

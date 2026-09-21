@@ -54,6 +54,20 @@ On 2026-09-21 the user stated that the sessions in the database are real user
 studies. That contradicts the stored flag, and the flag is what an examiner reading
 this repository would see. Two things follow:
 
+**The session dates matter here.** `evaluation-plan.md` records "dry-run passed
+2026-09-01/02/09". Three sessions fall exactly on those dates — P05 (1 Sep),
+P01 (2 Sep) and P03 (8 Sep 19:56 UTC = 9 Sep NZT) — which is strong circumstantial
+evidence that those three *are* the documented dry runs. The sessions not accounted
+for by a recorded dry run are **P02, P04, P06 and P07**.
+
+That produces an awkward intersection: of the three sessions that completed the full
+protocol, two (P01, P03) fall on documented dry-run dates and the third (P06) is the
+one carrying the automated latency batch. The sessions most likely to be genuine
+participants — P04, P07 — are the ones with almost no data.
+
+This is circumstantial, not conclusive; dates can coincide. It is recorded so the
+question is answered from evidence rather than from memory.
+
 1. **The flag cannot simply be flipped.** Whether a session is participant data is a
    research-integrity question, not a boolean. It needs a per-participant record of
    who took part and when, and any correction to the flag has to be dated and

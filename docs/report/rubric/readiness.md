@@ -215,9 +215,10 @@ arrives empty.
 ### Ordered by mark-per-hour
 
 1. Decide the user-study question (run it, or frame the report without it).
-2. Re-align the research questions with the evidence that exists, and rewrite the
-   scope statement (criterion B, 10 %, ~half a day — draft in
-   [`../lit-review/alignment.md`](../lit-review/alignment.md) §3).
+2. ~~Re-align the research questions with the evidence that exists, and rewrite the
+   scope statement~~ — **drafted 2026-09-21**, see
+   [`../lit-review/revised-section-2.md`](../lit-review/revised-section-2.md).
+   Outstanding decision: whether RQ7 (usability) stays, which depends on the study.
 3. Write the contribution + synthesis + limitations sections (criterion E, 25 %).
 4. Add the six missing literature sub-sections — RAG/grounding, health-chatbot
    safety, impaired-speech ASR, localisation, evaluation methodology, visual

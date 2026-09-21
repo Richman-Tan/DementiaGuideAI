@@ -44,6 +44,7 @@ Config lives in `packages/core/rag/`; tooling in `scripts/eval/` and
 | [eval/functional-verification.md](eval/functional-verification.md) | E10: requirements-to-evidence matrix, test levels, coverage, unverified requirements |
 | [eval/scalability.md](eval/scalability.md) | E11: per-turn call trace, capacity per dependency, the binding constraint, measured load |
 | [report/rubric/](report/rubric/readiness.md) | **The final report's marking rubric** and what the project has and has not got against it |
+| [report/lit-review/](report/lit-review/alignment.md) | The April scope/objectives/literature submission, and what has to change in it before it becomes the final report |
 
 ## Subsystems
 

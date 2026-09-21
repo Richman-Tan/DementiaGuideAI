@@ -60,7 +60,7 @@ These are point-in-time academic artefacts, not living reference docs.
 
 | Folder | Contents |
 |---|---|
-| [`study/`](study/README.md) | **The human usability study**: protocol, task sets and rubric, instruments, analysis plan, pilot gate, and the full UAHPEC ethics pack. Start at [study/README.md](study/README.md). Live — this one is being executed, not archived. |
+| [`study/`](study/README.md) | **The human usability study**: protocol, task sets and rubric, instruments, analysis plan, pilot gate, and the full UAHPEC ethics pack. Start at [study/README.md](study/README.md). Live — this one is being executed, not archived. [study/data-state.md](study/data-state.md) records what is in the database (the data itself is git-ignored). |
 | `report/` | Mid-year report: drafts, `figures/`, `baseline/`, `eval/` data, and `rubric/` (the final-report marking rubric + readiness analysis). **Paths here are stable on purpose** — they may be cited in submitted work, so do not reorganise. |
 | `seminar/` | Conference-day deck prompt, research notes, speaker script |
 | `web/` | The design prompt used to generate the web front-end (this is `docs/web/`, not the app) |

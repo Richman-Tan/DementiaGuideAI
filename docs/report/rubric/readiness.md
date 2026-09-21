@@ -36,52 +36,67 @@ Two consequences that shape everything below:
 | D — Execution, Findings & Evaluation | 30 % | **Strong.** Most of the evidence exists and is sha-stamped. |
 | E — Interpretation, Contribution / Impact | 25 % | **Weak in the repo.** Almost nothing written; the highest-value gap. |
 | C — Study Design | 20 % | **Strong**, but stated as an engineering plan, not justified from theory/literature. |
-| A — Literature & Field Knowledge | 10 % | **Unknown.** No literature review or bibliography exists in this repo. |
-| B — Problem Definition & Research Framing | 10 % | **Not in the repo.** No stated research question, aims or objectives. |
+| A — Literature & Field Knowledge | 10 % | **Exists, and is decent** (April submission, now at `docs/report/lit-review/`) — but covers none of the evaluation the report is about. |
+| B — Problem Definition & Research Framing | 10 % | **Exists** (§2 of the April submission). Two of its five research questions cannot be answered by any result. |
 | F — Technical Writing | 5 % | Depends on the write-up; the compendium half is nearly ready. |
 
-Roughly 45 % of the mark (A, B, E) rests on writing that does not yet exist in any
-form the repository can verify. 50 % (C, D) rests on work that largely does.
+**Revised 2026-09-21** after the April submission was located and committed to
+`docs/report/lit-review/`: A and B are no longer empty — roughly **25 % (E)** rests
+on writing that does not exist at all, and a further **20 % (A + B)** rests on
+writing that exists but describes a different project from the one that was built.
+See [`../lit-review/alignment.md`](../lit-review/alignment.md).
 
 ---
 
 ## A — Literature & Field Knowledge (10 %)
 
-**Have:** `docs/rag/rag-industry-research.md` (retrieval practice),
-`docs/seminar/seminar-research.md`, the citations already used in
-`docs/report/results-discussion-conclusion-draft.md` §7 (Chattopadhyay 2020,
-Rampioni 2021, Stara 2021, Laranjo 2018, Cohen & Massaro 1993) and its §H
-references addendum.
+**Have:** the April submission —
+[`../lit-review/`](../lit-review/alignment.md) — ~5,300 words, 26 references,
+organised by domain (dementia care challenges, digital resource systems, AI,
+conversational interfaces, avatars, personalisation, commercial solutions, gaps).
+It is critical rather than descriptive in places; §3.6 in particular separates
+what the avatar evidence supports from what it does not. Plus
+`docs/rag/rag-industry-research.md` and the citations in
+`results-discussion-conclusion-draft.md` §7 and §H.
 
-**Gaps:**
+**Gaps** (detail in [`../lit-review/alignment.md`](../lit-review/alignment.md) §4):
 
-- No bibliography or literature review lives in this repo — it is in the April
-  submission and the Word drafts outside it. Whether it reaches the A band
-  ("evaluation of relevance and implications", "connections across the field")
-  cannot be checked from here.
-- The April literature review predates the two biggest additions to the project:
-  **the user study** and **E9 (ASR on dementia speech)**. The ADReSS-2020 /
-  DementiaBank literature — published WER on impaired speech, the ADReSS
-  challenge papers, dysarthric/disordered-speech ASR — is not cited anywhere in
-  the repo, and E9's results are meaningless without it. The A band wants prior
-  work *evaluated*; E9 is the one place where a direct comparison to published
-  numbers is possible.
-- Same for the evaluation methodology: LLM-as-judge validity, inter-annotator
-  agreement conventions, SUS norms. These are used but not sourced.
+- The review predates almost everything the report will present. **No literature
+  at all** on: retrieval-augmented generation and grounding in health information
+  (E1/E2), safety and risk in health chatbots (E3), speech recognition on impaired
+  or older speech (E9), jurisdictional localisation of health information (the
+  AU→NZ safety fix), or evaluation methodology (LLM-as-judge validity, κ, SUS).
+- Without the ADReSS literature, E9's WER numbers have nothing to be compared
+  against — and criterion D's A band names "comparison with literature".
+- Mechanical errors to fix: wrong department on the title page, a stray
+  second-person editorial note in §3.6, an empty PROJECT PLAN heading, four
+  reference-list entries using "et al.", three uncited references.
 
 ## B — Problem Definition & Research Framing (10 %)
 
-**Have:** thirteen *evaluation* questions (EQ1–EQ13, `docs/eval/evaluation-plan.md`
-§3) which are well-formed and aligned to experiments.
+**Have:** §2 of the April submission is a real framing section — research problem,
+a main research question, five sub-questions, an aim, five objectives, scope, and
+significance, derived from named limitations in the literature. That is most of
+what this criterion asks for.
 
-**Gap:** EQs are not research questions. Nowhere in the repo is there a research
-question, an aims-and-objectives statement, or a problem statement for the report.
-The rubric's A band wants a gap in the literature identified and a coherent
-progression from that gap to the research direction. That document exists only in
-the April submission, and it needs rewriting to match what the project actually
-became (a voice avatar with a measured safety and retrieval programme, plus an
-impaired-speech robustness study). This is the cheapest 10 % on the list and it is
-currently unwritten.
+**Gap — alignment, not existence.** The questions do not match the project:
+
+- **RQ2 (AI-driven personalisation)** has no result. Personalisation exists only
+  as user-set preferences in `packages/core/rag/prompt.js` (caregiver framing,
+  personality, concise/detailed); the E2 condition matrix is a prompt/RAG
+  ablation with no personalisation condition.
+- **RQ3 (avatar engagement)** is answered only for *articulation* (E5); engagement
+  needs E6 or the user study, neither of which has data.
+- **RQ5 (digital literacy)** is close to, but not the same as, what E9 measures.
+- Nothing in §2 mentions grounding, safety or speech robustness — the three things
+  the evaluation actually spent its effort on.
+- §2.4 states the project "will not entail the use of any clinical data", which
+  contradicts both the DementiaBank corpus and the UAHPEC study.
+
+Criterion B's A band asks for questions that are well-formulated **and aligned**,
+and criterion C for "clear alignment with research questions" — an unanswerable
+question costs marks twice. A proposed replacement set is in
+[`../lit-review/alignment.md`](../lit-review/alignment.md) §3.
 
 ## C — Study Design (20 %)
 
@@ -180,10 +195,16 @@ and must say so.
 **For criterion D (30 %) — yes, we have what we need,** minus the user study,
 figures, and the remaining E4 cells.
 
-**For criteria A, B and E (45 %) — no.** None of that writing exists in a form
-this repo can verify, and E in particular (25 %) has no contribution statement,
-no synthesis and no consolidated limitations. That is not a data problem; it is
-a writing problem, and 27 days is enough time for it if it starts now.
+**For criteria A and B (20 %) — the writing exists but points at the wrong
+project.** The April submission frames DementiaGuide AI as a personalised resource
+manager; what was built and measured is a grounded, safety-gated assistant with a
+speech-robustness study. Two of five research questions have no result. Fixing
+this is editing, not new research, but it has to happen before the results
+chapters can be written around it.
+
+**For criterion E (25 %) — no.** No contribution statement, no synthesis, no
+consolidated limitations. That is not a data problem; it is a writing problem, and
+27 days is enough time for it if it starts now.
 
 **The one item with a hard lead time is the user study.** Everything else can be
 written or generated on demand. If real participant data is not going to exist,
@@ -194,10 +215,13 @@ arrives empty.
 ### Ordered by mark-per-hour
 
 1. Decide the user-study question (run it, or frame the report without it).
-2. Write the research question / aims / objectives (criterion B, 10 %, ~1 day).
+2. Re-align the research questions with the evidence that exists, and rewrite the
+   scope statement (criterion B, 10 %, ~half a day — draft in
+   [`../lit-review/alignment.md`](../lit-review/alignment.md) §3).
 3. Write the contribution + synthesis + limitations sections (criterion E, 25 %).
-4. Extend the literature review to cover ADReSS/impaired-speech ASR and
-   evaluation methodology, and cite it in the design chapter (criteria A + C).
+4. Add the six missing literature sub-sections — RAG/grounding, health-chatbot
+   safety, impaired-speech ASR, localisation, evaluation methodology, visual
+   speech — and cite them in the design chapter (criteria A + C, ~1 week).
 5. Generate the missing figures (criterion D).
 6. Finish E4 (spoken, iPhone, ablation).
 7. Assemble the compendium ReadMe.

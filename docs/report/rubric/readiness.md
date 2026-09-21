@@ -135,12 +135,16 @@ the human study design. `docs/eval/functional-verification.md` and
 
 **Gaps, in order of how much they cost:**
 
-1. **E7 user study — no analysable data.** The DB holds 6 pilot sessions and one
-   stopped-early session; `study-results/` holds a synthetic file. The A band
-   wants "sufficient scope and breadth", and this is a caregiver-support app
-   evaluated entirely without caregivers. It is also 25 % of criterion E's
-   "real-world connection". **This is the single largest risk to the grade** and
-   it is the one with a hard lead time (recruit → consent → run → analyse).
+1. **E7 user study — in progress, with a provenance question.** Re-checked against
+   the database 2026-09-21 (`docs/study/data-state.md`): 7 sessions, of which
+   **three ran the full protocol** (both arms, six tasks, SUS for both arms, Likert,
+   debrief) — better than the "no analysable data" recorded on 2026-09-19. Two
+   caveats: P06's 32 turns dated 18 Sep are the automated E4 latency batch and are
+   excluded from turn-level measures, and six of the seven sessions still carry
+   `is_pilot = true`, which the export tool and the pilot checklist treat as
+   never-reportable. The user states these are real participant sessions;
+   **that has to be recorded per participant before any result is reported.**
+   Recruitment is ongoing; practical cutoff ≈ 10 Oct.
 2. **Figures.** Only three exist (`docs/report/figures/fig1–3`), all lip-sync,
    all from July. The D band explicitly penalises missing diagrams and graphs.
    E9 (WER by group, error decomposition, degradation curve), E2 (condition

@@ -72,6 +72,11 @@ of §2 would not predict the evaluation chapter.
 
 ### Suggested revision of the research questions
 
+> **Done 2026-09-21** — the rewritten §2 is in
+> [`revised-section-2.md`](revised-section-2.md), with an evidence map tying every
+> research question to a committed artefact. The sketch below is what it was built
+> from; the drafted section is the version to use.
+
 Keep the aim. Replace the sub-questions with ones the report can answer with
 evidence that already exists:
 

@@ -29,7 +29,7 @@ const REGISTRY = [
     local_path: 'apps/mobile/src/features/library/data/knowledgeBase.js',
     category: null, // per-chunk categories come from the file itself
     enabled: true,
-    notes: '77 hand-authored chunks (10 per category, plus extensions). Paraphrased from cited orgs; per-chunk source_org/source_url preserved. 2026-08-12: added 5 chunks from Dementia NZ, Dementia Australia, and Forward with Dementia (wellbeing_011, clinical_011, bestpractices_011/012, homesafety_011) — pending owner fact-check before ingest.',
+    notes: '124 curated chunks (originally 10 per category, since extended). Paraphrased from cited orgs; per-chunk source_org/source_url preserved. 2026-09: reconciled the admin-added curated chunks into this file so source == DB (prune-safe). The 2026-08 mindfulness/box-breathing self-care chunk is wellbeing_023 (renamed from wellbeing_011 to resolve an id collision with the finances/scams chunk, which keeps wellbeing_011).',
   },
   {
     document_id: 'isupport-who-v2026',

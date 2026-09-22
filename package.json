@@ -34,6 +34,8 @@
     "rag:grade": "node scripts/eval/grade-groundedness.mjs",
     "rag:introspect": "node scripts/eval/introspect.mjs",
     "rag:eval:isupport": "node scripts/eval/run-isupport-eval.mjs",
+    "rag:eval:agent": "node scripts/eval/adaptive-agent-tester.mjs",
+    "rag:eval:quality-agent": "node scripts/eval/quality-agent-tester.mjs",
     "eval:generate": "node scripts/eval/run-generation.mjs",
     "eval:safety-report": "node scripts/eval/safety-report.mjs",
     "eval:judge": "node scripts/eval/judge.mjs",

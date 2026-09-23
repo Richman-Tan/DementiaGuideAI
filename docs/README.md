@@ -40,6 +40,11 @@ Config lives in `packages/core/rag/`; tooling in `scripts/eval/` and
 | [eval/evaluation-plan.md](eval/evaluation-plan.md) | The final-project evaluation design: claims, experiments (prompt/RAG ablation, safety, latency, lip-sync, user study), statistics, priorities |
 | [eval/README.md](eval/README.md) | How to run the harness: `scripts/eval/`, `scripts/lipsync/`, outputs under `docs/report/eval/` |
 | [eval/results-2026-09-13.md](eval/results-2026-09-13.md) | Results at snapshot 8a92ecd: retrieval, the prompt/RAG matrix, held-out safety, latency, lip-sync — and what is still pending |
+| [eval/results-e9-stt-2026-09-18.md](eval/results-e9-stt-2026-09-18.md) | E9: word-error rate of the transcription path on ADReSS-2020 dementia speech, four recognisers, downstream effect |
+| [eval/functional-verification.md](eval/functional-verification.md) | E10: requirements-to-evidence matrix, test levels, coverage, unverified requirements |
+| [eval/scalability.md](eval/scalability.md) | E11: per-turn call trace, capacity per dependency, the binding constraint, measured load |
+| [report/rubric/](report/rubric/readiness.md) | **The final report's marking rubric** and what the project has and has not got against it |
+| [report/lit-review/](report/lit-review/alignment.md) | The April scope/objectives/literature submission, what has to change in it, and the redrafted Section 2 (research questions, aim, scope) |
 
 ## Subsystems
 
@@ -55,8 +60,8 @@ These are point-in-time academic artefacts, not living reference docs.
 
 | Folder | Contents |
 |---|---|
-| [`study/`](study/README.md) | **The human usability study**: protocol, task sets and rubric, instruments, analysis plan, pilot gate, and the full UAHPEC ethics pack. Start at [study/README.md](study/README.md). Live — this one is being executed, not archived. |
-| `report/` | Mid-year report: drafts, `figures/`, `baseline/`, `eval/` data. **Paths here are stable on purpose** — they may be cited in submitted work, so do not reorganise. |
+| [`study/`](study/README.md) | **The human usability study**: protocol, task sets and rubric, instruments, analysis plan, pilot gate, and the full UAHPEC ethics pack. Start at [study/README.md](study/README.md). Live — this one is being executed, not archived. [study/data-state.md](study/data-state.md) records what is in the database (the data itself is git-ignored). |
+| `report/` | Mid-year report: drafts, `figures/`, `baseline/`, `eval/` data, and `rubric/` (the final-report marking rubric + readiness analysis). **Paths here are stable on purpose** — they may be cited in submitted work, so do not reorganise. |
 | `seminar/` | Conference-day deck prompt, research notes, speaker script |
 | `web/` | The design prompt used to generate the web front-end (this is `docs/web/`, not the app) |
 

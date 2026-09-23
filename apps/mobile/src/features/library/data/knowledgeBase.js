@@ -1,4 +1,4 @@
-// Dementia care knowledge base — 70 chunks, 10 per category.
+// Dementia care knowledge base — 78 chunks (10 per category, plus extensions).
 // Content paraphrased from authoritative sources; see source_url per chunk.
 // `embedding` is null at build time; populated at runtime from cache or API.
 
@@ -1123,7 +1123,7 @@ Non-verbal cultural connection through music from the person's country of origin
     embedding: null,
   },
 
-  // ─── CAREGIVER WELLBEING (extended: 008–010) ─────────────────────────────────
+  // ─── CAREGIVER WELLBEING (extended: 008–011) ─────────────────────────────────
   {
     id: 'wellbeing_008',
     category: 'wellbeing',
@@ -1170,6 +1170,24 @@ When care needs progress to rest-home or hospital-level care, the NASC assessmen
     tags: ['NASC', 'needs assessment', 'home support', 'Health NZ', 'Te Whatu Ora', 'residential care', 'Residential Care Subsidy', 'funding'],
     source_url: 'https://www.govt.nz/browse/health/help-in-your-home/needs-assessment/',
     source_org: 'Health New Zealand – Te Whatu Ora',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_023',
+    category: 'wellbeing',
+    title: 'Mindfulness and Box Breathing for Carer Stress',
+    content: `Alongside the practical supports covered elsewhere in this library, brief self-care practices you can use in the moment — when stress, frustration, or overwhelm builds up during caregiving — are an important part of sustaining yourself over the long term. iSupport, the WHO-endorsed self-help programme for dementia carers, recommends mindfulness and box breathing as two simple, evidence-informed techniques that take only a few minutes and require no equipment.
+
+Box breathing is a structured breathing pattern that helps calm the body's stress response quickly. Breathe in slowly through the nose for a count of four, hold the breath for a count of four, breathe out slowly through the mouth for a count of four, then hold again for a count of four before repeating the cycle. Doing this for two to three minutes — for example, before a difficult conversation, after a distressing incident, or whenever tension is rising — can noticeably reduce physical and emotional stress in the moment.
+
+Mindfulness involves gently bringing attention to the present moment — noticing what you can see, hear, feel, and breathe, without judging the experience — rather than being carried along by worry about the future or replaying difficult moments from the past. Even a minute or two of focused attention on the breath or the surrounding environment, practised regularly, can reduce the background level of stress carers experience and make it easier to respond calmly to challenging moments.
+
+These techniques are most effective when practised regularly, not only during acute stress, so that they become an accessible habit in difficult moments. They complement, rather than replace, the broader supports covered elsewhere in this library — GP support, sleep, exercise, social connection, and accepting help from others.`,
+    tags: ['mindfulness', 'box breathing', 'self-care', 'iSupport', 'carer stress', 'relaxation', 'stress management'],
+    // TODO: replace with the direct iSupport mindfulness/box breathing video URL once provided —
+    // this is the citation link this chunk's [n] badge will open, same as every other chunk.
+    source_url: 'https://isupportfordementia.org/',
+    source_org: 'iSupport / World Health Organization',
     embedding: null,
   },
 
@@ -1270,6 +1288,734 @@ Prioritise modifications based on the person's specific current and near-term ri
     tags: ['home safety assessment', 'occupational therapist', 'OT', 'home modification', 'checklist', 'proactive', 'Alzheimers NZ'],
     source_url: 'https://alzheimers.org.nz/',
     source_org: 'Alzheimers NZ',
+    embedding: null,
+  },
+
+  // ─── NEW EXTERNAL SOURCES (2026-08-12, pending owner review before commit) ────
+  {
+    id: 'wellbeing_011',
+    category: 'wellbeing',
+    title: 'Protecting Finances and Preventing Scams',
+    content: `Financial safety becomes an increasing concern as dementia progresses, and Dementia New Zealand recommends acting early — while the person can still be involved in the decisions — rather than waiting until a scam or costly mistake forces the issue. People with dementia are especially vulnerable to financial exploitation, so a few simple banking safeguards make a real difference.
+
+Everyday measures recommended by banks such as Westpac include setting up account alerts for unusual activity, arranging automatic payments or direct debits so regular bills are never missed, and simplifying banking arrangements to match the person's current needs. A withdrawal limit on debit or EFTPOS cards reduces the impact of any single mistake or scam, and adding a trusted contact to the account means the bank can notify a family member if something looks concerning.
+
+Alongside banking safeguards, the essential legal documents to put in place early are an up-to-date will, an Enduring Power of Attorney (EPOA) for Property, and a separate EPOA for Personal Care and Wellbeing. Talking openly with family or a trusted friend about future financial wishes — while the person can still take part in the conversation — avoids difficult guesswork later and reduces family conflict.
+
+Local Dementia Advisors and bank branch staff can help put these safeguards in place. Dementia New Zealand provides free information and education on managing money with dementia, and acting early — rather than after a scam or financial mistake has already happened — is the single most protective step a family can take.`,
+    tags: ['finances', 'money management', 'scams', 'fraud protection', 'EPOA', 'banking', 'financial safety'],
+    source_url: 'https://dementia.nz/resources/managing-money-when-living-with-dementia/',
+    source_org: 'Dementia NZ',
+    embedding: null,
+  },
+  {
+    id: 'clinical_011',
+    category: 'clinical',
+    title: 'Other and Less Common Causes of Dementia',
+    content: `Dementia is not a single disease — it is an umbrella term for a collection of symptoms caused by over 100 different underlying conditions that damage the brain. Alzheimer's disease, vascular dementia, and Lewy body dementia account for the large majority of diagnoses, but several less commonly discussed causes are worth families knowing about, particularly because some are preventable or have a different care pathway.
+
+Alcohol-related brain injury (ARBI) results from sustained heavy alcohol consumption and can produce dementia-like symptoms; because the underlying cause is behavioural rather than purely neurodegenerative, some improvement is possible with abstinence and nutritional support, particularly if identified early. HIV-associated dementia reflects the direct and indirect effects of the human immunodeficiency virus on brain tissue. Traumatic brain injury can also lead to dementia over time, including Chronic Traumatic Encephalopathy (CTE) from repeated head impacts — well documented in contact-sport athletes — and dementia following a single severe blast or impact injury.
+
+Less common still are childhood dementia — a group of over 100 rare genetic disorders that cause progressive loss of skills in children — and Down syndrome-associated Alzheimer's disease, which occurs at much higher rates and often at a younger age in people with Down syndrome because of the extra copy of chromosome 21 (which carries the amyloid precursor protein gene). Limbic-predominant Age-related TDP-43 Encephalopathy (LATE) is a further example: a biologically distinct condition, only identified as a separate entity in recent years, that can look clinically like Alzheimer's disease but has different underlying pathology and is now understood to be a common contributor to dementia symptoms in the oldest age groups.
+
+Because the underlying cause shapes both prognosis and treatment options, families noticing an unusual symptom pattern — for example, symptoms starting well before age 65, or a history of heavy alcohol use, significant head injury, or HIV — should ask their GP for referral to a specialist who can investigate the specific cause rather than assuming a standard Alzheimer's or vascular pattern.`,
+    tags: ['causes of dementia', 'alcohol-related brain injury', 'ARBI', 'HIV-associated dementia', 'traumatic brain injury', 'CTE', 'childhood dementia', 'Down syndrome', 'LATE'],
+    source_url: 'https://www.dementia.org.au/about-dementia/causes-and-types-dementia',
+    source_org: 'Dementia Australia',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_011',
+    category: 'best-practices',
+    title: 'Cognitive Stimulation Therapy and Other Cognitive Therapies',
+    content: `For people with mild-to-moderate dementia, several structured, evidence-based therapies exist to help maintain or improve memory and thinking — distinct from medication, and worth discussing with a GP or dementia specialist alongside any pharmacological treatment.
+
+Cognitive Stimulation Therapy (CST) is a group-based programme of themed discussion and activity sessions — puzzles, games, and structured conversation — typically run as 14 sessions of around 45 minutes with 5 to 8 participants, ideally repeated for a second course of 14 sessions. CST is designed to build concentration, language skills (word-finding, naming, comprehension), memory, and confidence in group conversation, and is usually available through community programmes or hospital outpatient services; a GP mental health plan can sometimes help with the cost.
+
+Cognitive training, sometimes called "brain training," involves repetitive thinking exercises of increasing difficulty — often app-based or pen-and-paper puzzles similar to games. It has reasonable evidence for mild cognitive impairment and may help delay the onset of dementia, but it is not yet clear whether it helps people who already have a dementia diagnosis, and improvements tend to be specific to the skill practised rather than generalising broadly. Simple, enjoyable options with a similar cognitive benefit include jigsaw puzzles, music and singing, dancing, card games, and word or number puzzles — particularly when done socially, which adds an additional layer of benefit.
+
+Cognitive rehabilitation is the most individualised of the three: a therapist or occupational therapist works with the person to set a personally meaningful goal — for example, someone who repeatedly forgets they have left the stove on might work on attention exercises, a simplified recipe, or an external memory aid like a timer alarm. It has a good evidence base in mild cognitive impairment and mild dementia but is more time-consuming and intensive to deliver than group programmes.
+
+Ask the GP or a memory service about local CST groups or referral to an occupational therapist for cognitive rehabilitation — access varies by region, so a dementia advisor can help identify what's available locally.`,
+    tags: ['cognitive stimulation therapy', 'CST', 'cognitive training', 'cognitive rehabilitation', 'brain training', 'non-pharmacological', 'memory'],
+    source_url: 'https://forwardwithdementia.au/for-carers/managing-changes/3-5-cognitive-therapies-and-rehabilitation/',
+    source_org: 'Forward with Dementia',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_012',
+    category: 'best-practices',
+    title: 'Helping Someone with Dementia Stay Focused on a Task',
+    content: `People with dementia typically find it much harder than others to filter out irrelevant sensory information — their brains have to work substantially harder to block out background noise, movement, and clutter, which makes sustaining attention on a single task genuinely more effortful, not simply a matter of willpower or motivation.
+
+A few practical adjustments make a real difference. Do one thing at a time rather than encouraging any kind of multi-tasking, and build in frequent short breaks rather than expecting sustained focus over a long stretch. Schedule anything mentally demanding for whenever the person is naturally most alert — for most people this is the morning — and save routine or physical tasks for the afternoon, when concentration typically wanes; plan a rest before any evening activity for the same reason.
+
+The environment matters as much as the task itself: reduce background noise and visual clutter, and make sure lighting is genuinely adequate — older adults need roughly twice the light intensity of a much younger adult to see as clearly, so a room that looks well lit to a carer may not be well lit enough for the person they are supporting.
+
+A simple but effective technique for multi-step tasks is verbal rehearsal: ask the person to repeat the instruction back in their own words before they start — for example, "get the prescription from the kitchen" — which helps anchor the goal and makes them less likely to be derailed by something else they notice on the way. What works varies between individuals, so it is worth trying a few of these adjustments deliberately and noting which ones actually help in practice.`,
+    tags: ['attention', 'focus', 'task completion', 'environment', 'lighting', 'communication', 'daily activities'],
+    source_url: 'https://forwardwithdementia.au/for-carers/managing-changes/3-9-helping-people-with-dementia-to-stay-on-task/',
+    source_org: 'Forward with Dementia',
+    embedding: null,
+  },
+  {
+    id: 'homesafety_011',
+    category: 'home-safety',
+    title: 'Living Alone with Dementia: Safety and Support Planning',
+    content: `Many people with early or mild dementia can continue living alone safely, but doing so well takes deliberate planning rather than waiting until a crisis forces the issue. Whether solo living remains safe depends on the individual's circumstances, the type and stage of their dementia, any other health conditions, and the support available around them.
+
+Rather than trying to solve every possible risk at once, start with a short, specific list of what is actually difficult for the person right now, or what worries you most — this is far more manageable than an open-ended worry about "everything that could go wrong." Build a layered support network around them: informal support from friends, family, and neighbours; formal support through aged-care services, the GP, and other health and social services; and peer support through dementia-friendly community groups.
+
+Simple, informal safety checks can be surprisingly effective — one carer described how a neighbour knew the person living alone was safely up and about each morning because of a small daily routine (hanging a towel out), without either party needing to frame it as "checking up" on them. Formal technology can extend this further: reminders, item-finding tools, fall detection, and other safety and social-connection technologies are increasingly available, and an assistive-technology directory can help identify options suited to a particular home and situation.
+
+If the person is reluctant to discuss extra support, it often helps to first understand how much insight they have into the areas of difficulty — someone who does not recognise a problem exists is unlikely to accept a solution framed around it. Revisit the plan regularly rather than treating it as a one-off decision, since needs — and what "safe enough" looks like — change as dementia progresses.`,
+    tags: ['living alone', 'independence', 'safety planning', 'support network', 'assistive technology', 'peer support'],
+    source_url: 'https://forwardwithdementia.au/for-carers/managing-changes/3-20-living-alone-with-dementia/',
+    source_org: 'Forward with Dementia',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_013',
+    category: 'best-practices',
+    title: 'Supporting Independence: Right-Sizing Help with Daily Activities',
+    content: `One of the hardest balances in dementia care is offering enough help that a task gets done safely, without offering so much that the person is left with nothing to do and no sense of contribution. The Alzheimer's Association frames this as "supporting independence" rather than "doing things for" someone, and it is a distinction worth holding onto deliberately, because the instinct to take over — especially when a task is taking a long time or being done "wrong" — is strong and usually counterproductive.
+
+In practice, this means breaking activities into smaller steps and offering help only at the specific step where it is needed, rather than at the level of the whole task. Someone who can still wash but struggles to sequence the steps of dressing may only need the clothes laid out in order, not to be dressed. Someone who can still hold a spoon but has trouble judging table height may need a simplified place setting rather than to be fed. Building in extra time is essential: rushing a person with dementia through a task they could complete independently, just more slowly, quietly removes one of the few areas of life still within their control.
+
+The safety-versus-independence tension does not have a single right answer and shifts as the disease progresses — a decision that was reasonable six months ago (cooking alone, for instance) may no longer be, and revisiting these decisions on a regular, planned basis is more sustainable than waiting for a safety incident to force the issue. Involving the person in the conversation about what they can still do, for as long as they are able to take part in it, also helps preserve dignity and reduces resistance to help when it is genuinely needed.`,
+    tags: ['independence', 'activities of daily living', 'dignity', 'step-by-step assistance', 'safety balance'],
+    source_url: 'https://www.alz.org/help-support/resources/empowered-caregiver',
+    source_org: 'Alzheimer\'s Association',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_014',
+    category: 'best-practices',
+    title: 'Understanding Behaviour as a Form of Communication',
+    content: `Rather than treating each new behaviour change — resistance, repetition, restlessness, calling out — as its own isolated problem to be solved, the Alzheimer's Association encourages caregivers to start from a single underlying question: what unmet need is this behaviour trying to express? As dementia progresses, verbal language is often the first channel to fail, and behaviour becomes one of the few remaining ways a person can signal pain, fear, boredom, overstimulation, confusion about their surroundings, or an unmet physical need such as hunger, thirst, or needing the bathroom.
+
+This reframing changes what a caregiver looks for. Instead of asking "how do I stop this behaviour," the more useful questions are: what happened just before it started (a change of room, a loud noise, a new face)? What time of day is it, and does this happen at the same time regularly? Has anything changed physically — a urinary tract infection, constipation, an ill-fitting hearing aid, unaddressed pain — that could explain a sudden shift in behaviour that seems otherwise out of character? A simple ABC log (Antecedent, Behaviour, Consequence) kept for even a few days often reveals a pattern that is not obvious in the moment.
+
+This approach does not mean every behaviour has an easily identified cause, and some will remain unexplained despite careful observation. But treating behaviour as communication rather than as defiance or a personality change reduces the temptation to respond with correction or argument, and it is also the point at which caregivers should judge whether a behaviour has become frequent, severe, or risky enough to need a GP review or specialist behavioural support, rather than being managed at home alone indefinitely.`,
+    tags: ['behaviour as communication', 'unmet needs', 'ABC log', 'behaviour change', 'underlying causes'],
+    source_url: 'https://www.alz.org/help-support/resources/empowered-caregiver',
+    source_org: 'Alzheimer\'s Association',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_015',
+    category: 'best-practices',
+    title: 'Responsive Behaviours: A Person-Centred, Detective-Based Approach',
+    content: `Dementia Training Australia (DTA) deliberately uses the term "responsive behaviours" rather than "challenging behaviours" or the clinical shorthand BPSD (behavioural and psychological symptoms of dementia), because the framing changes how caregivers approach what they see. A responsive behaviour is understood as a response — to pain, frustration, fear, boredom, overstimulation, or an unmet need the person can no longer put into words as the disease affects the brain's ability to communicate.
+
+DTA's approach treats each incident as something to investigate rather than something to simply stop. Its Changed Behaviour Toolkit encourages caregivers and care teams to work through a structured process: what happened immediately before the behaviour, what was going on in the environment (noise, unfamiliar people, time of day), whether a physical cause such as pain, constipation, infection, or hunger could explain it, and what has helped or made things worse in similar past episodes. This information then feeds into a behaviour support plan — a written, individualised set of strategies specific to that person, rather than a generic response applied to "the behaviour" in the abstract.
+
+A central, repeated theme in DTA's training is that the caregiver's own communication style directly shapes how an episode unfolds — a calm, unhurried, non-confrontational response tends to de-escalate, while arguing, correcting, or rushing tends to intensify distress. DTA frames this as detective work that gets easier with practice: the same behaviour rarely has the same single cause every time, and the goal of tracking incidents over days or weeks is to notice patterns invisible in any single moment, so that prevention — adjusting the environment or routine before the trigger occurs — gradually replaces reacting after the fact.`,
+    tags: ['responsive behaviours', 'BPSD', 'behaviour support plan', 'changed behaviour toolkit', 'de-escalation', 'person-centred care'],
+    source_url: 'https://dta.com.au/topic/behaviours/',
+    source_org: 'Dementia Training Australia (DTA)',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_016',
+    category: 'best-practices',
+    title: 'What Good Carer Training and Education Should Look Like',
+    content: `Rather than leaving carer education to whatever a family happens to find, the UK's NICE dementia guideline sets out specific standards for what good carer training should include and how it should be delivered — standards worth using as a checklist when looking for a carer education programme or course, wherever it is offered.
+
+On content, NICE recommends that carer education cover dementia itself and how symptoms are likely to change as the condition progresses, alongside practical training in how to understand and respond to changes in behaviour — treating behaviour management as a skill to be taught explicitly, not something carers are expected to work out through trial and error. Training should also include guidance on looking after the carer's own physical and mental health, emotional wellbeing, and — a detail easy to overlook — spiritual wellbeing, recognising that caregiving raises questions of meaning and identity that are not purely practical.
+
+On delivery, the guideline is specific in ways that are easy to miss when evaluating a course: it should be tailored to the individual carer's needs and preferences rather than one-size-fits-all, held somewhere genuinely easy for the carer to get to (a significant barrier when a carer cannot easily leave the person alone), and, notably, NICE finds that group-based sessions tend to be more effective than one-to-one education alone — likely because they provide peer connection and normalisation alongside information. Finally, the guideline flags explicitly that carers of people with dementia face a measurably increased risk of depression, which is part of the argument for treating carer education and psychological support as a clinical priority rather than an optional add-on to the person's own care.`,
+    tags: ['carer training', 'psychoeducation', 'NICE NG97', 'carer depression risk', 'group support'],
+    source_url: 'https://www.nice.org.uk/guidance/ng97/chapter/recommendations',
+    source_org: 'NICE (National Institute for Health and Care Excellence)',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_017',
+    category: 'best-practices',
+    title: 'Non-Drug Approaches First: NICE\'s Framework for Distress and Agitation',
+    content: `When a person with dementia becomes agitated, aggressive, or distressed, NICE's guideline sets out a clear order of operations that puts investigation and non-drug approaches ahead of medication in essentially every circumstance short of an acute safety risk. The first recommended step is always a structured assessment of possible causes — checking for pain, infection, constipation, an unmet physical need, or an environmental trigger such as noise, unfamiliar surroundings, or overstimulation — before assuming the behaviour itself is the problem to be treated.
+
+Following that assessment, NICE recommends offering psychosocial and environmental interventions as the primary, ongoing management strategy, not as something to try briefly before moving on to medication. A specifically named example is offering personalised activities matched to the individual's interests and abilities, aimed at promoting engagement, pleasure, and a sense of purpose — since boredom and understimulation are common, under-recognised drivers of agitation. For sleep problems specifically, the guideline recommends a multicomponent approach combining sleep hygiene education, daytime exposure to natural light, physical exercise, and personalised daytime activity, rather than reaching for a sleep medication as the first response.
+
+Medication, and antipsychotics in particular, are positioned explicitly as a last resort — appropriate only where the person is at risk of harming themselves or others, or is severely distressed by symptoms such as hallucinations or delusions that have not responded to other approaches. Even then, NICE specifies using the lowest effective dose, reassessing benefit at least every six weeks, and stopping the medication if it is not providing a clear, ongoing benefit — a standard worth a family carer knowing and asking about directly if antipsychotic medication for behavioural symptoms continues for months without a documented review.`,
+    tags: ['non-drug approaches', 'agitation', 'personalised activities', 'antipsychotic review', 'NICE NG97'],
+    source_url: 'https://www.nice.org.uk/guidance/ng97/chapter/recommendations',
+    source_org: 'NICE (National Institute for Health and Care Excellence)',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_018',
+    category: 'best-practices',
+    title: 'Building Distress-Management Activities Around Preserved Abilities and Past Roles',
+    content: `SIGN 168's approach to managing distressed behaviours in dementia shares the general principle of investigating causes before intervening, but adds a specific, practical design rule for the non-drug activities and strategies used day to day: build them around what the person can still do and who they have been, rather than around a generic activity list applied to everyone with a similar diagnosis.
+
+The guideline recommends that activities be tailored to the individual following a comprehensive, structured assessment, with a deliberate focus on preserved capabilities — skills and interests that remain intact even as others decline — and explicit consideration of the person's previous roles, interests, and preferences. A retired teacher may respond well to being "consulted" or asked to help explain something, drawing on decades of a helping, expert identity, in a way a generic craft activity would not touch. A person who spent a working life outdoors may find far more calm in time in a garden than in an indoor group activity chosen because it is convenient to run. This is a more demanding approach than a standard activity programme, but SIGN 168's evidence review found it more effective specifically because it engages identity and competence, not just occupies time.
+
+For carers, SIGN 168 recommends structured psychoeducation and skills training covering problem-solving, identifying specific triggers for distress, communication techniques, and crisis management — treating the skill of designing and adapting these personalised activities as something carers can be actively taught, rather than something they are expected to intuit. Keeping a simple record of what has worked for this specific person, and why it might connect to their history or preferences, turns this from a one-off insight into an ongoing, refinable strategy.`,
+    tags: ['non-pharmacological approaches', 'personalised activities', 'distressed behaviours', 'preserved abilities', 'carer training'],
+    source_url: 'https://www.sign.ac.uk/media/2157/sign-168-dementia.pdf',
+    source_org: 'SIGN (Scottish Intercollegiate Guidelines Network) Guideline 168',
+    embedding: null,
+  },
+  {
+    id: 'bestpractices_019',
+    category: 'best-practices',
+    title: 'The Evidence on Non-Drug Therapies: What Actually Helps and Why',
+    content: `Non-drug approaches to dementia-related distress — music, reminiscence, structured activity, sensory approaches, and many others — are widely recommended, but the Wicking Dementia Centre's research programme adds a useful, more critical layer: an honest look at how strong the evidence actually is for different approaches, rather than treating all non-pharmacological options as equally well-supported simply because they are non-drug.
+
+Some approaches have reasonably solid evidence behind specific outcomes: structured, personalised activity matched to a person's interests and abilities has consistent evidence for reducing agitation and improving engagement, and music that is personally meaningful to the individual (rather than generic "calming" playlists) has some of the more robust evidence among sensory approaches, likely because musical memory is often relatively preserved even in more advanced dementia. Other approaches are promising but less consistently studied — multisensory environments, aromatherapy, and animal-assisted interaction show benefit in some studies and settings but with more mixed or lower-quality evidence overall, meaning they are reasonable to try for an individual (since the risk of harm is generally low) without expecting the same reliability as a well-established approach.
+
+The broader research lesson, and one Wicking emphasises in its own teaching, is that non-pharmacological approaches are not a single category with uniform effectiveness — what works well depends heavily on matching the specific approach to the specific person, the specific symptom being addressed, and realistic expectations about the size of the likely effect. A family carer trying a new non-drug strategy is well served by treating it as a genuine trial: introducing one change at a time, observing its actual effect on this particular person over one to two weeks, and being willing to conclude that something reasonable in principle simply is not working for this individual, rather than assuming a lack of effect reflects doing it wrong.`,
+    tags: ['non-pharmacological therapies', 'evidence-based practice', 'music therapy', 'personalised activities', 'research evidence'],
+    source_url: 'https://www.utas.edu.au/wicking/research/translational-neuroscience',
+    source_org: 'Wicking Dementia Research and Education Centre, University of Tasmania',
+    embedding: null,
+  },
+  {
+    id: 'caregiving_011',
+    category: 'caregiving',
+    title: 'Building Foundations of Caregiving: Adjusting to the Role and Building a Support Team',
+    content: `Becoming a dementia caregiver is rarely a single decision — it is a gradual shift that often begins with small favours (paying a bill, driving to an appointment) and grows into a much larger role before most people consciously notice the change. The Alzheimer's Association's caregiver education work starts here deliberately, because naming the transition helps carers recognise it is a role with real demands, not just an extension of an existing relationship, and that recognition is what makes it possible to plan for rather than simply absorb.
+
+A central recommendation is to build a support team early, before a crisis forces it. This means identifying specific people for specific tasks rather than relying on one vague offer of "let me know if you need anything" — for example, one family member who can sit with the person for two hours a week, a neighbour who can collect groceries, and a friend who is simply willing to listen without offering advice. Formal supports matter too: a GP who understands the diagnosis, a local Alzheimer's or dementia organisation, and, where available, a support group of people in a similar situation, since peer carers often normalise experiences (guilt, grief, frustration) that can otherwise feel isolating or shameful.
+
+Managing caregiver stress is treated as a caregiving skill in its own right rather than an optional extra. Warning signs include denial about the diagnosis's impact, withdrawal from friends and activities, anxiety about the future, and physical symptoms like exhaustion or getting sick more often. The practical advice is to build in small, protected breaks before exhaustion sets in, accept that some tasks will be done imperfectly by others, and revisit the support plan regularly, since what is needed in month one of caregiving is rarely what is needed a year in.`,
+    tags: ['caregiver role', 'support team', 'caregiver stress', 'getting started', 'care partners', 'burnout prevention'],
+    source_url: 'https://www.alz.org/help-support/resources/empowered-caregiver',
+    source_org: 'Alzheimer\'s Association',
+    embedding: null,
+  },
+  {
+    id: 'caregiving_012',
+    category: 'caregiving',
+    title: 'Managing the Practical and Financial Side of Caregiving',
+    content: `Dementia caregiving carries real financial costs that are easy to underestimate at the outset — missed income from reduced work hours, home modifications, paid help, incontinence supplies, and eventually the cost of day programmes or residential care — and the Alzheimer's Association's "Managing Money" guidance treats early financial organisation as a caregiving task on the same level as arranging medical appointments, not an afterthought.
+
+The first practical step is consolidating information while the person can still help provide it: a list of accounts, income sources, insurance policies, debts, and key contacts (accountant, lawyer, financial adviser), along with where original documents are kept. Setting up a simple, transparent way to track caregiving-related spending from the start avoids confusion later, particularly in families where more than one person is contributing time or money and disagreements about fairness can otherwise surface under stress.
+
+Protecting against financial exploitation is treated as a distinct priority, since people with dementia are a specifically targeted group for scams and, less often discussed, for undue influence or exploitation by people close to them. Practical safeguards include setting up account alerts for unusual activity, adding a trusted secondary contact on major accounts, reviewing mail and bank statements together regularly rather than occasionally, and being alert to sudden new "friends," unexplained large withdrawals, or pressure to change a will or power of attorney. As with legal planning, financial conversations and safeguards are far easier to put in place while the person can still participate in and understand them, which is the practical argument for starting earlier than feels urgent.`,
+    tags: ['financial planning', 'caregiving costs', 'financial exploitation', 'record keeping', 'power of attorney'],
+    source_url: 'https://www.alz.org/help-support/caregiving/financial-legal-planning/managing-money',
+    source_org: 'Alzheimer\'s Association',
+    embedding: null,
+  },
+  {
+    id: 'caregiving_013',
+    category: 'caregiving',
+    title: 'Free Online Dementia Training for Family Carers and Volunteers',
+    content: `One of the more underused resources available to family carers is that much of the same evidence-based dementia training built for paid aged-care staff is freely available to the public. Dementia Training Australia (funded by the Australian Government) makes a full library of short online courses, videos, toolkits, and handbooks openly accessible, covering exactly the practical situations family carers encounter — no professional role or employer is required to enrol.
+
+Courses of direct relevance to family carers include structured modules on responsive behaviours and how to reduce escalation, dementia care training originally designed for aged-care volunteers (useful for anyone supporting a person outside a strict caregiving relationship, such as a friend or neighbour), and standards-based introductions to what "quality dementia care" looks like in practice, drawn from the same framework used to train professional care staff. DTA also maintains "learning pathways" — curated sequences of short courses grouped by topic or care setting — so a carer can follow a structured path rather than browsing a large, unsorted library and guessing where to start.
+
+Because the content is designed for a professional audience, it tends to be more structured and evidence-referenced than typical consumer-facing carer guides, while remaining accessible without a clinical background. For a family carer looking to build skills systematically rather than searching for answers only when a new problem arises, working through a learning pathway — even one module at a time, alongside the daily demands of caregiving — builds a base of practical technique that pays off across many different situations, rather than addressing only the specific issue currently causing stress.`,
+    tags: ['online training', 'carer education', 'quality dementia care', 'learning pathways', 'free courses'],
+    source_url: 'https://dta.com.au/online-dementia-courses/',
+    source_org: 'Dementia Training Australia (DTA)',
+    embedding: null,
+  },
+  {
+    id: 'caregiving_014',
+    category: 'caregiving',
+    title: 'Your Right to a Carer\'s Assessment and Coordinated Support (NICE Guidance)',
+    content: `The UK's NICE guideline on dementia care (NG97) is written primarily for health professionals, but several of its recommendations describe entitlements and standards of support that any family carer — wherever they live — can use as a benchmark for what good support should look like, and as language to ask for it more specifically.
+
+The guideline recommends that every carer be offered their own carer's assessment, separate from any assessment of the person they care for, covering both their practical caregiving situation and their own physical and mental health needs, alongside information about respite care, other support services, and psychological therapies available to carers specifically — not just to the person with dementia. This distinction matters: a carer's needs (sleep, mental health, time away from caregiving, their own medical care) are treated as a legitimate subject of assessment in their own right, not merely a side effect of the person's care plan to be addressed informally if there is time.
+
+NICE also recommends that people living with dementia be given a single named health or social care professional responsible for coordinating their care — a specific point of contact rather than a rotating cast of different services each carer must re-explain the situation to. Care plans, in turn, should be actively agreed and reviewed with the person, their family, and relevant professionals together, rather than decided by professionals and handed down. For a carer navigating a fragmented health and social care system, these are useful, concrete things to specifically ask for by name: "Can I have a carer's assessment?" and "Who is our named care coordinator?" tend to get a clearer response than a general request for more help.`,
+    tags: ['carer\'s assessment', 'care coordination', 'NICE NG97', 'carer rights', 'respite'],
+    source_url: 'https://www.nice.org.uk/guidance/ng97/chapter/recommendations',
+    source_org: 'NICE (National Institute for Health and Care Excellence)',
+    embedding: null,
+  },
+  {
+    id: 'caregiving_015',
+    category: 'caregiving',
+    title: 'The \'Single Point of Contact\' Model of Post-Diagnostic Support',
+    content: `One of the most consistent complaints from families navigating a dementia diagnosis is not a lack of services, but the difficulty of finding and coordinating between them — a different specialist for cognition, a different team for social care, a different contact for benefits and financial support, with no one person holding the whole picture. Scotland's SIGN 168 guideline responds to this directly, recommending that post-diagnostic support be co-ordinated between services and delivered through a single point of contact for both the person with dementia and their carers.
+
+In practice, Scotland has implemented this as a "link worker" model, guaranteeing at least a year of coordinated, named support immediately following diagnosis — a specific person whose role is to help the family understand the diagnosis, connect with relevant services, plan ahead, and access support at the pace and in the order that suits their situation, rather than the family having to independently discover and approach each service in turn. The guideline frames continuity of this kind, a person you don't have to re-explain your situation to every time, as a core component of good post-diagnostic care rather than a nice-to-have extra.
+
+While the specific "link worker" title and funding model are Scottish, the underlying model is a useful benchmark anywhere: after a diagnosis, it is reasonable to ask directly whether there is a single named person or service responsible for coordinating support, and to push for that role to exist even where it is not automatically offered, rather than accepting a fragmented set of one-off referrals as the default experience of post-diagnostic care.`,
+    tags: ['post-diagnostic support', 'care coordination', 'link worker', 'single point of contact', 'SIGN 168'],
+    source_url: 'https://www.sign.ac.uk/media/2157/sign-168-dementia.pdf',
+    source_org: 'SIGN (Scottish Intercollegiate Guidelines Network) Guideline 168',
+    embedding: null,
+  },
+  {
+    id: 'caregiving_016',
+    category: 'caregiving',
+    title: 'Financial and Employment Planning for Young Onset Dementia',
+    content: `Because young onset dementia typically arrives during a person's peak working and earning years, the financial planning task looks different from later-life dementia, and Dementia UK's guidance for younger-onset families focuses heavily on workplace and income questions that older-onset guidance rarely needs to address in the same depth.
+
+On employment, dementia meets the legal threshold for disability under equality and discrimination legislation in the UK, which gives a diagnosed employee specific legal protection from workplace discrimination and a right to request reasonable adjustments — information many newly diagnosed people and their families do not know to ask about. Some people continue working for a period with adjusted roles or hours; others need to stop sooner than planned, which raises immediate questions about income, benefits eligibility (Carer's Allowance, Employment and Support Allowance, Personal Independence Payment, and council tax reductions are all worth checking via a benefits calculator), and pension access. Early access to a pension is often possible but carries long-term trade-offs that are genuinely worth professional financial advice before deciding, and National Insurance credits can help protect a State Pension for someone who stops working earlier than expected.
+
+Day-to-day financial management deserves early, practical attention too: setting up standing orders or direct debits for regular bills reduces the risk of missed payments as symptoms progress, and using a prepaid card for discretionary spending, rather than direct access to a full joint account, can help monitor spending without removing all independence at once — joint accounts specifically carry shared liability risks worth understanding before relying on one as symptoms progress. As with any dementia diagnosis, but with particular urgency here given the working-age financial stakes involved, establishing a Lasting Power of Attorney for both health/welfare and property/finance, and making or updating a will, are priorities to act on while the person can still participate fully in the decisions.`,
+    tags: ['young onset dementia', 'employment rights', 'financial planning', 'power of attorney', 'benefits'],
+    source_url: 'https://www.dementiauk.org/information-and-support/financial-and-legal-support/finance-and-young-onset-dementia/',
+    source_org: 'Young Dementia Network',
+    embedding: null,
+  },
+  {
+    id: 'caregiving_017',
+    category: 'caregiving',
+    title: 'Four Areas to Cover While Future Plans Can Still Be Made Together',
+    content: `Forward with Dementia organises future planning after a dementia diagnosis into four distinct areas, deliberately broken apart rather than treated as one large, overwhelming task — a structure that makes the work more approachable and easier to tackle a piece at a time rather than all at once.
+
+The first is financial and legal matters, starting with an updated will that reflects the person's actual, current wishes rather than an old version that may no longer match their situation or relationships. The second is medical decision-making authority — formally documenting who can make healthcare choices once the person cannot make them independently, distinct from and complementary to the values-based advance care plan itself. The third is care arrangements: decisions about the kind of personal or residential care the person would want, made in advance rather than under the time pressure of a sudden health crisis or hospital discharge deadline, when decisions are much harder to make well. The fourth is broader decision-making authority — appointing someone (through a power of attorney or equivalent local instrument) to act on the person's behalf across everyday financial and administrative matters, not only medical ones.
+
+The guidance is candid that these conversations feel uncomfortable and are easy to keep postponing, precisely because they require acknowledging that a time will come when the person cannot express their wishes or make informed decisions independently. But Forward with Dementia frames the discomfort as worth pushing through specifically because of what it produces afterward: both the person with dementia and their family carer consistently report that having these plans genuinely in place — not merely discussed once and left unresolved — brings real peace of mind and a stronger, more grounded sense of control over what is otherwise an unpredictable situation.`,
+    tags: ['future planning', 'power of attorney', 'will', 'medical decision-making', 'care arrangements'],
+    source_url: 'https://forwardwithdementia.au/for-carers/planning-decisions/5-9-ensure-plans-for-the-future-are-in-place/',
+    source_org: 'Forward with Dementia',
+    embedding: null,
+  },
+  {
+    id: 'clinical_012',
+    category: 'clinical',
+    title: 'Preparing for a Hospital Visit or Admission',
+    content: `The National Institute on Aging is direct about hospital stays for people with dementia: it is wise to treat hospitalisation as a "when," not an "if." Falls, infections, and other acute illnesses are common, and an unplanned admission is far more disorienting and risky for a person with dementia than for most other patients — new environments, unfamiliar staff, disrupted routines, and pain or medication changes can all trigger a sharp, sometimes lasting, decline in confusion known as delirium.
+
+Preparation ahead of any admission makes a real difference. NIA recommends assembling a hospital "go bag" in advance containing insurance and identification documents, a full medication list, any advance directives, and — critically — a one-page personal information sheet describing the person's normal communication style, routines, likes, dislikes, and known behavioural triggers, so unfamiliar staff can understand them quickly. Comfort items (a familiar blanket, photo, or piece of music), snacks, incontinence supplies, and a notepad for tracking questions and instructions round out the bag.
+
+Once admitted, a caregiver's presence and advocacy matters enormously: keeping the room calm and quiet, minimising unfamiliar visual clutter, using a soothing voice and familiar rituals, and staying alert to pain that the person may not be able to report clearly — NIA suggests requesting pain assessments on a regular schedule rather than waiting for the person to ask. Caregivers should also ask staff to limit rapid-fire direct questioning of the person, clarify who will help with toileting and other personal care tasks, and start discharge planning early, since going home safely often requires arranging follow-up support before the person leaves, not after.`,
+    tags: ['hospital visit', 'hospitalisation', 'delirium', 'emergency preparation', 'hospital bag', 'advocacy'],
+    source_url: 'https://www.nia.nih.gov/health/caregiving',
+    source_org: 'National Institute on Aging',
+    embedding: null,
+  },
+  {
+    id: 'clinical_013',
+    category: 'clinical',
+    title: 'End-of-Life Alzheimer\'s Care: Comfort, Hospice, and Palliative Support',
+    content: `In the final stage of Alzheimer's disease, a person typically loses the ability to communicate pain or distress in words, so caregivers and clinicians need to watch instead for groans or sighs, grimacing when touched or moved, restlessness, or unusual body positioning as possible signs of discomfort. NIA's guidance is clear that comfort, not cure, becomes the central goal of care at this stage, and that good planning — knowing what to expect and what options exist — genuinely makes this period easier for both the person and their family.
+
+Comfort care draws on several complementary approaches: medical pain management coordinated with the healthcare team; emotional and spiritual comfort through familiar storytelling, looking through photographs together, and gentle touch or massage; and sensory approaches such as playing familiar music, gentle white noise, or recordings of nature sounds to reduce agitation when a person can no longer process complex stimulation. Simple physical presence matters more than most caregivers expect — sitting quietly with someone, even without conversation, can be calming in itself.
+
+Hospice and palliative care programmes are worth engaging early rather than only in the final days or weeks, since they can help coordinate medical care, arrange equipment and additional home support, and guide families through decisions about treatments that may no longer align with comfort-focused goals. NIA also names something caregivers are often reluctant to voice: the emotional aftermath of a death from Alzheimer's frequently includes not only sadness and grief but also a loss of purpose and, for many caregivers, an accompanying sense of relief — and all of these reactions, including relief, are a normal and legitimate response to years of caregiving.`,
+    tags: ['end-of-life care', 'hospice', 'palliative care', 'comfort care', 'late-stage dementia', 'caregiver grief'],
+    source_url: 'https://www.nia.nih.gov/health/alzheimers-caregiving/care-last-stages-alzheimers-disease',
+    source_org: 'National Institute on Aging',
+    embedding: null,
+  },
+  {
+    id: 'clinical_014',
+    category: 'clinical',
+    title: 'Medical Orders and Advance Directives: Documenting Treatment Wishes',
+    content: `Advance care planning is often discussed in terms of who will make decisions — for example, a power of attorney — but a separate, equally important layer is documenting exactly what treatments the person would or would not want, in medical terms clinicians can act on immediately in an emergency. Alzheimers.gov distinguishes a living will, which states general preferences about future medical care, from more specific medical orders that a doctor signs and that travel with the patient across care settings.
+
+These specific orders typically include a Do Not Resuscitate (DNR) order, which instructs staff not to attempt CPR, and — in many health systems — a POLST or MOLST form (Physician/Medical Orders for Life-Sustaining Treatment), a portable, actionable document covering resuscitation, the desired level of medical intervention, and artificial nutrition, designed to be honoured by paramedics and hospital staff without requiring a fresh conversation in a crisis. Because these are clinical orders rather than general statements of preference, they need a conversation with, and signature from, the treating doctor, ideally while the person can still describe their own wishes.
+
+Alzheimers.gov also flags a decision that is easy to overlook amid the more urgent planning tasks: whether the person wishes to be an organ or brain donor, which for brain donation in particular can meaningfully contribute to dementia research and needs to be arranged in advance rather than decided at the time of death. As with all advance planning, the practical guidance is the same — have these conversations, and get the documents signed, as early as possible, since the ability to participate meaningfully in these decisions narrows as the disease progresses.`,
+    tags: ['advance directives', 'DNR', 'POLST', 'MOLST', 'living will', 'organ donation', 'medical orders'],
+    source_url: 'https://www.alzheimers.gov/life-with-dementia/planning-after-diagnosis',
+    source_org: 'Alzheimers.gov',
+    embedding: null,
+  },
+  {
+    id: 'clinical_015',
+    category: 'clinical',
+    title: 'Understanding Psychotropic Medicines in Dementia Care',
+    content: `Psychotropic medicines — a category that includes antipsychotics, benzodiazepines, antidepressants, opioids, and anticholinesterase medicines — are commonly prescribed at some point in dementia care, but Dementia Training Australia's education for carers and care workers is built around a clear caution: these medicines carry real safety risks and should support safe, person-centred care rather than serve as a first-line response to distress or responsive behaviours.
+
+Each class carries its own considerations. Antipsychotics, often used for agitation or psychotic symptoms, carry an increased risk of stroke and death in older people with dementia when used long-term, alongside sedation and falls risk. Benzodiazepines, sometimes used for anxiety or sleep, increase fall and fracture risk and can worsen confusion. Opioids used for pain management need careful dosing given increased sensitivity in frail older people. Anticholinesterase medicines (used to treat cognitive symptoms of Alzheimer's disease itself) can cause gastrointestinal side effects and interact with other medicines. Recognising the intended purpose, likely side effects, and safety considerations of each class allows a family carer to ask more informed questions rather than simply accepting or refusing a new prescription without understanding it.
+
+DTA's broader training programme places strong emphasis on deprescribing and regular medication review — actively working with the prescriber to reduce or stop medicines that are no longer helping, rather than treating a prescription as a permanent, unquestioned fixture. For a family carer, the practical takeaway is to ask, at every medication review, whether each psychotropic medicine is still achieving its original purpose, whether non-drug approaches have been tried for the underlying distress, and what a planned review or reduction would look like.`,
+    tags: ['psychotropic medicines', 'antipsychotics', 'medication review', 'deprescribing', 'medication safety'],
+    source_url: 'https://dta.com.au/resources/understanding-psychotropic-medicines-in-dementia-care-quick-learning-videos/',
+    source_org: 'Dementia Training Australia (DTA)',
+    embedding: null,
+  },
+  {
+    id: 'clinical_016',
+    category: 'clinical',
+    title: 'Understanding Dying: What Happens in the Final Days and Hours',
+    content: `Dementia UK's Admiral Nurses guidance on the dying process aims to replace fear of the unknown with a clear picture of what is, for most people, a gradual and generally peaceful physical decline. As the body's metabolism slows in the final days, appetite and thirst typically reduce sharply — this is a normal part of dying, not a failure of care, and forcing food or fluids at this stage can cause discomfort rather than help. Small amounts offered for enjoyment, ice chips, or moistening the lips with a damp sponge are usually more appropriate than continued efforts at full meals.
+
+Withdrawal and increased sleep are common as the final days approach: the person becomes calmer, less interested in their surroundings, and gradually less responsive, eventually slipping into unconsciousness. Breathing often changes too — becoming slower, shallower, or irregular, and a "rattle" caused by mucus build-up in the throat is common in the final hours; while it can sound distressing to family in the room, it does not usually indicate the person is struggling to breathe, and repositioning or specific medication can reduce it if needed. Skin may become pale and cool, and hands or feet may change colour as circulation slows.
+
+Throughout this stage, comfort measures matter more than active intervention: simply being present, holding a hand, speaking softly (hearing is thought to persist even when a person is unresponsive), using a familiar scent, playing music they loved, or gentle hand massage. The healthcare or hospice team can talk through what to expect and will typically arrange anticipatory medications in advance — for pain, anxiety, nausea, or breathlessness — often given via a small syringe driver so that discomfort can be managed quickly without repeated injections.`,
+    tags: ['end of life', 'dying process', 'comfort care', 'anticipatory medication', 'hospice'],
+    source_url: 'https://www.dementiauk.org/information-and-support/looking-after-yourself-as-a-carer/understanding-dying/',
+    source_org: 'Dementia UK',
+    embedding: null,
+  },
+  {
+    id: 'clinical_017',
+    category: 'clinical',
+    title: 'Sex, Intimacy, and Changes in Sexual Behaviour in Dementia',
+    content: `Intimacy within a relationship affected by dementia is a topic many caregivers find difficult to raise, yet Dementia UK's Admiral Nurses treat it as a legitimate and common concern worth addressing directly rather than leaving unspoken. Dementia can change intimacy in either direction: some people lose interest in physical or emotional closeness, sometimes no longer recognising their partner as their partner in the way they once did, while others develop a heightened interest in sexual contact, which can be distressing for a partner who does not reciprocate or who finds the changed dynamic upsetting rather than intimate.
+
+A mismatch in desire between partners — one wanting more closeness, the other withdrawing, or vice versa — is common and does not reflect a failure on either person's part; it reflects changes in the brain affecting emotional processing, memory, and inhibition. The guidance encourages broadening the definition of intimacy beyond sex specifically: kissing, hand-holding, cuddling, massage, and simply spending unhurried, relaxed time together can meet real emotional needs even where a sexual relationship has changed or ended.
+
+Consent is treated as an ongoing, moment-by-moment question rather than something settled once at the start of a relationship: a positive, engaged response indicates willingness, while withdrawal, distress, or reduced responsiveness indicates it should stop, and — importantly — consent given on one occasion does not carry over automatically to the next, since capacity and mood can shift day to day or even hour to hour with dementia. Where changes in sexual behaviour or expression are causing distress to either partner, or raising questions about capacity to consent, Admiral Nurses and dementia specialists can help a couple think through how to meet both people's needs safely and with dignity, rather than treating the topic as something to simply avoid.`,
+    tags: ['intimacy', 'sexual behaviour changes', 'consent', 'relationships', 'dementia and partners'],
+    source_url: 'https://www.dementiauk.org/information-and-support/living-with-dementia/sex-intimacy-and-dementia/',
+    source_org: 'Dementia UK',
+    embedding: null,
+  },
+  {
+    id: 'clinical_018',
+    category: 'clinical',
+    title: 'Dementia with Lewy Bodies: Recognising the Distinct Pattern',
+    content: `Dementia with Lewy bodies (DLB) is the second most common progressive dementia after Alzheimer's disease, caused by abnormal protein deposits (Lewy bodies) in the brain, and the Family Caregiver Alliance's guidance is aimed squarely at helping families recognise a pattern that looks meaningfully different from typical Alzheimer's — because getting the diagnosis right changes what safe treatment looks like.
+
+Three features distinguish DLB most clearly. First, cognition fluctuates dramatically: a person may hold a clear, engaged conversation one day and be significantly more confused the next, a pattern of day-to-day variability that is far less typical of Alzheimer's steadier decline. Second, detailed, well-formed visual hallucinations are common and often appear early in the illness — seeing people, animals, or objects that are not present, described vividly rather than vaguely. Third, many people with DLB develop REM sleep behaviour disorder, physically acting out dreams (talking, punching, kicking) during sleep, sometimes years before other symptoms appear. Parkinsonian movement symptoms — slowness, rigidity, tremor, a shuffling gait — and drops in blood pressure on standing (raising fall risk) round out the typical picture.
+
+The single most important caregiving fact about DLB is medication sensitivity: standard antipsychotic medications such as haloperidol can cause a severe, sometimes dangerous reaction in people with DLB, including major motor deterioration and loss of consciousness. This makes an accurate diagnosis critical before any hallucinations or behavioural symptoms are treated with medication, and it means any new prescriber — including in an emergency department — needs to be told explicitly that DLB is suspected or confirmed. Where medication for hallucinations is genuinely needed, FCA notes that quetiapine or clozapine are generally better tolerated than typical antipsychotics, though this remains a decision for a specialist familiar with DLB. Occupational or physical therapy input for fall prevention, and connecting with the Lewy Body Dementia Association or a local caregiver resource centre for condition-specific support, are also recommended.`,
+    tags: ['Lewy body dementia', 'DLB', 'medication sensitivity', 'hallucinations', 'REM sleep behaviour disorder'],
+    source_url: 'https://www.caregiver.org/resource/dementia-lewy-bodies/',
+    source_org: 'Family Caregiver Alliance',
+    embedding: null,
+  },
+  {
+    id: 'clinical_019',
+    category: 'clinical',
+    title: 'Frontotemporal Dementia: When Personality and Language Change First',
+    content: `Frontotemporal dementia (FTD) is frequently misdiagnosed initially — sometimes as a mental health condition, a mid-life crisis, or simple stubbornness — because its earliest symptoms look nothing like the memory loss most people associate with dementia. The Family Caregiver Alliance's guidance is built around helping families recognise this different starting point, since it changes both what to expect and how to respond.
+
+FTD has two broad patterns. The behavioural variant involves prominent personality and conduct changes: apathy and social withdrawal, disinhibition (saying or doing things that are out of character or socially inappropriate), blunted emotional responses, and sometimes new compulsive behaviours — all while memory for recent events often remains relatively intact early on. The language variants instead primarily affect the ability to produce or understand speech: difficulty finding or using the right words, disrupted grammar, or (in semantic variants) losing the meaning of familiar words and objects, again with memory and spatial orientation typically preserved for longer than in Alzheimer's.
+
+FTD also differs from Alzheimer's in who it affects and when: it typically begins between ages 40 and 65, considerably younger than typical Alzheimer's onset, which brings distinct practical consequences — an affected person may still be working, may have dependent children at home, and family and friends are often slower to recognise personality or language changes as a medical condition rather than a personal choice, adding a particular layer of isolation for caregivers. Because behavioural symptoms in FTD can be sustained and socially difficult to manage in public, FCA emphasises that self-care, respite, and peer support are not optional extras but essential to sustaining care over what is often a long illness course; organisations such as the Association for Frontotemporal Degeneration (AFTD) offer grants specifically to help fund respite care for unpaid FTD caregivers.`,
+    tags: ['frontotemporal dementia', 'FTD', 'behavioural variant', 'primary progressive aphasia', 'young onset dementia'],
+    source_url: 'https://www.caregiver.org/resource/frontotemporal-dementia/',
+    source_org: 'Family Caregiver Alliance',
+    embedding: null,
+  },
+  {
+    id: 'clinical_020',
+    category: 'clinical',
+    title: 'Vascular Dementia: The Stepwise Pattern and the Stroke Connection',
+    content: `Vascular dementia is caused by reduced blood flow to the brain — from a single major stroke, from a series of smaller "silent" strokes (multi-infarct dementia), or from chronic narrowing of small blood vessels over time — and the Family Caregiver Alliance highlights a pattern of progression that is distinctly different from Alzheimer's and worth recognising, both for care planning and for prevention of further decline.
+
+Where Alzheimer's tends to progress gradually and continuously, vascular dementia caused by multiple small strokes often follows a stepwise pattern: a relatively stable period, then a sudden, noticeable drop in function after a new mini-stroke, followed by another plateau at the new, lower level — a pattern that can look, from the outside, like a series of discrete events rather than one continuous disease. Symptoms vary considerably depending on which part of the brain has been affected by reduced blood flow, but commonly include difficulty with problem-solving and planning, trouble concentrating, and slowed processing, sometimes alongside physical effects such as weakness or speech changes carried over from the underlying strokes.
+
+Because vascular dementia shares its underlying risk factors with cardiovascular disease — high blood pressure, atherosclerosis, diabetes, high cholesterol, obesity, smoking, and physical inactivity — active medical management of these conditions is not just relevant to general health but is a direct strategy for reducing the risk of further vascular damage and additional step-downs in function, making cardiovascular risk management an unusually direct form of dementia care in this specific type. On the caregiving side, FCA notes that people with vascular dementia often retain daily functioning better when routines are structured and consistent, tasks are broken into clear steps, distractions are minimised, and repetition and context are used to support memory — and that behavioural changes are generally better understood as a result of brain injury than as deliberate choices, which shapes a calmer, less blaming response from caregivers.`,
+    tags: ['vascular dementia', 'multi-infarct dementia', 'stroke', 'cardiovascular risk factors', 'stepwise decline'],
+    source_url: 'https://www.caregiver.org/resource/vascular-dementia/',
+    source_org: 'Family Caregiver Alliance',
+    embedding: null,
+  },
+  {
+    id: 'clinical_021',
+    category: 'clinical',
+    title: 'Young Onset Dementia: A Different Life Stage, the Same Disease',
+    content: `Young onset dementia — diagnosed before age 65 — is caused by the same underlying diseases as later-life dementia (Alzheimer's disease, frontotemporal dementia, vascular dementia, and others), but the Young Dementia Network and Dementia UK are consistent in emphasising that the life context surrounding a young onset diagnosis makes it a substantially different experience to support, not simply an earlier version of the same one.
+
+Diagnosis itself is frequently delayed, partly because clinicians and the person themselves are less likely to suspect dementia in someone in their 40s, 50s, or early 60s, and partly because symptoms can present differently — behavioural or personality changes rather than memory loss are common in younger-onset frontotemporal dementia specifically, and are easily misattributed to stress, depression, or relationship difficulties for months or years before a correct diagnosis is reached. This diagnostic delay is not a minor administrative issue: it delays access to the right support, financial planning, and — for the person themselves — a clear explanation for changes they and their family may already have been struggling to understand.
+
+The practical impact of the diagnosis is also markedly different: a person with young onset dementia is often still working, may be the primary or a significant financial provider for the household, and frequently has dependent children still living at home — circumstances rare in typical late-onset dementia, where retirement and grown children are the norm. This combination means young onset dementia routinely disrupts an active career and an active parenting role simultaneously, compounding financial strain with the emotional task of supporting children or teenagers through a parent's diagnosis at an age when those children still need active parenting themselves. Recognising this distinct combination of circumstances is the first step toward seeking support — such as through Dementia UK, the Young Dementia Network's directory of services, or Dementia Carers Count's carer courses — that is designed around this life stage specifically, rather than generic dementia support built around an older-age default.`,
+    tags: ['young onset dementia', 'diagnosis delay', 'working age', 'children and young onset dementia', 'frontotemporal dementia'],
+    source_url: 'https://www.alzheimersresearchuk.org/dementia-information/types-of-dementia/young-onset-dementia/',
+    source_org: 'Young Dementia Network',
+    embedding: null,
+  },
+  {
+    id: 'clinical_022',
+    category: 'clinical',
+    title: 'How Brain Changes Explain Dementia Symptoms: A Region-by-Region Guide',
+    content: `The Wicking Dementia Research and Education Centre's widely-used "Understanding Dementia" course builds its entire teaching approach around a single idea: dementia symptoms make far more sense once you understand which part of the brain is affected, because different brain regions are responsible for quite different jobs, and damage to each produces a recognisably different pattern of change.
+
+The hippocampus, deep in the temporal lobe, is central to forming new memories — which is why difficulty recalling recent events (what was eaten for breakfast, a conversation from an hour ago) is often the earliest and most prominent symptom in Alzheimer's disease specifically, while much older memories, laid down and consolidated years or decades earlier through different brain networks, can remain intact long after recent memory has failed. The frontal lobes govern planning, judgement, impulse control, and personality expression — damage here, as in frontotemporal dementia, produces changes in behaviour, social judgement, and personality often well before any memory problem appears, which is exactly why FTD is so often initially mistaken for a psychiatric or personal change rather than a brain disease. The parietal and occipital regions, involved in processing spatial information and visual perception, explain why some people with dementia — particularly dementia with Lewy bodies — experience difficulty judging distances, recognising faces, or interpreting visual scenes correctly, sometimes producing hallucinations when the brain misinterprets ambiguous visual information.
+
+This region-by-region framework gives family carers something practical: a way to predict, in broad terms, what kind of difficulty is likely to emerge next based on which areas of the brain a particular type of dementia tends to affect first and in what order, rather than experiencing each new symptom as a completely unpredictable event. It also explains why two people with different types of dementia can look so different from each other despite sharing the same broad diagnosis category of "dementia" — the underlying disease process differs, and so does the specific brain geography it damages first.`,
+    tags: ['brain anatomy', 'neuroscience', 'hippocampus', 'frontal lobe', 'symptom explanation'],
+    source_url: 'https://mooc.utas.edu.au/course/20281',
+    source_org: 'Wicking Dementia Research and Education Centre, University of Tasmania',
+    embedding: null,
+  },
+  {
+    id: 'clinical_023',
+    category: 'clinical',
+    title: 'Delirium vs Dementia: Recognising a Medical Emergency',
+    content: `One of the most important distinctions taught in Wicking's dementia education, and one of the easiest for family carers to miss under pressure, is the difference between dementia getting gradually worse and delirium — a separate, usually reversible, and medically urgent state of acute confusion that can occur in someone who already has dementia and can easily be mistaken for the dementia itself "suddenly declining."
+
+The key distinguishing feature is timing and pattern. Dementia typically progresses gradually, over months or years, with symptoms relatively stable from day to day even as they slowly worsen over the longer term. Delirium, by contrast, comes on suddenly — over hours to a couple of days — and characteristically fluctuates significantly within the same day: a person might be relatively clear and responsive in the morning and profoundly confused, agitated, or unusually drowsy by evening, with attention and awareness of surroundings noticeably affected in a way that goes beyond the person's usual baseline. Common triggers include urinary tract infections and other infections, dehydration, constipation, pain that is not being adequately managed, a new medication or medication interaction, low blood oxygen, or a change of environment such as a hospital admission.
+
+The practical importance of recognising delirium is that, unlike the underlying dementia, it is frequently treatable and often substantially or fully reversible once the underlying cause is identified and addressed — but it requires prompt medical attention rather than being managed at home as "a bad dementia day." A useful rule of thumb for family carers: if confusion has worsened noticeably and suddenly, over hours or a day or two, rather than gradually over weeks or months, or if alertness is fluctuating markedly within the same day, this pattern warrants an urgent GP review or, if severe, an emergency department visit, specifically to rule out and treat a reversible cause — rather than being assumed to simply be the dementia progressing on its own.`,
+    tags: ['delirium', 'acute confusion', 'medical emergency', 'UTI', 'distinguishing symptoms'],
+    source_url: 'https://mooc.utas.edu.au/course/20281',
+    source_org: 'Wicking Dementia Research and Education Centre, University of Tasmania',
+    embedding: null,
+  },
+  {
+    id: 'clinical_024',
+    category: 'clinical',
+    title: 'Advance Care Planning: What It Covers and How to Start',
+    content: `Forward with Dementia's guidance on advance care planning treats it as something broader than a single legal form — it is a documented conversation covering everything from small daily preferences to major medical decisions, including wishes about resuscitation, preferred living arrangements should residential care become necessary, and the kind of health care the person would or would not want if they could no longer speak for themselves. Because dementia is, in its own words, a life-limiting illness, this planning carries particular urgency compared with general end-of-life planning done "just in case" — the timeline for needing it is more predictable, even if the exact pace is not.
+
+A central and easily overlooked element is formally appointing a substitute decision-maker — called an enduring guardian, attorney, or agent depending on the jurisdiction — someone legally authorised to make health and lifestyle decisions once the person can no longer do so themselves. Forward with Dementia stresses that the person with dementia having genuine control over who they nominate for this role, while they are still able to make that choice clearly, matters as much as the plan's content: this is one of the last major decisions where their own voice can be the deciding one.
+
+A detail worth understanding clearly: the advance care plan document itself is often not, on its own, a legally binding instrument — its power comes from the appointed substitute decision-maker and family knowing it exists, knowing exactly where it is kept, and being willing to act on it faithfully when the time comes. A plan drafted carefully but never shared, or stored somewhere no one can find when it is needed, provides little practical protection. Involving a solicitor to formalise the decision-maker appointment, and using a dedicated advance care planning support service where available, helps ensure the plan is not just written but usable.`,
+    tags: ['advance care planning', 'substitute decision-maker', 'enduring guardian', 'end-of-life wishes', 'documentation'],
+    source_url: 'https://forwardwithdementia.au/for-carers/planning-decisions/5-10-plan-for-future-lifestyle-health-and-medical-care/',
+    source_org: 'Forward with Dementia',
+    embedding: null,
+  },
+  {
+    id: 'communication_011',
+    category: 'communication',
+    title: 'Communicating Effectively as Dementia Progresses',
+    content: `Dementia gradually affects a person's ability to find words, follow multi-step instructions, and process what is said to them — but it does not remove their ability to sense tone, facial expression, and emotional atmosphere, often long after verbal understanding has declined. The Alzheimer's Association's communication training builds its guidance around this gap: adjust what and how you say things, but assume the person can still feel how you are saying it.
+
+Practical techniques include approaching from the front rather than from behind or the side, so the person has time to register who is speaking before words start; using short, simple sentences with one idea at a time rather than compound instructions ("let's brush your teeth" rather than "let's brush your teeth and then get dressed and then have breakfast"); and offering limited choices — two options rather than an open-ended question — since open questions can be overwhelming when word-retrieval is difficult. Patience with pauses matters more than it might seem: filling a silence with a rephrased or repeated question, out of a wish to help, often adds pressure rather than relieving it.
+
+The guidance extends beyond one-on-one conversation to communicating with the wider circle around the person — family members who see them rarely and may not know what has changed, and healthcare professionals during appointments, where a caregiver can help by preparing a short written summary of recent changes in advance, since a person with dementia may present better in a single ten-minute consultation than they do day-to-day at home, making it easy for a clinician to underestimate their difficulties without that context.`,
+    tags: ['communication techniques', 'verbal communication', 'healthcare visits', 'word-finding difficulty', 'family communication'],
+    source_url: 'https://www.alz.org/help-support/resources/empowered-caregiver',
+    source_org: 'Alzheimer\'s Association',
+    embedding: null,
+  },
+  {
+    id: 'communication_012',
+    category: 'communication',
+    title: 'Starting Hard Conversations: Driving, Doctor Visits, and Money',
+    content: `Some of the most difficult moments in dementia caregiving are not the physical care tasks but the conversations that come before them — telling someone it may be time to stop driving, that they need to see a doctor about symptoms they deny having, or that finances need to be reviewed and eventually managed by someone else. The Alzheimer's Association's "Dementia Conversations" guidance is built around the idea that these conversations go better when they happen early, in stages, and are framed around care and safety rather than incapacity.
+
+On driving, the advice is to raise concerns as soon as they appear rather than waiting for an accident, to involve a neutral third party such as the person's doctor where possible (a clinical recommendation often carries more weight than a family member's opinion), and to have a concrete alternative ready — a specific offer of rides, a taxi or rideshare account, community transport — so the conversation is not just about loss but about what replaces it. On doctor visits, framing an appointment around a specific, non-threatening reason (a general check-up, a hearing or vision test) can reduce resistance compared to naming memory directly, especially early on.
+
+On money, the guidance is to start the conversation before a crisis, gently and factually, and to focus on protection rather than control — asking who else should be able to see the accounts "just in case," rather than announcing that finances are being taken over. Whenever possible, these conversations should happen while the person can still participate meaningfully in the decision, since waiting until capacity has clearly declined removes their voice from choices that affect them directly.`,
+    tags: ['driving and dementia', 'doctor visits', 'difficult conversations', 'financial planning', 'capacity'],
+    source_url: 'https://training.alz.org/products/4031/dementia-conversations-driving-doctor-visits-legal-financial-planning',
+    source_org: 'Alzheimer\'s Association',
+    embedding: null,
+  },
+  {
+    id: 'communication_013',
+    category: 'communication',
+    title: 'Culturally Safe Dementia Care: Lessons from Designing for Aboriginal and Torres Strait Islander Communities',
+    content: `Dementia Training Australia's work on culturally safe care for Aboriginal and Torres Strait Islander people offers a useful model for family carers supporting anyone from a cultural background different from the dominant culture of their care setting — not because the specific practices transfer directly, but because the underlying principle does: care that ignores a person's cultural identity, language, and history is not neutral, it is actively harder for that person to feel safe within.
+
+Culturally safe design, in DTA's framing, starts with genuinely involving the community and the person's own family and elders in decisions about their care and environment, rather than applying a standard model and adjusting it superficially afterward. Concrete elements include creating spaces that reflect familiar visual and physical cultural elements rather than a generic institutional aesthetic, ensuring staff or carers understand relevant cultural protocols (around gender, family roles, or specific practices), and — critically — supporting continued use of a person's first language, since language ability is often one of the last things preserved in dementia, and a person who has lost fluent English may still communicate clearly in their first language.
+
+For a family carer supporting someone from a migrant or minority cultural background more broadly, the transferable lesson is to actively ask, rather than assume, what matters to this specific person culturally — food, religious practice, modesty preferences, family decision-making structures, and language — and to build care around those answers specifically, rather than around a generic "cultural sensitivity" checklist that may not reflect the person's actual identity and preferences.`,
+    tags: ['culturally safe care', 'Aboriginal and Torres Strait Islander', 'cultural identity', 'language', 'person-centred care'],
+    source_url: 'https://dta.com.au/designing-for-better-living/',
+    source_org: 'Dementia Training Australia (DTA)',
+    embedding: null,
+  },
+  {
+    id: 'homesafety_012',
+    category: 'home-safety',
+    title: 'Emergency Preparedness: Medical IDs, Safety Alert Devices, and a Grab-and-Go Bag',
+    content: `Beyond removing everyday hazards from the home, NIA recommends preparing specifically for the moments when something goes wrong quickly — a wandering episode, a fall, or a sudden medical event — rather than assuming careful daily supervision will prevent every emergency. Two low-cost, low-effort tools do most of the work here: a medical identification bracelet or pendant that names the diagnosis and an emergency contact, and enrolment in a wandering-response programme where available, so that if the person is found alone and confused, whoever finds them can act immediately rather than losing critical time.
+
+Personal safety alert devices add another layer, particularly for a person who is largely independent but at risk of a fall or medical event when alone — a wearable button that summons help, or a monitoring service that checks in automatically, can bridge the gap between full independence and full supervision without requiring either extreme. For households where the person sleeps separately from their caregiver, a simple bedroom monitor can flag falls or distress overnight without constant in-person checking.
+
+A prepared "grab-and-go" folder or bag — kept somewhere every family member knows, not filed away — should hold copies of identification, insurance details, a current medication list, emergency contacts, and a short written description of the person's typical behaviour and communication style, the same kind of information sheet that proves useful during a hospital visit. Preparing this in a calm moment, rather than trying to assemble it during an actual emergency, is the entire point: it turns a moment of panic into a moment of simply grabbing what is already organised.`,
+    tags: ['emergency preparedness', 'medical ID', 'wandering', 'safety alert devices', 'grab-and-go bag'],
+    source_url: 'https://www.nia.nih.gov/health/alzheimers-and-dementia/tips-living-alone-early-stage-dementia',
+    source_org: 'National Institute on Aging',
+    embedding: null,
+  },
+  {
+    id: 'homesafety_013',
+    category: 'home-safety',
+    title: 'Designing a Dementia-Friendly Home: Beyond Hazard Removal',
+    content: `Most home safety advice for dementia focuses on removing hazards — a necessary but incomplete picture. Dementia Training Australia's "Home Matters" design guidance adds a second, complementary layer: how the overall feel and layout of a home affects a person's anxiety, agitation, and sense of identity, independent of whether any specific hazard is present.
+
+The first principle, "enable the person," is about designing spaces that let someone continue doing as much for themselves as safely possible — clear sightlines to a toilet or kitchen, for instance, support independence in a way that hiding a room behind an unmarked door does not. The second, "cultivate a home,": familiar furniture, personal photographs, and warm rather than clinical lighting and colour schemes help a space feel like somewhere the person belongs, rather than somewhere they are simply being cared for — thoughtfully designed environments of this kind have been shown to reduce anxiety, agitation, and distress compared with sterile, institutional-feeling spaces. The third principle, access to the outdoors, reflects the value of fresh air, natural light, and safe garden access for mood and sleep, even in a small courtyard or balcony. The fourth, connecting with community, is about sightlines and spaces that make it easy and natural for visitors to drop in and sit, rather than a layout that makes visiting feel like an intrusion.
+
+For a family carer adapting an ordinary home rather than designing a facility, the practical translation is smaller in scale but the same in spirit: keep meaningful, familiar objects visible rather than tidied away; favour warm lighting and reduce jarring visual clutter or high-contrast patterns that can be misread as an obstacle; and make sure the person still has an outdoor space they can reach safely and use regularly, since it is easy for outdoor access to quietly disappear as supervision needs increase.`,
+    tags: ['dementia-friendly design', 'home environment', 'sensory design', 'reducing agitation', 'outdoor access'],
+    source_url: 'https://dta.com.au/designing-for-better-living/',
+    source_org: 'Dementia Training Australia (DTA)',
+    embedding: null,
+  },
+  {
+    id: 'homesafety_014',
+    category: 'home-safety',
+    title: 'The Herbert Protocol: Preparing for a Missing Person Emergency',
+    content: `Wandering prevention strategies reduce the chance of someone with dementia going missing, but they cannot eliminate it entirely, and Dementia UK recommends a specific, practical tool for the moment prevention fails: the Herbert Protocol, a UK scheme (named after a war veteran with dementia who went missing) that gives police and other emergency services the detailed, person-specific information they need to search effectively, prepared calmly in advance rather than recalled under panic.
+
+The protocol is a form, completed before any incident occurs and ideally with the person's own input while they are able to give it, covering a physical description and a recent photograph, medical details and medication needs, significant places from their past and present (a former workplace, a childhood street, a regular walking route), previous addresses, and the contact details of family and friends who might be able to help identify their location or state of mind. It can be completed online through MedicAlert or on paper, and once submitted is held securely for police to access quickly if the person goes missing, removing the delay and information gaps that occur when a distressed family member is trying to answer detailed questions in the middle of an emergency.
+
+The practical guidance is to treat this as preparation, not pessimism: complete the form early, before it feels urgently necessary; review and update it roughly every six months or whenever something significant changes (a house move, a new medication, a change in mobility); keep a copy somewhere accessible at home in addition to the online record; and share a copy with close family, and where appropriate, trusted neighbours, so more than one person can act on it quickly if needed.`,
+    tags: ['Herbert Protocol', 'missing person', 'wandering', 'emergency preparedness', 'police'],
+    source_url: 'https://www.dementiauk.org/information-and-support/living-with-dementia/herbert-protocol/',
+    source_org: 'Dementia UK',
+    embedding: null,
+  },
+  {
+    id: 'homesafety_015',
+    category: 'home-safety',
+    title: 'Choosing Assistive Technology and Telecare: What to Weigh Up',
+    content: `Assistive technology and telecare — from simple reminder devices to remote monitoring systems — are increasingly offered as part of dementia support, and SIGN 168 reviewed the evidence on their use without treating more technology as automatically better. Its guidance is less a specific product recommendation and more a structured set of questions worth asking before adopting any particular device or system.
+
+Digital literacy and ease of use come first: a system that is technically capable but confusing or frustrating for the person to interact with directly can add stress rather than reduce it, and any technology introduced should be matched honestly to what the specific person can manage, ideally with them involved in choosing it rather than having it installed on their behalf. Cost and ongoing data security are practical considerations that are easy to overlook in the moment of solving an immediate problem (a device that works well but carries an ongoing subscription cost, or one that shares location or health data with a third party, has trade-offs worth thinking through deliberately) and informed consent — genuinely explaining what a device does and does not do, and getting the person's agreement where they are able to give it — is treated as essential rather than a formality.
+
+A point SIGN 168 makes explicitly, and one worth holding onto amid the appeal of remote monitoring, is that technology should generally support rather than replace face-to-face contact: an in-person visit allows a carer or professional to notice subtle changes — in mood, physical condition, or the home environment — that a sensor or camera is not designed to pick up. Telecare and assistive technology work best as one part of a support plan that still includes real human contact, not as a substitute for it introduced to reduce the frequency of visits.`,
+    tags: ['assistive technology', 'telecare', 'digital literacy', 'informed consent', 'SIGN 168'],
+    source_url: 'https://www.sign.ac.uk/media/2157/sign-168-dementia.pdf',
+    source_org: 'SIGN (Scottish Intercollegiate Guidelines Network) Guideline 168',
+    embedding: null,
+  },
+  {
+    id: 'prevention_011',
+    category: 'prevention',
+    title: 'Why Vascular Health Protects the Brain: The Blood Vessel–Dementia Connection',
+    content: `Lists of modifiable dementia risk factors commonly name high blood pressure, high cholesterol, diabetes, and smoking, but the Wicking Dementia Centre's prevention-focused teaching adds something a list alone does not: an explanation of the actual mechanism connecting cardiovascular health to brain health, which makes the advice to "manage your blood pressure" feel less abstract and more directly relevant to dementia specifically, not just heart health in general.
+
+The brain depends on an extraordinarily dense network of small blood vessels to deliver the oxygen and glucose its cells need essentially continuously — brain tissue has very little capacity to store its own energy reserves, so even brief interruptions to blood flow cause cell damage. High blood pressure, high cholesterol, and diabetes all damage blood vessels over years, including the very small vessels deep within the brain that are too small to be easily seen on standard imaging. This damage can starve small areas of brain tissue of blood entirely, causing tiny, sometimes unnoticed strokes that accumulate over time (the basis of vascular dementia's characteristic stepwise decline), or it can cause more diffuse, chronic reduction in blood flow that impairs brain function gradually without any single obvious event.
+
+Critically, this vascular damage does not act in isolation from other dementia processes — there is growing evidence that vascular damage and Alzheimer's disease pathology (amyloid plaques and tau tangles) interact and compound each other, meaning a brain already coping with early Alzheimer's changes is more vulnerable to added vascular damage, and vice versa. This is the mechanistic reason why managing blood pressure, cholesterol, and blood sugar from midlife onwards — well before any cognitive symptoms appear — is now understood as genuine dementia prevention, not merely cardiovascular disease prevention with a beneficial side effect. For a family history of stroke or cardiovascular disease, this connection is worth raising proactively with a GP as part of dementia risk management specifically, not only heart health.`,
+    tags: ['vascular health', 'brain blood flow', 'dementia mechanisms', 'cardiovascular risk', 'prevention'],
+    source_url: 'https://www.classcentral.com/course/independent-preventing-dementia-6565',
+    source_org: 'Wicking Dementia Research and Education Centre, University of Tasmania',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_012',
+    category: 'wellbeing',
+    title: 'Long-Distance Caregiving: Staying Involved and Organised From Afar',
+    content: `NIA defines a long-distance caregiver as anyone living roughly an hour or more away from the person needing care, and the role is real caregiving, not a lesser version of it — long-distance caregivers commonly manage money and bills, arrange and coordinate in-home care or services, research options, and provide respite so a primary, on-the-ground caregiver can rest, all without being physically present day to day.
+
+The practical challenge of distance caregiving is information: it is easy to be the last to know when something has changed, and easy for a primary caregiver, worn down by daily demands, to under-report how much help they actually need. Regular, scheduled check-in calls — not just calls that happen when there is a problem — help surface changes early. Building a genuine relationship with at least one local contact who sees the person regularly (a neighbour, a home-care worker, a nearby relative) gives a long-distance caregiver an independent source of information beyond what the primary caregiver reports, which is valuable precisely because it is not filtered through someone who may be minimising their own struggle.
+
+When visiting, it helps to shift from "visiting" mode to "assessing and helping" mode: reviewing medications and refill dates, checking the home for new safety issues, sitting in on a medical appointment if possible, and using the visit to take over a task or two, however small, so the trip provides tangible relief rather than only company. Long-distance caregivers also carry their own particular guilt — for not being there — and NIA's guidance is that this form of caregiving is a genuine, valuable contribution in its own right, not a lesser substitute for being physically present.`,
+    tags: ['long-distance caregiving', 'family coordination', 'respite', 'remote support', 'caregiver guilt'],
+    source_url: 'https://www.nia.nih.gov/health/long-distance-caregiving',
+    source_org: 'National Institute on Aging',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_013',
+    category: 'wellbeing',
+    title: 'Helping Children and Grandchildren Understand a Dementia Diagnosis',
+    content: `When a family member is diagnosed with dementia, children and grandchildren in the household or extended family are often an afterthought in the flurry of medical appointments and care planning — but NIA's guidance treats helping them understand what is happening as its own caregiving task, tailored by age rather than handled with a single one-size-fits-all conversation.
+
+With young children, simple, honest, concrete language works best: explaining, for example, that "Grandma has an illness that makes it hard for her to remember things" rather than avoiding the subject or offering a vague explanation that leaves room for imagination to fill the gaps. It is worth stating plainly and repeatedly that no one caused the illness and it is not contagious, since young children commonly and silently blame themselves or worry about catching it. Teenagers often respond differently — physical or behavioural changes in a family member can feel embarrassing or upsetting in ways they are reluctant to admit, and NIA specifically cautions against forcing visits or interaction, which can deepen resentment rather than build connection.
+
+Across age groups, validating that sadness, anger, and confusion are normal reactions — not something to suppress to keep the peace — helps children process what is happening rather than internalising it silently; changes in behaviour at school or home can be a sign a child is struggling and may need a conversation with a school counsellor. Where the family member with dementia is able, shared activities that do not depend heavily on memory or conversation — arts and crafts, singing, looking through photo albums, being read to — let children maintain a real relationship rather than one built only around the illness. Within the household, NIA is clear that young children should not be assigned caregiving duties, and that they still need dedicated, undivided time with the adults in their lives so they do not feel sidelined by the demands of care.`,
+    tags: ['children and dementia', 'grandchildren', 'family communication', 'explaining diagnosis', 'family support'],
+    source_url: 'https://www.nia.nih.gov/health/helping-kids-understand-alzheimers-disease',
+    source_org: 'National Institute on Aging',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_014',
+    category: 'wellbeing',
+    title: 'Coping with Guilt as a Dementia Carer',
+    content: `Guilt is one of the most common emotions Admiral Nurses hear about from family carers, and Dementia UK's guidance names its many specific triggers rather than treating it as one vague feeling: guilt about not doing enough, even while already exhausted; guilt about time taken from other relationships, work, or your own children; guilt about missing the person's pre-dementia self and the freedom of your own life before caregiving; guilt about frustration or anger during a difficult episode; guilt about wanting or taking a break; guilt about other family members not sharing the load equally; and, for many, a particularly sharp guilt around choosing residential care, which is often experienced as a personal failure rather than what it usually is — a necessary and appropriate decision.
+
+The guidance is direct that guilt of this kind is a near-universal part of caregiving, not a sign of doing it badly or of loving the person less. Naming the specific source of guilt out loud, to a friend, a support group, or an Admiral Nurse, tends to reduce its intensity more than trying to reason yourself out of feeling it. Practical self-care is presented as a genuine antidote rather than an indulgence: roughly 150 minutes of physical activity a week, adequate sleep, and eating well all measurably reduce the anxiety and low mood that guilt often travels alongside.
+
+Other concrete steps include requesting a carer's assessment from your local authority, using respite care without treating it as something to feel guilty about, setting realistic and openly communicated boundaries with other family members about who does what, and reminding yourself that professional carers — trained, rested, and working in shifts — are not managing this role any more "successfully" than you are; they are simply not doing it alone, unpaid, indefinitely. Dementia UK's own Admiral Nurse helpline, along with Carers UK and Carers Trust, are suggested as places to talk this through with someone who will not judge it.`,
+    tags: ['caregiver guilt', 'emotional wellbeing', 'residential care guilt', 'self-care', 'carer\'s assessment'],
+    source_url: 'https://www.dementiauk.org/information-and-support/looking-after-yourself-as-a-carer/coping-with-feelings-of-guilt-when-you-care-for-someone-with-dementia/',
+    source_org: 'Dementia UK',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_015',
+    category: 'wellbeing',
+    title: 'Anticipatory Grief: Grieving Someone Who Is Still Alive',
+    content: `Many dementia carers experience a form of grief long before a death occurs, and Dementia UK's Admiral Nurses treat this — anticipatory grief — as a normal and legitimate response, not a sign of giving up on the person or loving them less. It tends to surface at specific turning points: when the relationship changes fundamentally (a spouse who can no longer be confided in as a partner, a parent who no longer offers parental guidance), when the person stops recognising you, or when their personality changes so much that the person in front of you feels, in important ways, like someone else.
+
+Anticipatory grief can involve the full emotional range of grief after a death — sadness, guilt, relief, anger, denial, fear — often arriving unpredictably and sometimes appearing to contradict each other within the same week or even the same day. It frequently comes with physical symptoms that are easy to misattribute purely to tiredness: disrupted sleep, appetite changes, fatigue, and difficulty concentrating. Some carers also describe a strange doubling of experience — grieving the person who is gone while simultaneously still caring for the person who remains, which can make it hard to know which version of them to grieve, or whether it is acceptable to grieve at all while they are still here.
+
+The coping guidance mirrors bereavement support more broadly: be patient with yourself rather than expecting grief to resolve or make sense on a schedule, protect basic routines like sleep and movement even when motivation is low, avoid major life decisions during the most acute periods where possible, and let people support you rather than managing this privately. "Continuing bonds" — actively holding onto connection through photographs, shared memories, or reflecting on what the relationship has meant — are described as a healthy part of this process rather than something to move past. If grief becomes overwhelming or is affecting your physical health, a GP conversation or Dementia UK's Admiral Nurse helpline (0800 888 6678) are appropriate next steps.`,
+    tags: ['anticipatory grief', 'ambiguous loss', 'carer emotions', 'continuing bonds', 'grief support'],
+    source_url: 'https://www.dementiauk.org/information-and-support/looking-after-yourself-as-a-carer/grief-bereavement-and-loss/',
+    source_org: 'Dementia UK',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_016',
+    category: 'wellbeing',
+    title: 'How Dementia Changes Relationships and Family Roles',
+    content: `Beyond its physical and cognitive effects, dementia reshapes the structure of relationships themselves — a spouse becomes a carer as well as a partner, and an adult child can find themselves making decisions for a parent who once made decisions for them. Dementia UK's Admiral Nurses describe this role reversal as one of the more disorienting aspects of the disease for families, not because the caregiving tasks themselves are unfamiliar, but because they sit on top of, and sometimes seem to erase, decades of an entirely different relationship dynamic.
+
+Many carers describe a specific kind of loss tied to this shift: not only losing who the person was, but losing the future they had expected together — a description one carer summarised simply as feeling "robbed of our future." This loss compounds the practical difficulty of taking on new responsibilities, since carers are often managing new tasks and grieving an imagined future at the same time. Mood changes and emotional volatility in the person with dementia, arising both from the emotional impact of the diagnosis and from changes to the brain's emotional regulation, can create distance in a relationship even where love and commitment remain unchanged, and communication difficulties as the disease progresses tend to multiply small misunderstandings into larger conflicts.
+
+The practical guidance centres on making space for these shifts rather than pretending the relationship is unchanged: seeking professional counselling support where the relationship strain is significant, connecting with others going through the same role change through a support group, building practical routines and reminders that reduce day-to-day friction, and — importantly — deliberately maintaining an identity and relationships outside the caregiving role, so the relationship with the person is not the only remaining source of identity or connection. Early, honest conversations about future care preferences, backed by legal tools like lasting power of attorney, are also framed as protecting the relationship itself, by resolving decision-making questions before they become a source of conflict.`,
+    tags: ['role reversal', 'family relationships', 'spousal caregiving', 'identity', 'relationship strain'],
+    source_url: 'https://www.dementiauk.org/information-and-support/looking-after-yourself-as-a-carer/changing-relationships-and-roles/',
+    source_org: 'Dementia UK',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_017',
+    category: 'wellbeing',
+    title: 'Pre-Death Grief: A Named, Recognised Part of Dementia Caregiving',
+    content: `Scotland's 2023 national clinical guideline on dementia (SIGN 168) makes a point of naming something many carers feel but rarely hear acknowledged by a health professional: grief for a person with dementia commonly begins at the point of diagnosis, not only after death. The guideline recommends that professionals working with carers be specifically aware that this "pre-death" or anticipatory grief can arise from the moment of diagnosis and continue, in changing forms, through every stage of the illness and into bereavement itself.
+
+This matters because pre-death grief is easy to misread — by carers themselves and by the people around them — as something other than grief: as depression, as simple exhaustion, or as a private, slightly shameful feeling that doesn't fit the more familiar template of grieving only after a death has occurred. SIGN 168 recommends that professionals proactively and sensitively ask carers about these experiences, rather than waiting for a carer to raise it unprompted, particularly around known difficult transition points such as a move into residential care, which often triggers a fresh wave of grief distinct from what came before.
+
+The guideline's practical recommendation is a holistic assessment of carers that specifically includes pre-death grief as one of the things being assessed, alongside consideration of appropriate support and intervention strategies — which may include structured psychoeducation, carer support groups, or referral for more individual psychological support where grief is significantly affecting a carer's own wellbeing. For a family carer, the value of this framing is permission: recognising ongoing grief as a legitimate, expected, clinically-recognised part of the caregiving experience, rather than a sign that something is wrong with how you are coping.`,
+    tags: ['pre-death grief', 'anticipatory grief', 'carer assessment', 'SIGN 168', 'care transitions'],
+    source_url: 'https://www.sign.ac.uk/media/2157/sign-168-dementia.pdf',
+    source_org: 'SIGN (Scottish Intercollegiate Guidelines Network) Guideline 168',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_018',
+    category: 'wellbeing',
+    title: 'Ambiguous Loss: When Someone Is \'Here, But Not Here\'',
+    content: `The Family Caregiver Alliance names a specific kind of grief that many dementia carers experience but rarely have a term for: ambiguous loss, the stress of a person being physically present while being, in important ways, psychologically or emotionally absent. Unlike the loss caused by death, ambiguous loss offers no clear ending, no funeral, and little social recognition — friends and even family may not understand why a carer describes grieving someone who is still, technically, right there in the room, which can leave carers feeling isolated in an experience others do not recognise as loss at all.
+
+FCA is explicit that this is caused by the illness, not by any failure on the carer's or the person's part, and that the unpredictability — good days and bad days, moments of connection followed by confusion or absence — produces a kind of constant, low-grade sorrow that is different from grief after a single, final loss, and which is linked to higher rates of depression, anxiety, isolation, and relationship strain among carers who experience it without support.
+
+FCA's fact sheet offers nine specific coping strategies worth trying individually rather than all at once: name the experience as ambiguous loss, since simply having accurate language for it reduces confusion about your own reaction; practice "both/and" thinking (this person is both still here and also changed, rather than forcing a choice between the two framings); build a genuine support system and a defined "care team" rather than carrying the role alone; simplify rather than cancel family rituals and celebrations so connection continues in an adapted form; revise family roles and question unspoken "rules" that have left one person as the sole carer; find constructive outlets for anger rather than suppressing it; and deliberately cultivate new, smaller sources of hope even while grieving larger losses. The throughline across all nine is that resilience here comes from staying connected to others and to concrete, achievable sources of meaning, rather than from resolving the ambiguity itself, which usually cannot be resolved.`,
+    tags: ['ambiguous loss', 'carer grief', 'coping strategies', 'care team', 'isolation'],
+    source_url: 'https://www.caregiver.org/resource/caregiving-and-ambiguous-loss/',
+    source_org: 'Family Caregiver Alliance',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_019',
+    category: 'wellbeing',
+    title: 'Taking Care of YOU: Practical Self-Care Tools for Family Caregivers',
+    content: `The Family Caregiver Alliance's self-care guidance is deliberately practical rather than simply telling carers to "look after themselves" — a piece of advice most carers have already heard and found hard to act on. It starts by naming specific early warning signs to watch for in yourself: irritability, disrupted sleep, and increasing forgetfulness are flagged as signals that stress is building, worth acting on before reaching a point of full exhaustion or crisis rather than after.
+
+From there, the guidance offers concrete tools rather than general encouragement. For stress reduction, it suggests identifying which specific stressors are within your control and which are not, and using genuinely simple activities — a short walk, gardening, a few minutes of meditation, time with a friend — rather than waiting for a large, uninterrupted block of free time that may never arrive. For larger goals, it recommends breaking them into concrete steps achievable over a three-to-six month window, since vague, open-ended goals ("reduce stress," "get more support") are harder to act on than specific, time-bound ones.
+
+On communication, FCA recommends using "I" statements, being specific about what you need rather than hoping others will infer it, and listening actively when others respond — skills particularly relevant when asking family members to share caregiving tasks more fairly. On asking for help specifically, the practical tip is to prepare a concrete list of tasks in advance so that when someone offers help, you can name something specific rather than defaulting to "I'm fine" out of not having an answer ready. FCA also recommends preparing questions for your own doctor in advance, and treating your own healthcare appointments — including any conversation about persistent low mood — as being just as legitimate a priority as those of the person you care for, framing this consistently as making you more capable of sustained caregiving, not as a distraction from it.`,
+    tags: ['self-care', 'caregiver stress warning signs', 'goal setting', 'communication skills', 'asking for help'],
+    source_url: 'https://www.caregiver.org/resource/taking-care-you-self-care-family-caregivers/',
+    source_org: 'Family Caregiver Alliance',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_020',
+    category: 'wellbeing',
+    title: 'Carer Identity: When Caregiving Becomes Who You Are',
+    content: `Dementia Carers Count (formerly the Tipping Point Foundation), a UK charity running residential support courses exclusively for family and friend carers, has found through evaluating its own programmes that many carers arrive describing a loss that goes beyond tiredness or stress — a loss of their own identity outside the caring role. One participant's description, captured in the charity's own outcomes evaluation, has stuck precisely because it names something so many carers recognise but rarely say out loud: feeling like they were "drowning in a sea of treacle" before finding support — a slow, exhausting, all-consuming state that made it hard to remember, or even imagine, who they were before caregiving took over.
+
+This matters because sustained caregiving does not just add a new role to an existing identity — for many carers, especially those caring intensively for years, the caring role can gradually crowd out every other part of identity: the professional, the friend, the person with hobbies and opinions unrelated to care. Guilt often compounds this, since many carers describe feeling that wanting time or interests "for themselves" is somehow a betrayal of the person they care for, rather than a basic and necessary part of remaining a whole person.
+
+Dementia Carers Count's course model addresses this directly through peer connection rather than individual advice alone: bringing carers together in a residential setting, away from their usual environment and routines, specifically so identity outside the caring role has room to resurface, even briefly. Carers in the evaluation described finally being able to "ask anything ... without judgment" in a room of people who understood the specific texture of the experience without it needing to be explained or justified. The broader lesson for any carer, not just those able to attend a residential course, is that protecting even small, regular spaces where you are not "a carer" first — a hobby, a friendship, a piece of work — is not a distraction from caregiving capacity but a genuine protection of it.`,
+    tags: ['carer identity', 'loss of self', 'peer support', 'residential courses', 'guilt'],
+    source_url: 'https://eprints.worc.ac.uk/8775/1/DCC%20Carer%20Outcomes%20Report%20-%20F1.pdf',
+    source_org: 'Dementia Carers Count',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_021',
+    category: 'wellbeing',
+    title: 'Building Resilience as a Dementia Carer',
+    content: `Dementia Carers Count treats resilience not as a fixed personality trait some carers have and others lack, but as a set of skills that can be deliberately built — which is why "resilience and taking care of yourself as a carer" is a core, standalone module in the charity's training programme rather than a passing mention within general dementia education.
+
+The charity's approach begins by validating the emotional range caregiving produces rather than trying to manage it away: its guidance states plainly that caregiving involves a wide range of strong emotions, that every carer's experience is unique, and that it is fine to feel differently to other carers facing an apparently similar situation — removing the pressure to feel a "correct" way about caregiving that so much informal advice implicitly creates. From that foundation, the practical training addresses understanding stress physiologically (what is actually happening in the body when stress builds) and specific techniques to calm down in the moment, alongside making explicit the link between physical health and emotional coping capacity — the two are treated as inseparable rather than separate priorities competing for a carer's limited time and energy.
+
+A notable and evidence-based feature of Dementia Carers Count's flagship residential courses is their format: three days away from the normal caregiving environment, combining dementia education, structured discussion, peer connection, and stress-management practices such as guided meditation. Nationally, a large majority of unpaid carers report experiencing mental health difficulties, and the charity's evaluation of its own courses found that even a short, structured break of this kind — one that combines genuine peer understanding with concrete skills rather than either alone — measurably improved participants' sense of coping capacity afterward. The transferable principle for any carer, with or without access to a residential course, is that resilience-building works best as a combination of validated emotion, learned technique, and real connection with people who understand the role from the inside, rather than any single one of those in isolation.`,
+    tags: ['resilience', 'carer wellbeing', 'stress management', 'peer connection', 'residential support courses'],
+    source_url: 'https://dementiacarers.org.uk/help-and-information/looking-after-yourself/',
+    source_org: 'Dementia Carers Count',
+    embedding: null,
+  },
+  {
+    id: 'wellbeing_022',
+    category: 'wellbeing',
+    title: 'Making a Life Plan for Living Well Now, Not Just Planning for Later',
+    content: `Amid the necessary work of legal and medical future planning, Forward with Dementia makes a deliberate case for a different, complementary kind of plan: a life plan focused specifically on the current year, aimed not at preparing for decline but at actively protecting the things that still bring pleasure and a sense of satisfaction right now, for both the person with dementia and the carer supporting them.
+
+The starting observation is blunt and useful: dementia "gets in the way of living life well" — not necessarily by removing the capacity for enjoyment, but by adding friction, fatigue, and logistical difficulty to activities that used to happen easily. A life plan works by naming specific obstacles getting in the way of specific valued activities (a hobby that has quietly stopped happening, family visits that have become rare, a routine that used to include something enjoyable and no longer does) and then problem-solving around those particular obstacles, rather than addressing wellbeing only in the abstract.
+
+Forward with Dementia draws a clear and useful distinction between this life plan and a formal care plan: a care plan is developed by health professionals and focuses on medical and support needs, while a life plan is written by the person and their family themselves, and its actions are things they actually do together — a shared commitment rather than a clinical document. It is also explicitly meant to be revisited and adjusted through the year as circumstances change, rather than fixed once and left untouched. Sharing the plan with family or friends who can help enact specific parts of it — a regular visit, help getting to a valued activity, taking over a task that is currently a barrier — turns good intentions about "living well" into a concrete, shared plan rather than a private hope that quietly fades under the pressure of daily caregiving demands.`,
+    tags: ['life plan', 'quality of life', 'living well with dementia', 'carer and person goals', 'family involvement'],
+    source_url: 'https://forwardwithdementia.au/for-carers/planning-decisions/plan-for-now-to-live-well/',
+    source_org: 'Forward with Dementia',
     embedding: null,
   },
 ];

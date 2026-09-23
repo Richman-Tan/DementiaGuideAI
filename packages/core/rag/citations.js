@@ -38,7 +38,10 @@ function extractCitations(rawText, chunks = []) {
         sources.push({
           num,
           id: chunk.id,
-          title: chunk.title,
+          // display_title is the caregiver-facing plain-language title
+          // (2026-09-16_display_title.sql); `title` itself stays technical
+          // because it also feeds the embedding.
+          title: chunk.display_title ?? chunk.title,
           org: chunk.source_org ?? null,
           url: chunk.source_url ?? null,
           excerpt: excerptOf(chunk),

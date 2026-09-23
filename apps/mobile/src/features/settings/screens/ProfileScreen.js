@@ -15,7 +15,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/theme/colors';
 import { Typography, FontSize } from '@/theme/typography';
 import { openaiService } from '@/lib/openaiService';
@@ -255,7 +254,7 @@ export const ProfileScreen = ({ navigation }) => {
   const {
     textSize, textScale, setTextSize,
     hapticFeedback, audioEnabled, avatarEnabled, autoPlayResponses,
-    updateSetting, toggleDarkMode, triggerHaptic,
+    updateSetting, toggleDarkMode, triggerHaptic, clearConversation,
     darkMode, highContrast, subtitlesEnabled, conciseMode, handsFreeMode, fastVoiceMode, colors,
   } = useSettings();
   const [apiKey, setApiKey]               = useState(null);
@@ -311,7 +310,7 @@ export const ProfileScreen = ({ navigation }) => {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Clear', style: 'destructive', onPress: async () => {
-            await AsyncStorage.removeItem('chat_messages_v1');
+            await clearConversation();
             triggerHaptic('success');
           },
         },

@@ -32,12 +32,17 @@ function loadDotEnv(path) {
 
 export const env = { ...loadDotEnv(resolve(ROOT, '.env')), ...process.env };
 export const OPENAI_API_KEY = env.OPENAI_API_KEY;
+export const ANTHROPIC_API_KEY = env.ANTHROPIC_API_KEY;
 export const SUPABASE_URL = env.EXPO_PUBLIC_SUPABASE_URL;
 export const SUPABASE_ANON_KEY = env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-export function requireEnv({ openai = true, supabase = true } = {}) {
+export function requireEnv({ openai = true, supabase = true, anthropic = false } = {}) {
   if (openai && !OPENAI_API_KEY) {
     console.error('ERROR: OPENAI_API_KEY not set (export it or add to .env).');
+    process.exit(1);
+  }
+  if (anthropic && !ANTHROPIC_API_KEY) {
+    console.error('ERROR: ANTHROPIC_API_KEY not set (export it or add to .env).');
     process.exit(1);
   }
   if (supabase && (!SUPABASE_URL || !SUPABASE_ANON_KEY)) {

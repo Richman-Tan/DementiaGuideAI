@@ -117,6 +117,7 @@ export const ChatScreen = ({ navigation, route }) => {
   const {
     textScale, autoPlayResponses, conciseMode, colors,
     responseStyle, jargonMode, ariaPersonality, isCaregiversSetup,
+    conversationResetSignal,
   } = useSettings();
   const messageListRef = useRef(null);
   // Internal message list (oldest first)
@@ -153,6 +154,24 @@ export const ChatScreen = ({ navigation, route }) => {
   useEffect(() => {
     return () => { soundRef.current?.unloadAsync().catch(() => {}); };
   }, []);
+
+  // Settings' "Clear Conversation History" bumps conversationResetSignal after
+  // wiping AsyncStorage — mirror that here so the on-screen list doesn't keep
+  // showing the deleted history until the app is restarted.
+  const isFirstReset = useRef(true);
+  useEffect(() => {
+    if (isFirstReset.current) {
+      isFirstReset.current = false;
+      return;
+    }
+    setInternalMessages(SAMPLE_MESSAGES);
+    setError(null);
+    setActiveCitation(null);
+    setIsTyping(false);
+    setIsSpeaking(false);
+    soundRef.current?.unloadAsync().catch(() => {});
+    soundRef.current = null;
+  }, [conversationResetSignal]);
 
   // Re-check API key when screen comes back into focus (e.g. after saving in Profile)
   // Also reload messages in case voice conversation added new ones

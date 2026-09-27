@@ -4,12 +4,22 @@
 //   node scripts/ingest/ingest.mjs --doc curated               # one source
 //   node scripts/ingest/ingest.mjs --doc curated --dry-run     # plan only
 //   node scripts/ingest/ingest.mjs --doc isupport-who-v2026 --prune
+//   node scripts/ingest/ingest.mjs --doc curated --backfill-titles   # see below
+//   node scripts/ingest/ingest.mjs --doc curated --backfill-titles --force-titles
 //
 // Pipeline per registry entry: load → (chunk if raw text) → diff against the
-// DB by content_hash → auto-tag + embed only NEW/CHANGED chunks → upsert with
-// full provenance → optionally --prune rows whose ids the source no longer
-// produces. Unchanged chunks are never re-embedded (fixes the silent-stale-
-// chunk bug in the retired migrate-to-supabase.mjs, audit F-10).
+// DB by content_hash → auto-tag + simplify-title + embed only NEW/CHANGED
+// chunks → upsert with full provenance → optionally --prune rows whose ids
+// the source no longer produces. Unchanged chunks are never re-embedded
+// (fixes the silent-stale-chunk bug in the retired migrate-to-supabase.mjs,
+// audit F-10).
+//
+// --backfill-titles: one-time mode for rows written before the display_title
+// column existed (2026-09-16_display_title.sql). Patches display_title only
+// on existing rows missing it — no re-embed, no content/tag changes — then
+// exits without running the normal diff/upsert pipeline. Add --force-titles
+// to regenerate EVERY row's display_title instead of only missing ones
+// (e.g. to re-run title-collision dedup after fixing simplifyTitle).
 //
 // Requires: .env with SUPABASE_URL (or EXPO_PUBLIC_SUPABASE_URL),
 // SUPABASE_SERVICE_ROLE_KEY (writes bypass RLS — scripts only, never the app)
@@ -51,18 +61,27 @@ const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null 
 const DOC = argVal('--doc');
 const DRY_RUN = args.includes('--dry-run');
 const PRUNE = args.includes('--prune');
+const BACKFILL_TITLES = args.includes('--backfill-titles');
+const FORCE_TITLES = args.includes('--force-titles');
+const ONLY_IDS = argVal('--only')?.split(',').map(s => s.trim()).filter(Boolean) ?? null;
+const AVOID_TITLE = argVal('--avoid'); // manual override for a KNOWN cross-document collision (see --only)
 
 if (!DOC) {
-  console.error('Usage: node scripts/ingest/ingest.mjs --doc <document_id> [--dry-run] [--prune]');
+  console.error('Usage: node scripts/ingest/ingest.mjs --doc <document_id> [--dry-run] [--prune] [--backfill-titles [--force-titles | --only <id[,id...]> [--avoid "<title>"]]]');
   console.error(`Registered documents: ${REGISTRY.map(e => `${e.document_id}${e.enabled ? '' : ' (disabled)'}`).join(', ')}`);
   process.exit(1);
 }
-const entry = getEntry(DOC);
-if (!entry) {
+// --backfill-titles only reads/patches display_title on rows that already
+// exist under this document_id — it needs no loader/licence/source metadata,
+// so (unlike real ingestion) it isn't gated on a registry entry. This matters
+// in practice: production document_ids can lag the registry (e.g. a
+// versioned re-ingestion planned in registry.js but not yet run/pruned).
+const entry = BACKFILL_TITLES ? null : getEntry(DOC);
+if (!BACKFILL_TITLES && !entry) {
   console.error(`Unknown document_id '${DOC}'. Add it to scripts/ingest/registry.js first — unregistered content is not ingested.`);
   process.exit(1);
 }
-if (!entry.enabled) {
+if (!BACKFILL_TITLES && !entry.enabled) {
   console.error(`'${DOC}' is disabled in the registry (licence gate). Confirm licence/provenance, set enabled: true, then re-run.`);
   process.exit(1);
 }
@@ -204,15 +223,64 @@ async function autoTag(chunk) {
   } catch { return []; }
 }
 
+// `title` doubles as the embedding input, so for PDF/URL/text sources it's
+// built from the source document name + heading path + part number (see
+// chunkDocument in chunking.js) — technical PDF/manual furniture when shown
+// to a caregiver. Runs for EVERY chunk, including 'curated-js' ones: none of
+// the existing titles are guaranteed caregiver-friendly just because they
+// look hand-written, so all sources go through the same simplifier rather
+// than special-casing by loader. Cached by content_hash (only called for
+// new/changed chunks in the normal pipeline, or explicitly via
+// --backfill-titles), so this is a one-time cost per chunk.
+// `avoid`, when set, is a single colliding title from another chunk in the
+// same document — sibling chunks (windowed parts of one section, or just
+// topically similar sections) tend to simplify to the same generic phrase
+// independently, which reads as a duplicate/glitch when two citations in one
+// answer show the identical title. Callers detect the collision (see the
+// `used` set in backfillTitles / the toWrite loop) and retry once with it set.
+async function simplifyTitle(chunk, { avoid } = {}) {
+  const avoidClause = avoid
+    ? ` Another chunk from the same source already uses the title "${avoid}" — make this one clearly distinct while still reflecting THIS excerpt.`
+    : '';
+  const data = await withRetry(`simplify-title ${chunk.id}`, () => openaiJson('/chat/completions', {
+    model: TAG_MODEL,
+    max_tokens: 30,
+    temperature: 0,
+    messages: [
+      { role: 'system', content:
+        'You write short reference titles for a dementia care app used by family caregivers, many with no ' +
+        'clinical or technical background. Given a technical source title and an excerpt, rewrite the title as ' +
+        'a plain-language phrase a worried family member would understand at a glance: at most 6 words, no ' +
+        'document names, module/section/part numbers, or clinical jargon. Output ONLY the plain title text — ' +
+        'no quotes, no explanation.' },
+      { role: 'user', content: `Technical title: ${chunk.title}\n\nExcerpt: ${chunk.content.slice(0, 500)}${avoidClause}` },
+    ],
+  }));
+  return data.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
+}
+
+// Generate a display_title, retrying once (with the sibling's title flagged)
+// if it collides with one already assigned in this document — see
+// simplifyTitle's `avoid` param.
+async function simplifyTitleUnique(chunk, usedTitles) {
+  let title = await simplifyTitle(chunk);
+  if (usedTitles.has(title)) title = await simplifyTitle(chunk, { avoid: title });
+  usedTitles.add(title);
+  return title;
+}
+
 async function embedBatch(texts) {
   const data = await withRetry('embed', () => openaiJson('/embeddings', { model: EMBEDDING_MODEL, input: texts }));
   return data.data.sort((a, b) => a.index - b.index).map(d => d.embedding);
 }
 
 // ─── DB diff & upsert ─────────────────────────────────────────────────────────
+// Selects title/content/display_title too (not just the id/content_hash diff
+// key) so callers can seed title-dedup sets and --backfill-titles/--force-titles
+// can generate display_title without re-running the loader/chunker.
 async function fetchExisting(documentId) {
   const r = await fetch(
-    `${SUPABASE_URL}/rest/v1/knowledge_chunks?document_id=eq.${encodeURIComponent(documentId)}&select=id,content_hash`,
+    `${SUPABASE_URL}/rest/v1/knowledge_chunks?document_id=eq.${encodeURIComponent(documentId)}&select=id,content_hash,title,content,display_title`,
     { headers: sbHeaders({}, { write: false }) },
   );
   if (!r.ok) {
@@ -223,6 +291,39 @@ async function fetchExisting(documentId) {
     throw new Error(`Existing-rows fetch failed (${r.status}): ${body.slice(0, 200)}`);
   }
   return r.json();
+}
+
+async function patchDisplayTitle(id, displayTitle) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/knowledge_chunks?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: sbHeaders(),
+    body: JSON.stringify({ display_title: displayTitle }),
+  });
+  if (!r.ok) throw new Error(`display_title patch failed for ${id} (${r.status}): ${(await r.text()).slice(0, 200)}`);
+}
+
+// force=true regenerates EVERY row's display_title (e.g. to fix titles that
+// collided under the old non-deduping simplifyTitle); otherwise only rows
+// missing one are touched.
+async function backfillTitles(documentId, { force = false, only = null, avoid = null } = {}) {
+  const rows = await fetchExisting(documentId);
+  const targets = only ? rows.filter(r => only.includes(r.id))
+    : force ? rows
+    : rows.filter(r => !r.display_title);
+  console.log(`${documentId}: ${targets.length} of ${rows.length} chunks ${only ? `(--only ${only.join(',')})` : force ? '(forced regeneration)' : 'missing display_title'}.`);
+  const targetIds = new Set(targets.map(r => r.id));
+  // Seed same-document dedup from every OTHER row's current title, excluding
+  // the targets themselves so a row being regenerated doesn't "collide" with
+  // its own stale title. Cross-document collisions (this function only sees
+  // one document_id) are handled instead via an explicit --avoid override.
+  const used = new Set(rows.filter(r => r.display_title && !targetIds.has(r.id)).map(r => r.display_title));
+  for (const row of targets) {
+    row.display_title = avoid ? await simplifyTitle(row, { avoid }) : await simplifyTitleUnique(row, used);
+    console.log(`  ${row.id}\n    "${row.title.slice(0, 70)}"\n    → "${row.display_title}"`);
+    if (!DRY_RUN) await patchDisplayTitle(row.id, row.display_title);
+  }
+  console.log(targets.length ? 'done.' : '');
+  console.log(DRY_RUN ? '(dry run — nothing written)' : `Backfilled ${targets.length} chunk(s).`);
 }
 
 async function upsert(rows) {
@@ -278,6 +379,12 @@ async function deleteIds(ids) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
+  if (BACKFILL_TITLES) {
+    console.log(`Backfilling display_title for '${DOC}'${FORCE_TITLES ? ' [FORCE regenerate all]' : ''}${DRY_RUN ? ' [DRY RUN]' : ''}`);
+    await backfillTitles(DOC, { force: FORCE_TITLES, only: ONLY_IDS, avoid: AVOID_TITLE });
+    return;
+  }
+
   console.log(`Ingesting '${entry.document_id}' (${entry.loader}: ${entry.local_path ?? entry.source_url})${DRY_RUN ? ' [DRY RUN]' : ''}`);
   const chunks = await LOADERS[entry.loader](entry);
   console.log(`Loaded ${chunks.length} chunks from source.`);
@@ -316,6 +423,14 @@ async function main() {
       if (!c.tags || c.tags.length === 0) c.tags = await autoTag(c);
     }
 
+    console.log('Simplifying titles for caregiver display…');
+    // Seed with unchanged siblings' titles too, so a re-ingested chunk can't
+    // collide with a chunk from the same document that isn't being rewritten.
+    const usedTitles = new Set(existing.filter(r => r.display_title).map(r => r.display_title));
+    for (const c of toWrite) {
+      c.display_title = await simplifyTitleUnique(c, usedTitles);
+    }
+
     console.log('Embedding…');
     const now = new Date().toISOString();
     for (let i = 0; i < toWrite.length; i += EMBED_BATCH) {
@@ -330,6 +445,7 @@ async function main() {
       id: c.id,
       category: c.category,
       title: c.title,
+      display_title: c.display_title,
       content: c.content,
       tags: c.tags,
       source_url: c.source_url ?? null,

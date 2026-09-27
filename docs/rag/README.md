@@ -49,6 +49,8 @@ npm run rag:eval:generation   # answers for all sets (temp 0, seeded)
 npm run rag:eval:safety  -- docs/report/eval/generation_<sha>_<prompt>.json   # MUST/MUST-NOT gates (exit code)
 npm run rag:grade        -- docs/report/eval/generation_<sha>_<prompt>.json   # groundedness judge + spot-check file
 npm run rag:eval:sweep        # min_similarity × diversity-cap parameter sweep
+npm run rag:eval:agent        # adaptive Claude red-team agent (needs ANTHROPIC_API_KEY)
+npm run rag:eval:quality-agent # Claude quality/edge-case agent (needs ANTHROPIC_API_KEY)
 npm run rag:introspect        # dump live corpus → docs/report/kb_chunks_reference.csv
 ```
 
@@ -72,6 +74,8 @@ tables — see [../eval/README.md](../eval/README.md).
 | [rag-improvement-results.md](rag-improvement-results.md) | Measured before/after results |
 | [rag-source-inventory.md](rag-source-inventory.md) | Every knowledge-base source and its review verdict |
 | [adding-content.md](adding-content.md) | How the research team adds its own content (file → manifest → registry → sign-off → ingest) |
+| [adaptive-agent-tester.md](adaptive-agent-tester.md) | Methodology, literature, and ethics for the Claude-based adversarial tester |
+| [quality-agent-tester.md](quality-agent-tester.md) | Methodology and literature for the Claude-based quality/edge-case tester (RAGAS dimensions, calibration, avatar-evaluation research) |
 
 ## Where this is heading
 

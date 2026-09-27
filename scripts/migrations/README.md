@@ -25,6 +25,7 @@ dated files.
 | `2026-08-18_study_tables.sql` | ✅ run (verified 2026-08-24) | `study_sessions`, `study_events`, `study_usage` + `bump_study_usage()`; RLS on with no policies, `service_role` only |
 | `2026-08-18_participant_allocation.sql` | ⏳ apply with study_tables | `study_participant_seq` + `claim_participant_number()`. Not verifiable with the anon key — check with the service role before enrolling |
 | `2026-08-19_study_version_stamp.sql` | ⏳ verify before enrolling | Adds `study_sessions.study_version`. `apps/api/api/study/session.js` selects **and** inserts this column, so if it is missing every session create fails |
+| `2026-09-16_display_title.sql` | ⏳ apply, then backfill | Adds `knowledge_chunks.display_title` (caregiver-facing plain-language title, separate from the embedding-input `title`) and returns it from `match_chunks`. After applying, backfill existing rows with `node scripts/ingest/ingest.mjs --doc <id> --backfill-titles` for each registry entry |
 
 After any corpus replacement (Stage 9), rebuild the ivfflat index so its
 training clusters match the new data: `reindex index knowledge_chunks_embedding_idx;`

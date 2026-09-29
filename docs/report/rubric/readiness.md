@@ -10,9 +10,9 @@ listed as a gap.
 | Item | Value |
 |---|---|
 | **Final Research Report** | **Sunday 18 Oct 2026, 11:59 pm** — individual submission, **100 % of the grade** |
-| Length | 8,000–13,000 words (typically 12,000), **max 30 pages**, Introduction → Future Work inclusive |
-| Format | Times New Roman 12 pt; template on Canvas |
-| Required sections | Title Page, Abstract, Signed Statement of Contribution, Acknowledgements, Table of Contents, Glossary of Terms, *Introduction*, *Literature Review*, *Middle sections*, *Discussion*, *Conclusions*, *Future Work*, References, Appendices |
+| Length | **Soft limit 25 pages, hard limit 13,000 words**, minimum 8,000 (typically 10,000–12,000), Introduction → Conclusions and Future Work inclusive — Canvas assignment page, read 2026-09-29. The Handbook says 30 pages; the stricter Canvas figure is used. See [`../final/README.md`](../final/README.md) |
+| Format | Times New Roman 12 pt; Canvas template `FYP Report Template ECSE 2026.docx` (A4, 2.5/2.0 cm margins, IEEE numeric citations) |
+| Required sections | Canvas template order: Title Page, Abstract, Signed Statement of Contribution (student **and supervisor** signatures), Table of Contents, Acknowledgements, Glossary of Terms, Abbreviations, *Introduction*, *Literature Review*, *Middle sections*, *Discussion*, *Conclusions and Future Work*, References, Appendices |
 | **Research Compendium** | **Tuesday 20 Oct 2026** — joint submission with JooHyun Kang; must include a ReadMe describing structure, organisation and contents; must allow replication by future researchers |
 | Display Day poster | Friday 9 Oct 2026 (joint); Display Day Thursday 22 Oct |
 | Completion checklist | Tuesday 27 Oct, 5:00 pm — **work is not assessed without it** |
@@ -24,7 +24,7 @@ Two consequences that shape everything below:
    independently written and the Statement of Contribution must delineate what is
    Richman's work. The evaluation programme (E1–E12) is the strongest individual
    claim available and should be framed that way.
-2. **30 pages is binding.** The proposed evaluation chapter
+2. **25 pages is binding** (Canvas soft limit; the Handbook's 30 is superseded — corrected 2026-09-29). The proposed evaluation chapter
    (`docs/eval/evaluation-plan.md` §15) has thirteen subsections. All of it will
    not fit alongside a 5–6 page literature review, methods, discussion and future
    work. The compendium is where the overflow goes — that is what it is for.
@@ -115,7 +115,7 @@ the human study design. `docs/eval/functional-verification.md` and
   a picture-description corpus is the right proxy, why an LLM judge needs human
   agreement to be credible, why a within-subjects Latin square — each needs a
   citation, not just a rationale.
-- The plan's §15 chapter structure needs cutting to fit 30 pages.
+- The plan's §15 chapter structure needs cutting to fit 25 pages — done in the skeleton, [`../final/`](../final/README.md), which orders results by research question.
 
 ## D — Study Execution, Findings & Evaluation (30 %)
 

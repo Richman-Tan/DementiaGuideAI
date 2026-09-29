@@ -43,6 +43,7 @@ Config lives in `packages/core/rag/`; tooling in `scripts/eval/` and
 | [eval/results-e9-stt-2026-09-18.md](eval/results-e9-stt-2026-09-18.md) | E9: word-error rate of the transcription path on ADReSS-2020 dementia speech, four recognisers, downstream effect |
 | [eval/functional-verification.md](eval/functional-verification.md) | E10: requirements-to-evidence matrix, test levels, coverage, unverified requirements |
 | [eval/scalability.md](eval/scalability.md) | E11: per-turn call trace, capacity per dependency, the binding constraint, measured load |
+| [report/final/](report/final/README.md) | **The final report's skeleton**: every required section with its word budget, rubric hook, evidence pointers and status; check it with `python3 scripts/report/check-template.py` |
 | [report/rubric/](report/rubric/readiness.md) | **The final report's marking rubric** and what the project has and has not got against it |
 | [report/lit-review/](report/lit-review/alignment.md) | The April scope/objectives/literature submission, what has to change in it, and the redrafted Section 2 (research questions, aim, scope) |
 

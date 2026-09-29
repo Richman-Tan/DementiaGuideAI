@@ -7,7 +7,7 @@ the "Evidence" column is not part of the report text — it is the audit trail, 
 reproduced in §*Evidence map* at the end.
 
 Markdown is the source of truth; paste into the Canvas template when the report is
-assembled (Times New Roman 12 pt, double-spaced, per the handbook). One structural
+assembled (Times New Roman 12 pt, single-spaced with paragraph spacing, per the Canvas template — see [`../final/README.md`](../final/README.md)). One structural
 fix to carry across: all of §2.1–§2.5 should sit at the **same heading level** — the
 April document put §2.1 at Heading 2 and §2.2–§2.5 at Heading 3 within the same
 section.

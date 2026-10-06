@@ -31,13 +31,12 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { getEntry, REGISTRY } = require('./registry.js');
-const { chunkDocument, contentHash, normalise, stripPdfBoilerplate } = require('./chunking.js');
+const { contentHash, normalise } = require('./chunking.js');
+const { withRetry, pdfBufferToText, fetchUrlToArticle, textToChunks, makeOpenAIClient } = require('./pipeline.js');
 const { EMBEDDING_MODEL, CATEGORIES } = require('../../packages/core/rag/ragConfig.js');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
-const OPENAI_BASE = 'https://api.openai.com/v1';
-const TAG_MODEL = 'gpt-4o-mini';
 const EMBED_BATCH = 20;
 
 // ─── Env ──────────────────────────────────────────────────────────────────────
@@ -90,30 +89,7 @@ if (!SUPABASE_URL || (!DRY_RUN && !SERVICE_KEY) || !OPENAI_API_KEY) {
   process.exit(1);
 }
 
-// ─── Retry helper: exponential backoff on 429/5xx ─────────────────────────────
-async function withRetry(label, fn, tries = 4, baseMs = 1500) {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      return await fn();
-    } catch (e) {
-      const retryable = /429|5\d\d|ECONNRESET|ETIMEDOUT|fetch failed/i.test(String(e.message));
-      if (!retryable || attempt >= tries) throw e;
-      const wait = baseMs * 2 ** (attempt - 1);
-      console.warn(`  ${label}: attempt ${attempt} failed (${String(e.message).slice(0, 120)}) — retrying in ${wait}ms`);
-      await new Promise(r => setTimeout(r, wait));
-    }
-  }
-}
-
-async function openaiJson(endpoint, body) {
-  const r = await fetch(`${OPENAI_BASE}${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` },
-    body: JSON.stringify(body),
-  });
-  if (!r.ok) throw new Error(`OpenAI ${endpoint} ${r.status}: ${(await r.text()).slice(0, 200)}`);
-  return r.json();
-}
+const openai = makeOpenAIClient(OPENAI_API_KEY, { embeddingModel: EMBEDDING_MODEL });
 
 // Reads may fall back to the anon key (RLS allows SELECT) so --dry-run can
 // show a real diff without the service-role key; writes always need it.
@@ -149,16 +125,11 @@ function loadCuratedJs(entry) {
 }
 
 async function loadPdf(entry) {
-  const { PDFParse } = require('pdf-parse'); // v2 API
   const path = resolve(ROOT, entry.local_path);
   if (!existsSync(path)) throw new Error(`Source file missing: ${entry.local_path} (see content/sources/MANIFEST.md)`);
-  const parser = new PDFParse({ data: readFileSync(path) });
-  const result = await parser.getText();
-  // Strip running headers/footers/logos detected across pages (also removes the
-  // pdf-parse "-- N of M --" separators). See chunking.stripPdfBoilerplate.
-  const text = stripPdfBoilerplate(result.text);
+  const text = await pdfBufferToText(readFileSync(path));
   const idBase = entry.document_id.replace(/[^a-z0-9]+/gi, '_').slice(0, 30);
-  return chunkDocument(text, { idBase, sourceTitle: entry.title }).map(c => ({
+  return textToChunks(text, { idBase, sourceTitle: entry.title }).map(c => ({
     ...c,
     category: entry.category,
     tags: [],
@@ -171,7 +142,7 @@ function loadText(entry) {
   const path = resolve(ROOT, entry.local_path);
   if (!existsSync(path)) throw new Error(`Source file missing: ${entry.local_path}`);
   const idBase = entry.document_id.replace(/[^a-z0-9]+/gi, '_').slice(0, 30);
-  return chunkDocument(readFileSync(path, 'utf8'), { idBase, sourceTitle: entry.title }).map(c => ({
+  return textToChunks(readFileSync(path, 'utf8'), { idBase, sourceTitle: entry.title }).map(c => ({
     ...c,
     category: entry.category,
     tags: [],
@@ -181,17 +152,9 @@ function loadText(entry) {
 }
 
 async function loadUrl(entry) {
-  const { JSDOM } = require('jsdom');
-  const { Readability } = require('@mozilla/readability');
-  const resp = await withRetry('fetch', () => fetch(entry.source_url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DementiaGuideAI-Ingest/2.0)' },
-  }));
-  if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching ${entry.source_url}`);
-  const dom = new JSDOM(await resp.text(), { url: entry.source_url });
-  const article = new Readability(dom.window.document).parse();
-  if (!article) throw new Error('Readability could not parse the page');
+  const { text, title } = await fetchUrlToArticle(entry.source_url);
   const idBase = entry.document_id.replace(/[^a-z0-9]+/gi, '_').slice(0, 30);
-  return chunkDocument(article.textContent, { idBase, sourceTitle: article.title || entry.title }).map(c => ({
+  return textToChunks(text, { idBase, sourceTitle: title || entry.title }).map(c => ({
     ...c,
     category: entry.category,
     tags: [],
@@ -202,77 +165,17 @@ async function loadUrl(entry) {
 
 const LOADERS = { 'curated-js': loadCuratedJs, pdf: loadPdf, text: loadText, url: loadUrl };
 
-// ─── Tagging & embedding (new/changed chunks only) ────────────────────────────
-async function autoTag(chunk) {
-  const data = await withRetry(`tag ${chunk.id}`, () => openaiJson('/chat/completions', {
-    model: TAG_MODEL,
-    max_tokens: 60,
-    temperature: 0,
-    messages: [
-      { role: 'system', content:
-        'You are a specialist tagger for a dementia care knowledge base used by caregivers and clinicians. ' +
-        'Given a chunk of text, produce ONLY a JSON array of 5 to 8 lowercase tags that are SPECIFIC to the exact content — ' +
-        'specific conditions, symptoms, techniques, medications, risk factors, or situations; not generic labels like "dementia" or "caregiving". ' +
-        '1-3 words per tag. No explanation, no markdown — only the JSON array.' },
-      { role: 'user', content: `Title: ${chunk.title}\n\nContent: ${chunk.content.slice(0, 800)}` },
-    ],
-  }));
-  try {
-    const tags = JSON.parse(data.choices[0].message.content.trim());
-    return Array.isArray(tags) ? tags.map(String) : [];
-  } catch { return []; }
-}
-
-// `title` doubles as the embedding input, so for PDF/URL/text sources it's
-// built from the source document name + heading path + part number (see
-// chunkDocument in chunking.js) — technical PDF/manual furniture when shown
-// to a caregiver. Runs for EVERY chunk, including 'curated-js' ones: none of
+// Tagging/titling/embedding (autoTag, simplifyTitle, simplifyTitleUnique,
+// embedBatch) now live in pipeline.js's makeOpenAIClient, bound above as
+// `openai` — shared with the admin intake endpoint. `title` doubles as the
+// embedding input, so for PDF/URL/text sources it's built from the source
+// document name + heading path + part number (see chunkDocument in
+// chunking.js) — technical PDF/manual furniture when shown to a caregiver.
+// simplifyTitle runs for EVERY chunk, including 'curated-js' ones: none of
 // the existing titles are guaranteed caregiver-friendly just because they
-// look hand-written, so all sources go through the same simplifier rather
-// than special-casing by loader. Cached by content_hash (only called for
-// new/changed chunks in the normal pipeline, or explicitly via
-// --backfill-titles), so this is a one-time cost per chunk.
-// `avoid`, when set, is a single colliding title from another chunk in the
-// same document — sibling chunks (windowed parts of one section, or just
-// topically similar sections) tend to simplify to the same generic phrase
-// independently, which reads as a duplicate/glitch when two citations in one
-// answer show the identical title. Callers detect the collision (see the
-// `used` set in backfillTitles / the toWrite loop) and retry once with it set.
-async function simplifyTitle(chunk, { avoid } = {}) {
-  const avoidClause = avoid
-    ? ` Another chunk from the same source already uses the title "${avoid}" — make this one clearly distinct while still reflecting THIS excerpt.`
-    : '';
-  const data = await withRetry(`simplify-title ${chunk.id}`, () => openaiJson('/chat/completions', {
-    model: TAG_MODEL,
-    max_tokens: 30,
-    temperature: 0,
-    messages: [
-      { role: 'system', content:
-        'You write short reference titles for a dementia care app used by family caregivers, many with no ' +
-        'clinical or technical background. Given a technical source title and an excerpt, rewrite the title as ' +
-        'a plain-language phrase a worried family member would understand at a glance: at most 6 words, no ' +
-        'document names, module/section/part numbers, or clinical jargon. Output ONLY the plain title text — ' +
-        'no quotes, no explanation.' },
-      { role: 'user', content: `Technical title: ${chunk.title}\n\nExcerpt: ${chunk.content.slice(0, 500)}${avoidClause}` },
-    ],
-  }));
-  return data.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
-}
-
-// Generate a display_title, retrying once (with the sibling's title flagged)
-// if it collides with one already assigned in this document — see
-// simplifyTitle's `avoid` param.
-async function simplifyTitleUnique(chunk, usedTitles) {
-  let title = await simplifyTitle(chunk);
-  if (usedTitles.has(title)) title = await simplifyTitle(chunk, { avoid: title });
-  usedTitles.add(title);
-  return title;
-}
-
-async function embedBatch(texts) {
-  const data = await withRetry('embed', () => openaiJson('/embeddings', { model: EMBEDDING_MODEL, input: texts }));
-  return data.data.sort((a, b) => a.index - b.index).map(d => d.embedding);
-}
+// look hand-written. Cached by content_hash (only called for new/changed
+// chunks in the normal pipeline, or explicitly via --backfill-titles), so
+// this is a one-time cost per chunk.
 
 // ─── DB diff & upsert ─────────────────────────────────────────────────────────
 // Selects title/content/display_title too (not just the id/content_hash diff
@@ -318,7 +221,7 @@ async function backfillTitles(documentId, { force = false, only = null, avoid = 
   // one document_id) are handled instead via an explicit --avoid override.
   const used = new Set(rows.filter(r => r.display_title && !targetIds.has(r.id)).map(r => r.display_title));
   for (const row of targets) {
-    row.display_title = avoid ? await simplifyTitle(row, { avoid }) : await simplifyTitleUnique(row, used);
+    row.display_title = avoid ? await openai.simplifyTitle(row, { avoid }) : await openai.simplifyTitleUnique(row, used);
     console.log(`  ${row.id}\n    "${row.title.slice(0, 70)}"\n    → "${row.display_title}"`);
     if (!DRY_RUN) await patchDisplayTitle(row.id, row.display_title);
   }
@@ -420,7 +323,7 @@ async function main() {
   if (toWrite.length > 0) {
     console.log('Tagging new/changed chunks…');
     for (const c of toWrite) {
-      if (!c.tags || c.tags.length === 0) c.tags = await autoTag(c);
+      if (!c.tags || c.tags.length === 0) c.tags = await openai.autoTag(c);
     }
 
     console.log('Simplifying titles for caregiver display…');
@@ -428,14 +331,14 @@ async function main() {
     // collide with a chunk from the same document that isn't being rewritten.
     const usedTitles = new Set(existing.filter(r => r.display_title).map(r => r.display_title));
     for (const c of toWrite) {
-      c.display_title = await simplifyTitleUnique(c, usedTitles);
+      c.display_title = await openai.simplifyTitleUnique(c, usedTitles);
     }
 
     console.log('Embedding…');
     const now = new Date().toISOString();
     for (let i = 0; i < toWrite.length; i += EMBED_BATCH) {
       const batch = toWrite.slice(i, i + EMBED_BATCH);
-      const vectors = await embedBatch(batch.map(c => `${c.title}. ${c.content}`));
+      const vectors = await openai.embedBatch(batch.map(c => `${c.title}. ${c.content}`));
       batch.forEach((c, j) => { c.embedding = vectors[j]; });
       process.stdout.write('.');
     }

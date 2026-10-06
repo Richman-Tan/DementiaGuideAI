@@ -1,0 +1,26 @@
+{
+  "name": "@dementiaguide/admin",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Internal admin tool: lets a non-engineer submit a PDF/URL/pasted-text resource to the knowledge base via apps/api, without running scripts/ingest/ingest.mjs. Deployed as its own Vercel project (dementiaguide-admin) — separate from apps/web and apps/mobile, so neither gains any weight from this.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^3.2.7",
+    "typescript": "~5.9.2",
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0"
+  }
+}

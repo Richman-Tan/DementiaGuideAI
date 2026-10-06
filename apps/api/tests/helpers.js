@@ -8,6 +8,7 @@ import { vi } from 'vitest';
 import { Readable } from 'node:stream';
 
 export const CODE = 'study-code-0123456789abcdef'; // 28 chars, above the 16 minimum
+export const ADMIN_TOKEN = 'admin-token-0123456789abcdef'; // 29 chars, above the 16 minimum
 export const ORIGIN = 'https://dementiaguide-web.vercel.app';
 
 export function makeReq({
@@ -47,6 +48,7 @@ export function makeRes() {
 
 export const baseEnv = {
   STUDY_ACCESS_CODES: CODE,
+  ADMIN_INGEST_TOKENS: ADMIN_TOKEN,
   ALLOWED_ORIGINS: ORIGIN,
   OPENAI_API_KEY: 'sk-test',
   ELEVENLABS_API_KEY: 'el-test',
@@ -68,6 +70,7 @@ export async function load(modulePath, { env = {}, admin } = {}) {
     adminConfigured: true,
     rpc: vi.fn(async () => true),
     insertIgnoringConflicts: vi.fn(async (t, rows) => rows.length),
+    insertManyReturning: vi.fn(async (t, rows) => rows.map((r) => ({ id: r.id, display_title: r.display_title }))),
     selectOne: vi.fn(async () => null),
     insertReturning: vi.fn(async () => null),
     updateWhere: vi.fn(async () => ({})),

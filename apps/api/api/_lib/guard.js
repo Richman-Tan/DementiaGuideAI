@@ -84,7 +84,9 @@ export function applyCors(req, res) {
   }
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-study-code, Authorization');
+    // x-admin-token: the knowledge-base admin intake endpoint (adminGuard.js)
+    // reuses this helper for its own CORS, not just the study routes.
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-study-code, x-admin-token, Authorization');
     res.setHeader('Access-Control-Max-Age', '86400');
     res.status(204).end();
     return true;

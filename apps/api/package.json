@@ -6,7 +6,10 @@
   "description": "Backend service: holds the provider credentials, proxies AI calls, and owns study and conversation data. Deployed as its own Vercel project (dementiaguide-api) — see this app's README.",
   "license": "UNLICENSED",
   "dependencies": {
-    "@dementiaguide/core": "1.0.0"
+    "@dementiaguide/core": "1.0.0",
+    "@mozilla/readability": "^0.6.0",
+    "jsdom": "^29.1.1",
+    "pdf-parse": "^2.4.5"
   },
   "devDependencies": {
     "vitest": "^3.2.7"

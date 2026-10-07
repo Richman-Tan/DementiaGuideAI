@@ -148,3 +148,34 @@ test.describe('study harness in Firefox (mocked session)', () => {
     await expect.poll(() => studyEvents(log).find((e) => e.kind === 'session_start')?.payload?.browserAck, { timeout: 15_000 }).toBe(true);
   });
 });
+
+test.describe('a finished session left on the device (Oct 2026: "the avatar only works in incognito")', () => {
+  // The state a pilot participant's own browser is left in: the session ended
+  // in the text arm, and nobody pressed "Clear this device".
+  const finished = (step) => ({
+    accessCode: STUDY_ACCESS_CODE, participantCode: 'P05', sessionId: SESSION_ID,
+    group: 'caregiver', armOrder: 'AB', setOrder: '12', step, stageIndex: 1, taskIndex: 2,
+  });
+
+  for (const step of ['done', 'stopped']) {
+    test(`(k) after "${step}" in the text arm, chat shows the avatar again and the picker is free`, async ({ page }) => {
+      await mockProviders(page);
+      await seedStorage(page, { keys: false });
+      await page.addInitScript((s) => localStorage.setItem('dg_study', JSON.stringify(s)), finished(step));
+      await page.goto('/#/app/chat');
+      await expect(page.getByLabel('Type your question')).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Hide panel' })).toBeVisible();
+      await page.goto('/#/app/settings');
+      await expect(page.getByText('Fixed for this study session')).toHaveCount(0);
+    });
+  }
+
+  test('(l) during the text arm itself, the avatar stays hidden', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false });
+    await page.addInitScript((s) => localStorage.setItem('dg_study', JSON.stringify(s)), { ...finished('task'), taskId: 't2c' });
+    await page.goto('/#/app/chat');
+    await expect(page.getByLabel('Type your question')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Hide panel' })).toHaveCount(0);
+  });
+});

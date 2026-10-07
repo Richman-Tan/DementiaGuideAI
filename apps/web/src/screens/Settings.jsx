@@ -4,6 +4,7 @@ import { useChat } from '../state/ChatContext.jsx';
 import { useUi } from '../state/UiContext.jsx';
 import { loadKeys, saveKeys as persistKeys, clearKeys as wipeKeys } from '../state/keysStore.js';
 import { useStudy } from '../study/StudyContext.jsx';
+import { inLiveStudy } from '../study/guards.js';
 import { useAuth } from '../state/AuthContext.jsx';
 import { navigate } from '../state/router.js';
 import { AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
@@ -115,7 +116,8 @@ export default function Settings() {
   const inStudy = Boolean(study?.active);
   // The avatar is fixed for the tasks study, so every task is with the same one.
   // Free use on the feedback round has no tasks, and trying both is fair game.
-  const avatarFixed = inStudy && !study?.isFeedback;
+  // Lifted when the session ends, which `inStudy` alone is not (see inLiveStudy).
+  const avatarFixed = inLiveStudy(study) && !study?.isFeedback;
   const [keys, setKeys] = useState(loadKeys);
   const [advOpen, setAdvOpen] = useState(false);
   // Re-renders when the Unity-build probe resolves (locks/unlocks the picker).

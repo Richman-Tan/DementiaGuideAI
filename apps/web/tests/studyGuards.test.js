@@ -7,7 +7,7 @@
 // the analysis will claim — so the checks live here rather than in a manual
 // walkthrough nobody will repeat before every session.
 import { describe, it, expect } from 'vitest';
-import { wrongArmRedirect, needsResumeCheck, setupStartDisabled, ARM_ROUTE } from '../src/study/guards.js';
+import { wrongArmRedirect, needsResumeCheck, setupStartDisabled, inLiveStudy, ARM_ROUTE } from '../src/study/guards.js';
 
 /** A live session standing in `arm`, at `step`. */
 const live = (arm, step = 'task') => ({ active: true, step, stage: { arm } });
@@ -131,5 +131,25 @@ describe('letting a session start', () => {
     // the tradeoff a decision instead of a surprise.
     expect(setupStartDisabled(form({ micStatus: 'denied', micAck: true }))).toBe(false);
     expect(setupStartDisabled(form({ micStatus: null, micAck: true }))).toBe(false);
+  });
+});
+
+describe('rules that last only as long as the session', () => {
+  // A finished session stays on the device until "Clear this device", so the
+  // text arm's "no avatar" and the session's fixed avatar used to outlive it —
+  // that browser showed no avatar in chat while an incognito window did.
+  it('is live during a session', () => {
+    expect(inLiveStudy(live('B', 'task'))).toBe(true);
+    expect(inLiveStudy(live('A', 'sus'))).toBe(true);
+  });
+
+  it('ends with the session, whether finished or stopped', () => {
+    expect(inLiveStudy(live('B', 'done'))).toBe(false);
+    expect(inLiveStudy(live('B', 'stopped'))).toBe(false);
+  });
+
+  it('is never live outside a session', () => {
+    expect(inLiveStudy(null)).toBe(false);
+    expect(inLiveStudy({ active: false, step: 'task' })).toBe(false);
   });
 });

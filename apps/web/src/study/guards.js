@@ -36,6 +36,20 @@ export function wrongArmRedirect(path, study) {
 }
 
 /**
+ * True while a study session is in progress, false once it has ended.
+ *
+ * `active` alone is not that: a session stays on the device after "done" or
+ * "stopped" until someone presses "Clear this device", which most people who
+ * finish never do. Rules that shape the interface for the study — no avatar in
+ * the text arm, the avatar fixed for the session — must lift when the session
+ * ends, or that browser keeps them indefinitely while a fresh (incognito) window
+ * shows the normal app. Found Oct 2026: "the avatar only works in incognito".
+ */
+export function inLiveStudy(study) {
+  return Boolean(study?.active) && !TERMINAL_STEPS.includes(study.step);
+}
+
+/**
  * Whether the person at the keyboard has to confirm the session this device
  * restored belongs to them.
  *

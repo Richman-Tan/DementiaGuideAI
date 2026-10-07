@@ -10,6 +10,7 @@ import { useStudy } from '../study/StudyContext.jsx';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
 import { CitationText } from '../components/CitationText.jsx';
 import FlagAnswer from '../study/FlagAnswer.jsx';
+import { inLiveStudy } from '../study/guards.js';
 import { makeStickTracker } from '../lib/autoscroll.js';
 
 const Dots = () => (
@@ -31,7 +32,9 @@ export default function Chat({ isDesktop, isMobile }) {
   // Arm B is the text baseline — no avatar of any kind, including the desktop
   // bust panel. Leaving it visible would make the two arms differ by less than
   // the design says they do.
-  const armB = Boolean(study?.active && study.stage?.arm === 'B');
+  // Only while the session is live — a finished session left on the device
+  // must not hide the avatar for good (see inLiveStudy).
+  const armB = inLiveStudy(study) && study.stage?.arm === 'B';
   const [panel, setPanel] = useState(true);
   const chatEl = useRef(null);
 

@@ -1,0 +1,54 @@
+# Home: everything a first-time visitor sees, then the typed-question hand-off
+# to Chat.
+#
+# No API key is configured, so the question cannot be answered. What the flow
+# pins down is what the user is shown: their question in the transcript, then
+# an error banner. Which banner depends on the network: with a connection,
+# OpenAI rejects the request (the app has no key to send, so the header reads
+# "Bearer null") and the auth message shows; offline, the connection message
+# shows. Both are the app's real error states, so either passes.
+appId: com.anonymous.DementiaGuideAi
+name: Home — content and typed question
+tags:
+  - home
+  - chat
+---
+- runFlow: subflows/skip-onboarding.yaml
+
+- assertVisible: "Good (morning|afternoon|evening)"
+- assertVisible: "DementiaGuide AI"
+- assertVisible: "Your trusted companion for dementia care guidance"
+- assertVisible: "Aria"
+- assertVisible: "Your AI Guide"
+- assertVisible: '(?s)Ask a question, explore resources.*'
+- assertVisible: "Evidence-based"
+- assertVisible: "Private & secure"
+- assertVisible: "Curated resources"
+- assertVisible: "Common Questions"
+- assertVisible: "How do I manage sundowning?"
+- scrollUntilVisible:
+    element: "Speak with Aria"
+    direction: DOWN
+- assertVisible: "Explore"
+- assertVisible: "Ask questions"
+- assertVisible: "Browse resources"
+- scrollUntilVisible:
+    element: "Type your question"
+    direction: UP
+
+# The send button only appears once there is text
+- assertNotVisible: "Send question"
+- tapOn: "Type your question"
+- inputText: "What is respite care?"
+- assertVisible: "Send question"
+- tapOn: "Send question"
+
+# Chat opens with the question in the transcript
+- extendedWaitUntil:
+    visible: "What is respite care?"
+    timeout: 15000
+- assertVisible: "Online|Thinking…|Speaking…"
+- extendedWaitUntil:
+    visible: "Invalid API key — update it in Settings|Connection error — check your internet connection"
+    timeout: 45000
+- assertVisible: "What is respite care?"

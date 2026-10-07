@@ -1,0 +1,129 @@
+# Library and articles: categories, filter chips, search (hits and no hits),
+# opening an article, a related article, back navigation, and handing an
+# article to Chat.
+#
+# The e2e build points Supabase at an address that never resolves, so the
+# Library always falls back to the articles bundled with the app
+# (src/features/library/data/knowledgeBase.js). Titles asserted below come
+# from that file.
+appId: com.anonymous.DementiaGuideAi
+name: Library — browse, filter, search, read
+tags:
+  - library
+---
+- runFlow: subflows/skip-onboarding.yaml
+- tapOn:
+    id: "tab-library"
+- extendedWaitUntil:
+    visible: "Knowledge Library"
+    timeout: 10000
+- assertVisible: "Evidence-based dementia care resources"
+- assertVisible: "Resources"
+- assertVisible: "Categories"
+- assertVisible: "Updated"
+- assertVisible: "Search knowledge library"
+- assertVisible: "Browse by Category"
+- assertVisible: "Caregiving Advice — Practical daily care tips and strategies"
+- scrollUntilVisible:
+    element: 'All Resources \(\d+\)'
+    direction: DOWN
+    timeout: 30000
+- assertNotVisible: "Loading resources..."
+
+# A category card filters the list; "Clear" removes the filter
+- scrollUntilVisible:
+    element: "Clinical Guidelines — .*"
+    direction: UP
+    centerElement: true
+- tapOn: "Clinical Guidelines — .*"
+- extendedWaitUntil:
+    visible: 'Clinical Guidelines \(\d+\)'
+    timeout: 10000
+- assertNotVisible: "Browse by Category"
+- assertVisible: "Stages of Dementia: Mild, Moderate, and Severe, .*"
+- tapOn: "Clear category filter"
+- scrollUntilVisible:
+    element: "Browse by Category"
+    direction: UP
+
+# The filter chips do the same
+- tapOn: "Filter by Home Safety"
+- extendedWaitUntil:
+    visible: 'Home Safety \(\d+\)'
+    timeout: 10000
+- tapOn: "Filter by All"
+- extendedWaitUntil:
+    visible: "Browse by Category"
+    timeout: 10000
+
+# Search with no match offers to ask Aria instead
+- tapOn: "Search knowledge library"
+- inputText: "zzqxv"
+- extendedWaitUntil:
+    visible: "No results found"
+    timeout: 10000
+- assertVisible: "Try different search terms or browse a category"
+- assertVisible: "Ask Aria instead"
+- assertVisible: 'Results \(0\)'
+- tapOn: "Clear search"
+- extendedWaitUntil:
+    visible: "Browse by Category"
+    timeout: 10000
+
+# Search with matches
+- tapOn: "Search knowledge library"
+- inputText: "sundowning"
+- extendedWaitUntil:
+    visible: 'Results \([1-9]\d*\)'
+    timeout: 10000
+- hideKeyboard
+- tapOn: "Managing Sundowning Behaviour, .*"
+
+# Article detail
+- extendedWaitUntil:
+    visible: "Back to Library"
+    timeout: 10000
+- assertVisible: "Managing Sundowning Behaviour"
+- assertVisible: "Caregiving Advice"
+- assertVisible: '\d+ min read'
+- assertVisible: "Share article"
+- scrollUntilVisible:
+    element: "Topics covered"
+    direction: DOWN
+- scrollUntilVisible:
+    element: "More in Caregiving Advice"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Ask Aria about this"
+
+# A related article opens on top; Back returns to the first one
+- tapOn: "Responding to Repetitive Questions and Actions"
+- extendedWaitUntil:
+    visible: "Responding to Repetitive Questions and Actions"
+    timeout: 10000
+- assertNotVisible: "Managing Sundowning Behaviour"
+- tapOn: "Back to Library"
+- extendedWaitUntil:
+    visible: "Managing Sundowning Behaviour"
+    timeout: 10000
+
+# "Ask Aria about this" hands the article to Chat as a question
+- scrollUntilVisible:
+    element: "Ask Aria about this article"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Ask Aria about this article"
+- extendedWaitUntil:
+    visible: '(?s)I just read the article "Managing Sundowning Behaviour".*'
+    timeout: 15000
+
+# Back in the Library, the search is still there
+- tapOn:
+    id: "tab-library"
+- extendedWaitUntil:
+    visible: 'Results \([1-9]\d*\)'
+    timeout: 10000
+- tapOn: "Clear search"
+- scrollUntilVisible:
+    element: 'All Resources \(\d+\)'
+    direction: DOWN

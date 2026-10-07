@@ -200,8 +200,8 @@ export default function Settings() {
               return (
                 <button
                   key={p.id}
-                  onClick={() => { if (!unityLocked) setSetting('avatarId', p.id); }}
-                  disabled={unityLocked}
+                  onClick={() => { if (!unityLocked && !inStudy) setSetting('avatarId', p.id); }}
+                  disabled={unityLocked || inStudy}
                   title={unityLocked ? 'Unity WebGL build not installed — see public/unity/README.md' : p.description}
                   style={{ minHeight: '44px', padding: '0 14px', borderRadius: '9px', border: 'none', cursor: unityLocked ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '.9rem', opacity: unityLocked ? 0.45 : 1, ...segStyle(on) }}
                 >
@@ -210,6 +210,11 @@ export default function Settings() {
               );
             })}
           </div>
+          {inStudy && (
+            <div style={{ width: '100%', color: 'var(--text2)', fontSize: '.85rem' }}>
+              {`Fixed for this study session, so every task is with ${effective.name}.`}
+            </div>
+          )}
           {storedLocked && (
             <div style={{ width: '100%', color: 'var(--text2)', fontSize: '.85rem' }}>
               {storedProfile.name} needs the Unity build — using {effective.name} meanwhile

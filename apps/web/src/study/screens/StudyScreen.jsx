@@ -2,7 +2,7 @@
 // during a task the participant is in the real app with StudyTaskOverlay on top.
 import React, { useEffect, useState } from 'react';
 import { useStudy, detectBrowser, SUPPORTED_BROWSERS } from '../StudyContext.jsx';
-import { armLabel, GROUPS, IDENTITY_WARNING } from '@core/study/studyConfig.mjs';
+import { armLabel, GROUPS, IDENTITY_WARNING, ARM_A } from '@core/study/studyConfig.mjs';
 import { useSettings } from '../../state/SettingsContext.jsx';
 import { useEffectiveAvatarProfile } from '../../avatar/effectiveProfile.js';
 import { Page, Button, Choice, LikertItem, TextArea, SupportNumbers, Disclaimer, card, PIS, PisLink } from '../ui.jsx';
@@ -268,6 +268,11 @@ export default function StudyScreen() {
           Take as long as you like. When you have found what you need — or if you
           decide you can’t — use the buttons at the top of the screen to come back here.
         </p>
+        {stage.arm === ARM_A && (
+          <p style={{ marginTop: '.75rem', fontSize: '.95rem', color: 'var(--text2)', lineHeight: 1.6 }}>
+            {`To hear an answer again, press ↻ at the top right; ☰ shows the whole conversation as text, so you can re-read what ${assistant} said.`}
+          </p>
+        )}
         <div style={{ marginTop: '1.5rem' }}>
           <Button onClick={st.startTask}>Start</Button>
         </div>
@@ -756,6 +761,10 @@ function SetupStep({ onStop }) {
 
   const browser = detectBrowser();
   const browserOk = SUPPORTED_BROWSERS.includes(browser);
+  // Advisory since Oct 2026 (a tester on Firefox was turned away): typing works in
+  // any browser and speech falls back to the server recogniser; the choice to
+  // continue rides on session_start so the data can say which sessions used it.
+  const [browserAck, setBrowserAck] = useState(false);
 
   const checkMic = async () => {
     try {
@@ -782,6 +791,7 @@ function SetupStep({ onStop }) {
         // succeeds, so this is the only way the check's outcome reaches the data.
         micStatus: mic ?? 'skipped',
         micAck,
+        browserAck: !browserOk && browserAck,
       });
       // dg_settings survives "Clear this device" (deliberately — it is not
       // study state), so on a shared laptop the previous participant's text
@@ -796,17 +806,18 @@ function SetupStep({ onStop }) {
     }
   };
 
-  if (!browserOk) {
+  if (!browserOk && !browserAck) {
     return (
       <Page
-        title="Please switch to Chrome or Edge"
-        lead="The talking part of this app only works properly in Google Chrome or Microsoft Edge. In other browsers it can’t show what you are saying as you say it, which would change what we are measuring."
+        title="Talking works best in Chrome or Edge"
+        lead="Typing works in any browser. Speaking works best in Google Chrome or Microsoft Edge, which show what you are saying as you say it; in this browser it may be slower or less reliable."
       >
         <div style={card}>
-          <p style={{ margin: 0, lineHeight: 1.7 }}>
-            Please copy the link from your invitation email, open Chrome or Edge, and
-            paste it there. Nothing you have done so far will be lost.
+          <p style={{ margin: '0 0 1rem', lineHeight: 1.7 }}>
+            You can continue here, or copy the link from your invitation email, open Chrome or
+            Edge, and paste it there. Nothing you have done so far will be lost.
           </p>
+          <Button onClick={() => setBrowserAck(true)}>Continue in this browser</Button>
         </div>
         <p style={{ marginTop: '1rem', color: 'var(--text2)' }}>
           We detected: <strong>{browser}</strong>.

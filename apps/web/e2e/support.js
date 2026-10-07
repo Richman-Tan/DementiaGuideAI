@@ -10,7 +10,47 @@
 //
 // The chat completion is an SSE body carrying inline [S#] markers, so the real
 // citation extractor, the marker stripper and the source drawer all run.
-import { expect } from '@playwright/test';
+import { test as base, expect } from '@playwright/test';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// ─── Coverage (E2E_COVERAGE=1) ───────────────────────────────────────────────
+// The dev server is instrumented by vite-plugin-istanbul (vite.config.js), so
+// each loaded document keeps its counters in `window.__coverage__`. A full
+// navigation starts a fresh document and loses them, so they are saved before
+// every page.goto / page.reload and at the end of the test. Specs import
+// `test` from here rather than from '@playwright/test' to get this.
+const COVERAGE_DIR = process.env.E2E_COVERAGE === '1'
+  ? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.coverage-e2e')
+  : null;
+
+export const test = base.extend({
+  page: async ({ page }, runTest, testInfo) => {
+    if (!COVERAGE_DIR) {
+      await runTest(page);
+      return;
+    }
+    const snapshots = [];
+    const save = async () => {
+      try {
+        const cov = await page.evaluate(() => window.__coverage__ || null);
+        if (cov) snapshots.push(cov);
+      } catch { /* page closed or not yet loaded — nothing to save */ }
+    };
+    for (const method of ['goto', 'reload']) {
+      const original = page[method].bind(page);
+      page[method] = async (...args) => { await save(); return original(...args); };
+    }
+    await runTest(page);
+    await save();
+    if (snapshots.length) {
+      mkdirSync(COVERAGE_DIR, { recursive: true });
+      const name = `${testInfo.testId}-${testInfo.retry}-${Date.now()}.json`;
+      writeFileSync(path.join(COVERAGE_DIR, name), JSON.stringify(snapshots));
+    }
+  },
+});
 
 export const OPENAI_KEY = 'sk-e2e-not-a-real-key';
 export const STUDY_ACCESS_CODE = 'e2e-study-access-code-0001';

@@ -31,7 +31,8 @@ module.exports = {
   },
   coverageProvider: 'v8',
   coverageDirectory: '<rootDir>/apps/mobile/coverage',
-  coverageReporters: ['json-summary', 'text-summary'],
+  // `json` (coverage-final.json) feeds scripts/test/coverage-gate.mjs.
+  coverageReporters: ['json', 'json-summary', 'text-summary'],
   collectCoverageFrom: [
     'packages/core/**/*.{js,mjs,ts}',
     'scripts/eval/lib/**/*.{js,mjs}',

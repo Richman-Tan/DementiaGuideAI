@@ -2,8 +2,7 @@
 // notice, free use with "Things to try", a flagged answer, open questions, the
 // optional SUS skipped. The study API is answered by the fixtures in support.js,
 // which give a feedback session no arms, as the real endpoint does.
-import { test } from '@playwright/test';
-import { mockProviders, seedStorage, ask, expect, studyEvents, STUDY_ACCESS_CODE } from './support.js';
+import { test, mockProviders, seedStorage, ask, expect, studyEvents, STUDY_ACCESS_CODE } from './support.js';
 
 async function enrol(page) {
   await page.goto('/#/study/feedback');

@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { saveKeys } from '../src/state/keysStore.js';
 import { saveStudy } from '../src/study/studyStore.js';
+import { apiUrl } from '../src/services/apiBase.js';
 
 vi.mock('../src/services/openaiClient.js', () => ({
   openaiClient: { tts: vi.fn(async (text, voice) => `data:audio/mpeg;base64,OPENAI:${voice}`) },
@@ -91,7 +92,7 @@ describe('ElevenLabs proxied (study session)', () => {
     saveStudy({ sessionId: '11111111-2222-3333-4444-555555555555', accessCode: 'study-access-code-0001' });
     await tts('Hello', { elevenVoiceId: 'v1', speechRate: 0.65 });
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('/api/eleven-tts');
+    expect(url).toBe(apiUrl('/api/eleven-tts'));
     expect(init.headers).toEqual({ 'x-study-code': 'study-access-code-0001', 'Content-Type': 'application/json' });
     expect(JSON.parse(init.body)).toEqual({ text: 'Hello', voiceId: 'v1', speechRate: 0.65 });
   });

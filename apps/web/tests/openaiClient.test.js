@@ -9,6 +9,7 @@ import { Buffer } from 'node:buffer';
 import { saveKeys, loadKeys } from '../src/state/keysStore.js';
 import { saveStudy } from '../src/study/studyStore.js';
 import { saveAccess } from '../src/state/accessStore.js';
+import { apiUrl } from '../src/services/apiBase.js';
 import { buildSystemPrompt, buildUserContent } from '@core/rag/prompt';
 import { CHAT_MODEL, EMBEDDING_MODEL, MIN_SIMILARITY, GENERATION_TEMPERATURE } from '@core/rag/ragConfig';
 
@@ -312,7 +313,7 @@ describe('chatStream', () => {
     fetchMock.mockResolvedValue(new Response('', { status: 401 }));
     await expect(drain(openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })))
       .rejects.toBeInstanceOf(StudyAccessError);
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/chat');
+    expect(fetchMock.mock.calls[0][0]).toBe(apiUrl('/api/chat'));
   });
 
   it('retrieves itself when not given chunks, and records an empty result', async () => {
@@ -444,7 +445,7 @@ describe('tts', () => {
     fetchMock.mockResolvedValue(new Response(new Uint8Array([1, 2, 3]), { status: 200 }));
     expect(await openaiClient.tts('Hi')).toBe('data:audio/mpeg;base64,AQID');
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('/api/speech');
+    expect(url).toBe(apiUrl('/api/speech'));
     expect(JSON.parse(init.body)).toEqual({ voice: 'nova', input: 'Hi' });
     expect(init.headers['x-study-code']).toBe('study-access-code-0001');
   });

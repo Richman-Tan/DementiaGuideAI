@@ -73,10 +73,20 @@ describe('supabase client guard', () => {
   });
 });
 
+// Expected proxy URLs are built with apiUrl() so the assertions hold whatever
+// VITE_API_BASE_URL a developer's local .env sets.
 describe('apiBase', () => {
-  it('builds same-origin URLs when no API origin is configured', () => {
-    expect(apiUrl('/api/chat')).toBe('/api/chat');
-    expect(apiIsCrossOrigin).toBe(false);
+  it('builds same-origin URLs when no API origin is configured', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    vi.resetModules();
+    const mod = await import('../src/services/apiBase.js');
+    expect(mod.apiUrl('/api/chat')).toBe('/api/chat');
+    expect(mod.apiIsCrossOrigin).toBe(false);
+  });
+
+  it('this run’s base agrees with its cross-origin flag', () => {
+    expect(apiUrl('/api/chat').endsWith('/api/chat')).toBe(true);
+    expect(apiIsCrossOrigin).toBe(apiUrl('') !== '');
   });
 
   it('prefixes a configured origin, dropping trailing slashes', async () => {
@@ -97,10 +107,10 @@ describe('transport', () => {
 
   it('openaiUrl maps each proxied OpenAI path to its study endpoint', () => {
     const t = { proxied: true };
-    expect(openaiUrl(t, '/embeddings')).toBe('/api/embed');
-    expect(openaiUrl(t, '/chat/completions')).toBe('/api/chat');
-    expect(openaiUrl(t, '/audio/speech')).toBe('/api/speech');
-    expect(openaiUrl(t, '/audio/transcriptions')).toBe('/api/transcribe');
+    expect(openaiUrl(t, '/embeddings')).toBe(apiUrl('/api/embed'));
+    expect(openaiUrl(t, '/chat/completions')).toBe(apiUrl('/api/chat'));
+    expect(openaiUrl(t, '/audio/speech')).toBe(apiUrl('/api/speech'));
+    expect(openaiUrl(t, '/audio/transcriptions')).toBe(apiUrl('/api/transcribe'));
   });
 
   it('refuses to proxy any OpenAI path that has no explicit study route', () => {
@@ -145,10 +155,10 @@ describe('warmStudyProxy', () => {
     await new Promise((r) => setTimeout(r, 0)); // let the rejected fetches settle
     const calls = fetchMock.mock.calls.map(([url, init]) => [url, JSON.parse(init.body), init.headers['x-study-code']]);
     expect(calls).toEqual([
-      ['/api/embed', { model: 'text-embedding-3-small', input: 'warm-up' }, GUEST],
-      ['/api/chat', { model: 'gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'ok' }] }, GUEST],
-      ['/api/transcribe', {}, GUEST],
-      ['/api/speech', {}, GUEST],
+      [apiUrl('/api/embed'), { model: 'text-embedding-3-small', input: 'warm-up' }, GUEST],
+      [apiUrl('/api/chat'), { model: 'gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'ok' }] }, GUEST],
+      [apiUrl('/api/transcribe'), {}, GUEST],
+      [apiUrl('/api/speech'), {}, GUEST],
     ]);
     for (const [, init] of fetchMock.mock.calls) {
       expect(init.method).toBe('POST');
@@ -197,6 +207,9 @@ describe('selectTtsMode / markTtsDegraded', () => {
 });
 
 describe('chatService', () => {
+  // A developer's local .env may force mock mode; these tests decide it themselves.
+  beforeEach(() => vi.stubEnv('VITE_FORCE_MOCK', ''));
+
   async function load() {
     const chat = await import('../src/services/chatService.js');
     const S = await import('../src/data/services.js');
@@ -226,7 +239,7 @@ describe('chatService', () => {
       saveKeys({ openai: 'sk-1', eleven: '', azure: '' });
       vi.stubEnv('VITE_FORCE_MOCK', '1');
       expect(isMockMode()).toBe(true);
-      vi.unstubAllEnvs();
+      vi.stubEnv('VITE_FORCE_MOCK', '');
       vi.stubGlobal('location', { search: '?a=b&mock=1' });
       expect(isMockMode()).toBe(true);
       vi.stubGlobal('location', { search: '?nomock=0' });

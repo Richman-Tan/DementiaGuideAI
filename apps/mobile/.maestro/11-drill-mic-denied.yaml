@@ -1,0 +1,51 @@
+# FR-36 fallback drill: microphone permission denied.
+#
+# Only the microphone is refused; speech recognition stays allowed. Maestro
+# writes the refusal into the Simulator's privacy database, which is the same
+# change as `xcrun simctl privacy <udid> revoke microphone com.anonymous.DementiaGuideAi`
+# (docs/testing/ios-e2e.md records a manual cross-check with that command).
+#
+# What the code does with a refusal (useAvatarConversation.js, startRecording):
+# it treats `permission-denied` as a deliberate silent no-op. The mic stays
+# idle and NO message explains why; sttService.js also skips the Whisper
+# fallback on a denial. This flow pins that behaviour down, including the
+# absence of a message, so a change to it is noticed. Typing must still work.
+appId: com.anonymous.DementiaGuideAi
+name: Drill — microphone denied
+tags:
+  - drill
+  - voice
+---
+- runFlow: subflows/skip-onboarding.yaml
+- launchApp:
+    permissions:
+      microphone: deny
+      speech: allow
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 30000
+- tapOn: "Start voice conversation"
+- extendedWaitUntil:
+    visible: "Start speaking"
+    timeout: 10000
+
+# Tapping the mic: nothing happens, and nothing is shown
+- tapOn: "Start speaking"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible: "Start speaking"
+- assertNotVisible: "Stop"
+- assertNotVisible: "(?i).*(microphone|permission).*"
+- tapOn: "Start speaking"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertNotVisible: "Stop"
+
+# Typing still works: the typed question goes through the same pipeline and
+# reaches the credential check (no key on a fresh install)
+- tapOn: "Sleep tips"
+- tapOn: "Send"
+- extendedWaitUntil:
+    visible: "No API key configured"
+    timeout: 20000
+- assertVisible: "Start speaking"

@@ -13,13 +13,12 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 // Every web screen. avatarProfiles.js is the one legitimate home of the names;
-// Onboarding still carries ~12 literals but is unreachable during a study
-// session (the router exempts study sessions) — its rewrite is deferred and
-// tracked in the PR that added this test. Everything else must resolve the
-// name through useEffectiveAvatarProfile.
+// everything else must resolve the name through useEffectiveAvatarProfile.
+// Onboarding joined the scan once its literals were rewritten (a tester read
+// "Meet Aria" here, then met Aaron on Home).
 const SCREENS = [
   'Landing.jsx', 'Library.jsx', 'Privacy.jsx', 'Disclaimer.jsx', 'Settings.jsx',
-  'Chat.jsx', 'Voice.jsx', 'Home.jsx', 'Article.jsx',
+  'Chat.jsx', 'Voice.jsx', 'Home.jsx', 'Article.jsx', 'Onboarding.jsx',
 ];
 
 const src = (name) =>
@@ -44,7 +43,7 @@ describe('avatar naming', () => {
   it('the screens above resolve the name through the effective profile', () => {
     // The scan alone would pass on a screen that simply says nothing; the
     // screens that DO name the assistant must derive it.
-    for (const name of ['Landing.jsx', 'Library.jsx', 'Privacy.jsx', 'Disclaimer.jsx', 'Settings.jsx']) {
+    for (const name of ['Landing.jsx', 'Library.jsx', 'Privacy.jsx', 'Disclaimer.jsx', 'Settings.jsx', 'Onboarding.jsx']) {
       expect(src(name), `${name} should use useEffectiveAvatarProfile`).toContain('useEffectiveAvatarProfile');
     }
   });

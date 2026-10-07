@@ -9,6 +9,7 @@ import { navigate } from '../state/router.js';
 import { AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
 import { isUnityAvailable } from '../avatar/unity/unityBridge.js';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { AccessCodeForm } from '../components/AccessCodeForm.jsx';
 
 const Toggle = ({ label, on, onToggle }) => (
   <button role="switch" aria-checked={on ? 'true' : 'false'} aria-label={label} onClick={onToggle} style={{ position: 'relative', width: '52px', height: '32px', flexShrink: '0', borderRadius: '999px', border: 'none', cursor: 'pointer', background: on ? 'var(--primary)' : 'var(--border)', transition: 'background .2s' }}>
@@ -237,6 +238,14 @@ export default function Settings() {
         {!inStudy && <button onClick={clearHistory} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Clear Conversation History</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>{savedToAccount ? 'Delete past conversations from your account and this device' : 'Delete past conversations from this device'}</span></span><span style={{ color: 'var(--text2)' }}>›</span></button>}
       </Card>
 
+      {!inStudy && <SectionTitle>Access code</SectionTitle>}
+      {!inStudy && (
+      <Card>
+        <p style={{ margin: '0 0 12px', color: 'var(--text2)', fontSize: '.92rem', lineHeight: 1.5 }}>{`If the DementiaGuide team gave you an access code, enter it here to talk with ${who} and get live answers. You don't need an API key.`}</p>
+        <div style={{ paddingBottom: '16px' }}><AccessCodeForm /></div>
+      </Card>
+      )}
+
       {!inStudy && <SectionTitle>Advanced</SectionTitle>}
       {!inStudy && (
       <Card>
@@ -249,7 +258,7 @@ export default function Settings() {
                 <input type="password" value={keys[k]} onChange={(e) => setKeys({ ...keys, [k]: e.target.value })} placeholder="Paste key…" style={{ minHeight: '48px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--elev)', color: 'var(--text)', fontSize: '.95rem', boxSizing: 'border-box' }} />
               </label>
             ))}
-            <p style={{ margin: '0', color: 'var(--text2)', fontSize: '.85rem' }}>Keys are stored only in this browser — never sent anywhere else. {`With an OpenAI key saved, ${who} answers with the live knowledge base; without one the app uses built-in example answers.`}</p>
+            <p style={{ margin: '0', color: 'var(--text2)', fontSize: '.85rem' }}>Keys are stored only in this browser — never sent anywhere else. {`With an OpenAI key or an access code saved, ${who} answers with the live knowledge base; without either the app uses built-in example answers.`}</p>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => { persistKeys(keys); showToast('Settings saved'); }} style={{ minHeight: '46px', padding: '0 20px', borderRadius: '12px', border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: '600', cursor: 'pointer' }} className="hv2">Save keys</button>
               <button onClick={() => { setKeys({ openai: '', eleven: '', azure: '' }); wipeKeys(); showToast('API keys cleared'); }} style={{ minHeight: '46px', padding: '0 20px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv3">Clear keys</button>

@@ -19,6 +19,8 @@ import { emit } from '../study/events.js';
 import { shouldAdoptServerThread } from './threadAdoption.js';
 import { resolveEffectiveProfile } from '../avatar/effectiveProfile.js';
 import { MODALITY_TYPED } from '@core/study/studyConfig.mjs';
+import { credentialErrorCopy } from '../services/credentialErrorCopy.js';
+import { transportKind } from '../services/transport.js';
 
 const ChatCtx = createContext(null);
 
@@ -244,15 +246,7 @@ export function ChatProvider({ children }) {
       failedQ.current = q;
       setTyping(false);
       setChatError(true);
-      setChatErrorMsg(
-        err?.name === 'StudyAccessError'
-          ? 'Your study access code was not accepted — check the code in your invitation email.'
-          : err?.name === 'OpenAIAuthError'
-          ? 'Your OpenAI API key looks invalid — check it in Settings → Advanced.'
-          : err?.name === 'OpenAIRateLimitError'
-            ? 'The AI service is rate-limited right now — wait a moment and retry.'
-            : "I couldn't reach the knowledge base — try again."
-      );
+      setChatErrorMsg(credentialErrorCopy(err, transportKind()) ?? "I couldn't reach the knowledge base — try again.");
       setMessages(base); // drop the empty streaming bubble if any
     } finally {
       busyRef.current = false;

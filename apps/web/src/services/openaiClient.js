@@ -49,6 +49,10 @@ class OpenAIRateLimitError extends Error {
 class StudyAccessError extends Error {
   constructor(msg) { super(msg); this.name = 'StudyAccessError'; }
 }
+// Proxied mode only: the access code's daily request cap, not a provider limit.
+class StudyLimitError extends Error {
+  constructor(msg) { super(msg); this.name = 'StudyLimitError'; }
+}
 
 // Shared response mapping so every call site reports the same thing.
 //
@@ -61,7 +65,12 @@ async function throwForStatus(resp, transport, label) {
       ? new StudyAccessError('Study access code was not accepted')
       : new OpenAIAuthError('Invalid API key');
   }
-  if (resp.status === 429) throw new OpenAIRateLimitError('Rate limit reached');
+  if (resp.status === 429) {
+    // The proxy's own cap says so in its body; any other 429 is the provider's.
+    const body = transport.proxied ? await resp.clone().text().catch(() => '') : '';
+    if (/limit reached for today/.test(body)) throw new StudyLimitError('Access code limit reached for today');
+    throw new OpenAIRateLimitError('Rate limit reached');
+  }
   if (resp.status === 403) {
     throw new Error(`${label}: refused (403) — the key may be unavailable in your region`);
   }
@@ -385,7 +394,7 @@ class OpenAIClient {
 }
 
 export const openaiClient = new OpenAIClient();
-export { OpenAIAuthError, OpenAIRateLimitError, StudyAccessError };
+export { OpenAIAuthError, OpenAIRateLimitError, StudyAccessError, StudyLimitError };
 
 // ─── Chat-screen entry point (used by services/chatService.js) ───────────────
 // Streams cleaned text into onToken; resolves with the final transcript text

@@ -194,6 +194,11 @@ export default function Voice() {
   // such room and keep them above the controls.
   const width = useWidth();
   const sideCaptions = width >= 1024;
+  // The status chip is centred across the screen while the close button and the
+  // repeat/transcript pair are pinned to the corners; below ~520 px a chip such as
+  // "Tap the mic or type below" runs under the right-hand pair, so on narrow
+  // screens it drops to a row of its own beneath them.
+  const stackHeader = width < 520;
 
   const closeVoice = () => { history.length > 1 ? history.back() : navigate('#/app/home'); };
   const saveSetup = () => { saveKeys(keys); setSavedKeys(keys); };
@@ -238,7 +243,7 @@ export default function Voice() {
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '16px', pointerEvents: 'none' }}>
         <button onClick={closeVoice} aria-label="Close voice conversation" className="hv3" style={{ ...iconBtn, position: 'absolute', left: '16px', top: '16px', fontSize: '1.1rem', pointerEvents: 'auto' }}>✕</button>
         {hasKey && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', pointerEvents: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', pointerEvents: 'auto', marginTop: stackHeader ? '56px' : 0 }}>
             <StatusChip vState={vState} who={who} />
             {avatarFallback && (
               <div style={{ ...glass, borderRadius: '999px', padding: '6px 16px', fontSize: '.9rem', color: 'var(--text2)', maxWidth: '36em', textAlign: 'center' }}>

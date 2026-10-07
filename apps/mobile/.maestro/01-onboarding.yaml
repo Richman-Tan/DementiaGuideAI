@@ -1,0 +1,131 @@
+# First launch → the full 9-step setup guide → summary → app.
+# Covers every onboarding screen, the per-step Back and Skip controls, the
+# branch where choosing "voice" adds the voice-speed step, editing an answer
+# from the summary (returnToSummary), and that finishing setup survives a
+# relaunch.
+appId: com.anonymous.DementiaGuideAi
+name: Onboarding — full setup guide
+tags:
+  - onboarding
+---
+- runFlow: subflows/launch-fresh.yaml
+- assertVisible: '(?s)Welcome to.*DementiaGuide AI'
+- assertVisible: "This takes about 2 minutes"
+- tapOn: "Let's begin"
+
+# Step 1 — who is setting up
+- extendedWaitUntil:
+    visible: '(?s)Who is setting up.*this app today\?'
+    timeout: 10000
+- tapOn: "(?s)I'm helping a family member.*or friend"
+- tapOn: "Next"
+
+# Step 2 — comfort with apps
+- extendedWaitUntil:
+    visible: '(?s)How comfortable are you with.*using apps like this\?'
+    timeout: 10000
+- tapOn: '(?s)Please guide me.*one step at a time.*'
+- tapOn: "Next"
+
+# Step 3 — helper style (option labels carry their description too)
+- extendedWaitUntil:
+    visible: '(?s)What kind of helper.*feels right for you\?'
+    timeout: 10000
+- tapOn: 'Calm and reassuring.*'
+- tapOn: "Next"
+
+# Step 4 — answer length
+- extendedWaitUntil:
+    visible: '(?s)When you ask a question,.*'
+    timeout: 10000
+- tapOn: 'Short and simple.*'
+- tapOn: "Next"
+
+# Step 5 — medical words; go Back once and forward again first
+- extendedWaitUntil:
+    visible: '(?s)When medical words.*'
+    timeout: 10000
+- tapOn: "Go back to previous step"
+- extendedWaitUntil:
+    visible: '(?s)When you ask a question,.*'
+    timeout: 10000
+- tapOn: "Next"
+- extendedWaitUntil:
+    visible: '(?s)When medical words.*'
+    timeout: 10000
+- tapOn: 'Use plain words only.*'
+- tapOn: "Next"
+
+# Step 6 — voice, text or both; "voice" leads to the speed step
+- extendedWaitUntil:
+    visible: '(?s)How would you like to.*talk with Aria\?'
+    timeout: 10000
+- tapOn: 'Speak to her using my voice.*'
+- tapOn: "Next"
+
+# Step 7 — voice speed
+- extendedWaitUntil:
+    visible: '(?s)How fast would you like.*Aria to speak\?'
+    timeout: 10000
+- tapOn: 'Slower.*'
+- tapOn: "Next"
+
+# Step 8 — text size; leave it and use the step's Skip control instead
+- extendedWaitUntil:
+    visible: '(?s)How would you like.*the text to appear\?'
+    timeout: 10000
+- tapOn: "Skip this step"
+
+# Step 9 — display choices
+- extendedWaitUntil:
+    visible: "A few display choices"
+    timeout: 10000
+- tapOn: "Toggle Stronger colours"
+- tapOn: "Next"
+
+# Safety notice
+- extendedWaitUntil:
+    visible: '(?s)One important thing.*to know'
+    timeout: 10000
+- assertVisible: '(?s)Aria is here to help you find information.*not a doctor.*'
+- tapOn: "I understand — let's go"
+
+# Summary reflects every answer
+- extendedWaitUntil:
+    visible: '(?s)Here.s how you.ve.*set things up'
+    timeout: 10000
+- assertVisible: "For someone else"
+- assertVisible: "Guide me step by step"
+- assertVisible: "Calm and reassuring"
+- assertVisible: "Short and simple"
+- assertVisible: "Plain words only"
+- assertVisible: "Voice"
+- assertVisible: "Slower"
+- assertVisible: "Normal"
+- assertVisible: "On"
+
+# Change one answer from the summary and come straight back to it
+- tapOn: "Change Setup"
+- extendedWaitUntil:
+    visible: '(?s)Who is setting up.*this app today\?'
+    timeout: 10000
+- tapOn: "I'm setting this up for myself"
+- tapOn: "Next"
+- extendedWaitUntil:
+    visible: '(?s)Here.s how you.ve.*set things up'
+    timeout: 10000
+- assertVisible: "For myself"
+- assertNotVisible: "For someone else"
+
+- tapOn: "All done — show me the app"
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 15000
+
+# Setup is remembered: a relaunch (state kept) goes straight to Home
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 30000
+- assertNotVisible: "Let's begin"

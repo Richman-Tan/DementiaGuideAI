@@ -6,8 +6,9 @@ import UnityFramework
 /// Builds with or without UnityFramework. The committed framework is a device
 /// slice only, so Simulator builds omit it (plugins/withUnityFramework.js gates
 /// every iOS mod); `canImport` then compiles this down to a stub whose start()
-/// returns nil and whose sends are dropped. UnityAvatarModule reports the module
-/// unavailable and the JS falls back to the Three.js WebView avatar.
+/// returns nil and whose sends are dropped. The module itself still registers,
+/// so UnityAvatarModule exports `isUnityLinked` (false here) and AvatarUnity.js
+/// shows its "3D avatar isn't available" fallback instead of an empty view.
 ///
 /// Lazily boots the embedded Unity player and owns the singleton `UnityFramework`
 /// instance. Deliberately NOT started from AppDelegate.didFinishLaunchingWithOptions
@@ -23,6 +24,14 @@ public final class UnityBridgeManager: NSObject {
     // xcodebuild failure ("cannot find 'UnityBridgeManager' in scope")
     // without it.
     public static let shared = UnityBridgeManager()
+
+    /// Whether this pod was compiled against UnityFramework. False on Simulator
+    /// builds and EXPO_UNITY_AVATAR=0 builds, where start() can never return a view.
+#if canImport(UnityFramework)
+    public static let isUnityLinked = true
+#else
+    public static let isUnityLinked = false
+#endif
 
     public private(set) var isStarted = false
 #if canImport(UnityFramework)

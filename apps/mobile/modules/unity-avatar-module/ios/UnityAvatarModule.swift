@@ -8,6 +8,13 @@ public class UnityAvatarModule: Module {
     public func definition() -> ModuleDefinition {
         Name("UnityAvatarModule")
 
+        // Read once by src/index.js. Without it, a build that compiled this
+        // module without UnityFramework looks "available" to JS and mounts an
+        // empty native view where the avatar fallback should be.
+        Constants([
+            "isUnityLinked": UnityBridgeManager.isUnityLinked
+        ])
+
         AsyncFunction("initialize") {
             _ = UnityBridgeManager.shared.start()
         }

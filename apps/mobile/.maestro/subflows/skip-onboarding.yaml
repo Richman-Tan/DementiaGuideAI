@@ -1,0 +1,9 @@
+# Fresh install, then "Skip setup" straight to the main tabs. Most flows start
+# here so that each one is independent of the others and of run order.
+appId: com.anonymous.DementiaGuideAi
+---
+- runFlow: launch-fresh.yaml
+- tapOn: "Skip setup — go straight to the app"
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 15000

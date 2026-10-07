@@ -197,3 +197,49 @@ export const DEBRIEF = [
   { id: 'would_check', text: 'Was there anything the app said that you would want to check with a doctor, nurse, or another person before acting on it?' },
   { id: 'anything_else', text: 'Is there anything else you would like us to know?' },
 ];
+
+// ─── Feedback protocol (Oct 2026) ────────────────────────────────────────────
+//
+// Wording is a DRAFT for the clinical collaborators to confirm before the mode
+// is switched on (docs/study/protocol-feedback.md, "Before it goes live").
+
+/**
+ * Suggestions shown beside free use, from the clinical lead's scenario list
+ * (23 Sep 2026). Ideas the participant may tick off, never tasks: the objection
+ * to the tasks protocol was having to answer the researchers' questions instead
+ * of trying the tool.
+ *
+ * What the team hopes to see for `sudden_confusion` and `normal_ageing` (prompt
+ * contact with a health professional; general information and a GP, never an
+ * assessment) is in the protocol document and deliberately NOT here — this file
+ * ships to the browser.
+ */
+export const THINGS_TO_TRY = [
+  { id: 'repeat_questions', text: 'Ask what might help when the person you care for asks the same question again and again.' },
+  { id: 'respite', text: 'Ask about respite care near you.' },
+  { id: 'sudden_confusion', text: 'Ask what to do if the person you care for has suddenly become much more confused since yesterday.' },
+  { id: 'normal_ageing', text: 'Ask how dementia is different from normal ageing.' },
+  { id: 'follow_up', text: 'Ask a follow-up question about one of the answers.' },
+  { id: 'compare_ediva', text: 'Look up the same topic on the e-DiVA-NZ website, and think about which was more useful, and why.', ediva: true },
+  { id: 'flag', text: 'Flag an answer you don’t agree with, using “Flag this answer” under it.' },
+  // Round 1 only, per the scenario list. Remove for later rounds.
+  { id: 'ediva_videos', text: 'Watch two or three of the e-DiVA-NZ videos, and think about whether a short video beside an answer here would help.', ediva: true },
+];
+
+/** Open questions after free use, for thematic analysis. Every one is skippable. */
+export const FEEDBACK_QUESTIONS = [
+  { id: 'useful', text: 'What did you find useful?' },
+  { id: 'confusing', text: 'What was confusing or hard to use?' },
+  { id: 'ediva', text: 'Compared with the e-DiVA-NZ website, which did you find more useful, and why?' },
+  // Round 1 only, paired with the 'ediva_videos' suggestion above.
+  { id: 'video', text: 'Would a short video beside an answer help, or is text enough?' },
+  { id: 'change', text: 'What would you change?' },
+];
+
+// SUS with the standard substitution of "system" by "this app". The tasks
+// protocol scores an interface ("this way of using the app"); free use scores
+// the product. Same ids and polarity, so the same scorer applies.
+export const FEEDBACK_SUS_ITEMS = SUS_ITEMS.map((item) => ({
+  ...item,
+  text: item.text.replaceAll('this way of using the app', 'this app'),
+}));

@@ -1,10 +1,11 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { SettingsProvider, useSettings } from './state/SettingsContext.jsx';
 import { UiProvider } from './state/UiContext.jsx';
 import { AuthProvider } from './state/AuthContext.jsx';
 import { ChatProvider } from './state/ChatContext.jsx';
 import { StudyProvider, useStudy } from './study/StudyContext.jsx';
 import { wrongArmRedirect } from './study/guards.js';
+import { emit } from './study/events.js';
 import StudyScreen from './study/screens/StudyScreen.jsx';
 import StudyTaskOverlay from './study/screens/StudyTaskOverlay.jsx';
 import { useRoute, useWidth, navigate } from './state/router.js';
@@ -29,6 +30,13 @@ function Routed() {
   const { settings } = useSettings();
   const study = useStudy();
   const path = useRoute(settings.onboarded, Boolean(study?.active));
+  // Feedback round only: where in the app people went during free use. The
+  // route is all that is recorded — library paths carry the article id, which
+  // is how the export counts articles opened.
+  const exploring = Boolean(study?.exploring);
+  useEffect(() => {
+    if (exploring) emit('page_view', { path });
+  }, [path, exploring]);
   const width = useWidth();
   const isDesktop = width >= 1024;
   const isTablet = width >= 768 && width < 1024;

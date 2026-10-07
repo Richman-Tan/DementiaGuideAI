@@ -4,6 +4,8 @@
 // session can be cleared without touching a participant's accessibility
 // preferences, and so nothing study-related leaks into the normal app for
 // people who are not participants.
+import { PROTOCOL_FEEDBACK, PROTOCOL_TASKS, FEEDBACK_THREAD } from '@core/study/studyConfig.mjs';
+
 const KEY = 'dg_study';
 
 const EMPTY = {
@@ -21,6 +23,9 @@ const EMPTY = {
   responses: {},       // questionnaire answers, keyed by instrument id
   convoIds: {},        // conversation thread per arm, scoped to THIS session
   seq: 0,              // monotonic event counter, survives a reload
+  protocol: PROTOCOL_TASKS, // 'tasks' | 'feedback' — the server's value wins once a session exists
+  exploreStartedAt: null,   // feedback: set while the participant is using the app freely
+  tried: {},                // feedback: "Things to try" ticks, keyed by item id
 };
 
 export function loadStudy() {
@@ -71,11 +76,42 @@ export function rememberStudyConversation(arm, id) {
   saveStudy({ convoIds: { ...(s.convoIds || {}), [arm]: id } });
 }
 
-/** The arm the participant is currently in, or null outside a study session. */
+/** True for a live session on the feedback protocol (free use, no arms). */
+export function isFeedbackSession() {
+  const s = loadStudy();
+  return Boolean(s.sessionId && s.accessCode && s.protocol === PROTOCOL_FEEDBACK);
+}
+
+/**
+ * The arm the participant is currently in, or null outside a study session.
+ *
+ * Always null on the feedback protocol, which has no arms. Anything else would
+ * tag free-use turns as an arm, let wrongArmRedirect bounce the participant
+ * between screens, and hide the avatar as if this were the text arm.
+ */
 export function currentArm() {
   const s = loadStudy();
-  if (!s.sessionId || !s.armOrder) return null;
+  if (!s.sessionId || !s.armOrder || s.protocol === PROTOCOL_FEEDBACK) return null;
   return s.armOrder[s.stageIndex] || null;
+}
+
+/**
+ * The key a session's conversation thread is remembered under: the arm on the
+ * tasks protocol, FEEDBACK_THREAD on the feedback one, null outside a session.
+ *
+ * Without the feedback key, free use fell through to the anon user's most
+ * recent thread — on a shared device at a group session, the previous person's
+ * conversation, on screen and fed to the model as context.
+ */
+export function studyThreadKey() {
+  if (isFeedbackSession()) return FEEDBACK_THREAD;
+  return isStudyMode() ? currentArm() : null;
+}
+
+/** True while a feedback participant is in the app using it freely. */
+export function isExploring() {
+  const s = loadStudy();
+  return isFeedbackSession() && s.step === 'explore' && Boolean(s.exploreStartedAt);
 }
 
 /** The task currently in progress, or null. Companion to currentArm(); both are

@@ -17,6 +17,7 @@ import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { loadKeys, saveKeys } from '../state/keysStore.js';
 import { hasCredentials } from '../services/transport.js';
 import { emit } from '../study/events.js';
+import FlagAnswer from '../study/FlagAnswer.jsx';
 
 // Once per page load: the Unity→fallback swap is a property of the session,
 // not of this component's mount count (mirrors the stt_whisper pattern).
@@ -343,7 +344,15 @@ export default function Voice() {
               {m.role === 'user' ? (
                 <div style={{ alignSelf: 'flex-end', maxWidth: '85%', background: 'var(--primary)', color: '#fff', borderRadius: '16px 16px 4px 16px', padding: '10px 14px' }}>{m.text}</div>
               ) : (
-                <div style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--elev)', border: 'var(--bw) solid var(--border)', borderRadius: '16px 16px 16px 4px', padding: '10px 14px' }}>{m.text}</div>
+                <>
+                  <div style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--elev)', border: 'var(--bw) solid var(--border)', borderRadius: '16px 16px 16px 4px', padding: '10px 14px' }}>{m.text}</div>
+                  <FlagAnswer
+                    surface="voice"
+                    answer={m.text}
+                    question={messages[i - 1]?.role === 'user' ? messages[i - 1].text : ''}
+                    turnId={m.turnId || null}
+                  />
+                </>
               )}
             </div>
           ))}

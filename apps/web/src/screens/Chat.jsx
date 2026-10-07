@@ -9,6 +9,7 @@ import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { useStudy } from '../study/StudyContext.jsx';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
 import { CitationText } from '../components/CitationText.jsx';
+import FlagAnswer from '../study/FlagAnswer.jsx';
 import { makeStickTracker } from '../lib/autoscroll.js';
 
 const Dots = () => (
@@ -131,6 +132,14 @@ export default function Chat({ isDesktop, isMobile }) {
                           <button key={j} onClick={() => setDrawer(c)} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', minHeight: '36px', padding: '4px 14px', borderRadius: '999px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '.85rem', cursor: 'pointer' }} className="hv8"><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: c.dot }} />{c.title}</button>
                         ))}
                       </div>
+                    )}
+                    {!m.streaming && (
+                      <FlagAnswer
+                        surface="chat"
+                        answer={m.text}
+                        question={messages[i - 1]?.role === 'user' ? messages[i - 1].text : ''}
+                        turnId={m.turnId || null}
+                      />
                     )}
                     <div style={{ alignSelf: 'flex-start', color: 'var(--text2)', fontSize: '.75rem', paddingLeft: '4px' }}>{m.time}</div>
                   </>

@@ -2,7 +2,7 @@
 // tested. They used to live inline — in a router branch, a provider, a
 // disabled prop — where the only way to check them was to run a session by
 // hand and hope.
-import { ARM_A, ARM_B, GROUPS } from '@core/study/studyConfig.mjs';
+import { ARM_A, ARM_B, GROUPS, PROTOCOL_FEEDBACK } from '@core/study/studyConfig.mjs';
 
 /** The one app route each arm is conducted in. */
 export const ARM_ROUTE = { [ARM_A]: '#/app/voice', [ARM_B]: '#/app/chat' };
@@ -63,9 +63,12 @@ export function needsResumeCheck({ sessionId, step }, acknowledged) {
  * microphone" acknowledgement (typing is a supported path through every Arm A
  * task, so a dead mic must not lock anyone out — it just can't be a surprise).
  */
-export function setupStartDisabled({ busy, accessCode, group, supporterPresent, micStatus, micAck }) {
+export function setupStartDisabled({ busy, accessCode, group, supporterPresent, micStatus, micAck, protocol }) {
   if (busy || !String(accessCode ?? '').trim() || !GROUPS.includes(group)) return true;
   // A PLWD session cannot proceed without a support person present.
   if (group === 'plwd' && supporterPresent !== true) return true;
+  // Free use has no speaking tasks: talking is one way to use the app among
+  // others, so a missing microphone is the participant's business, not a gate.
+  if (protocol === PROTOCOL_FEEDBACK) return false;
   return micStatus !== 'ok' && micAck !== true;
 }

@@ -260,8 +260,12 @@ test.describe('chat on a phone', () => {
     await page.getByRole('button', { name: 'Open source 1' }).click();
     const drawer = page.getByRole('dialog', { name: 'Source preview' });
     await expect(drawer).toBeVisible();
+    // Full width (less any scrollbar gutter) and anchored to the bottom edge.
     const box = await drawer.boundingBox();
-    expect(box.width).toBeGreaterThan(380);
+    const view = page.viewportSize();
+    expect(box.x).toBe(0);
+    expect(box.width).toBeGreaterThan(view.width * 0.9);
+    expect(box.y + box.height).toBeGreaterThan(view.height - 20);
   });
 });
 

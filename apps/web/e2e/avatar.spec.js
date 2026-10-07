@@ -99,3 +99,34 @@ test.describe('Unity avatar loading', () => {
     await expect(page.getByText('Aaron', { exact: true })).toHaveCount(0);
   });
 });
+
+test.describe('the 3D (Three.js) avatar', () => {
+  const bust = (page) => page.getByRole('main').locator('svg[viewBox="0 0 120 120"]');
+
+  test('if the graphics context is lost, the 3D helper gives way to the drawn figure', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false, settings: { avatarId: 'aria' } });
+    await page.goto('/#/app/home');
+    const canvas = page.getByRole('main').locator('canvas');
+    // Loaded: the drawn placeholder is gone and the canvas is shown.
+    await expect(bust(page)).toHaveCount(0);
+    await expect(canvas).toBeVisible();
+    await page.evaluate(() => {
+      const c = document.querySelector('main canvas');
+      (c.getContext('webgl2') || c.getContext('webgl')).getExtension('WEBGL_lose_context').loseContext();
+    });
+    await expect(bust(page)).toBeVisible();
+  });
+
+  test('a model that fails to download leaves the drawn figure in place', async ({ page }) => {
+    await mockProviders(page);
+    const warnings = [];
+    page.on('console', (m) => { if (m.type() === 'warning') warnings.push(m.text()); });
+    await page.route(/characters\/zhenja\/zhenja\.glb$/, (route) => route.fulfill({ status: 404, body: 'missing' }));
+    await seedStorage(page, { keys: false, settings: { avatarId: 'zhenja' } });
+    await page.goto('/#/app/home');
+    await expect.poll(() => warnings.some((w) => w.startsWith('[avatar] renderer error:'))).toBe(true);
+    await expect(bust(page)).toBeVisible();
+    await expect(page.getByText('Zhenja', { exact: true })).toBeVisible();
+  });
+});

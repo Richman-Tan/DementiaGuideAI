@@ -107,7 +107,8 @@ test.describe('feedback round (mocked session)', () => {
     expect(of('feedback_done')[0].payload.responses).toEqual({ 'feedback.useful': 'The respite answer was clear.' });
     expect(of('sus_done')[0].payload).toEqual({ scope: 'feedback', responses: {} });
     expect(log.study.progress.map((p) => p.step)).toEqual(expect.arrayContaining(['explore', 'feedback', 'feedbacksus']));
-    expect(log.study.complete).toEqual([expect.objectContaining({ stoppedEarly: false })]);
+    // Marked complete after the final flush, so it can trail the last events.
+    await expect.poll(() => log.study.complete, { timeout: 15_000 }).toEqual([expect.objectContaining({ stoppedEarly: false })]);
 
     // "Nothing more will be recorded": going back into the app afterwards adds nothing.
     const before = studyEvents(log).length;

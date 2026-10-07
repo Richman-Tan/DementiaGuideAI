@@ -110,7 +110,7 @@ export function StudyProvider({ children }) {
 
   // ─── Session ──────────────────────────────────────────────────────────────
 
-  const begin = useCallback(async ({ participantCode, accessCode, group, consent, consentTranscripts, supporterPresent = null, micStatus = null, micAck = false }) => {
+  const begin = useCallback(async ({ participantCode, accessCode, group, consent, consentTranscripts, supporterPresent = null, micStatus = null, micAck = false, browserAck = false }) => {
     // The participant code is optional. A first-time participant supplies none
     // and the server allocates one; a returning participant is identified by the
     // code already in the store, or by re-typing the one they were given if they
@@ -203,6 +203,8 @@ export function StudyProvider({ children }) {
       // participant typing every turn is otherwise inexplicable in the data.
       micStatus,
       micAck,
+      // true when the participant chose to continue in a browser other than Chrome or Edge.
+      browserAck,
       renderer: await detectRenderer(),
       avatarLoad: getUnityLoadState?.() ?? null,
       // Stored choice vs what actually resolved. The renderer alone couldn't

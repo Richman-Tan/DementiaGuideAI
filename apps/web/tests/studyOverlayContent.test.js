@@ -42,11 +42,17 @@ describe('the collapsed band (the default during a task)', () => {
     expect(html).not.toContain(task.situation);
   });
 
-  it('keeps all three task buttons and offers the details', () => {
+  it('keeps all three task buttons and names what the toggle holds', () => {
     expect(html).toContain('I found my answer');
     expect(html).toContain('I couldn’t find it');
     expect(html).toContain('I need to stop');
-    expect(html).toContain('Show details');
+    expect(html).toContain('Detailed instructions');
+  });
+
+  it('says how far along the participant is, and how long it all takes', () => {
+    const withProgress = render({ progress: { n: 2, total: 6 }, minutes: 'about 35–45 min in total' });
+    expect(withProgress).toContain('Task 2 of 6');
+    expect(withProgress).toContain('about 35–45 min in total');
   });
 
   it('carries the text-size control', () => {
@@ -62,7 +68,7 @@ describe('the expanded band', () => {
   });
 
   it('offers the way back down', () => {
-    expect(html).toContain('Hide details');
+    expect(html).toContain('Hide instructions');
   });
 });
 

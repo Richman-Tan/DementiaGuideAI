@@ -20,6 +20,13 @@ export default function StudyTaskOverlay() {
   const ref = useRef(null);
 
   const showing = Boolean(st?.active && st.step === 'task' && st.task);
+  // "Task n of N" across both arms, so a participant always knows how far along they are.
+  const progress = showing && Array.isArray(st.sequence)
+    ? {
+        n: st.sequence.slice(0, st.stageIndex).reduce((k, s) => k + (s.tasks?.length || 0), 0) + st.taskIndex + 1,
+        total: st.sequence.reduce((k, s) => k + (s.tasks?.length || 0), 0),
+      }
+    : null;
 
   // Publish the band's height as a custom property so the two full-viewport
   // screens (Home and Voice) can subtract it instead of being covered by it.
@@ -94,6 +101,8 @@ export default function StudyTaskOverlay() {
     >
       <OverlayBand
         task={st.task}
+        progress={progress}
+        minutes="about 35–45 min in total"
         expanded={expanded}
         onToggle={() => setExpanded((v) => !v)}
         textScale={settings.textScale}

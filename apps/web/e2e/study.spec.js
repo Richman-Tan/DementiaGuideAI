@@ -103,3 +103,48 @@ test.describe('study Arm B (text arm, mocked session)', () => {
     expect(log.chat.length).toBe(0);
   });
 });
+
+test.describe('study harness after the Oct 2026 UX feedback (mocked session)', () => {
+  test('(f) the band says how far along the task is and what its toggle holds; the avatar is fixed for the session', async ({ page }) => {
+    const log = await mockProviders(page);
+    await seedStorage(page, { keys: false });
+    await enrolArmB(page, log);
+
+    const band = page.getByRole('region', { name: 'Your current task' });
+    await expect(band.getByText(/Task 1 of \d+/)).toBeVisible();
+    await expect(band.getByText(/about 35–45 min in total/)).toBeVisible();
+    await band.getByRole('button', { name: 'Detailed instructions' }).click();
+    await expect(band.getByRole('button', { name: 'Hide instructions' })).toBeVisible();
+
+    await page.goto('/#/app/settings');
+    const avatars = page.getByRole('group', { name: 'Avatar' }).getByRole('button');
+    for (let i = 0; i < await avatars.count(); i++) await expect(avatars.nth(i)).toBeDisabled();
+    await expect(page.getByText(/Fixed for this study session/)).toBeVisible();
+  });
+});
+
+test.describe('study harness in Firefox (mocked session)', () => {
+  test.use({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14.0; rv:131.0) Gecko/20100101 Firefox/131.0' });
+
+  test('(g) a Firefox participant can continue past the browser notice, and session_start records it', async ({ page }) => {
+    const log = await mockProviders(page);
+    await seedStorage(page, { keys: false });
+    await page.goto('/#/study');
+    await page.getByRole('button', { name: 'Start' }).click();
+    await page.getByRole('button', { name: 'I’ve read this' }).click();
+    await page.getByRole('radiogroup', { name: 'group' }).getByRole('radio', { name: /I care, or recently cared/ }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
+    const boxes = page.getByRole('checkbox');
+    for (let i = 0; i < await boxes.count(); i++) await boxes.nth(i).check();
+    await page.getByRole('radiogroup', { name: 'transcripts' }).getByRole('radio', { name: 'Yes, keep my conversation' }).click();
+    await page.getByRole('button', { name: 'I agree — continue' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Talking works best in Chrome or Edge' })).toBeVisible();
+    await page.getByRole('button', { name: 'Continue in this browser' }).click();
+    await page.getByPlaceholder('from your invitation email').fill(STUDY_ACCESS_CODE);
+    await page.getByRole('checkbox', { name: /Continue without the microphone/ }).check();
+    await page.getByRole('button', { name: 'Start the study' }).click();
+    await expect(page.getByText('Your participant code is')).toBeVisible();
+    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'session_start')?.payload?.browserAck, { timeout: 15_000 }).toBe(true);
+  });
+});

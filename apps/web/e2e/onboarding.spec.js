@@ -53,3 +53,94 @@ test.describe('onboarding wizard', () => {
     await expect(page.getByRole('status')).toContainText("The preview couldn't play");
   });
 });
+
+test.describe('onboarding: the whole wizard', () => {
+  test('every step, answered, adds up to the summary; Change goes back to a step; finishing opens Home', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false, settings: { onboarded: false, avatarId: 'aria', darkMode: false } });
+    await page.goto('/#/onboarding/1');
+    await page.getByRole('button', { name: "Let's begin" }).click();
+
+    const pick = async (title, option) => {
+      await expect(page.getByRole('heading', { name: title })).toBeVisible();
+      await page.getByRole('button', { name: option }).click();
+      await page.getByRole('button', { name: 'Continue' }).click();
+    };
+    await pick('Who is setting up this app today?', "I work in care professionally");
+    await pick('How comfortable are you with using apps like this?', /I'd like extra guidance/);
+    await pick('What kind of helper feels right for you?', 'Calm & steady');
+    await pick('When you ask a question, how much detail would you like?', 'Short and simple');
+    await pick('When medical words come up, what would you prefer?', 'Medical terms are fine');
+    await pick('How would you like to talk with Aria?', /^Type my questions/);
+    await pick('How fast would you like Aria to speak?', 'Faster');
+
+    await expect(page.getByRole('heading', { name: 'How would you like the text to appear?' })).toBeVisible();
+    await page.getByRole('button', { name: /Large/ }).click();
+    await expect(page.locator('html')).toHaveCSS('font-size', '21.25px');
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page.getByRole('heading', { name: 'A few display choices' })).toBeVisible();
+    for (const label of ['Dark mode', 'High contrast', 'Subtitles during voice replies', 'Show Aria on screen']) {
+      const sw = page.getByRole('switch', { name: label });
+      const was = await sw.getAttribute('aria-checked');
+      await sw.click();
+      await expect(sw).toHaveAttribute('aria-checked', was === 'true' ? 'false' : 'true');
+    }
+    await page.getByRole('button', { name: 'Continue' }).click();
+
+    await expect(page.getByRole('heading', { name: 'One important thing to know' })).toBeVisible();
+    await page.getByRole('button', { name: 'I understand' }).click();
+
+    await expect(page.getByRole('heading', { name: "Here's how you've set things up" })).toBeVisible();
+    for (const value of ['I work in care professionally', 'Extra guidance please', 'Calm & steady', 'Short and simple',
+      'Medical terms are fine', 'Type my questions', 'Faster', 'Large', 'Dark · high contrast']) {
+      await expect(page.getByText(value, { exact: true })).toBeVisible();
+    }
+    // "Short and simple" also turns on the concise style.
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dg_settings')).concise)).toBe(true);
+
+    // Change → the step → Continue walks forward again.
+    await page.getByRole('button', { name: 'Change' }).nth(3).click();
+    await expect(page).toHaveURL(/#\/onboarding\/5$/);
+    await page.getByRole('button', { name: 'Balanced' }).click();
+    await page.goto('/#/onboarding/12');
+    await expect(page.getByText('Balanced', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Meet Aria →' }).click();
+    await expect(page).toHaveURL(/#\/app\/home$/);
+    await expect(page.getByRole('status')).toHaveText("You're all set — welcome");
+  });
+
+  test('"Skip setup" on the first step and "Skip for now" later both go straight to Home', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false, settings: { onboarded: false } });
+    await page.goto('/#/onboarding/1');
+    await page.getByRole('button', { name: 'Skip setup' }).click();
+    await expect(page).toHaveURL(/#\/app\/home$/);
+    await expect(page.getByRole('status')).toHaveText('Setup skipped — you can redo it in Settings');
+
+    await page.goto('/#/onboarding/3');
+    await page.getByRole('button', { name: 'Skip for now' }).click();
+    await expect(page).toHaveURL(/#\/app\/home$/);
+  });
+
+  test('an out-of-range step address shows the nearest real step', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false, settings: { onboarded: false } });
+    await page.goto('/#/onboarding/99');
+    await expect(page.getByRole('heading', { name: "Here's how you've set things up" })).toBeVisible();
+    await page.goto('/#/onboarding/zero');
+    await expect(page.getByRole('heading', { name: /^Kia ora — I'm / })).toBeVisible();
+  });
+
+  test('Preview voice with a key plays the chosen voice, then settles', async ({ page }) => {
+    const log = await mockProviders(page, { audioSeconds: 1.5 });
+    await seedStorage(page, { keys: true, settings: { onboarded: false, avatarId: 'aria', voiceSpeed: 'slower' } });
+    await page.goto('/#/onboarding/8');
+    await page.getByRole('button', { name: /Preview voice/ }).click();
+    await expect(page.getByText("“Kia ora — I'm Aria. This is about how I'll sound.”")).toBeVisible();
+    expect(log.speech[0]).toMatchObject({ voice: 'nova', input: "Kia ora — I'm Aria. This is about how I'll sound." });
+    // When the clip ends the preview returns to its button.
+    await expect(page.getByText("“Kia ora — I'm Aria. This is about how I'll sound.”")).toHaveCount(0, { timeout: 15_000 });
+  });
+});

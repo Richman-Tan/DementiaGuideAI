@@ -12,7 +12,7 @@ import { startSttSession } from '../services/sttWeb.js';
 import { sttErrorPresentation } from './sttErrorCopy.js';
 import { getElevenKey } from '../state/keysStore.js';
 import { createTurnTimer } from '../study/latency.js';
-import { emit } from '../study/events.js';
+import { emit, newUuid } from '../study/events.js';
 import { currentArm, currentTaskId, transcriptFields } from '../study/studyStore.js';
 import { mapSettingsToRag, speechRateFor } from '../state/mapSettingsToRag.js';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
@@ -284,12 +284,15 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           }
         }
       } finally {
+        // turnId joins a flagged answer (feedback protocol) to its `turn` event.
+        const turnId = newUuid();
         appendMessage({
           role: 'aria',
           text: fullText,
           citations: mapSourcesToCitations(citedSources),
           sources: citedSources,
           safety: false,
+          turnId,
         });
         turn.finish({ modality, streaming: streamingActive && !streamFailed, aborted: abortRef.current });
         // Transcript capture for rubric scoring and the safety scan. Retrieved
@@ -300,6 +303,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         emit('turn', {
           arm,
           taskId,
+          turnId,
           // Spoken or typed. The avatar screen keeps its message bar on purpose
           // (a participant who finds speaking hard must have a way through), so
           // an Arm A turn is not automatically a spoken one — and a typed turn

@@ -43,6 +43,10 @@ export default defineConfig({
       VITE_SUPABASE_ANON_KEY: '',
       VITE_API_BASE_URL: '',
       VITE_FORCE_MOCK: '',
+      // The feedback round ships switched off; the e2e build switches it on so
+      // its flow is tested, and so every tasks-study flow below is proven to be
+      // unaffected by it being on.
+      VITE_STUDY_FEEDBACK: '1',
     },
   },
 });

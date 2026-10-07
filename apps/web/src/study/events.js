@@ -27,7 +27,8 @@ let batchLimit = MAX_BATCH;
 
 // crypto.randomUUID is unavailable on insecure origins in some browsers; the
 // fallback only has to be collision-free within one participant's session.
-function newUuid() {
+// Exported for turn ids, which join a flagged answer to its `turn` event.
+export function newUuid() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
   const hex = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 16).toString(16)).join('');
   return `${hex(8)}-${hex(4)}-4${hex(3)}-a${hex(3)}-${hex(12)}`;
@@ -53,6 +54,12 @@ function writeQueue(q) {
 export function emit(kind, { arm = null, taskId = null, ...payload } = {}) {
   const s = loadStudy();
   if (!s.sessionId || !s.accessCode) return;
+  // Nothing after the session has ended. The closing screens say "nothing more
+  // will be recorded", but the session stays live on the device until it is
+  // cleared — so a participant who went back into the app afterwards had every
+  // turn, with its transcript, logged against their code. finish() emits its
+  // own closing events before it moves the step, so those still get through.
+  if (s.step === 'done' || s.step === 'stopped') return;
 
   const q = readQueue();
   q.push({

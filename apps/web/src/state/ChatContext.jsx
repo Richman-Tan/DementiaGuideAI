@@ -12,10 +12,10 @@ import { useAuth } from './AuthContext.jsx';
 import { navigate } from './router.js';
 import { useSettings } from './SettingsContext.jsx';
 import { isMockMode, generateReply } from '../services/chatService.js';
-import { isStudyMode, currentArm, currentTaskId, transcriptFields, studyConversationId, rememberStudyConversation } from '../study/studyStore.js';
+import { isStudyMode, currentArm, currentTaskId, transcriptFields, studyConversationId, rememberStudyConversation, studyThreadKey } from '../study/studyStore.js';
 import { useStudy } from '../study/StudyContext.jsx';
 import { createTurnTimer } from '../study/latency.js';
-import { emit } from '../study/events.js';
+import { emit, newUuid } from '../study/events.js';
 import { shouldAdoptServerThread } from './threadAdoption.js';
 import { resolveEffectiveProfile } from '../avatar/effectiveProfile.js';
 import { MODALITY_TYPED } from '@core/study/studyConfig.mjs';
@@ -61,6 +61,9 @@ export function ChatProvider({ children }) {
   const convIdRef = useRef(null);
   useEffect(() => { convIdRef.current = conversationId; }, [conversationId]);
   const studyArm = currentArm();
+  // The arm on the tasks protocol, 'free' on the feedback one: which
+  // session-scoped thread this provider writes to. See studyThreadKey().
+  const threadKey = studyThreadKey();
   const scrollCb = useRef(null); // Chat screen registers its scroll-to-bottom here
 
   // The guard in the initialiser above runs once, at mount — which on a fresh
@@ -106,16 +109,18 @@ export function ChatProvider({ children }) {
       // threads decides if an empty server copy may replace the screen.
       const prevId = convIdRef.current;
       let id;
-      if (isStudyMode() && studyArm) {
+      if (isStudyMode() && threadKey) {
         // A fresh thread per (session, arm). getOrCreateConversation reuses the
         // anon user's most recent arm thread — on a shared study device that is
         // the PREVIOUS participant's conversation, shown on screen and fed to
         // the model as context. The session-scoped id lives in dg_study, so a
         // reload rejoins this thread and "Clear this device" retires it.
-        id = studyConversationId(studyArm);
+        // On the feedback protocol the key is 'free' and the stored arm null —
+        // the conversations table only allows A or B.
+        id = studyConversationId(threadKey);
         if (!id) {
-          id = await startNewConversation(userId, { surface: 'chat', studyArm });
-          if (id) rememberStudyConversation(studyArm, id);
+          id = await startNewConversation(userId, { surface: 'chat', studyArm: studyArm || null });
+          if (id) rememberStudyConversation(threadKey, id);
         }
       } else {
         id = await getOrCreateConversation(userId, { surface: 'chat', studyArm: null });
@@ -138,7 +143,7 @@ export function ChatProvider({ children }) {
       saveCached(server);
     })();
     return () => { cancelled = true; };
-  }, [authStatus, userId, studyArm]);
+  }, [authStatus, userId, studyArm, threadKey]);
 
   const persist = useCallback((msgs) => {
     setMessages(msgs);
@@ -164,7 +169,8 @@ export function ChatProvider({ children }) {
     setChatError(false);
     const ac = new AbortController();
     abortRef.current = ac;
-    const msg = { role: 'aria', text: '', citations: [], safety: false, streaming: true, time: now() };
+    // turnId joins a flagged answer (feedback protocol) to its `turn` event.
+    const msg = { role: 'aria', text: '', citations: [], safety: false, streaming: true, time: now(), turnId: newUuid() };
     let started = false;
     // Text arm of the study. No STT or TTS stage here, so the turn timer records
     // retrieval and time-to-first-token only — which is the fair comparison
@@ -221,6 +227,7 @@ export function ChatProvider({ children }) {
       emit('turn', {
         arm,
         taskId,
+        turnId: msg.turnId,
         modality: MODALITY_TYPED,
         avatar,
         // A participant who declines has their words withheld here, not at
@@ -281,7 +288,9 @@ export function ChatProvider({ children }) {
     // appends to the old conversation.
     const id = await startNewConversation(userId, { surface: 'chat', studyArm: studyArm || null });
     if (id) setConversationId(id);
-  }, [userId, studyArm]);
+    // Remembered, or a reload during a session rejoins the thread just left.
+    if (id && isStudyMode() && threadKey) rememberStudyConversation(threadKey, id);
+  }, [userId, studyArm, threadKey]);
 
   // Voice appends fully-formed messages (its own streaming lives in the voice loop)
   const appendMessage = useCallback((m) => {
@@ -311,8 +320,9 @@ export function ChatProvider({ children }) {
     setConversationId(null);
     const id = await startNewConversation(userId, { surface: 'chat', studyArm: studyArm || null });
     if (id) setConversationId(id);
+    if (id && isStudyMode() && threadKey) rememberStudyConversation(threadKey, id);
     return result;
-  }, [userId, studyArm]);
+  }, [userId, studyArm, threadKey]);
 
   const value = {
     messages, typing, chatError, chatErrorMsg, send, retry, askNow, newConvo, clearHistory, appendMessage,

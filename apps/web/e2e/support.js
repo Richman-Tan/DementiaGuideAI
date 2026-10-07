@@ -141,14 +141,21 @@ export async function mockProviders(page) {
     const body = route.request().postDataJSON();
     log.study.session.push({ headers: route.request().headers(), body });
     // Participant number 2 → Latin-square cell 2 → arm order BA, set order 12:
-    // the text arm comes first, which is what the Arm B flows need.
+    // the text arm comes first, which is what the Arm B flows need. A feedback
+    // session has no arms, as the real endpoint answers.
+    const feedback = body?.protocol === 'feedback';
     await route.fulfill({
       status: 201,
       contentType: 'application/json',
       body: JSON.stringify({
-        sessionId: SESSION_ID, participantCode: 'P02', participantNumber: 2,
-        group: body?.group || 'caregiver', armOrder: 'BA', setOrder: '12',
+        sessionId: SESSION_ID,
+        participantCode: feedback ? 'P31' : 'P02',
+        participantNumber: feedback ? 31 : 2,
+        group: body?.group || 'caregiver',
+        armOrder: feedback ? null : 'BA',
+        setOrder: feedback ? null : '12',
         resumed: false, completed: false, studyVersion: 'e2e',
+        protocol: feedback ? 'feedback' : 'tasks',
       }),
     });
   });

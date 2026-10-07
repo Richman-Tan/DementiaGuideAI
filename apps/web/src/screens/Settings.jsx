@@ -113,6 +113,9 @@ export default function Settings() {
   // A study participant reaches the model through the server-side proxy with an
   // access code. Showing them an API-key form would be a confusing dead end.
   const inStudy = Boolean(study?.active);
+  // The avatar is fixed for the tasks study, so every task is with the same one.
+  // Free use on the feedback round has no tasks, and trying both is fair game.
+  const avatarFixed = inStudy && !study?.isFeedback;
   const [keys, setKeys] = useState(loadKeys);
   const [advOpen, setAdvOpen] = useState(false);
   // Re-renders when the Unity-build probe resolves (locks/unlocks the picker).
@@ -200,8 +203,8 @@ export default function Settings() {
               return (
                 <button
                   key={p.id}
-                  onClick={() => { if (!unityLocked && !inStudy) setSetting('avatarId', p.id); }}
-                  disabled={unityLocked || inStudy}
+                  onClick={() => { if (!unityLocked && !avatarFixed) setSetting('avatarId', p.id); }}
+                  disabled={unityLocked || avatarFixed}
                   title={unityLocked ? 'Unity WebGL build not installed — see public/unity/README.md' : p.description}
                   style={{ minHeight: '44px', padding: '0 14px', borderRadius: '9px', border: 'none', cursor: unityLocked ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '.9rem', opacity: unityLocked ? 0.45 : 1, ...segStyle(on) }}
                 >
@@ -210,7 +213,7 @@ export default function Settings() {
               );
             })}
           </div>
-          {inStudy && (
+          {avatarFixed && (
             <div style={{ width: '100%', color: 'var(--text2)', fontSize: '.85rem' }}>
               {`Fixed for this study session, so every task is with ${effective.name}.`}
             </div>

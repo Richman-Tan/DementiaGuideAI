@@ -55,8 +55,18 @@ describe('ChatProvider thread selection', () => {
     // whatever arm thread this device's anon user touched last — the previous
     // participant's conversation.
     expect(chatContext).not.toMatch(/getOrCreateConversation\([^)]*studyArm:\s*studyArm/);
-    expect(chatContext).toMatch(/startNewConversation\(userId,\s*\{\s*surface:\s*'chat',\s*studyArm\s*\}\)/);
-    expect(chatContext).toMatch(/rememberStudyConversation\(studyArm,\s*id\)/);
+    // Keyed by the session-scoped thread key — the arm, or 'free' on the
+    // feedback round, whose thread is stored with study_arm null.
+    expect(chatContext).toMatch(/if \(isStudyMode\(\) && threadKey\)/);
+    expect(chatContext).toMatch(/studyConversationId\(threadKey\)/);
+    expect(chatContext).toMatch(/startNewConversation\(userId,\s*\{\s*surface:\s*'chat',\s*studyArm:\s*studyArm \|\| null\s*\}\)/);
+    expect(chatContext).toMatch(/rememberStudyConversation\(threadKey,\s*id\)/);
+  });
+
+  it('remembers the thread a "new conversation" starts during a session', () => {
+    // Otherwise a reload rejoins the thread the participant had just left.
+    const remembered = chatContext.match(/rememberStudyConversation\(threadKey,\s*id\)/g) || [];
+    expect(remembered.length).toBeGreaterThanOrEqual(3); // thread pick, newConvo, clearHistory
   });
 
   it('adopts the new thread on an arm switch instead of bailing on emptiness', () => {

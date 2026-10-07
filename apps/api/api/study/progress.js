@@ -14,6 +14,8 @@ const STEPS = new Set([
   'intro', 'info', 'group', 'consent', 'setup', 'background',
   'armbrief', 'task', 'posttask', 'sus', 'likert',
   'recheck', 'debrief', 'done', 'stopped',
+  // Feedback protocol (docs/study/protocol-feedback.md).
+  'privacy', 'explore', 'feedback', 'feedbacksus',
 ]);
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

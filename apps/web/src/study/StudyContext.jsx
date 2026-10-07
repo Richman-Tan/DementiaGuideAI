@@ -2,6 +2,10 @@
 // debrief → close. State lives in localStorage so a participant who closes the
 // tab and comes back resumes where they were, with the same arm assignment.
 //
+// The feedback protocol (Oct 2026) runs through the same provider on a shorter
+// path: privacy notice → group → setup → free use → open questions → optional
+// SUS → close. No arms, no tasks, no timing. See docs/study/protocol-feedback.md.
+//
 // Task timing is anchored on wall-clock epochs rather than performance.now()
 // for the same reason: a reload must not restart the clock.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -11,7 +15,7 @@ import { emit, flush, installUnloadFlush, pendingCount, resetQueue } from './eve
 import { closeSession } from './closeSession.js';
 import { apiUrl } from '../services/apiBase.js';
 import { warmStudyProxy } from '../services/transport.js';
-import { sequenceFor, normaliseParticipantCode, parseParticipantCode } from '@core/study/studyConfig.mjs';
+import { sequenceFor, normaliseParticipantCode, parseParticipantCode, PROTOCOL_FEEDBACK, PROTOCOL_TASKS } from '@core/study/studyConfig.mjs';
 import { navigate } from '../state/router.js';
 import { getUnityAvailability, getUnityLoadState, probeUnity } from '../avatar/unity/unityBridge.js';
 import { getSettingSnapshot } from '../state/settingsSnapshot.js';
@@ -46,6 +50,9 @@ export const STEPS = [
   'intro', 'info', 'group', 'consent', 'setup', 'background',
   'armbrief', 'task', 'posttask', 'sus', 'likert',
   'recheck', 'debrief', 'done', 'stopped',
+  // Feedback protocol only. `explore` covers both the brief and the free use
+  // itself; exploreStartedAt in the store says which.
+  'privacy', 'explore', 'feedback', 'feedbacksus',
 ];
 
 async function post(path, body, accessCode, accessToken = null) {
@@ -97,11 +104,15 @@ export function StudyProvider({ children }) {
 
   useEffect(() => { installUnloadFlush(); }, []);
 
+  const isFeedback = state.protocol === PROTOCOL_FEEDBACK;
   const sequence = useMemo(() => {
+    // No arms on the feedback protocol, so no stage, no task, and nothing for
+    // the arm guards to enforce.
+    if (state.protocol === PROTOCOL_FEEDBACK) return [];
     const n = parseParticipantCode(state.participantCode);
     if (n === null || !state.armOrder) return [];
     return sequenceFor(n, state.group);
-  }, [state.participantCode, state.armOrder, state.group]);
+  }, [state.participantCode, state.armOrder, state.group, state.protocol]);
 
   const stage = sequence[state.stageIndex] || null;
   const task = stage ? stage.tasks[state.taskIndex] || null : null;
@@ -111,6 +122,7 @@ export function StudyProvider({ children }) {
   // ─── Session ──────────────────────────────────────────────────────────────
 
   const begin = useCallback(async ({ participantCode, accessCode, group, consent, consentTranscripts, supporterPresent = null, micStatus = null, micAck = false, browserAck = false }) => {
+    const protocol = loadStudy().protocol === PROTOCOL_FEEDBACK ? PROTOCOL_FEEDBACK : PROTOCOL_TASKS;
     // The participant code is optional. A first-time participant supplies none
     // and the server allocates one; a returning participant is identified by the
     // code already in the store, or by re-typing the one they were given if they
@@ -128,6 +140,9 @@ export function StudyProvider({ children }) {
 
     const data = await post('/api/study/session', {
       ...(code ? { participantCode: code } : {}),
+      // Only sent when it is not the default, so the tasks protocol's request
+      // is byte-for-byte what it was before the feedback round existed.
+      ...(protocol === PROTOCOL_FEEDBACK ? { protocol } : {}),
       group,
       consent,
       consentTranscripts,
@@ -140,6 +155,13 @@ export function StudyProvider({ children }) {
       browser: detectBrowser(),
       renderer: await detectRenderer(),
     }, accessCode.trim(), tokenRef.current);
+
+    // An API that predates the feedback round ignores `protocol` and creates a
+    // tasks session — which would put this person into the consented study
+    // without its consent form. Only a server that confirms the round may run it.
+    if (protocol === PROTOCOL_FEEDBACK && data.protocol !== PROTOCOL_FEEDBACK) {
+      throw new Error('not available');
+    }
 
     if (!data.resumed) resetQueue();
 
@@ -161,14 +183,19 @@ export function StudyProvider({ children }) {
     // fall back to local, and never resume *into* setup.
     const localStep = state.step && state.step !== 'setup' ? state.step : null;
     const resumeStep = data.step && data.step !== 'setup' ? data.step : localStep;
+    // The server's protocol wins: it is the record of what this session is.
+    const sessionProtocol = data.protocol === PROTOCOL_FEEDBACK ? PROTOCOL_FEEDBACK : PROTOCOL_TASKS;
+    // Free use has no background questionnaire; it goes straight to the brief.
+    const firstStep = sessionProtocol === PROTOCOL_FEEDBACK ? 'explore' : 'background';
     update({
+      protocol: sessionProtocol,
       sessionId: data.sessionId,
       participantCode: data.participantCode,
       group: data.group,
       armOrder: data.armOrder,
       setOrder: data.setOrder,
       consentTranscripts: Boolean(consentTranscripts),
-      step: data.resumed ? (resumeStep || 'background') : 'background',
+      step: data.resumed ? (resumeStep || firstStep) : firstStep,
       stageIndex: data.resumed ? (data.stageIndex ?? state.stageIndex) : 0,
       taskIndex: data.resumed ? (data.taskIndex ?? state.taskIndex) : 0,
       // A new session inherits nothing from whoever used this device last.
@@ -178,7 +205,7 @@ export function StudyProvider({ children }) {
       // participant never saw.
       // convoIds included: leftover thread ids would rejoin the previous
       // participant's conversation, putting their chat on this person's screen.
-      ...(data.resumed ? {} : { responses: {}, taskId: '', taskStartedAt: null, convoIds: {} }),
+      ...(data.resumed ? {} : { responses: {}, taskId: '', taskStartedAt: null, convoIds: {}, exploreStartedAt: null, tried: {} }),
     });
 
     // First chance the transport is armed (sessionId + code now stored). Boot
@@ -188,9 +215,10 @@ export function StudyProvider({ children }) {
     // The session row is created before the participant reaches this screen, so
     // without this a refresh on the very first questionnaire resumes to whatever
     // step the row was born with.
-    checkpoint({ step: data.resumed ? (resumeStep || 'background') : 'background' });
+    checkpoint({ step: data.resumed ? (resumeStep || firstStep) : firstStep });
 
     emit('session_start', {
+      protocol: sessionProtocol,
       group: data.group,
       armOrder: data.armOrder,
       setOrder: data.setOrder,
@@ -281,6 +309,12 @@ export function StudyProvider({ children }) {
       });
     }
 
+    // Same for an open free-use window on the feedback protocol: without the end
+    // marker, page views and turns after the last one have no boundary.
+    if (s.protocol === PROTOCOL_FEEDBACK && s.step === 'explore' && s.exploreStartedAt) {
+      emit('explore_end', { durationMs: Date.now() - s.exploreStartedAt, stoppedMidExplore: true });
+    }
+
     // Whatever is already answered on the screen they are standing on. Every
     // other response event fires from next(), so anything entered and not yet
     // submitted was discarded — a completed SUS, or five debrief answers, thrown
@@ -291,8 +325,8 @@ export function StudyProvider({ children }) {
     }
 
     emit(stoppedEarly ? 'session_stopped' : 'session_complete', {});
-    update({ step: stoppedEarly ? 'stopped' : 'done', taskStartedAt: null });
-    navigate('#/study');
+    update({ step: stoppedEarly ? 'stopped' : 'done', taskStartedAt: null, exploreStartedAt: null });
+    navigate(studyHome(s.protocol));
     await closeSession({
       flush,
       complete: s.sessionId
@@ -304,10 +338,14 @@ export function StudyProvider({ children }) {
 
   const next = useCallback(() => {
     const s = loadStudy();
+    const feedback = s.protocol === PROTOCOL_FEEDBACK;
     switch (s.step) {
-      case 'intro': return update({ step: 'info' });
+      // Feedback: a privacy notice in place of the information sheet and the
+      // consent form — this round is not consented research (protocol-feedback.md).
+      case 'intro': return update({ step: feedback ? 'privacy' : 'info' });
+      case 'privacy': return update({ step: 'group' });
       case 'info': return update({ step: 'group' });
-      case 'group': return update({ step: 'consent' });
+      case 'group': return update({ step: feedback ? 'setup' : 'consent' });
       case 'consent': return update({ step: 'setup' });
       case 'setup':
         checkpoint({ step: 'background' });
@@ -362,10 +400,71 @@ export function StudyProvider({ children }) {
       case 'debrief':
         emit('debrief_done', { responses: s.responses });
         return finish(false);
+      case 'feedback':
+        emit('feedback_done', { responses: pick(s.responses, 'feedback.') });
+        checkpoint({ step: 'feedbacksus' });
+        return update({ step: 'feedbacksus' });
+      case 'feedbacksus':
+        emit('sus_done', { scope: 'feedback', responses: pick(s.responses, 'sus.feedback.') });
+        return finish(false);
       default:
         return undefined;
     }
   }, [update, checkpoint, startTask, finish, isLastTask, isLastStage, stage]);
+
+  // ─── Feedback protocol ────────────────────────────────────────────────────
+
+  // Before a session exists, the link decides the protocol. Switching resets to
+  // the protocol's intro so nobody lands half-way into the other flow's screens.
+  const chooseProtocol = useCallback((protocol) => {
+    const s = loadStudy();
+    if (s.sessionId || s.protocol === protocol) return;
+    update({ protocol, step: 'intro' });
+  }, [update]);
+
+  const startExplore = useCallback(() => {
+    const s = loadStudy();
+    if (s.protocol !== PROTOCOL_FEEDBACK || s.step !== 'explore') return;
+    if (!s.exploreStartedAt) {
+      update({ exploreStartedAt: Date.now() });
+      emit('explore_start', {});
+    }
+    // The participant is about to ask a first question after reading the brief.
+    warmStudyProxy();
+    navigate('#/app/home');
+  }, [update]);
+
+  const endExplore = useCallback(() => {
+    const s = loadStudy();
+    if (s.protocol !== PROTOCOL_FEEDBACK || s.step !== 'explore') return;
+    emit('explore_end', { durationMs: Date.now() - (s.exploreStartedAt || Date.now()) });
+    update({ step: 'feedback', exploreStartedAt: null });
+    checkpoint({ step: 'feedback' });
+    navigate(studyHome(PROTOCOL_FEEDBACK));
+  }, [update, checkpoint]);
+
+  // "Things to try" ticks. Suggestions, not tasks: un-ticking is recorded too.
+  const markTried = useCallback((id, done) => {
+    setState((prev) => saveStudy({ tried: { ...(prev.tried || {}), [id]: Boolean(done) } }));
+    emit('try_done', { id, done: Boolean(done) });
+  }, []);
+
+  /**
+   * "Flag this answer". Carries the answer and the question that produced it
+   * whatever the transcript choice was, because the flag form says so before it
+   * is sent: flagging is an explicit choice to send that one exchange. Without
+   * the text a flag is unreadable whenever conversations are not kept.
+   */
+  const flagAnswer = useCallback(({ turnId = null, question = '', answer = '', comment = '', surface = '' }) => {
+    emit('answer_flagged', {
+      turnId,
+      surface,
+      question: String(question).slice(0, 4000),
+      answer: String(answer).slice(0, 8000),
+      comment: String(comment).slice(0, 4000),
+    });
+    flush();
+  }, []);
 
   // "I need to stop" — available on every screen, no reason required
   // (docs/study/ethics/risk-and-distress-protocol.md §2).
@@ -394,8 +493,11 @@ export function StudyProvider({ children }) {
   const value = {
     ...state,
     active: isStudyMode(),
+    isFeedback,
+    exploring: isStudyMode() && isFeedback && state.step === 'explore' && Boolean(state.exploreStartedAt),
     sequence, stage, task, isLastStage, isLastTask,
     begin, setResponse, next, startTask, endTask, stop, reset, update,
+    chooseProtocol, startExplore, endExplore, markTried, flagAnswer,
     // "Is this still you?" — asked once per page load when a live session was
     // restored from this device, and never for a session started in this load.
     needsResumeCheck: needsResumeCheck(state, resumeAck),
@@ -405,6 +507,18 @@ export function StudyProvider({ children }) {
 }
 
 export const useStudy = () => useContext(Ctx);
+
+/**
+ * The study screen's address for a protocol. A feedback session returns to the
+ * feedback link, so that on a shared device at a group session the next person
+ * is offered the same round after "Clear this device", not the tasks protocol.
+ */
+export const studyHome = (protocol) => (protocol === PROTOCOL_FEEDBACK ? '#/study/feedback' : '#/study');
+
+/** The responses whose keys start with `prefix`. */
+function pick(responses, prefix) {
+  return Object.fromEntries(Object.entries(responses || {}).filter(([k]) => k.startsWith(prefix)));
+}
 
 /** Coarse family detection — recorded to explain technical failures, and used
  *  by the browser gate. Web Speech API live transcription is Chrome/Edge only;

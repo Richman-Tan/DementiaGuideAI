@@ -9,6 +9,7 @@
     "@dementiaguide/core": "1.0.0"
   },
   "devDependencies": {
+    "@vitest/coverage-istanbul": "^3.2.7",
     "vitest": "^3.2.7"
   },
   "scripts": {

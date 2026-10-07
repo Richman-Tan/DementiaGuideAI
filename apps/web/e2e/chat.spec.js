@@ -1,7 +1,6 @@
 // Flows (a)–(c): the text chat with a BYO key, every provider mocked.
-import { test } from '@playwright/test';
 import { createRequire } from 'node:module';
-import { mockProviders, seedStorage, ask, expect, CHUNKS } from './support.js';
+import { test, mockProviders, seedStorage, ask, expect, CHUNKS } from './support.js';
 
 const require = createRequire(import.meta.url);
 // The same constants the client uses, so the assertion cannot drift from the config.

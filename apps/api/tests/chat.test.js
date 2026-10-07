@@ -168,3 +168,71 @@ describe('streaming', () => {
     expect(b.admin.insertIgnoringConflicts.mock.calls[0][1][0].units).toBe(0);
   });
 });
+
+describe('guard', () => {
+  it('refuses a caller without the access code before calling upstream', async () => {
+    const { mod } = await load('../api/chat.js');
+    const fetch = stubFetch(sseResponse([]));
+    const res = makeRes();
+    await mod.default(makeReq({ code: null, body: { model: 'gpt-4o', messages } }), res);
+    expect(res.statusCode).toBe(401);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('upstream error bodies', () => {
+  it('answers 502 even when the error body cannot be read', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const broken = new Response(new ReadableStream({ start(c) { c.error(new Error('reset')); } }), { status: 500 });
+    const { res } = await run({ model: 'gpt-4o', messages }, { response: broken });
+    expect(res.statusCode).toBe(502);
+    expect(res.body).toEqual({ error: 'upstream error' });
+    expect(err).toHaveBeenCalledWith('[study] chat upstream 500: ');
+  });
+});
+
+describe('client disconnect', () => {
+  it('stops relaying and cancels the upstream read once the caller goes away, with no error marker', async () => {
+    const { mod, admin } = await load('../api/chat.js');
+    const enc = new TextEncoder();
+    const frames = ['data: {"choices":[{"delta":{"content":"Hel"}}]}\n\n', 'data: {"choices":[{"delta":{"content":"lo"}}]}\n\n', 'data: [DONE]\n\n'];
+    let i = 0;
+    const cancelled = vi.fn();
+    const upstream = new Response(new ReadableStream({
+      pull(c) { if (i < frames.length) c.enqueue(enc.encode(frames[i++])); else c.close(); },
+      cancel: cancelled,
+    }), { status: 200 });
+    const fetch = stubFetch(upstream);
+
+    const claims = Buffer.from(JSON.stringify({ sub: 'user-1' })).toString('base64url');
+    const req = makeReq({ body: { model: 'gpt-4o', messages }, headers: { authorization: `Bearer a.${claims}.b` } });
+    const res = makeRes();
+    // The participant navigates away as soon as the first frame reaches them.
+    const write = res.write.bind(res);
+    res.write = (c) => { const r = write(c); req.emit('close'); return r; };
+    await mod.default(req, res);
+
+    expect(res.chunks).toEqual([frames[0]]);
+    expect(res.chunks.join('')).not.toContain('stream_interrupted');
+    expect(cancelled).toHaveBeenCalled();
+    expect(fetch.mock.calls[0][1].signal.aborted).toBe(true);
+    expect(res.ended).toBe(true);
+    // The handler detaches its listener, so a later close is a no-op.
+    expect(req.listenerCount('close')).toBe(0);
+    // The call is still metered. The usage frame never arrived, so it reads 0.
+    expect(admin.insertIgnoringConflicts).toHaveBeenCalledWith(
+      'usage_events', [{ user_id: 'user-1', kind: 'chat', units: 0, model: 'gpt-4o' }], 'id',
+    );
+  });
+
+  it('stops when the response has been destroyed under it', async () => {
+    const { mod } = await load('../api/chat.js');
+    stubFetch(sseResponse(['data: {"choices":[]}\n\n', 'data: {"choices":[]}\n\n', 'data: [DONE]\n\n']));
+    const res = makeRes();
+    const write = res.write.bind(res);
+    res.write = (c) => { const r = write(c); res.destroyed = true; return r; };
+    await mod.default(makeReq({ body: { model: 'gpt-4o', messages } }), res);
+    expect(res.chunks).toHaveLength(1);
+    expect(res.ended).toBe(true);
+  });
+});

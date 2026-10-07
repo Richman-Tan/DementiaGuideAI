@@ -98,3 +98,62 @@ describe('eleven-tts', () => {
     expect(sent(fetch).text).toHaveLength(4000);
   });
 });
+
+// What all three share: the guard runs first, the server key must be present,
+// and an upstream failure is reported as the proxy's own 502 (or a 429 passed
+// through), never as the upstream's status, even when its body is unreadable.
+describe.each([
+  ['embed', '../api/embed.js', { model: 'text-embedding-3-small', input: 'q' }, 'OPENAI_API_KEY'],
+  ['speech', '../api/speech.js', { input: 'hello' }, 'OPENAI_API_KEY'],
+  ['eleven-tts', '../api/eleven-tts.js', { text: 'hello', voiceId: 'nPczCjzI2devNBz1zQrb' }, 'ELEVENLABS_API_KEY'],
+])('%s: guard, configuration and upstream failures', (_name, modulePath, body, keyName) => {
+  async function invoke({ code, env, fetchImpl } = {}) {
+    const { mod, admin } = await load(modulePath, { env });
+    const fetch = vi.fn(fetchImpl ?? (async () => jsonResponse({})));
+    vi.stubGlobal('fetch', fetch);
+    const res = makeRes();
+    await mod.default(makeReq({ body, ...(code !== undefined ? { code } : {}) }), res);
+    return { res, fetch, admin };
+  }
+
+  it('refuses a caller without the access code before calling upstream', async () => {
+    const { res, fetch } = await invoke({ code: null });
+    expect(res.statusCode).toBe(401);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when the server key is not configured', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { res, fetch } = await invoke({ env: { [keyName]: undefined } });
+    expect(res.statusCode).toBe(503);
+    expect(res.body).toEqual({ error: 'study backend not configured' });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(err).toHaveBeenCalledWith(`[study] ${keyName} is not configured`);
+  });
+
+  it('returns 502 when fetch itself throws', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { res, admin } = await invoke({ fetchImpl: async () => { throw new Error('ECONNRESET'); } });
+    expect(res.statusCode).toBe(502);
+    expect(res.body).toEqual({ error: 'upstream request failed' });
+    expect(admin.insertIgnoringConflicts).not.toHaveBeenCalled();
+  });
+
+  it('passes a 429 through and maps any other failure to 502, without metering', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const limited = await invoke({ fetchImpl: async () => jsonResponse({}, 429) });
+    expect(limited.res.statusCode).toBe(429);
+    const failed = await invoke({ fetchImpl: async () => jsonResponse({}, 401) });
+    expect(failed.res.statusCode).toBe(502);
+    expect(failed.res.body).toEqual({ error: 'upstream error' });
+    expect(failed.admin.insertIgnoringConflicts).not.toHaveBeenCalled();
+  });
+
+  it('still answers 502 when the upstream error body cannot be read', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const broken = () => new Response(new ReadableStream({ start(c) { c.error(new Error('reset')); } }), { status: 500 });
+    const { res } = await invoke({ fetchImpl: async () => broken() });
+    expect(res.statusCode).toBe(502);
+    expect(err.mock.calls[0][0]).toMatch(/upstream 500: $/);
+  });
+});

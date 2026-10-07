@@ -23,6 +23,8 @@ import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
 import { detectSentiment } from '@core/sentiment/detectSentiment';
 import { createSentenceSplitter } from '@core/voice/sentenceTracker';
 import { MODALITY_SPOKEN, MODALITY_TYPED } from '@core/study/studyConfig.mjs';
+import { credentialErrorCopy } from '../services/credentialErrorCopy.js';
+import { transportKind } from '../services/transport.js';
 
 const MAX_QUERY_CHARS = 1000;
 
@@ -360,7 +362,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       await Promise.all([producerTask(), consumerTask()]);
     } catch (err) {
       console.error('[useVoiceConversation] processQuery error:', err);
-      setError(err.message ?? 'Something went wrong. Please try again.');
+      setError(credentialErrorCopy(err, transportKind()) ?? err.message ?? 'Something went wrong. Please try again.');
     } finally {
       subtitleTimers.forEach(clearTimeout);
       try { ttsStream?.abort(); } catch { /* completed */ }

@@ -15,6 +15,7 @@ import { UnityAvatarMount } from '../avatar/unity/UnityAvatarStage.jsx';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { loadKeys, saveKeys } from '../state/keysStore.js';
+import { AccessCodeForm } from '../components/AccessCodeForm.jsx';
 import { hasCredentials } from '../services/transport.js';
 import { emit } from '../study/events.js';
 import FlagAnswer from '../study/FlagAnswer.jsx';
@@ -84,7 +85,7 @@ function StatusChip({ vState, who }) {
 }
 
 // ── Keys setup card (no demo mode — replaces the controls) ──────────────────
-function SetupCard({ who, keys, setKeys, onSave }) {
+function SetupCard({ who, keys, setKeys, onSave, onAccess }) {
   const canSave = keys.openai.trim().length > 0;
   const field = (label, k, placeholder, helper) => (
     <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
@@ -103,7 +104,14 @@ function SetupCard({ who, keys, setKeys, onSave }) {
     <div style={{ width: 'min(430px, calc(100% - 36px))', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '20px', boxShadow: 'var(--shadow)', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
       <div style={{ fontWeight: 700, fontSize: '1.2rem' }}>Set up voice conversations</div>
       <p style={{ margin: 0, color: 'var(--text2)', fontSize: '.95rem', lineHeight: 1.5 }}>
-        To talk with {who}, add your OpenAI key. Your keys are stored only in this browser — they are never sent anywhere else.
+        To talk with {who}, enter the access code you were given, or add your own OpenAI key.
+      </p>
+      <AccessCodeForm onChange={onAccess} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text2)', fontSize: '.85rem' }}>
+        <span style={{ flex: '1', height: '1px', background: 'var(--border)' }} />or use your own key<span style={{ flex: '1', height: '1px', background: 'var(--border)' }} />
+      </div>
+      <p style={{ margin: 0, color: 'var(--text2)', fontSize: '.85rem', lineHeight: 1.5 }}>
+        Your keys are stored only in this browser — they are never sent anywhere else.
       </p>
       {field('OpenAI API key', 'openai', 'sk-…')}
       {field('ElevenLabs API key', 'eleven', 'Optional', `Optional — gives ${who} a more natural voice and better lip movement.`)}
@@ -152,6 +160,8 @@ export default function Voice() {
   // the live conversation — typing must not unlock; only "Save and start" does.
   const [keys, setKeys] = useState(loadKeys);
   const [savedKeys, setSavedKeys] = useState(loadKeys);
+  // Bumped when an access code is saved or removed, so hasKey is re-read.
+  const [, setAccessTick] = useState(0);
 
   const profile = useEffectiveAvatarProfile(settings.avatarId);
   const who = profile.name;
@@ -272,7 +282,7 @@ export default function Voice() {
       {/* Setup card (no keys) */}
       {!hasKey && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '18px' }}>
-          <SetupCard who={who} keys={keys} setKeys={setKeys} onSave={saveSetup} />
+          <SetupCard who={who} keys={keys} setKeys={setKeys} onSave={saveSetup} onAccess={() => setAccessTick((n) => n + 1)} />
         </div>
       )}
 

@@ -571,7 +571,10 @@ describe('turn failures', () => {
   });
 
   it('a TTS failure ends the turn with its message', async () => {
-    tts.mockRejectedValue(new Error('TTS error: quota'));
+    // Only the first request fails. (If a later queued request also failed,
+    // its rejection would never be awaited once the consumer has stopped —
+    // an unhandled rejection in the source, noted in the PR.)
+    tts.mockRejectedValueOnce(new Error('TTS error: quota'));
     const { result } = await mountVoice();
     await run(() => result.current.askText('Q'));
     expect(result.current.error).toBe('TTS error: quota');

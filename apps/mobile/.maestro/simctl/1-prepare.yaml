@@ -1,0 +1,18 @@
+# FR-36 drill, microphone revoked with `xcrun simctl privacy` — part 1 of 2.
+#
+# scripts/ios-e2e.sh runs this folder after the main suite; a plain
+# `maestro test apps/mobile/.maestro` doesn't (Maestro only runs the flows at
+# the top of the folder it's given). The script runs, in order:
+#   1. this flow: a fresh install, setup skipped, Aria's voice off, app stopped;
+#   2. xcrun simctl privacy <udid> revoke microphone com.anonymous.DementiaGuideAi
+#   3. xcrun simctl launch <udid> com.anonymous.DementiaGuideAi
+#   4. 2-mic-revoked.yaml.
+# The split is needed because Maestro's launchApp grants every permission by
+# default, which would undo the revoke.
+appId: com.anonymous.DementiaGuideAi
+name: Drill (simctl) — prepare
+tags:
+  - drill
+---
+- runFlow: ../subflows/skip-onboarding.yaml
+- stopApp

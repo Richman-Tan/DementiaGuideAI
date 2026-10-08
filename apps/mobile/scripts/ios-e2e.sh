@@ -3,7 +3,7 @@
 #
 #   npm run test:e2e:ios                    # prebuild + build + run every flow
 #   npm run test:e2e:ios -- --skip-build    # reuse the last build, run the flows
-#   npm run test:e2e:ios -- --flow apps/mobile/.maestro/05-library.yaml
+#   npm run test:e2e:ios -- --skip-build --flow apps/mobile/.maestro/07-library.yaml
 #
 # What it does, in order:
 #   1. `expo prebuild --platform ios` with EXPO_UNITY_AVATAR=0, so the config
@@ -19,6 +19,14 @@
 #      The flows wipe the Simulator keychain, so they must not run on a device
 #      you use for anything else.
 #   4. Installs the app and runs `maestro test apps/mobile/.maestro`.
+#   5. On a full run, the FR-36 microphone drill that needs a shell step in
+#      the middle: apps/mobile/.maestro/simctl/1-prepare.yaml, then
+#      `xcrun simctl privacy <udid> revoke microphone <app>`, then
+#      `xcrun simctl launch`, then simctl/2-mic-revoked.yaml.
+#
+# Nothing is audible: every flow switches Aria's voice off in the app first
+# (apps/mobile/.maestro/subflows/audio-off.yaml), and this script turns off
+# the simulated iPhone's keyboard clicks. The Mac's audio is never touched.
 #
 # Reports land in apps/mobile/ios/build/e2e-results (JUnit + Maestro debug
 # output). Everything under apps/mobile/ios/ is generated and git-ignored.
@@ -53,7 +61,7 @@ while [[ $# -gt 0 ]]; do
     --skip-prebuild) SKIP_PREBUILD=1 ;;
     --skip-build) SKIP_BUILD=1; SKIP_PREBUILD=1 ;;
     --flow) FLOWS="$(cd "$(dirname "$2")" && pwd)/$(basename "$2")"; shift ;;
-    -h|--help) sed -n '2,40p' "${BASH_SOURCE[0]}"; exit 0 ;;
+    -h|--help) sed -n '2,/^$/p' "${BASH_SOURCE[0]}"; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
   shift
@@ -178,5 +186,35 @@ maestro --device "$UDID" test "$FLOWS" \
 STATUS=$?
 set -e
 
-log "Prebuild + build: ${BUILD_SECONDS}s · flows: $((SECONDS - BUILD_SECONDS))s · total: ${SECONDS}s · JUnit: ${RESULTS_DIR#"$REPO_ROOT"/}/report.xml"
+# ── 5. FR-36 drill: microphone revoked with xcrun simctl privacy ─────────────
+# Full runs only. Maestro's launchApp grants every permission by default, so
+# the revoke happens between two flows and the app is launched by simctl.
+if [[ "$FLOWS" == "$MOBILE_DIR/.maestro" ]]; then
+  log "FR-36 drill: microphone revoked with xcrun simctl privacy"
+  set +e
+  maestro --device "$UDID" test "$FLOWS/simctl/1-prepare.yaml" \
+    --format junit --output "$RESULTS_DIR/report-simctl-prepare.xml" \
+    --test-output-dir "$RESULTS_DIR/artifacts-simctl" \
+    --debug-output "$RESULTS_DIR/debug-simctl"
+  DRILL=$?
+  if [[ $DRILL -eq 0 ]]; then
+    xcrun simctl privacy "$UDID" revoke microphone "$APP_ID"
+    # The Simulator's own privacy database should now say "denied" (0).
+    TCC_DB="$HOME/Library/Developer/CoreSimulator/Devices/$UDID/data/Library/TCC/TCC.db"
+    if command -v sqlite3 >/dev/null && [[ -f "$TCC_DB" ]]; then
+      echo "[ios-e2e] microphone auth_value after revoke: $(sqlite3 "$TCC_DB" \
+        "select auth_value from access where service='kTCCServiceMicrophone' and client='$APP_ID'") (0 = denied)"
+    fi
+    xcrun simctl launch "$UDID" "$APP_ID" >/dev/null
+    maestro --device "$UDID" test "$FLOWS/simctl/2-mic-revoked.yaml" \
+      --format junit --output "$RESULTS_DIR/report-simctl-mic-revoked.xml" \
+      --test-output-dir "$RESULTS_DIR/artifacts-simctl" \
+      --debug-output "$RESULTS_DIR/debug-simctl"
+    DRILL=$?
+  fi
+  set -e
+  [[ $DRILL -eq 0 ]] || STATUS=1
+fi
+
+log "Prebuild + build: ${BUILD_SECONDS}s · flows: $((SECONDS - BUILD_SECONDS))s · total: ${SECONDS}s · JUnit: ${RESULTS_DIR#"$REPO_ROOT"/}/report*.xml"
 exit $STATUS

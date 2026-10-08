@@ -49,6 +49,24 @@ node scripts/test/coverage-gate.mjs --enforce   # exit 1 unless every in-scope f
 The report is printed and written to `coverage/gate.md`, which is git-ignored. In CI it is also
 added to the job summary.
 
+## In CI: enforced
+
+Every in-scope file has been at 100% statements and lines since October 2026, so the CI job
+"Coverage (unit + e2e, scope gate)" in `.github/workflows/ci.yml` runs the gate with `--enforce`.
+The job fails if any in-scope file drops below 100%, if a new source file is never loaded by a
+test, or if a coverage-ignore comment appears in scope.
+
+When it fails, the job summary and the `coverage-gate` artifact name each file and its
+uncovered lines. To fix it, do one of these:
+
+- add a test that reaches the line and checks what it does;
+- delete the line, if you can show that no input reaches it, and give the reason in the commit;
+- if a whole file genuinely cannot be run by any test runner, add it to `EXCLUDED` with a reason
+  a reviewer can check.
+
+Never add an ignore comment. Whether the job must pass before a merge is a branch-protection
+setting on GitHub, not something this repository sets.
+
 ## Exclusions
 
 The list, with the reason for each file, is `EXCLUDED` in

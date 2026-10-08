@@ -28,7 +28,10 @@ const SCALES = [
   { value: 100, name: 'hundred' },
 ];
 
-/** Integer (0 – 999,999,999,999) → words. Falls back to digit-by-digit above range. */
+/**
+ * Non-negative integer → words. Past the billions the head recurses through the
+ * table again, so 10^12 reads "one thousand billion".
+ */
 function intToWords(n) {
   if (n < 20) return ONES[n];
   if (n < 100) {
@@ -36,15 +39,11 @@ function intToWords(n) {
     const r = n % 10;
     return r ? `${t}-${ONES[r]}` : t;
   }
-  for (const { value, name } of SCALES) {
-    if (n >= value) {
-      const head = intToWords(Math.floor(n / value));
-      const rest = n % value;
-      return rest ? `${head} ${name} ${intToWords(rest)}` : `${head} ${name}`;
-    }
-  }
-  // Beyond our scale table — read the digits out one by one.
-  return String(n).split('').map((d) => ONES[Number(d)]).join(' ');
+  // n >= 100 here and the table ends at 100, so the largest scale ≤ n always exists.
+  const { value, name } = SCALES.find((s) => n >= s.value);
+  const head = intToWords(Math.floor(n / value));
+  const rest = n % value;
+  return rest ? `${head} ${name} ${intToWords(rest)}` : `${head} ${name}`;
 }
 
 /** Reads a run of digits one at a time: "05" → "zero five" (for decimals). */

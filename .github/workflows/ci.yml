@@ -117,8 +117,10 @@ jobs:
   coverage:
     # Unit and e2e coverage, merged and checked against the agreed scope
     # (docs/testing/coverage.md, scripts/test/coverage-scope.mjs). The report
-    # lands in the job summary. Report-only until the scope is at 100%; then
-    # the gate step gains --enforce and this job becomes a required check.
+    # lands in the job summary. Enforcing: the gate step fails this job unless
+    # every in-scope file is at 100% statements and lines, with no coverage-
+    # ignore comments in scope. (Whether the job is a *required* check is a
+    # branch-protection setting, not set here.)
     name: Coverage (unit + e2e, scope gate)
     runs-on: ubuntu-latest
     steps:
@@ -146,7 +148,7 @@ jobs:
           CI: 'true'
 
       - name: Coverage gate
-        run: node scripts/test/coverage-gate.mjs
+        run: node scripts/test/coverage-gate.mjs --enforce
 
       - name: Upload coverage report
         if: always()

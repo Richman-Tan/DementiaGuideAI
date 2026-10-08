@@ -54,6 +54,27 @@ describe('closeSession', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('could not close session'));
   });
 
+  it('by default waits two seconds before the one retry', async () => {
+    // The wait is real time in the app: a retry fired straight back into the
+    // same blip would fail the same way.
+    vi.useFakeTimers();
+    try {
+      const complete = vi.fn()
+        .mockRejectedValueOnce(new Error('HTTP 502'))
+        .mockResolvedValueOnce({});
+
+      const done = closeSession({ flush: async () => {}, complete, warn: () => {} });
+
+      await vi.advanceTimersByTimeAsync(1999);
+      expect(complete).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      await done;
+      expect(complete).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('flushes even when there is no session row to close', async () => {
     const flush = vi.fn(async () => {});
 

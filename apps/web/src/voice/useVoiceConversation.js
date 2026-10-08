@@ -86,11 +86,15 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
   // reach every event this turn emits, and a fourth optional positional is the
   // kind of thing that gets passed in the wrong slot exactly once, silently, in
   // a live session.
+  //
+  // `userText` arrives trimmed and non-empty: each caller (stopAndTranscribe,
+  // askText) normalises and checks it at its own boundary, where a blank can
+  // still be answered properly. A blank check in here could only return early,
+  // leaving the screen on "thinking" with nothing in flight.
   const processQuery = useCallback(async (
     userText,
     { preRetrievedChunks = null, timer = null, modality = MODALITY_SPOKEN } = {},
   ) => {
-    if (!userText.trim()) return;
     if (userText.length > MAX_QUERY_CHARS) userText = userText.slice(0, MAX_QUERY_CHARS);
 
     const history = historyForModel();
@@ -212,10 +216,11 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       ttsStream.open().catch(handleStreamFailure);
     }
 
-    // REST segment queue (legacy path + streaming fallback target).
-    const addSegment = (text) => {
-      const clean = text.trim();
-      if (!clean || !audioOn) return;
+    // REST segment queue (legacy path + streaming fallback target). Only ever
+    // handed a sentence handleSentence has already trimmed and found non-empty,
+    // and only with audio on: its REST branch runs after the audio-off return,
+    // and the streaming replay needs audio on for the stream to exist at all.
+    const addSegment = (clean) => {
       const emotion = detectSentiment(clean);
       turn.mark('ttsRequest');
       queue.promises.push(
@@ -232,6 +237,8 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
 
     const handleSentence = (text) => {
       const clean = text.trim();
+      // The splitter marks boundaries with U+001F, so a stray one in the model's
+      // own output comes back as an empty "sentence"; nothing to say for it.
       if (!clean) return;
       turn.mark('firstSentence');
       if (!audioOn) {
@@ -447,8 +454,13 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
 
     const turn = createTurnTimer(currentArm(), currentTaskId());
     try {
-      const { transcript } = await session.stop();
+      const { transcript: heard } = await session.stop();
       turn.mark('sttDone');
+      // Normalised here, at the STT boundary, so a provider that ever returns a
+      // blank-but-untrimmed transcript gets the "didn't catch that" prompt like
+      // an empty one, rather than a turn that never starts and a screen stuck
+      // on "thinking". Today's providers already trim, so for them it is a no-op.
+      const transcript = (heard ?? '').trim();
       if (!transcript) {
         emit('stt_empty', { arm: currentArm(), taskId: currentTaskId() });
         speculativeRef.current?.cancel();

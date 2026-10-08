@@ -102,10 +102,30 @@ depend on each other or on run order.
 | `08-settings` | Settings | Every toggle flips; text size; the profile, privacy, medical and rating dialogs; clearing history can be cancelled; the Azure and ElevenLabs editors open and cancel; version details; every change survives a relaunch |
 | `09-voice` | Voice screen | Controls; a typed question without a key reports it; About; changing persona to Ariana; the volume button mutes Aria; the microphone refused (stays idle) and allowed through both iOS prompts (listens, then stops); choices survive a relaunch |
 | `10-avatar-fallback` | The avatar without Unity | The fallback card ("The 3D avatar isn't available on this build — voice still works.") for both personas; with "Show Avatar" off, the placeholder shows Ready → Listening… → Ready |
+| `11-drill-mic-denied` | FR-36 drill: microphone refused | See [Fallback drills (FR-36)](#fallback-drills-fr-36) |
+| `12-drill-invalid-voice-key` | FR-36 drill: invalid ElevenLabs key | See [Fallback drills (FR-36)](#fallback-drills-fr-36) |
 
 Shared steps live in `apps/mobile/.maestro/subflows/`:
 - `launch-fresh.yaml` wipes the app and keychain and launches;
-- `skip-onboarding.yaml` does that, then skips setup.
+- `skip-onboarding.yaml` does that, skips setup, then runs `audio-off.yaml`;
+- `audio-off.yaml` switches Aria's voice off (see [No sound](#no-sound)).
+
+## No sound
+
+Nothing these tests do may be audible on the Mac running them, and a Simulator plays its sound
+through the Mac's speakers. The Mac's own volume and audio settings are never touched. Instead:
+
+- **Aria's voice is off in every flow.** Before a flow does anything else, `audio-off.yaml`
+  switches Settings → "Audio Responses" off and checks that it and "Auto-play Responses" are off.
+  Flow 01 runs it as soon as setup finishes, since the setup screens make no sound. The only
+  exception is the volume-button check at the end of `09-voice`. It switches speech on, checks
+  Settings, and switches it off again, with no question asked in between.
+- **Speech couldn't play anyway.** The app's only sound is Aria speaking an answer. An answer
+  needs the language model, and that needs a real OpenAI key, which these flows never have.
+- **Keyboard clicks are off** on the simulated iPhone. The script sets its own Sounds & Haptics
+  preference (`com.apple.preferences.sounds`), because Maestro types through the iOS keyboard.
+- **The microphone is input only.** The listening checks record from the Simulator's input and
+  play nothing.
 
 **About the chat errors.** Without a real key, a question can't be answered. The flows check what
 the user sees instead. Online, OpenAI rejects the request and the app shows "Invalid API key —
@@ -137,6 +157,19 @@ These need a real iPhone, real credentials, or a person:
   source" link (opens Safari) hand off to other apps, which these flows don't follow.
 - **Look and feel.** Flows check text and state, not appearance. Dark mode, high contrast and text
   size are checked as settings that switch and persist, not visually.
+
+## Fallback drills (FR-36)
+
+The functional verification list ([`docs/eval/functional-verification.md`](../eval/functional-verification.md),
+FR-36) has three device fallback drills that were never run. They are taken from
+[`docs/voice-latency-streaming.md`](../voice-latency-streaming.md):
+- airplane mode mid-stream;
+- an invalid ElevenLabs key;
+- the microphone denied.
+
+Each was attempted on the Simulator, as below.
+
+DRILLS_TABLE_PLACEHOLDER
 
 ## Running on a real device with Unity
 

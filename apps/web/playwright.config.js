@@ -10,12 +10,16 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = Number(process.env.E2E_PORT || 4173);
+// An instrumented dev server (E2E_COVERAGE=1) transforms and runs every module
+// several times slower; the same flows need more headroom there, not different
+// assertions.
+const SLOW = process.env.E2E_COVERAGE === '1' ? 3 : 1;
 
 export default defineConfig({
   testDir: './e2e',
   testMatch: /.*\.spec\.js/,
-  timeout: 60_000,
-  expect: { timeout: 10_000 },
+  timeout: 60_000 * SLOW,
+  expect: { timeout: 10_000 * SLOW },
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
@@ -33,7 +37,9 @@ export default defineConfig({
   webServer: {
     command: `npx vite --port ${PORT} --strictPort --host 127.0.0.1`,
     url: `http://127.0.0.1:${PORT}/`,
-    reuseExistingServer: !process.env.CI,
+    // Never reuse a server for a coverage run: a plain one left running locally
+    // would silently record nothing.
+    reuseExistingServer: !process.env.CI && process.env.E2E_COVERAGE !== '1',
     timeout: 120_000,
     env: {
       // Force the unconfigured Supabase path regardless of a developer's .env:
@@ -47,6 +53,9 @@ export default defineConfig({
       // its flow is tested, and so every tasks-study flow below is proven to be
       // unaffected by it being on.
       VITE_STUDY_FEEDBACK: '1',
+      // `E2E_COVERAGE=1` instruments the dev server (vite.config.js) and makes
+      // the page fixture in e2e/support.js save each test's coverage.
+      E2E_COVERAGE: process.env.E2E_COVERAGE || '',
     },
   },
 });

@@ -1,8 +1,7 @@
 // Guest access code: an invited carer enters a code once and uses the whole app
 // through the proxy, with no study session. Providers mocked (see support.js);
 // /api/speech answers 400 to the empty validation body, which means "accepted".
-import { test } from '@playwright/test';
-import { mockProviders, seedStorage, ask, expect } from './support.js';
+import { test, mockProviders, seedStorage, ask, expect } from './support.js';
 
 const CODE = 'e2e-guest-access-code-0001';
 

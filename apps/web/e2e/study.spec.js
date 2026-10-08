@@ -3,8 +3,7 @@
 // The enrolment path is the real one — intro, information, group, consent,
 // setup — with only the study API answered by fixtures. The mocked session
 // assigns participant P02 (arm order BA), so the first arm is the text arm.
-import { test } from '@playwright/test';
-import { mockProviders, seedStorage, ask, expect, studyEvents, STUDY_ACCESS_CODE, SESSION_ID } from './support.js';
+import { test, mockProviders, seedStorage, ask, expect, studyEvents, STUDY_ACCESS_CODE, SESSION_ID } from './support.js';
 
 async function enrolArmB(page, log) {
   await page.goto('/#/study');

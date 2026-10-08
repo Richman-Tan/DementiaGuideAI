@@ -1,8 +1,7 @@
 // Onboarding wizard: one helper name throughout, and a voice preview that never fails silently.
 // The e2e mocks refuse the Unity build, so the helper that resolves here is the fallback avatar;
 // the assertions therefore check consistency with the resolved name, not a fixed name.
-import { test } from '@playwright/test';
-import { mockProviders, seedStorage, expect } from './support.js';
+import { test, mockProviders, seedStorage, expect } from './support.js';
 
 const fresh = { keys: false, settings: { onboarded: false } };
 

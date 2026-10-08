@@ -105,6 +105,10 @@ data/
 
 # Test coverage output (summarised into docs/report/eval/final/coverage_*.md)
 coverage/
+# Raw per-test coverage snapshots (unit: apps/web/tests/setup/coverageDump.js; e2e:
+# apps/web/e2e/support.js), merged by scripts/test/coverage-gate.mjs
+.coverage-unit/
+.coverage-e2e/
 
 # Playwright
 apps/web/playwright-report/

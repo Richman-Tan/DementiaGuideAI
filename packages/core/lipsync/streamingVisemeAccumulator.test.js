@@ -62,6 +62,26 @@ describe('createStreamingVisemeAccumulator', () => {
     expect(acc.flush().frames).toEqual([]);
   });
 
+  it('holds a chunk that is all one partial word, emitting nothing until the word completes', () => {
+    const acc = createStreamingVisemeAccumulator({});
+    // 'medi' alone is in the lexicon too; rendering it now would animate a
+    // different word from the one being spoken.
+    const first = acc.push(alignmentFor('medi', 0, 100), 0.4);
+    expect(first.frames).toEqual([]);
+    expect(first.charTimes).toEqual([0, 0.1, 0.2, 0.3]);
+    expect(acc.getStreamOffsetSec()).toBeCloseTo(0.4, 5);
+
+    // Chunk-relative times for the rest of the word: shifted by the 0.4s offset.
+    const second = acc.push(alignmentFor('cation now ', 0, 100), 1.1);
+    expect(second.charTimes[0]).toBeCloseTo(0.4, 5);
+    // One G2P pass over the whole word 'medication', starting where 'medi' did:
+    // m-e-d-ah-k-ey-sh-ah-n, so a closed /m/ first and /sh/ in the middle.
+    const visemes = second.frames.map((f) => f.viseme);
+    expect(second.frames[0].time).toBeCloseTo(0, 5);
+    expect(visemes[0]).toBe('v_pp');
+    expect(visemes).toContain('v_ch');
+  });
+
   it('handles alignment-less audio chunks by advancing the clock only', () => {
     const acc = createStreamingVisemeAccumulator({});
     const res = acc.push(null, 0.3);

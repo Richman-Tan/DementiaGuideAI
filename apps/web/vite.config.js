@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { istanbulPre } from '../../scripts/test/istanbul-pre-plugin.mjs';
 import path from 'node:path';
 import { createReadStream, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -185,6 +186,8 @@ function decorate(res) {
   }
 }
 
+const COVERAGE = process.env.E2E_COVERAGE === '1' || process.env.UNIT_COVERAGE === '1';
+
 export default defineConfig(({ mode }) => {
   // Env resolution, least→most specific: apps/web/.env (local dev; git-ignored so
   // `vercel build` doesn't stage it) → .vercel/.env.<mode>.local (written by
@@ -195,7 +198,17 @@ export default defineConfig(({ mode }) => {
     ...process.env,
   };
   return {
-    plugins: [cjsLibsToEsm(), unityBrotliHeaders(), studyApiDevServer(), react()],
+    plugins: [
+      cjsLibsToEsm(),
+      // Coverage instrumentation for the gate (scripts/test/coverage-gate.mjs),
+      // only when asked: E2E_COVERAGE=1 for Playwright, UNIT_COVERAGE=1 for
+      // Vitest. A normal dev server and `vite build` (Vercel) are never
+      // instrumented. Straight after the CJS shim (whose regexes must see the
+      // plain source, and which keeps every line in place) and before every
+      // other transform, so unit and e2e runs instrument identical code.
+      ...(COVERAGE ? [istanbulPre({ root: path.resolve(__dirname, '../..'), dirs: ['apps/web/src/', 'packages/core/'] })] : []),
+      unityBrotliHeaders(), studyApiDevServer(), react(),
+    ],
     resolve: {
       alias: {
         // The web app resolves nothing out of the mobile tree — everything it
@@ -222,7 +235,10 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'node',
       include: ['tests/**/*.test.js'],
-      // Opt-in (`npx vitest run --coverage`); reported, never gated.
+      // UNIT_COVERAGE=1: save the pre-plugin's counters after each test file,
+      // for the merged gate (scripts/test/coverage-gate.mjs).
+      setupFiles: process.env.UNIT_COVERAGE === '1' ? ['tests/setup/coverageDump.js'] : [],
+      // Opt-in (`npx vitest run --coverage`); a quick v8 report, not the gate.
       coverage: {
         provider: 'v8',
         include: ['src/**'],

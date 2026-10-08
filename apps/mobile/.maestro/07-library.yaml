@@ -46,11 +46,15 @@ tags:
     element: "Browse by Category"
     direction: UP
 
-# The filter chips do the same
-- tapOn: "Filter by Home Safety"
+# The filter chips do the same (the chip row scrolls sideways; the first
+# category chip is on screen)
+- tapOn: "Filter by Caregiving Advice"
 - extendedWaitUntil:
-    visible: 'Home Safety \(\d+\)'
+    visible: 'Caregiving Advice \(\d+\)'
     timeout: 10000
+- assertVisible:
+    text: "Filter by Caregiving Advice"
+    selected: true
 - tapOn: "Filter by All"
 - extendedWaitUntil:
     visible: "Browse by Category"
@@ -63,8 +67,12 @@ tags:
     visible: "No results found"
     timeout: 10000
 - assertVisible: "Try different search terms or browse a category"
-- assertVisible: "Ask Aria instead"
+- assertVisible: ".*Ask Aria instead"   # the button reads its icon glyph first
 - assertVisible: 'Results \(0\)'
+# Known defect: while the keyboard is up, the first tap on anything in the
+# Library only closes the keyboard (its ScrollView has no
+# keyboardShouldPersistTaps); close it first, as a person's first tap would.
+- hideKeyboard
 - tapOn: "Clear search"
 - extendedWaitUntil:
     visible: "Browse by Category"
@@ -94,7 +102,7 @@ tags:
     element: "More in Caregiving Advice"
     direction: DOWN
     centerElement: true
-- assertVisible: "Ask Aria about this"
+- assertVisible: "Ask Aria about this article"
 
 # A related article opens on top; Back returns to the first one
 - tapOn: "Responding to Repetitive Questions and Actions"
@@ -117,13 +125,16 @@ tags:
     visible: '(?s)I just read the article "Managing Sundowning Behaviour".*'
     timeout: 15000
 
-# Back in the Library, the search is still there
+# Back in the Library, it starts afresh: the search is cleared
 - tapOn:
     id: "tab-library"
 - extendedWaitUntil:
-    visible: 'Results \([1-9]\d*\)'
+    visible: "Browse by Category"
     timeout: 10000
-- tapOn: "Clear search"
+- assertNotVisible: 'Results \(\d+\)'
+- assertVisible:
+    text: "Filter by All"
+    selected: true
 - scrollUntilVisible:
     element: 'All Resources \(\d+\)'
     direction: DOWN

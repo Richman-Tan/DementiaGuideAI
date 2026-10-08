@@ -61,8 +61,10 @@ tags:
     checked: true
 
 # ── Avatar & Audio ──
+# With large text this section is taller than the screen, so it is checked
+# a few switches at a time.
 - scrollUntilVisible:
-    element: "Toggle Faster Voice Responses"
+    element: "Toggle Subtitles"
     direction: DOWN
     centerElement: true
 - assertVisible:
@@ -76,45 +78,65 @@ tags:
 - assertVisible:
     text: "Toggle Subtitles"
     checked: true
-- assertVisible:
-    text: "Toggle Auto-play Responses"
-    checked: false
-- assertVisible:
-    text: "Toggle Get to the Point"
-    checked: false
-- assertVisible:
-    text: "Toggle Hands-free Conversation"
-    checked: false
-- assertVisible:
-    text: "Toggle Faster Voice Responses"
-    checked: true
-
-# Auto-play goes on here only as a setting: no question is ever sent in this
-# flow, so there is no answer to play and nothing can be heard.
 - tapOn: "Toggle Subtitles"
-- tapOn: "Toggle Auto-play Responses"
-- tapOn: "Toggle Get to the Point"
-- tapOn: "Toggle Hands-free Conversation"
-- tapOn: "Toggle Faster Voice Responses"
 - assertVisible:
     text: "Toggle Subtitles"
     checked: false
+
+# One switch at a time, each scrolled into view first. (Tapping a switch
+# that has drifted under the status bar scrolls the page to the top instead.)
+# Auto-play goes on here only as a setting: no question is ever sent in this
+# flow, so there is no answer to play and nothing can be heard.
+- scrollUntilVisible:
+    element: "Toggle Auto-play Responses"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Auto-play Responses"
+    checked: false
+- tapOn: "Toggle Auto-play Responses"
 - assertVisible:
     text: "Toggle Auto-play Responses"
     checked: true
+- scrollUntilVisible:
+    element: "Toggle Get to the Point"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Get to the Point"
+    checked: false
+- tapOn: "Toggle Get to the Point"
 - assertVisible:
     text: "Toggle Get to the Point"
     checked: true
+- scrollUntilVisible:
+    element: "Toggle Hands-free Conversation"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Hands-free Conversation"
+    checked: false
+- tapOn: "Toggle Hands-free Conversation"
 - assertVisible:
     text: "Toggle Hands-free Conversation"
     checked: true
+- scrollUntilVisible:
+    element: "Toggle Faster Voice Responses"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Faster Voice Responses"
+    checked: true
+- tapOn: "Toggle Faster Voice Responses"
 - assertVisible:
     text: "Toggle Faster Voice Responses"
     checked: false
 
 # ── Privacy & Trust dialogs ──
+# Each row is scrolled into view before it is tapped: a row left under the
+# status bar would scroll the page to the top instead.
 - scrollUntilVisible:
-    element: "Clear Conversation History"
+    element: "Privacy Policy"
     direction: DOWN
     centerElement: true
 - tapOn: "Privacy Policy"
@@ -122,14 +144,23 @@ tags:
     visible: "(?s)DementiaGuide AI is designed with privacy at its core.*"
     timeout: 10000
 - tapOn: "OK"
+- scrollUntilVisible:
+    element: "Medical Disclaimer"
+    direction: DOWN
+    centerElement: true
 - tapOn: "Medical Disclaimer"
 - extendedWaitUntil:
     visible: "(?s)DementiaGuide AI provides information for general guidance only.*"
     timeout: 10000
 - tapOn: "Understood"
+- assertVisible: "Data Security"
 - assertVisible: "Conversations are stored only on this device"
 # Clearing history is confirmed first; cancelling keeps it (the Clear path
 # runs in 06-chat-placeholder-key.yaml, where there is history to clear)
+- scrollUntilVisible:
+    element: "Clear Conversation History"
+    direction: DOWN
+    centerElement: true
 - tapOn: "Clear Conversation History"
 - extendedWaitUntil:
     visible: "(?s)This will remove all your conversation history.*"
@@ -138,29 +169,38 @@ tags:
 - assertNotVisible: "(?s)This will remove all your conversation history.*"
 
 # ── AI Configuration: open each credential editor and cancel ──
+# (A row with an action is one button on iOS, so its "Not configured" status
+# is read with the button, not checked here as separate text.)
 - scrollUntilVisible:
-    element: "ElevenLabs API Key"
+    element: "Azure Speech"
     direction: DOWN
     centerElement: true
-- assertVisible: "Not configured — tap to add"
 - tapOn: "Azure Speech"
 - assertVisible: "Azure API key input"
 - assertVisible: "Azure region input"
 - tapOn: "Cancel"
-- assertVisible: "Azure Speech"
+- assertNotVisible: "Azure API key input"
+- scrollUntilVisible:
+    element: "ElevenLabs API Key"
+    direction: DOWN
+    centerElement: true
 - tapOn: "ElevenLabs API Key"
 - assertVisible: "ElevenLabs API Key input"
 - tapOn: "Cancel"
-- assertVisible: "ElevenLabs API Key"
+- assertNotVisible: "ElevenLabs API Key input"
 
 # ── About ──
 - scrollUntilVisible:
-    element: "Reset setup guide"
+    element: "Powered by OpenAI"
     direction: DOWN
     centerElement: true
 - assertVisible: "DementiaGuide AI v1.0.0"
 - assertVisible: "GPT-4o-mini with OpenAI voice"
 # The Simulator has no App Store, so "Rate the App" explains instead
+- scrollUntilVisible:
+    element: "Rate the App"
+    direction: DOWN
+    centerElement: true
 - tapOn: "Rate the App"
 - extendedWaitUntil:
     visible: "(?s)Thank you for your support!.*"
@@ -194,21 +234,40 @@ tags:
     text: "Toggle Dark Mode"
     checked: true
 - scrollUntilVisible:
-    element: "Toggle Faster Voice Responses"
+    element: "Toggle Subtitles"
     direction: DOWN
     centerElement: true
 - assertVisible:
     text: "Toggle Subtitles"
     checked: false
 - assertVisible:
+    text: "Toggle Audio Responses"
+    checked: false
+- scrollUntilVisible:
+    element: "Toggle Auto-play Responses"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
     text: "Toggle Auto-play Responses"
     checked: true
+- scrollUntilVisible:
+    element: "Toggle Get to the Point"
+    direction: DOWN
+    centerElement: true
 - assertVisible:
     text: "Toggle Get to the Point"
     checked: true
+- scrollUntilVisible:
+    element: "Toggle Hands-free Conversation"
+    direction: DOWN
+    centerElement: true
 - assertVisible:
     text: "Toggle Hands-free Conversation"
     checked: true
+- scrollUntilVisible:
+    element: "Toggle Faster Voice Responses"
+    direction: DOWN
+    centerElement: true
 - assertVisible:
     text: "Toggle Faster Voice Responses"
     checked: false

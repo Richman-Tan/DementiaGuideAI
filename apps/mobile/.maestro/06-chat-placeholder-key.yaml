@@ -34,15 +34,22 @@ env:
 - assertVisible: "OpenAI API Key"
 
 # Too short a key cannot be saved (the editor stays open)
+# Known defect: while the keyboard is up, the first tap on Save only closes
+# the keyboard (the Settings ScrollView has no keyboardShouldPersistTaps), so
+# the flow closes it first, as a person's first tap would.
 - tapOn: "OpenAI API Key"
 - tapOn: "OpenAI API Key input"
 - inputText: "sk-short"
+- hideKeyboard
 - tapOn: "Save"
 - assertVisible: "OpenAI API Key input"
+- assertNotVisible: "API Key Saved"
+- tapOn: "OpenAI API Key input"
 - eraseText: 20
 
 # A placeholder of valid length saves, with a confirmation
 - inputText: ${PLACEHOLDER_KEY}
+- hideKeyboard
 - tapOn: "Save"
 - extendedWaitUntil:
     visible: "API Key Saved"

@@ -62,12 +62,10 @@ tags:
 - tapOn:
     id: "tab-home"
 
-# The Explore cards sit partly under the tab bar; centre one before tapping
-# it, or the tap lands on the tab bar instead.
-- scrollUntilVisible:
-    element: "Start chat conversation"
-    direction: DOWN
-    centerElement: true
+# The Explore cards sit partly under the tab bar until Home is scrolled to
+# its end, and Maestro taps an element's centre even when something covers
+# it, so scroll first or the tap lands on the tab bar.
+- scroll
 - tapOn: "Start chat conversation"
 - extendedWaitUntil:
     visible: "Aria, Online"
@@ -111,20 +109,14 @@ tags:
 # ── Home's other Explore cards ──
 - tapOn:
     id: "tab-home"
-- scrollUntilVisible:
-    element: "Browse knowledge library"
-    direction: DOWN
-    centerElement: true
+- scroll
 - tapOn: "Browse knowledge library"
 - extendedWaitUntil:
     visible: "Knowledge Library"
     timeout: 10000
 - tapOn:
     id: "tab-home"
-- scrollUntilVisible:
-    element: "Start voice interaction"
-    direction: DOWN
-    centerElement: true
+- scroll
 - tapOn: "Start voice interaction"
 - extendedWaitUntil:
     visible: "Switch to text chat"

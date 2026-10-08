@@ -4,7 +4,7 @@ Agreed in October 2026. The target has two parts:
 
 1. **Every user flow has an end-to-end test**:
    - web: Playwright, `apps/web/e2e/`;
-   - iOS: Maestro on the iOS Simulator, `apps/mobile/.maestro/`.
+   - iOS: Maestro on the iOS Simulator, `apps/mobile/.maestro/` (see [ios-e2e.md](ios-e2e.md)).
 2. **The testable logic reaches 100% statement and line coverage**, from unit and e2e tests
    combined:
    - the web app (`apps/web/src`);

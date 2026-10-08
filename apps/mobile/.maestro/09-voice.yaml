@@ -1,0 +1,148 @@
+# Voice screen as far as the Simulator allows: its controls, a typed question
+# with no API key, the menu (About, Change Persona), the microphone (refused,
+# and allowed through the iOS permission prompts), and the volume button.
+# Aria's voice stays off throughout (subflows/audio-off.yaml) apart from the
+# volume-button check at the end, where nothing is asked.
+#
+# Real speech can't be tested here: the Simulator has no microphone audio to
+# recognise and no key to answer with. What is checked is the state machine
+# the user sees: idle → listening (mic button turns into Stop) → idle.
+appId: com.anonymous.DementiaGuideAi
+name: Voice — controls, menu, persona, microphone permissions
+tags:
+  - voice
+---
+- runFlow: subflows/skip-onboarding.yaml
+- tapOn: "Start voice conversation"
+- extendedWaitUntil:
+    visible: "Switch to text chat"
+    timeout: 10000
+- assertVisible: "Aaron"
+- assertVisible: "Return to home"
+- assertVisible: "Open menu"
+- assertVisible: "Morning routine"
+- assertVisible: "Managing sundowning"
+- assertVisible: "Start speaking"
+- assertVisible: "Volume"
+- assertVisible: "Send"
+
+# A quick chip fills the box; sending without a key reports it
+- tapOn: "Morning routine"
+- tapOn: "Send"
+- extendedWaitUntil:
+    visible: "No API key configured"
+    timeout: 20000
+- assertVisible: "Start speaking"
+
+# Menu → About / Help
+- tapOn: "Open menu"
+- extendedWaitUntil:
+    visible: ".*About / Help.*"
+    timeout: 10000
+- assertVisible: ".*Change Persona.*"
+- tapOn: ".*About / Help.*"
+- extendedWaitUntil:
+    visible: "About DementiaGuide AI"
+    timeout: 10000
+- tapOn: "Got it"
+
+# Menu → Change Persona → Ariana
+- tapOn: "Open menu"
+- tapOn: ".*Change Persona.*"
+- extendedWaitUntil:
+    visible: "Choose Your Avatar"
+    timeout: 10000
+- assertVisible: "Each guide has their own voice and style"
+- assertVisible: "Select Aaron Classic"
+- assertVisible: "Select Ariana New"
+- tapOn: "Select Ariana New"
+- extendedWaitUntil:
+    visible: "Ariana"
+    timeout: 10000
+- assertNotVisible: "Aaron"
+- assertNotVisible: "Choose Your Avatar"
+
+# ── Microphone refused: the mic stays idle, nothing breaks ──
+- launchApp:
+    permissions:
+      microphone: deny
+      speech: deny
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 30000
+- tapOn: "Start voice conversation"
+- extendedWaitUntil:
+    visible: "Start speaking"
+    timeout: 10000
+- assertVisible: "Ariana"
+- tapOn: "Start speaking"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertNotVisible: "Stop"
+- assertVisible: "Start speaking"
+
+# ── Microphone allowed through the iOS prompts ──
+# "unset" puts both permissions back to "not asked", so iOS prompts on the
+# next request. The app asks for speech recognition and the microphone; each
+# prompt is answered with "Allow".
+- launchApp:
+    permissions:
+      microphone: unset
+      speech: unset
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 30000
+- tapOn: "Start voice conversation"
+- extendedWaitUntil:
+    visible: "Start speaking"
+    timeout: 10000
+- tapOn: "Start speaking"
+- tapOn:
+    text: "Allow"
+    optional: true
+- tapOn:
+    text: "Allow"
+    optional: true
+# Listening: the mic button and the send button both become "Stop"
+- extendedWaitUntil:
+    visible: "Stop"
+    timeout: 20000
+- assertNotVisible: "Start speaking"
+- tapOn:
+    text: "Stop"
+    index: 0
+- extendedWaitUntil:
+    visible: "Start speaking"
+    timeout: 30000
+- assertNotVisible: "Stop"
+
+# ── The volume button ──
+# Speech is off (subflows/audio-off.yaml); the volume button turns it back on,
+# and Settings follows. Nothing is asked while it is on, and it is switched
+# off again before the flow goes on, so nothing can be heard.
+- tapOn: "Volume"
+- tapOn: "Return to home"
+- tapOn:
+    id: "tab-settings"
+- scrollUntilVisible:
+    element: "Toggle Audio Responses"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Audio Responses"
+    checked: true
+- tapOn: "Toggle Audio Responses"
+- assertVisible:
+    text: "Toggle Audio Responses"
+    checked: false
+
+# ── The persona choice persists ──
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 30000
+- tapOn: "Start voice conversation"
+- extendedWaitUntil:
+    visible: "Ariana"
+    timeout: 10000

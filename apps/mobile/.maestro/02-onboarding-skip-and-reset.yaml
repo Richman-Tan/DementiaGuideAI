@@ -1,0 +1,39 @@
+# The two other ways in and out of setup: "Skip setup" on the welcome screen
+# (remembered across a relaunch), and Settings → "Reset setup guide", which
+# brings the welcome screen back.
+appId: com.anonymous.DementiaGuideAi
+name: Onboarding — skip, relaunch, reset
+tags:
+  - onboarding
+---
+- runFlow: subflows/skip-onboarding.yaml
+
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 30000
+- assertNotVisible: "Let's begin"
+
+- tapOn:
+    id: "tab-settings"
+- extendedWaitUntil:
+    visible: "Personalise your DementiaGuide AI experience"
+    timeout: 10000
+# (Last row on the page: it can't be centred, so no centerElement)
+- scrollUntilVisible:
+    element: "Reset setup guide"
+    direction: DOWN
+- tapOn: "Reset setup guide"
+- extendedWaitUntil:
+    visible: "Let's begin"
+    timeout: 15000
+- assertVisible: '(?s)Welcome to.*DementiaGuide AI'
+
+# Skipping a second time lands back in the app
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn: "Skip setup — go straight to the app"
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 15000

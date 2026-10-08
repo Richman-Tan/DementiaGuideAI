@@ -25,6 +25,9 @@ const TabIcon = ({ name, label, focused, color }) => (
   </View>
 );
 
+// tabBarButtonTestID gives each tab button a stable id for the Maestro e2e flows
+// (apps/mobile/.maestro). Their accessibility labels can't serve: "Settings" and
+// "Knowledge library" also label elements on the screens themselves.
 const MainTabs = () => {
   const { colors } = useSettings();
   return (
@@ -49,6 +52,7 @@ const MainTabs = () => {
             <TabIcon name={focused ? 'home' : 'home-outline'} label="Home" focused={focused} color={color} />
           ),
           tabBarAccessibilityLabel: 'Home',
+          tabBarButtonTestID: 'tab-home',
         }}
       />
       <Tab.Screen
@@ -59,6 +63,7 @@ const MainTabs = () => {
             <TabIcon name={focused ? 'chat' : 'chat-outline'} label="Chat" focused={focused} color={color} />
           ),
           tabBarAccessibilityLabel: 'Chat with Aria',
+          tabBarButtonTestID: 'tab-chat',
         }}
       />
       <Tab.Screen
@@ -74,6 +79,7 @@ const MainTabs = () => {
             </View>
           ),
           tabBarAccessibilityLabel: 'Voice interaction',
+          tabBarButtonTestID: 'tab-voice',
         }}
       />
       <Tab.Screen
@@ -84,6 +90,7 @@ const MainTabs = () => {
             <TabIcon name={focused ? 'library' : 'library-outline'} label="Library" focused={focused} color={color} />
           ),
           tabBarAccessibilityLabel: 'Knowledge library',
+          tabBarButtonTestID: 'tab-library',
         }}
       />
       <Tab.Screen
@@ -94,6 +101,7 @@ const MainTabs = () => {
             <TabIcon name={focused ? 'tune-variant' : 'tune-variant'} label="Settings" focused={focused} color={color} />
           ),
           tabBarAccessibilityLabel: 'Settings',
+          tabBarButtonTestID: 'tab-settings',
         }}
       />
     </Tab.Navigator>

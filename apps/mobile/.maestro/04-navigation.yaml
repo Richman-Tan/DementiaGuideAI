@@ -1,0 +1,127 @@
+# Navigation between every screen: the five tabs, the Voice screen hiding the
+# tab bar, and each in-screen link (Home's settings button and Explore cards,
+# Chat's back/library/voice buttons, Library's "Ask Aria", Voice's back and
+# "switch to text chat").
+#
+# Tabs are tapped by testID (tabBarButtonTestID in AppNavigator.js) because two
+# of their accessibility labels also appear on the screens themselves.
+appId: com.anonymous.DementiaGuideAi
+name: Navigation — tabs and in-screen links
+tags:
+  - navigation
+---
+- runFlow: subflows/skip-onboarding.yaml
+
+# ── The tab bar ──
+- tapOn:
+    id: "tab-chat"
+- extendedWaitUntil:
+    visible: "(?s)Hello! I'm Aria, your DementiaGuide AI assistant.*"
+    timeout: 10000
+- assertVisible: "Aria, Online"
+
+- tapOn:
+    id: "tab-library"
+- extendedWaitUntil:
+    visible: "Knowledge Library"
+    timeout: 10000
+
+- tapOn:
+    id: "tab-settings"
+- extendedWaitUntil:
+    visible: "Personalise your DementiaGuide AI experience"
+    timeout: 10000
+
+- tapOn:
+    id: "tab-home"
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 10000
+
+# The centre tab opens Voice, which hides the tab bar
+- tapOn:
+    id: "tab-voice"
+- extendedWaitUntil:
+    visible: "Open menu"
+    timeout: 10000
+- assertVisible: "Start speaking"
+- assertNotVisible:
+    id: "tab-home"
+- tapOn: "Return to home"
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 10000
+- assertVisible:
+    id: "tab-home"
+
+# ── Home's own links ──
+- tapOn: "Open settings"
+- extendedWaitUntil:
+    visible: "Personalise your DementiaGuide AI experience"
+    timeout: 10000
+- tapOn:
+    id: "tab-home"
+
+# The Explore cards sit partly under the tab bar until Home is scrolled to
+# its end, and Maestro taps an element's centre even when something covers
+# it, so scroll first or the tap lands on the tab bar.
+- scroll
+- tapOn: "Start chat conversation"
+- extendedWaitUntil:
+    visible: "Aria, Online"
+    timeout: 10000
+
+# ── Chat's links ──
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 10000
+- tapOn:
+    id: "tab-chat"
+- extendedWaitUntil:
+    visible: "Aria, Online"
+    timeout: 10000
+# The header's library button, not the tab button with the same label
+- tapOn:
+    text: "Knowledge library"
+    above:
+      id: "tab-home"
+- extendedWaitUntil:
+    visible: "Knowledge Library"
+    timeout: 10000
+
+# ── Library's link to Chat ──
+- tapOn: "Ask Aria a question"
+- extendedWaitUntil:
+    visible: "Aria, Online"
+    timeout: 10000
+
+# ── Chat → Voice → Chat ──
+- tapOn: "Voice"
+- extendedWaitUntil:
+    visible: "Switch to text chat"
+    timeout: 10000
+- tapOn: "Switch to text chat"
+- extendedWaitUntil:
+    visible: "Aria, Online"
+    timeout: 10000
+
+# ── Home's other Explore cards ──
+- tapOn:
+    id: "tab-home"
+- scroll
+- tapOn: "Browse knowledge library"
+- extendedWaitUntil:
+    visible: "Knowledge Library"
+    timeout: 10000
+- tapOn:
+    id: "tab-home"
+- scroll
+- tapOn: "Start voice interaction"
+- extendedWaitUntil:
+    visible: "Switch to text chat"
+    timeout: 10000
+- tapOn: "Return to home"
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 10000

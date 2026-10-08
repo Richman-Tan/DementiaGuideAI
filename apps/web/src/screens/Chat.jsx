@@ -60,10 +60,9 @@ export default function Chat({ isDesktop, isMobile }) {
     scrollCb.current && scrollCb.current();
   }, [messages, typing, scrollCb]);
 
-  const onTranscriptScroll = () => {
-    const el = chatEl.current;
-    if (!el) return;
-    stickRef.current.onScroll(el);
+  // The transcript's own scroll event: currentTarget is the element that scrolled.
+  const onTranscriptScroll = (e) => {
+    stickRef.current.onScroll(e.currentTarget);
     setDetached(!stickRef.current.stuck());
   };
   const jumpToLatest = () => {

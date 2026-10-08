@@ -170,7 +170,7 @@ Prices are from `scripts/eval/pricing.2026-09.json` (checked 2026-09-18): gpt-4o
 ## 5. Deviations from §18 and limitations
 
 - **E4-S ran without TTS.** That followed the pre-specified key contingency, so its headline (`to_first_audio_byte`, and with it L3) is not reported.
-  - The ElevenLabs key was not in the root `.env`. A key does exist in the API app's environment pulled from Vercel production. It was not used, because the brief limits keys to the root `.env` and that key is the production study proxy's credential.
+  - The ElevenLabs key was not in the root `.env`, the only key source this run was authorised to use.
   - With `ELEVENLABS_API_KEY` in the root `.env`, `node scripts/eval/latency/bench-spoken.mjs --tts --tag <new tag>` re-runs the same sample with synthesis. Per §18.1, that run replaces this one as the headline. It would use about 6,000 characters from the plan's credits.
 - **E2-X was not run:** there is no Anthropic credential. See §3.
 - **The E9-A hypotheses come from the earlier session's pass,** run on code that was not yet committed but was identical to the committed code. Provenance is in §1.1. They were scored after the commit, and the scorer reproduced the committed `whisper-1` figures exactly.

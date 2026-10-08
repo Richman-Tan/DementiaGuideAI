@@ -4,7 +4,7 @@
 
 | Evaluation | Status | Headline | Artefacts |
 |---|---|---|---|
-| E9-A — Apple on-device recogniser, ADReSS-2020 condition (a) | **Run** (primary en-NZ; secondary en-US also run, §1.6) | pooled WER control 41.8 % / dementia 58.5 % vs `whisper-1` 26.3 % / 41.9 %; paired Δ +14.5 pp | `docs/report/eval/stt/wer_e65cdc2_apple-ondevice-*` |
+| E9-A — Apple on-device recogniser, ADReSS-2020 condition (a) | **Run** (primary en-NZ; secondary en-US also run, §1.6) | pooled WER control 41.8 % / dementia 58.5 % vs `whisper-1` 26.3 % / 41.9 %; paired Δ +14.5 pp | `docs/report/eval/stt/wer_e65cdc2_apple-ondevice-en-NZ.*`, `wer_0b81b1c_apple-ondevice-en-US.*` |
 | E4-S — headless spoken-turn latency | **Run** without TTS — §18.1 key contingency (no ElevenLabs key) | end of speech → first sentence ready (strict lower bound on first audio): median 4.18 s, p90 7.17 s; 47/60 turns already over 3 s | `docs/report/eval/latency/spoken-bench_e65cdc2_mac-2026-10-09*` |
 | E2-X — cross-family judge (Claude) | **Not run** — no Anthropic credential | — | — |
 
@@ -134,12 +134,11 @@ Against the post-hoc 3 s yardstick (report §4.5):
 
   The RPC and the embedding call have no per-query cache on this path, so the run cannot separate provider or network drift over the 12 minutes from warm-up beyond the two discarded turns. The pooled figure is the pre-specified headline. Repeat 1 alone would sit inside L2's range, and that is not a licence to report it instead.
 - **The tail comes from speech-to-text.** The four slowest first-sentence times (10.0–20.9 s) had `whisper-1` uploads of 5.3–16.2 s for clips of 4.3–5.1 s.
-- **This run is a lower bound on what a participant waited for**, for these reasons:
-  - It has no proxy hop and no TTS, decode or playback.
-  - It starts from the end of the upload.
-  - The fallback recogniser is the slowest recogniser path; the primary live recognisers deliver their transcript close to the stop.
+- **What it bounds.** For a turn on the fallback path, this run is a lower bound on the wait:
+  - it has no proxy hop and no TTS, decode or playback;
+  - its clock starts at the start of the upload, standing in for the end of recording, so MediaRecorder finalisation is excluded.
 
-  It measures the cost of the fallback path. The web client takes that path when the browser has no `SpeechRecognition` (for example Firefox), when live recognition fails to start, or when it rescues an empty live result (`apps/web/src/services/sttWeb.js`).
+  For a turn on a primary live recogniser, which delivers its transcript close to the stop, most of the `stt` stage (median 1.7 s) would not be paid, so the wait could be shorter. This run does not measure that path. It measures the cost of the fallback path. The web client takes that path when the browser has no `SpeechRecognition` (for example Firefox), when live recognition fails to start, or when it rescues an empty live result (`apps/web/src/services/sttWeb.js`).
 
 ## 3. E2-X — cross-family judge (§18.2): not run
 

@@ -8,7 +8,7 @@
 // The avatar is hidden in most of these (Settings → Show Avatar off, a real
 // option) so a software-rendered WebGL scene does not slow every turn; the
 // first test runs with the 3D avatar on screen and voiced through it.
-import { test, mockProviders, seedStorage, installFakeMedia, expect, ELEVEN_KEY, OPENAI_KEY } from './support.js';
+import { test, mockProviders, seedStorage, installFakeMedia, expect, ELEVEN_KEY, OPENAI_KEY, slow } from './support.js';
 
 // Two short sentences, each cited — long enough to have two caption lines,
 // short enough that a turn takes a couple of seconds.
@@ -44,7 +44,7 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
     await expect(page.getByText('Aria is speaking')).toBeVisible();
     // Captions follow the spoken sentence, markers stripped.
     await expect(page.getByText(/Keep a calm routine in the evening/)).toBeVisible();
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.chat).toHaveLength(1);
     // One OpenAI TTS request per sentence, in Aria's voice.
     expect(log.speech.map((s) => s.voice)).toEqual(['nova', 'nova']);
@@ -59,7 +59,7 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
     // Repeat replays the last answer as one clip.
     await page.getByRole('button', { name: 'Repeat last answer' }).click();
     await expect(page.getByText('Aria is speaking')).toBeVisible();
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.speech).toHaveLength(3);
     expect(log.speech[2].input).toMatch(/^Keep a calm routine in the evening/);
   });
@@ -71,10 +71,10 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
 
     await typeTurn(page, 'How do I manage sundowning?');
     await expect(page.getByText(/^Keep a calm routine/)).toBeVisible();
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     await page.getByRole('button', { name: 'Repeat last answer' }).click();
     await expect(page.getByText(/^Keep a calm routine/)).toBeVisible();
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.speech).toHaveLength(0);
 
     await page.getByRole('button', { name: 'Unmute Aria' }).click();
@@ -85,7 +85,7 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
     const log = await openVoice(page, { settings: { audioResponses: false }, providers: { answer: 'Keep a calm routine [S1].' } });
     await typeTurn(page, 'How do I manage sundowning?');
     await expect(page.getByText(/^Keep a calm routine/)).toBeVisible();
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.speech).toHaveLength(0);
   });
 
@@ -127,7 +127,7 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
     const sent = log.chat[0].messages.at(-1).content;
     expect(sent).toContain('Q'.repeat(1000));
     expect(sent).not.toContain('TAIL');
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
   });
 
   test('a refused key ends the turn with advice to check it, which can be dismissed', async ({ page }) => {
@@ -155,7 +155,7 @@ test.describe('voice: speaking a question', () => {
 
     await page.getByRole('button', { name: 'Tap when finished' }).click();
     await expect(page.getByText('Aria is speaking')).toBeVisible();
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     // The early retrieval was reused: no second search for the same words.
     expect(log.rpc).toHaveLength(1);
     expect(log.chat.at(-1).messages.at(-1).content).toContain('What helps with wandering at night');
@@ -167,8 +167,8 @@ test.describe('voice: speaking a question', () => {
     await expect(page.getByText('Aria will notice when you finish speaking')).toBeVisible();
     await page.evaluate(() => window.__stt.say('How can I help him sleep'));
     // No tap: silence after the words ends the turn.
-    await expect(page.getByText('Aria is speaking')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('button', { name: 'End conversation' })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Aria is speaking')).toBeVisible({ timeout: slow(15_000) });
+    await expect(page.getByRole('button', { name: 'End conversation' })).toBeVisible({ timeout: slow(20_000) });
     expect(log.chat).toHaveLength(1);
 
     // Ending with nothing said asks the person to try again.
@@ -219,7 +219,7 @@ test.describe('voice: speaking a question', () => {
     const log = await openVoice(page);
     await page.getByRole('button', { name: 'Tap to talk' }).click();
     await page.getByRole('button', { name: 'Tap when finished' }).click();
-    await expect(page.getByText('Aria is speaking')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('Aria is speaking')).toBeVisible({ timeout: slow(15_000) });
     expect(log.transcribe).toHaveLength(1);
     expect(log.chat[0].messages.at(-1).content).toContain('How do I manage sundowning in the evening?');
   });
@@ -238,7 +238,7 @@ test.describe('voice: speaking a question', () => {
       await page.getByRole('button', { name: 'Tap to talk' }).click();
       await expect(page.getByText('Listening…')).toBeVisible();
       await page.getByRole('button', { name: 'Tap when finished' }).click();
-      await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
       expect(log.transcribe).toHaveLength(turn);
     }
     // The second turn did not try the broken recognizer again.
@@ -308,7 +308,7 @@ test.describe('voice: speaking a question', () => {
     const log = await openVoice(page, { media: { live: false } });
     await page.getByRole('button', { name: 'Tap to talk' }).click();
     await page.getByRole('button', { name: 'Tap when finished' }).click();
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.transcribe).toHaveLength(1);
     expect(log.chat).toHaveLength(1);
   });
@@ -319,7 +319,7 @@ test.describe('voice: ElevenLabs voices', () => {
     const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY }, settings: { showAvatar: true } });
     await expect(placeholder(page)).toHaveCount(0);
     await typeTurn(page, 'How do I manage sundowning?');
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.eleven.map((r) => r.text)).toEqual([expect.stringMatching(/^Keep a calm routine/), expect.stringMatching(/^Close the curtains/)]);
     expect(log.speech).toHaveLength(0);
   });
@@ -332,17 +332,17 @@ test.describe('voice: ElevenLabs voices', () => {
       const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY } });
       await page.route(/api\.elevenlabs\.io\/v1\/text-to-speech/, (route) => route.fulfill(reply));
       await typeTurn(page, 'How do I manage sundowning?');
-      await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
       expect(log.speech).toHaveLength(2);
     });
   }
 
   test('"Faster Voice Responses" streams the answer as it is written', async ({ page }) => {
-    const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY }, settings: { fasterVoice: true, showAvatar: true } });
+    const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY }, settings: { fasterVoice: true, showAvatar: true }, providers: { streamChunkSeconds: 0.5 } });
     await expect(placeholder(page)).toHaveCount(0);
     await typeTurn(page, 'How do I manage sundowning?');
     await expect(page.getByText('Aria is speaking')).toBeVisible();
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     const sent = log.stream[0].messages;
     expect(sent[0]).toMatchObject({ xi_api_key: ELEVEN_KEY });
     expect(sent.map((m) => m.text).join('')).toContain('calm routine');
@@ -368,12 +368,12 @@ test.describe('voice: ElevenLabs voices', () => {
       });
     });
     await typeTurn(page, 'How do I manage sundowning?');
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.eleven.length).toBeGreaterThanOrEqual(1);
     const before = log.eleven.length;
     await typeTurn(page, 'And at night?');
-    await expect.poll(() => log.eleven.length, { timeout: 20_000 }).toBeGreaterThan(before);
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect.poll(() => log.eleven.length, { timeout: slow(20_000) }).toBeGreaterThan(before);
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
   });
 });
 
@@ -419,7 +419,7 @@ test.describe('voice on a phone-sized screen', () => {
     await openVoice(page);
     await typeTurn(page, 'How do I manage sundowning?');
     await expect(page.getByText(/Keep a calm routine in the evening/)).toBeVisible();
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
   });
 });
 
@@ -430,7 +430,7 @@ test.describe('voice with a guest access code', () => {
     await installFakeMedia(page);
     await page.goto('/#/app/voice');
     await typeTurn(page, 'How do I manage sundowning?');
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.chat).toHaveLength(1);
     expect(log.eleven.map((r) => r.proxied)).toEqual([true, true]);
   });

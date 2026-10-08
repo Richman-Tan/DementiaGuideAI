@@ -65,6 +65,13 @@ export const test = base.extend({
   },
 });
 
+/**
+ * Scale a wait for the instrumented (E2E_COVERAGE=1) server, which runs every
+ * module several times slower — the same factor playwright.config.js applies
+ * to its own timeouts.
+ */
+export const slow = (ms) => ms * (process.env.E2E_COVERAGE === '1' ? 3 : 1);
+
 export const OPENAI_KEY = 'sk-e2e-not-a-real-key';
 export const STUDY_ACCESS_CODE = 'e2e-study-access-code-0001';
 export const SESSION_ID = '11111111-2222-4333-8444-555555555555';

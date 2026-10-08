@@ -6,7 +6,7 @@
 // arm's first task in detail; this file covers the rest of the journey.
 //
 // The mocked session is participant P02: arm order BA, task sets 1 then 2.
-import { test, mockProviders, seedStorage, installFakeMedia, ask, expect, studyEvents, STUDY_ACCESS_CODE, SESSION_ID } from './support.js';
+import { test, mockProviders, seedStorage, installFakeMedia, ask, expect, studyEvents, STUDY_ACCESS_CODE, SESSION_ID, slow } from './support.js';
 
 const ANSWER = 'Keep a calm routine in the evening [S1].';
 
@@ -48,7 +48,7 @@ async function voiceTurn(page, text) {
   await page.getByLabel('Message Aria').fill(text);
   await page.getByRole('button', { name: 'Send message' }).click();
   await expect(page.getByText('Aria is speaking')).toBeVisible();
-  await expect(page.getByText('Tap the mic or type below')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('Tap the mic or type below')).toBeVisible({ timeout: slow(20_000) });
 }
 
 test.describe('the tasks study, start to finish', () => {
@@ -138,9 +138,9 @@ test.describe('the tasks study, start to finish', () => {
     await expect(page.getByText('Your participant code is P02. Please keep it.')).toBeVisible();
     await expect(page.getByText('If you would like to talk to someone')).toBeVisible();
 
-    await expect.poll(() => log.study.complete.length, { timeout: 15_000 }).toBe(1);
+    await expect.poll(() => log.study.complete.length, { timeout: slow(15_000) }).toBe(1);
     expect(log.study.complete[0]).toMatchObject({ sessionId: SESSION_ID, stoppedEarly: false });
-    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: 15_000 }).toEqual(expect.arrayContaining([
+    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: slow(15_000) }).toEqual(expect.arrayContaining([
       'background_done', 'posttask_response', 'sus_done', 'likert_done', 'debrief_done', 'session_complete',
     ]));
     const events = studyEvents(log);
@@ -210,7 +210,7 @@ test.describe('the tasks study, start to finish', () => {
     await page.getByRole('button', { name: 'Finish' }).click();
     await expect(page.getByRole('heading', { name: 'Thank you — that’s everything' })).toBeVisible();
 
-    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: 15_000 }).toEqual(expect.arrayContaining(['consent_rechecked', 'likert_done', 'session_complete']));
+    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: slow(15_000) }).toEqual(expect.arrayContaining(['consent_rechecked', 'likert_done', 'session_complete']));
     // Transcripts declined: turns are counted, but no words leave the browser.
     const turns = studyEvents(log).filter((e) => e.kind === 'turn');
     expect(turns).toHaveLength(2);
@@ -263,6 +263,36 @@ test.describe('a session already on this device', () => {
     expect(studyEvents(log).map((e) => e.eventUuid)).toContain('e2e-1');
   });
 
+  test('clearing the device while records are still on their way waits for them', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false, study: live() });
+    // The event endpoint is slow: a batch is in flight when the handover starts.
+    let inFlight = false;
+    let release;
+    const released = new Promise((r) => { release = r; });
+    await page.route('**/api/study/event', async (route) => {
+      const body = JSON.parse(route.request().postData() || '{}');
+      if (body.accessCode) return route.fallback(); // beacons are not part of this
+      inFlight = true;
+      await released;
+      return route.fallback();
+    });
+    await page.goto('/#/study');
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await expect.poll(() => inFlight, { timeout: slow(15_000) }).toBe(true);
+
+    await page.getByRole('button', { name: 'I’m someone else' }).click();
+    await page.getByRole('button', { name: 'Clear this device' }).click();
+    await expect(page.getByText(/Not cleared\. 1 record has not reached the server yet/)).toBeVisible();
+    release();
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('dg_study_queue') || '[]').length)).toBe(0);
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(page.getByRole('heading', { name: 'Thank you for taking part' })).toBeVisible();
+  });
+
   test('a session that went out of step offers a way back', async ({ page }) => {
     await mockProviders(page);
     await seedStorage(page, { keys: false, study: live({ step: 'sideways' }) });
@@ -291,9 +321,9 @@ test.describe('a session already on this device', () => {
     await page.getByRole('button', { name: 'Finish here' }).click();
     await expect(page.getByRole('heading', { name: 'You’ve stopped the session' })).toBeVisible();
     await expect(page.getByText(/quoting your participant code — P02/)).toBeVisible();
-    await expect.poll(() => log.study.complete.length, { timeout: 15_000 }).toBe(1);
+    await expect.poll(() => log.study.complete.length, { timeout: slow(15_000) }).toBe(1);
     expect(log.study.complete[0].stoppedEarly).toBe(true);
-    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: 15_000 }).toEqual(expect.arrayContaining(['responses_snapshot', 'session_stopped']));
+    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: slow(15_000) }).toEqual(expect.arrayContaining(['responses_snapshot', 'session_stopped']));
   });
 });
 
@@ -330,7 +360,7 @@ test.describe('stopping', () => {
     await band(page).getByRole('button', { name: 'Yes, stop' }).click();
     await expect(page.getByRole('heading', { name: 'You’ve stopped the session' })).toBeVisible();
 
-    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: 15_000 }).toEqual(expect.arrayContaining(['task_end', 'responses_snapshot', 'session_stopped']));
+    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: slow(15_000) }).toEqual(expect.arrayContaining(['task_end', 'responses_snapshot', 'session_stopped']));
     const end = studyEvents(log).find((e) => e.kind === 'task_end');
     expect(end).toMatchObject({ arm: 'B', taskId: 't1a', payload: expect.objectContaining({ stoppedMidTask: true }) });
     expect(end.payload.durationMs).toBeGreaterThanOrEqual(5000);
@@ -344,7 +374,7 @@ test.describe('stopping', () => {
     // The page's own button (the task band above it has one too).
     await page.getByRole('button', { name: 'I couldn’t find it' }).first().click();
     await expect(page.getByRole('heading', { name: 'How did that go?' })).toBeVisible();
-    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'task_end')?.payload?.gaveUp, { timeout: 15_000 }).toBe(true);
+    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'task_end')?.payload?.gaveUp, { timeout: slow(15_000) }).toBe(true);
   });
 });
 
@@ -398,7 +428,7 @@ test.describe('study setup problems', () => {
     await code.fill(STUDY_ACCESS_CODE);
     await start.click();
     await expect(page.getByRole('heading', { name: 'Next: Awake and moving at night' })).toBeVisible();
-    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'session_start')?.payload?.resumed, { timeout: 15_000 }).toBe(true);
+    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'session_start')?.payload?.resumed, { timeout: slow(15_000) }).toBe(true);
   });
 });
 
@@ -417,7 +447,7 @@ test.describe('event delivery', () => {
     // The beacon carries the access code in its body (it cannot set headers).
     await expect.poll(() => log.study.event.some((e) => e.body?.accessCode === STUDY_ACCESS_CODE)).toBe(true);
     await setVisibility('visible');
-    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: 15_000 }).toEqual(expect.arrayContaining(['tab_hidden', 'tab_visible']));
+    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: slow(15_000) }).toEqual(expect.arrayContaining(['tab_hidden', 'tab_visible']));
 
     // The server starts refusing everything: the next batch is split until the
     // bad event is alone, then dropped, so later events are not held up behind it.
@@ -429,7 +459,7 @@ test.describe('event delivery', () => {
       await route.fulfill({ status: 400, contentType: 'application/json', body: '{"error":"bad event"}' });
     });
     for (const state of ['hidden', 'visible', 'hidden']) await setVisibility(state);
-    await expect.poll(() => sizes.includes(1), { timeout: 30_000 }).toBe(true);
+    await expect.poll(() => sizes.includes(1), { timeout: slow(30_000) }).toBe(true);
     expect(sizes[0]).toBeGreaterThan(1);
     expect(sizes.indexOf(1)).toBeGreaterThan(0);
   });
@@ -465,13 +495,13 @@ test.describe('event delivery on a bad connection', () => {
     }, state);
     // Dropped: kept and retried a couple of seconds later, when the reply is not JSON.
     await setVisibility('hidden');
-    await expect.poll(() => seen, { timeout: 20_000 }).toEqual(['drop', 'not-json']);
+    await expect.poll(() => seen, { timeout: slow(20_000) }).toEqual(['drop', 'not-json']);
     // A reply admitting that fewer were stored than sent.
     await setVisibility('visible');
-    await expect.poll(() => seen, { timeout: 20_000 }).toEqual(['drop', 'not-json', 'partial']);
+    await expect.poll(() => seen, { timeout: slow(20_000) }).toEqual(['drop', 'not-json', 'partial']);
     // And then back to normal.
     await setVisibility('hidden');
-    await expect.poll(() => seen, { timeout: 20_000 }).toEqual(['drop', 'not-json', 'partial', 'ok']);
+    await expect.poll(() => seen, { timeout: slow(20_000) }).toEqual(['drop', 'not-json', 'partial', 'ok']);
     const delivered = log.study.event.filter((e) => !e.body?.accessCode).flatMap((e) => e.body?.events || []);
     expect(delivered.map((e) => e.kind)).toContain('tab_hidden');
   });

@@ -3,7 +3,7 @@
 // The enrolment path is the real one — intro, information, group, consent,
 // setup — with only the study API answered by fixtures. The mocked session
 // assigns participant P02 (arm order BA), so the first arm is the text arm.
-import { test, mockProviders, seedStorage, ask, expect, studyEvents, STUDY_ACCESS_CODE, SESSION_ID } from './support.js';
+import { test, mockProviders, seedStorage, ask, expect, studyEvents, STUDY_ACCESS_CODE, SESSION_ID, slow } from './support.js';
 
 async function enrolArmB(page, log) {
   await page.goto('/#/study');
@@ -67,7 +67,7 @@ test.describe('study Arm B (text arm, mocked session)', () => {
 
     // The flushed events carry a typed turn for this arm and task, plus the
     // task boundaries that bound time-on-task.
-    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: 15_000 })
+    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: slow(15_000) })
       .toEqual(expect.arrayContaining(['session_start', 'task_start', 'turn_start', 'turn', 'task_end']));
     const events = studyEvents(log);
     // The mic check's outcome rides on session_start, since the queue is dead
@@ -144,7 +144,7 @@ test.describe('study harness in Firefox (mocked session)', () => {
     await page.getByRole('checkbox', { name: /Continue without the microphone/ }).check();
     await page.getByRole('button', { name: 'Start the study' }).click();
     await expect(page.getByText('Your participant code is')).toBeVisible();
-    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'session_start')?.payload?.browserAck, { timeout: 15_000 }).toBe(true);
+    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'session_start')?.payload?.browserAck, { timeout: slow(15_000) }).toBe(true);
   });
 });
 

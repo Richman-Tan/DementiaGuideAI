@@ -2,7 +2,7 @@
 // (installFakeUnity in support.js): the download and "preparing" progress, a
 // failed load and its retry, speaking through the avatar, switching between
 // Aaron and Ariana, and falling back to Aria when no build is installed.
-import { test, mockProviders, seedStorage, installFakeUnity, expect } from './support.js';
+import { test, mockProviders, seedStorage, installFakeUnity, expect, slow } from './support.js';
 
 const unityTypes = (page) => page.evaluate(() => window.__unity.messages.map((m) => m.type));
 
@@ -27,7 +27,7 @@ test.describe('Unity avatar loading', () => {
     await page.getByLabel('Message Aaron').fill('How do I manage sundowning?');
     await page.getByRole('button', { name: 'Send message' }).click();
     await expect(page.getByText('Aaron is speaking')).toBeVisible();
-    await expect(page.getByText('Tap the mic or type below')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Tap the mic or type below')).toBeVisible({ timeout: slow(20_000) });
     // Aaron's own voice, and the mouth movements sent to the avatar.
     expect(log.speech.map((s) => s.voice)).toEqual(['onyx']);
     const types = await unityTypes(page);
@@ -84,7 +84,7 @@ test.describe('Unity avatar loading', () => {
     await page.getByLabel('Message Aaron').fill('How do I manage sundowning?');
     await page.getByRole('button', { name: 'Send message' }).click();
     await expect(page.getByText('Aaron is speaking')).toBeVisible();
-    await expect(page.getByText('Tap the mic or type below')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Tap the mic or type below')).toBeVisible({ timeout: slow(20_000) });
     expect(log.speech.map((x) => x.voice)).toEqual(['onyx']);
     expect(await page.evaluate(() => window.__unity.calls)).toBe(0);
   });
@@ -99,7 +99,7 @@ test.describe('Unity avatar loading', () => {
     await seedStorage(page, { keys: false });
     await page.goto('/#/app/home');
     await expect(page.getByText('Aaron', { exact: true })).toBeVisible();
-    await expect(page.getByText('Aria', { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('Aria', { exact: true })).toBeVisible({ timeout: slow(15_000) });
     await expect(page.getByText('Aaron', { exact: true })).toHaveCount(0);
   });
 });

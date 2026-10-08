@@ -1,7 +1,7 @@
 // Onboarding wizard: one helper name throughout, and a voice preview that never fails silently.
 // The e2e mocks refuse the Unity build, so the helper that resolves here is the fallback avatar;
 // the assertions therefore check consistency with the resolved name, not a fixed name.
-import { test, mockProviders, seedStorage, expect } from './support.js';
+import { test, mockProviders, seedStorage, expect, slow } from './support.js';
 
 const fresh = { keys: false, settings: { onboarded: false } };
 
@@ -141,6 +141,6 @@ test.describe('onboarding: the whole wizard', () => {
     await expect(page.getByText("“Kia ora — I'm Aria. This is about how I'll sound.”")).toBeVisible();
     expect(log.speech[0]).toMatchObject({ voice: 'nova', input: "Kia ora — I'm Aria. This is about how I'll sound." });
     // When the clip ends the preview returns to its button.
-    await expect(page.getByText("“Kia ora — I'm Aria. This is about how I'll sound.”")).toHaveCount(0, { timeout: 15_000 });
+    await expect(page.getByText("“Kia ora — I'm Aria. This is about how I'll sound.”")).toHaveCount(0, { timeout: slow(15_000) });
   });
 });

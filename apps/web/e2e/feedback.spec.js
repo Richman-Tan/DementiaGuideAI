@@ -2,7 +2,7 @@
 // notice, free use with "Things to try", a flagged answer, open questions, the
 // optional SUS skipped. The study API is answered by the fixtures in support.js,
 // which give a feedback session no arms, as the real endpoint does.
-import { test, mockProviders, seedStorage, ask, expect, studyEvents, STUDY_ACCESS_CODE } from './support.js';
+import { test, mockProviders, seedStorage, ask, expect, studyEvents, STUDY_ACCESS_CODE, slow } from './support.js';
 
 async function enrol(page) {
   await page.goto('/#/study/feedback');
@@ -76,7 +76,7 @@ test.describe('feedback round (mocked session)', () => {
     await expect(page.getByRole('heading', { name: 'Thank you — that’s everything' })).toBeVisible();
     await expect(page.getByText('Your session code is')).toBeVisible();
 
-    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: 15_000 }).toEqual(expect.arrayContaining([
+    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: slow(15_000) }).toEqual(expect.arrayContaining([
       'session_start', 'explore_start', 'try_done', 'page_view', 'turn', 'answer_flagged',
       'explore_end', 'feedback_done', 'sus_done', 'session_complete',
     ]));
@@ -108,7 +108,7 @@ test.describe('feedback round (mocked session)', () => {
     expect(of('sus_done')[0].payload).toEqual({ scope: 'feedback', responses: {} });
     expect(log.study.progress.map((p) => p.step)).toEqual(expect.arrayContaining(['explore', 'feedback', 'feedbacksus']));
     // Marked complete after the final flush, so it can trail the last events.
-    await expect.poll(() => log.study.complete, { timeout: 15_000 }).toEqual([expect.objectContaining({ stoppedEarly: false })]);
+    await expect.poll(() => log.study.complete, { timeout: slow(15_000) }).toEqual([expect.objectContaining({ stoppedEarly: false })]);
 
     // "Nothing more will be recorded": going back into the app afterwards adds nothing.
     const before = studyEvents(log).length;
@@ -193,7 +193,7 @@ test.describe('feedback round: the other ways through (mocked session)', () => {
     await expect(page.getByRole('heading', { name: 'You’ve stopped the session' })).toBeVisible();
     await expect(page.getByText(/quoting your session code — P31/)).toBeVisible();
 
-    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: 15_000 }).toEqual(expect.arrayContaining(['explore_end', 'session_stopped']));
+    await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: slow(15_000) }).toEqual(expect.arrayContaining(['explore_end', 'session_stopped']));
     expect(studyEvents(log).filter((e) => e.kind === 'try_done').length).toBeGreaterThanOrEqual(22);
     expect(studyEvents(log).find((e) => e.kind === 'explore_end').payload.stoppedMidExplore).toBe(true);
   });
@@ -223,7 +223,7 @@ test.describe('feedback round: the other ways through (mocked session)', () => {
     await page.getByRole('radiogroup', { name: 'q1', exact: true }).getByRole('radio', { name: '4 — Agree' }).click();
     await page.getByRole('button', { name: 'Finish', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Thank you — that’s everything' })).toBeVisible();
-    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'sus_done')?.payload?.responses, { timeout: 15_000 }).toEqual({ 'sus.feedback.q1': 4 });
+    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'sus_done')?.payload?.responses, { timeout: slow(15_000) }).toEqual({ 'sus.feedback.q1': 4 });
   });
 
   test('during free use an answer heard on the voice screen can be flagged from the transcript', async ({ page }) => {
@@ -242,7 +242,7 @@ test.describe('feedback round: the other ways through (mocked session)', () => {
     await page.evaluate(() => { location.hash = '#/app/voice'; });
     await page.getByLabel('Message Aria').fill('Where can I get a break?');
     await page.getByRole('button', { name: 'Send message' }).click();
-    await expect(page.getByText('Tap the mic or type below')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Tap the mic or type below')).toBeVisible({ timeout: slow(20_000) });
 
     await page.getByRole('button', { name: 'Show transcript' }).click();
     await page.getByRole('button', { name: '⚑ Flag this answer' }).click();
@@ -251,6 +251,6 @@ test.describe('feedback round: the other ways through (mocked session)', () => {
     await page.getByLabel('What’s wrong with this answer?').fill('Too vague.');
     await page.getByRole('button', { name: 'Send flag' }).click();
     await expect(page.getByText('Flagged — thank you.')).toBeVisible();
-    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'answer_flagged')?.payload, { timeout: 15_000 }).toMatchObject({ surface: 'voice', comment: 'Too vague.', question: 'Where can I get a break?' });
+    await expect.poll(() => studyEvents(log).find((e) => e.kind === 'answer_flagged')?.payload, { timeout: slow(15_000) }).toMatchObject({ surface: 'voice', comment: 'Too vague.', question: 'Where can I get a break?' });
   });
 });

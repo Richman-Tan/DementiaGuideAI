@@ -1,28 +1,36 @@
-// Knowledge-base admin intake: auth/validation must reject before any
+// Knowledge-base admin intake: auth (a verified Supabase session, checked
+// against an email allowlist) and validation must reject before any
 // OpenAI/DB call happens, and a valid submission must land as
 // review_status='pending' with the shape the migration expects.
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { makeReq, makeRes, load, ADMIN_TOKEN } from './helpers.js';
+import { makeReq, makeRes, load, ADMIN_EMAIL } from './helpers.js';
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
-function adminReq(body, { token = ADMIN_TOKEN, headers = {} } = {}) {
+function adminReq(body, { token = 'valid-session-token', headers = {} } = {}) {
   return makeReq({
     body,
     code: null, // this endpoint doesn't use the study access code at all
-    headers: { ...(token ? { 'x-admin-token': token } : {}), ...headers },
+    headers: { ...(token ? { authorization: `Bearer ${token}` } : {}), ...headers },
   });
 }
 
-/** Routes fetch by URL + request body, since autoTag/simplifyTitle/embedBatch all hit chat/completions or embeddings. */
-function stubOpenAI() {
+/**
+ * Routes fetch by URL + request body: /auth/v1/user for the Supabase login
+ * check, /chat/completions and /embeddings for autoTag/simplifyTitle/embedBatch.
+ */
+function stubBackends({ authEmail = ADMIN_EMAIL, authStatus = 200 } = {}) {
   const fn = vi.fn(async (url, init) => {
+    const u = String(url);
+    if (u.includes('/auth/v1/user')) {
+      return jsonOk(authStatus === 200 ? { email: authEmail } : { error: 'invalid token' }, authStatus);
+    }
     const body = init?.body ? JSON.parse(init.body) : {};
-    if (String(url).includes('/chat/completions')) {
+    if (u.includes('/chat/completions')) {
       const content = body.max_tokens === 60 ? '["sundowning", "evening agitation"]' : 'Evening confusion and agitation';
       return jsonOk({ choices: [{ message: { content } }] });
     }
-    if (String(url).includes('/embeddings')) {
+    if (u.includes('/embeddings')) {
       const inputs = Array.isArray(body.input) ? body.input : [body.input];
       return jsonOk({ data: inputs.map((_, i) => ({ index: i, embedding: new Array(8).fill(0.01) })) });
     }
@@ -32,11 +40,12 @@ function stubOpenAI() {
   return fn;
 }
 
-function jsonOk(body) {
-  return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
+function jsonOk(body, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
-async function post(body, { token, admin } = {}) {
+async function post(body, { token, admin, authEmail, authStatus } = {}) {
+  stubBackends({ authEmail, authStatus });
   const { mod, admin: a } = await load('../api/admin/ingest.js', { admin });
   const res = makeRes();
   await mod.default(adminReq(body, { token }), res);
@@ -44,17 +53,21 @@ async function post(body, { token, admin } = {}) {
 }
 
 describe('auth and validation reject before any OpenAI/DB call', () => {
-  it('401s with no admin token, and touches neither fetch nor the DB', async () => {
-    const fetchStub = stubOpenAI();
-    const { res, admin } = await post(textBody(), { token: null });
+  it('401s with no Authorization header, and never calls fetch at all', async () => {
+    const { res } = await post(textBody(), { token: null });
     expect(res.statusCode).toBe(401);
-    expect(fetchStub).not.toHaveBeenCalled();
-    expect(admin.insertManyReturning).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it('401s with a wrong admin token', async () => {
-    const { res } = await post(textBody(), { token: 'wrong-token-but-long-enough' });
+  it('401s when the Supabase session token is rejected (expired/invalid)', async () => {
+    const { res } = await post(textBody(), { authStatus: 401 });
     expect(res.statusCode).toBe(401);
+  });
+
+  it('401s for a valid session whose email is not on the allowlist', async () => {
+    const { res, admin } = await post(textBody(), { authEmail: 'stranger@example.com' });
+    expect(res.statusCode).toBe(401);
+    expect(admin.insertManyReturning).not.toHaveBeenCalled();
   });
 
   it('400s on an unknown category', async () => {
@@ -73,16 +86,16 @@ describe('auth and validation reject before any OpenAI/DB call', () => {
   });
 
   it('413s a PDF payload over the size cap without attempting to parse it', async () => {
-    const fetchStub = stubOpenAI();
     const { res } = await post({ ...textBody(), sourceType: 'pdf', payload: 'A'.repeat(5_000_000) });
     expect(res.statusCode).toBe(413);
-    expect(fetchStub).not.toHaveBeenCalled();
+    // Auth still had to run (it's checked first), but no chat/completions or embeddings call.
+    const calledUrls = global.fetch.mock.calls.map(([url]) => String(url));
+    expect(calledUrls.every((u) => u.includes('/auth/v1/user'))).toBe(true);
   });
 });
 
 describe('happy path (pasted text)', () => {
   it('tags, titles, embeds, and writes rows as review_status=pending', async () => {
-    stubOpenAI();
     const { res, admin } = await post(textBody());
 
     expect(res.statusCode).toBe(200);
@@ -103,7 +116,6 @@ describe('happy path (pasted text)', () => {
   });
 
   it('uses the submitted sourceUrl/sourceOrg/licence/country verbatim', async () => {
-    stubOpenAI();
     const { admin } = await post({
       ...textBody(),
       sourceUrl: 'https://alzheimers.org.nz/sundowning',

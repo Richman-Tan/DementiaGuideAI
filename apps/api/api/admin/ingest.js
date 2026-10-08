@@ -8,7 +8,7 @@
 import { createRequire } from 'node:module';
 import { adminGuard } from '../_lib/adminGuard.js';
 import { requireEnv } from '../_lib/guard.js';
-import { adminConfigured, insertManyReturning } from '../_lib/supabaseAdmin.js';
+import { insertManyReturning } from '../_lib/supabaseAdmin.js';
 
 // createRequire, not a bare `import` of these CommonJS modules: ingest.mjs
 // uses the same trick for the same reason (see its header comment) — a
@@ -40,15 +40,11 @@ function makeDocumentId(title) {
 }
 
 export default async function handler(req, res) {
-  if (adminGuard(req, res)) return;
+  const user = await adminGuard(req, res);
+  if (!user) return;
 
   const apiKey = requireEnv(res, process.env.OPENAI_API_KEY, 'OPENAI_API_KEY');
   if (!apiKey) return;
-  if (!adminConfigured) {
-    console.error('[admin] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not configured');
-    res.status(503).json({ error: 'admin intake backend not configured' });
-    return;
-  }
 
   const {
     sourceType, payload, title,
@@ -145,6 +141,7 @@ export default async function handler(req, res) {
     const written = await withRetry('admin-ingest insert', () =>
       insertManyReturning('knowledge_chunks', rows, 'id,display_title'));
 
+    console.log(`[admin] ${written.length} chunk(s) saved under '${documentId}' (submitted by ${user.email}, pending review)`);
     res.status(200).json({
       document_id: documentId,
       chunkCount: written.length,
@@ -157,7 +154,7 @@ export default async function handler(req, res) {
     // failure partway through a large submission may have already written
     // some rows under this document_id — surfaced here rather than claimed
     // away, since chunks.length can exceed one batch for a long document.
-    console.error(`[admin] ingest failed for document '${documentId}': ${err?.stack ?? err}`);
+    console.error(`[admin] ingest failed for document '${documentId}' (submitted by ${user.email}): ${err?.stack ?? err}`);
     res.status(502).json({
       error: `Processing failed partway through. Some chunks may have already saved under document_id '${documentId}' — check the Supabase table editor before retrying.`,
     });

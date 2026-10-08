@@ -8,7 +8,7 @@ import { vi } from 'vitest';
 import { Readable } from 'node:stream';
 
 export const CODE = 'study-code-0123456789abcdef'; // 28 chars, above the 16 minimum
-export const ADMIN_TOKEN = 'admin-token-0123456789abcdef'; // 29 chars, above the 16 minimum
+export const ADMIN_EMAIL = 'admin@example.com'; // allowlisted test identity for adminGuard
 export const ORIGIN = 'https://dementiaguide-web.vercel.app';
 
 export function makeReq({
@@ -48,7 +48,7 @@ export function makeRes() {
 
 export const baseEnv = {
   STUDY_ACCESS_CODES: CODE,
-  ADMIN_INGEST_TOKENS: ADMIN_TOKEN,
+  ADMIN_ALLOWED_EMAILS: ADMIN_EMAIL,
   ALLOWED_ORIGINS: ORIGIN,
   OPENAI_API_KEY: 'sk-test',
   ELEVENLABS_API_KEY: 'el-test',

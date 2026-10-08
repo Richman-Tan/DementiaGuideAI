@@ -1,63 +1,66 @@
 // Request guard for the knowledge-base admin intake endpoint.
 //
-// Deliberately NOT the study's STUDY_ACCESS_CODES/guard() — that pool is
-// sized and rate-limited for an unmoderated public study with many
-// participants sharing read-mostly proxy access. This endpoint writes
-// directly into the production knowledge base, a different trust tier, so it
-// gets its own dedicated secret and no daily meter (a handful of trusted
-// team members submit resources, not a crowd).
-import { createHash, timingSafeEqual } from 'node:crypto';
+// Auth is a real Supabase Auth session, not a shared secret: apps/admin's
+// login screen calls supabase.auth.signInWithOtp() (a magic-link email) and
+// sends the resulting access token as a normal Authorization: Bearer
+// header. This guard verifies that token against Supabase's own Auth API
+// (GET /auth/v1/user) rather than implementing JWT verification here, then
+// checks the token's email against an explicit allowlist — being an
+// authenticated Supabase user is not by itself enough to write into the
+// knowledge base. Same "explicit allowlist, not an open door" shape as
+// guard.js's STUDY_ACCESS_CODES, just keyed on a verified email instead of
+// a shared secret.
 import { applyCors } from './guard.js';
+import { adminConfigured } from './supabaseAdmin.js';
 
-const MIN_TOKEN_LENGTH = 16;
-
-function validTokens() {
-  const tokens = (process.env.ADMIN_INGEST_TOKENS || '')
+function allowedEmails() {
+  return (process.env.ADMIN_ALLOWED_EMAILS || '')
     .split(',')
-    .map((s) => s.trim())
+    .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  const weak = tokens.filter((t) => t.length < MIN_TOKEN_LENGTH);
-  if (weak.length) {
-    console.error(`[admin] ${weak.length} admin token(s) shorter than ${MIN_TOKEN_LENGTH} characters — refusing to accept them`);
+}
+
+async function verifiedUser(req) {
+  const raw = req.headers.authorization || '';
+  const token = raw.startsWith('Bearer ') ? raw.slice(7) : '';
+  if (!token) return null;
+  try {
+    const resp = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: process.env.SUPABASE_SERVICE_ROLE_KEY },
+    });
+    if (!resp.ok) return null;
+    return resp.json();
+  } catch (err) {
+    console.error(`[admin] auth verification request failed: ${err?.message ?? err}`);
+    return null;
   }
-  return tokens.filter((t) => t.length >= MIN_TOKEN_LENGTH);
 }
 
-// Same digest-compare shape as guard.js's isAllowed: neither the length nor a
-// shared prefix should be observable in timing.
-function isAllowed(token) {
-  const tokens = validTokens();
-  if (!token || tokens.length === 0) return false;
-  const target = createHash('sha256').update(token).digest();
-  let hit = false;
-  for (const t of tokens) {
-    const candidate = createHash('sha256').update(t).digest();
-    if (timingSafeEqual(target, candidate)) hit = true;
-  }
-  return hit;
-}
-
-function readToken(req) {
-  const raw = req.headers['x-admin-token'];
-  return (Array.isArray(raw) ? raw[0] : raw || '').trim();
-}
-
-/** Returns true (and sends the response) if the request should stop here. */
-export function adminGuard(req, res, { methods = ['POST'] } = {}) {
-  if (applyCors(req, res)) return true;
+/** Returns the verified user on success, or null after sending the response. */
+export async function adminGuard(req, res, { methods = ['POST'] } = {}) {
+  if (applyCors(req, res)) return null;
 
   if (!methods.includes(req.method)) {
     res.setHeader('Allow', methods.join(', '));
     res.status(405).json({ error: 'method not allowed' });
-    return true;
+    return null;
   }
 
-  if (!isAllowed(readToken(req))) {
-    // Deliberately vague: a caller who guesses a token should not learn
-    // whether it was the token or the configuration that was wrong.
-    res.status(401).json({ error: 'invalid or missing admin token' });
-    return true;
+  if (!adminConfigured) {
+    console.error('[admin] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not configured');
+    res.status(503).json({ error: 'admin intake backend not configured' });
+    return null;
   }
 
-  return false;
+  const user = await verifiedUser(req);
+  const email = user?.email?.toLowerCase();
+  if (!email || !allowedEmails().includes(email)) {
+    // Deliberately vague: a caller with a valid Supabase login that isn't
+    // allowlisted should not learn that their login worked but their email
+    // wasn't on the list.
+    res.status(401).json({ error: 'not authorised for the admin intake tool' });
+    return null;
+  }
+
+  return user;
 }

@@ -36,6 +36,29 @@ describe('createSpeculativeRag', () => {
     expect(result.status).toBe('hit');
   });
 
+  it('reuses on prefix growth alone when the token overlap is below the Jaccard bar', async () => {
+    const search = jest.fn().mockResolvedValue(CHUNKS);
+    const spec = createSpeculativeRag({ search });
+
+    // 4 of 6 tokens shared (Jaccard 0.67 < 0.8), but the speculative text is a
+    // token prefix and the final is only 19% longer (50 vs 42 characters).
+    await stabilize(spec, 'sundowning behaviour management strategies');
+    const result = await spec.resolve('sundowning behaviour management strategies at home');
+    expect(result.status).toBe('hit');
+    expect(result.chunks).toBe(CHUNKS);
+  });
+
+  it('misses a token prefix that grew by more than 25%', async () => {
+    const search = jest.fn().mockResolvedValue(CHUNKS);
+    const spec = createSpeculativeRag({ search });
+
+    await stabilize(spec, 'sundowning behaviour management strategies');
+    // 57 characters against 42: a 36% longer question is a different question.
+    const result = await spec.resolve('sundowning behaviour management strategies for my mother');
+    expect(result.status).toBe('miss');
+    expect(result.chunks).toBeNull();
+  });
+
   it('misses when the final transcript diverges materially', async () => {
     const search = jest.fn().mockResolvedValue(CHUNKS);
     const spec = createSpeculativeRag({ search });

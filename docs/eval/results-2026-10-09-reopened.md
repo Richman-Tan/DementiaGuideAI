@@ -4,7 +4,7 @@
 
 | Evaluation | Status | Headline | Artefacts |
 |---|---|---|---|
-| E9-A — Apple on-device recogniser, ADReSS-2020 condition (a) | **Run** (primary en-NZ; secondary en-US: see §1.6) | pooled WER control 41.8 % / dementia 58.5 % vs `whisper-1` 26.3 % / 41.9 %; paired Δ +14.5 pp | `docs/report/eval/stt/wer_e65cdc2_apple-ondevice-*` |
+| E9-A — Apple on-device recogniser, ADReSS-2020 condition (a) | **Run** (primary en-NZ; secondary en-US also run, §1.6) | pooled WER control 41.8 % / dementia 58.5 % vs `whisper-1` 26.3 % / 41.9 %; paired Δ +14.5 pp | `docs/report/eval/stt/wer_e65cdc2_apple-ondevice-*` |
 | E4-S — headless spoken-turn latency | **Run** without TTS — §18.1 key contingency (no ElevenLabs key) | end of speech → first sentence ready (strict lower bound on first audio): median 4.18 s, p90 7.17 s; 47/60 turns already over 3 s | `docs/report/eval/latency/spoken-bench_e65cdc2_mac-2026-10-09*` |
 | E2-X — cross-family judge (Claude) | **Not run** — no Anthropic credential | — | — |
 
@@ -68,7 +68,19 @@ The web app's primary recogniser (Chrome's Web Speech API) is not measured, unde
 
 ### 1.6 Secondary condition — en-US
 
-In progress at the time of this commit (en-US on-device recognition, same tool and procedure); the result is added in the next commit.
+**Run**, because time permitted: the same tool, request settings, cuts and scorer, with locale en-US, the corpus's accent. The pass took 760 s on 2026-10-09 and returned 2,063 results with 0 errors, 464 of them "no speech". It was scored in one call together with en-NZ and `whisper-1`, so the paired rows compare the same speakers. The report is `wer_0b81b1c_apple-ondevice-en-US.md`; the scorer and transcriber at `0b81b1c` are unchanged from `e65cdc2`.
+
+| Group | Pooled WER en-US (en-NZ) | Mean WER en-US (95 % CI) | Del | Empty outputs en-US (en-NZ) |
+|---|---:|---|---:|---:|
+| control | 42.2 % (41.8 %) | 45.4 % (39.2–51.8) | 30.7 % | 18.4 % (17.0 %) |
+| dementia | 58.9 % (58.5 %) | 58.0 % (52.5–63.5) | 48.3 % | 25.0 % (24.0 %) |
+
+- Dementia vs control: Mann–Whitney p < 0.001, δ = 0.31. Spearman ρ against MMSE = −0.205, p = 0.009. Fillers kept: 43.8 % / 60.2 %, δ = 0.29.
+- Paired, per speaker:
+  - en-US − en-NZ = **+0.7 pp** (Wilcoxon p = 0.005, rank-biserial 0.31);
+  - en-US − `whisper-1` = +15.1 pp (p < 0.001).
+
+Reading: matching the locale to the corpus accent does not help. en-US is marginally *worse* than en-NZ, by under one point, so A2's suggested reason, "an en-NZ model hearing US English", does not explain the gap to `whisper-1`. The size of the on-device model, and its tendency to return nothing, remain the explanation the data allow. §18 fixed no expectation for this condition, so it is descriptive.
 
 ## 2. E4-S — headless spoken-turn latency, fallback recogniser (§18.1)
 

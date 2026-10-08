@@ -18,6 +18,8 @@
 //        [--sets A,B] [--limit N] [--effort low|medium|high] [--concurrency 2] [--dry-run] [--tag t] [--out-dir docs/report/eval] [--heldout]
 //        [--retry-missing]   re-judge only the rows whose previous output has a null score and merge into the existing files
 //        [--questions-file scripts/eval/questions.perturbed.js]   extra question file, same contract as run-generation.mjs
+//        [--key docs/report/eval/human/human-sheet_round1_KEY.csv]   judge only the rows a human rating sheet covers
+//             (matched on column, id and sample) — the κ gate of plan §18.2 needs exactly those 60 items
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 import { createRequire } from 'node:module';
@@ -30,10 +32,11 @@ const { QUESTIONS } = require('./questions.js');
 const { DIMENSIONS, applicableDimensions, judgeSystemPrompt, judgeUserContent } = require('./judges/rubrics.js');
 const { stripCitations } = require('./lib/textMetrics.js');
 const { columnKey } = require('./lib/aggregate.js');
+const { parseCsv } = require('./lib/csv.js');
 
 const args = process.argv.slice(2);
 const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
-const flagArgs = new Set(['--model', '--dims', '--sets', '--limit', '--effort', '--concurrency', '--tag', '--out-dir', '--cache', '--questions-file']);
+const flagArgs = new Set(['--model', '--dims', '--sets', '--limit', '--effort', '--concurrency', '--tag', '--out-dir', '--cache', '--questions-file', '--key']);
 const files = args.filter((a, i) => !a.startsWith('--') && !flagArgs.has(args[i - 1]));
 if (!files.length) { console.error('Usage: node scripts/eval/judge.mjs <generation.json> [...] [--model claude-opus-5]'); process.exit(1); }
 
@@ -48,9 +51,14 @@ const TAG = argVal('--tag');
 const OUT_DIR = resolve(ROOT, argVal('--out-dir') ?? 'docs/report/eval');
 const CACHE_PATH = resolve(ROOT, argVal('--cache') ?? '.cache/eval/chunks.json');
 const RETRY_MISSING = args.includes('--retry-missing');
+const KEY_FILTER = argVal('--key')
+  ? new Set(parseCsv(readFileSync(resolve(ROOT, argVal('--key')), 'utf8')).map(k => `${k.column}|${k.id}|${k.sample}`))
+  : null;
 
 const pool = [...QUESTIONS];
-if (args.includes('--heldout')) {
+// --key implies --heldout: the human sheet samples held-out S items (HM*), and
+// silently dropping them would judge 30 of the 60 rated items.
+if (args.includes('--heldout') || KEY_FILTER) {
   const p = resolve(ROOT, 'scripts/eval/questions.heldout.js');
   if (existsSync(p)) pool.push(...require(p).HELDOUT_QUESTIONS);
 }
@@ -102,7 +110,8 @@ async function runPool(tasks, n) {
 async function judgeFile(file) {
   const run = JSON.parse(readFileSync(resolve(ROOT, file), 'utf8'));
   const column = columnKey(run);
-  let rows = run.rows.filter(r => byId[r.id] && (!SETS || SETS.includes(byId[r.id].set))).slice(0, LIMIT);
+  let rows = run.rows.filter(r => byId[r.id] && (!SETS || SETS.includes(byId[r.id].set)))
+    .filter(r => !KEY_FILTER || KEY_FILTER.has(`${column}|${r.id}|${r.sample ?? 0}`)).slice(0, LIMIT);
   const modelShort = MODEL.replace(/[^a-z0-9]+/gi, '-');
   const base = `judge_${modelShort}_${column.replace(/:/g, '_')}${TAG ? `_${TAG}` : ''}`;
   let previous = null;
@@ -164,7 +173,23 @@ async function judgeFile(file) {
   return results;
 }
 
+// With --key, every rated item must be found in the given files before any
+// call is made — otherwise the κ gate would be computed on a silent subset.
+function checkKeyCoverage() {
+  if (!KEY_FILTER) return;
+  const found = new Set();
+  for (const f of files) {
+    const run = JSON.parse(readFileSync(resolve(ROOT, f), 'utf8'));
+    const column = columnKey(run);
+    for (const r of run.rows) if (byId[r.id]) found.add(`${column}|${r.id}|${r.sample ?? 0}`);
+  }
+  const missing = [...KEY_FILTER].filter(k => !found.has(k));
+  if (missing.length) { console.error(`--key: ${missing.length} of ${KEY_FILTER.size} rated items not found in the given files, e.g. ${missing.slice(0, 3).join(', ')}`); process.exit(1); }
+  console.log(`--key: all ${KEY_FILTER.size} rated items found`);
+}
+
 async function main() {
+  checkKeyCoverage();
   if (!DRY_RUN) requireEnv({ openai: !isAnthropicModel(MODEL) || true, supabase: true });
   for (const f of files) await judgeFile(f);
 }

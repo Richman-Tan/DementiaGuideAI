@@ -1,0 +1,19 @@
+{
+  "about": "E6 perceptual lip-sync stimuli (docs/eval/evaluation-plan.md, E6). Ten caregiver sentences taken verbatim from the shipped knowledge base (apps/mobile/src/features/library/data/knowledgeBase.js), plus one control sentence. Selection rule: 12-18 words (about 5-9 s at the app's default speech rate 0.78), no digits, abbreviations or brackets, neutral or warm in tone (raters are colleagues, not carers), and between them every visible articulation class: lip closures (p b m), lip-teeth contact (f v), tongue-teeth (th), rounded and open vowels. The control sentence is not in the main set, so it adds no repeat exposure.",
+  "voice": { "character": "aaron", "elevenVoiceId": "nPczCjzI2devNBz1zQrb", "speechRate": 0.78 },
+  "main": [
+    { "id": "S01", "source": "bestpractices_001", "text": "Use a calm, slow voice and get to the person's eye level." },
+    { "id": "S02", "source": "caregiving_005", "text": "Avoid long daytime naps, which reduce the drive to sleep at night." },
+    { "id": "S03", "source": "caregiving_004", "text": "Brightly coloured plates that contrast with the food help the person see and identify what they are eating." },
+    { "id": "S04", "source": "wellbeing_005", "text": "Maintain at least one activity each week that is purely for your own enjoyment." },
+    { "id": "S05", "source": "communication_007", "text": "Hearing a familiar, calm voice provides comfort regardless of whether the language is fully comprehended." },
+    { "id": "S06", "source": "wellbeing_005", "text": "Phone calls, video calls, and brief visits sustain the relationships that provide emotional resilience." },
+    { "id": "S07", "source": "wellbeing_006", "text": "Shared responsibility is more sustainable than one person carrying the full burden." },
+    { "id": "S08", "source": "homesafety_007", "text": "Personalise the bedroom door with a meaningful photograph or familiar object so the person can identify their room." },
+    { "id": "S09", "source": "communication_002", "text": "Mirror the person's body language subtly to create a sense of connection and ease." },
+    { "id": "S10", "source": "wellbeing_006", "text": "If someone does a task differently than you would, resist correcting unless it is genuinely unsafe." }
+  ],
+  "control": [
+    { "id": "C01", "source": "caregiving_007", "text": "A predictable, structured daily routine is one of the most effective tools in dementia care." }
+  ]
+}

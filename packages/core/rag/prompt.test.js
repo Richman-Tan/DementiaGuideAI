@@ -89,6 +89,42 @@ describe('buildSystemPrompt (style plumbing, both versions)', () => {
     expect(p).toContain('CONCISE MODE ON');
     expect(p).not.toContain('4 to 6 paragraphs');
   });
+
+  describe.each([
+    ['v1', buildSystemPromptV1],
+    ['v2-nz-safety', buildSystemPromptV2],
+  ])('%s', (_version, build) => {
+    it('selects exactly one length rule per response style', () => {
+      const rules = {
+        balanced: '2 to 4 short paragraphs',
+        brief: '1 to 2 sentences maximum',
+        detailed: '4 to 6 paragraphs if the topic warrants it',
+        'step-by-step': 'Format any instructions or processes as a numbered list',
+      };
+      for (const [style, rule] of Object.entries(rules)) {
+        const p = build({ responseStyle: style });
+        expect(p).toContain(rule);
+        for (const [other, otherRule] of Object.entries(rules)) {
+          if (other !== style) expect(p).not.toContain(otherRule);
+        }
+      }
+      // conciseMode beats every style.
+      const concise = build({ conciseMode: true, responseStyle: 'step-by-step' });
+      expect(concise).toContain('CONCISE MODE ON');
+      expect(concise).not.toContain('numbered list');
+    });
+
+    it('prepends the caregiver preamble only when isCaregiversSetup', () => {
+      expect(build({ isCaregiversSetup: true }).startsWith('The person using this app is a family caregiver')).toBe(true);
+      expect(build().startsWith('You are Aria')).toBe(true);
+    });
+
+    it('falls back to a default rule for an unknown personality or jargon mode', () => {
+      const p = build({ ariaPersonality: 'sarcastic', jargonMode: 'maximal' });
+      expect(p).toContain('- Be warm, empathetic, and emotionally supportive.');
+      expect(p).toContain('Avoid medical jargon unless you explain the term immediately after.');
+    });
+  });
 });
 
 describe('buildUserContent', () => {

@@ -1,0 +1,385 @@
+<!doctype html>
+<!--
+  E6 perceptual lip-sync rating page (docs/eval/evaluation-plan.md, E6).
+  Copied next to stimuli.js and clips/ by scripts/eval/e6-make-stimuli.mjs.
+  Works offline from file:// — no server, no network, nothing leaves the machine
+  except the CSV the rater (or researcher) downloads.
+
+  Per trial: two clips of the same sentence (left/right and pair order randomised
+  per participant), 1–5 synchronisation and 1–5 naturalness for each clip, and a
+  forced choice of the more natural one. The page never knows which clip is which
+  condition: stimuli.js lists clip IDs only, and the key stays with the researcher.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Avatar Lip-sync Rating</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --text: #1d1d1f; --muted: #5b5b60; --line: #d9d7d2;
+    --accent: #1f5f8b; --accent-text: #ffffff; --chip: #eef3f7; --warn: #8a4b00; --warn-bg: #fff4e5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17181a; --panel: #212225; --text: #ececec; --muted: #a5a5ab; --line: #3a3b40;
+      --accent: #6fb1e0; --accent-text: #0d1b26; --chip: #26303a; --warn: #ffc27a; --warn-bg: #3a2a14;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 1.5rem; margin: 0 0 12px; }
+  h2 { font-size: 1.15rem; margin: 0 0 8px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin: 0 0 16px; }
+  .muted { color: var(--muted); }
+  .note { background: var(--chip); border-radius: 10px; padding: 14px 16px; }
+  .warn { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 10px 14px; }
+  label.block { display: block; margin: 14px 0 6px; font-weight: 600; }
+  input[type=text], textarea { width: 100%; max-width: 420px; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+  textarea { max-width: 100%; min-height: 90px; }
+  button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 8px 16px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .clips { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .clips { grid-template-columns: 1fr; } }
+  .clip { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .clip h3 { margin: 0 0 8px; font-size: 1.05rem; }
+  video { width: 100%; max-height: 62vh; background: #000; border-radius: 8px; display: block; object-fit: contain; }
+  .seen { font-size: .85rem; color: var(--muted); margin-left: 6px; }
+  .scale { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 2px; }
+  .scale label { display: inline-flex; flex-direction: column; align-items: center; min-width: 54px; padding: 6px 4px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; font-size: .8rem; text-align: center; }
+  .scale input { margin: 0 0 2px; }
+  .scale label:has(input:checked) { border-color: var(--accent); background: var(--chip); }
+  .q { margin: 14px 0 0; }
+  .q .prompt { font-weight: 600; }
+  .choice label { display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; margin-right: 8px; }
+  .choice label:has(input:checked) { border-color: var(--accent); background: var(--chip); }
+  .progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin: 6px 0 16px; }
+  .progress > div { height: 100%; background: var(--accent); width: 0; }
+  details { margin-top: 24px; }
+  .hidden { display: none !important; }
+  table.small { border-collapse: collapse; font-size: .85rem; }
+  table.small td, table.small th { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+</style>
+</head>
+<body>
+<main>
+
+<!-- ── Start ─────────────────────────────────────────────────────────── -->
+<section id="start">
+  <h1>Avatar lip-sync rating</h1>
+  <div class="panel">
+    <h2>About this task</h2>
+    <p class="note" id="info">
+      This short task is part of a final-year student project that built an AI guide for people caring for someone with dementia.
+      The guide is a computer-generated character who speaks its answers aloud. You will watch about 11 pairs of short videos
+      (5–10 seconds each) of the character saying the same sentence twice, and for each video you will rate how well the mouth
+      movements match the speech and how natural they look, then pick the one that looks more natural. It takes about 10–15 minutes.
+      There are no right or wrong answers, and you are rating the computer character, not yourself. Taking part is voluntary: you
+      can stop at any time without giving a reason, and if you stop before the end nothing is kept unless you ask for it to be.
+      Please do not type your name or anything that identifies you; use only the code the researcher gives you. Your answers are
+      saved as an anonymous file on this computer and used only for the project's evaluation.
+    </p>
+    <p class="muted">Please use headphones or speakers with the sound on, and sit at a normal distance from the screen.</p>
+
+    <label class="block" for="code">Participant code (given by the researcher, for example R07)</label>
+    <input type="text" id="code" autocomplete="off" spellcheck="false" maxlength="12" placeholder="R07">
+    <div id="codeWarn" class="warn hidden" style="margin-top:8px">Please use the short code you were given (letters and numbers only), not your name.</div>
+
+    <div class="q">
+      <div class="prompt">Did you take part in the DementiaGuide app usability study earlier this year?</div>
+      <div class="choice" style="margin-top:6px">
+        <label><input type="radio" name="study" value="no"> No</label>
+        <label><input type="radio" name="study" value="yes"> Yes</label>
+        <label><input type="radio" name="study" value="unsure"> Not sure</label>
+      </div>
+    </div>
+
+    <div class="q">
+      <label><input type="checkbox" id="agree"> I have read the note above and I am happy to take part.</label>
+    </div>
+
+    <div class="row" style="margin-top:18px">
+      <button class="primary" id="begin" disabled>Start</button>
+      <span id="stimMsg" class="muted"></span>
+    </div>
+  </div>
+
+  <details>
+    <summary class="muted">Researcher tools</summary>
+    <div class="panel" style="margin-top:10px">
+      <p class="muted">Every finished or abandoned session is also kept in this browser (on this computer only) as a backup.</p>
+      <div class="row">
+        <button id="exportAll">Download all saved sessions (CSV)</button>
+        <button id="clearAll">Clear saved sessions…</button>
+      </div>
+      <div id="savedList" style="margin-top:10px"></div>
+    </div>
+  </details>
+</section>
+
+<!-- ── Trial ─────────────────────────────────────────────────────────── -->
+<section id="trial" class="hidden">
+  <div class="row" style="justify-content:space-between">
+    <h1 id="trialTitle">Pair 1 of 11</h1>
+    <button id="quit">Stop taking part</button>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <p class="muted" style="margin-top:0">Play <strong>both</strong> clips to the end (you can replay them as often as you like). The questions unlock once you have watched both.</p>
+
+  <div class="clips">
+    <div class="clip" id="clipL">
+      <h3>Clip A <span class="seen" id="seenL"></span></h3>
+      <video id="vidL" playsinline preload="auto"></video>
+      <div class="row" style="margin-top:8px"><button id="playL" class="primary">▶ Play clip A</button></div>
+    </div>
+    <div class="clip" id="clipR">
+      <h3>Clip B <span class="seen" id="seenR"></span></h3>
+      <video id="vidR" playsinline preload="auto"></video>
+      <div class="row" style="margin-top:8px"><button id="playR" class="primary">▶ Play clip B</button></div>
+    </div>
+  </div>
+
+  <div class="panel" id="questions" style="margin-top:16px">
+    <div class="q">
+      <div class="prompt">1. How well did the mouth movements match the speech?</div>
+      <div class="clips" style="gap:10px">
+        <div><div class="muted">Clip A</div><div class="scale" data-name="sync_left"></div></div>
+        <div><div class="muted">Clip B</div><div class="scale" data-name="sync_right"></div></div>
+      </div>
+    </div>
+    <div class="q">
+      <div class="prompt">2. How natural did the mouth movements look?</div>
+      <div class="clips" style="gap:10px">
+        <div><div class="muted">Clip A</div><div class="scale" data-name="natural_left"></div></div>
+        <div><div class="muted">Clip B</div><div class="scale" data-name="natural_right"></div></div>
+      </div>
+    </div>
+    <div class="q">
+      <div class="prompt">3. Which clip looked more natural overall?</div>
+      <div class="choice" style="margin-top:6px">
+        <label><input type="radio" name="choice" value="left"> Clip A</label>
+        <label><input type="radio" name="choice" value="right"> Clip B</label>
+      </div>
+    </div>
+    <div class="row" style="margin-top:18px">
+      <button class="primary" id="next" disabled>Next pair</button>
+      <span id="lockMsg" class="muted">Watch both clips to unlock the questions.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── End ───────────────────────────────────────────────────────────── -->
+<section id="end" class="hidden">
+  <h1>Thank you</h1>
+  <div class="panel">
+    <label class="block" for="comment">Anything you noticed about the videos? (optional; please don't include names)</label>
+    <textarea id="comment"></textarea>
+    <div class="row" style="margin-top:14px">
+      <button class="primary" id="save">Save my responses</button>
+      <span id="saveMsg" class="muted"></span>
+    </div>
+    <p class="muted">This downloads a small CSV file to this computer. Please let the researcher know you have finished.</p>
+  </div>
+</section>
+
+<section id="stopped" class="hidden">
+  <h1>You have stopped</h1>
+  <div class="panel">
+    <p>Thank you for your time. Your partial answers have been discarded.</p>
+    <p class="muted">Researcher: reload the page to start a new session.</p>
+  </div>
+</section>
+
+</main>
+
+<script src="stimuli.js"></script>
+<script>
+(() => {
+  const PAGE_VERSION = 'e6-rating-1.0';
+  const STORE_KEY = 'e6-rating-sessions';
+  const $ = (id) => document.getElementById(id);
+  const S = window.E6_STIMULI;
+
+  // ── helpers ──────────────────────────────────────────────────────────
+  const rnd = (n) => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };
+  const shuffle = (xs) => { const a = [...xs]; for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const nowIso = () => new Date().toISOString();
+  const csvEscape = (v) => { const s = String(v ?? ''); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const COLUMNS = ['participant_code', 'session_id', 'stimuli_id', 'page_version', 'took_part_in_study', 'session_complete',
+    'trial_index', 'pair_id', 'pair_role', 'clip_left', 'clip_right', 'plays_left', 'plays_right',
+    'sync_left', 'sync_right', 'natural_left', 'natural_right', 'choice', 'chosen_clip',
+    'response_ms', 'trial_started_at', 'trial_finished_at', 'comment'];
+  const toCsv = (rows) => [COLUMNS.join(','), ...rows.map((r) => COLUMNS.map((c) => csvEscape(r[c])).join(','))].join('\n') + '\n';
+  const loadStore = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch { return []; } };
+  const saveStore = (xs) => { try { localStorage.setItem(STORE_KEY, JSON.stringify(xs)); } catch { /* private mode: CSV download still works */ } };
+  const download = (name, text) => {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  };
+  const show = (id) => { for (const s of ['start', 'trial', 'end', 'stopped']) $(s).classList.toggle('hidden', s !== id); window.scrollTo(0, 0); };
+
+  // ── scales ───────────────────────────────────────────────────────────
+  const SYNC = ['Not at all', 'Poorly', 'Somewhat', 'Well', 'Perfectly'];
+  const NAT = ['Very unnatural', 'Unnatural', 'Neither', 'Natural', 'Very natural'];
+  for (const el of document.querySelectorAll('.scale')) {
+    const labels = el.dataset.name.startsWith('sync') ? SYNC : NAT;
+    el.innerHTML = labels.map((t, i) => `<label><input type="radio" name="${el.dataset.name}" value="${i + 1}"><strong>${i + 1}</strong>${t}</label>`).join('');
+  }
+
+  // ── start screen ─────────────────────────────────────────────────────
+  if (!S || !Array.isArray(S.pairs) || !S.pairs.length) {
+    $('stimMsg').textContent = 'stimuli.js is missing or empty: run scripts/eval/e6-make-stimuli.mjs first.';
+    $('stimMsg').className = 'warn';
+  } else {
+    $('stimMsg').textContent = `${S.pairs.length} pairs · ${S.stimuliId}`;
+  }
+  const CODE_OK = /^[A-Za-z]{0,3}[0-9]{1,4}$/;
+  const updateBegin = () => {
+    const code = $('code').value.trim();
+    $('codeWarn').classList.toggle('hidden', !code || CODE_OK.test(code));
+    const study = document.querySelector('input[name=study]:checked');
+    $('begin').disabled = !(S && S.pairs && S.pairs.length && CODE_OK.test(code) && study && $('agree').checked);
+  };
+  for (const el of document.querySelectorAll('#start input')) el.addEventListener('input', updateBegin);
+  for (const el of document.querySelectorAll('#start input')) el.addEventListener('change', updateBegin);
+
+  const renderSaved = () => {
+    const xs = loadStore();
+    $('savedList').innerHTML = xs.length
+      ? `<table class="small"><tr><th>code</th><th>session</th><th>trials</th><th>complete</th><th>saved</th></tr>${xs.map((s) => `<tr><td>${csvEscape(s.code)}</td><td>${s.sessionId}</td><td>${s.rows.length}</td><td>${s.complete ? 'yes' : 'no'}</td><td>${s.savedAt}</td></tr>`).join('')}</table>`
+      : '<span class="muted">No sessions saved in this browser yet.</span>';
+  };
+  renderSaved();
+  $('exportAll').onclick = () => {
+    const rows = loadStore().flatMap((s) => s.rows);
+    if (!rows.length) return alert('No saved sessions.');
+    download(`e6_all-sessions_${nowIso().replace(/[:.]/g, '-')}.csv`, toCsv(rows));
+  };
+  $('clearAll').onclick = () => {
+    if (confirm('Delete every saved session from this browser? Download them first if you still need them.')) { saveStore([]); renderSaved(); }
+  };
+
+  // ── session ──────────────────────────────────────────────────────────
+  let session = null;
+  let trialIdx = 0;
+  let trial = null;
+
+  const persist = () => {
+    const xs = loadStore().filter((s) => s.sessionId !== session.sessionId);
+    xs.push({ sessionId: session.sessionId, code: session.code, complete: session.complete, savedAt: nowIso(), rows: session.rows });
+    saveStore(xs);
+  };
+
+  $('begin').onclick = () => {
+    const code = $('code').value.trim().toUpperCase();
+    session = {
+      code,
+      sessionId: `${code}-${Date.now().toString(36)}-${rnd(1e6).toString(36)}`,
+      study: document.querySelector('input[name=study]:checked').value,
+      // Randomised per participant: pair order, and which clip is on the left.
+      plan: shuffle(S.pairs).map((p) => { const swap = rnd(2) === 1; return { ...p, left: swap ? p.clips[1] : p.clips[0], right: swap ? p.clips[0] : p.clips[1] }; }),
+      rows: [],
+      complete: false,
+    };
+    trialIdx = 0;
+    startTrial();
+  };
+
+  const vids = { L: $('vidL'), R: $('vidR') };
+  const resetQuestions = () => {
+    for (const el of document.querySelectorAll('#questions input')) { el.checked = false; el.disabled = true; }
+    $('next').disabled = true;
+    $('lockMsg').textContent = 'Watch both clips to unlock the questions.';
+  };
+
+  function startTrial() {
+    const p = session.plan[trialIdx];
+    trial = { p, plays: { L: 0, R: 0 }, ended: { L: false, R: false }, startedAt: nowIso(), unlockedAt: null };
+    $('trialTitle').textContent = `Pair ${trialIdx + 1} of ${session.plan.length}`;
+    $('bar').style.width = `${(trialIdx / session.plan.length) * 100}%`;
+    $('seenL').textContent = ''; $('seenR').textContent = '';
+    for (const side of ['L', 'R']) {
+      const v = vids[side];
+      v.pause();
+      v.src = `clips/${side === 'L' ? p.left : p.right}.mp4#t=0.01`;
+      v.load();
+      $(`play${side}`).textContent = `▶ Play clip ${side === 'L' ? 'A' : 'B'}`;
+    }
+    resetQuestions();
+    show('trial');
+  }
+
+  for (const side of ['L', 'R']) {
+    const v = vids[side];
+    const other = side === 'L' ? 'R' : 'L';
+    $(`play${side}`).onclick = () => {
+      vids[other].pause();
+      v.currentTime = 0;
+      v.play().catch((e) => alert(`Could not play the clip (${e.message}). Check the clips/ folder is next to this page.`));
+    };
+    v.addEventListener('play', () => { trial.plays[side] += 1; });
+    v.addEventListener('ended', () => {
+      trial.ended[side] = true;
+      $(`seen${side}`).textContent = '· watched';
+      $(`play${side}`).textContent = `↻ Replay clip ${side === 'L' ? 'A' : 'B'}`;
+      if (trial.ended.L && trial.ended.R && !trial.unlockedAt) {
+        trial.unlockedAt = performance.now();
+        for (const el of document.querySelectorAll('#questions input')) el.disabled = false;
+        $('lockMsg').textContent = 'Answer all three questions to continue.';
+      }
+    });
+    v.addEventListener('error', () => alert(`A video failed to load (${v.src.split('/').pop()}). Tell the researcher.`));
+  }
+
+  const val = (name) => { const el = document.querySelector(`#questions input[name=${name}]:checked`); return el ? el.value : null; };
+  document.getElementById('questions').addEventListener('change', () => {
+    const ok = ['sync_left', 'sync_right', 'natural_left', 'natural_right', 'choice'].every((n) => val(n));
+    $('next').disabled = !ok;
+    if (ok) $('lockMsg').textContent = '';
+  });
+
+  $('next').onclick = () => {
+    const p = trial.p;
+    const choice = val('choice');
+    session.rows.push({
+      participant_code: session.code, session_id: session.sessionId, stimuli_id: S.stimuliId, page_version: PAGE_VERSION,
+      took_part_in_study: session.study, session_complete: 'no',
+      trial_index: trialIdx + 1, pair_id: p.pairId, pair_role: p.role, clip_left: p.left, clip_right: p.right,
+      plays_left: trial.plays.L, plays_right: trial.plays.R,
+      sync_left: val('sync_left'), sync_right: val('sync_right'), natural_left: val('natural_left'), natural_right: val('natural_right'),
+      choice, chosen_clip: choice === 'left' ? p.left : p.right,
+      response_ms: Math.round(performance.now() - trial.unlockedAt), trial_started_at: trial.startedAt, trial_finished_at: nowIso(), comment: '',
+    });
+    persist();
+    trialIdx += 1;
+    for (const v of Object.values(vids)) v.pause();
+    if (trialIdx < session.plan.length) startTrial();
+    else { $('bar').style.width = '100%'; show('end'); }
+  };
+
+  $('quit').onclick = () => {
+    if (!confirm('Stop taking part? Your answers so far will be discarded.')) return;
+    for (const v of Object.values(vids)) v.pause();
+    saveStore(loadStore().filter((s) => s.sessionId !== session.sessionId));
+    session = null;
+    show('stopped');
+  };
+
+  $('save').onclick = () => {
+    session.complete = true;
+    const comment = $('comment').value.trim().slice(0, 2000);
+    for (const r of session.rows) r.session_complete = 'yes';
+    if (session.rows.length) session.rows[session.rows.length - 1].comment = comment;
+    persist();
+    download(`e6_${session.code}_${nowIso().replace(/[:.]/g, '-')}.csv`, toCsv(session.rows));
+    $('saveMsg').textContent = 'Saved. Thank you!';
+    renderSaved();
+  };
+})();
+</script>
+</body>
+</html>

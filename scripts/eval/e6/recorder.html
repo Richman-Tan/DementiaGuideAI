@@ -1,0 +1,213 @@
+<!doctype html>
+<!--
+  E6 stimulus recorder. Served by scripts/eval/e6-make-stimuli.mjs; never
+  opened by raters.
+
+  It loads the real Unity WebGL build (the one the web app ships) and records it
+  in VIRTUAL TIME: once Unity has booted, this page owns performance.now(),
+  Date.now() and requestAnimationFrame, advances the clock by exactly 1/fps per
+  step, lets Unity render that one frame, and grabs it. Real-time capture
+  (MediaRecorder) could not hold a usable frame rate (Unity fell to ~34 fps and
+  the recording to ~12–18 fps on an M3 laptop); stepping the clock makes every
+  clip a clean, evenly-timed frame sequence whatever the machine's speed.
+  (Unity 6 reads time through `_emscripten_get_now=()=>performance.now()` and
+  schedules frames through the global requestAnimationFrame, both at call time.)
+
+  Message timing per clip reproduces apps/web/src/avatar/unity/UnityAvatarController.js
+  and AvatarAudioEngine (apps/web/src/avatar/three/audio.js):
+    - setState 'speaking' shortly before speech (the voice screen's state change)
+    - play message at time Tm; audio starts at Tm + 10 ms (the engine's look-ahead)
+    - { type: 'stop' } when the audio ends (onAudioEnd → stop)
+  Unity anchors the lip timeline at Tm, so the audio is muxed at
+  Tm + 10 ms by ffmpeg — the relation production aims for.
+
+  The ONLY thing that differs between conditions is the play message:
+    engine — { visemes, blendshapes }  exactly what production sends
+    legacy — { blendshapes } only      Unity falls back to the keyframe track
+    static — no play message at all    the mouth stays at rest (control)
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>E6 recorder</title>
+<style>
+  html, body { margin: 0; background: #000; }
+  #stage { position: absolute; left: 0; top: 0; }
+  #unity-canvas { width: 100%; height: 100%; display: block; background: #000; }
+  #status { position: fixed; right: 4px; bottom: 4px; color: #aaa; font: 12px monospace; background: #000a; padding: 2px 6px; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="unity-canvas" tabindex="-1"></canvas></div>
+<div id="status">loading</div>
+<script>
+// ── Virtual clock: installed BEFORE Unity loads, real time until switched on ──
+const VT = { on: false, now: 0, dateOffset: 0, queue: new Map(), seq: 1 };
+(() => {
+  const realPerfNow = performance.now.bind(performance);
+  const realDateNow = Date.now.bind(Date);
+  const realRaf = window.requestAnimationFrame.bind(window);
+  const realCaf = window.cancelAnimationFrame.bind(window);
+  performance.now = () => (VT.on ? VT.now : realPerfNow());
+  Date.now = () => (VT.on ? Math.round(VT.now + VT.dateOffset) : realDateNow());
+  window.requestAnimationFrame = (cb) => {
+    if (!VT.on) return realRaf(cb);
+    const id = 1e9 + VT.seq++;
+    VT.queue.set(id, cb);
+    return id;
+  };
+  window.cancelAnimationFrame = (id) => { if (!VT.queue.delete(id)) realCaf(id); };
+  VT.start = () => { VT.now = realPerfNow(); VT.dateOffset = realDateNow() - VT.now; VT.on = true; };
+})();
+
+(async () => {
+  const status = (s) => { document.getElementById('status').textContent = s; };
+  const post = (path, body, type = 'application/json') =>
+    fetch(path, { method: 'POST', headers: { 'Content-Type': type }, body });
+  const log = (event, data = {}) => post('/log', JSON.stringify({ event, ...data }));
+  const realSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // Keep Unity's own log lines (which play path ran, warnings, errors).
+  const unityLines = [];
+  for (const k of ['log', 'warn', 'error']) {
+    const orig = console[k].bind(console);
+    console[k] = (...a) => {
+      const line = a.map(String).join(' ');
+      if (/NativeBridgeReceiver|AvatarRouter|WebGLCameraFraming|IdleAnimator|error|exception/i.test(line)) {
+        unityLines.push({ level: k, line: line.slice(0, 400) });
+      }
+      orig(...a);
+    };
+  }
+
+  try {
+    const job = await (await fetch('/job.json', { cache: 'no-store' })).json();
+    const stage = document.getElementById('stage');
+    stage.style.width = job.canvas.width + 'px';
+    stage.style.height = job.canvas.height + 'px';
+    const canvas = document.getElementById('unity-canvas');
+
+    // Same loader and file contract as apps/web/src/avatar/unity/unityBridge.js.
+    const m = job.manifest;
+    const v = m.version ? `?v=${m.version}` : '';
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = job.buildBase + m.loader + v;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Unity loader failed to load'));
+      document.head.appendChild(s);
+    });
+    status('booting unity');
+    const t0 = performance.now();
+    // eslint-disable-next-line no-undef
+    const unity = await createUnityInstance(canvas, {
+      dataUrl: job.buildBase + m.data + v,
+      frameworkUrl: job.buildBase + m.framework + v,
+      codeUrl: job.buildBase + m.code + v,
+      companyName: 'DementiaGuideAI',
+      productName: 'UnityAvatar',
+      // Lets every captured frame be read back reliably; it changes nothing
+      // about what Unity draws.
+      webglContextAttributes: { preserveDrawingBuffer: true },
+    }, (p) => status(`loading ${(p * 100).toFixed(0)}%`));
+    const bootMs = Math.round(performance.now() - t0);
+
+    let renderer = 'unknown';
+    try {
+      const gl = document.createElement('canvas').getContext('webgl2');
+      const ext = gl && gl.getExtension('WEBGL_debug_renderer_info');
+      renderer = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : (gl ? gl.getParameter(gl.RENDERER) : 'no webgl2');
+    } catch { /* keep 'unknown' */ }
+
+    const send = (obj) => unity.SendMessage('AvatarRouter', 'ReceiveBridgeMessage', JSON.stringify(obj));
+    send({ type: 'setCharacter', id: job.character });
+    send({ type: 'setState', state: 'idle' });
+
+    // ── Switch to virtual time and wait for Unity's loop to enter our queue ──
+    VT.start();
+    for (let i = 0; i < 200 && VT.queue.size === 0; i++) await realSleep(10);
+    if (VT.queue.size === 0) throw new Error('Unity main loop never re-armed requestAnimationFrame under the virtual clock');
+    await log('unity-ready', { bootMs, renderer });
+
+    const dt = 1000 / job.fps;
+    let frames = 0;
+    const step = () => {
+      VT.now += dt;
+      const cbs = [...VT.queue.values()];
+      VT.queue.clear();
+      for (const cb of cbs) cb(VT.now);
+      frames++;
+    };
+    // Let the browser breathe now and then (GC, compositor) without touching virtual time.
+    const yieldEvery = async (n) => { if (frames % n === 0) await realSleep(0); };
+
+    // Crop in canvas pixels (fractions of the canvas: w:h:left:top).
+    const [cw, ch, cx, cy] = job.crop;
+    const even = (x) => 2 * Math.round(x / 2);
+    const crop = { sx: even(cx * job.canvas.width), sy: even(cy * job.canvas.height), sw: even(cw * job.canvas.width), sh: even(ch * job.canvas.height) };
+    const out = document.createElement('canvas');
+    out.width = crop.sw; out.height = crop.sh;
+    const c2d = out.getContext('2d');
+    // Synchronous encode: toBlob is scheduled in idle time and cost ~250 ms a frame.
+    const grab = () => {
+      c2d.drawImage(canvas, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, crop.sw, crop.sh);
+      return out.toDataURL('image/jpeg', job.jpegQuality).slice('data:image/jpeg;base64,'.length);
+    };
+
+    status('warming up');
+    for (let i = 0; i < Math.round(job.warmupMs / dt); i++) { step(); await yieldEvery(30); }
+    await log('warm', { backbuffer: `${canvas.width}x${canvas.height}`, crop });
+    if (canvas.width !== job.canvas.width || canvas.height !== job.canvas.height) {
+      throw new Error(`Unity backbuffer is ${canvas.width}x${canvas.height}, expected ${job.canvas.width}x${job.canvas.height} — the crop would be wrong`);
+    }
+
+    const decoder = new OfflineAudioContext(1, 1, 44100);
+    for (let ci = 0; ci < job.clips.length; ci++) {
+      const clip = job.clips[ci];
+      status(`clip ${ci + 1}/${job.clips.length}`);
+      const audioSeconds = (await decoder.decodeAudioData(await (await fetch(clip.audioUrl)).arrayBuffer())).duration;
+
+      // Settle (not captured): the reset the app does after every utterance.
+      send({ type: 'stop' });
+      send({ type: 'setState', state: 'idle' });
+      for (let i = 0; i < Math.round(job.settleMs / dt); i++) { step(); await yieldEvery(30); }
+
+      // Captured timeline, in frames from the first captured frame (frame f is
+      // rendered at virtual time t0 + (f + 1) * dt; video time f * dt).
+      // The play message goes in just before frame `leadFrames` is rendered, so
+      // Unity anchors the lip timeline to the previous frame's time — video time
+      // (leadFrames - 1) * dt — and the audio starts 10 ms after that.
+      const leadFrames = Math.round(job.leadInMs / dt);
+      const stateFrame = leadFrames - Math.round(job.stateLeadMs / dt);
+      const audioStartMs = (leadFrames - 1) * dt + 10;
+      const stopFrame = leadFrames - 1 + Math.ceil((10 + audioSeconds * 1000) / dt);
+      const totalFrames = stopFrame + Math.round(job.tailMs / dt);
+      let sentPlay = false;
+      for (let f = 0; f < totalFrames; f++) {
+        if (f === stateFrame) send({ type: 'setState', state: 'speaking' });
+        if (f === leadFrames && clip.payload) { send(clip.payload); sentPlay = true; }
+        if (f === stopFrame + 1) send({ type: 'stop' });
+        step();
+        const jpgBase64 = grab();
+        await fetch(`/frame?clip=${encodeURIComponent(clip.clipId)}&n=${f}`, { method: 'POST', body: jpgBase64 });
+      }
+      send({ type: 'setState', state: 'idle' });
+      await log('clip', {
+        clipId: clip.clipId, frames: totalFrames, fps: job.fps,
+        audioSeconds, audioStartMs, playFrame: clip.payload ? leadFrames : null,
+        stopFrame, sentPlay,
+        visemes: clip.payload?.visemes?.length ?? 0,
+        keyframes: clip.payload?.blendshapes?.length ?? 0,
+        crop,
+      });
+    }
+    await post('/done', JSON.stringify({ ok: true, unityLines }));
+    status('done');
+  } catch (err) {
+    await post('/done', JSON.stringify({ ok: false, error: String((err && err.stack) || err), unityLines }));
+    status('failed: ' + err);
+  }
+})();
+</script>
+</body>
+</html>

@@ -71,6 +71,10 @@ docs/report/backup/
 # See docs/study/ethics/data-management-plan.md §6: transcripts are not shared
 # with the project partner, not committed, and not published.
 docs/study/results/
+# Human-evaluation material that must not be published: E6 lip-sync clips, the
+# blinding key and rater response CSVs, and clinician review sheets and returns
+# (scripts/eval/e6-*.mjs and scripts/eval/clinician-review-sheet.mjs write here).
+docs/eval/human/private/
 
 # MS Office lock files
 ~$*

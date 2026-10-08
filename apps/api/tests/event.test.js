@@ -102,12 +102,17 @@ describe('what landed', () => {
     expect((await post(base([ev(1)]), { insertIgnoringConflicts: fail(503) })).res.statusCode).toBe(500);
   });
 
-  it('returns 503 when the backend is not configured, without a second response', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-    // The guard fails closed first (429) when the meter cannot run — so an
-    // unconfigured backend is refused before the handler's own 503 is reached.
-    const { res } = await post(base([ev(1)]), { adminConfigured: false });
-    expect([429, 503]).toContain(res.statusCode);
+  it('refuses an unconfigured backend at the meter (429, fail closed), with one response and no insert', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // This route is metered, and the meter cannot run without the Supabase admin
+    // client, so the guard refuses before the handler body: there is no separate
+    // 503 path here (session, progress and complete pass meter: false and have one).
+    const { res, admin } = await post(base([ev(1)]), { adminConfigured: false });
+    expect(res.statusCode).toBe(429);
+    expect(res.body).toEqual({ error: 'study request limit reached for today' });
     expect(res.ended).toBe(true);
+    expect(admin.rpc).not.toHaveBeenCalled();
+    expect(admin.insertIgnoringConflicts).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('usage meter unavailable'));
   });
 });

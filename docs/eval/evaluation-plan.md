@@ -668,6 +668,15 @@ and the generated answers, no participant data. Outputs are named for the actual
 (`judge_gemini-3-8-flash_*`, `agreement_human-R{1,2}_vs_gemini-3-8-flash.md`,
 `agreement_gemini-3-8-flash_vs_gpt-4o-mini.md`, `judge-crossfamily_gemini-3-8-flash.md`). The
 expectation is unchanged.
+
+**Deviation withdrawn, 9 Oct 2026 — committed before any item was judged by Claude.** The Gemini
+free tier allows 20 requests per model per day (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`),
+and the run scored 7 of the 60 items before it hit that cap. The author then supplied an Anthropic
+credential, so the judge reverts to the specification above, unchanged: `claude-sonnet-5-5`, effort
+`medium`, refusal fallback `"default"`, and the `claude-sonnet-5-5` output names. The 7 partial
+Gemini scores were never compared with the human ratings; they are discarded, not committed, and
+not used or reported anywhere. The Gemini adapter stays in `scripts/eval/lib/judgeClient.mjs`.
+
 ### 18.3 E9-A — Apple's on-device recogniser on dementia speech
 
 **Question.** How accurately does Apple's on-device speech recogniser transcribe the ADReSS-2020 dementia and control speakers? How does it compare with the fallback (`whisper-1`) measured in E9?

@@ -72,3 +72,23 @@ RTF ≈ 0.21 with output identical to fp16 on the probe clips, so it is the prim
 
 The model label in the CSV carries the repo suffix (`local:large-v2-mlx-8bit`) so a
 quantised run is never confused with an fp16 one. State the quantisation in the report.
+
+## Apple on-device recogniser (E9-A, plan §18.3)
+
+`transcribe-apple.mjs` builds `apple-ondevice/AppleOnDeviceSTT.swift` (with
+`swiftc`, Info.plist embedded so a CLI may ask for speech-recognition permission)
+and runs every cut through `SFSpeechRecognizer` with
+`requiresOnDeviceRecognition = true`. The tool refuses to start unless the
+recogniser reports `supportsOnDeviceRecognition` for the locale, so DementiaBank
+audio never reaches Apple's servers; audio is read from file and never played.
+Same CSV contract as the other transcribers; per-file cache under
+`data/dementiabank/cache/apple-ondevice-<locale>/`.
+
+```
+node scripts/eval/stt/transcribe-apple.mjs --dry-run
+node scripts/eval/stt/transcribe-apple.mjs --locale en-NZ        # the iOS app's locale
+node scripts/eval/stt/wer-report.mjs --hyps data/dementiabank/hyps_apple-ondevice-en-NZ.csv,data/dementiabank/hyps_whisper-1.csv
+```
+
+The iOS app starts recognition with `requiresOnDeviceRecognition: false`, so this
+is a proxy for what iOS users get, not the same service.

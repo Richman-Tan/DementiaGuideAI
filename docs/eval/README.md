@@ -29,6 +29,9 @@ scripts/eval/
   report-tables.mjs           Tables A/B/C for the report
   build-phone-allowlist.mjs   verified numbers for the invented-number check
   latency/bench-pipeline.mjs  headless per-stage latency benchmark
+  latency/bench-spoken.mjs    headless SPOKEN-turn benchmark, fallback STT → first audio byte (plan §18.1)
+  stt/transcribe-apple.mjs    Apple SFSpeechRecognizer, on-device only, over the E9 cuts (plan §18.3;
+                              Swift tool in stt/apple-ondevice/)
   judges/rubrics.js           the ONE rubric text used by judge and humans
   lib/                        stats.js, checks.js, aggregate.js, textMetrics.js, csv.js, judgeClient.mjs
   fixtures/phone-allowlist.json

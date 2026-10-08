@@ -16,6 +16,8 @@ export function isAnthropicModel(model) { return ANTHROPIC_MODELS.test(model); }
 export function judgeCostEstimateUSD(model, calls, inTokens = 3900, outTokens = 300) {
   const rates = {
     'claude-opus-5': [5, 25], 'claude-sonnet-5': [2, 10], 'claude-haiku-4-5': [1, 5],
+    // Anthropic list prices read 2026-10-08 (plan §18.2).
+    'claude-opus-5-5': [4, 20], 'claude-sonnet-5-5': [2, 10], 'claude-haiku-5-5': [0.1, 0.5],
     'gpt-4o': [2.5, 10], 'gpt-4o-mini': [0.15, 0.6],
   };
   const [i, o] = rates[model] ?? [5, 25];

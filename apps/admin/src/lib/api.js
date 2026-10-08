@@ -18,26 +18,6 @@ export const CATEGORIES = [
   'isupport-course',
 ];
 
-const TOKEN_STORAGE_KEY = 'dg_admin_token';
-
-export function getStoredToken() {
-  try {
-    return sessionStorage.getItem(TOKEN_STORAGE_KEY) || '';
-  } catch {
-    return '';
-  }
-}
-
-export function setStoredToken(token) {
-  try {
-    if (token) sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
-    else sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-  } catch {
-    // sessionStorage can throw in a private window with blocked site data —
-    // the token still works for this page load, it just won't persist.
-  }
-}
-
 export function validate(fields) {
   if (!['pdf', 'url', 'text'].includes(fields.sourceType)) return 'Choose a source type.';
   if (!fields.title?.trim()) return 'Title is required.';
@@ -75,10 +55,10 @@ export function fileToBase64(file) {
   });
 }
 
-export async function submitResource({ apiBaseUrl, token, body }) {
+export async function submitResource({ apiBaseUrl, accessToken, body }) {
   const resp = await fetch(`${apiBaseUrl || ''}/api/admin/ingest`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify(body),
   });
   const data = await resp.json().catch(() => ({}));

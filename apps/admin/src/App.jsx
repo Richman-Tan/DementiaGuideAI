@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import {
-  CATEGORIES, getStoredToken, setStoredToken, validate, buildRequestBody, fileToBase64, submitResource,
-} from './lib/api.js';
+import { useAuth } from './lib/useAuth.js';
+import { CATEGORIES, validate, buildRequestBody, fileToBase64, submitResource } from './lib/api.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -19,43 +18,91 @@ const EMPTY_FIELDS = {
 };
 
 export default function App() {
-  const [token, setToken] = useState(getStoredToken);
-  const [tokenInput, setTokenInput] = useState('');
+  const auth = useAuth();
 
-  if (!token) {
+  if (auth.status === 'unavailable') {
     return (
       <div className="app">
         <h1>DementiaGuide AI — knowledge base intake</h1>
-        <p>Enter the admin token you were given to continue.</p>
-        <form onSubmit={(e) => { e.preventDefault(); setStoredToken(tokenInput.trim()); setToken(tokenInput.trim()); }}>
-          <div className="field">
-            <label htmlFor="token">Admin token</label>
-            <input id="token" type="password" value={tokenInput} onChange={(e) => setTokenInput(e.target.value)} autoFocus />
-          </div>
-          <button type="submit" disabled={!tokenInput.trim()}>Continue</button>
-        </form>
+        <p className="error">Sign-in isn't configured for this deployment (missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY).</p>
       </div>
     );
+  }
+
+  if (auth.status === 'loading') {
+    return (
+      <div className="app">
+        <h1>DementiaGuide AI — knowledge base intake</h1>
+        <p>Loading…</p>
+      </div>
+    );
+  }
+
+  if (!auth.accessToken) {
+    return <SignIn sendMagicLink={auth.sendMagicLink} />;
   }
 
   return (
     <div className="app">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <h1>Add a resource to the knowledge base</h1>
-        <button type="button" className="signout" onClick={() => { setStoredToken(''); setToken(''); }}>
-          Switch token
+        <button type="button" className="signout" onClick={auth.signOut}>
+          Sign out ({auth.email})
         </button>
       </div>
       <p>
         Submissions are reviewed before they're used in chat — a team member checks them in Supabase
         (<code>knowledge_chunks</code>, filter <code>review_status = pending</code>) and approves or rejects.
       </p>
-      <IntakeForm token={token} />
+      <IntakeForm accessToken={auth.accessToken} />
     </div>
   );
 }
 
-function IntakeForm({ token }) {
+function SignIn({ sendMagicLink }) {
+  const [email, setEmail] = useState('');
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSending(true);
+    try {
+      await sendMagicLink(email.trim());
+    } catch (err) {
+      // Logged, not shown: the message is the same either way so a caller
+      // can't tell a config error from "that email isn't allowed to sign in".
+      console.error(`[auth] sign-in request failed: ${err.message}`);
+    } finally {
+      setSending(false);
+      setSent(true);
+    }
+  }
+
+  return (
+    <div className="app">
+      <h1>DementiaGuide AI — knowledge base intake</h1>
+      {sent ? (
+        <p>If that email has access, a sign-in link was just sent to it. Open it on this device to continue.</p>
+      ) : (
+        <>
+          <p>Enter the email address you were given access with.</p>
+          <form onSubmit={handleSubmit}>
+            <div className="field">
+              <label htmlFor="email">Email</label>
+              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus required />
+            </div>
+            <button type="submit" disabled={sending || !email.trim()}>
+              {sending ? 'Sending…' : 'Send sign-in link'}
+            </button>
+          </form>
+        </>
+      )}
+    </div>
+  );
+}
+
+function IntakeForm({ accessToken }) {
   const [fields, setFields] = useState(EMPTY_FIELDS);
   const [status, setStatus] = useState('idle'); // idle | submitting | success | error
   const [error, setError] = useState(null);
@@ -81,7 +128,7 @@ function IntakeForm({ token }) {
         : fields.sourceType === 'url' ? fields.url.trim()
         : fields.text;
       const body = buildRequestBody(fields, payload);
-      const data = await submitResource({ apiBaseUrl: API_BASE_URL, token, body });
+      const data = await submitResource({ apiBaseUrl: API_BASE_URL, accessToken, body });
       setResult(data);
       setStatus('success');
       setFields(EMPTY_FIELDS);

@@ -652,6 +652,22 @@ When a key exists, the same script and sample are re-run with `--tts`, and that 
 
 **Precondition.** `ANTHROPIC_API_KEY` must be present. If it is absent, this evaluation stops and is reported as not run; the specification above stands for when a key exists.
 
+
+**Deviation, 9 Oct 2026 — committed before any item was judged.** No Anthropic credential exists
+for this project, and the author chose a free judge over buying one, so the judge model changes
+from `claude-sonnet-5-5` to **`gemini-3.8-flash`** (Google, free tier, `v1` `generateContent`,
+temperature 0). It is still from a different family than both the gpt-4o generator and the
+gpt-4o-mini judge, which is the property §18.2 requires. Everything else stands as written above:
+the rubric and blinded prompts of `judge.mjs`, the same 60 rated items (`--key`), Cohen's κ against
+R1 and R2 separately with the κ ≥ 0.6 and non-degeneracy gate per dimension, stage 2 pairwise
+directions only on a dimension that passes, and no per-condition means. Two consequences, stated in
+advance: (1) a Flash-tier model is a weaker judge than the planned Sonnet, so a failed gate is less
+informative about cross-family judges in general; (2) Google may use free-tier prompts to improve
+its models — the prompts contain only the synthetic evaluation questions, retrieved corpus passages
+and the generated answers, no participant data. Outputs are named for the actual model
+(`judge_gemini-3-8-flash_*`, `agreement_human-R{1,2}_vs_gemini-3-8-flash.md`,
+`agreement_gemini-3-8-flash_vs_gpt-4o-mini.md`, `judge-crossfamily_gemini-3-8-flash.md`). The
+expectation is unchanged.
 ### 18.3 E9-A — Apple's on-device recogniser on dementia speech
 
 **Question.** How accurately does Apple's on-device speech recogniser transcribe the ADReSS-2020 dementia and control speakers? How does it compare with the fallback (`whisper-1`) measured in E9?

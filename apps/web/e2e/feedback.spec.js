@@ -176,8 +176,9 @@ test.describe('feedback round: the other ways through (mocked session)', () => {
     await expect(band.getByRole('button', { name: 'Text size' })).toHaveText('Aa+');
     // Ticking several ideas on and off records each change.
     await band.getByRole('button', { name: /Things to try/ }).click();
+    // (Twenty-odd changes in a row are sent at once rather than waiting for the timer.)
     const idea = band.getByRole('checkbox', { name: 'Ask how dementia is different from normal ageing.' });
-    for (let i = 0; i < 10; i++) await idea.click();
+    for (let i = 0; i < 22; i++) await idea.click();
     await expect(idea).not.toBeChecked();
 
     // "I'm finished" asks first; "Keep using the app" changes nothing.
@@ -193,7 +194,7 @@ test.describe('feedback round: the other ways through (mocked session)', () => {
     await expect(page.getByText(/quoting your session code — P31/)).toBeVisible();
 
     await expect.poll(() => studyEvents(log).map((e) => e.kind), { timeout: 15_000 }).toEqual(expect.arrayContaining(['explore_end', 'session_stopped']));
-    expect(studyEvents(log).filter((e) => e.kind === 'try_done').length).toBeGreaterThanOrEqual(10);
+    expect(studyEvents(log).filter((e) => e.kind === 'try_done').length).toBeGreaterThanOrEqual(22);
     expect(studyEvents(log).find((e) => e.kind === 'explore_end').payload.stoppedMidExplore).toBe(true);
   });
 

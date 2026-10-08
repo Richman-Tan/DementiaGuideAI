@@ -314,10 +314,64 @@ test.describe('chat: slow and broken answers', () => {
     await page.goto('/#/app/chat');
     await page.getByRole('button', { name: 'New conversation' }).click();
     await ask(page, 'What helps in the evenings?');
-    await expect(page.getByRole('button', { name: 'Open source 1' })).toBeVisible();
+    await expect(page.getByText(/close the curtains before dusk/)).toBeVisible();
     await ask(page, 'What helps in the evenings?');
     await expect.poll(() => log.chat.length).toBe(2);
     expect(log.embed).toHaveLength(1);
     expect(log.rpc).toHaveLength(2);
+  });
+});
+
+test.describe('chat: changing course mid-answer', () => {
+  test('?mock=1 forces the example answers even with a key; a second question while one is coming waits its turn', async ({ page }) => {
+    const log = await mockProviders(page);
+    await seedStorage(page);
+    await page.goto('/?mock=1#/app/chat');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await ask(page, 'How do I manage sundowning?');
+    // Sent while the first answer is still "typing": ignored.
+    await ask(page, 'And bathing?');
+    await expect(page.getByText(/Sundowning — becoming more restless or confused/)).toBeVisible();
+    await expect(page.getByText('And bathing?')).toHaveCount(0);
+    expect(log.chat).toHaveLength(0);
+  });
+
+  test('"New conversation" while an example answer is coming cancels it', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false, settings: { avatarId: 'aria' } });
+    await page.goto('/#/app/chat');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await ask(page, 'How do I manage sundowning?');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await expect(page.getByText("Kia ora, I'm Aria")).toBeVisible();
+    // The cancelled answer never arrives.
+    await page.waitForTimeout(1500);
+    await expect(page.getByText(/Sundowning — becoming more restless/)).toHaveCount(0);
+    await expect(page.getByText("I couldn't reach the knowledge base — try again.")).toHaveCount(0);
+  });
+
+  test('"New conversation" while a live answer is on its way cancels the request', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page, { settings: { avatarId: 'aria' } });
+    let pending = false;
+    await page.route('https://api.openai.com/v1/chat/completions', () => { pending = true; }); // never answered
+    await page.goto('/#/app/chat');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await ask(page, 'What helps in the evenings?');
+    await expect.poll(() => pending).toBe(true);
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await expect(page.getByText("Kia ora, I'm Aria")).toBeVisible();
+    await expect(page.getByText("I couldn't reach the knowledge base — try again.")).toHaveCount(0);
+  });
+
+  test('a stray bracket number stays plain text, and a reply ending mid-marker keeps its last characters', async ({ page }) => {
+    await mockProviders(page, { answer: 'Keep a calm routine [S1]. Step [3] of your plan still applies [S' });
+    await seedStorage(page);
+    await page.goto('/#/app/chat');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await ask(page, 'What helps in the evenings?');
+    await expect(page.getByRole('button', { name: 'Open source 1' })).toBeVisible();
+    await expect(page.getByText(/Step \[3\] of your plan/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open source 3' })).toHaveCount(0);
   });
 });

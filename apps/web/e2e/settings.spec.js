@@ -98,6 +98,11 @@ test.describe('settings: privacy and history', () => {
 
   test('clearing history asks first; "Keep history" changes nothing, "Clear history" empties the chat', async ({ page }) => {
     await openSettings(page);
+    await page.goto('/#/app/chat');
+    await ask(page, 'How do I manage sundowning?');
+    await expect(page.getByRole('button', { name: 'Open source 1' }).last()).toBeVisible();
+    await expect(page.getByText('How do I manage sundowning?')).toHaveCount(2);
+    await page.goto('/#/app/settings');
     await page.getByRole('button', { name: /Clear Conversation History/ }).click();
     const dialog = page.getByRole('alertdialog');
     await expect(dialog.getByRole('heading', { name: 'Clear conversation history?' })).toBeVisible();
@@ -122,8 +127,8 @@ test.describe('settings: privacy and history', () => {
 });
 
 test.describe('settings: access code', () => {
-  test('a code is checked, saved, and can be removed', async ({ page }) => {
-    await openSettings(page);
+  test('a code is checked, saved, and can be removed (alongside a personal key)', async ({ page }) => {
+    await openSettings(page, { keys: true });
     const field = page.getByLabel('Access code');
     await expect(page.getByRole('button', { name: 'Use code' })).toBeDisabled();
     await field.fill(CODE);

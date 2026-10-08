@@ -191,10 +191,16 @@ const TINY_GLB = (() => {
  *             window.__stt.say(text) / .fail(code); false → none (Whisper path)
  *   liveStartThrows  the recognizer refuses to start (the sticky Whisper degrade)
  *   recorderBytes    size of the clip a fake MediaRecorder hands back on stop
+ *   recorder         false → no MediaRecorder at all (very old browsers)
+ *   recorderTypes    the audio formats the fake recorder claims to support
+ * window.__stt.micReleased() says whether every microphone stream was stopped.
  */
-export async function installFakeMedia(page, { mic = 'ok', live = true, liveStartThrows = false, recorderBytes = 6000 } = {}) {
-  await page.addInitScript(({ mic, live, liveStartThrows, recorderBytes }) => {
-    const stt = { instances: [], active: null, starts: 0 };
+export async function installFakeMedia(page, {
+  mic = 'ok', live = true, liveStartThrows = false, recorderBytes = 6000,
+  recorder = true, recorderTypes = ['audio/webm;codecs=opus'],
+} = {}) {
+  await page.addInitScript(({ mic, live, liveStartThrows, recorderBytes, recorder, recorderTypes }) => {
+    const stt = { instances: [], active: null, starts: 0, streams: [] };
     window.__stt = stt;
     stt.say = (text) => stt.active?.onresult?.({ results: [[{ transcript: text }]] });
     stt.fail = (code) => stt.active?.onerror?.({ error: code });
@@ -203,11 +209,15 @@ export async function installFakeMedia(page, { mic = 'ok', live = true, liveStar
       if (mic === 'denied') throw new DOMException('Permission denied', 'NotAllowedError');
       if (mic === 'missing') throw new DOMException('Requested device not found', 'NotFoundError');
       const ctx = new AudioContext();
-      return ctx.createMediaStreamDestination().stream;
+      const stream = ctx.createMediaStreamDestination().stream;
+      stt.streams.push(stream);
+      return stream;
     };
+    // True once every microphone stream the app opened has been stopped.
+    stt.micReleased = () => stt.streams.every((st) => st.getTracks().every((t) => t.readyState === 'ended'));
 
     class FakeMediaRecorder {
-      static isTypeSupported(m) { return m === 'audio/webm;codecs=opus'; }
+      static isTypeSupported(m) { return recorderTypes.includes(m); }
       constructor(stream, opts = {}) { this.stream = stream; this.mimeType = opts.mimeType || ''; this.state = 'inactive'; }
       start() { this.state = 'recording'; }
       stop() {
@@ -217,7 +227,7 @@ export async function installFakeMedia(page, { mic = 'ok', live = true, liveStar
         setTimeout(() => { this.ondataavailable?.({ data }); this.onstop?.(); }, 10);
       }
     }
-    window.MediaRecorder = FakeMediaRecorder;
+    window.MediaRecorder = recorder ? FakeMediaRecorder : undefined;
 
     class FakeRecognition {
       constructor() { stt.instances.push(this); }
@@ -231,7 +241,7 @@ export async function installFakeMedia(page, { mic = 'ok', live = true, liveStar
     }
     window.SpeechRecognition = live ? FakeRecognition : undefined;
     window.webkitSpeechRecognition = live ? FakeRecognition : undefined;
-  }, { mic, live, liveStartThrows, recorderBytes });
+  }, { mic, live, liveStartThrows, recorderBytes, recorder, recorderTypes });
 }
 
 /**
@@ -302,7 +312,9 @@ export function answerFor(body) {
  * Install every provider mock on a page. Returns the captured request log so
  * a test can assert on what the app sent (max_tokens, study events, …).
  */
-export async function mockProviders(page, { answer = null, transcript = 'How do I manage sundowning in the evening?', audioSeconds = 0.25 } = {}) {
+export async function mockProviders(page, {
+  answer = null, transcript = 'How do I manage sundowning in the evening?', audioSeconds = 0.25, streamChunkSeconds = 0.08,
+} = {}) {
   // `warm` collects the study proxy's warm-up calls (a one-token chat and a
   // 'warm-up' embedding fired at session start and task start) so the per-turn
   // counts in `chat`/`embed` stay exact.
@@ -390,9 +402,11 @@ export async function mockProviders(page, { answer = null, transcript = 'How do 
       session.messages.push(msg);
       if (msg.text === '') { ws.send(JSON.stringify({ isFinal: true })); return; }
       if (!msg.text || !msg.text.trim() || msg.xi_api_key) return;
-      const chars = [...msg.text];
+      // Alignment stops at the last letter, as the service's does, so a word
+      // can straddle two chunks.
+      const chars = [...msg.text.trimEnd()];
       ws.send(JSON.stringify({
-        audio: pcmBase64(0.08),
+        audio: pcmBase64(streamChunkSeconds),
         alignment: { chars, charStartTimesMs: chars.map((_, i) => i * 20), charDurationsMs: chars.map(() => 20) },
       }));
     });
@@ -474,10 +488,10 @@ function sessionFor({ anonymous = true, email = null } = {}) {
  * restores a permanent (non-anonymous) session from storage instead of signing
  * in. Set `db.fail[name] = true` to make one kind of call fail:
  * signIn, lookup, createConversation, loadMessages, appendMessage, touch,
- * deleteAll, updateUser.
+ * deleteAll, updateUser; each refusal is logged in `db.refused`.
  */
 export async function mockSupabase(page, { signedIn = null, conversations = [], messages = [], fail = {} } = {}) {
-  const db = { conversations: conversations.map((c) => ({ ...c })), messages: messages.map((m) => ({ ...m })), calls: [], fail: { ...fail }, nextId: 1 };
+  const db = { conversations: conversations.map((c) => ({ ...c })), messages: messages.map((m) => ({ ...m })), calls: [], refused: [], fail: { ...fail }, nextId: 1 };
   if (signedIn === 'email') {
     await page.addInitScript(({ key, session }) => {
       if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(session));
@@ -485,7 +499,10 @@ export async function mockSupabase(page, { signedIn = null, conversations = [], 
   }
 
   const json = (route, status, body) => route.fulfill({ status, contentType: 'application/json', body: body === undefined ? '' : JSON.stringify(body) });
-  const refuse = (route, name) => json(route, 500, { message: `e2e: ${name} refused`, code: 'XX000' });
+  const refuse = (route, name) => {
+    db.refused.push(name);
+    return json(route, 500, { message: `e2e: ${name} refused`, code: 'XX000' });
+  };
   const params = (url) => Object.fromEntries(new URL(url).searchParams.entries());
   const eqVal = (v) => (v || '').replace(/^eq\./, '');
 
@@ -494,10 +511,12 @@ export async function mockSupabase(page, { signedIn = null, conversations = [], 
     const url = new URL(req.url());
     db.calls.push(`${req.method()} ${url.pathname}`);
     if (url.pathname.endsWith('/signup')) {
+      if (db.fail.signIn) db.refused.push('signIn');
       if (db.fail.signIn) return json(route, 422, { code: 422, error_code: 'anonymous_provider_disabled', msg: 'Anonymous sign-ins are disabled' });
       return json(route, 200, sessionFor({ anonymous: true }));
     }
     if (url.pathname.endsWith('/user') && req.method() === 'PUT') {
+      if (db.fail.updateUser) db.refused.push('updateUser');
       if (db.fail.updateUser) return json(route, 422, { code: 422, error_code: 'email_exists', msg: 'A user with this email address has already been registered' });
       const body = req.postDataJSON();
       db.linkedEmail = body.email;

@@ -74,14 +74,18 @@ test.describe('Unity avatar loading', () => {
     await expect(page.getByText('Ariana', { exact: true })).toBeVisible();
   });
 
-  test('with the avatar switched off, the build is never downloaded', async ({ page }) => {
-    await mockProviders(page);
+  test('with the avatar switched off, the build is never downloaded and answers are still spoken', async ({ page }) => {
+    const log = await mockProviders(page, { answer: 'Keep a calm routine [S1].', audioSeconds: 0.5 });
     await installFakeUnity(page, { auto: true });
-    await seedStorage(page, { keys: false, settings: { showAvatar: false } });
+    await seedStorage(page, { settings: { showAvatar: false } });
     await page.goto('/#/app/home');
     await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening)$/ })).toBeVisible();
     await page.goto('/#/app/voice');
-    await expect(page.getByText('Set up voice conversations')).toBeVisible();
+    await page.getByLabel('Message Aaron').fill('How do I manage sundowning?');
+    await page.getByRole('button', { name: 'Send message' }).click();
+    await expect(page.getByText('Aaron is speaking')).toBeVisible();
+    await expect(page.getByText('Tap the mic or type below')).toBeVisible({ timeout: 20_000 });
+    expect(log.speech.map((x) => x.voice)).toEqual(['onyx']);
     expect(await page.evaluate(() => window.__unity.calls)).toBe(0);
   });
 
@@ -116,6 +120,19 @@ test.describe('the 3D (Three.js) avatar', () => {
       (c.getContext('webgl2') || c.getContext('webgl')).getExtension('WEBGL_lose_context').loseContext();
     });
     await expect(bust(page)).toBeVisible();
+  });
+
+  test('switching between the two 3D helpers swaps the model on Home', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false, settings: { avatarId: 'aria' } });
+    await page.goto('/#/app/home');
+    await expect(bust(page)).toHaveCount(0);
+    await page.getByRole('complementary').first().getByRole('button', { name: 'Settings' }).click();
+    await page.getByRole('group', { name: 'Avatar' }).getByRole('button', { name: 'Zhenja' }).click();
+    await page.getByRole('complementary').first().getByRole('button', { name: 'Home' }).click();
+    await expect(page.getByText('Zhenja', { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').locator('canvas')).toBeVisible();
+    await expect(bust(page)).toHaveCount(0);
   });
 
   test('a model that fails to download leaves the drawn figure in place', async ({ page }) => {

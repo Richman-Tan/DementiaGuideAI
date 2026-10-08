@@ -311,6 +311,10 @@ test.describe('stopping', () => {
     await page.getByRole('button', { name: 'Yes, stop' }).click();
     await expect(page.getByRole('heading', { name: 'You’ve stopped the session' })).toBeVisible();
     await expect(page.getByText('If you would like to talk to someone')).toBeVisible();
+    // Nothing was ever recorded, so the device clears straight away.
+    await page.getByRole('button', { name: 'Setting up for another participant?' }).click();
+    await page.getByRole('button', { name: 'Clear this device' }).click();
+    await expect(page.getByRole('heading', { name: 'Thank you for taking part' })).toBeVisible();
   });
 
   test('stopping mid-task closes the task, keeps what was answered, and ends the session', async ({ page }) => {
@@ -359,6 +363,7 @@ test.describe('study setup problems', () => {
     let reply = { status: 401, body: { error: 'invalid or missing study access code' } };
     await page.route('**/api/study/session', async (route) => {
       if (!reply) return route.fallback();
+      if (reply.raw) return route.fulfill({ status: reply.status, contentType: 'text/html', body: reply.raw });
       return route.fulfill({ status: reply.status, contentType: 'application/json', body: JSON.stringify(reply.body) });
     });
     const code = page.getByPlaceholder('from your invitation email');
@@ -369,6 +374,7 @@ test.describe('study setup problems', () => {
       [{ status: 409, body: { error: 'participant code belongs to a different study' } }, 'That session code belongs to a different study.'],
       [{ status: 503, body: { error: 'study backend not configured' } }, 'The study isn’t quite ready at our end.'],
       [{ status: 500, body: {} }, 'We couldn’t start the session. Please check your internet connection'],
+      [{ status: 502, raw: '<html>Bad gateway</html>' }, 'We couldn’t start the session. Please check your internet connection'],
     ]) {
       reply = r;
       await code.fill(STUDY_ACCESS_CODE);
@@ -385,6 +391,8 @@ test.describe('study setup problems', () => {
     await start.click();
     await expect(alert).toContainText('That participant code doesn’t look right.');
 
+    // Progress checkpoints failing does not hold the participant up.
+    await page.route('**/api/study/progress', (route) => route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"db down"}' }));
     reply = { status: 200, body: { sessionId: SESSION_ID, participantCode: 'P02', participantNumber: 2, group: 'caregiver', armOrder: 'BA', setOrder: '12', resumed: true, completed: false, step: 'armbrief', stageIndex: 0, taskIndex: 1, studyVersion: 'e2e', protocol: 'tasks' } };
     await page.getByPlaceholder('P07').fill(' p02 ');
     await code.fill(STUDY_ACCESS_CODE);
@@ -426,3 +434,82 @@ test.describe('event delivery', () => {
     expect(sizes.indexOf(1)).toBeGreaterThan(0);
   });
 });
+
+test.describe('event delivery on a bad connection', () => {
+  test('a damaged queue is discarded, and events survive a dropped connection, odd replies and partial writes', async ({ page }) => {
+    const log = await mockProviders(page);
+    await seedStorage(page, { keys: false, study: live() });
+    await page.addInitScript(() => {
+      if (!sessionStorage.getItem('dg_e2e_queue')) {
+        sessionStorage.setItem('dg_e2e_queue', '1');
+        localStorage.setItem('dg_study_queue', '{damaged');
+      }
+    });
+    const replies = ['drop', 'not-json', 'partial'];
+    const seen = [];
+    await page.route('**/api/study/event', async (route) => {
+      const body = JSON.parse(route.request().postData() || '{}');
+      if (body.accessCode) return route.fallback(); // beacons: not part of this
+      const reply = replies.shift();
+      seen.push(reply || 'ok');
+      if (reply === 'drop') return route.abort('connectionreset');
+      if (reply === 'not-json') return route.fulfill({ status: 200, contentType: 'text/plain', body: 'ok' });
+      if (reply === 'partial') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ received: body.events.length, inserted: 0 }) });
+      return route.fallback();
+    });
+    await page.goto('/#/study');
+    await page.getByRole('button', { name: 'Yes, that’s me — carry on' }).click();
+    const setVisibility = (state) => page.evaluate((st) => {
+      Object.defineProperty(document, 'visibilityState', { value: st, configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    }, state);
+    // Dropped: kept and retried a couple of seconds later, when the reply is not JSON.
+    await setVisibility('hidden');
+    await expect.poll(() => seen, { timeout: 20_000 }).toEqual(['drop', 'not-json']);
+    // A reply admitting that fewer were stored than sent.
+    await setVisibility('visible');
+    await expect.poll(() => seen, { timeout: 20_000 }).toEqual(['drop', 'not-json', 'partial']);
+    // And then back to normal.
+    await setVisibility('hidden');
+    await expect.poll(() => seen, { timeout: 20_000 }).toEqual(['drop', 'not-json', 'partial', 'ok']);
+    const delivered = log.study.event.filter((e) => !e.body?.accessCode).flatMap((e) => e.body?.events || []);
+    expect(delivered.map((e) => e.kind)).toContain('tab_hidden');
+  });
+
+  test('outside a study, switching tabs sends nothing', async ({ page }) => {
+    const log = await mockProviders(page);
+    await seedStorage(page, { keys: false });
+    await page.goto('/#/app/home');
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening)$/ })).toBeVisible();
+    expect(log.study.event).toHaveLength(0);
+  });
+});
+
+// The browser notice is advisory and depends only on the browser family.
+for (const [family, ua, notice] of [
+  ['edge', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0', false],
+  ['safari', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15', true],
+  ['opera', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 OPR/115.0.0.0', true],
+  ['other', 'e2e-unknown-browser/1.0', true],
+]) {
+  test.describe(`study setup in ${family}`, () => {
+    test.use({ userAgent: ua });
+
+    test(`${notice ? 'shows' : 'skips'} the Chrome-or-Edge notice`, async ({ page }) => {
+      await mockProviders(page);
+      await seedStorage(page, { keys: false });
+      await startStudy(page);
+      await consentAll(page);
+      if (notice) {
+        await expect(page.getByRole('heading', { name: 'Talking works best in Chrome or Edge' })).toBeVisible();
+        await expect(page.getByText(`We detected: ${family}.`)).toBeVisible();
+      } else {
+        await expect(page.getByRole('heading', { name: 'Let’s get set up' })).toBeVisible();
+      }
+    });
+  });
+}

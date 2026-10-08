@@ -23,6 +23,9 @@ async function openVoice(page, { settings = {}, keys = true, media = {}, provide
   return log;
 }
 
+// The drawn placeholder figure; it leaves once the 3D avatar has loaded.
+const placeholder = (page) => page.locator('section svg[viewBox="0 0 120 120"]');
+
 async function typeTurn(page, text, who = 'Aria') {
   await page.getByLabel(`Message ${who}`).fill(text);
   await page.getByRole('button', { name: 'Send message' }).click();
@@ -31,8 +34,10 @@ async function typeTurn(page, text, who = 'Aria') {
 test.describe('voice: typed turns, transcript, repeat and mute', () => {
   test('a typed question is answered aloud through the 3D avatar, with captions, a transcript and repeat', async ({ page }) => {
     const log = await openVoice(page, { settings: { showAvatar: true } });
-    // The avatar mounts its canvas once the (stand-in) model has loaded.
+    // The avatar replaces the placeholder once the (stand-in) model has loaded,
+    // so the answer is voiced through it.
     await expect(page.locator('canvas').first()).toBeVisible();
+    await expect(placeholder(page)).toHaveCount(0);
     await expect(page.getByText(IDLE)).toBeVisible();
 
     await typeTurn(page, 'What helps in the evenings?');
@@ -88,6 +93,9 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
     const log = await openVoice(page, { providers: { audioSeconds: 6 } });
     await typeTurn(page, 'How do I manage sundowning?');
     await expect(page.getByText('Aria is speaking')).toBeVisible();
+    // Repeat does nothing while an answer is already playing.
+    await page.getByRole('button', { name: 'Repeat last answer' }).click();
+    expect(log.speech.length).toBeLessThanOrEqual(2);
     await page.getByRole('button', { name: 'Tap to interrupt' }).click();
     await expect(page.getByText(IDLE)).toBeVisible();
 
@@ -254,6 +262,48 @@ test.describe('voice: speaking a question', () => {
     await expect(page.getByText(IDLE)).toBeVisible();
   });
 
+  test('a browser that cannot record audio says so, and typing still works', async ({ page }) => {
+    const log = await openVoice(page, { media: { recorder: false } });
+    await page.getByRole('button', { name: 'Tap to talk' }).click();
+    await expect(page.getByRole('alert')).toContainText('MediaRecorder is not a constructor');
+    // The microphone it opened was let go.
+    expect(await page.evaluate(() => window.__stt.micReleased())).toBe(true);
+    await typeTurn(page, 'How do I manage sundowning?');
+    await expect.poll(() => log.chat.length).toBe(1);
+  });
+
+  test('a slow transcription gives up with a clear message; a dropped connection says so too', async ({ page }) => {
+    await page.clock.install();
+    await openVoice(page, { media: { live: false } });
+    let calls = 0;
+    await page.route('https://api.openai.com/v1/audio/transcriptions', (route) => {
+      calls += 1;
+      if (calls === 2) return route.abort('connectionreset');
+      return undefined; // the first one never answers
+    });
+    await page.getByRole('button', { name: 'Tap to talk' }).click();
+    await page.getByRole('button', { name: 'Tap when finished' }).click();
+    await expect.poll(() => calls).toBe(1);
+    await page.clock.fastForward(16_000);
+    await expect(page.getByRole('alert')).toContainText('Transcription timed out — please check your connection and try again');
+
+    await page.getByRole('button', { name: 'Tap to talk' }).click();
+    await page.getByRole('button', { name: 'Tap when finished' }).click();
+    await expect(page.getByRole('alert')).toContainText('Failed to fetch');
+  });
+
+  test('leaving the voice screen while listening lets go of the microphone', async ({ page }) => {
+    await openVoice(page, { media: { live: false, recorderTypes: [] } });
+    await page.goto('/#/app/home');
+    await page.getByRole('button', { name: 'Ask Aria by voice' }).click();
+    await page.getByRole('button', { name: 'Tap to talk' }).click();
+    await expect(page.getByText('Listening…')).toBeVisible();
+    expect(await page.evaluate(() => window.__stt.micReleased())).toBe(false);
+    await page.getByRole('button', { name: 'Close voice conversation' }).click();
+    await expect(page).toHaveURL(/#\/app\/home$/);
+    await expect.poll(() => page.evaluate(() => window.__stt.micReleased())).toBe(true);
+  });
+
   test('a browser without live recognition sends a real recording to be transcribed', async ({ page }) => {
     const log = await openVoice(page, { media: { live: false } });
     await page.getByRole('button', { name: 'Tap to talk' }).click();
@@ -266,23 +316,30 @@ test.describe('voice: speaking a question', () => {
 
 test.describe('voice: ElevenLabs voices', () => {
   test('with an ElevenLabs key, each sentence is voiced with character timings for lip-sync', async ({ page }) => {
-    const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY } });
+    const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY }, settings: { showAvatar: true } });
+    await expect(placeholder(page)).toHaveCount(0);
     await typeTurn(page, 'How do I manage sundowning?');
     await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
     expect(log.eleven.map((r) => r.text)).toEqual([expect.stringMatching(/^Keep a calm routine/), expect.stringMatching(/^Close the curtains/)]);
     expect(log.speech).toHaveLength(0);
   });
 
-  test('if ElevenLabs fails, the reply falls back to the OpenAI voice', async ({ page }) => {
-    const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY } });
-    await page.route(/api\.elevenlabs\.io\/v1\/text-to-speech/, (route) => route.fulfill({ status: 500, body: 'quota' }));
-    await typeTurn(page, 'How do I manage sundowning?');
-    await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
-    expect(log.speech).toHaveLength(2);
-  });
+  for (const [what, reply] of [
+    ['an error', { status: 500, body: 'quota' }],
+    ['a reply with no audio', { status: 200, contentType: 'application/json', body: '{}' }],
+  ]) {
+    test(`if ElevenLabs answers with ${what}, the reply falls back to the OpenAI voice`, async ({ page }) => {
+      const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY } });
+      await page.route(/api\.elevenlabs\.io\/v1\/text-to-speech/, (route) => route.fulfill(reply));
+      await typeTurn(page, 'How do I manage sundowning?');
+      await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
+      expect(log.speech).toHaveLength(2);
+    });
+  }
 
   test('"Faster Voice Responses" streams the answer as it is written', async ({ page }) => {
-    const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY }, settings: { fasterVoice: true } });
+    const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY }, settings: { fasterVoice: true, showAvatar: true } });
+    await expect(placeholder(page)).toHaveCount(0);
     await typeTurn(page, 'How do I manage sundowning?');
     await expect(page.getByText('Aria is speaking')).toBeVisible();
     await expect(page.getByText(IDLE)).toBeVisible({ timeout: 20_000 });
@@ -292,6 +349,14 @@ test.describe('voice: ElevenLabs voices', () => {
     expect(sent.at(-1)).toEqual({ text: '' });
     // Nothing went over REST.
     expect(log.eleven).toHaveLength(0);
+  });
+
+  test('a streamed answer can be interrupted like any other', async ({ page }) => {
+    await openVoice(page, { keys: { eleven: ELEVEN_KEY }, settings: { fasterVoice: true }, providers: { streamChunkSeconds: 3 } });
+    await typeTurn(page, 'How do I manage sundowning?');
+    await expect(page.getByText('Aria is speaking')).toBeVisible();
+    await page.getByRole('button', { name: 'Tap to interrupt' }).click();
+    await expect(page.getByText(IDLE)).toBeVisible();
   });
 
   test('a stream that fails mid-answer is finished over REST, and later turns stay on REST', async ({ page }) => {

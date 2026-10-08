@@ -56,6 +56,11 @@ test.describe('an anonymous account, created on first visit', () => {
     await expect.poll(() => db.messages.map((m) => m.content)).toEqual(['An old question from before', 'An old answer from before']);
     expect(await page.evaluate(() => localStorage.getItem('dg_history_migrated'))).toBe('1');
     await expect(page.getByText('An old question from before')).toBeVisible();
+    // Once only: the next visit does not copy it again.
+    await page.reload();
+    await expect(page.getByText('An old question from before')).toBeVisible();
+    await expect.poll(() => db.calls.filter((c) => c === 'GET messages').length).toBeGreaterThanOrEqual(2);
+    expect(db.messages).toHaveLength(2);
   });
 
   test('"New conversation" starts a new thread on the server', async ({ page }) => {
@@ -120,7 +125,8 @@ test.describe('a permanent account', () => {
 
 test.describe('when the account service misbehaves', () => {
   test('anonymous sign-in refused: the app still works, and says conversations stay on this device', async ({ page }) => {
-    await open(page, '/#/app/chat', { supabase: { fail: { signIn: true } } });
+    const { db } = await open(page, '/#/app/chat', { supabase: { fail: { signIn: true } } });
+    await expect.poll(() => db.refused).toContain('signIn');
     await ask(page, 'What helps in the evenings?');
     await expect(page.getByText(/Keep a calm routine in the evening/).last()).toBeVisible();
     await page.goto('/#/app/settings');
@@ -130,16 +136,19 @@ test.describe('when the account service misbehaves', () => {
 
   test('a failed lookup or create leaves the conversation on this device only', async ({ page }) => {
     const { db } = await open(page, '/#/app/settings', { supabase: { fail: { lookup: true } } });
+    await expect.poll(() => db.refused).toContain('lookup');
     await expect(page.getByText('Saved on this device only — no account is available')).toBeVisible();
     expect(db.conversations).toHaveLength(0);
     db.fail.lookup = false;
     db.fail.createConversation = true;
     await page.reload();
+    await expect.poll(() => db.refused).toContain('createConversation');
     await expect(page.getByText('Saved on this device only — no account is available')).toBeVisible();
     // "New conversation" cannot make a server thread either, and the screen still clears.
     await page.goto('/#/app/chat');
     await page.getByRole('button', { name: 'New conversation' }).click();
     await expect(page.getByText("Kia ora, I'm Aria")).toBeVisible();
+    await expect.poll(() => db.refused.filter((r) => r === 'createConversation').length).toBe(2);
   });
 
   test('failed reads and writes do not interrupt the conversation', async ({ page }) => {
@@ -152,15 +161,19 @@ test.describe('when the account service misbehaves', () => {
       seed: { history: [{ role: 'user', text: 'Cached before the outage', time: '9:00 am' }] },
     });
     // The cached copy stays on screen when the server copy cannot be read.
+    await expect.poll(() => db.refused).toContain('loadMessages');
     await expect(page.getByText('Cached before the outage')).toBeVisible();
     await ask(page, 'What helps in the evenings?');
     await expect(page.getByText(/Keep a calm routine in the evening/).last()).toBeVisible();
+    // The one-time copy of the cached history, then this turn's question and answer.
+    await expect.poll(() => db.refused.filter((r) => r === 'appendMessage').length).toBe(3);
     expect(db.messages).toHaveLength(0);
 
     db.fail.appendMessage = false;
     db.fail.touch = true;
     await ask(page, 'And at night?');
     await expect.poll(() => db.messages.length).toBe(2);
+    await expect.poll(() => db.refused).toContain('touch');
   });
 });
 

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Embedded into the CLI binary (__TEXT,__info_plist) so macOS lets a bare
+     command-line tool request speech-recognition authorisation. -->
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key><string>nz.dementiaguide.eval.apple-ondevice-stt</string>
+  <key>CFBundleName</key><string>apple-ondevice-stt</string>
+  <key>NSSpeechRecognitionUsageDescription</key><string>Evaluation E9-A: on-device speech recognition of local audio files. Audio never leaves this machine.</string>
+</dict>
+</plist>

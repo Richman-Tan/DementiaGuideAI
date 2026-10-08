@@ -3,7 +3,9 @@
 How the final-project evaluation is run, what each script produces, and how the
 numbers get into the report. The design, priorities and statistics behind it
 are in **[evaluation-plan.md](evaluation-plan.md)** (approved 2026-09-12); the
-results collected so far are in **[results-2026-09-13.md](results-2026-09-13.md)**.
+results collected so far are in **[results-2026-09-13.md](results-2026-09-13.md)**; the
+three reopened automated evaluations of plan §18 (E4-S, E2-X, E9-A) are in
+**[results-2026-10-09-reopened.md](results-2026-10-09-reopened.md)**.
 
 Conventions: every generated artefact is stamped with the git sha and written
 under `docs/report/eval/` (raw, one file per run) or `docs/report/eval/final/`
@@ -33,6 +35,9 @@ scripts/eval/
   report-tables.mjs           Tables A/B/C for the report
   build-phone-allowlist.mjs   verified numbers for the invented-number check
   latency/bench-pipeline.mjs  headless per-stage latency benchmark
+  latency/bench-spoken.mjs    headless SPOKEN-turn benchmark, fallback STT → first audio byte (plan §18.1)
+  stt/transcribe-apple.mjs    Apple SFSpeechRecognizer, on-device only, over the E9 cuts (plan §18.3;
+                              Swift tool in stt/apple-ondevice/)
   judges/rubrics.js           the ONE rubric text used by judge and humans
   lib/                        stats.js, checks.js, aggregate.js, textMetrics.js, csv.js, judgeClient.mjs
   fixtures/phone-allowlist.json

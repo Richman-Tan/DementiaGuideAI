@@ -8,6 +8,11 @@
 > verification, scalability and cost. EQ10–EQ13 and E9–E12 are defined in §17;
 > the detailed designs live in [functional-verification.md](functional-verification.md)
 > and [scalability.md](scalability.md).
+>
+> **Addendum 2026-10-08 (§18):** three automated evaluations reopened after data collection
+> closed: a headless spoken-turn latency benchmark, the cross-family (Claude) judge, and
+> Apple's on-device recogniser on the E9 dementia-speech cuts. §18 is committed before any of
+> them runs.
 
 ## Context
 
@@ -545,3 +550,143 @@ Design in [scalability.md](scalability.md). A capacity model per dependency from
 ### 17.5 Order of work
 
 Now: register at the TalkBank protected link, download ADReSS-2020, and ask the supervisor to sign off the API condition on the documented non-storage basis. Week 1: E12 (no external dependency) and E10. Week 2: E11 and the E9 tooling on synthetic fixtures. Week 3: E9 runs, Web Speech subset, perturbation, e2e. Week 4: dry-run record, fallback drills, Unity re-run, write-up. Week 5: buffer, chapter integration.
+
+## 18. Addendum 2026-10-08 — reopened automated evaluations (pre-specified)
+
+Data collection closed on 2026-10-07. On 2026-10-08 the user reopened it for three automated evaluations that the final report lists as not run. None involves a human participant; the perceptual lip-sync test (E6) and the clinician review stay out of scope. This section is committed **before any of the three runs**, so the commit order is the record that question, sample, measures, expectation and analysis were fixed first. Every result file records its commit sha, date, models, prices or plan, and its regeneration command. Total API spend is capped at about US$25, estimated before each run and recorded after it.
+
+### 18.1 E4-S — headless spoken-turn latency, fallback recogniser
+
+**Question.** On the production code path with the fallback recogniser, how long does it take from the end of a spoken question to the first byte of answer audio? Which stage dominates?
+
+**Path mirrored.** Each step follows the web voice pipeline (`apps/web/src/voice/useVoiceConversation.js` `stopAndTranscribe` → `processQuery`), call by call:
+1. `whisper-1` upload as `openaiClient.transcribe` sends it: `language: 'en'`, a webm/opus file.
+2. `text-embedding-3-small` query embedding.
+3. The `match_chunks` RPC: 50 candidates, `query_text` set to the transcript, then `capBySourceFamily`.
+4. `buildSystemPrompt` with the web defaults: balanced, jargon "plain" (mapped to `avoid`), warm, carer set-up, inline sources. Then `buildUserContent`.
+5. gpt-4o streaming: temperature 0.7, `max_tokens` 600, no history.
+6. `createMarkerStripper` → `createSentenceSplitter` → the first sentence → `normalizeSpokenText`.
+7. ElevenLabs REST `/with-timestamps`, as the study proxy sends it (`apps/api/api/eleven-tts.js`): `eleven_turbo_v2_5`, `mp3_44100_64`, the proxy's voice settings, speed 0.78 (the web default) and the Brian voice (Aaron, the default avatar).
+
+On this path no partial transcripts exist, so speculative retrieval never fires. The WebSocket streaming mode is not on the production path, and is not measured: the Unity renderer lacks `supportsStreamingAudio`, and study sessions hold no browser key (`ttsModeWeb.js`).
+
+**Declared differences from a real turn:**
+- Requests go straight from this Mac to the providers, not through the Vercel study proxy; E11 measured that hop.
+- `stream_options.include_usage` is added so tokens can be priced. It only appends a final chunk.
+- The app's embedding LRU cache is not used. A repeated question would otherwise hit it.
+- Audio is not decoded or played.
+
+**Audio.** Each Set-A question (v2 wording) is synthesised offline to a file with macOS `say -v Karen -o …`; Karen (en_AU) is the closest installed voice to New Zealand English. Each clip gets 300 ms of silence at each end and is encoded with ffmpeg as webm/opus, mono, 48 kHz, 32 kbit/s, the format Chrome's MediaRecorder produces. No audio is ever played. Because the speech is synthetic, its recognition accuracy is not a finding: the transcript's WER against the question text is recorded only as a sanity check.
+
+**Sample.** The 30 Set-A questions of the September headless bench, two repeats each, in round-robin order (repeat 0 for all 30, then repeat 1): n = 60 measured turns. Two warm-up turns on fixed A-neighbour items come first and are discarded. Turns are paced 5 s apart.
+- A turn that receives a 429 or 5xx is re-run from scratch after the wait; the timing kept is the clean attempt's, and re-runs are counted.
+- A turn that fails three times is reported as failed, never imputed.
+
+**Measures.** One clock per turn; t0 is the start of the upload, which stands in for the end of recording. Times are in ms.
+- Stage durations:
+  - `stt`, `embed`, `rpc`;
+  - `llm_ttft`: from request send to the first content token;
+  - `llm_first_sentence`: from request send to the first sentence out of the splitter;
+  - `tts_ttfb` (headers), `tts_first_byte` (first body byte) and `tts_complete` (full JSON, the point at which the audio can be played);
+  - `llm_total`.
+- Milestones from t0: `to_first_token`, `to_first_tts_request` (first sentence ready), **`to_first_audio_byte` (the headline)** and `to_first_audio_playable`.
+- Statistics: n, median, mean, p90, p95, sd, min and max for each, plus the share of turns above 3,000 ms for each milestone.
+- Context recorded: machine, OS, Node version, network interface, and the baseline HTTPS round trip to each provider host.
+
+**Key contingency.** If `ELEVENLABS_API_KEY` is absent at run time:
+- the TTS stage is not run and the headline is not reported;
+- `to_first_tts_request` is reported instead as a strict lower bound on time to first audio, since synthesis can only add time;
+- the share of turns whose lower bound already exceeds 3 s is a lower bound on the share whose first audio would.
+
+When a key exists, the same script and sample are re-run with `--tts`, and that run replaces this one as the headline.
+
+**Expectations (directional).**
+- L1: `stt` (the `whisper-1` upload) is the largest single stage before the model's first token.
+- L2: median `to_first_tts_request` lies between 2.0 and 3.5 s.
+- L3: median `to_first_audio_byte` exceeds 3 s, the yardstick. This is testable only with the ElevenLabs key.
+
+**Analysis.** Descriptive only, with no test, because there is one condition. Results are compared with the report's post-hoc 3 s yardstick (§4.5) and labelled **"headless pipeline, not perceived in-browser latency"**. The run excludes:
+- the proxy hop and MediaRecorder finalisation;
+- audio decode, the playback queue and the start of lip-sync;
+- the primary live recogniser, which delivers its transcript almost at stop (37–56 ms on the iPhone in July); the run uses the fallback instead.
+
+**Output.** `docs/report/eval/latency/spoken-bench_<sha>_<tag>{_raw.csv,.md}`.
+
+**Budget.** About US$0.80: gpt-4o at about US$0.011 per turn over 62 turns, `whisper-1` at about US$0.0005 per turn, and negligible embeddings. With a key, synthesis adds about 6,000 ElevenLabs characters from the plan's credits.
+
+### 18.2 E2-X — cross-family judge (Claude)
+
+**Question.** Does a judge from a different model family than the gpt-4o generator agree with the two human raters, R1 (Richman) and R2 (JooHyun), well enough to pass the pre-registered κ ≥ 0.6 gate (§5, E2 judge protocol step 4) on any dimension? Where it passes, what is the paired direction of v2 against each other condition?
+
+**Judge model.** `claude-sonnet-5-5`, Anthropic's current Sonnet, at US$2 / US$10 per million input / output tokens on 2026-10-08.
+- It is a different family from both the generator and the gpt-4o-mini judge.
+- `claude-opus-5-5` would cost about twice as much for the same calls.
+- `claude-haiku-5-5` is cheaper, but gpt-4o-mini failed by compressing every score to the ceiling, and a smaller judge is the more likely to repeat that.
+- Settings: effort `medium`; server-side refusal fallback `"default"`.
+- Temperature cannot be set on this model (a non-default value is rejected), so the plan's "temperature 0" is not honoured; this is declared.
+- Rubric and prompts: unchanged from `scripts/eval/judge.mjs` and `judges/rubrics.js` (RUBRIC_VERSION 2026-09-14). The human sheets were scored under the 2026-09-13 safety wording; the other four dimensions are identical.
+
+**Stage 1 — the gate.**
+- Items: the 60 human-rated items (`human/human-sheet_round1_KEY.csv`) from the seeded `generation_8a92ecd_*_final.json` files, on each item's applicable dimensions. That gives groundedness 49, correctness 20, helpfulness 35, tone 60 and safety 35: the items and dimensions of Table A.4.
+- Statistic: unweighted Cohen's κ, categories {0,1,2}, computed with `agreement.mjs` against R1 and against R2 separately.
+- A dimension **passes** only if both of these hold:
+  - κ ≥ 0.6 against both raters;
+  - it is not degenerate: neither the judge's scores nor either rater's take a single value on ≥ 95 % of the dimension's items. This fixes in advance the report's treatment of correctness (§4.3); by this rule R1's correctness (19 of 20 at 2) is already degenerate.
+- Linear and quadratic κ, and judge–judge κ against gpt-4o-mini, are reported descriptively.
+
+**Stage 2 — paired direction, only on passing dimensions.** Position-swapped pairwise judging with `judge-pairwise.mjs`, v2 against P0, v1, v2-nosafety and v2 without retrieval. It uses the same 106 seeded pairs per comparison as Table A.3: sets A, A-neighbour, B, N, S and J, matched by id.
+- The pairwise instrument has only `helpful` and `safe`, so the mapping is helpfulness → `helpful` and safety → `safe`.
+- A pass on groundedness, correctness or tone is reported as "passes; no position-swapped instrument exists", and nothing further is computed for it.
+- Reported for each comparison: wins, losses and ties; the count of position-inconsistent verdicts (counted as ties); and a sign test on decisive pairs, Holm-adjusted within the dimension across the four comparisons.
+- **Per-condition judge means are never reported.**
+
+**Expectation.** No dimension is expected to pass with confidence, because human scores sit near the ceiling (rater means 1.81 and 1.82). Directionally, Claude's κ against both raters should exceed gpt-4o-mini's on groundedness and safety, where gpt-4o-mini was at chance (0.015 / 0.001 and −0.035).
+
+**Output.** `docs/report/eval/final/`:
+- `judge_claude-sonnet-5-5_<column>_key60.{csv,json}`;
+- `agreement_human-R{1,2}_vs_claude-sonnet-5-5.md` and `agreement_claude-sonnet-5-5_vs_gpt-4o-mini.md`;
+- `pairwise_claude-sonnet-5-5_v2_final_vs_<x>.{csv,json}`;
+- a summary `judge-crossfamily_claude-sonnet-5-5.md`.
+
+**Budget.** Stage 1 is about 60 calls, about US$1. Stage 2 runs only if helpfulness or safety passes: up to 848 calls, about US$8–10.
+
+**Precondition.** `ANTHROPIC_API_KEY` must be present. If it is absent, this evaluation stops and is reported as not run; the specification above stands for when a key exists.
+
+### 18.3 E9-A — Apple's on-device recogniser on dementia speech
+
+**Question.** How accurately does Apple's on-device speech recogniser transcribe the ADReSS-2020 dementia and control speakers? How does it compare with the fallback (`whisper-1`) measured in E9?
+
+**App facts the label depends on.** The iOS app's primary recogniser is expo-speech-recognition, which uses SFSpeechRecognizer, started with `lang: 'en-NZ'` and **`requiresOnDeviceRecognition: false`** (`apps/mobile/src/lib/stt/expoSpeechRecognition.js`). iOS may therefore send the app's audio to Apple's servers, so an on-device measurement is a **proxy** for what iOS users get. The web app's primary recogniser is Chrome's Web Speech API, a Google cloud service; it is not measured, under the data rules below.
+
+**Data governance.** The 19 September sign-off covers only OpenAI's transcription endpoint, so no DementiaBank audio goes to any other cloud service.
+- The tool sets `requiresOnDeviceRecognition = true` and refuses to start unless the recogniser reports `supportsOnDeviceRecognition`.
+- Audio is read from the cut WAV files (`SFSpeechURLRecognitionRequest`) and never played.
+- Hypotheses stay in the git-ignored `data/dementiabank/`. Only the aggregates written by `wer-report.mjs` are committed.
+
+**Configuration.**
+- Platform: SFSpeechRecognizer on macOS 27.0.1, Apple M3.
+- Locale: en-NZ, the app's locale. On-device recognition supports it on this Mac.
+- Request: `shouldReportPartialResults = false`, since only the final transcript is scored and the app's partials end in the same final; `addsPunctuation = false` (the app's default); `taskHint` unspecified; no contextual strings.
+- Hypothesis: the final result's `bestTranscription.formattedString`.
+- A "no speech detected" result becomes an empty hypothesis, scored as deletions, as `whisper-1`'s empty outputs were.
+- Any other error is retried once, then left missing and counted.
+
+**Sample.** Condition (a) of E9: 2,063 utterance cuts from 156 speakers (78 dementia, 78 control), scored against the unchanged `data/dementiabank/references.csv`.
+
+**Measures and analysis.** `scripts/eval/stt/wer-report.mjs`, unchanged: the same scorer and normalisation as E9.
+- Both filler policies are reported; the primary policy strips fillers.
+- For each group: mean WER with a bootstrap 95 % CI over speakers, pooled WER, and the S/D/I split.
+- Dementia against control: Mann–Whitney with Cliff's δ, and Spearman ρ against MMSE.
+- The hallucination and empty-output table.
+- Secondary: a paired Wilcoxon over speakers against `whisper-1` condition (a) (`hyps_whisper-1.csv`).
+
+**Expectations (directional).**
+- A1: dementia WER exceeds control WER (Mann–Whitney p < 0.05, δ > 0), as it did for every recogniser in E9.
+- A2: pooled WER is higher than `whisper-1`'s condition (a) figures (26.3 % control, 41.9 % dementia) in both groups, with a positive paired Δ. The reasons are a smaller on-device model and an en-NZ model hearing US English.
+- A3: the stock-phrase rate falls below `whisper-1`'s, while the empty-output rate rises above it.
+
+**Secondary condition.** The en-US locale, which matches the corpus accent, with the same procedure. It runs only if time permits after the primary condition; otherwise it is reported as not run.
+
+**Label.** "Apple on-device recogniser on macOS". The result is reported as a proxy for the iOS app, which requests server-capable recognition.
+
+**Cost.** US$0; the run is local.

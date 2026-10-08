@@ -1,5 +1,6 @@
-# Fresh install, then "Skip setup" straight to the main tabs. Most flows start
-# here so that each one is independent of the others and of run order.
+# Fresh install, then "Skip setup" straight to the main tabs, then Aria's
+# voice switched off (subflows/audio-off.yaml) so nothing can be heard. Most
+# flows start here, so each one is independent of the others and of run order.
 appId: com.anonymous.DementiaGuideAi
 ---
 - runFlow: launch-fresh.yaml
@@ -7,3 +8,4 @@ appId: com.anonymous.DementiaGuideAi
 - extendedWaitUntil:
     visible: "How can I help you today?"
     timeout: 15000
+- runFlow: audio-off.yaml

@@ -141,6 +141,15 @@ log "Booting $DEVICE_NAME ($UDID)"
 xcrun simctl boot "$UDID" 2>/dev/null || true   # already booted is fine
 xcrun simctl bootstatus "$UDID" -b >/dev/null
 
+# Nothing may be audible on the Mac, and a Simulator plays its sounds through
+# the Mac's speakers. Turn off keyboard clicks on the SIMULATED iPhone (its own
+# Settings → Sounds & Haptics → Keyboard Feedback; the keys UIKit reads), since
+# Maestro types through the iOS keyboard. The Mac's own audio settings are
+# never touched. Aria's voice is switched off inside the app by every flow
+# (apps/mobile/.maestro/subflows/audio-off.yaml).
+xcrun simctl spawn "$UDID" defaults write com.apple.preferences.sounds keyboard-audio -bool false
+xcrun simctl spawn "$UDID" defaults write com.apple.preferences.sounds keyboard -bool false
+
 # ── 4. Install and run the flows ─────────────────────────────────────────────
 log "Installing $APP_ID"
 xcrun simctl install "$UDID" "$APP_PATH"

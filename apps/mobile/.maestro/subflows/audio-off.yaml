@@ -1,0 +1,42 @@
+# Nothing may be audible on the Mac running these tests: a Simulator plays
+# its sound through the Mac's speakers. The only sound this app makes is Aria
+# speaking (text-to-speech), so before a flow does anything else, this turns
+# "Audio Responses" off and checks that it, and "Auto-play Responses", are off.
+#
+# (Speech also needs an answer from the language model, which needs a real
+# API key that these flows never have, so nothing could be spoken anyway.
+# This makes it impossible rather than merely unlikely.)
+#
+# Starts on the main tabs; ends on Home.
+appId: com.anonymous.DementiaGuideAi
+---
+- tapOn:
+    id: "tab-settings"
+- extendedWaitUntil:
+    visible: "Personalise your DementiaGuide AI experience"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Toggle Auto-play Responses"
+    direction: DOWN
+    centerElement: true
+- runFlow:
+    when:
+      visible:
+        text: "Toggle Audio Responses"
+        checked: true
+    commands:
+      - tapOn: "Toggle Audio Responses"
+- assertVisible:
+    text: "Toggle Audio Responses"
+    checked: false
+- assertVisible:
+    text: "Toggle Auto-play Responses"
+    checked: false
+- scrollUntilVisible:
+    element: "Personalise your DementiaGuide AI experience"
+    direction: UP
+- tapOn:
+    id: "tab-home"
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 10000

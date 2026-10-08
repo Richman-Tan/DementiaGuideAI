@@ -121,6 +121,8 @@ tags:
 - extendedWaitUntil:
     visible: "How can I help you today?"
     timeout: 15000
+# Setup screens make no sound; switch Aria's voice off before anything else
+- runFlow: subflows/audio-off.yaml
 
 # Setup is remembered: a relaunch (state kept) goes straight to Home
 - stopApp

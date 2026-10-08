@@ -11,7 +11,10 @@
 # bad key is accepted and the app switches to describing an ElevenLabs voice;
 # a voice turn with it ends in the app's error message with the screen back
 # to idle, not a crash or a hang. The fallback to the OpenAI voice itself is
-# recorded as not feasible on the Simulator in docs/testing/ios-e2e.md.
+# recorded as not feasible on the Simulator in docs/testing/ios-e2e.md: on top
+# of needing a real key, it would mean playing speech, and nothing may be
+# audible on the Mac running these tests (Aria's voice is off throughout,
+# subflows/audio-off.yaml).
 appId: com.anonymous.DementiaGuideAi
 name: Drill — invalid ElevenLabs key
 tags:

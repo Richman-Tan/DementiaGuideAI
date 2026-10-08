@@ -1,6 +1,8 @@
 # Voice screen as far as the Simulator allows: its controls, a typed question
-# with no API key, the menu (About, Change Persona), the volume button, and
-# the microphone, both refused and allowed through the iOS permission prompts.
+# with no API key, the menu (About, Change Persona), the microphone (refused,
+# and allowed through the iOS permission prompts), and the volume button.
+# Aria's voice stays off throughout (subflows/audio-off.yaml) apart from the
+# volume-button check at the end, where nothing is asked.
 #
 # Real speech can't be tested here: the Simulator has no microphone audio to
 # recognise and no key to answer with. What is checked is the state machine
@@ -61,9 +63,6 @@ tags:
 - assertNotVisible: "Aaron"
 - assertNotVisible: "Choose Your Avatar"
 
-# The volume button mutes Aria (Settings → Audio Responses follows)
-- tapOn: "Volume"
-
 # ── Microphone refused: the mic stays idle, nothing breaks ──
 - launchApp:
     permissions:
@@ -118,7 +117,11 @@ tags:
     timeout: 30000
 - assertNotVisible: "Stop"
 
-# ── Persona and volume choices persist ──
+# ── The volume button ──
+# Speech is off (subflows/audio-off.yaml); the volume button turns it back on,
+# and Settings follows. Nothing is asked while it is on, and it is switched
+# off again before the flow goes on, so nothing can be heard.
+- tapOn: "Volume"
 - tapOn: "Return to home"
 - tapOn:
     id: "tab-settings"
@@ -128,7 +131,13 @@ tags:
     centerElement: true
 - assertVisible:
     text: "Toggle Audio Responses"
+    checked: true
+- tapOn: "Toggle Audio Responses"
+- assertVisible:
+    text: "Toggle Audio Responses"
     checked: false
+
+# ── The persona choice persists ──
 - stopApp
 - launchApp
 - extendedWaitUntil:

@@ -68,9 +68,11 @@ tags:
 - assertVisible:
     text: "Toggle Show Avatar"
     checked: true
+# Audio Responses defaults to on; subflows/audio-off.yaml has switched it
+# off so nothing can be heard (09-voice.yaml covers switching it back on)
 - assertVisible:
     text: "Toggle Audio Responses"
-    checked: true
+    checked: false
 - assertVisible:
     text: "Toggle Subtitles"
     checked: true
@@ -87,6 +89,8 @@ tags:
     text: "Toggle Faster Voice Responses"
     checked: true
 
+# Auto-play goes on here only as a setting: no question is ever sent in this
+# flow, so there is no answer to play and nothing can be heard.
 - tapOn: "Toggle Subtitles"
 - tapOn: "Toggle Auto-play Responses"
 - tapOn: "Toggle Get to the Point"

@@ -1,12 +1,14 @@
+// @vitest-environment jsdom
 // Questionnaire interaction rules. The instruments' wording is ethics-approved
 // and lives in instruments.js; what is tested here is how a participant's taps
 // become stored answers — the part the pilot tester caught: "some of the
 // options cannot be left unticked, and on some more than one answer might
 // apply".
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Choice, MultiChoice, nextChoiceValue, toggleMulti } from '../src/study/ui.jsx';
+import { render, flush, cleanup } from './helpers/render.js';
 
 describe('single-choice taps', () => {
   it('selects, and switches between options', () => {
@@ -79,5 +81,35 @@ describe('rendered semantics', () => {
       React.createElement(MultiChoice, { name: 'q', options: OPTIONS, onChange: () => {} }),
     );
     expect(html.match(/aria-checked="false"/g)).toHaveLength(3);
+  });
+});
+
+describe('MultiChoice taps', () => {
+  afterEach(cleanup);
+
+  const mount = async (value, onChange) => {
+    const { container } = await render(React.createElement(MultiChoice, { name: 'q', options: [...OPTIONS, 'Other'], value, onChange }));
+    return (label) => [...container.querySelectorAll('[role="checkbox"]')].find((b) => b.textContent === label);
+  };
+
+  it('a tap adds that option to the stored answers, keeping the others', async () => {
+    const onChange = vi.fn();
+    const box = await mount([1], onChange);
+    await flush(() => box('Three').click());
+    expect(onChange).toHaveBeenCalledWith([1, 3]);
+  });
+
+  it('a tap on a ticked option removes only that one, so it can be left unticked', async () => {
+    const onChange = vi.fn();
+    const box = await mount([1, 3], onChange);
+    await flush(() => box('One').click());
+    expect(onChange).toHaveBeenCalledWith([3]);
+  });
+
+  it('plain-string options store their own text', async () => {
+    const onChange = vi.fn();
+    const box = await mount(undefined, onChange);
+    await flush(() => box('Other').click());
+    expect(onChange).toHaveBeenCalledWith(['Other']);
   });
 });

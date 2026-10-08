@@ -199,6 +199,18 @@ describe('a typed question with REST audio', () => {
     expect(result.current.vState).toBe('idle');
   });
 
+  it('a stray U+001F in the answer (the splitter’s own boundary mark) yields no empty TTS request or subtitle', async () => {
+    // The splitter marks sentence ends with \x1F, so one already in the model's
+    // text splits off an empty "sentence". It must be skipped, not spoken.
+    openaiClient.chatStream.mockImplementation(answer(['Rest helps.\x1F\x1FTry a routine.']));
+    const { result, props } = await mountVoice();
+    await run(() => result.current.askText('Q'));
+    expect(tts.mock.calls.map(([text]) => text)).toEqual(['Rest helps.', 'Try a routine.']);
+    expect(props.avatar.playAudio.mock.calls.map(([seg]) => seg.text)).toEqual(['Rest helps.', 'Try a routine.']);
+    expect(fx.timers[0].marks.filter((m) => m === 'ttsRequest')).toHaveLength(2);
+    expect(result.current).toMatchObject({ vState: 'idle', error: null });
+  });
+
   it('caps a very long question at 1000 characters', async () => {
     const { result, props } = await mountVoice();
     await run(() => result.current.askText('x'.repeat(1200)));
@@ -635,6 +647,32 @@ describe('recording and transcription', () => {
     expect(result.current.error).toBe("I didn't catch that — try again a little closer to the microphone.");
     expect(result.current.vState).toBe('idle');
     expect(openaiClient.chatStream).not.toHaveBeenCalled();
+  });
+
+  it('a blank transcript that is only whitespace is treated as nothing heard, not left "thinking"', async () => {
+    // Every provider trims today; the check sits at this boundary so a future
+    // one that does not cannot start a turn that never runs.
+    startSttSession.mockImplementation(async () => fakeSession('  \n '));
+    const { result, props } = await mountVoice();
+    await flush(() => result.current.micTap());
+    await run(() => result.current.micTap());
+    expect(emit).toHaveBeenCalledWith('stt_empty', { arm: null, taskId: null });
+    expect(result.current.error).toBe("I didn't catch that — try again a little closer to the microphone.");
+    expect(result.current.vState).toBe('idle');
+    expect(openaiClient.chatStream).not.toHaveBeenCalled();
+    expect(props.appendMessage).not.toHaveBeenCalled();
+  });
+
+  it('a transcript with surrounding whitespace is asked and shown trimmed', async () => {
+    startSttSession.mockImplementation(async () => fakeSession('  how do I help \n'));
+    const { result, props } = await mountVoice();
+    await flush(() => result.current.micTap());
+    await run(() => result.current.micTap());
+    expect(fx.specs[0].resolve).toHaveBeenCalledWith('how do I help');
+    expect(result.current.vTranscript).toBe('how do I help');
+    expect(openaiClient.chatStream.mock.calls[0][0]).toBe('how do I help');
+    expect(props.appendMessage.mock.calls[0][0]).toEqual({ role: 'user', text: 'how do I help' });
+    expect(emit).toHaveBeenCalledWith('turn_start', expect.objectContaining({ modality: MODALITY_SPOKEN, chars: 13 }));
   });
 
   it('a transcription failure is shown and the screen returns to idle', async () => {

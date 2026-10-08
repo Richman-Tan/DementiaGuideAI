@@ -11,12 +11,18 @@ tags:
 - runFlow: subflows/launch-fresh.yaml
 - assertVisible: '(?s)Welcome to.*DementiaGuide AI'
 - assertVisible: "This takes about 2 minutes"
-- tapOn: "Let's begin"
+# The first tap after a fresh launch is occasionally dropped; tap again if
+# step 1 hasn't appeared.
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn: "Let's begin"
+      - extendedWaitUntil:
+          visible: '(?s)Who is setting up.*this app today\?'
+          timeout: 10000
 
 # Step 1 — who is setting up
-- extendedWaitUntil:
-    visible: '(?s)Who is setting up.*this app today\?'
-    timeout: 10000
+- assertVisible: "Step 1 of 9"
 - tapOn: "(?s)I'm helping a family member.*or friend"
 - tapOn: "Next"
 

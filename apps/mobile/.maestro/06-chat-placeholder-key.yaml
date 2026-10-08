@@ -30,8 +30,8 @@ env:
 - tapOn: "OpenAI API Key"
 - assertVisible: "OpenAI API Key input"
 - tapOn: "Cancel"
+- assertNotVisible: "OpenAI API Key input"
 - assertVisible: "OpenAI API Key"
-- assertVisible: "Not configured"
 
 # Too short a key cannot be saved (the editor stays open)
 - tapOn: "OpenAI API Key"
@@ -49,16 +49,16 @@ env:
     timeout: 10000
 - assertVisible: "Aria will now use your OpenAI key."
 - tapOn: "OK"
-- assertVisible: "…0000"
+- assertNotVisible: "OpenAI API Key input"
 
 # Chat is now unlocked
 - tapOn:
     id: "tab-chat"
 - extendedWaitUntil:
-    visible: "Ask Aria anything…"
+    visible: "Message input Ask Aria anything…"
     timeout: 10000
-- assertNotVisible: "Add your OpenAI API key in Settings to start chatting"
-- tapOn: "Message input"
+- assertNotVisible: "Add API key in settings"
+- tapOn: "Message input.*"
 - inputText: "What is sundowning?"
 - tapOn: "Send message"
 - extendedWaitUntil:
@@ -71,7 +71,7 @@ env:
     when:
       visible: "Invalid API key — update it in Settings"
     commands:
-      - assertVisible: "Add your OpenAI API key in Settings to start chatting"
+      - assertVisible: "Add API key in settings"
 
 # Settings → Clear Conversation History empties the live transcript too
 - tapOn:

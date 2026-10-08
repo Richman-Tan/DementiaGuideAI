@@ -26,12 +26,15 @@ tags:
 - assertVisible: "Curated resources"
 - assertVisible: "Common Questions"
 - assertVisible: "How do I manage sundowning?"
+- assertVisible: "Start voice conversation"
+# Each Explore card is one button, read by its label ("Ask questions",
+# "Browse resources" and "Speak with Aria" are inside them)
 - scrollUntilVisible:
-    element: "Speak with Aria"
+    element: "Start voice interaction"
     direction: DOWN
 - assertVisible: "Explore"
-- assertVisible: "Ask questions"
-- assertVisible: "Browse resources"
+- assertVisible: "Start chat conversation"
+- assertVisible: "Browse knowledge library"
 - scrollUntilVisible:
     element: "Type your question"
     direction: UP
@@ -47,7 +50,8 @@ tags:
 - extendedWaitUntil:
     visible: "What is respite care?"
     timeout: 15000
-- assertVisible: "Online|Thinking…|Speaking…"
+# The header reads as one element: Aria's name and her status
+- assertVisible: "Aria, (Online|Thinking…|Speaking…)"
 - extendedWaitUntil:
     visible: "Invalid API key — update it in Settings|Connection error — check your internet connection"
     timeout: 45000

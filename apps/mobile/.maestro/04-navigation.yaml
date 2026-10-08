@@ -18,7 +18,7 @@ tags:
 - extendedWaitUntil:
     visible: "(?s)Hello! I'm Aria, your DementiaGuide AI assistant.*"
     timeout: 10000
-- assertVisible: "Online"
+- assertVisible: "Aria, Online"
 
 - tapOn:
     id: "tab-library"
@@ -70,7 +70,7 @@ tags:
     centerElement: true
 - tapOn: "Start chat conversation"
 - extendedWaitUntil:
-    visible: "Online"
+    visible: "Aria, Online"
     timeout: 10000
 
 # ── Chat's links ──
@@ -81,7 +81,7 @@ tags:
 - tapOn:
     id: "tab-chat"
 - extendedWaitUntil:
-    visible: "Online"
+    visible: "Aria, Online"
     timeout: 10000
 # The header's library button, not the tab button with the same label
 - tapOn:
@@ -95,7 +95,7 @@ tags:
 # ── Library's link to Chat ──
 - tapOn: "Ask Aria a question"
 - extendedWaitUntil:
-    visible: "Online"
+    visible: "Aria, Online"
     timeout: 10000
 
 # ── Chat → Voice → Chat ──
@@ -105,7 +105,7 @@ tags:
     timeout: 10000
 - tapOn: "Switch to text chat"
 - extendedWaitUntil:
-    visible: "Online"
+    visible: "Aria, Online"
     timeout: 10000
 
 # ── Home's other Explore cards ──

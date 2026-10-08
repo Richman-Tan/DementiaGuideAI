@@ -74,6 +74,10 @@ command -v java >/dev/null || die "Maestro needs a Java runtime (17+)."
 # Maestro phones home by default; nothing about these runs needs to leave the machine.
 export MAESTRO_CLI_NO_ANALYTICS=1
 export MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true
+# Maestro drives the app through an XCTest runner it installs on the Simulator.
+# On a freshly booted device that runner took ~2.5 minutes to come up, past
+# Maestro's default wait; allow 5 (milliseconds; override from the environment).
+export MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-300000}"
 
 SECONDS=0
 
@@ -153,6 +157,16 @@ xcrun simctl spawn "$UDID" defaults write com.apple.preferences.sounds keyboard 
 # ── 4. Install and run the flows ─────────────────────────────────────────────
 log "Installing $APP_ID"
 xcrun simctl install "$UDID" "$APP_PATH"
+
+# If Maestro dies before its driver is up (e.g. the startup timeout), it can
+# leave that driver's `xcodebuild test-without-building` running against the
+# Simulator, and the next run's driver is then killed a few seconds into every
+# flow. Stop any driver aimed at THIS device before starting, and after.
+stop_stale_drivers() {
+  pkill -f "xcodebuild test-without-building.*id=$UDID" 2>/dev/null || true
+}
+stop_stale_drivers
+trap stop_stale_drivers EXIT
 
 rm -rf "$RESULTS_DIR" && mkdir -p "$RESULTS_DIR"
 log "maestro test ${FLOWS#"$REPO_ROOT"/}"

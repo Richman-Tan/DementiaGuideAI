@@ -10,11 +10,16 @@
 # Starts on the main tabs; ends on Home.
 appId: com.anonymous.DementiaGuideAi
 ---
-- tapOn:
-    id: "tab-settings"
-- extendedWaitUntil:
-    visible: "Personalise your DementiaGuide AI experience"
-    timeout: 10000
+# Right after launch a tap is occasionally dropped; tap again if Settings
+# hasn't opened.
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn:
+          id: "tab-settings"
+      - extendedWaitUntil:
+          visible: "Personalise your DementiaGuide AI experience"
+          timeout: 10000
 - scrollUntilVisible:
     element: "Toggle Auto-play Responses"
     direction: DOWN

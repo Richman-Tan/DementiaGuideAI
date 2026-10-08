@@ -26,7 +26,7 @@ tags:
 
 # Switching persona keeps the fallback (Ariana's card)
 - tapOn: "Open menu"
-- tapOn: "Change Persona"
+- tapOn: ".*Change Persona.*"
 - tapOn: "Select Ariana New"
 - extendedWaitUntil:
     visible: "Ariana"

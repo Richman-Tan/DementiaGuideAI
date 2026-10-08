@@ -43,7 +43,7 @@ tags:
 
 # Typing still works: the typed question goes through the same pipeline and
 # reaches the credential check (no key on a fresh install)
-- tapOn: "Sleep tips"
+- tapOn: "Morning routine"
 - tapOn: "Send"
 - extendedWaitUntil:
     visible: "No API key configured"

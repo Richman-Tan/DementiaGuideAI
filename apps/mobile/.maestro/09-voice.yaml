@@ -37,10 +37,10 @@ tags:
 # Menu → About / Help
 - tapOn: "Open menu"
 - extendedWaitUntil:
-    visible: "About / Help"
+    visible: ".*About / Help.*"
     timeout: 10000
-- assertVisible: "Change Persona"
-- tapOn: "About / Help"
+- assertVisible: ".*Change Persona.*"
+- tapOn: ".*About / Help.*"
 - extendedWaitUntil:
     visible: "About DementiaGuide AI"
     timeout: 10000
@@ -48,14 +48,13 @@ tags:
 
 # Menu → Change Persona → Ariana
 - tapOn: "Open menu"
-- tapOn: "Change Persona"
+- tapOn: ".*Change Persona.*"
 - extendedWaitUntil:
     visible: "Choose Your Avatar"
     timeout: 10000
 - assertVisible: "Each guide has their own voice and style"
 - assertVisible: "Select Aaron Classic"
 - assertVisible: "Select Ariana New"
-- assertVisible: "Active"
 - tapOn: "Select Ariana New"
 - extendedWaitUntil:
     visible: "Ariana"

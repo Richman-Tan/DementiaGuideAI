@@ -20,10 +20,10 @@ tags:
 - extendedWaitUntil:
     visible: "Personalise your DementiaGuide AI experience"
     timeout: 10000
+# (Last row on the page: it can't be centred, so no centerElement)
 - scrollUntilVisible:
     element: "Reset setup guide"
     direction: DOWN
-    centerElement: true
 - tapOn: "Reset setup guide"
 - extendedWaitUntil:
     visible: "Let's begin"

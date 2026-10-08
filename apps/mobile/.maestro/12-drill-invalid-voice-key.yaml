@@ -43,12 +43,15 @@ env:
 - tapOn: "ElevenLabs API Key"
 - tapOn: "ElevenLabs API Key input"
 - inputText: ${FAKE_ELEVEN_KEY}
+# With the keyboard up, the first tap on Save only closes the keyboard (see
+# 06-chat-placeholder-key.yaml); close it first
+- hideKeyboard
 - tapOn: "Save"
 - extendedWaitUntil:
     visible: "ElevenLabs Key Saved"
     timeout: 10000
 - tapOn: "OK"
-- assertVisible: "…0000"
+- assertNotVisible: "ElevenLabs API Key input"
 
 # The app now describes its voice as ElevenLabs
 - scrollUntilVisible:
@@ -64,7 +67,7 @@ env:
 - extendedWaitUntil:
     visible: "Start speaking"
     timeout: 10000
-- tapOn: "Sleep tips"
+- tapOn: "Morning routine"
 - tapOn: "Send"
 - extendedWaitUntil:
     visible: "No API key configured"

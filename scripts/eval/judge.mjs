@@ -148,7 +148,7 @@ async function judgeFile(file) {
     }
     console.log(`  ${row.id.padEnd(5)}${run.samples > 1 ? `#${row.sample}` : ''} ${dims.map(d => `${d}=${scores[d].score ?? '?'}`).join(' ')}`);
     await sleep(150);
-    return { id: row.id, sample: row.sample ?? 0, set: q.set, category: q.category, dims, scores, judgeInput: user, judgeRaw: res.text, usage: res.usage ?? null, judgeModel: res.model ?? MODEL };
+    return { id: row.id, sample: row.sample ?? 0, set: q.set, category: q.category, dims, scores, judgeInput: user, judgeRaw: res.text, usage: res.usage ?? null, judgeModel: res.model ?? MODEL, error: res.error ?? null, refused: res.refused ?? false };
   });
   let results = await runPool(tasks, CONCURRENCY);
   if (previous) {

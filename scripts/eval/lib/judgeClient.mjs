@@ -1,17 +1,21 @@
-// Provider adapters for the LLM judges. One entry point, two families:
+// Provider adapters for the LLM judges. One entry point, three families:
 //   * OpenAI (gpt-4o-mini / gpt-4o) through the existing raw-fetch helper —
 //     the same client the generation runner uses.
 //   * Anthropic (claude-opus-5 by default) through the official SDK — a
 //     different model family from the gpt-4o generator, which is the point:
 //     a judge from the generator's own family has a measurable self-preference.
-// Both return { text, usage, refused } and never throw on a refusal.
+//   * Google Gemini (gemini-3.8-flash) through the REST `v1` generateContent
+//     endpoint — the free-tier cross-family judge of plan §18.2's deviation.
+// All return { text, usage, refused } and never throw on a refusal.
 import Anthropic from '@anthropic-ai/sdk';
 import { openaiJson, env } from '../lib.mjs';
 
 const ANTHROPIC_MODELS = /^claude-/;
+const GEMINI_MODELS = /^gemini-/;
 let anthropicClient = null;
 
 export function isAnthropicModel(model) { return ANTHROPIC_MODELS.test(model); }
+export function isGeminiModel(model) { return GEMINI_MODELS.test(model); }
 
 export function judgeCostEstimateUSD(model, calls, inTokens = 3900, outTokens = 300) {
   const rates = {
@@ -19,6 +23,8 @@ export function judgeCostEstimateUSD(model, calls, inTokens = 3900, outTokens = 
     // Anthropic list prices read 2026-10-08 (plan §18.2).
     'claude-opus-5-5': [4, 20], 'claude-sonnet-5-5': [2, 10], 'claude-haiku-5-5': [0.1, 0.5],
     'gpt-4o': [2.5, 10], 'gpt-4o-mini': [0.15, 0.6],
+    // Free tier (plan §18.2 deviation): no charge, rate-limited instead.
+    'gemini-3.8-flash': [0, 0],
   };
   const [i, o] = rates[model] ?? [5, 25];
   return calls * (inTokens * i + outTokens * o) / 1e6;
@@ -65,7 +71,8 @@ async function withRetry(fn, attempts = 8) {
       const status = e?.status ?? (/\((\d{3})\)/.exec(msg)?.[1] && Number(/\((\d{3})\)/.exec(msg)[1]));
       const retryable = status === 429 || (status >= 500 && status < 600) || /fetch failed|ECONNRESET|ETIMEDOUT|socket hang up|overloaded/i.test(msg);
       if (!retryable || i === attempts - 1) throw e;
-      const suggested = /try again in ([\d.]+)\s*s/i.exec(msg);
+      // OpenAI: "try again in 1.2s"; Gemini: "retryDelay": "17s".
+      const suggested = /try again in ([\d.]+)\s*s/i.exec(msg) ?? /"retryDelay":\s*"([\d.]+)s"/.exec(msg);
       const wait = Math.min(90000, suggested ? Math.ceil(Number(suggested[1]) * 1000) + 500 + Math.random() * 1500 : 2000 * 2 ** i + Math.random() * 1000);
       await sleep(wait);
     }
@@ -83,7 +90,45 @@ export async function judgeCall(model, system, user, opts = {}) {
   return withRetry(() => judgeCallOnce(model, system, user, opts));
 }
 
+// Harm-themed evaluation items (crisis, self-harm, dangerous practice) must be
+// judged, not filtered, so the API's content filters are relaxed for the judge.
+const GEMINI_SAFETY = ['HARM_CATEGORY_HARASSMENT', 'HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT']
+  .map((category) => ({ category, threshold: 'BLOCK_NONE' }));
+
+async function geminiCall(model, system, user, maxTokens) {
+  const key = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY;
+  if (!key) throw new Error('GEMINI_API_KEY is not set (root .env)');
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: 'user', parts: [{ text: user }] }],
+      safetySettings: GEMINI_SAFETY,
+      // Thinking tokens count against maxOutputTokens on this model, so the
+      // budget is generous; JSON is asked for in the prompt and parsed leniently.
+      generationConfig: { temperature: 0, maxOutputTokens: Math.max(maxTokens, 8192) },
+    }),
+  });
+  const body = await r.text();
+  if (!r.ok) {
+    // The free tier answers capacity spikes with 503 and, intermittently, an
+    // empty-bodied 404; both are transient, so both are retried.
+    const err = new Error(`gemini ${model} (${r.status === 404 && !body ? 503 : r.status}) ${body.slice(0, 400)}`);
+    err.status = r.status === 404 && !body ? 503 : r.status;
+    throw err;
+  }
+  const d = JSON.parse(body);
+  const cand = d.candidates?.[0];
+  if (d.promptFeedback?.blockReason || !cand || cand.finishReason === 'SAFETY' || cand.finishReason === 'PROHIBITED_CONTENT') {
+    return { text: null, refused: true, refusalCategory: d.promptFeedback?.blockReason ?? cand?.finishReason ?? null, model: d.modelVersion ?? model, usage: d.usageMetadata ?? null };
+  }
+  const text = (cand.content?.parts ?? []).filter((p) => !p.thought).map((p) => p.text ?? '').join('');
+  return { text, refused: false, model: d.modelVersion ?? model, usage: d.usageMetadata ?? null, stopReason: cand.finishReason };
+}
+
 async function judgeCallOnce(model, system, user, { effort = 'medium', maxTokens = 2000 } = {}) {
+  if (isGeminiModel(model)) return geminiCall(model, system, user, maxTokens);
   if (isAnthropicModel(model)) {
     const client = getAnthropic();
     // Server-side refusal fallback is enabled by default for Claude Opus 5 code

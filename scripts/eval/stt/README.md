@@ -114,5 +114,12 @@ node scripts/eval/stt/transcribe-chrome.mjs --profile $P --locale en-NZ --root <
 node scripts/eval/stt/transcribe-chrome.mjs --robustness --profile $P --locale en-NZ --root <main checkout> --baseline <same>
 ```
 
+`--cloud-diagnostic` (offline, synthetic audio only) shows which path serves a request: it
+recognises an en-NZ clip with `processLocally` true and false, and a French clip (no pack
+installed) with both, and attributes proxy requests and NetLog URLs to each step. On
+9 Oct 2026 it showed that, with the English pack installed, Chrome 155 serves English
+requests on-device even with `processLocally = false`, so the pre-registered same-locale
+cloud control could not fail (results: `docs/eval/results-2026-10-10-e9c.md`).
+
 Same CSV contract; cache under `data/dementiabank/cache/chrome-ondevice-<locale>/`. The web
 app itself uses Chrome's cloud recogniser, so this is a proxy, as E9-A is for iOS.

@@ -69,7 +69,7 @@ const args = process.argv.slice(2);
 const has = (n) => args.includes(n);
 const argVal = (n) => { const i = args.indexOf(n); return i === -1 ? null : args[i + 1]; };
 
-const MODE = has('--dry-run') ? 'dry' : has('--probe') ? 'probe' : has('--install') ? 'install' : has('--offline-proof') ? 'proof' : 'run';
+const MODE = has('--dry-run') ? 'dry' : has('--probe') ? 'probe' : has('--install') ? 'install' : has('--offline-proof') ? 'proof' : has('--cloud-diagnostic') ? 'cloudDiag' : 'run';
 const PROFILE = argVal('--profile') ? resolve(argVal('--profile')) : null;
 const LOCALE = argVal('--locale') ?? 'en-NZ';
 const LOCALES = (argVal('--locales') ?? 'en-NZ,en-US').split(',');
@@ -111,6 +111,9 @@ const SYNTH = [
   { id: 'syn5', voice: 'Samantha', text: 'We went for a short walk to the park and then had a cup of tea.' },
   { id: 'syn6', voice: 'Daniel', text: 'Is there a support group for carers that meets near the city?' },
 ];
+
+// A sentence in a language with NO installed on-device pack (cloud diagnostic).
+const SYNTH_FR = { id: 'fr1', voice: 'Jacques', text: 'Bonjour, je voudrais prendre rendez-vous avec le médecin demain matin.' };
 
 const now = () => new Date().toISOString();
 const log = (...a) => console.log(`[${new Date().toTimeString().slice(0, 8)}]`, ...a);
@@ -714,6 +717,56 @@ async function modeProof() {
   if (!res.verdict.pass) process.exit(3);
 }
 
+// Why did the pre-registered cloud control not fail? Offline, synthetic audio
+// only: the same en-NZ clip with processLocally true and false, then a French
+// clip (no French pack installed) with false and true. Each step's proxy
+// requests and NetLog URLs are attributed by time window.
+async function modeCloudDiagnostic() {
+  const netlog = resolve(SCRATCH, `netlog-clouddiag-${Date.now()}.json`);
+  const synthPaths = { syn1: synth(SYNTH[0]), syn2: synth(SYNTH[1]), fr1: synth(SYNTH_FR) };
+  let chrome = null;
+  const g = await startGuards({ strict: false, onAbort: () => killTree(g, chrome) });
+  const server = await startPageServer({ synthPaths });
+  chrome = await launchChrome({ offline: true, netlog, proxyPort: g.sink.port });
+  g.chromePid = chrome.proc.pid;
+  g.attachNetLog(netlog);
+  const startedAt = now();
+  log(`OFFLINE cloud diagnostic — Chrome ${chrome.version}, headless ${!HEADED}, pid ${g.chromePid}`);
+  const page = await openHarnessPage(chrome.context, server.port);
+  const avail = {};
+  for (const L of ['en-NZ', 'en-US', 'fr-FR']) avail[L] = { local: await available(page, L, true), cloud: await available(page, L, false) };
+  log(`available: ${JSON.stringify(avail)}`);
+  await sleep(10000); // let start-up background requests settle before the first window
+  const steps = [];
+  const step = async (label, clip, lang, pl) => {
+    const t0 = Date.now();
+    const r = await recognise(page, `/synth/${clip.id}`, lang, pl);
+    const t1 = Date.now();
+    steps.push({ label, clip: clip.id, script: clip.text, lang, processLocally: pl, hyp: r.text, wer: wer(clip.text, r.text ?? '').wer, errors: r.errors, nResults: r.nResults, audiostart: r.audiostart, finalWaitMs: Math.round(r.finalWaitMs ?? -1), window: [t0, t1] });
+    log(`${label}: hyp ${JSON.stringify(r.text)} errors ${JSON.stringify(r.errors)} results ${r.nResults}`);
+    await sleep(5000);
+  };
+  await step('en-NZ, processLocally=true', SYNTH[0], 'en-NZ', true);
+  await step('en-NZ, processLocally=false', SYNTH[0], 'en-NZ', false);
+  await step('fr-FR (no pack), processLocally=false', SYNTH_FR, 'fr-FR', false);
+  await step('fr-FR (no pack), processLocally=true', SYNTH_FR, 'fr-FR', true);
+  await step('en-NZ, processLocally=false (second clip)', SYNTH[1], 'en-NZ', false);
+  await closeChrome(chrome);
+  await sleep(2000);
+  await g.stop(); await server.close();
+  const items = g.netlog.st.items;
+  for (const st of steps) {
+    const [a, b] = [st.window[0], st.window[1] + 2000];
+    st.proxyRequests = g.sink.seen.filter((e) => e.at >= a && e.at <= b).map((e) => `${e.method} ${e.host}`);
+    st.netlogUrls = [...new Set(items.filter((x) => x.kind === 'url' && x.at >= a && x.at <= b).map((x) => x.key))];
+    st.netlogSpeechUrls = items.filter((x) => x.speech && x.at >= a && x.at <= b).length;
+  }
+  const res = { mode: 'cloud-diagnostic', startedAt, finishedAt: now(), chrome: chrome.version, os: osVersion(), headless: !HEADED, switches: chrome.switches, request: REQ, available: avail, steps, guards: g.summary() };
+  const out = resolve(REPORT_DIR, `chrome-ondevice-cloud-diagnostic_${gitSha()}.json`);
+  writeFileSync(out, JSON.stringify(res, null, 1) + '\n');
+  log(`wrote ${out}`);
+}
+
 const cacheKey = (bytes) => createHash('sha256').update(TOOL_VERSION).update('\0').update(LOCALE).update('\0').update(bytes).digest('hex');
 const cacheFile = (key, dir = CACHE_DIR) => resolve(dir, `${key}.json`);
 
@@ -884,5 +937,5 @@ async function modeRun() {
   log(`Wrote ${OUT}: ${rows.length} rows; ${JSON.stringify(meta.counts)}`);
 }
 
-const main = { dry: modeRun, run: modeRun, probe: modeProbe, install: modeInstall, proof: modeProof }[MODE];
+const main = { dry: modeRun, run: modeRun, probe: modeProbe, install: modeInstall, proof: modeProof, cloudDiag: modeCloudDiagnostic }[MODE];
 main().catch((e) => { console.error(e?.stack ?? e); process.exit(1); });

@@ -58,9 +58,20 @@ function digitsToWords(digits) {
   return digits.split('').map((d) => ONES[Number(d)]).join(' ');
 }
 
+// A JS number holds an integer exactly only up to 15–16 digits, and a run of
+// 309 or more overflows to Infinity, which intToWords recursed on until it threw
+// a RangeError. Longer runs are not quantities anyone says aloud, so they are
+// read digit by digit instead.
+const MAX_CARDINAL_DIGITS = 15;
+
+/** Digit string (no commas) → cardinal words, or digit by digit when too long. */
+function cardinalToWords(digits) {
+  return digits.length > MAX_CARDINAL_DIGITS ? digitsToWords(digits) : intToWords(Number(digits));
+}
+
 /** "3.5" → "three point five"; integer part uses cardinal words, fraction is digit-by-digit. */
 function decimalToWords(intPart, fracPart) {
-  const whole = intToWords(Number(intPart.replace(/,/g, '')));
+  const whole = cardinalToWords(intPart.replace(/,/g, ''));
   return fracPart ? `${whole} point ${digitsToWords(fracPart)}` : whole;
 }
 
@@ -274,9 +285,10 @@ export function normalizeSpokenText(text) {
 
   // Currency: "$5" → "five dollars", "$5.50" → "five dollars and fifty cents".
   // Runs first so the '$' and cents are consumed before the plain-number rule.
-  out = out.replace(/\$(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d{2}))?/g, (_m, dollars, cents) => {
-    const d = Number(dollars.replace(/,/g, ''));
-    let phrase = `${intToWords(d)} ${d === 1 ? 'dollar' : 'dollars'}`;
+  // Thousands commas need at least one group, or "$1250" would stop at "$125".
+  out = out.replace(/\$(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{2}))?/g, (_m, dollars, cents) => {
+    const d = dollars.replace(/,/g, '');
+    let phrase = `${cardinalToWords(d)} ${Number(d) === 1 ? 'dollar' : 'dollars'}`;
     if (cents && cents !== '00') {
       const c = Number(cents);
       phrase += ` and ${intToWords(c)} ${c === 1 ? 'cent' : 'cents'}`;

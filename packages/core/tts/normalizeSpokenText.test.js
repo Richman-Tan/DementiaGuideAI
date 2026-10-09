@@ -45,6 +45,17 @@ describe('normalizeSpokenText', () => {
     it('leaves digits inside a word alone', () => {
       expect(normalizeSpokenText('a1b')).toBe('a1b');
     });
+
+    it('reads a run too long to be a quantity digit by digit instead of throwing', () => {
+      // 309+ digits overflow to Infinity, which used to recurse into a RangeError;
+      // past 15 digits a JS number is no longer exact anyway.
+      expect(normalizeSpokenText('9'.repeat(309))).toBe(Array(309).fill('nine').join(' '));
+      expect(normalizeSpokenText('1234567890123456')).toBe(
+        'one two three four five six seven eight nine zero one two three four five six');
+      expect(normalizeSpokenText('123456789012345')).toBe(
+        'one hundred twenty-three thousand four hundred fifty-six billion '
+        + 'seven hundred eighty-nine million twelve thousand three hundred forty-five');
+    });
   });
 
   describe('currency', () => {
@@ -58,6 +69,15 @@ describe('normalizeSpokenText', () => {
       expect(normalizeSpokenText('$5.50')).toBe('five dollars and fifty cents');
       expect(normalizeSpokenText('$1.01')).toBe('one dollar and one cent');
       expect(normalizeSpokenText('$3.00')).toBe('three dollars');
+    });
+
+    it('reads an amount written without thousands commas whole', () => {
+      // Used to stop at the third digit: "one hundred twenty-five dollars0".
+      expect(normalizeSpokenText('$1250 a week')).toBe('one thousand two hundred fifty dollars a week');
+    });
+
+    it('reads a very long amount digit by digit instead of throwing', () => {
+      expect(normalizeSpokenText(`$${'9'.repeat(309)}`)).toBe(`${Array(309).fill('nine').join(' ')} dollars`);
     });
   });
 

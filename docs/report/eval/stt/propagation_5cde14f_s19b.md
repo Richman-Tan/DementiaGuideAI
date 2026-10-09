@@ -1,9 +1,11 @@
 # §19B P1 — speech-recognition error propagation into retrieval and safety
 
-Pre-registered in `docs/eval/plan-19b-propagation.md` §19B.1. Generated 2026-10-09T04:26:46.233Z by `scripts/eval/stt/propagation-report.mjs` from:
+Pre-registered in `docs/eval/plan-19b-propagation.md` §19B.1. Generated 2026-10-09T04:27:42.946Z by `scripts/eval/stt/propagation-report.mjs` from:
 - variants `docs/report/eval/stt/propagation-variants_5cde14f_s19b.json` (error model `docs/report/eval/stt/error-model_5cde14f_s19b.json`, seed 42, 3 draws; question file sha256 `a7432d5d4ffe2370…`)
 - retrieval `docs/report/eval/retrieval_5cde14f_v2_s19b-propagation.json` (sha e72d595, 2026-10-09T04:01:51.640Z)
 - generation `docs/report/eval/generation_5cde14f_v2_s19b-propagation.json` (sha 5cde14f, 2026-10-09T04:26:34.272Z, gpt-4o, temperature 0, seed 42, prompt v2, system prompt sha256 aa6fd9e67cf3)
+- spend: generation 1,066,706 prompt + 80,063 completion tokens = **US$3.47** at gpt-4o US$2.5/10 per 1M (`scripts/eval/pricing.2026-09.json`, checked 2026-09-18); retrieval embeddings (`text-embedding-3-small`, US$0.02 per 1M) < US$0.01
+- regenerate: `node scripts/eval/stt/propagation-report.mjs --variants docs/report/eval/stt/propagation-variants_5cde14f_s19b.json --retrieval docs/report/eval/retrieval_5cde14f_v2_s19b-propagation.json --generation docs/report/eval/generation_5cde14f_v2_s19b-propagation.json` (runs: plan-19b-propagation.md §19B.1 "Procedure")
 
 Synthetic by construction: the typed questions are rewritten by an error model built from the committed E9 aggregates of each recogniser on the ADReSS-2020 dementia speakers. No DementiaBank text or audio is used. A blank-guarded turn is one the app would stop at its STT boundary ("I didn't catch that" on the web, a silent return to idle on mobile): no retrieval, no model call. Conditions: **clean** (typed), **W1** (whisper-1 profile), **AP** (Apple on-device profile, empty output rescued by whisper-1 as both clients do), and **AP-terminal** (the same Apple turns without the rescue; descriptive).
 

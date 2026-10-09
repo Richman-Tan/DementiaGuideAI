@@ -53,6 +53,13 @@ md.push(`Pre-registered in \`docs/eval/plan-19b-propagation.md\` §19B.1. Genera
 md.push(`- variants \`${argVal('--variants')}\` (error model \`${V.errorModel}\`, seed ${V.seed}, ${V.draws} draws; question file sha256 \`${V.questionsFileSha256.slice(0, 16)}…\`)`);
 if (R) md.push(`- retrieval \`${argVal('--retrieval')}\` (sha ${R.gitSha}, ${R.generatedAt})`);
 if (G) md.push(`- generation \`${argVal('--generation')}\` (sha ${G.gitSha}, ${G.generatedAt}, ${G.model}, temperature ${G.temperature}, seed ${G.seed}, prompt ${G.condition}, system prompt sha256 ${G.systemPromptSha256?.slice(0, 12)})`);
+const PRICES = JSON.parse(readFileSync(resolve(ROOT, 'scripts/eval/pricing.2026-09.json'), 'utf8'));
+if (G) {
+  const pt = G.rows.reduce((t, r) => t + (r.promptTokens ?? 0), 0), ct = G.rows.reduce((t, r) => t + (r.completionTokens ?? 0), 0);
+  const g = PRICES.openai['gpt-4o'];
+  md.push(`- spend: generation ${pt.toLocaleString('en-NZ')} prompt + ${ct.toLocaleString('en-NZ')} completion tokens = **US$${((pt * g.input + ct * g.output) / 1e6).toFixed(2)}** at gpt-4o US$${g.input}/${g.output} per 1M (\`scripts/eval/pricing.2026-09.json\`, checked ${PRICES.checked}); retrieval embeddings (\`text-embedding-3-small\`, US$${PRICES.openai['text-embedding-3-small'].input} per 1M) < US$0.01`);
+}
+md.push(`- regenerate: \`node scripts/eval/stt/propagation-report.mjs ${args.map(a => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' ')}\` (runs: plan-19b-propagation.md §19B.1 "Procedure")`);
 md.push('', `Synthetic by construction: the typed questions are rewritten by an error model built from the committed E9 aggregates of each recogniser on the ADReSS-2020 dementia speakers. No DementiaBank text or audio is used. A blank-guarded turn is one the app would stop at its STT boundary ("I didn't catch that" on the web, a silent return to idle on mobile): no retrieval, no model call. Conditions: **clean** (typed), **W1** (whisper-1 profile), **AP** (Apple on-device profile, empty output rescued by whisper-1 as both clients do), and **AP-terminal** (the same Apple turns without the rescue; descriptive).`, '');
 
 // ── Transcripts ──────────────────────────────────────────────────────────────

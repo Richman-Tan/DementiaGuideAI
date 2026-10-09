@@ -43,6 +43,7 @@ const col = (d, k) => d.rows.filter(x => x[k] !== '' && x[k] != null).map(x => N
 const md = [];
 md.push(`# E4-S across days — per-day medians and spread`, '');
 md.push(`Pre-registered in \`docs/eval/plan-19b-propagation.md\` §19B.4. Generated ${new Date().toISOString()} at \`${gitSha()}\` by \`scripts/eval/latency/compare-days.mjs\`. **Headless pipeline, not perceived in-browser latency.**`, '');
+md.push(`Regenerate: \`node scripts/eval/latency/compare-days.mjs ${args.join(' ')}\`. No API call; spend for each day is in that run's own report.`, '');
 md.push('| Day (NZDT) | Raw file | Measured turns | First turn (UTC) | Last turn (UTC) |', '|---|---|---:|---|---|');
 for (const d of data) md.push(`| ${d.day} | \`${d.path.replace(/^.*\//, '')}\` | ${d.rows.length} | ${d.startedAt ?? '—'} | ${d.finishedAt ?? '—'} |`);
 md.push('');

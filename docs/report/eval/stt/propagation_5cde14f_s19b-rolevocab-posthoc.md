@@ -2,9 +2,10 @@
 
 > **POST-HOC SENSITIVITY, not pre-registered (results §19B.1.4): the near-neighbour substitution vocabulary is limited to each role's own items. Retrieval only. The verdict column below applies the pre-registered thresholds for comparison; it does not replace the pre-registered result in propagation_5cde14f_s19b.md.**
 
-Pre-registered in `docs/eval/plan-19b-propagation.md` §19B.1. Generated 2026-10-09T04:09:30.686Z by `scripts/eval/stt/propagation-report.mjs` from:
+Pre-registered in `docs/eval/plan-19b-propagation.md` §19B.1. Generated 2026-10-09T04:27:43.227Z by `scripts/eval/stt/propagation-report.mjs` from:
 - variants `docs/report/eval/stt/propagation-variants_5cde14f_s19b-rolevocab.json` (error model `docs/report/eval/stt/error-model_5cde14f_s19b.json`, seed 42, 3 draws; question file sha256 `fc543e504abcef90…`)
 - retrieval `docs/report/eval/retrieval_5cde14f_v2_s19b-propagation-rolevocab.json` (sha e8a25e7, 2026-10-09T04:09:18.764Z)
+- regenerate: `node scripts/eval/stt/propagation-report.mjs --variants docs/report/eval/stt/propagation-variants_5cde14f_s19b-rolevocab.json --retrieval docs/report/eval/retrieval_5cde14f_v2_s19b-propagation-rolevocab.json --out docs/report/eval/stt/propagation_5cde14f_s19b-rolevocab-posthoc --banner "POST-HOC SENSITIVITY, not pre-registered (results §19B.1.4): the near-neighbour substitution vocabulary is limited to each role's own items. Retrieval only. The verdict column below applies the pre-registered thresholds for comparison; it does not replace the pre-registered result in propagation_5cde14f_s19b.md."` (runs: plan-19b-propagation.md §19B.1 "Procedure")
 
 Synthetic by construction: the typed questions are rewritten by an error model built from the committed E9 aggregates of each recogniser on the ADReSS-2020 dementia speakers. No DementiaBank text or audio is used. A blank-guarded turn is one the app would stop at its STT boundary ("I didn't catch that" on the web, a silent return to idle on mobile): no retrieval, no model call. Conditions: **clean** (typed), **W1** (whisper-1 profile), **AP** (Apple on-device profile, empty output rescued by whisper-1 as both clients do), and **AP-terminal** (the same Apple turns without the rescue; descriptive).
 

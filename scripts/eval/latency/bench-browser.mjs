@@ -183,17 +183,52 @@ async function elevenMeter() {
   } catch { return null; }
 }
 
-// ── TCC watchdog: any real-microphone access request kills Chrome ────────────
-function startWatchdog(onTrip) {
-  const wd = spawn('/usr/bin/log', ['stream', '--style', 'compact', '--predicate', 'subsystem == "com.apple.TCC" AND eventMessage CONTAINS "kTCCServiceMicrophone"']);
-  const seen = { preflight: 0, trips: [] };
+// ── TCC watchdog: a real-microphone access by THE HARNESS CHROME kills it ────
+// macOS logs every microphone access request (tccd). Requests are correlated
+// by msgID: AUTHREQ_CTX gives the service and whether it is a real access
+// (preflight=no) or a status check; AUTHREQ_ATTRIBUTION gives the accessing
+// pid and the responsible app. The harness Chrome runs with Terminal as its
+// responsible app and its own --user-data-dir; any other app on the Mac (for
+// example the author's own Chrome in a call) is recorded but does not stop
+// the run. A first version stopped on any process and was tripped by the
+// author's own Chrome at 14:45:10 (see the results note).
+function startWatchdog(onTrip, isMine) {
+  const wd = spawn('/usr/bin/log', ['stream', '--style', 'compact', '--predicate',
+    'subsystem == "com.apple.TCC" AND (eventMessage CONTAINS "AUTHREQ_CTX" OR eventMessage CONTAINS "AUTHREQ_ATTRIBUTION" OR eventMessage CONTAINS "AUTHREQ_PROMPTING")']);
+  const seen = { preflight: 0, trips: [], others: {} };
+  const byMsg = new Map();
+  const decide = (id) => {
+    const m = byMsg.get(id);
+    if (!m || m.done || !m.mic || m.preflight !== 'no' || !m.attr) return;
+    m.done = true;
+    const mine = (m.pid && isMine(m.pid)) || m.responsible === 'com.apple.Terminal';
+    if (mine) { seen.trips.push(`${id} pid ${m.pid} responsible ${m.responsible}`); onTrip(`msgID ${id}, accessing pid ${m.pid}, responsible ${m.responsible}`); }
+    else { const k = `${m.responsible ?? '?'} (${m.accessing ?? '?'})`; seen.others[k] = (seen.others[k] ?? 0) + 1; }
+  };
   let buf = '';
   wd.stdout.on('data', (d) => {
     buf += String(d);
     const lines = buf.split('\n'); buf = lines.pop();
     for (const line of lines) {
-      if (/preflight=no|AUTHREQ_PROMPTING/.test(line)) { seen.trips.push(line.slice(0, 240)); onTrip(line); }
-      else if (/preflight=yes/.test(line)) seen.preflight++;
+      const id = /msgID=([\d.]+)/.exec(line)?.[1];
+      if (!id) continue;
+      const m = byMsg.get(id) ?? {};
+      byMsg.set(id, m);
+      if (/AUTHREQ_CTX/.test(line)) {
+        m.mic = /service=kTCCServiceMicrophone/.test(line);
+        m.preflight = /preflight=no/.test(line) ? 'no' : 'yes';
+        if (m.mic && m.preflight === 'yes') seen.preflight++;
+        if (m.mic && m.preflight === 'no' && !m.attr) setTimeout(() => { if (!m.done && !m.attr) { m.attr = true; m.responsible = 'unknown'; m.done = true; seen.trips.push(`${id} no attribution`); onTrip(`msgID ${id}: real-microphone request with no attribution`); } }, 3000);
+      } else if (/AUTHREQ_ATTRIBUTION/.test(line)) {
+        m.attr = true;
+        m.responsible = /responsible=\{TCCDProcess: identifier=([\w.]+)/.exec(line)?.[1] ?? null;
+        m.pid = Number(/accessing=\{TCCDProcess: identifier=[\w.]+, pid=(\d+)/.exec(line)?.[1]) || null;
+        m.accessing = /accessing=\{TCCDProcess: identifier=([\w.]+)/.exec(line)?.[1] ?? null;
+      } else if (/AUTHREQ_PROMPTING/.test(line) && /kTCCServiceMicrophone/.test(line) && /com\.apple\.Terminal/.test(line)) {
+        seen.trips.push(`${id} prompt`); onTrip(`msgID ${id}: microphone prompt for Terminal`);
+      }
+      decide(id);
+      if (byMsg.size > 5000) byMsg.clear();
     }
   });
   return { stop: () => wd.kill(), seen };
@@ -448,9 +483,10 @@ async function main() {
 
   // Chrome + watchdog.
   let chrome = null;
-  const watchdog = startWatchdog((line) => { abortReason = `TCC watchdog: ${line.slice(0, 160)}`; try { chrome?.kill('SIGKILL'); } catch { /* gone */ } });
-  await sleep(1500);
   const udd = mkdtempSync(join(os.tmpdir(), 'e4b-chrome-'));
+  const isMine = (pid) => { try { return execFileSync('ps', ['-o', 'command=', '-p', String(pid)]).toString().includes(udd); } catch { return false; } };
+  const watchdog = startWatchdog((why) => { abortReason = `TCC watchdog: ${why}`; try { chrome?.kill('SIGKILL'); } catch { /* gone */ } }, isMine);
+  await sleep(1500);
   const switches = ['--mute-audio', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--disable-audio-input',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows',
     '--no-first-run', '--no-default-browser-check', '--window-size=400,760', '--window-position=1300,120'];
@@ -659,7 +695,8 @@ async function main() {
   meta.finishedAt = new Date().toISOString();
   meta.abortReason = abortReason;
   meta.violations = violations;
-  meta.watchdog = watchdog.seen.trips.length ? `**TRIPPED** ${watchdog.seen.trips.length}×` : `no real-microphone access request (${watchdog.seen.preflight} status-only preflights)`;
+  const others = Object.entries(watchdog.seen.others).map(([k, v]) => `${k} ×${v}`).join(', ');
+  meta.watchdog = (watchdog.seen.trips.length ? `**TRIPPED** ${watchdog.seen.trips.length}× (${watchdog.seen.trips.join('; ')})` : `no real-microphone access request by the harness Chrome (${watchdog.seen.preflight} status-only preflights)`) + (others ? `; other apps' microphone use, ignored: ${others}` : '');
   meta.adminStub = `${server.stats.totals.adminCalls} calls, all \`bump_study_usage\` answered locally${violations.some((v) => /admin stub/.test(v)) ? '; **refused calls present**' : ''}`;
   meta.blockedCount = blockedCount;
   meta.supabaseAudit = Object.entries(audit).map(([k, v]) => `${k} ×${v}`).join(', ') || 'none';

@@ -20,8 +20,11 @@
 //   embeddingSha256       sha256 over the sorted "id\t<pgvector text>\n" lines
 //                         (for later comparison; September kept no vectors)
 //   embeddedAfterSnapshot rows whose embedded_at is later than the snapshot day
-//   vsSeptember           ids added/removed and rows whose content_hash, title
-//                         or tags differ from the September CSV
+//   vsSeptember           ids added/removed and rows whose content_hash, title,
+//                         tags, category or provenance columns differ from the
+//                         September CSV. Text identity is checkable only for rows
+//                         that had a stored content_hash in September (the
+//                         iSupport rows have none) — reported as contentComparable
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -39,7 +42,7 @@ const sha256 = (s) => createHash('sha256').update(s).digest('hex');
 
 async function fetchAll() {
   const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
-  const select = 'id,category,title,tags,content_hash,content,embedded_at,embedding_model';
+  const select = 'id,category,title,tags,document_id,source_version,country,chunk_level,content_hash,content,embedded_at,embedding_model';
   const rows = [];
   for (let offset = 0; ; offset += 1000) {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/knowledge_chunks?select=${select}&order=id.asc&limit=1000&offset=${offset}`, { headers });
@@ -103,11 +106,12 @@ export async function kbFingerprint() {
     if ((s.title ?? '') !== (r.title ?? '')) diffs.push('title');
     if ((s.tags ?? '') !== (Array.isArray(r.tags) ? r.tags.join('|') : (r.tags ?? ''))) diffs.push('tags');
     if ((s.category ?? '') !== (r.category ?? '')) diffs.push('category');
+    for (const c of ['document_id', 'source_version', 'country', 'chunk_level']) if ((s[c] ?? '') !== String(r[c] ?? '')) diffs.push(c);
     if (diffs.length) changed.push({ id, diffs });
   }
   return {
     at,
-    source: `${SUPABASE_URL.replace(/^https?:\/\//, '').split('.')[0]}… knowledge_chunks (anon GET)`,
+    source: 'live knowledge_chunks table (PostgREST, anon key, GET only)',
     count: rows.length,
     byCategory,
     idsContentHashSha256,
@@ -120,6 +124,10 @@ export async function kbFingerprint() {
       snapshot: `${SEPTEMBER_CSV} (fa69e62, 2026-09-13)`,
       septemberCount: sept.length,
       septemberIdsContentHashSha256: septHash,
+      // The September CSV has a content_hash only where ingest wrote one (the
+      // curated rows); for rows without one, text identity cannot be checked.
+      contentComparable: sept.filter((r) => r.content_hash).length,
+      contentNotComparable: sept.filter((r) => !r.content_hash).length,
       identical: added.length === 0 && removed.length === 0 && changed.length === 0 && septHash === idsContentHashSha256,
       added, removed, changed,
     },

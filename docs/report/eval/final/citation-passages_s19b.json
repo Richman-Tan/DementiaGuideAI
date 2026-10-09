@@ -1,0 +1,346 @@
+{
+  "fetchedAt": "2026-10-09T03:30:00.758Z",
+  "snapshot": "docs/report/kb_chunks_reference.csv",
+  "chunks": {
+    "alzheimers_disease_002": {
+      "hashStatus": "verified",
+      "contentSha256": "29f327c64123094b928a2bc93d39e49c8d981d32da7d62e51269a32468f608d9"
+    },
+    "bestpractices_001": {
+      "hashStatus": "verified",
+      "contentSha256": "8c98d5e8c3a5d5a018dd7ebe3c78000881b7ba9c7b63e81f089b794ca5b7ce3e"
+    },
+    "bestpractices_002": {
+      "hashStatus": "verified",
+      "contentSha256": "2519ab10a0e1a99baae225f9589bb569dd9da8e6288ad1d240fb764f57904f66"
+    },
+    "bestpractices_003": {
+      "hashStatus": "verified",
+      "contentSha256": "671314aed504e5b3f6dab7cfc383913f69196f5daf69dbcb65e55cf516169121"
+    },
+    "bestpractices_004": {
+      "hashStatus": "verified",
+      "contentSha256": "7df11f2f6f05ffb442f764d9595dc0bd6295c342102b9ae5c06c8254d941b8dc"
+    },
+    "bestpractices_005": {
+      "hashStatus": "verified",
+      "contentSha256": "91e4dfe2f73006a79022f184a5082fe54cdd9905f1658d28dbaa59c54caf6bfd"
+    },
+    "bestpractices_007": {
+      "hashStatus": "verified",
+      "contentSha256": "21170537856c3a5dcc553001b4e0e1d27192cbb1dfe4ab107cbf59a534afa93a"
+    },
+    "bestpractices_008": {
+      "hashStatus": "verified",
+      "contentSha256": "4e6fc3ddf2764b05587d15312062b0fd028e3187a3ee5da1fed67cfd266f58b6"
+    },
+    "caregiving_001": {
+      "hashStatus": "verified",
+      "contentSha256": "d5ba71b36c4bedf84df9d70b1e30a68c92ec6ad261cd563a2c92fbf3318e78da"
+    },
+    "caregiving_002": {
+      "hashStatus": "verified",
+      "contentSha256": "e1f3a10fdcfa1ea19f04d8c3d1e80a39925eb3d92babe1329ed1b8f9d691ec00"
+    },
+    "caregiving_003": {
+      "hashStatus": "verified",
+      "contentSha256": "b0ad59a87804b9251c2ed4b3e16e290964da28019c265ffefb366af6ce5113e9"
+    },
+    "caregiving_004": {
+      "hashStatus": "verified",
+      "contentSha256": "28a064c0603b7a52d288302cfc9cb8a857b59dbafb8c0242a51f16c51780e977"
+    },
+    "caregiving_005": {
+      "hashStatus": "verified",
+      "contentSha256": "0a92b43c2b1da509102d779504f4e32b31e39f5b56d72cfe6ce2ca6f85614b03"
+    },
+    "caregiving_006": {
+      "hashStatus": "verified",
+      "contentSha256": "53832342717497f9a15b0047cce2ca202a3bd298285d1506863bbf7d4ac9309d"
+    },
+    "caregiving_008": {
+      "hashStatus": "verified",
+      "contentSha256": "0a5dccc0b07b28e57929076c80923ddd25f7d75fe7f647d867aaf99ef66003a5"
+    },
+    "caregiving_009": {
+      "hashStatus": "verified",
+      "contentSha256": "044b217755431a421e96963a93db49c5390b9d12a3c1505d09e81f0ae3fc807c"
+    },
+    "caregiving_010": {
+      "hashStatus": "verified",
+      "contentSha256": "125cd8493e2e72b67b04aed3418120498cd07270878946fa6afff4777d794a5b"
+    },
+    "clinical_001": {
+      "hashStatus": "verified",
+      "contentSha256": "9bad0fb80b91ce181edda19edd9160f513e05b4a7b053d6081666c71b2ac9c87"
+    },
+    "clinical_002": {
+      "hashStatus": "verified",
+      "contentSha256": "d8fcf85ac7b20b8783fcac50a227215ae20d18b0e92026dcbd390bc139dcdb51"
+    },
+    "clinical_003": {
+      "hashStatus": "verified",
+      "contentSha256": "7500bc2f2826ea19fe34ba9b713c7dfcee7724da6bf41cea8e05b6ad5933063a"
+    },
+    "clinical_004": {
+      "hashStatus": "verified",
+      "contentSha256": "dc6aa33d440a2c1921d0dc0c2ddbc89e714f770597eb93a235739574d71ee714"
+    },
+    "clinical_005": {
+      "hashStatus": "verified",
+      "contentSha256": "5785b92cf50f15267d0d7d85ab0357b8ae7271ecb2b47019beaa5371b6e68fba"
+    },
+    "clinical_006": {
+      "hashStatus": "verified",
+      "contentSha256": "773b0adeff07df2e2cfee6664b645555c1f7da6d669340acf7962f71d1e78ee9"
+    },
+    "clinical_007": {
+      "hashStatus": "verified",
+      "contentSha256": "fe8ee7e7a5d2b454ae00d70704f1f98425dfa034cd53d93e51c086b82edee253"
+    },
+    "clinical_008": {
+      "hashStatus": "verified",
+      "contentSha256": "c1ac195b40b151046b09f632a1c590277b6f3a7838d99ace4bf97b99738fa6d6"
+    },
+    "clinical_010": {
+      "hashStatus": "verified",
+      "contentSha256": "d0f22f11bf554b581c2c161ebdcd5ee8612e3817ca8d5bbc3753e5f941dc3e5e"
+    },
+    "communication_001": {
+      "hashStatus": "verified",
+      "contentSha256": "208d7297a1bd1144f6681a93b5f2bab615e9dbf3a9ccf101363433332bd9e16b"
+    },
+    "communication_002": {
+      "hashStatus": "verified",
+      "contentSha256": "aede6d14bb9b01a897ba84b89f6a90e3698ef242732f115c046a6ec9e41b7cc3"
+    },
+    "communication_003": {
+      "hashStatus": "verified",
+      "contentSha256": "299b106ee36f0dfee4e76854987899e8ac71b15e7cb44ffe1d15b7f97ba3f948"
+    },
+    "communication_006": {
+      "hashStatus": "verified",
+      "contentSha256": "8530f31dc8e3e6debb97d8694a66e0af90f9e7b74af097dc04e38fbf93aad4a3"
+    },
+    "dg_delirium_v2026_09_736cfad1": {
+      "hashStatus": "verified",
+      "contentSha256": "fb67e79d28b3f289ddd4a2d0d9f30f094e653891dbf4f63c9f795910cf5d1ab7"
+    },
+    "dg_delirium_v2026_09_9d3492c4": {
+      "hashStatus": "verified",
+      "contentSha256": "0c1d2b4f9c0d638fefe23f8aafd21e4e7d34a4592713a81bc6d3441e7bf05cd1"
+    },
+    "homesafety_001": {
+      "hashStatus": "verified",
+      "contentSha256": "66e146bfea4b9ed81da9c8c362f30d163afd9e4ef32ebac2362d76cebed206a5"
+    },
+    "homesafety_002": {
+      "hashStatus": "verified",
+      "contentSha256": "2efd5ed4a2d4a7d7d36edc49d08d1e351a389919c4a2288df03e049dc0d75c73"
+    },
+    "homesafety_003": {
+      "hashStatus": "verified",
+      "contentSha256": "e78c3b22e1168dfe4fac16a45e0ad8a700ff4a00b2d302870c95d1669d1fcad0"
+    },
+    "homesafety_004": {
+      "hashStatus": "verified",
+      "contentSha256": "3f5d4c2e4ca94062348de79160fd14941e93ba9452dbc524a0f6ca2e7563937f"
+    },
+    "homesafety_005": {
+      "hashStatus": "verified",
+      "contentSha256": "ab7497d5c8c8a87fa3a533d84fdee975bf719a4c39f8950ecd93523423c22090"
+    },
+    "homesafety_006": {
+      "hashStatus": "verified",
+      "contentSha256": "6f4e06afbce2678e6638f6341db8aeadd0c9ff916d7d147292adb183af296deb"
+    },
+    "homesafety_007": {
+      "hashStatus": "verified",
+      "contentSha256": "bec15101c6822a7353053d11c00a9701937efa99abbf42d38108e1c82ed17fd6"
+    },
+    "homesafety_009": {
+      "hashStatus": "verified",
+      "contentSha256": "de78bb8dfbca2ba2c13e41283f117f76c3e08fd4a43962530ed29192dfe4c8d1"
+    },
+    "homesafety_011": {
+      "hashStatus": "verified",
+      "contentSha256": "ba900039cb90f5cbad28b645dc1ba4fc9a8062994943598395ad9d69760cf188"
+    },
+    "isupport_nz_c010": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "3bdd620d57c998f4ac3a0f707f2b657ff524939571c2dfd3a1a118038f9667ec"
+    },
+    "isupport_nz_c014": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "50d86b7c0e840eea081360bedf2b9ec73ee99c9bf2f667d664520f5efdfe61d6"
+    },
+    "isupport_nz_c015": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "4a7bd3f90ef820681709c086598f26c3353d5bdfebba143cede5065864c0acd0"
+    },
+    "isupport_nz_c017": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "a32e7485595d17f81a666c9f80d7d19903e55c9b068f5da005190909d5c90ae6"
+    },
+    "isupport_nz_c019": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "0456917f1a8158479af89abaa5c1595c756c5faba6270c8b01bd7a3a52c26e97"
+    },
+    "isupport_nz_c020": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "c1d851ffc433ae21b331a7e2e64bd52dfeb783f2d52a0bed2637f24a8d2d4cb3"
+    },
+    "isupport_nz_c032": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "c67b79e362c76914a27ca4089ae5d937c78948eaf1c8ff94d6b80ce4dc7d4846"
+    },
+    "isupport_nz_c078": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "4f3ab38f88e47a788df1472b28a24da21b3ab09afe9bb63355d7f2f57a63c9b8"
+    },
+    "isupport_nz_c079": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "8ce910c8716a258818a413e2e726c88064f8742ccc54a8e1106e68d834685f5f"
+    },
+    "isupport_nz_c086": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "6589619db43f6edd69c2b2d74c029c0b44cd7f083fe70ec17f3b28f2168c14cd"
+    },
+    "isupport_nz_c089": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "ef1141af5f4834504400adb7647923120bd745d9aa9405b2f573bbe53a74857c"
+    },
+    "isupport_nz_c094": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "2442956afabeefb7d38e157f8809277aa90de80330665eb8396193ab0b94002d"
+    },
+    "isupport_nz_c096": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "170453171c656305f66c746bff507e920a570b411cd4a87ca689b9519b7d0c07"
+    },
+    "isupport_nz_c107": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "b075c0e9b0ad35afc640a305e469d00c46754d9efa38ac3d37d7948817b22020"
+    },
+    "isupport_nz_c113": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "6de952b921468c7c29758a64575e03cdfefaa40fe01c522159154865fb3ddfa0"
+    },
+    "isupport_nz_c121": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "787618a6cd864051b7158f38b75208c6d20d0a6e19cf6e87f6dbb98ae41da822"
+    },
+    "isupport_nz_c125": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "8b0322c703949e347581bc09c5e5126897de113e62533e57c8917ffdf1e9224c"
+    },
+    "isupport_nz_c131": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "394a2bd7bc0cf7fb5604b2ccadf1622bfaac89570afa8e682c313c7b9ac98d1c"
+    },
+    "isupport_nz_c141": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "c2074b8ddd51b9fabf4610e15ab076d8a11873eab9879fef40fc8c7039b6b462"
+    },
+    "isupport_who_c020": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "de481cee86520afb9612cbda5ef395329d3745824c795e0500c216d485a3dfb3"
+    },
+    "isupport_who_c065": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "793f14f78dd7f2da1660720146c8f2d3384e0564ab88a0aefdeb471322b73674"
+    },
+    "isupport_who_c072": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "f192eefa6058230b880d228d5d13adcf363df00184fa6ff484e9ee6426eb8026"
+    },
+    "isupport_who_c093": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "dd556d38fc14e0376d24f3042b359166c5e0b0f3b1b339a5928dccd760beadda"
+    },
+    "isupport_who_c099": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "18b1b28e556f93428a5e10f2161cc2a7c1b1a8a483c8a499f1ab2a1ed279103a"
+    },
+    "isupport_who_c100": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "65d89ba66c97fb2809b112a558f9645bdd2fbaa1cf9a0472ee55583b6e9f0a4d"
+    },
+    "isupport_who_c110": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "ee39eb8085674271d798459b6ae104ec9758154ca32da186d140765122770080"
+    },
+    "isupport_who_c113": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "75a4a1e83c54569c03ce4e8b9f37cedf93bf96890c3896e6e560f75d1cfb9de6"
+    },
+    "isupport_who_c117": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "f272e7b618f883ffa9163340f96dcfe0488d43600d10263eb099bdfe6934183b"
+    },
+    "isupport_who_c119": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "d47379eaae62b72f7c6329f571805d673cc9d071c46e5440a5488a825446def3"
+    },
+    "isupport_who_c122": {
+      "hashStatus": "unrecorded",
+      "contentSha256": "7d3ecedba90e6b198b73d26f6f61bff3724d248c40d13f410f17a21ab49f6c76"
+    },
+    "prevention_001": {
+      "hashStatus": "verified",
+      "contentSha256": "e8962a450daa92691ec0ad99e5869660ea748c0e6ec8dbe24201b5dc31190e0b"
+    },
+    "prevention_002": {
+      "hashStatus": "verified",
+      "contentSha256": "6f3e171180bcefb31aca0cc3ad5a386c647763639024825c9fbccd773fb86ecc"
+    },
+    "prevention_003": {
+      "hashStatus": "verified",
+      "contentSha256": "7b6adf0d28192117c188889d1546f67b4fa61abdeeb8113e958d93a8ba9c72a9"
+    },
+    "prevention_005": {
+      "hashStatus": "verified",
+      "contentSha256": "534894df3775e3d81563ce1105978a3e2056446520393a65929e2b6ee7e72431"
+    },
+    "prevention_006": {
+      "hashStatus": "verified",
+      "contentSha256": "1741615d560f49301194aa5084a04e53aa2ca8af29aa42ca107712e171554437"
+    },
+    "prevention_007": {
+      "hashStatus": "verified",
+      "contentSha256": "b96162a6ef8751bf5c055f70cd91fd9111d9af918af04aa59633d868eef17ce4"
+    },
+    "wellbeing_001": {
+      "hashStatus": "verified",
+      "contentSha256": "3907ce41ebf4dc7e54bd2aabfeea97799618966dd5b66785a7c38298db3fc293"
+    },
+    "wellbeing_003": {
+      "hashStatus": "verified",
+      "contentSha256": "c19753c665054dc791aa103d83a5e94e543d036010482a147bac976ddbe3bd78"
+    },
+    "wellbeing_004": {
+      "hashStatus": "verified",
+      "contentSha256": "7b1738bb15d23acd598ed639e38083f7687367b17418256f9392ed7fbad77748"
+    },
+    "wellbeing_006": {
+      "hashStatus": "verified",
+      "contentSha256": "fc8360c8f6dec55c2d3fa86339b8a75966f58480d754083e520ee138bd5d7cb8"
+    },
+    "wellbeing_007": {
+      "hashStatus": "verified",
+      "contentSha256": "cd0afd6cbced67c6d643f86497a8b4dd2ce6040305796067bf23969bea9109bd"
+    },
+    "wellbeing_008": {
+      "hashStatus": "verified",
+      "contentSha256": "f7d323328ebf29adc5db412271623cce97e711773034719ad11019547a683dab"
+    },
+    "wellbeing_010": {
+      "hashStatus": "verified",
+      "contentSha256": "445602ff8d57186e607c9837001c9712be817e92eb236f7ffa75359fbc7390f9"
+    },
+    "wellbeing_011": {
+      "hashStatus": "verified",
+      "contentSha256": "1390e0233fbdaa9317ed9655671a9213ed958896077ee9f5b94ae05591ede0c5"
+    }
+  }
+}

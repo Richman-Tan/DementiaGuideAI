@@ -273,7 +273,7 @@
 (() => {
   'use strict';
   const DATA = JSON.parse(document.getElementById('r3-data').textContent);
-  const STORE_KEY = 'r3-rating-state';
+  const STORE_NAME = 'r3-rating-state';
   const $ = (id) => document.getElementById(id);
   const nowIso = () => new Date().toISOString();
   const ITEMS = DATA.items || [];
@@ -287,9 +287,9 @@
   // ── storage (every access guarded: private windows and blocked storage throw) ──
   const storageOk = (() => { try { const k = '__r3_probe'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; } catch { return false; } })();
   if (!storageOk) $('storageWarn').hidden = false;
-  const load = () => { try { const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); return s && s.pageVersion === DATA.pageVersion ? s : null; } catch { return null; } };
-  const save = () => { if (!state) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch { /* the download still works */ } };
-  const wipe = () => { try { localStorage.removeItem(STORE_KEY); } catch { /* nothing stored */ } };
+  const load = () => { try { const s = JSON.parse(localStorage.getItem(STORE_NAME) || 'null'); return s && s.pageVersion === DATA.pageVersion ? s : null; } catch { return null; } };
+  const save = () => { if (!state) return; try { localStorage.setItem(STORE_NAME, JSON.stringify(state)); } catch { /* the download still works */ } };
+  const wipe = () => { try { localStorage.removeItem(STORE_NAME); } catch { /* nothing stored */ } };
 
   let state = load();
 

@@ -28,7 +28,7 @@ const { parseCsv } = require('./lib/csv.js');
 
 const DIMS = ['groundedness', 'correctness', 'helpfulness', 'tone', 'safety'];
 const GATE = 0.6, DEGENERATE = 0.95, C4_CUT = 1.64;
-const PREREG = '327cbeb';
+const PREREG = '327cbeb', CLARIFIED = 'fae1d30';
 const args = process.argv.slice(2);
 const argVal = (n, d = null) => { const i = args.indexOf(n); return i === -1 ? d : args[i + 1]; };
 const abs = (p) => (isAbsolute(p) ? p : resolve(ROOT, p));
@@ -130,7 +130,7 @@ try { sha = execFileSync('git', ['-C', ROOT, 'rev-parse', '--short', 'HEAD'], { 
 // ── write ────────────────────────────────────────────────────────────────────
 const md = [];
 md.push('# E2-R3 — independent health-care rater (plan §18.5)', '');
-md.push(`Pre-specification: \`docs/eval/evaluation-plan.md\` §18.5, committed and pushed as \`${PREREG}\` before the rating link was shared. Summary written by \`scripts/eval/r3-summarise.mjs\` at \`${sha}\` on ${new Date().toISOString().slice(0, 10)}.`, '');
+md.push(`Pre-specification: \`docs/eval/evaluation-plan.md\` §18.5, committed and pushed as \`${PREREG}\` (C2 clarification \`${CLARIFIED}\`) before the rating link was shared. Summary written by \`scripts/eval/r3-summarise.mjs\` at \`${sha}\` on ${new Date().toISOString().slice(0, 10)}.`, '');
 md.push('R3 is **a health-care worker independent of the project**. No name, workplace or job title is recorded here.', '');
 md.push('| Item | Value |', '|---|---|');
 md.push('| Items | the 60 round-1 items, same order and rubric wording (2026-09-13) as R1 and R2; 199 judgements |');

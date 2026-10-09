@@ -54,7 +54,7 @@ const fail = (msg) => { console.error(`r3-make-page: ${msg}`); process.exit(1); 
 // and the word KEY. Word-bounded, so "v2" inside an unrelated token is not hit.
 export const FORBIDDEN = [
   /\bp0\b/i, /\bv1\b/i, /\bv2\b/i, /nosafety/i, /\bv2[:_-]?none\b/i, /:none\b/i, /_none\b/i,
-  /\boracle\b/i, /:final\b/i, /_final\b/i, /\bgeneration_/i, /8a92ecd/i, /\bKEY\b/, /\bx3\b/i,
+  /\boracle\b/i, /:final\b/i, /_final\b/i, /\bgeneration_/i, /8a92ecd/i, /\bKEY\b/, /\bx3\b/i, /KEY/,
   /prompt[ _-]?version/i, /human-sheet/i, /\.json\b/i,
 ];
 // Words the page's own text must not use (they are fine inside an answer or
@@ -73,7 +73,8 @@ if (args.includes('--check')) {
   const file = abs(argVal('--check'));
   const text = readFileSync(file, 'utf8');
   const hits = scanForLeaks(text);
-  const none = [...text.matchAll(/\bnone\b/gi)].length;
+  // JSON escapes such as "\none" (a newline, then "one") are not the word.
+  const none = [...text.replace(/\\n/g, ' ').matchAll(/\bnone\b/gi)].length;
   console.log(`${file}: ${hits.length} forbidden-token hit(s); the bare word "none" occurs ${none} time(s)`);
   for (const h of hits.slice(0, 20)) console.log(`  ${h.pattern} … ${h.context}`);
   process.exit(hits.length ? 1 : 0);

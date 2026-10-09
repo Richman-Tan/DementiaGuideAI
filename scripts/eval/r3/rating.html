@@ -1,0 +1,549 @@
+<!doctype html>
+<!--
+  E2-R3 answer-rating page (docs/eval/evaluation-plan.md, section 18.5).
+  Built by scripts/eval/r3-make-page.mjs, which inlines the rater-facing item
+  content (question, passages, reference material, answer, applicable aspects
+  and the rubric wording) into the r3-data block below. Static and
+  self-contained: no network requests, no backend. Progress is kept in this
+  browser's localStorage; the only output is the CSV the rater downloads.
+-->
+<html lang="en-NZ">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>DementiaGuide Answer Rating</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --text: #1b1b1d; --muted: #55555b; --line: #d6d3cc;
+    --accent: #1f5f8b; --accent-text: #ffffff; --chip: #e9f0f6; --sel: #dbe9f4;
+    --warn: #7a4300; --warn-bg: #fff3e0; --ok: #1f6b3a; --quote: #f1efea;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161719; --panel: #202124; --text: #ececec; --muted: #a9a9b0; --line: #3b3c41;
+      --accent: #78b6e4; --accent-text: #0c1a25; --chip: #26313b; --sel: #1f3446;
+      --warn: #ffc27a; --warn-bg: #3a2a14; --ok: #7fd49c; --quote: #26272b;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161719; --panel: #202124; --text: #ececec; --muted: #a9a9b0; --line: #3b3c41;
+    --accent: #78b6e4; --accent-text: #0c1a25; --chip: #26313b; --sel: #1f3446;
+    --warn: #ffc27a; --warn-bg: #3a2a14; --ok: #7fd49c; --quote: #26272b;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 1240px; margin: 0 auto; padding: 20px 16px 64px; }
+  h1 { font-size: 1.55rem; line-height: 1.25; margin: 0 0 12px; }
+  h2 { font-size: 1.2rem; line-height: 1.3; margin: 0 0 10px; }
+  h3 { font-size: 1.05rem; margin: 0 0 6px; }
+  p { margin: 0 0 12px; }
+  a { color: var(--accent); }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin: 0 0 16px; }
+  .narrow { max-width: 760px; margin-left: auto; margin-right: auto; }
+  .muted { color: var(--muted); }
+  .small { font-size: .9rem; }
+  .note { background: var(--chip); border-radius: 10px; padding: 14px 16px; margin: 0 0 14px; }
+  .warn { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 10px 14px; margin: 10px 0; }
+  ul.facts { padding-left: 1.2em; margin: 0 0 12px; }
+  ul.facts li { margin: 0 0 6px; }
+  label.block { display: block; margin: 16px 0 6px; font-weight: 600; }
+  input[type=text], textarea { width: 100%; font: inherit; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+  input[type=text].code { max-width: 220px; text-transform: uppercase; }
+  textarea { min-height: 84px; resize: vertical; }
+  button { font: inherit; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 10px 18px; min-height: 44px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .spread { justify-content: space-between; }
+  .check { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; margin: 8px 0; cursor: pointer; }
+  .check input { width: 22px; height: 22px; margin: 2px 0 0; flex: 0 0 auto; accent-color: var(--accent); }
+  .check:has(input:checked) { border-color: var(--accent); background: var(--sel); }
+  .sub { margin: 6px 0 4px 34px; }
+  /* rating screen */
+  .topbar { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0 8px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+  .progress { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .progress > div { height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "material" "scores"; gap: 0 16px; }
+  #mainTop { grid-area: top; }
+  #material { grid-area: material; }
+  #mainScores { grid-area: scores; }
+  @media (min-width: 1000px) {
+    .grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-areas: "top material" "scores material"; align-items: start; }
+    #material { position: sticky; top: 92px; max-height: calc(100vh - 108px); overflow: auto; }
+  }
+  .label { font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin: 0 0 4px; }
+  .question { font-size: 1.15rem; font-weight: 600; }
+  .rich { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .answer { background: var(--quote); border-left: 4px solid var(--accent); border-radius: 0 10px 10px 0; padding: 14px 16px; }
+  details.passage { border: 1px solid var(--line); border-radius: 10px; margin: 8px 0; background: var(--panel); }
+  details.passage > summary { padding: 10px 14px; cursor: pointer; font-weight: 600; }
+  details.passage > summary .org { font-weight: 400; color: var(--muted); }
+  details.passage > .rich { padding: 0 14px 14px; font-size: .95rem; }
+  details.group > summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+  fieldset.dim { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 10px; margin: 0 0 14px; background: var(--panel); }
+  fieldset.dim legend { font-weight: 700; font-size: 1.08rem; padding: 0 6px; }
+  fieldset.dim.done legend::after { content: "  ✓"; color: var(--ok); }
+  .rubric-head, .rubric-tail { font-size: .92rem; white-space: pre-wrap; margin: 0 0 8px; }
+  .rubric-tail { color: var(--muted); margin-top: 6px; }
+  .opt { position: relative; display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 8px 0; cursor: pointer; }
+  .opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .opt .score { flex: 0 0 44px; height: 44px; border-radius: 10px; border: 2px solid var(--line); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.25rem; }
+  .opt .txt { font-size: .95rem; padding-top: 2px; }
+  .opt:has(input:checked) { border-color: var(--accent); background: var(--sel); }
+  .opt:has(input:checked) .score { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .opt:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .navrow { position: sticky; bottom: 0; background: var(--bg); padding: 12px 0; border-top: 1px solid var(--line); margin-top: 8px; }
+  .navrow #navMsg { display: block; text-align: center; min-height: 1.4em; margin-top: 6px; }
+  /* Phones and small tablets: nothing sticky, so the content gets the screen. */
+  @media (max-width: 699px) {
+    .topbar, .navrow { position: static; }
+    #itemTitle { font-size: 1.25rem; }
+    .topbar button, .topbar select { min-height: 40px; padding: 6px 12px; }
+  }
+  select { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); min-height: 44px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  code.file { font-size: .95rem; background: var(--chip); padding: 2px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<main>
+
+<!-- ── Start ─────────────────────────────────────────────────────────── -->
+<section id="start" class="narrow">
+  <h1>Rating answers from a dementia-care assistant</h1>
+
+  <div class="panel" id="resumePanel" hidden>
+    <h2>Welcome back</h2>
+    <p id="resumeText"></p>
+    <div class="row">
+      <button class="primary" id="resume">Continue where I left off</button>
+      <button id="restart">Start again from the beginning…</button>
+    </div>
+  </div>
+
+  <div class="panel" id="introPanel">
+    <h2>About this task</h2>
+    <p>DementiaGuide is a final-year engineering student project. It is an AI assistant that answers questions from people caring for someone with dementia in New Zealand. We are asking <strong>one health-care worker who had no part in building it</strong> to rate a set of its answers, so we can check that our own ratings hold up.</p>
+    <ul class="facts">
+      <li><strong>What you do:</strong> for each of <span data-fill="items">60</span> answers you read the question, the answer and the material the assistant was given. Then you score each aspect listed (for example tone or safety) 0, 1 or 2, using the description shown next to each score. That is <span data-fill="scores">199</span> scores in total, with an optional comment on any answer.</li>
+      <li><strong>How long:</strong> about <strong>3 hours in total</strong>, roughly 3 minutes per answer. You do not need to do it in one go. Your progress is saved in this browser as you work, so you can close the tab and come back later with the same link, <em>on the same device and browser</em>.</li>
+      <li><strong>Anonymous:</strong> we do not ask your name, and please do not type names anywhere. You enter only the short code from Richman's message. Apart from the answers on this screen, nothing about you is recorded.</li>
+      <li><strong>What it is used for:</strong> your scores are compared with the project's other ratings of the same answers. The result goes into the project's final report, where you are described only as <em>"a health-care worker independent of the project"</em>.</li>
+      <li><strong>At the end</strong> you download one small file and email it to Richman, the person who sent you this link. Nothing is sent anywhere automatically.</li>
+      <li><strong>Voluntary:</strong> you can stop at any time without giving a reason. If you stop, just do not send the file.</li>
+    </ul>
+    <p class="muted small">The questions were written for testing and are not about real patients. Some describe distressing situations, such as a medical emergency or a carer under strain. The answers were produced by the assistant during testing and are not checked or corrected; some may be wrong, and that is part of what you are rating.</p>
+
+    <div id="storageWarn" class="warn" hidden>This browser is not letting the page save your progress (for example in a private window). Your scores will be lost if you close or reload the tab. Please use a normal window, or finish in one sitting.</div>
+
+    <label class="block" for="code">Your code (from Richman's message, for example H01)</label>
+    <input type="text" id="code" class="code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="8" placeholder="H01" aria-describedby="codeWarn">
+    <div id="codeWarn" class="warn" hidden>Please use the short code you were given (letters then numbers), not your name.</div>
+
+    <h2 style="margin-top:22px">Before you start</h2>
+    <p class="muted small">This task is only for someone who meets all four of these. Please tick each one that is true for you.</p>
+    <label class="check"><input type="checkbox" id="sc_health"><span>I work in health care.</span></label>
+    <div class="sub">
+      <label for="role" class="small"><strong>Your role</strong> (optional; job title only, for example "registered nurse". <strong>No names</strong>, and no workplace.)</label>
+      <input type="text" id="role" autocomplete="off" maxlength="80" placeholder="e.g. registered nurse">
+    </div>
+    <label class="check"><input type="checkbox" id="sc_notinvolved"><span>I was not involved in building, testing or evaluating DementiaGuide.</span></label>
+    <label class="check"><input type="checkbox" id="sc_notseen"><span>I have not seen DementiaGuide's answers before.</span></label>
+    <label class="check"><input type="checkbox" id="sc_notstudy"><span>I have not taken part in the DementiaGuide usability study.</span></label>
+    <label class="check"><input type="checkbox" id="sc_consent"><span>I have read the information above and agree to take part. I understand my scores are anonymous and will be used in the project's final report.</span></label>
+
+    <div class="row" style="margin-top:18px">
+      <button class="primary" id="begin" disabled>Start rating</button>
+      <span id="beginMsg" class="muted small" aria-live="polite"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ── Rating ────────────────────────────────────────────────────────── -->
+<section id="rate" hidden>
+  <div class="topbar">
+    <div class="row spread">
+      <h1 id="itemTitle" style="margin:0">Item 1 of 60</h1>
+      <div class="row">
+        <label for="jump" class="sr">Go to item</label>
+        <select id="jump" aria-label="Go to an earlier item"></select>
+        <button id="howBtn" aria-expanded="false" aria-controls="howPanel">How to rate</button>
+      </div>
+    </div>
+    <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+    <div class="muted small" id="progressText" aria-live="polite"></div>
+  </div>
+
+  <div class="panel note" id="howPanel" hidden>
+    <p id="instruction" style="margin:0 0 8px"></p>
+    <p class="small" style="margin:0">Each item shows only the aspects that apply to it. Read the answer, open the passages or reference material when an aspect asks you to compare against them, then pick 0, 1 or 2 for each aspect. You can go back to change a score at any time. Your progress saves automatically.</p>
+  </div>
+
+  <div class="grid">
+    <div id="mainTop">
+      <div class="panel">
+        <div class="label">Question</div>
+        <div class="question rich" id="question"></div>
+      </div>
+      <div class="panel">
+        <div class="label">The assistant's answer</div>
+        <div class="answer rich" id="answer"></div>
+      </div>
+    </div>
+
+    <div id="material">
+      <div class="panel">
+        <details class="group" id="passGroup">
+          <summary id="passSummary">Passages the assistant was given</summary>
+          <div class="row spread" id="passTools" style="margin:6px 0 2px">
+            <span class="muted small">Tip: use your browser's Find (Ctrl+F or ⌘F) to look for a claim.</span>
+            <button id="openAll" class="small" style="min-height:36px;padding:4px 12px">Open all passages</button>
+          </div>
+          <div id="passages"></div>
+        </details>
+        <details class="group" id="refGroup" style="margin-top:8px">
+          <summary>Reference material (human-labelled correct guidance)</summary>
+          <p class="muted small" style="margin:6px 0">Curated guidance that a person labelled as the right answer to this question. The assistant may or may not have seen it. Use it for the correctness score.</p>
+          <div id="references"></div>
+        </details>
+      </div>
+    </div>
+
+    <div id="mainScores">
+      <div id="dims"></div>
+      <div class="panel">
+        <label for="itemNote" class="block" style="margin-top:0">Comment on this answer (optional; please no names)</label>
+        <textarea id="itemNote" maxlength="2000"></textarea>
+      </div>
+      <div class="navrow">
+        <div class="row spread">
+          <button id="back">← Back</button>
+          <button class="primary" id="next" disabled>Next →</button>
+        </div>
+        <span id="navMsg" class="muted small" aria-live="polite"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Finish ────────────────────────────────────────────────────────── -->
+<section id="finish" class="narrow" hidden>
+  <h1>Thank you: all answers rated</h1>
+  <div class="panel">
+    <p id="finishSummary"></p>
+    <label class="block" for="overall">Anything you would like to say about the task or the answers overall? (optional; please no names)</label>
+    <textarea id="overall" maxlength="3000"></textarea>
+    <div class="row" style="margin-top:16px">
+      <button class="primary" id="download">Download my ratings file</button>
+      <button id="backToItems">Go back to the answers</button>
+    </div>
+    <div id="afterDownload" class="note" style="margin-top:16px" hidden>
+      <p style="margin:0 0 6px"><strong>Last step: please email this file to Richman</strong>, by replying to the message that gave you this link:</p>
+      <p style="margin:0 0 6px"><code class="file" id="fileName"></code></p>
+      <p class="small" style="margin:0">It is usually in your <strong>Downloads</strong> folder (on an iPad or iPhone, in the Files app under Downloads). That is everything. Thank you very much for your time.</p>
+    </div>
+    <details style="margin-top:16px">
+      <summary class="muted small">The file did not download, or you cannot attach it?</summary>
+      <p class="small" style="margin-top:8px">Copy the file's contents and paste them into the body of an email to Richman instead.</p>
+      <div class="row"><button id="copyCsv">Copy the file's contents</button><span id="copyMsg" class="muted small" aria-live="polite"></span></div>
+    </details>
+    <details style="margin-top:12px">
+      <summary class="muted small">Clear my answers from this browser</summary>
+      <p class="small" style="margin-top:8px">Only do this after you have sent the file. It deletes the saved scores from this browser.</p>
+      <button id="clearAll">Clear saved answers…</button>
+    </details>
+  </div>
+</section>
+
+<section id="cleared" class="narrow" hidden>
+  <h1>Your saved answers have been cleared</h1>
+  <div class="panel"><p>Nothing from this task is stored in this browser any more. You can close this tab.</p></div>
+</section>
+
+</main>
+
+<script type="application/json" id="r3-data">{}</script>
+<script>
+(() => {
+  'use strict';
+  const DATA = JSON.parse(document.getElementById('r3-data').textContent);
+  const STORE_KEY = 'r3-rating-state';
+  const $ = (id) => document.getElementById(id);
+  const nowIso = () => new Date().toISOString();
+  const ITEMS = DATA.items || [];
+  const TOTAL = ITEMS.reduce((a, it) => a + it.dims.length, 0);
+  const CODE_OK = /^[A-Za-z]{1,3}[0-9]{1,4}$/;
+
+  for (const el of document.querySelectorAll('[data-fill=items]')) el.textContent = String(ITEMS.length);
+  for (const el of document.querySelectorAll('[data-fill=scores]')) el.textContent = String(TOTAL);
+  $('instruction').textContent = DATA.instruction || '';
+
+  // ── storage (every access guarded: private windows and blocked storage throw) ──
+  const storageOk = (() => { try { const k = '__r3_probe'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; } catch { return false; } })();
+  if (!storageOk) $('storageWarn').hidden = false;
+  const load = () => { try { const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); return s && s.pageVersion === DATA.pageVersion ? s : null; } catch { return null; } };
+  const save = () => { if (!state) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch { /* the download still works */ } };
+  const wipe = () => { try { localStorage.removeItem(STORE_KEY); } catch { /* nothing stored */ } };
+
+  let state = load();
+
+  // ── helpers ──────────────────────────────────────────────────────────
+  const show = (id) => { for (const s of ['start', 'rate', 'finish', 'cleared']) $(s).hidden = s !== id; window.scrollTo(0, 0); };
+  const scoredCount = () => ITEMS.reduce((a, it) => a + it.dims.filter((d) => state.scores[it.item] && state.scores[it.item][d] != null).length, 0);
+  const itemDone = (i) => { const it = ITEMS[i]; const s = state.scores[it.item] || {}; return it.dims.every((d) => s[d] != null); };
+  const firstIncomplete = () => { for (let i = 0; i < ITEMS.length; i++) if (!itemDone(i)) return i; return ITEMS.length; };
+
+  // Text is inserted as text nodes only; **bold** pairs on a line become <strong>.
+  function rich(el, text) {
+    el.textContent = '';
+    const lines = String(text).split('\n');
+    lines.forEach((line, li) => {
+      const parts = line.split('**');
+      if (parts.length % 2 === 0) { el.appendChild(document.createTextNode(line)); }
+      else parts.forEach((p, i) => { if (!p) return; if (i % 2) { const b = document.createElement('strong'); b.textContent = p; el.appendChild(b); } else el.appendChild(document.createTextNode(p)); });
+      if (li < lines.length - 1) el.appendChild(document.createTextNode('\n'));
+    });
+  }
+
+  // ── start screen ─────────────────────────────────────────────────────
+  const SC = ['sc_health', 'sc_notinvolved', 'sc_notseen', 'sc_notstudy', 'sc_consent'];
+  const updateBegin = () => {
+    const code = $('code').value.trim();
+    const codeOk = CODE_OK.test(code);
+    $('codeWarn').hidden = !code || codeOk;
+    const allTicked = SC.every((id) => $(id).checked);
+    $('begin').disabled = !(codeOk && allTicked && ITEMS.length);
+    $('beginMsg').textContent = !ITEMS.length ? 'The answers did not load. Please tell Richman.' : !codeOk ? 'Enter your code to start.' : !allTicked ? 'Tick all five boxes to start.' : '';
+  };
+  for (const el of document.querySelectorAll('#introPanel input')) { el.addEventListener('input', updateBegin); el.addEventListener('change', updateBegin); }
+  updateBegin();
+
+  if (state && state.code) {
+    $('resumePanel').hidden = false;
+    $('introPanel').hidden = true;
+    const n = scoredCount();
+    $('resumeText').textContent = `You have given ${n} of ${TOTAL} scores so far (code ${state.code}). You will continue at item ${Math.min(state.current, ITEMS.length - 1) + 1} of ${ITEMS.length}.`;
+  }
+  $('resume').onclick = () => { state.sittings = (state.sittings || 1) + 1; save(); if (firstIncomplete() >= ITEMS.length && state.current >= ITEMS.length - 1) showFinish(); else openItem(state.current); };
+  $('restart').onclick = () => {
+    if (!confirm('Start again? This deletes every score you have given so far from this browser.')) return;
+    wipe(); state = null; $('resumePanel').hidden = true; $('introPanel').hidden = false; updateBegin();
+  };
+
+  $('begin').onclick = () => {
+    state = {
+      pageVersion: DATA.pageVersion,
+      code: $('code').value.trim().toUpperCase(),
+      screening: {
+        works_in_health_care: $('sc_health').checked, role: $('role').value.trim().slice(0, 80),
+        not_involved_in_building_or_evaluating: $('sc_notinvolved').checked,
+        not_seen_answers_before: $('sc_notseen').checked,
+        not_in_usability_study: $('sc_notstudy').checked,
+        consent: $('sc_consent').checked,
+      },
+      startedAt: nowIso(), finishedAt: null, sittings: 1,
+      scores: {}, notes: {}, onScreenMs: {}, current: 0, overall: '',
+    };
+    save();
+    openItem(0);
+  };
+
+  // ── on-screen time (only while the tab is visible and the item is shown) ──
+  let shownSince = null;
+  const flushTime = () => {
+    if (shownSince == null || !state) return;
+    const it = ITEMS[state.current];
+    state.onScreenMs[it.item] = (state.onScreenMs[it.item] || 0) + (performance.now() - shownSince);
+    shownSince = document.visibilityState === 'visible' && !$('rate').hidden ? performance.now() : null;
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { if (!$('rate').hidden && shownSince == null) shownSince = performance.now(); }
+    else { flushTime(); shownSince = null; save(); }
+  });
+  setInterval(() => { if (shownSince != null) { flushTime(); save(); } }, 15000);
+  window.addEventListener('pagehide', () => { flushTime(); save(); });
+
+  // ── rating screen ────────────────────────────────────────────────────
+  function renderPassages(container, list) {
+    container.textContent = '';
+    list.forEach((p, i) => {
+      const d = document.createElement('details'); d.className = 'passage';
+      const s = document.createElement('summary');
+      s.appendChild(document.createTextNode(`${i + 1}. `));
+      const t = document.createElement('span'); rich(t, p.title); s.appendChild(t);
+      if (p.org) { const o = document.createElement('span'); o.className = 'org'; o.textContent = ` · ${p.org}`; s.appendChild(o); }
+      const body = document.createElement('div'); body.className = 'rich'; rich(body, p.content);
+      d.appendChild(s); d.appendChild(body); container.appendChild(d);
+    });
+  }
+
+  function renderDims(it) {
+    const box = $('dims'); box.textContent = '';
+    const sc = state.scores[it.item] || {};
+    for (const d of it.dims) {
+      const r = DATA.rubric[d];
+      const fs = document.createElement('fieldset'); fs.className = 'dim' + (sc[d] != null ? ' done' : '');
+      const lg = document.createElement('legend'); lg.textContent = r.label; fs.appendChild(lg);
+      const hd = document.createElement('p'); hd.className = 'rubric-head'; hd.textContent = r.head; fs.appendChild(hd);
+      for (const k of [2, 1, 0]) {
+        const lab = document.createElement('label'); lab.className = 'opt';
+        const inp = document.createElement('input'); inp.type = 'radio'; inp.name = `dim_${d}`; inp.value = String(k);
+        inp.checked = sc[d] === k;
+        inp.setAttribute('aria-label', `${r.label}: ${k}`);
+        inp.addEventListener('change', () => {
+          (state.scores[it.item] = state.scores[it.item] || {})[d] = k;
+          fs.classList.add('done'); save(); updateNav();
+        });
+        const num = document.createElement('span'); num.className = 'score'; num.textContent = String(k); num.setAttribute('aria-hidden', 'true');
+        const txt = document.createElement('span'); txt.className = 'txt'; txt.textContent = r.levels[k];
+        lab.appendChild(inp); lab.appendChild(num); lab.appendChild(txt); fs.appendChild(lab);
+      }
+      if (r.tail) { const tl = document.createElement('p'); tl.className = 'rubric-tail'; tl.textContent = r.tail; fs.appendChild(tl); }
+      box.appendChild(fs);
+    }
+  }
+
+  function updateNav() {
+    const i = state.current; const it = ITEMS[i];
+    const missing = it.dims.filter((d) => !(state.scores[it.item] && state.scores[it.item][d] != null)).length;
+    $('next').disabled = missing > 0;
+    $('next').textContent = i === ITEMS.length - 1 ? 'Finish →' : 'Next →';
+    $('navMsg').textContent = missing ? `Score ${missing === 1 ? 'the last aspect' : `all ${missing} remaining aspects`} to continue.` : '';
+    $('back').disabled = i === 0;
+    const n = scoredCount();
+    $('bar').style.width = `${(100 * n / TOTAL).toFixed(1)}%`;
+    $('progressText').textContent = `${n} of ${TOTAL} scores given · ${firstIncomplete() >= ITEMS.length ? 'all' : firstIncomplete()} of ${ITEMS.length} answers complete`;
+    const reach = Math.min(firstIncomplete(), ITEMS.length - 1);
+    const jump = $('jump'); jump.textContent = '';
+    for (let j = 0; j <= Math.max(reach, i); j++) {
+      const o = document.createElement('option'); o.value = String(j);
+      o.textContent = `Item ${j + 1}${itemDone(j) ? ' ✓' : ''}`; o.selected = j === i; jump.appendChild(o);
+    }
+  }
+
+  function openItem(i) {
+    flushTime();
+    i = Math.max(0, Math.min(i, ITEMS.length - 1, firstIncomplete()));
+    state.current = i; save();
+    const it = ITEMS[i];
+    $('itemTitle').textContent = `Item ${i + 1} of ${ITEMS.length}`;
+    rich($('question'), it.question);
+    rich($('answer'), it.answer);
+    if (it.passages.length) {
+      $('passSummary').textContent = `Passages the assistant was given (${it.passages.length})`;
+      renderPassages($('passages'), it.passages);
+      $('openAll').textContent = 'Open all passages';
+    } else {
+      $('passSummary').textContent = 'Passages the assistant was given (0)';
+      $('passages').textContent = '';
+      const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'No passages were given for this question: the assistant answered without any.';
+      $('passages').appendChild(p);
+    }
+    $('passTools').hidden = !it.passages.length;
+    $('refGroup').hidden = !it.reference;
+    renderPassages($('references'), it.reference || []);
+    const ui = state.ui || {};
+    $('passGroup').open = !!ui.passOpen && it.passages.length > 0; $('refGroup').open = !!ui.refOpen;
+    renderDims(it);
+    $('itemNote').value = state.notes[it.item] || '';
+    show('rate');
+    shownSince = document.visibilityState === 'visible' ? performance.now() : null;
+    updateNav();
+  }
+
+  let noteTimer = null;
+  $('itemNote').addEventListener('input', () => {
+    const it = ITEMS[state.current];
+    state.notes[it.item] = $('itemNote').value.slice(0, 2000);
+    clearTimeout(noteTimer); noteTimer = setTimeout(save, 400);
+  });
+  // Remember whether the rater keeps the passages / reference open between items.
+  $('passGroup').addEventListener('toggle', () => { if (state && !$('rate').hidden && ITEMS[state.current].passages.length) { (state.ui = state.ui || {}).passOpen = $('passGroup').open; save(); } });
+  $('refGroup').addEventListener('toggle', () => { if (state && !$('rate').hidden && !$('refGroup').hidden) { (state.ui = state.ui || {}).refOpen = $('refGroup').open; save(); } });
+  $('openAll').onclick = () => {
+    const ds = [...document.querySelectorAll('#passages details.passage')];
+    const open = !ds.every((d) => d.open);
+    for (const d of ds) d.open = open;
+    $('openAll').textContent = open ? 'Close all passages' : 'Open all passages';
+  };
+  $('back').onclick = () => openItem(state.current - 1);
+  $('next').onclick = () => { if (state.current === ITEMS.length - 1) { flushTime(); shownSince = null; save(); showFinish(); } else openItem(state.current + 1); };
+  $('jump').onchange = () => openItem(Number($('jump').value));
+  $('howBtn').onclick = () => { const p = $('howPanel'); p.hidden = !p.hidden; $('howBtn').setAttribute('aria-expanded', String(!p.hidden)); };
+
+  // ── finish and download ──────────────────────────────────────────────
+  const csvEscape = (v) => { const s = String(v ?? ''); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  function buildCsv() {
+    const cols = DATA.columns;
+    const rows = ITEMS.map((it) => {
+      const sc = state.scores[it.item] || {};
+      const r = { item: it.item, set: it.set, question: it.question, answer: it.answer, notes: (state.notes[it.item] || '').trim() };
+      for (const d of DATA.dims) r[d] = it.dims.includes(d) ? (sc[d] != null ? String(sc[d]) : '') : 'n/a';
+      return cols.map((c) => csvEscape(r[c])).join(',');
+    });
+    const sheet = [cols.join(','), ...rows].join('\n') + '\n';
+    const s = state.screening; const yn = (b) => (b ? 'yes' : 'no');
+    const ms = Object.values(state.onScreenMs).reduce((a, b) => a + b, 0);
+    const about = [
+      ['field', 'value'],
+      ['page_version', DATA.pageVersion], ['instrument_sha256', DATA.instrumentSha256], ['code', state.code],
+      ['works_in_health_care', yn(s.works_in_health_care)], ['role', s.role],
+      ['not_involved_in_building_or_evaluating', yn(s.not_involved_in_building_or_evaluating)],
+      ['not_seen_answers_before', yn(s.not_seen_answers_before)], ['not_in_usability_study', yn(s.not_in_usability_study)],
+      ['consent', yn(s.consent)], ['started_at', state.startedAt], ['finished_at', state.finishedAt || ''],
+      ['on_screen_minutes', (ms / 60000).toFixed(1)], ['sittings', String(state.sittings || 1)],
+      ['scores_given', `${scoredCount()}/${TOTAL}`], ['overall_comment', (state.overall || '').trim()],
+    ].map(([k, v]) => ['#about', k, v].map(csvEscape).join(','));
+    return `${sheet}\n${about.join('\n')}\n`;
+  }
+
+  function showFinish() {
+    if (firstIncomplete() < ITEMS.length) { openItem(firstIncomplete()); return; }
+    $('finishSummary').textContent = `You have given all ${TOTAL} scores across ${ITEMS.length} answers. You can still go back and change any score before downloading.`;
+    $('overall').value = state.overall || '';
+    $('afterDownload').hidden = !state.fileName;
+    if (state.fileName) $('fileName').textContent = state.fileName;
+    show('finish');
+  }
+  $('overall').addEventListener('input', () => { state.overall = $('overall').value.slice(0, 3000); save(); });
+  $('backToItems').onclick = () => openItem(ITEMS.length - 1);
+
+  $('download').onclick = () => {
+    if (firstIncomplete() < ITEMS.length) { openItem(firstIncomplete()); return; }
+    state.finishedAt = nowIso();
+    const name = `r3_${state.code}_${state.finishedAt.replace(/[:.]/g, '-')}.csv`;
+    state.fileName = name; save();
+    const url = URL.createObjectURL(new Blob([buildCsv()], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 2000);
+    $('fileName').textContent = name; $('afterDownload').hidden = false;
+  };
+  $('copyCsv').onclick = async () => {
+    if (!state.finishedAt) state.finishedAt = nowIso();
+    save();
+    const text = buildCsv();
+    try { await navigator.clipboard.writeText(text); $('copyMsg').textContent = 'Copied. Paste it into an email to Richman.'; }
+    catch {
+      const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '-1000px';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch { ok = false; }
+      ta.remove();
+      $('copyMsg').textContent = ok ? 'Copied. Paste it into an email to Richman.' : 'Copying is blocked in this browser. Please use the download button.';
+    }
+  };
+  $('clearAll').onclick = () => {
+    if (!confirm('Delete your saved scores from this browser? Only do this after you have sent the file.')) return;
+    wipe(); state = null; show('cleared');
+  };
+
+  window.addEventListener('beforeunload', () => { flushTime(); save(); });
+})();
+</script>
+</body>
+</html>

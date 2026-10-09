@@ -1,12 +1,24 @@
 # §19B P2 — sentence-level citation support
 
-Pre-registered in `docs/eval/plan-19b-propagation.md` §19B.2. Generated 2026-10-09T03:33:37.315Z by `scripts/eval/citation-support.mjs report`. Checker `claude-sonnet-5-5` (effort medium, refusal fallback default (server-side-fallback-2026-07-01)), run 2026-10-09T03:30:29.224Z → 2026-10-09T03:33:31.136Z at `f34d899`; 743572 input / 52443 output tokens, **US$2.01** at US$2/10 per 1M (2026-10-08 (plan §18.2)). Answers: the seeded `generation_8a92ecd_{v2,v2-nosafety,v2_oracle}_final.json` (gpt-4o, temperature 0, seed 42). Unit: one (sentence, cited passage) pair. Regenerate: `node scripts/eval/citation-support.mjs extract && … passages && … judge && … report [--labels <csv>]`.
+Pre-registered in `docs/eval/plan-19b-propagation.md` §19B.2. Generated 2026-10-09T06:41:22.962Z by `scripts/eval/citation-support.mjs report`. Checker `claude-sonnet-5-5` (effort medium, refusal fallback default (server-side-fallback-2026-07-01)), run 2026-10-09T03:30:29.224Z → 2026-10-09T03:33:31.136Z at `f34d899`; 743572 input / 52443 output tokens, **US$2.01** at US$2/10 per 1M (2026-10-08 (plan §18.2)). Answers: the seeded `generation_8a92ecd_{v2,v2-nosafety,v2_oracle}_final.json` (gpt-4o, temperature 0, seed 42). Unit: one (sentence, cited passage) pair. Regenerate: `node scripts/eval/citation-support.mjs extract && … passages && … judge && … report [--labels <csv>]`.
 
 Pairs: 661 extracted; 0 excluded because the cited chunk's recorded content_hash differs from the 2026-09-13 snapshot; 661 judged (568 on a hash-verified passage, 93 on an iSupport passage with no hash recorded on either side — plan §19B.2 clarification); 661 scored; 0 unscored (0 refused, 0 errors or unparsed).
 
-## Validation gate
+## Validation gate (author vs checker, blinded sample)
 
-**Not assessed: the author's labels have not been returned.** Under the pre-registered rule only the pooled rate below may be reported, as a descriptive, unvalidated checker result. Per-condition rates are not computed.
+Pre-registered: Cohen's κ ≥ 0.6 on **supported vs not fully supported** (partial and not_supported together), on ≥ 36 labelled pairs, with neither side giving one value on ≥ 95 % of them.
+
+| Pairs labelled by both | κ, supported vs not fully (primary) | Agreement | κ, any support vs none | κ, three labels | κ, three labels, linear | Degenerate | Gate |
+|---:|---:|---:|---:|---:|---:|---|---|
+| 40 | 0.564 | 80.0 % | 1.000 | 0.597 | 0.665 | no | **not met** — κ 0.564 < 0.6 |
+
+Confusion (rows author, columns checker):
+
+| | supported | partial | not_supported |
+|---|---:|---:|---:|
+| supported | 23 | 8 | 0 |
+| partial | 0 | 6 | 0 |
+| not_supported | 0 | 0 | 3 |
 
 ## Pooled support across all answers (661 pairs, 194 answers)
 

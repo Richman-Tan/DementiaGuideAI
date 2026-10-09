@@ -819,3 +819,22 @@ Chrome runs headed (a small window), because Web Speech is not expected to run h
 - Total ≈ US$2.1, against the US$5 cap. Spend is computed from the returned token usage, the recording durations and the characters sent, and checked against the ElevenLabs meter read before and after.
 
 **Output.** `docs/report/eval/latency/browser-bench_<sha>_<tag>{.md,_raw.csv,_meta.json}`, with the harness in `scripts/eval/latency/` (`bench-browser.mjs` and the server and init script beside it).
+
+**Deviation, 9 Oct 2026 — how the speech enters the page; committed before any app turn.**
+- **What happened.** Before any app turn, two feasibility checks ran on a blank local test page: no app, no provider call, only `webkitSpeechRecognition` and `getUserMedia`. They showed that Chrome 155 on this Mac opens the **real** default microphone despite `--use-fake-device-for-media-stream`, both for `webkitSpeechRecognition.start()` and for `getUserMedia({audio: true})`. The macOS privacy log (TCC) records:
+  - at 13:59:10, the first check's capture request raised a macOS microphone-permission prompt, attributed to Terminal, the harness's parent process;
+  - that prompt was answered "Allow" at 14:05:01;
+  - a later check at 14:05:19 then opened the real microphone for about 14 s, until Chrome was killed.
+
+  In neither check did any audio reach the page or a recogniser: no capture promise resolved and no recognition event fired. Nothing was recorded, nothing was sent, and nothing was spoken at the microphone. The prescribed `--use-file-for-fake-audio-capture` route cannot be used without touching the real microphone, so it is dropped.
+- **New method.**
+  - The init script replaces `navigator.mediaDevices.getUserMedia`, for audio-only requests, with a harness source. The turn's clip (the same WAV) is played by a separate `AudioContext`, never connected to the speakers, into a `MediaStreamAudioDestinationNode`, and the app receives that stream. Native capture is never called; the shim refuses any other request.
+  - Chrome 155's Web Speech accepts a `MediaStreamTrack` (`start(track)`). The init script's `start` wrapper passes the app's own capture track, so the recogniser and the app's parallel MediaRecorder hear the same single copy of the clip, as from one microphone. The app still calls `start()` itself.
+  - Switches: `--use-file-for-fake-audio-capture` is dropped and `--disable-audio-input` is added as a guard; the rest are unchanged.
+  - A watchdog reads the macOS privacy log throughout the run. At the first real-microphone access request (`kTCCServiceMicrophone`, other than a status preflight) or prompt, it kills Chrome and the run stops. A feasibility check of this method (one clip, blank page) triggered nothing.
+- **Consequences for timing.**
+  - t_cap becomes the scheduled start of the clip in the page, mapped from the harness `AudioContext` clock to `performance.now()`. It is the same in P and F, and replaces the `audiostart` and `getUserMedia` anchors.
+  - The stop tap and end-of-speech rules are unchanged: the tap at t_cap + clip duration, and t_eos = t_cap + clip duration − 300 ms.
+  - The F alignment check on the app's recording is kept, now as a check on what the shim delivers.
+- **Declared difference from a real microphone.** A track generated with Web Audio gets none of Chrome's capture processing (echo cancellation, noise suppression, gain control) and no device buffering. The recogniser receives it through Chrome's track path rather than its own device capture.
+- **The P contingency now reads:** if `start(track)` stops producing live transcripts, P is reported as not run. There is no fallback to the real microphone.

@@ -27,7 +27,7 @@ import {
   WS_OPEN_TIMEOUT_MS,
   WS_STALL_TIMEOUT_MS,
 } from '../voice/voiceConfig';
-import { normalizeSpokenText } from './normalizeSpokenText';
+import { normalizeSpokenText, unsettledTailStart } from './normalizeSpokenText';
 
 const ELEVENLABS_WS_BASE = 'wss://api.elevenlabs.io';
 
@@ -79,10 +79,15 @@ export function createElevenLabsStream({
 
   // ElevenLabs buffers text server-side; each message should end cleanly on a
   // word boundary for best quality, so we forward whole words and hold the
-  // trailing partial word until the next token completes it. Word-level
-  // normalizeSpokenText is equivalent to the REST path's sentence-level pass
-  // (all its patterns are word-bounded) and keeps digits animating the lips.
+  // trailing partial word until the next token completes it. normalizeSpokenText
+  // runs on each forwarded piece, which keeps digits animating the lips.
   let wordBuf = '';
+  // Whole words that cannot be normalised yet: a phone number may still be
+  // arriving ("0800 " … "611 116"), or a "call" is waiting for the "111" it
+  // introduces (see unsettledTailStart). Held words go out with the next piece,
+  // so every piece normalises the same as it would in the full sentence, as the
+  // REST path does it.
+  let heldBuf = '';
 
   const fireError = (err) => {
     if (errorFired || dead) return;
@@ -255,28 +260,60 @@ export function createElevenLabsStream({
       wordBuf += text;
       const lastSpace = wordBuf.lastIndexOf(' ');
       if (lastSpace < 0) return;
-      const sendable = wordBuf.slice(0, lastSpace + 1);
+      const complete = heldBuf + wordBuf.slice(0, lastSpace + 1);
       wordBuf = wordBuf.slice(lastSpace + 1);
-      if (sendable.trim().length === 0) return;
+      const cut = unsettledTailStart(complete);
+      const sendable = complete.slice(0, cut);
+      if (sendable.trim().length === 0) {
+        // Nothing to send yet; whitespace before held words stays with them.
+        heldBuf = cut < complete.length ? complete : '';
+        return;
+      }
+      heldBuf = complete.slice(cut);
       if (sendTextPayload(normalizeSpokenText(sendable))) armStall();
     },
 
     /**
      * Sentence boundary: force generation of the server-side buffer for a
-     * clean prosody break. Deliberately does NOT push the held word — at a
-     * boundary, the held word is the NEXT sentence's first word (LLM output
-     * has a space after ".", so the sentence-final word is always already
-     * sent); pulling it forward would tie it to the wrong generation.
+     * clean prosody break. Deliberately does NOT push the held partial word —
+     * at a boundary, it is usually the NEXT sentence's first word (LLM output
+     * has a space after ".", so the sentence-final word is already sent);
+     * pulling it forward would tie it to the wrong generation.
+     *
+     * Held whole words (see heldBuf) go out first when the sentence or
+     * clause being flushed ends inside them, so they are not carried past the
+     * break: when they end with the comma of an early clause split, or when
+     * the partial word closes the sentence or clause (only spaces separate
+     * words here, so in "time.\n\n", "minutes.\n4" or "111," it is still
+     * open at its flush). The closing part of the partial word goes with them
+     * only if it holds a digit, the rest of a number or the number a held
+     * "call" introduces; otherwise it stays, as before. In any other case the
+     * held words belong to text still open (an early split at an earlier comma
+     * can land in the middle of "0800 004 001", or the reply's last sentence
+     * has no closing punctuation) and stay held until the next piece or end().
      */
     flush() {
       if (dead || inputEnded) return;
+      const close = /[.!?,;]["'”’)\]*]*(?=\s|$)/.exec(wordBuf);
+      if (heldBuf && (close || /[,;]\s*$/.test(heldBuf))) {
+        let held = heldBuf;
+        const closing = close ? wordBuf.slice(0, close.index + close[0].length) : '';
+        if (/\d/.test(closing)) {
+          held += `${closing} `;
+          wordBuf = wordBuf.slice(closing.length);
+        }
+        heldBuf = '';
+        sendTextPayload(normalizeSpokenText(held));
+      }
       if (sendTextPayload(' ', true)) armStall();
     },
 
     /** LLM done: send EOS; remaining audio + isFinal will drain. */
     end() {
       if (dead || inputEnded) return;
-      if (wordBuf.trim()) sendTextPayload(`${normalizeSpokenText(wordBuf)} `, true);
+      const rest = (heldBuf + wordBuf).trimEnd();
+      if (rest) sendTextPayload(`${normalizeSpokenText(rest)} `, true);
+      heldBuf = '';
       wordBuf = '';
       inputEnded = true;
       if (wsSend({ text: '' })) armStall();

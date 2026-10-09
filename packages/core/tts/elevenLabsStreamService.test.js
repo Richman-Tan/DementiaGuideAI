@@ -87,10 +87,89 @@ describe('createElevenLabsStream', () => {
     const { stream } = makeStream();
     stream.open();
     FakeWebSocket.instances[0].emitOpen();
-    stream.sendText('call 0800 late');
+    stream.sendText('Take 2 tablets daily');
     const ws = FakeWebSocket.instances[0];
-    // '0800 ' is a complete word → normalized like the REST path would.
-    expect(ws.sent[1].text).toBe('call eight hundred ');
+    // Complete words → normalized like the REST path would.
+    expect(ws.sent[1].text).toBe('Take two tablets ');
+  });
+
+  // Phone numbers arrive over several tokens, and "call" can arrive before the
+  // "111" it introduces. Each piece must be spoken as the REST path speaks the
+  // whole sentence: digit by digit, never "one hundred eleven".
+  describe('phone numbers across tokens', () => {
+    const texts = (ws) => ws.sent.slice(1).map((m) => (m.flush ? `${m.text}[flush]` : m.text));
+    const open = () => {
+      const made = makeStream();
+      made.stream.open();
+      FakeWebSocket.instances[0].emitOpen();
+      return { ...made, ws: FakeWebSocket.instances[0] };
+    };
+
+    it('holds a number until it is complete, then speaks it whole', () => {
+      const { stream, ws, events } = open();
+      for (const t of ['Call', ' Health', 'line', ' on', ' 080', '0', ' 611', ' 116', '.', ' Then']) stream.sendText(t);
+      expect(texts(ws)).toEqual(['Call Healthline on oh eight hundred, six one one, one one six. ']);
+      // onTextSent still mirrors the wire, so subtitle offsets stay in step.
+      expect(events.sentText).toEqual([' ', 'Call Healthline on oh eight hundred, six one one, one one six. ']);
+    });
+
+    it('keeps "call" with the 111 that follows it', () => {
+      const { stream, ws } = open();
+      for (const t of ['Please', ' call', ' 111', ' now', '.', ' Stay']) stream.sendText(t);
+      // 'call ' alone, then '111 ' alone, used to read "one hundred eleven".
+      expect(texts(ws)).toEqual(['Please ', 'call one one one now. ']);
+    });
+
+    it('flush() sends a clause that ends in its partial word, with the number', () => {
+      const { stream, ws } = open();
+      for (const t of ['If he falls,', ' call', ' 111', ',']) stream.sendText(t);
+      stream.flush(); // the caller split early at that comma
+      stream.sendText(' ');
+      expect(texts(ws)).toEqual(['If he ', 'falls, ', 'call one one one, ', ' [flush]']);
+    });
+
+    it('flush() sends held words that end with the clause comma', () => {
+      const { stream, ws } = open();
+      stream.sendText('Then call them on 111, and');
+      stream.flush();
+      expect(texts(ws)).toEqual(['Then ', 'call them on one one one, ', ' [flush]']);
+    });
+
+    it('flush() keeps held words that belong to text still open', () => {
+      const { stream, ws } = open();
+      stream.sendText('Alzheimers New Zealand, on 0800 004 001');
+      stream.flush(); // an early split at the earlier comma, mid-number
+      stream.sendText('. Next');
+      expect(texts(ws)).toEqual([
+        'Alzheimers New Zealand, ', ' [flush]', 'on oh eight hundred, oh oh four, oh oh one. ',
+      ]);
+    });
+
+    it('flush() sends held words before the break and leaves a closing word without digits, as before', () => {
+      const { stream, ws } = open();
+      stream.sendText('It is at the right time.\n\nNext');
+      stream.flush();
+      expect(texts(ws)).toEqual(['It is ', 'at the right ', ' [flush]']);
+      stream.sendText(' one ');
+      expect(texts(ws).slice(-1)).toEqual(['time.\n\nNext one ']);
+    });
+
+    it('flush() takes a closing word with digits along at the end of the reply', () => {
+      const { stream, ws } = open();
+      stream.sendText('Call Healthline on 0800 611 116.');
+      stream.flush();
+      stream.end();
+      expect(texts(ws)).toEqual([
+        'Call Healthline on oh eight hundred, six one one, one one six. ', ' [flush]', '',
+      ]);
+    });
+
+    it('end() releases held words together with the partial word', () => {
+      const { stream, ws } = open();
+      stream.sendText('Call 0800 611 116');
+      stream.end();
+      expect(texts(ws)).toEqual(['Call oh eight hundred, six one one, one one six [flush]', '']);
+    });
   });
 
   it('flush() forces generation without stealing the next sentence\'s held word', () => {

@@ -306,7 +306,10 @@ function validate(p, srvTurn, cond, live, hist) {
   if (p.tCap == null) notes.push('no synthetic capture');
   if (p.tTap == null) notes.push('no stop tap');
   if (p.tAudio == null) notes.push('no first audio');
-  if (!p.app || p.app.to_first_audio_ms == null) notes.push('no [LATENCY SUMMARY] with first audio');
+  // The app emits [LATENCY SUMMARY] when the LLM stream ends; if that is before
+  // playback starts, its summary simply has no tts_first_ms / to_first_audio_ms.
+  // That is the app's instrumentation, not a failed turn: t_audio is measured here.
+  if (!p.app || p.app.stt_ms == null) notes.push('no [LATENCY SUMMARY]');
   if (cond === 'P' && live !== true) notes.push('live recogniser not exposed');
   if (cond === 'F' && live !== false) notes.push('recogniser still exposed');
   if (cond === 'P' && p.sttSource !== 'live') notes.push(`P transcript not live (${p.sttSource})`);
@@ -319,7 +322,11 @@ function validate(p, srvTurn, cond, live, hist) {
 }
 
 // ── summary ──────────────────────────────────────────────────────────────────
-function summarise(rows, meta) {
+function summarise(rowsIn, meta) {
+  // The app's tts_first_ms is missing when its summary was emitted before the
+  // TTS response (stream ended first); the TTS stage then falls back to the
+  // browser's Resource Timing of the same request (rt_tts_ms).
+  const rows = rowsIn.map((r) => ({ ...r, tts_stage_ms: r.app_tts_first_ms !== '' && r.app_tts_first_ms != null ? r.app_tts_first_ms : (r.rt_tts_ms ?? '') }));
   const f = (x) => (x == null || Number.isNaN(x) ? '—' : Math.round(x).toLocaleString('en-NZ'));
   const s1 = (x) => (x == null || Number.isNaN(x) ? '—' : (x / 1000).toFixed(2));
   const ok = (r) => r.phase === 'measured' && r.h1_ms !== '';
@@ -343,7 +350,8 @@ function summarise(rows, meta) {
   let e4s = new Map();
   if (existsSync(E4S_RAW)) e4s = new Map(parseCsv(readFileSync(E4S_RAW, 'utf8')).filter((r) => r.phase === 'measured').map((r) => [`${r.question_id}#${r.repeat}`, r]));
   const vsE4S = byCond.F.filter((r) => e4s.has(key(r))).map((r) => ({ byte: Number(r.h2_ms) - Number(e4s.get(key(r)).to_first_audio_byte_ms), playable: Number(r.h2_ms) - Number(e4s.get(key(r)).to_first_audio_playable_ms) }));
-  const stages = ['app_stt_ms', 'app_rag_ms', 'app_llm_to_token_ms', 'app_first_sentence_ms', 'app_tts_first_ms'];
+  const stages = ['app_stt_ms', 'app_rag_ms', 'app_llm_to_token_ms', 'app_first_sentence_ms', 'tts_stage_ms'];
+  const missing = (c, k) => byCond[c].filter((r) => r[k] === '' || r[k] == null).length;
   const largest = (c) => stages.map((k) => [k, med(c, k)]).filter(([, m]) => m != null).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
   const sumCol = (k) => rows.reduce((a, r) => a + (Number(r[k]) || 0), 0);
   const pIn = PRICES.openai['gpt-4o'].input, pOut = PRICES.openai['gpt-4o'].output, pEmb = PRICES.openai['text-embedding-3-small'].input, pWh = PRICES.openai['whisper-1'].price, pEl = PRICES.elevenlabs.api_per_1k_chars.flash_turbo;
@@ -380,7 +388,8 @@ function summarise(rows, meta) {
   md.push(statRow('App `rag_ms` (transcript → passages)', 'app_rag_ms'));
   md.push(statRow('App `llm_to_token_ms`', 'app_llm_to_token_ms'));
   md.push(statRow('App `first_sentence_ms` (first token → first sentence)', 'app_first_sentence_ms'));
-  md.push(statRow('App `tts_first_ms` (TTS request → audio in hand)', 'app_tts_first_ms'));
+  md.push(statRow('App `tts_first_ms` (TTS request → audio in hand; only where the app recorded it)', 'app_tts_first_ms'));
+  md.push(statRow('TTS stage (app mark, else Resource Timing of the same request)', 'tts_stage_ms'));
   md.push(statRow('App `playback_wait_ms` (audio in hand → app\'s firstAudio mark)', 'app_playback_wait_ms'));
   md.push(statRow('App `to_first_audio_ms` (its own mark, before decode)', 'app_to_first_audio_ms'));
   md.push(statRow('Decode and schedule (app mark → samples start)', 'decode_to_start_ms'));
@@ -395,6 +404,7 @@ function summarise(rows, meta) {
   md.push(statRow('`/api/eleven-tts` round trip (first sentence)', 'rt_tts_ms'));
   md.push(statRow('Output latency reported by the AudioContext (not added)', 'output_latency_ms'));
   md.push(statRow('Alignment: speech onset in the app\'s recording − expected', 'align_onset_err_ms'));
+  md.push('', `The app emits its \`[LATENCY SUMMARY]\` when the LLM stream ends, so a turn whose stream ended before playback started has no \`tts_first_ms\` / \`to_first_audio_ms\` in it: P ${missing('P', 'app_to_first_audio_ms')} of ${byCond.P.length}, F ${missing('F', 'app_to_first_audio_ms')} of ${byCond.F.length} turns. H1 and H2 are measured by the harness for every turn.`);
   md.push('', `Speculative retrieval in P: hit ${byCond.P.filter((r) => r.spec_status === 'hit').length}, miss ${byCond.P.filter((r) => r.spec_status === 'miss').length}, not fired ${byCond.P.filter((r) => r.spec_status === 'none').length}. Later-sentence TTS requests held and answered with a placeholder: ${sumCol('tts_held')}.`, '');
   md.push('## Against the 3 s yardstick (report §4.5)', '');
   md.push(`- P: H1 over 3,000 ms in ${share(byCond.P, 'h1_ms')}; H2 in ${share(byCond.P, 'h2_ms')}.`);
@@ -407,7 +417,7 @@ function summarise(rows, meta) {
   md.push(`| B1: P median H1 lower than F's by ≥ 0.5 s | P ${s1(med('P', 'h1_ms'))} s, F ${s1(med('F', 'h1_ms'))} s; gap ${s1(B1)} s | ${verdict(B1 == null ? null : B1 >= 500)} |`);
   md.push(`| B2: F median H2 > 4.25 s (E4-S headline) | ${s1(med('F', 'h2_ms'))} s | ${verdict(med('F', 'h2_ms') == null ? null : med('F', 'h2_ms') > 4250)} |`);
   md.push(`| B3: more than half of P turns have H1 > 3 s | ${B3n} of ${B3d} | ${verdict(B3d ? B3n / B3d > 0.5 : null)} |`);
-  md.push(`| B4: largest app stage is \`stt_ms\` in F, and not \`stt_ms\` in P | F: \`${largest('F') ?? '—'}\`; P: \`${largest('P') ?? '—'}\` | ${verdict(largest('F') && largest('P') ? largest('F') === 'app_stt_ms' && largest('P') !== 'app_stt_ms' : null)} |`);
+  md.push(`| B4: largest of the five stages (\`stt_ms\`, \`rag_ms\`, \`llm_to_token_ms\`, \`first_sentence_ms\`, TTS) is \`stt_ms\` in F, and not \`stt_ms\` in P | F: \`${largest('F') ?? '—'}\` (${f(med('F', largest('F')))} ms); P: \`${largest('P') ?? '—'}\` (${f(med('P', largest('P')))} ms) | ${verdict(largest('F') && largest('P') ? largest('F') === 'app_stt_ms' && largest('P') !== 'app_stt_ms' : null)} |`);
   if (failed.length) md.push('', `Failed turns: ${failed.map((r) => `${r.condition} ${r.question_id}#${r.repeat} (${r.failed_attempt_notes})`).join('; ')}.`);
   md.push('');
   return md.join('\n');
@@ -567,7 +577,7 @@ async function main() {
   let lastEnd = 0;
   let pilotLeft = PILOT ?? Infinity;
   let openaiUsd = 0;
-  let tapLag = 40; // ms; adapted after every turn (see attempt step 4)
+  let tapLag = 15; // ms; adapted slowly after every turn (see attempt step 4)
   const priceTurn = (st, recMs) => ((st?.chat?.prompt ?? 0) * PRICES.openai['gpt-4o'].input + (st?.chat?.completion ?? 0) * PRICES.openai['gpt-4o'].output + (st?.embedTokens ?? 0) * PRICES.openai['text-embedding-3-small'].input) / 1e6 + (recMs ? recMs / 60000 * PRICES.openai['whisper-1'].price : 0);
 
   async function attempt(s, turnId) {
@@ -606,10 +616,19 @@ async function main() {
     //    Press/release go straight to CDP; tapLag (learned over the first
     //    turns) absorbs the dispatch delay so the click lands on target.
     await page.mouse.move(sx, sy);
-    const pnow = await page.evaluate(() => performance.now());
-    await sleep(Math.max(0, tCap + clip.ms - pnow - tapLag));
-    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: sx, y: sy, button: 'left', clickCount: 1 });
-    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: sx, y: sy, button: 'left', clickCount: 1 });
+    let best = null; // page clock − Node clock, from the probe with the smallest round trip
+    for (let k = 0; k < 7; k++) {
+      const a = performance.now();
+      const pn = await page.evaluate(() => performance.now());
+      const b = performance.now();
+      if (!best || b - a < best.rtt) best = { rtt: b - a, offset: pn - (a + b) / 2 };
+    }
+    const targetNode = tCap + clip.ms - best.offset;
+    await sleep(Math.max(0, targetNode - performance.now() - tapLag));
+    await Promise.all([
+      cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: sx, y: sy, button: 'left', clickCount: 1 }),
+      cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: sx, y: sy, button: 'left', clickCount: 1 }),
+    ]);
     // 5. Wait for first audio, then for the turn to finish (idle again).
     const t5 = Date.now();
     let gotAudio = false;
@@ -635,7 +654,7 @@ async function main() {
     const p = parseTurn(data, srvTurn, clip, s.cond);
     if (p.tTap != null && p.tCap != null) {
       const err = p.tTap - (p.tCap + clip.ms);
-      tapLag = Math.min(Math.max(tapLag + 0.6 * err, 0), 250);
+      tapLag = Math.min(Math.max(tapLag + 0.15 * err, 0), 120);
     }
     const recA = analyseRecording(data.rec, data.recMime, `${TAG}_${turnId}`);
     const expectOnset = p.mrStarted != null && p.tCap != null ? p.tCap + 300 - p.mrStarted : null;

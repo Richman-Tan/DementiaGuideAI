@@ -31,7 +31,7 @@ import { writeFileSync, mkdirSync, readFileSync, appendFileSync, existsSync, mkd
 import { resolve, join } from 'node:path';
 import { createRequire } from 'node:module';
 import { createHash, randomBytes } from 'node:crypto';
-import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { execFile, execFileSync, spawn, spawnSync } from 'node:child_process';
 import { performance } from 'node:perf_hooks';
 import os from 'node:os';
 
@@ -94,7 +94,7 @@ const COLS = ['turn', 'phase', 'condition', 'question_id', 'repeat', 'item', 'sl
   'decode_to_start_ms', 'output_latency_ms',
   'rec_final_wait_ms', 'rec_last_change_after_eos_ms', 'mr_finalise_ms',
   'rt_transcribe_ms', 'rt_embed_ms', 'rt_rpc_ms', 'rt_chat_headers_ms', 'rt_tts_ms', 'n_embed_before_tap', 'n_embed_after_tap', 'n_tts_requests', 'tts_held',
-  'align_onset_err_ms', 'align_end_err_ms', 'recording_ms',
+  'align_onset_err_ms', 'align_end_err_ms', 'recording_ms', 'tap_sched_late_ms', 'tap_dispatch_ms',
   'prompt_tokens', 'completion_tokens', 'embed_tokens', 'tts_chars', 'history_before', 'history_after',
   'failed_attempt_notes', 'transcript'];
 
@@ -201,9 +201,12 @@ function startWatchdog(onTrip, isMine) {
     const m = byMsg.get(id);
     if (!m || m.done || !m.mic || m.preflight !== 'no' || !m.attr) return;
     m.done = true;
-    const mine = (m.pid && isMine(m.pid)) || m.responsible === 'com.apple.Terminal';
-    if (mine) { seen.trips.push(`${id} pid ${m.pid} responsible ${m.responsible}`); onTrip(`msgID ${id}, accessing pid ${m.pid}, responsible ${m.responsible}`); }
-    else { const k = `${m.responsible ?? '?'} (${m.accessing ?? '?'})`; seen.others[k] = (seen.others[k] ?? 0) + 1; }
+    const trip = () => { seen.trips.push(`${id} pid ${m.pid} responsible ${m.responsible}`); onTrip(`msgID ${id}, accessing pid ${m.pid}, responsible ${m.responsible}`); };
+    if (m.responsible === 'com.apple.Terminal') return trip();
+    isMine(m.pid).then((mine) => {
+      if (mine) return trip();
+      const k = `${m.responsible ?? '?'} (${m.accessing ?? '?'})`; seen.others[k] = (seen.others[k] ?? 0) + 1;
+    });
   };
   let buf = '';
   wd.stdout.on('data', (d) => {
@@ -494,7 +497,7 @@ async function main() {
   // Chrome + watchdog.
   let chrome = null;
   const udd = mkdtempSync(join(os.tmpdir(), 'e4b-chrome-'));
-  const isMine = (pid) => { try { return execFileSync('ps', ['-o', 'command=', '-p', String(pid)]).toString().includes(udd); } catch { return false; } };
+  const isMine = (pid) => new Promise((r) => { if (!pid) return r(false); execFile('ps', ['-o', 'command=', '-p', String(pid)], (err, out) => r(!err && String(out).includes(udd))); });
   const watchdog = startWatchdog((why) => { abortReason = `TCC watchdog: ${why}`; try { chrome?.kill('SIGKILL'); } catch { /* gone */ } }, isMine);
   await sleep(1500);
   const switches = ['--mute-audio', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--disable-audio-input',
@@ -577,7 +580,7 @@ async function main() {
   let lastEnd = 0;
   let pilotLeft = PILOT ?? Infinity;
   let openaiUsd = 0;
-  let tapLag = 15; // ms; adapted slowly after every turn (see attempt step 4)
+  let tapLag = 10; // ms; CDP dispatch latency, adapted slowly after every turn (see attempt step 4)
   const priceTurn = (st, recMs) => ((st?.chat?.prompt ?? 0) * PRICES.openai['gpt-4o'].input + (st?.chat?.completion ?? 0) * PRICES.openai['gpt-4o'].output + (st?.embedTokens ?? 0) * PRICES.openai['text-embedding-3-small'].input) / 1e6 + (recMs ? recMs / 60000 * PRICES.openai['whisper-1'].price : 0);
 
   async function attempt(s, turnId) {
@@ -616,19 +619,19 @@ async function main() {
     //    Press/release go straight to CDP; tapLag (learned over the first
     //    turns) absorbs the dispatch delay so the click lands on target.
     await page.mouse.move(sx, sy);
-    let best = null; // page clock − Node clock, from the probe with the smallest round trip
-    for (let k = 0; k < 7; k++) {
-      const a = performance.now();
-      const pn = await page.evaluate(() => performance.now());
-      const b = performance.now();
-      if (!best || b - a < best.rtt) best = { rtt: b - a, offset: pn - (a + b) / 2 };
-    }
-    const targetNode = tCap + clip.ms - best.offset;
-    await sleep(Math.max(0, targetNode - performance.now() - tapLag));
+    // The wait runs on the PAGE clock (a timer in the page resolves at the
+    // target), so a busy Node loop or a slow probe cannot delay the tap; only
+    // the CDP dispatch after it (learned as tapLag) is left to absorb.
+    const lateInPage = await page.evaluate((target) => new Promise((r) => {
+      const step = () => { const left = target - performance.now(); if (left <= 0) r(-left); else setTimeout(step, left > 30 ? left - 20 : 0); };
+      step();
+    }), tCap + clip.ms - tapLag);
+    const tDispatch = performance.now();
     await Promise.all([
       cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: sx, y: sy, button: 'left', clickCount: 1 }),
       cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: sx, y: sy, button: 'left', clickCount: 1 }),
     ]);
+    const tapDiag = { lateInPage: Math.round(lateInPage), dispatchMs: Math.round(performance.now() - tDispatch), lag: Math.round(tapLag) };
     // 5. Wait for first audio, then for the turn to finish (idle again).
     const t5 = Date.now();
     let gotAudio = false;
@@ -650,11 +653,11 @@ async function main() {
     server.endTurn();
     lastEnd = Date.now();
     mkdirSync(resolve(CACHE, 'turns'), { recursive: true });
-    writeFileSync(resolve(CACHE, 'turns', `${PILOT ? 'pilot' : TAG}_${turnId}_${s.cond}_${s.q.id}.json`), JSON.stringify({ events: data.events, resources: data.resources, server: { ...srvTurn, firstDone: undefined, resolveFirst: undefined }, clickAim: { start: [cx, cy], stop: [sx, sy] }, tCapNode: tCap }, null, 1));
+    writeFileSync(resolve(CACHE, 'turns', `${PILOT ? 'pilot' : TAG}_${turnId}_${s.cond}_${s.q.id}.json`), JSON.stringify({ events: data.events, resources: data.resources, server: { ...srvTurn, firstDone: undefined, resolveFirst: undefined }, clickAim: { start: [cx, cy], stop: [sx, sy] }, tCapNode: tCap, tapDiag }, null, 1));
     const p = parseTurn(data, srvTurn, clip, s.cond);
     if (p.tTap != null && p.tCap != null) {
       const err = p.tTap - (p.tCap + clip.ms);
-      tapLag = Math.min(Math.max(tapLag + 0.15 * err, 0), 120);
+      tapLag = Math.min(Math.max(tapLag + 0.15 * err, 0), 60);
     }
     const recA = analyseRecording(data.rec, data.recMime, `${TAG}_${turnId}`);
     const expectOnset = p.mrStarted != null && p.tCap != null ? p.tCap + 300 - p.mrStarted : null;
@@ -662,6 +665,8 @@ async function main() {
     p.row.align_onset_err_ms = num(recA?.onset != null && expectOnset != null ? recA.onset - expectOnset : null);
     p.row.align_end_err_ms = num(recA?.speechEnd != null && expectEnd != null ? recA.speechEnd - expectEnd : null);
     p.row.recording_ms = num(recA?.dur);
+    p.row.tap_sched_late_ms = tapDiag.lateInPage;
+    p.row.tap_dispatch_ms = tapDiag.dispatchMs;
     p.row.history_before = histBefore;
     p.row.history_after = data.histAfter;
     p.row.transcript_wer = p.transcript ? wer(questionText(s.q, 'v2'), p.transcript).wer.toFixed(3) : '';

@@ -25,6 +25,8 @@
 // Plain CommonJS so Jest and the .mjs runners load the same file.
 
 const { buildSystemPrompt, buildSystemPromptV2, buildUserContent } = require('../../../packages/core/rag/prompt');
+// §19A component ablations (v2 − persona/warmth, − helplines/111, − both).
+const { ABLATION_CONDITIONS } = require('./ablation19a');
 
 // ── P0: the library prompt, resurrected verbatim ────────────────────────────
 // Ported from `_buildSystemPrompt` at commit 7c75fc0^ (2026-07-15, the last
@@ -151,6 +153,7 @@ const CONDITIONS = {
     userContent: (q, chunks) => buildUserContent(q, chunks, 'inline'),
     lineage: { introduced: '619f8f9 (2026-07-17)', inlineCitations: '6d12b5c (2026-07-17)', unchangedSince: '2026-07-17' },
   },
+  ...ABLATION_CONDITIONS,
 };
 
 // Backward-compatible aliases: the existing runner/artefacts name the

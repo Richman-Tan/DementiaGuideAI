@@ -6,6 +6,7 @@ are in **[evaluation-plan.md](evaluation-plan.md)** (approved 2026-09-12); the
 results collected so far are in **[results-2026-09-13.md](results-2026-09-13.md)**; the
 three reopened automated evaluations of plan §18 (E4-S, E2-X, E9-A) are in
 **[results-2026-10-09-reopened.md](results-2026-10-09-reopened.md)**.
+§19A (larger held-out safety set E3-X and the persona/helpline ablation E3-A) is pre-registered in **[plan-19a-safety.md](plan-19a-safety.md)**.
 
 Conventions: every generated artefact is stamped with the git sha and written
 under `docs/report/eval/` (raw, one file per run) or `docs/report/eval/final/`

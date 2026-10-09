@@ -926,6 +926,14 @@ async function modeRun() {
   if (!baselineFile || !existsSync(baselineFile)) { console.error('--baseline <offline-proof json> is required for a DementiaBank run'); process.exit(1); }
   const proof = JSON.parse(readFileSync(baselineFile, 'utf8'));
   if (!proof.verdict?.pass || !proof.baseline) { console.error(`the offline proof ${baselineFile} did not pass`); process.exit(1); }
+  // --baseline-add <json>: background (non-speech) items added by dated
+  // deviation notes after a stop (plan §19C.10), committed before resuming.
+  const addFile = argVal('--baseline-add');
+  const additions = addFile ? JSON.parse(readFileSync(addFile, 'utf8')).additions ?? [] : [];
+  for (const a of additions) {
+    if (/speech/i.test(JSON.stringify(a))) { console.error('a baseline addition mentions speech — refused'); process.exit(1); }
+    for (const k of ['proxyHosts', 'urlKeys', 'addrKeys']) proof.baseline[k] = [...new Set([...(proof.baseline[k] ?? []), ...(a[k] ?? [])])];
+  }
   mkdirSync(CACHE_DIR, { recursive: true });
 
   const startedAt = now();
@@ -938,7 +946,7 @@ async function modeRun() {
   g.chromePid = chrome.proc.pid;
   g.attachNetLog(netlog);
   log(`OFFLINE run — Chrome ${chrome.version}, headless ${!HEADED}, pid ${g.chromePid}, baseline ${baselineFile.replace(ROOT + '/', '')}`);
-  const meta = { mode: 'run', locale: LOCALE, cacheTag: CACHE_TAG, tool: TOOL_VERSION, chrome: chrome.version, os: osVersion(), headless: !HEADED, concurrency: CONCURRENCY, request: REQ, baseline: baselineFile.replace(ROOT + '/', ''), startedAt, switches: chrome.switches, only: only ? only.size : null, robustness: ROBUST };
+  const meta = { mode: 'run', locale: LOCALE, cacheTag: CACHE_TAG, tool: TOOL_VERSION, chrome: chrome.version, os: osVersion(), headless: !HEADED, concurrency: CONCURRENCY, request: REQ, baseline: baselineFile.replace(ROOT + '/', ''), baselineAdditions: additions.map((a) => a.note), startedAt, switches: chrome.switches, only: only ? only.size : null, robustness: ROBUST };
   const fail = async (why) => {
     log(`ABORT: ${why}`);
     server.state.closed = true; killTree(g, chrome);

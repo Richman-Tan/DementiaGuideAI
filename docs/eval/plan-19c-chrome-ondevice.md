@@ -317,3 +317,22 @@ On this path Chrome does not start the session until audio frames flow on the tr
 2. The offline proof (§19C.13 criteria) is re-run with the corrected harness and committed.
 
 The run then restarts from an empty cache: en-NZ, k = 1, headless, every monitor on. The expectations, sample, scorer and stop rules are unchanged.
+
+## 19C.15 Deviation, 10 Oct 2026 — a background stop and a baseline addition (the §19C.10 procedure)
+
+**What happened.**
+- The run restarted with the corrected harness at 09:36:03 NZDT. Its preflight passed, and the guards were armed and the gate opened at 09:36:55.
+- It stopped 10 s later (09:37:05) on the proxy rule: `POST update.googleapis.com`, a request for a host outside the baseline.
+- One cut had been served. Its result was not written before the stop, so the cache is empty.
+
+**Investigation**, as §19C.10 requires before anything else:
+- The request is Chrome's component-updater check, sent over plain HTTP. Its NetLog URL, `http://update.googleapis.com/service/update2/json`, is already in the baseline of `chrome-ondevice-offline-proof_3545bda.json`.
+- Its proxy host key, `update.googleapis.com` (no port, because it is plain HTTP), is missing from that proof's proxy baseline for one reason: in that proof, the request happened to land inside a cloud-control window, and those windows are excluded from the proxy baseline. It was in the baseline of the earlier passing proof (`chrome-ondevice-offline-proof_e3b4142.json`).
+- After arming, the session's NetLog shows **0 speech URLs**. The only URLs are the component updater's `update2/json`, over HTTPS and HTTP, both in the baseline.
+- No socket of the tree had a non-loopback peer, nettop saw no flow, there was no sandbox denial and no microphone request.
+- The request was refused by the local proxy, like every other.
+
+**Disposition** (the §19C.10 rule for a non-speech background URL refused by the local proxy):
+- `update.googleapis.com` is added to the proxy-host baseline through the committed file `docs/report/eval/stt/chrome-ondevice-baseline-additions.json`, which the run reads with `--baseline-add`. The tool refuses any addition that mentions speech.
+- Every other stop rule is unchanged. A speech URL, an external socket or flow, a sandbox denial, a `network` error or a microphone request still abandons the run.
+- The run resumes from the (empty) cache. Any later background stop is handled the same way, with its own dated entry in the additions file and in this section.

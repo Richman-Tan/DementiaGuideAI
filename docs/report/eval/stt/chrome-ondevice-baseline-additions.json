@@ -1,0 +1,10 @@
+{
+ "about": "E9-C (plan §19C.10, §19C.15): Chrome background-service items added to the offline proof's baseline after a run stopped on them. Each is non-speech, was refused by the local proxy, and is added by a dated deviation note committed before the run resumed. Items that mention speech are refused by the tool.",
+ "additions": [
+  {
+   "note": "§19C.15, 10 Oct 2026 09:37 NZDT: component-updater plain-HTTP check",
+   "proxyHosts": ["update.googleapis.com"],
+   "evidence": "Run stopped 10 s after arming on 'POST update.googleapis.com' (proxy host without port). Its NetLog URL, http://update.googleapis.com/service/update2/json, is already in the baseline of chrome-ondevice-offline-proof_3545bda.json; the host fell outside that proof's proxy baseline only because the request landed inside a cloud-control window. NetLog after arming: 0 speech URLs; only update2/json URLs."
+  }
+ ]
+}

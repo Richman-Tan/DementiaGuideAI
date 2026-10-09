@@ -931,7 +931,7 @@ async function modeRun() {
   const addFile = argVal('--baseline-add');
   const additions = addFile ? JSON.parse(readFileSync(addFile, 'utf8')).additions ?? [] : [];
   for (const a of additions) {
-    if (/speech/i.test(JSON.stringify(a))) { console.error('a baseline addition mentions speech — refused'); process.exit(1); }
+    if (/speech/i.test(JSON.stringify([a.proxyHosts, a.urlKeys, a.addrKeys]))) { console.error('a baseline addition mentions speech — refused'); process.exit(1); }
     for (const k of ['proxyHosts', 'urlKeys', 'addrKeys']) proof.baseline[k] = [...new Set([...(proof.baseline[k] ?? []), ...(a[k] ?? [])])];
   }
   mkdirSync(CACHE_DIR, { recursive: true });

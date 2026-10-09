@@ -112,8 +112,12 @@ const SYNTH = [
   { id: 'syn6', voice: 'Daniel', text: 'Is there a support group for carers that meets near the city?' },
 ];
 
-// A sentence in a language with NO installed on-device pack (cloud diagnostic).
-const SYNTH_FR = { id: 'fr1', voice: 'Jacques', text: 'Bonjour, je voudrais prendre rendez-vous avec le médecin demain matin.' };
+// Sentences in a language with NO installed on-device pack: the cloud control
+// (plan §19C.13 amendment) and the cloud diagnostic.
+const SYNTH_FR = [
+  { id: 'fr1', voice: 'Jacques', text: 'Bonjour, je voudrais prendre rendez-vous avec le médecin demain matin.' },
+  { id: 'fr2', voice: 'Jacques', text: 'Ma mère oublie souvent ses rendez-vous chez le dentiste.' },
+];
 
 const now = () => new Date().toISOString();
 const log = (...a) => console.log(`[${new Date().toTimeString().slice(0, 8)}]`, ...a);
@@ -203,8 +207,13 @@ async function treePids(root) {
 
 // ── socket monitor: lsof on the tree every second ──────────────────────────
 const isLoopback = (addr) => /^(127\.|\[::1\]|localhost|::1)/.test(addr);
+// Chrome's IPv6 reachability check connect()s a UDP socket to this address and
+// sends nothing (NetLog UDP_CONNECT; part of the proof's baseline). lsof
+// records such a socket separately (plan §19C.13); nettop still stops the run
+// if any UDP flow of the tree moves a byte.
+const IPV6_PROBE = '[2001:4860:4860::8888]:443';
 function startSocketMonitor(getPids, onExternal) {
-  const seen = { snapshots: 0, maxSockets: 0, external: [], kinds: {} };
+  const seen = { snapshots: 0, maxSockets: 0, external: [], kinds: {}, ipv6ProbeUdp: 0 };
   let stopped = false; let busy = false;
   const tick = async () => {
     if (stopped || busy) return;
@@ -222,7 +231,10 @@ function startSocketMonitor(getPids, onExternal) {
         const [, proto, local, remote, state] = m;
         const kind = `${proto} ${isLoopback(local) ? 'loopback' : local.startsWith('*') ? 'wildcard' : 'non-loopback'}-local${remote ? (isLoopback(remote) ? '->loopback' : '->EXTERNAL') : ''}${state ? ` ${state}` : ''}`;
         seen.kinds[kind] = (seen.kinds[kind] ?? 0) + 1;
-        if (remote && !isLoopback(remote)) { const e = `${now()} ${l.trim().replace(/\s+/g, ' ')}`; seen.external.push(e); onExternal(e); }
+        if (remote && !isLoopback(remote)) {
+          if (proto === 'UDP' && remote === IPV6_PROBE) { seen.ipv6ProbeUdp++; continue; }
+          const e = `${now()} ${l.trim().replace(/\s+/g, ' ')}`; seen.external.push(e); onExternal(e);
+        }
       }
     } finally { busy = false; }
   };
@@ -483,7 +495,7 @@ async function startGuards({ strict, baseline, onAbort }) {
     return {
       proxyRequests: g.sink.seen.filter((e) => e.at >= since).length,
       proxyByHost: tally(g.sink.seen.filter((e) => e.at >= since), (e) => `${e.method} ${e.host}`),
-      lsofSnapshots: g.sockets.seen.snapshots, lsofMaxSockets: g.sockets.seen.maxSockets, lsofSocketKinds: g.sockets.seen.kinds, lsofExternal: g.sockets.seen.external,
+      lsofSnapshots: g.sockets.seen.snapshots, lsofMaxSockets: g.sockets.seen.maxSockets, lsofSocketKinds: g.sockets.seen.kinds, lsofExternal: g.sockets.seen.external, lsofIpv6ProbeUdp: g.sockets.seen.ipv6ProbeUdp,
       nettopSamples: g.nettop.seen.samples, nettopFlowRowsAllProcesses: g.nettop.seen.rows, nettopTreeFlows: g.nettop.seen.tree, nettopTreeZeroByteUdp: g.nettop.seen.zeroByteUdp,
       sandboxDenials: g.sbx.seen.denials, sandboxDenialsOtherProcesses: g.sbx.seen.otherProcesses,
       tccTrips: g.tcc.seen.trips, tccPreflights: g.tcc.seen.preflight, tccOtherApps: g.tcc.seen.others,
@@ -520,8 +532,11 @@ async function openHarnessPage(context, port) {
 const recognise = (page, url, lang, processLocally) => page.evaluate(([u, o]) => window.H.recognise(u, o), [url, { ...REQ, lang, processLocally }]);
 const available = (page, lang, processLocally) => page.evaluate(([l, p]) => window.H.available(l, p), [lang, processLocally]);
 
-// On-device recognition of the synthetic clips (must work), then the cloud
-// recogniser on two of them (must fail offline). Wall-clock windows recorded.
+// On-device recognition of the synthetic clips (must work). Then, as amended
+// in plan §19C.13, after a 10 s settle and 5 s apart: two English clips with
+// processLocally = false (must make no speech request), and the cloud control,
+// two French clips (no pack installed) with processLocally = false (must fail
+// with "network", the speech request refused by the local proxy).
 async function syntheticChecks(page, locale, clips, { cloudControl = true } = {}) {
   const tLocal0 = Date.now();
   const local = [];
@@ -530,17 +545,56 @@ async function syntheticChecks(page, locale, clips, { cloudControl = true } = {}
     local.push({ id: c.id, voice: c.voice, script: c.text, hyp: r.text, wer: synthScore(c, r.text), errors: r.errors, audiostart: r.audiostart, lastFinal: r.lastFinal, nResults: r.nResults, finalWaitMs: Math.round(r.finalWaitMs ?? -1), clipMs: Math.round(r.clipMs ?? -1) });
   }
   const tLocal1 = Date.now();
-  const cloud = [];
+  const englishFalse = []; const cloud = [];
   if (cloudControl) {
+    await sleep(10000);
     for (const c of clips.slice(0, 2)) {
+      const t0 = Date.now();
       const r = await recognise(page, `/synth/${c.id}`, locale, false);
-      cloud.push({ id: c.id, hyp: r.text, errors: r.errors, audiostart: r.audiostart });
+      englishFalse.push({ id: c.id, lang: locale, processLocally: false, hyp: r.text, wer: synthScore(c, r.text), errors: r.errors, nResults: r.nResults, sameAsOnDevice: r.text === local.find((x) => x.id === c.id)?.hyp, window: [t0, Date.now() + 2000] });
+      await sleep(5000);
+    }
+    for (const c of SYNTH_FR) {
+      const t0 = Date.now();
+      const r = await recognise(page, `/synth/${c.id}`, 'fr-FR', false);
+      cloud.push({ id: c.id, lang: 'fr-FR', processLocally: false, hyp: r.text, errors: r.errors, audiostart: r.audiostart, window: [t0, Date.now() + 2000] });
+      await sleep(5000);
     }
   }
-  const tCloud1 = Date.now();
   const localOk = local.every((x) => x.hyp && x.wer <= 0.5 && !x.errors.some((e) => FATAL_ERRORS.test(e)));
-  const cloudFailed = cloud.every((x) => !x.hyp && x.errors.length > 0);
-  return { locale, local, cloud, localOk, cloudFailed, meanWer: local.reduce((a, x) => a + x.wer, 0) / local.length, windows: { local: [tLocal0, tLocal1], cloud: cloudControl ? [tLocal1, tCloud1] : null } };
+  const cloudFailed = cloud.length > 0 && cloud.every((x) => !x.hyp && x.errors.includes('network'));
+  return { locale, local, englishFalse, cloud, localOk, cloudFailed, meanWer: local.reduce((a, x) => a + x.wer, 0) / local.length, windows: { local: [tLocal0, tLocal1] } };
+}
+
+// Attribute proxy requests and NetLog speech URLs to each control step by its
+// time window [start, end + 2 s].
+function judgeControls(g, chk) {
+  const items = g.netlog.st.items;
+  const inW = (t, w) => t >= w[0] && t <= w[1];
+  for (const st of [...chk.englishFalse, ...chk.cloud]) {
+    const sp = items.filter((x) => x.speech && inW(x.at, st.window));
+    st.speechUrls = sp.length;
+    st.speechUrlKeys = [...new Set(sp.map((x) => x.key))];
+    st.proxyRequests = g.sink.seen.filter((e) => inW(e.at, st.window)).map((e) => `${e.method} ${e.host}`);
+    st.googleConnects = st.proxyRequests.filter((x) => /(^|\s)www\.google\.com(:|$)/.test(x)).length;
+  }
+  chk.cloudRequestRefused = chk.cloud.length > 0 && chk.cloud.every((st) => st.speechUrls > 0 && st.googleConnects > 0);
+  chk.englishNoSpeechRequest = chk.englishFalse.length > 0 && chk.englishFalse.every((st) => st.speechUrls === 0 && st.googleConnects === 0);
+  return chk;
+}
+
+// The NetLog is written in order but in batches: wait until it shows the last
+// French cloud-control speech request, so that every earlier step is on disk.
+async function awaitNetLogCaughtUp(g, chk, timeoutMs = 90000) {
+  const w = chk.cloud[chk.cloud.length - 1]?.window;
+  if (!w) return false;
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeoutMs) {
+    g.netlog.poll();
+    if (g.netlog.st.items.some((x) => x.speech && x.at >= w[0] && x.at <= w[1])) return true;
+    await sleep(2000);
+  }
+  return false;
 }
 
 function dirSizeKb(p) {
@@ -641,7 +695,7 @@ async function modeInstall() {
 
 async function modeProof() {
   const netlog = resolve(SCRATCH, `netlog-proof-${Date.now()}.json`);
-  const synthPaths = Object.fromEntries(SYNTH.map((c) => [c.id, synth(c)]));
+  const synthPaths = Object.fromEntries([...SYNTH, ...SYNTH_FR].map((c) => [c.id, synth(c)]));
   let chrome = null;
   const g = await startGuards({ strict: false, onAbort: () => killTree(g, chrome) });
   const server = await startPageServer({ synthPaths });
@@ -649,17 +703,18 @@ async function modeProof() {
   g.chromePid = chrome.proc.pid;
   g.attachNetLog(netlog);
   const startedAt = now();
-  log(`OFFLINE proof — Chrome ${chrome.version}, headless ${!HEADED}, pid ${g.chromePid}`);
+  log(`OFFLINE proof (amended, plan §19C.13) — Chrome ${chrome.version}, headless ${!HEADED}, pid ${g.chromePid}`);
   const page = await openHarnessPage(chrome.context, server.port);
   const info = await page.evaluate(() => window.H.info());
   const res = { mode: 'offline-proof', startedAt, chrome: chrome.version, os: osVersion(), headless: !HEADED, switches: chrome.switches, request: REQ, info, locales: [] };
-  const localWindows = []; const cloudWindows = [];
+  const localWindows = []; const cloudWindows = []; const checks = [];
   for (const L of LOCALES) {
-    const avail = { local: await available(page, L, true), cloud: await available(page, L, false) };
-    log(`${L}: available local=${avail.local} cloud=${avail.cloud}`);
+    const avail = { local: await available(page, L, true), cloud: await available(page, L, false), frLocal: await available(page, 'fr-FR', true), frCloud: await available(page, 'fr-FR', false) };
+    log(`${L}: available ${JSON.stringify(avail)}`);
     const seq = await syntheticChecks(page, L, SYNTH);
-    localWindows.push(seq.windows.local); cloudWindows.push(seq.windows.cloud);
-    log(`${L}: on-device mean WER ${seq.meanWer.toFixed(3)} (ok ${seq.localOk}); cloud control failed ${seq.cloudFailed}: ${JSON.stringify(seq.cloud.map((c) => c.errors))}`);
+    checks.push(seq);
+    localWindows.push(seq.windows.local); for (const st of seq.cloud) cloudWindows.push(st.window);
+    log(`${L}: on-device mean WER ${seq.meanWer.toFixed(3)} (ok ${seq.localOk}); English processLocally=false hyps same as on-device ${seq.englishFalse.filter((x) => x.sameAsOnDevice).length}/${seq.englishFalse.length}; fr-FR cloud control failed with network ${seq.cloudFailed}: ${JSON.stringify(seq.cloud.map((c) => c.errors))}`);
     // Concurrency: the same clips across k pages at once, on-device only.
     const conc = {};
     for (const k of [4, 2]) {
@@ -679,15 +734,20 @@ async function modeProof() {
   }
   // Idle under the guards for a minute: Chrome's periodic background requests.
   await sleep(60000);
+  const tCatch = Date.now();
+  res.netlogCaughtUpLive = await awaitNetLogCaughtUp(g, checks[checks.length - 1]);
+  res.netlogCatchUpSeconds = Math.round((Date.now() - tCatch) / 1000);
   await closeChrome(chrome);
   await sleep(2000);
   await g.stop(); await server.close();
   res.finishedAt = now();
   res.guards = g.summary();
   const items = g.netlog.st.items;
-  const inWin = (t, ws) => ws.some((w) => w && t >= w[0] && t <= w[1] + 3000);
+  for (const chk of checks) judgeControls(g, chk);
+  const inWin = (t, ws) => ws.some((w) => w && t >= w[0] && t <= w[1]);
   const speech = items.filter((x) => x.speech);
-  res.speechUrls = { total: speech.length, duringCloudControl: speech.filter((x) => inWin(x.at, cloudWindows)).length, duringOnDevice: speech.filter((x) => inWin(x.at, localWindows) && !inWin(x.at, cloudWindows)).length, keys: [...new Set(speech.map((x) => x.key))] };
+  res.speechUrls = { total: speech.length, duringCloudControl: speech.filter((x) => inWin(x.at, cloudWindows)).length, duringOnDevice: speech.filter((x) => inWin(x.at, localWindows)).length, keys: [...new Set(speech.map((x) => x.key))] };
+  res.controls = checks.map((c) => ({ locale: c.locale, englishFalse: c.englishFalse, cloud: c.cloud, cloudFailed: c.cloudFailed, cloudRequestRefused: c.cloudRequestRefused, englishNoSpeechRequest: c.englishNoSpeechRequest }));
   res.proxyDuringCloudControl = g.sink.seen.filter((e) => inWin(e.at, cloudWindows)).map((e) => `${e.method} ${e.host}`);
   const tcpExternal = Object.keys(g.netlog.st.addrs).filter((k) => !/\/UDP_/.test(k) && !/^UDP_/.test(k));
   // The baseline the DementiaBank run is held to: everything seen here except
@@ -699,7 +759,9 @@ async function modeProof() {
   };
   res.verdict = {
     onDeviceWorksOffline: res.locales.every((l) => l.available.local === 'available' && l.sequential.localOk),
-    cloudFailsOffline: res.locales.every((l) => l.sequential.cloudFailed),
+    cloudControlFailsWithNetwork: checks.every((c) => c.cloudFailed),
+    cloudControlSpeechRequestRefused: checks.every((c) => c.cloudRequestRefused),
+    englishProcessLocallyFalseMakesNoSpeechRequest: checks.every((c) => c.englishNoSpeechRequest),
     noSpeechUrlOutsideCloudControl: res.speechUrls.total === res.speechUrls.duringCloudControl,
     noExternalSocket: res.guards.lsofExternal.length === 0 && res.guards.lsofSnapshots > 0,
     noNettopFlow: res.guards.nettopTreeFlows.length === 0 && res.guards.nettopSamples > 0,
@@ -712,6 +774,7 @@ async function modeProof() {
   const out = resolve(REPORT_DIR, `chrome-ondevice-offline-proof_${gitSha()}${HEADED ? '_headed' : ''}.json`);
   writeFileSync(out, JSON.stringify(res, null, 1) + '\n');
   log(`speech URLs ${JSON.stringify(res.speechUrls)}; proxy during cloud control ${JSON.stringify(res.proxyDuringCloudControl)}`);
+  for (const c of res.controls) log(`${c.locale}: English false steps ${JSON.stringify(c.englishFalse.map((x) => ({ id: x.id, same: x.sameAsOnDevice, speech: x.speechUrls, google: x.googleConnects, proxy: x.proxyRequests })))}; fr-FR steps ${JSON.stringify(c.cloud.map((x) => ({ id: x.id, errors: x.errors, speech: x.speechUrls, google: x.googleConnects })))}`);
   log(`verdict ${JSON.stringify(res.verdict)}`);
   log(`wrote ${out}`);
   if (!res.verdict.pass) process.exit(3);
@@ -723,7 +786,7 @@ async function modeProof() {
 // requests and NetLog URLs are attributed by time window.
 async function modeCloudDiagnostic() {
   const netlog = resolve(SCRATCH, `netlog-clouddiag-${Date.now()}.json`);
-  const synthPaths = { syn1: synth(SYNTH[0]), syn2: synth(SYNTH[1]), fr1: synth(SYNTH_FR) };
+  const synthPaths = { syn1: synth(SYNTH[0]), syn2: synth(SYNTH[1]), fr1: synth(SYNTH_FR[0]) };
   let chrome = null;
   const g = await startGuards({ strict: false, onAbort: () => killTree(g, chrome) });
   const server = await startPageServer({ synthPaths });
@@ -748,8 +811,8 @@ async function modeCloudDiagnostic() {
   };
   await step('en-NZ, processLocally=true', SYNTH[0], 'en-NZ', true);
   await step('en-NZ, processLocally=false', SYNTH[0], 'en-NZ', false);
-  await step('fr-FR (no pack), processLocally=false', SYNTH_FR, 'fr-FR', false);
-  await step('fr-FR (no pack), processLocally=true', SYNTH_FR, 'fr-FR', true);
+  await step('fr-FR (no pack), processLocally=false', SYNTH_FR[0], 'fr-FR', false);
+  await step('fr-FR (no pack), processLocally=true', SYNTH_FR[0], 'fr-FR', true);
   await step('en-NZ, processLocally=false (second clip)', SYNTH[1], 'en-NZ', false);
   await closeChrome(chrome);
   await sleep(2000);
@@ -810,7 +873,7 @@ async function modeRun() {
 
   const startedAt = now();
   const netlog = resolve(SCRATCH, `netlog-run-${CACHE_TAG}-${Date.now()}.json`);
-  const synthPaths = Object.fromEntries(SYNTH.slice(0, 2).map((c) => [c.id, synth(c)]));
+  const synthPaths = Object.fromEntries([...SYNTH.slice(0, 2), ...SYNTH_FR].map((c) => [c.id, synth(c)]));
   let chrome = null; let server = null;
   const g = await startGuards({ strict: true, baseline: proof.baseline, onAbort: () => { if (server) server.state.closed = true; killTree(g, chrome); } });
   server = await startPageServer({ cutPaths: files, synthPaths });
@@ -835,12 +898,16 @@ async function modeRun() {
     const availLocal = await available(page, LOCALE, true);
     if (availLocal !== 'available') return fail(`on-device pack not available for ${LOCALE}: ${availLocal}`);
     const pre = await syntheticChecks(page, LOCALE, SYNTH.slice(0, 2));
-    meta.preflight = { availLocal, onDeviceMeanWer: pre.meanWer, localOk: pre.localOk, cloudFailed: pre.cloudFailed, cloudErrors: pre.cloud.map((c) => c.errors), at: now() };
-    log(`preflight: on-device ok ${pre.localOk} (mean WER ${pre.meanWer.toFixed(3)}), cloud failed ${pre.cloudFailed} ${JSON.stringify(meta.preflight.cloudErrors)}`);
+    const caughtUp = await awaitNetLogCaughtUp(g, pre);
+    judgeControls(g, pre);
+    const brief = (x) => ({ id: x.id, lang: x.lang, errors: x.errors, sameAsOnDevice: x.sameAsOnDevice, speechUrls: x.speechUrls, googleConnects: x.googleConnects, proxyRequests: x.proxyRequests });
+    meta.preflight = { availLocal, onDeviceMeanWer: pre.meanWer, localOk: pre.localOk, englishFalse: pre.englishFalse.map(brief), cloud: pre.cloud.map(brief), cloudFailed: pre.cloudFailed, cloudRequestRefused: pre.cloudRequestRefused, englishNoSpeechRequest: pre.englishNoSpeechRequest, netlogCaughtUp: caughtUp, at: now() };
+    log(`preflight: on-device ok ${pre.localOk} (mean WER ${pre.meanWer.toFixed(3)}); English processLocally=false no speech request ${pre.englishNoSpeechRequest}; fr-FR cloud control failed with network ${pre.cloudFailed}, speech request refused ${pre.cloudRequestRefused}; NetLog caught up ${caughtUp}`);
     if (!pre.localOk) return fail('preflight: on-device recognition of the synthetic clip failed');
-    if (!pre.cloudFailed) return fail('preflight: the CLOUD recogniser worked — the network is not blocked');
+    if (!caughtUp) return fail('preflight: the NetLog never showed the cloud control\'s speech request');
+    if (!pre.cloudFailed || !pre.cloudRequestRefused) return fail('preflight: the fr-FR cloud control did not fail with a refused speech request');
+    if (!pre.englishNoSpeechRequest) return fail('preflight: an English processLocally=false request made a speech request');
     pages = [page, ...await Promise.all(Array.from({ length: CONCURRENCY - 1 }, () => openHarnessPage(chrome.context, server.port)))];
-    await sleep(5000); // let the cloud control's NetLog entries land before arming
     g.netlog.poll();
     if (g.abortReason) return fail(g.abortReason);
   } catch (e) { return fail(`preflight error: ${e.message}`); }

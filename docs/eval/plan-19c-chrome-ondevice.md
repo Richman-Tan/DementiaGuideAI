@@ -225,3 +225,60 @@ After the primary pass, 60 cuts are re-run **one at a time (k = 1)** in a fresh 
   - `chrome-ondevice-run_<sha>_<locale>.json` (counts, times and guard results only).
 - Aggregates: `docs/report/eval/stt/wer_<sha>_chrome-ondevice-<locale>.{md,csv}`.
 - Results: `docs/eval/results-2026-10-10-e9c.md`, under the heading **§19C**.
+
+## 19C.13 Amendment, 9 Oct 2026 — the cloud control; committed before any DementiaBank audio
+
+**When and why.**
+- The first offline proof (20:13:39–20:21:38 NZDT, `chrome-ondevice-offline-proof_4a92057.json`) failed one criterion: the same-locale cloud control returned transcripts instead of failing.
+- A diagnostic (20:23:03–20:24:51, offline, synthetic audio only; `chrome-ondevice-cloud-diagnostic_4a92057.json`) showed why. With the English pack installed, Chrome 155 serves an English request on-device even when `processLocally` is false, and makes no speech request. A French request (no pack installed) does try Google's speech endpoint, is refused by the local proxy, and fails with `network`.
+- The evaluation stopped, as §19C.10 requires, and was reported (`results-2026-10-10-e9c.md`, §19C.6 proposal).
+- On 9 October the author approved the proposal. This amendment adopts it as proposed, plus the two clarifications below.
+- It is written after the failed criterion and **before any DementiaBank audio**. No DementiaBank cut has been served to Chrome, and no hypothesis exists. The failed proof and the diagnostic stay committed as the record.
+
+**1. The cloud control becomes fr-FR**, a locale with no installed pack.
+- Two synthetic French sentences (`say -v Jacques -o`, never played) are recognised with `processLocally = false`, 5 s apart, after the English steps.
+- **Pass:** each returns no transcript and a `network` error. In each step's window (start → end + 2 s), the NetLog shows a speech URL, and the proxy refused a `CONNECT www.google.com:443`.
+- This replaces the same-locale cloud control in the offline proof and in the run's preflight.
+
+**2. Added check: English requests make no speech request.**
+- After a 10 s settle, two English clips are recognised in the locale under test with `processLocally = false`, 5 s apart.
+- **Pass:** each step's window (start → end + 2 s) contains no NetLog speech URL and no proxy request for `www.google.com`.
+- Every English request in the DementiaBank run is still made with `processLocally = true`. The diagnostic shows that, where no pack exists, such a request is refused (`language-not-supported`), not sent to the cloud.
+
+**Amended offline-proof criteria (all must hold), for en-NZ and en-US:**
+1. on-device recognition works offline (unchanged);
+2. the fr-FR cloud control fails with `network`;
+3. its speech request is visible in the NetLog and refused by the proxy;
+4. the English `processLocally = false` steps make no speech request;
+5. every speech URL falls inside a fr-FR control window;
+6. no external socket (lsof, but see clarification 3);
+7. no TCP flow, and no UDP flow moving a byte (nettop);
+8. no sandbox network denial;
+9. no TCP connection to a non-loopback address (NetLog);
+10. no microphone access request.
+
+**The run's preflight** uses the same three parts on two clips each: English on-device, English `processLocally = false`, and French cloud.
+- It judges them only once the NetLog shows the last French speech request. The NetLog is written in order, so every earlier step is then on disk.
+- The gate opens only if all the checks hold.
+
+**3. Clarification: lsof and Chrome's IPv6 reachability check.**
+- In the first proof, the NetLog showed 53 UDP `connect()` calls to `[2001:4860:4860::8888]:443` in 8 minutes: Chrome's IPv6 reachability check. It sends no datagram, and nettop saw no flow from it. These are baseline socket addresses, and the pre-registered NetLog rule already allows baseline addresses.
+- lsof never caught one of these sockets in 394 snapshots, because each lives for microseconds. Over a run of several hours it might.
+- Such a socket (UDP, peer exactly `[2001:4860:4860::8888]:443`) is therefore **counted separately by lsof rather than treated as an external socket**. This makes lsof consistent with the NetLog baseline.
+- Any other non-loopback peer still stops the run. nettop still stops the run if any UDP flow of the tree moves a byte.
+
+**4. Clarification: concurrency is k = 1, fixed now.**
+- en-NZ and en-US run the same model, SODA en-US Models 1.5075.0 (install record).
+- In the first proof, the concurrent en-US passes lost a final word in 1 of 6 clips at both k = 4 and k = 2 ("me", "city"). No final word was lost in 24 sequential recognitions.
+- Because the model is the same, that finding applies to en-NZ. A lost final word under concurrency would be a systematic deletion bias.
+- The DementiaBank run therefore uses **k = 1** (one page), as instructed if the en-US finding affects en-NZ. The amended proof's k = 4 and k = 2 checks are kept for the record only.
+- Runtime becomes about 3.5 h per locale. en-US runs afterwards only if time allows.
+- The robustness re-run (§19C.9) is also k = 1, so it now measures run-to-run repeatability at the same setting.
+
+Everything else in §19C.1–§19C.12 is unchanged:
+- the question and label;
+- the request settings;
+- the sample;
+- the scorer and the paired rows;
+- expectations C1–C4;
+- the stop rules and contingencies.

@@ -130,26 +130,35 @@ async function passages() {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
     });
     if (!r.ok) throw new Error(`chunk fetch failed (${r.status})`);
-    for (const row of await r.json()) out[row.id] = { ...row, frozenHash: ref[row.id] ?? null, hashMatches: ref[row.id] === row.content_hash };
+    for (const row of await r.json()) {
+      // Plan §19B.2 clarification: a chunk with no content_hash recorded on either side (every
+      // iSupport chunk) cannot be checked — 'unrecorded', kept and flagged. Only a recorded
+      // hash that differs (or is recorded on one side only) counts as 'changed' and is excluded.
+      const frozen = ref[row.id] || null, live = row.content_hash || null;
+      const hashStatus = !frozen && !live ? 'unrecorded' : frozen === live ? 'verified' : 'changed';
+      out[row.id] = { ...row, frozenHash: frozen, hashStatus, contentSha256: sha256(row.content ?? '') };
+    }
   }
   const missing = ids.filter(id => !out[id]);
-  const changed = ids.filter(id => out[id] && !out[id].hashMatches);
+  const by = (st) => ids.filter(id => out[id]?.hashStatus === st);
   mkdirSync(CACHE, { recursive: true });
-  writeFileSync(PASSAGES, JSON.stringify({ fetchedAt: new Date().toISOString(), n: ids.length, missing, changed, passages: out }, null, 2));
-  console.log(`Fetched ${Object.keys(out).length}/${ids.length} cited chunks into ${relative(ROOT, PASSAGES)} (git-ignored). content_hash differs from the 2026-09-13 snapshot: ${changed.length}${changed.length ? ` (${changed.join(', ')})` : ''}; missing: ${missing.length}`);
+  writeFileSync(PASSAGES, JSON.stringify({ fetchedAt: new Date().toISOString(), n: ids.length, missing, changed: by('changed'), unrecorded: by('unrecorded'), passages: out }, null, 2));
+  // Committed record of what the checker saw: ids, hash status and a sha256 of each passage text (no text).
+  writeFileSync(resolve(FINAL, 'citation-passages_s19b.json'), JSON.stringify({ fetchedAt: new Date().toISOString(), snapshot: 'docs/report/kb_chunks_reference.csv', chunks: Object.fromEntries(ids.filter(id => out[id]).map(id => [id, { hashStatus: out[id].hashStatus, contentSha256: out[id].contentSha256 }])) }, null, 2) + '\n');
+  console.log(`Fetched ${Object.keys(out).length}/${ids.length} cited chunks into ${relative(ROOT, PASSAGES)} (git-ignored): hash verified ${by('verified').length}, no hash recorded on either side ${by('unrecorded').length}, changed ${by('changed').length}${by('changed').length ? ` (${by('changed').join(', ')})` : ''}; missing ${missing.length}`);
 }
 
 // ── judge ────────────────────────────────────────────────────────────────────
 async function judge() {
   const { pairs } = load(PAIRS);
   const P = existsSync(PASSAGES) ? load(PASSAGES).passages : null;
-  const usable = pairs.filter(p => P?.[p.chunkId]?.hashMatches);
+  const usable = pairs.filter(p => P?.[p.chunkId] && P[p.chunkId].hashStatus !== 'changed');
   const LIMIT = argVal('--limit') ? Number(argVal('--limit')) : Infinity;
   if (has('--dry-run')) {
     const sample = (P ? usable : pairs).slice(0, 50);
     const avgChars = sample.reduce((s, p) => s + SYSTEM.length + (P ? userPrompt(p, P[p.chunkId]).length : 2400), 0) / Math.max(1, sample.length);
     const inTok = Math.round(avgChars / 3.6);
-    console.log(`Dry run: ${pairs.length} pairs (${P ? `${usable.length} with a hash-verified passage` : 'passages not fetched yet'}); ~${inTok} input tokens per call.`);
+    console.log(`Dry run: ${pairs.length} pairs (${P ? `${usable.length} usable, ${usable.filter(p => P[p.chunkId].hashStatus === 'verified').length} of them hash-verified` : 'passages not fetched yet'}); ~${inTok} input tokens per call.`);
     console.log(`Estimated cost at ${MODEL} list price: US$${judgeCostEstimateUSD(MODEL, pairs.length, inTok, 350).toFixed(2)} (350 output tokens per call incl. thinking); spend cap US$${SPEND_CAP_USD}.`);
     return;
   }
@@ -186,7 +195,7 @@ async function judge() {
       const parsed = res?.text ? parseJsonObject(res.text) : null;
       const verdict = parsed ? normaliseLabel(parsed.verdict) : null;
       rows.push({ pairId: p.pairId, condition: p.condition, qid: p.qid, set: p.set, sentenceIndex: p.sentenceIndex, marker: p.marker, chunkId: p.chunkId,
-        verdict: verdict ?? null, reason: parsed?.reason ?? null, refused: res?.refused ?? false,
+        hashStatus: P[p.chunkId].hashStatus, verdict: verdict ?? null, reason: parsed?.reason ?? null, refused: res?.refused ?? false,
         error: err ?? (res && !res.refused && !verdict ? `unparsed: ${String(res?.text).slice(0, 120)}` : null),
         servedBy: res?.model ?? null, stopReason: res?.stopReason ?? null, inputTokens: i, outputTokens: o });
       if (++sinceSave >= 20) { save(true); sinceSave = 0; process.stdout.write(`  ${rows.length}/${usable.length} judged, US$${spend.toFixed(3)}\n`); }
@@ -286,7 +295,7 @@ function report() {
   const pc = (x) => `${(100 * x).toFixed(1)} %`;
   md.push('# §19B P2 — sentence-level citation support', '');
   md.push(`Pre-registered in \`docs/eval/plan-19b-propagation.md\` §19B.2. Generated ${new Date().toISOString()} by \`scripts/eval/citation-support.mjs report\`. Checker \`${J.model}\` (effort ${J.effort}, refusal fallback ${J.fallbacks}), run ${J.startedAt} → ${J.generatedAt} at \`${J.gitSha}\`; ${J.usage.inputTokens} input / ${J.usage.outputTokens} output tokens, **US$${J.usage.costUSD.toFixed(2)}** at US$${J.priceUSDPerMTok.input}/${J.priceUSDPerMTok.output} per 1M (${J.priceUSDPerMTok.checked}). Answers: the seeded \`generation_8a92ecd_{v2,v2-nosafety,v2_oracle}_final.json\` (gpt-4o, temperature 0, seed 42). Unit: one (sentence, cited passage) pair. Regenerate: \`node scripts/eval/citation-support.mjs extract && … passages && … judge && … report [--labels <csv>]\`.`, '');
-  md.push(`Pairs: ${J.rows.length + J.excludedPairs} extracted; ${J.excludedPairs} excluded because the cited chunk's content_hash no longer matches the 2026-09-13 snapshot; ${J.rows.length} judged; ${scored.length} scored; ${J.rows.length - scored.length} unscored (${J.rows.filter(r => r.refused).length} refused, ${J.rows.filter(r => r.error).length} errors or unparsed).`, '');
+  md.push(`Pairs: ${J.rows.length + J.excludedPairs} extracted; ${J.excludedPairs} excluded because the cited chunk's recorded content_hash differs from the 2026-09-13 snapshot; ${J.rows.length} judged (${J.rows.filter(r => r.hashStatus === 'verified').length} on a hash-verified passage, ${J.rows.filter(r => r.hashStatus === 'unrecorded').length} on an iSupport passage with no hash recorded on either side — plan §19B.2 clarification); ${scored.length} scored; ${J.rows.length - scored.length} unscored (${J.rows.filter(r => r.refused).length} refused, ${J.rows.filter(r => r.error).length} errors or unparsed).`, '');
 
   let gate = null;
   if (argVal('--labels')) {
@@ -319,6 +328,11 @@ function report() {
   const d = distribution(scored);
   md.push('| Verdict | Pairs | Share | 95 % CI (bootstrap over answers) |', '|---|---:|---:|---|');
   for (const v of LABELS) md.push(`| ${v} | ${d[v].k} | ${pc(d[v].p)} | ${pc(d[v].ci.lo)} – ${pc(d[v].ci.hi)} |`);
+  const ver = scored.filter(r => r.hashStatus === 'verified');
+  if (ver.length && ver.length < scored.length) {
+    const dv = distribution(ver);
+    md.push('', `Sensitivity (pre-registered in the clarification): hash-verified passages only, ${ver.length} pairs — ${LABELS.map(v => `${v} ${pc(dv[v].p)} [${pc(dv[v].ci.lo)}–${pc(dv[v].ci.hi)}]`).join(', ')}.`);
+  }
   // sentence level: best verdict over the sentence's cited passages
   const sent = new Map();
   for (const r of scored) { const k = `${r.condition}|${r.qid}|${r.sentenceIndex}`; const rank = LABELS.indexOf(r.verdict); if (!sent.has(k) || rank < sent.get(k).rank) sent.set(k, { rank, verdict: r.verdict, condition: r.condition, qid: r.qid }); }

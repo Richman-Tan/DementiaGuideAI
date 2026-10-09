@@ -1,0 +1,767 @@
+{
+  "generatedAt": "2026-10-09T03:22:25.451Z",
+  "gitSha": "5cde14f",
+  "generator": "scripts/eval/stt/build-error-model.mjs",
+  "plan": "docs/eval/plan-19b-propagation.md §19B.1",
+  "group": "dementia",
+  "condition": "E9 condition (a) — utterance cuts, pauses included; fillers stripped (primary policy)",
+  "calibration": "expected per-word S, D, I over a population of mean-length utterances equal the committed pooled totals; empty utterances = all words deleted; stock-phrase words = insertions; empty and phrase utterances assumed to have the mean reference length (refWords / utterances)",
+  "dataRule": "built from committed aggregate artefacts only; no DementiaBank transcript, hypothesis or audio is read or sent anywhere",
+  "recognisers": {
+    "w1": {
+      "label": "whisper-1 (deployed fallback / rescue recogniser)",
+      "aggregates": {
+        "speakers": 78,
+        "refWords": 7870,
+        "S": 1429,
+        "D": 1274,
+        "I": 597,
+        "utterances": 1018,
+        "phraseUtterances": 116,
+        "emptyUtterances": 31,
+        "runawayUtterances": 17,
+        "repetitionUtterances": 6,
+        "fnDeleted": 1234,
+        "contentDeleted": 841,
+        "substitutions": [
+          {
+            "ref": "the",
+            "hyp": "a",
+            "n": 38
+          },
+          {
+            "ref": "a",
+            "hyp": "the",
+            "n": 25
+          },
+          {
+            "ref": "gonna",
+            "hyp": "to",
+            "n": 24
+          },
+          {
+            "ref": "waters",
+            "hyp": "is",
+            "n": 18
+          },
+          {
+            "ref": "the",
+            "hyp": "thank",
+            "n": 17
+          },
+          {
+            "ref": "is",
+            "hyp": "was",
+            "n": 13
+          },
+          {
+            "ref": "the",
+            "hyp": "is",
+            "n": 12
+          },
+          {
+            "ref": "is",
+            "hyp": "thank",
+            "n": 11
+          },
+          {
+            "ref": "the",
+            "hyp": "this",
+            "n": 10
+          },
+          {
+            "ref": "is",
+            "hyp": "you",
+            "n": 9
+          },
+          {
+            "ref": "the",
+            "hyp": "to",
+            "n": 9
+          },
+          {
+            "ref": "dishes",
+            "hyp": "you",
+            "n": 9
+          },
+          {
+            "ref": "is",
+            "hyp": "it",
+            "n": 9
+          },
+          {
+            "ref": "that",
+            "hyp": "it",
+            "n": 8
+          },
+          {
+            "ref": "it",
+            "hyp": "you",
+            "n": 8
+          },
+          {
+            "ref": "is",
+            "hyp": "has",
+            "n": 7
+          },
+          {
+            "ref": "the",
+            "hyp": "you",
+            "n": 7
+          },
+          {
+            "ref": "okay",
+            "hyp": "you",
+            "n": 6
+          },
+          {
+            "ref": "and",
+            "hyp": "in",
+            "n": 6
+          },
+          {
+            "ref": "i",
+            "hyp": "thank",
+            "n": 6
+          },
+          {
+            "ref": "else",
+            "hyp": "you",
+            "n": 6
+          },
+          {
+            "ref": "mothers",
+            "hyp": "is",
+            "n": 6
+          },
+          {
+            "ref": "the",
+            "hyp": "i",
+            "n": 6
+          },
+          {
+            "ref": "is",
+            "hyp": "am",
+            "n": 6
+          },
+          {
+            "ref": "is",
+            "hyp": "boys",
+            "n": 6
+          },
+          {
+            "ref": "a",
+            "hyp": "thank",
+            "n": 6
+          },
+          {
+            "ref": "sink",
+            "hyp": "thing",
+            "n": 6
+          },
+          {
+            "ref": "she",
+            "hyp": "he",
+            "n": 6
+          },
+          {
+            "ref": "jar",
+            "hyp": "you",
+            "n": 5
+          },
+          {
+            "ref": "cookie",
+            "hyp": "cooking",
+            "n": 5
+          }
+        ]
+      },
+      "model": {
+        "pEmpty": 0.030451866404715127,
+        "pPhraseGivenNonEmpty": 0.11752786220871327,
+        "phrases": [
+          "Thank you.",
+          "Thanks for watching!",
+          "Subscribe.",
+          "Bye."
+        ],
+        "meanPhraseWords": 1.75,
+        "rates": {
+          "sub": 0.18727858604038009,
+          "del": 0.13555664554069483,
+          "ins": 0.05163594324696274
+        },
+        "functionWordDeletionShare": 0.5946987951807229,
+        "confusions": [
+          {
+            "ref": "the",
+            "hyp": "a",
+            "n": 38
+          },
+          {
+            "ref": "a",
+            "hyp": "the",
+            "n": 25
+          },
+          {
+            "ref": "gonna",
+            "hyp": "to",
+            "n": 24
+          },
+          {
+            "ref": "waters",
+            "hyp": "is",
+            "n": 18
+          },
+          {
+            "ref": "is",
+            "hyp": "was",
+            "n": 13
+          },
+          {
+            "ref": "the",
+            "hyp": "is",
+            "n": 12
+          },
+          {
+            "ref": "the",
+            "hyp": "this",
+            "n": 10
+          },
+          {
+            "ref": "the",
+            "hyp": "to",
+            "n": 9
+          },
+          {
+            "ref": "is",
+            "hyp": "it",
+            "n": 9
+          },
+          {
+            "ref": "that",
+            "hyp": "it",
+            "n": 8
+          },
+          {
+            "ref": "is",
+            "hyp": "has",
+            "n": 7
+          },
+          {
+            "ref": "and",
+            "hyp": "in",
+            "n": 6
+          },
+          {
+            "ref": "mothers",
+            "hyp": "is",
+            "n": 6
+          },
+          {
+            "ref": "the",
+            "hyp": "i",
+            "n": 6
+          },
+          {
+            "ref": "is",
+            "hyp": "am",
+            "n": 6
+          },
+          {
+            "ref": "is",
+            "hyp": "boys",
+            "n": 6
+          },
+          {
+            "ref": "sink",
+            "hyp": "thing",
+            "n": 6
+          },
+          {
+            "ref": "she",
+            "hyp": "he",
+            "n": 6
+          },
+          {
+            "ref": "cookie",
+            "hyp": "cooking",
+            "n": 5
+          }
+        ],
+        "insertWords": [
+          {
+            "w": "a",
+            "n": 38
+          },
+          {
+            "w": "is",
+            "n": 36
+          },
+          {
+            "w": "to",
+            "n": 33
+          },
+          {
+            "w": "the",
+            "n": 25
+          },
+          {
+            "w": "it",
+            "n": 17
+          },
+          {
+            "w": "was",
+            "n": 13
+          },
+          {
+            "w": "this",
+            "n": 10
+          },
+          {
+            "w": "he",
+            "n": 6
+          },
+          {
+            "w": "i",
+            "n": 6
+          },
+          {
+            "w": "in",
+            "n": 6
+          }
+        ],
+        "impliedPooled": {
+          "sub": 0.1815756035578145,
+          "del": 0.1618805590851334,
+          "ins": 0.0758576874205845,
+          "wer": 0.4193138500635324
+        }
+      },
+      "sources": {
+        "docs/report/eval/stt/wer_57ad032_whisper-1.csv": {
+          "sha256": "08aa24e0efea526ebe3251dbe1cc8ffe9198c8c2f0995b8e753c305e85194724",
+          "used": "per-speaker S, D, I and refWords summed over the 78 dementia speakers"
+        },
+        "docs/report/eval/stt/wer_57ad032_whisper-1.md": {
+          "sha256": "8b97135fc95c59bee978fbc9012ba4242ded19c0034db6a4b30d10d6eb6b396f",
+          "lines": {
+            "12": "primary-policy dementia row (cross-check of the CSV sums): | dementia | 78 | 7870 | 43.0% (35.7%–50.4%) | 29.6% | 41.9% | 18.2% | 16.2% | 7.6% |",
+            "24": "hallucination table, dementia row (utterances, phrase and empty counts): | dementia | 1018 | 1.7% (17) | 11.4% (116) | 0.6% (6) | 3.0% (31) | 36.4% (30.7%–42.4%) | 33.1% | 4.5% |",
+            "37": "function-word deletion share: Function-word share of deletions: 59.5% (1234 function, 841 content). A high share means the recogniser drops grammar rather than meaning; content-word deletions are the ones that change a retrieval query.",
+            "41-70": "top-30 substitution table"
+          }
+        }
+      }
+    },
+    "ap": {
+      "label": "Apple on-device recogniser, en-NZ (proxy for the iOS live recogniser)",
+      "aggregates": {
+        "speakers": 78,
+        "refWords": 7870,
+        "S": 724,
+        "D": 3813,
+        "I": 70,
+        "utterances": 1018,
+        "phraseUtterances": 0,
+        "emptyUtterances": 244,
+        "runawayUtterances": 0,
+        "repetitionUtterances": 0,
+        "fnDeleted": 3808,
+        "contentDeleted": 2800,
+        "substitutions": [
+          {
+            "ref": "the",
+            "hyp": "a",
+            "n": 32
+          },
+          {
+            "ref": "waters",
+            "hyp": "is",
+            "n": 26
+          },
+          {
+            "ref": "and",
+            "hyp": "in",
+            "n": 24
+          },
+          {
+            "ref": "a",
+            "hyp": "the",
+            "n": 21
+          },
+          {
+            "ref": "is",
+            "hyp": "was",
+            "n": 19
+          },
+          {
+            "ref": "stool",
+            "hyp": "store",
+            "n": 19
+          },
+          {
+            "ref": "is",
+            "hyp": "boys",
+            "n": 13
+          },
+          {
+            "ref": "that",
+            "hyp": "it",
+            "n": 12
+          },
+          {
+            "ref": "her",
+            "hyp": "your",
+            "n": 8
+          },
+          {
+            "ref": "the",
+            "hyp": "water",
+            "n": 8
+          },
+          {
+            "ref": "waters",
+            "hyp": "water",
+            "n": 7
+          },
+          {
+            "ref": "falling",
+            "hyp": "fallen",
+            "n": 7
+          },
+          {
+            "ref": "up",
+            "hyp": "out",
+            "n": 6
+          },
+          {
+            "ref": "cookie",
+            "hyp": "cooking",
+            "n": 6
+          },
+          {
+            "ref": "drying",
+            "hyp": "dry",
+            "n": 6
+          },
+          {
+            "ref": "the",
+            "hyp": "my",
+            "n": 6
+          },
+          {
+            "ref": "is",
+            "hyp": "the",
+            "n": 5
+          },
+          {
+            "ref": "the",
+            "hyp": "i",
+            "n": 5
+          },
+          {
+            "ref": "mothers",
+            "hyp": "is",
+            "n": 5
+          },
+          {
+            "ref": "it",
+            "hyp": "that",
+            "n": 5
+          },
+          {
+            "ref": "out",
+            "hyp": "at",
+            "n": 5
+          },
+          {
+            "ref": "is",
+            "hyp": "i",
+            "n": 4
+          },
+          {
+            "ref": "is",
+            "hyp": "has",
+            "n": 4
+          },
+          {
+            "ref": "to",
+            "hyp": "the",
+            "n": 4
+          },
+          {
+            "ref": "boy",
+            "hyp": "boys",
+            "n": 4
+          },
+          {
+            "ref": "is",
+            "hyp": "girls",
+            "n": 4
+          },
+          {
+            "ref": "shrubbery",
+            "hyp": "strawberry",
+            "n": 4
+          },
+          {
+            "ref": "sink",
+            "hyp": "think",
+            "n": 4
+          },
+          {
+            "ref": "standing",
+            "hyp": "stand",
+            "n": 4
+          },
+          {
+            "ref": "ladys",
+            "hyp": "ladies",
+            "n": 4
+          }
+        ]
+      },
+      "model": {
+        "pEmpty": 0.23968565815324164,
+        "pPhraseGivenNonEmpty": 0,
+        "phrases": [
+          "Thank you.",
+          "Thanks for watching!",
+          "Subscribe.",
+          "Bye."
+        ],
+        "meanPhraseWords": 1.75,
+        "rates": {
+          "sub": 0.12099589912302301,
+          "del": 0.321988449251237,
+          "ins": 0.011698498533993937
+        },
+        "functionWordDeletionShare": 0.576271186440678,
+        "confusions": [
+          {
+            "ref": "the",
+            "hyp": "a",
+            "n": 32
+          },
+          {
+            "ref": "waters",
+            "hyp": "is",
+            "n": 26
+          },
+          {
+            "ref": "and",
+            "hyp": "in",
+            "n": 24
+          },
+          {
+            "ref": "a",
+            "hyp": "the",
+            "n": 21
+          },
+          {
+            "ref": "is",
+            "hyp": "was",
+            "n": 19
+          },
+          {
+            "ref": "stool",
+            "hyp": "store",
+            "n": 19
+          },
+          {
+            "ref": "is",
+            "hyp": "boys",
+            "n": 13
+          },
+          {
+            "ref": "that",
+            "hyp": "it",
+            "n": 12
+          },
+          {
+            "ref": "her",
+            "hyp": "your",
+            "n": 8
+          },
+          {
+            "ref": "the",
+            "hyp": "water",
+            "n": 8
+          },
+          {
+            "ref": "waters",
+            "hyp": "water",
+            "n": 7
+          },
+          {
+            "ref": "falling",
+            "hyp": "fallen",
+            "n": 7
+          },
+          {
+            "ref": "up",
+            "hyp": "out",
+            "n": 6
+          },
+          {
+            "ref": "cookie",
+            "hyp": "cooking",
+            "n": 6
+          },
+          {
+            "ref": "drying",
+            "hyp": "dry",
+            "n": 6
+          },
+          {
+            "ref": "the",
+            "hyp": "my",
+            "n": 6
+          },
+          {
+            "ref": "is",
+            "hyp": "the",
+            "n": 5
+          },
+          {
+            "ref": "the",
+            "hyp": "i",
+            "n": 5
+          },
+          {
+            "ref": "mothers",
+            "hyp": "is",
+            "n": 5
+          },
+          {
+            "ref": "it",
+            "hyp": "that",
+            "n": 5
+          },
+          {
+            "ref": "out",
+            "hyp": "at",
+            "n": 5
+          },
+          {
+            "ref": "is",
+            "hyp": "i",
+            "n": 4
+          },
+          {
+            "ref": "is",
+            "hyp": "has",
+            "n": 4
+          },
+          {
+            "ref": "to",
+            "hyp": "the",
+            "n": 4
+          },
+          {
+            "ref": "boy",
+            "hyp": "boys",
+            "n": 4
+          },
+          {
+            "ref": "is",
+            "hyp": "girls",
+            "n": 4
+          },
+          {
+            "ref": "shrubbery",
+            "hyp": "strawberry",
+            "n": 4
+          },
+          {
+            "ref": "sink",
+            "hyp": "think",
+            "n": 4
+          },
+          {
+            "ref": "standing",
+            "hyp": "stand",
+            "n": 4
+          },
+          {
+            "ref": "ladys",
+            "hyp": "ladies",
+            "n": 4
+          }
+        ],
+        "insertWords": [
+          {
+            "w": "a",
+            "n": 32
+          },
+          {
+            "w": "is",
+            "n": 31
+          },
+          {
+            "w": "the",
+            "n": 30
+          },
+          {
+            "w": "in",
+            "n": 24
+          },
+          {
+            "w": "was",
+            "n": 19
+          },
+          {
+            "w": "it",
+            "n": 12
+          },
+          {
+            "w": "i",
+            "n": 9
+          },
+          {
+            "w": "your",
+            "n": 8
+          },
+          {
+            "w": "my",
+            "n": 6
+          },
+          {
+            "w": "out",
+            "n": 6
+          },
+          {
+            "w": "at",
+            "n": 5
+          },
+          {
+            "w": "that",
+            "n": 5
+          }
+        ],
+        "impliedPooled": {
+          "sub": 0.09199491740787802,
+          "del": 0.48449809402795424,
+          "ins": 0.008894536213468869,
+          "wer": 0.5853875476493011
+        }
+      },
+      "sources": {
+        "docs/report/eval/stt/wer_e65cdc2_apple-ondevice-en-NZ.csv": {
+          "sha256": "a6eb2ed1be0adbb29e1edd2695bf472dc0d84f36b0aeba3c36f085959316b579",
+          "used": "per-speaker S, D, I and refWords summed over the 78 dementia speakers"
+        },
+        "docs/report/eval/stt/wer_e65cdc2_apple-ondevice-en-NZ.md": {
+          "sha256": "dcd80f2a88340356498daf5d2d85fe1a4f02e541fe567f783753ee110b5ca360",
+          "lines": {
+            "12": "primary-policy dementia row (cross-check of the CSV sums): | dementia | 78 | 7870 | 57.5% (51.9%–63.0%) | 55.5% | 58.5% | 9.2% | 48.4% | 0.9% |",
+            "24": "hallucination table, dementia row (utterances, phrase and empty counts): | dementia | 1018 | 0.0% (0) | 0.0% (0) | 0.0% (0) | 24.0% (244) | 57.5% (51.9%–63.0%) | 58.5% | 0.9% |",
+            "37": "function-word deletion share: Function-word share of deletions: 57.6% (3808 function, 2800 content). A high share means the recogniser drops grammar rather than meaning; content-word deletions are the ones that change a retrieval query.",
+            "41-70": "top-30 substitution table"
+          }
+        }
+      }
+    }
+  }
+}

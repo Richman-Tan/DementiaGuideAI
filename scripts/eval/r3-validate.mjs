@@ -60,7 +60,9 @@ if (!files.length) { console.error('no CSV files found'); process.exit(1); }
 
 function validate(file) {
   const reasons = [];
-  const text = readFileSync(file, 'utf8');
+  // CRLF can appear if the file passed through an email client or Windows;
+  // line endings are transport, not content, so they are normalised first.
+  const text = readFileSync(file, 'utf8').replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
   const firstLine = text.slice(0, text.indexOf('\n'));
   if (firstLine !== COLUMNS.join(',')) return { file, reasons: [`header is not the sheet header: ${firstLine.slice(0, 80)}`] };
   const rows = parseCsv(text);

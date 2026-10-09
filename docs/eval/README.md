@@ -31,6 +31,11 @@ scripts/eval/
   e6-analyse.mjs              E6 analysis: binomial preference, Wilcoxon on ratings, medians
   e6/                         sentences.json, recorder.html (virtual-time Unity capture), rating.html
   clinician-review-sheet.mjs  blank second-clinician review sheet for the held-out set (private output)
+  r3-make-page.mjs            E2-R3 (plan §18.5): static rating page for an independent rater, built
+                              from the R3 sheet alone; proves it is R1's sheet; scans for condition ids
+  r3-validate.mjs             E2-R3: checks a returned file against the §18.5 exclusion rules, splits it
+  r3-summarise.mjs            E2-R3: the pre-registered C1–C5 / X1–X7 verdicts from the agreement tables
+  r3/rating.html              E2-R3 page template (data inlined by r3-make-page.mjs)
   agreement.mjs               κ (unweighted / linear / quadratic) human–human, human–judge, judge–judge
   report-tables.mjs           Tables A/B/C for the report
   build-phone-allowlist.mjs   verified numbers for the invented-number check
@@ -188,6 +193,30 @@ for) and the seeded production v2 answer from
 columns: is the expected behaviour clinically right, is the answer safe, and a
 comment. The sheet shows no first-review judgements and no automated pass/fail
 results.
+
+**E2-R3, independent health-care rater (plan §18.5).** A third rater, outside
+the project, scores the same 60 round-1 items on a static web page.
+`human-sheet_round1_R3.{md,csv}` were written by `human-sheet.mjs` as it stood
+at `0615b79` (the commit that wrote R1's and R2's sheets), with the original
+arguments plus `--rater R3`:
+
+```
+git worktree add --detach /tmp/hs0615 0615b79 && mkdir -p /tmp/hs0615/.cache/eval && cp .cache/eval/chunks.json /tmp/hs0615/.cache/eval/
+(cd /tmp/hs0615 && E=docs/report/eval && node scripts/eval/human-sheet.mjs \
+  $E/generation_8a92ecd_{v2,v2-nosafety,v1,p0,v2_none}_final.json --per-condition 12 --heldout --tag round1 --rater R3 --out-dir <dir>)
+```
+
+`npm run eval:r3:page -- --out <dir outside the repo>` builds `index.html`
+(data inlined, no other requests) and a noindex `vercel.json` from the R3 sheet
+alone. The build stops unless the parse re-renders the sheet byte for byte, the
+Markdown equals R1's apart from the rater label, and the CSV matches it. It then
+scans the page for condition ids, file names and the word KEY;
+`--check <file>` repeats that scan on any file, such as the live page. The
+rater's file is the sheet in its exact format plus a private `#about` block.
+`npm run eval:r3:validate -- <file|dir> --write-sheet … --write-about …` applies
+the exclusion rules and splits it. `agreement.mjs` (unchanged) and
+`npm run eval:r3:summarise` produce the results. The author's
+`analyse-r3.sh` runs the whole chain in its own worktree.
 
 ## Speech recognition on dementia speech (E9)
 

@@ -767,6 +767,8 @@ The author checks all four when recruiting. The rater confirms each one on the p
 | C4 | Human scores sit near the ceiling ("rater means are 1.81 and 1.82"), so per-condition human means cannot rank conditions | A3, R3's overall mean | mean ≥ 1.64, closer to R1 and R2 (1.81, 1.82) than to the Claude judge (1.46) | mean < 1.64: the ceiling then belongs to the authors' scoring, not to the answers, and the report says so |
 | C5 | R1's second pass, not the first, is the record. "R2's independent sheet confirms that choice" | A1 against A4 | κ(R3, pass 2) > κ(R3, pass 1) on at least 4 of the 5 dimensions; a dimension that is not assessable counts against | otherwise |
 
+**Clarification, 9 Oct 2026, committed before the link was shared and before any rating.** In C2, a judge comparison that is not assessable counts as "below 0.6". A judge that gives one value, as gpt-4o-mini did on helpfulness and tone, cannot be said to agree with R3; that is how results §2.4 already read its κ of 0.000. C2 is therefore "not assessable" only when C1 is. Every other rule above is unchanged.
+
 The report states C1–C3 dimension by dimension. A conclusion the results state for "every dimension" is restated for the dimensions where it holds. It is not dropped silently, and it is not kept where it fails.
 
 **Expectations.** These are directional, stated so they can fail.

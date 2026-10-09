@@ -1,0 +1,181 @@
+{
+  "tag": "mac-2026-10-09e-retry",
+  "sha": "6ba2e7a",
+  "date": "2026-10-09",
+  "startedAt": "2026-10-09T03:40:25.829Z",
+  "command": "node scripts/eval/latency/bench-browser.mjs --warmup 2 --only F:A27#1,F:A28#1,P:A28#1,P:A29#1,F:A29#1,F:A33#1,P:A33#1 --tag mac-2026-10-09e-retry --pilot-turns-before 4 --unity-dir /Users/richmantan/Project.Git/DementiaGuideAi/apps/web/public/unity",
+  "env": {
+    "machine": "Apple M3, 8 GB",
+    "os": "27.0.1",
+    "node": "v20.19.2",
+    "chrome": "Google Chrome 155.0.8059.39",
+    "playwrightCore": "1.63.0",
+    "network": "Wi-Fi (en0)",
+    "timeZone": "Pacific/Auckland",
+    "rtt": {
+      "api.openai.com": 236.31754099999944,
+      "supabase": 66.94741700000031,
+      "api.elevenlabs.io": 350.74029100000007
+    }
+  },
+  "appBaseSha": "7386425",
+  "appTreeIdentical": true,
+  "buildIndexSha": "939843f34389",
+  "unityVersion": "356c7acb203d",
+  "unityDir": "/Users/richmantan/Project.Git/DementiaGuideAi/apps/web/public/unity",
+  "chromeSwitches": [
+    "--mute-audio",
+    "--use-fake-device-for-media-stream",
+    "--use-fake-ui-for-media-stream",
+    "--disable-audio-input",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-backgrounding-occluded-windows",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--window-size=400,760",
+    "--window-position=1300,120"
+  ],
+  "nQuestions": 30,
+  "repeats": 2,
+  "warmup": 2,
+  "paceMs": 5000,
+  "conditions": [
+    "P",
+    "F"
+  ],
+  "clipCheck": "32 of 32 regenerated E4-S webm clips match E4-S's `clip_ms` and `clip_bytes` exactly (sha256 cannot match: the webm muxer writes a random 16-byte segment UID; `say` output is byte-identical across runs)",
+  "pilotTurns": 4,
+  "kb": {
+    "start": {
+      "at": "2026-10-09T03:40:06.123Z",
+      "source": "live knowledge_chunks table (PostgREST, anon key, GET only)",
+      "count": 454,
+      "byCategory": {
+        "clinical": 28,
+        "best-practices": 19,
+        "caregiving": 17,
+        "communication": 13,
+        "home-safety": 15,
+        "isupport-course": 328,
+        "prevention": 11,
+        "wellbeing": 23
+      },
+      "idsContentHashSha256": "0bc97ae0d17b33af771dae4f3f8d6a6e89875df04b78584f08555a7541c87258",
+      "recomputed": {
+        "matchesStored": 80,
+        "of": 454,
+        "sha256": "678b4a6b3c38c36d0fcc2c46ac6bb0429bfc7f2a9c382df7fcaeb900bb6d9df8"
+      },
+      "contentSha256": "a778d5d49d4b05eb812be2362b2690a2d8b05da83c5413a6a6c1ed2e3ac12d39",
+      "embeddingSha256": "29331f9671386e36a8a9fe31d8e38bb563f5aecc76719e15f1732ca8a45b3812",
+      "embeddingModels": [
+        "text-embedding-3-small"
+      ],
+      "embeddedAfterSnapshot": {
+        "since": "2026-09-13T00:00:00Z",
+        "count": 47,
+        "latest": "2026-09-22T14:16:11.8+00:00"
+      },
+      "vsSeptember": {
+        "snapshot": "docs/report/kb_chunks_reference.csv (fa69e62, 2026-09-13)",
+        "septemberCount": 453,
+        "septemberIdsContentHashSha256": "0020d041b9ca0f570cea2b7fb8eced836acbb21de17472f3e3763ab513f29bd8",
+        "contentComparable": 125,
+        "contentNotComparable": 328,
+        "identical": false,
+        "added": [
+          "wellbeing_023"
+        ],
+        "removed": [],
+        "changed": []
+      }
+    },
+    "end": {
+      "at": "2026-10-09T03:44:12.047Z",
+      "source": "live knowledge_chunks table (PostgREST, anon key, GET only)",
+      "count": 454,
+      "byCategory": {
+        "clinical": 28,
+        "best-practices": 19,
+        "caregiving": 17,
+        "communication": 13,
+        "home-safety": 15,
+        "isupport-course": 328,
+        "prevention": 11,
+        "wellbeing": 23
+      },
+      "idsContentHashSha256": "0bc97ae0d17b33af771dae4f3f8d6a6e89875df04b78584f08555a7541c87258",
+      "recomputed": {
+        "matchesStored": 80,
+        "of": 454,
+        "sha256": "678b4a6b3c38c36d0fcc2c46ac6bb0429bfc7f2a9c382df7fcaeb900bb6d9df8"
+      },
+      "contentSha256": "a778d5d49d4b05eb812be2362b2690a2d8b05da83c5413a6a6c1ed2e3ac12d39",
+      "embeddingSha256": "29331f9671386e36a8a9fe31d8e38bb563f5aecc76719e15f1732ca8a45b3812",
+      "embeddingModels": [
+        "text-embedding-3-small"
+      ],
+      "embeddedAfterSnapshot": {
+        "since": "2026-09-13T00:00:00Z",
+        "count": 47,
+        "latest": "2026-09-22T14:16:11.8+00:00"
+      },
+      "vsSeptember": {
+        "snapshot": "docs/report/kb_chunks_reference.csv (fa69e62, 2026-09-13)",
+        "septemberCount": 453,
+        "septemberIdsContentHashSha256": "0020d041b9ca0f570cea2b7fb8eced836acbb21de17472f3e3763ab513f29bd8",
+        "contentComparable": 125,
+        "contentNotComparable": 328,
+        "identical": false,
+        "added": [
+          "wellbeing_023"
+        ],
+        "removed": [],
+        "changed": []
+      }
+    },
+    "summary": "unchanged during the run; 1 added (wellbeing_023), 0 removed, 0 changed"
+  },
+  "finishedAt": "2026-10-09T03:44:20.810Z",
+  "abortReason": null,
+  "violations": [],
+  "watchdog": "no real-microphone access request by the harness Chrome (3 status-only preflights)",
+  "adminStub": "33 calls, all `bump_study_usage` answered locally",
+  "blockedCount": 1,
+  "supabaseAudit": "POST /auth/v1/signup (blocked) ×1, POST /rest/v1/rpc/match_chunks ×10",
+  "historyCheck": "0 messages in every kept turn",
+  "serverTotals": {
+    "chatPrompt": 24524,
+    "chatCompletion": 2515,
+    "embedTokens": 155,
+    "elevenChars": 476,
+    "elevenRequests": 9,
+    "heldTts": 126,
+    "speechChars": 0,
+    "transcribeBytes": 410280,
+    "adminCalls": 33,
+    "statuses": {
+      "embed:200": 10,
+      "eleven-tts:200": 135,
+      "chat:200": 9,
+      "transcribe:200": 5
+    }
+  },
+  "spend": {
+    "openaiUsdHarnessEstimate": 0.0891,
+    "elevenMeter": "5540 → 5578 units of 10000 (38 used; tier payg)",
+    "meterBefore": {
+      "tier": "payg",
+      "used": 5540,
+      "limit": 10000,
+      "at": "2026-10-09T03:39:56.832Z"
+    },
+    "meterAfter": {
+      "tier": "payg",
+      "used": 5578,
+      "limit": 10000,
+      "at": "2026-10-09T03:44:18.965Z"
+    }
+  }
+}

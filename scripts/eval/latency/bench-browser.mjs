@@ -82,7 +82,9 @@ const items = [
   ...warmQs.map((q) => ({ q, rep: 0, phase: 'warmup' })),
   ...Array.from({ length: REPEATS }, (_, rep) => measuredQs.map((q) => ({ q, rep, phase: 'measured' }))).flat(),
 ].map((it, i) => ({ ...it, index: i, order: orderFor(i) }));
-const schedule = items.flatMap((it) => it.order.map((cond, k) => ({ ...it, cond, slot: k + 1 })));
+const ONLY = argVal('--only') ? new Set(argVal('--only').split(',')) : null; // e.g. "F:A27#1,P:A28#1"
+const schedule = items.flatMap((it) => it.order.map((cond, k) => ({ ...it, cond, slot: k + 1 })))
+  .filter((s) => !ONLY || (s.phase === 'warmup' ? s.index === 0 : ONLY.has(`${s.cond}:${s.q.id}#${s.rep}`)));
 
 const sha = argVal('--sha') ?? gitSha();
 mkdirSync(OUT_DIR, { recursive: true });
@@ -366,11 +368,12 @@ function summarise(rowsIn, meta) {
   const stages = ['app_stt_ms', 'app_rag_ms', 'app_llm_to_token_ms', 'app_first_sentence_ms', 'tts_stage_ms'];
   const missing = (c, k) => byCond[c].filter((r) => r[k] === '' || r[k] == null).length;
   const largest = (c) => stages.map((k) => [k, med(c, k)]).filter(([, m]) => m != null).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-  const sumCol = (k) => rows.reduce((a, r) => a + (Number(r[k]) || 0), 0);
+  const spendRows = [...rowsIn.filter((r) => !(meta.merge && r.failed_attempt_notes?.includes('|| re-run in'))), ...(meta.extraSpendRows ?? [])];
+  const sumCol = (k, rs = spendRows) => rs.reduce((a, r) => a + (Number(r[k]) || 0), 0);
   const pIn = PRICES.openai['gpt-4o'].input, pOut = PRICES.openai['gpt-4o'].output, pEmb = PRICES.openai['text-embedding-3-small'].input, pWh = PRICES.openai['whisper-1'].price, pEl = PRICES.elevenlabs.api_per_1k_chars.flash_turbo;
   const llmUsd = (sumCol('prompt_tokens') * pIn + sumCol('completion_tokens') * pOut) / 1e6;
   const embUsd = sumCol('embed_tokens') * pEmb / 1e6;
-  const whUsd = rows.filter((r) => r.condition === 'F' || r.stt_source === 'whisper-rescue').reduce((a, r) => a + (Number(r.recording_ms) || 0) / 60000 * pWh, 0);
+  const whUsd = spendRows.filter((r) => r.condition === 'F' || r.stt_source === 'whisper-rescue').reduce((a, r) => a + (Number(r.recording_ms) || 0) / 60000 * pWh, 0);
   const elChars = sumCol('tts_chars');
   const elUsd = elChars / 1000 * pEl;
   const sp = meta.spend ?? {};
@@ -390,7 +393,7 @@ function summarise(rowsIn, meta) {
   md.push(`- Audio: \`say -v ${VOICE_SAY} -o\`, 300 ms silence each side, 48 kHz mono WAV; never played. Same speech as E4-S: ${meta.clipCheck}. Transcript WER against the question text (sanity check only): P median ${stat(byCond.P, 'transcript_wer').median?.toFixed(3) ?? '—'}, max ${stat(byCond.P, 'transcript_wer').max?.toFixed(3) ?? '—'}; F median ${stat(byCond.F, 'transcript_wer').median?.toFixed(3) ?? '—'}, max ${stat(byCond.F, 'transcript_wer').max?.toFixed(3) ?? '—'}.`);
   md.push(`- Sample: ${meta.nQuestions} Set-A questions × ${meta.repeats} repeats, each item in both conditions back to back (order alternating P-F / F-P), after ${meta.warmup} warm-up items in both conditions (discarded); paced ≥ ${meta.paceMs} ms. Measured turns: P ${byCond.P.length}, F ${byCond.F.length}; failed after ${MAX_ATTEMPTS} attempts: ${failed.length}; turns re-run: ${rows.filter((r) => Number(r.attempts) > 1).length}. Pilot turns before the run: ${meta.pilotTurns ?? '—'} (discarded).`);
   md.push(`- KB (read-only): start ${meta.kb?.start?.count ?? '—'} chunks, \`${meta.kb?.start?.idsContentHashSha256?.slice(0, 12) ?? '—'}…\`; end ${meta.kb?.end?.count ?? '—'} chunks, \`${meta.kb?.end?.idsContentHashSha256?.slice(0, 12) ?? '—'}…\`; vs the September snapshot (453): ${meta.kb?.summary ?? '—'}.`);
-  md.push(`- Prices (\`scripts/eval/pricing.2026-09.json\`, checked ${PRICES.checked}): gpt-4o US$${pIn}/${pOut} per 1M tokens, embeddings US$${pEmb}/1M, whisper-1 US$${pWh}/min, ElevenLabs Flash/Turbo pay-as-you-go US$${pEl}/1k characters. **Spend for this run ≈ US$${(llmUsd + embUsd + whUsd + elUsd).toFixed(3)}** (gpt-4o ${llmUsd.toFixed(3)}, whisper-1 ${whUsd.toFixed(4)}, embeddings ${embUsd.toFixed(5)}, ElevenLabs ${elUsd.toFixed(3)} for ${elChars} characters; all ${rows.length} turns incl. warm-up and re-runs). ElevenLabs meter: ${sp.elevenMeter ?? '—'}.`);
+  md.push(`- Prices (\`scripts/eval/pricing.2026-09.json\`, checked ${PRICES.checked}): gpt-4o US$${pIn}/${pOut} per 1M tokens, embeddings US$${pEmb}/1M, whisper-1 US$${pWh}/min, ElevenLabs Flash/Turbo pay-as-you-go US$${pEl}/1k characters. **Spend for this run ≈ US$${(llmUsd + embUsd + whUsd + elUsd).toFixed(3)}** (gpt-4o ${llmUsd.toFixed(3)}, whisper-1 ${whUsd.toFixed(4)}, embeddings ${embUsd.toFixed(5)}, ElevenLabs ${elUsd.toFixed(3)} for ${elChars} characters; all ${spendRows.length} turns incl. warm-up and re-runs${meta.merge ? `, including the ${meta.merge.extraRows} turns of the re-run file` : ''}). ElevenLabs meter: ${sp.elevenMeter ?? '—'}.`);
   md.push(`- Regenerate: \`${meta.command}\`; rebuild this file from the raw CSV with \`node scripts/eval/latency/bench-browser.mjs --summarise-only --tag ${meta.tag} --sha ${meta.sha}\`.`, '');
   md.push('## Headline and stages (ms, measured turns)', '');
   md.push('| Measure | P n | P median | P p90 | P p95 | P mean | P min–max | F n | F median | F p90 | F p95 | F mean | F min–max |', '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
@@ -435,6 +438,7 @@ function summarise(rowsIn, meta) {
   md.push(`| B2: F median H2 > 4.25 s (E4-S headline) | ${s1(med('F', 'h2_ms'))} s | ${verdict(med('F', 'h2_ms') == null ? null : med('F', 'h2_ms') > 4250)} |`);
   md.push(`| B3: more than half of P turns have H1 > 3 s | ${B3n} of ${B3d} | ${verdict(B3d ? B3n / B3d > 0.5 : null)} |`);
   md.push(`| B4: largest of the five stages (\`stt_ms\`, \`rag_ms\`, \`llm_to_token_ms\`, \`first_sentence_ms\`, TTS) is \`stt_ms\` in F, and not \`stt_ms\` in P | F: \`${largest('F') ?? '—'}\` (${f(med('F', largest('F')))} ms); P: \`${largest('P') ?? '—'}\` (${f(med('P', largest('P')))} ms) | ${verdict(largest('F') && largest('P') ? largest('F') === 'app_stt_ms' && largest('P') !== 'app_stt_ms' : null)} |`);
+  if (meta.merge) md.push('', `**Merged re-run.** ${meta.merge.replaced.length} measured turns that failed three times on OpenAI \`insufficient_quota\` (HTTP 429) at the end of this run were re-run, after the account was topped up, in \`${meta.merge.from}\` (a fresh page session after one discarded warm-up per condition) and replace the failed rows here: ${meta.merge.replaced.join(', ')}. Their attempts count both runs.`);
   if (failed.length) md.push('', `Failed turns: ${failed.map((r) => `${r.condition} ${r.question_id}#${r.repeat} (${r.failed_attempt_notes})`).join('; ')}.`);
   md.push('');
   return md.join('\n');
@@ -445,8 +449,25 @@ async function main() {
   const cmd = `node scripts/eval/latency/bench-browser.mjs ${args.filter((a) => a !== '--summarise-only').join(' ')}`.trim();
   const metaPath = `${base}_meta.json`;
   if (SUMMARISE_ONLY) {
-    const rows = parseCsv(readFileSync(RAW, 'utf8'));
+    let rows = parseCsv(readFileSync(RAW, 'utf8'));
     const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+    const mergePath = argVal('--merge');
+    if (mergePath) {
+      // Replace measured turns that failed with the clean re-run of the same
+      // (condition, question, repeat) from a --only run; everything else stays.
+      const retry = parseCsv(readFileSync(resolve(ROOT, mergePath), 'utf8'));
+      const ok = new Map(retry.filter((r) => r.phase === 'measured' && r.h1_ms !== '').map((r) => [`${r.condition}:${r.question_id}#${r.repeat}`, r]));
+      const replaced = [];
+      rows = rows.map((r) => {
+        const k = `${r.condition}:${r.question_id}#${r.repeat}`;
+        if (r.phase !== 'measured' || r.h1_ms !== '' || !ok.has(k)) return r;
+        replaced.push(k);
+        const n = ok.get(k);
+        return { ...n, turn: r.turn, item: r.item, slot: r.slot, attempts: Number(r.attempts) + Number(n.attempts), failed_attempt_notes: `${r.failed_attempt_notes} || re-run in ${mergePath.split('/').pop()}` };
+      });
+      meta.merge = { from: mergePath, replaced, extraRows: retry.length };
+      meta.extraSpendRows = retry; // the re-run's warm-ups and attempts are spend too
+    }
     writeFileSync(`${base}.md`, summarise(rows, meta));
     console.log(`rebuilt ${base}.md`);
     return;

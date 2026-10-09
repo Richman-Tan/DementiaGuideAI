@@ -172,6 +172,14 @@ Against the post-hoc 3 s yardstick (report §4.5):
 
   For a turn on a primary live recogniser, which delivers its transcript close to the stop, most of the `stt` stage (median 1.7 s) would not be paid, so the wait could be shorter. This run does not measure that path. It measures the cost of the fallback path. The web client takes that path when the browser has no `SpeechRecognition` (for example Firefox), when live recognition fails to start, or when it rescues an empty live result (`apps/web/src/services/sttWeb.js`).
 
+### 2.5 Knowledge-base state (post-hoc note, 9 Oct)
+
+**Knowledge-base state, added 9 Oct 2026 (post hoc; read after E4-S, not during it).** The examiner noted that E4-S recorded no knowledge-base state. `scripts/eval/latency/kb-fingerprint.mjs` (read-only GETs with the anon key) was run at 14:15 NZDT on 9 Oct, about 4.3 h after the E4-S headline run ended:
+- **454 chunks**; sha256 over the sorted `(id, content_hash)` pairs `0bc97ae0d17b…`; sha256 over the sorted `(id, sha256(content))` pairs `a778d5d49d4b…`; embedding vectors `29331f967138…` (all `text-embedding-3-small`).
+- **Against the September snapshot** (`docs/report/kb_chunks_reference.csv`, 453 chunks, frozen in `fa69e62` on 13 Sep): all 453 September chunks are present, with the same title, tags, category and provenance columns. One chunk was added: `wellbeing_023` ("Mindfulness and Box Breathing for Carer Stress", curated), embedded on 22 Sep by the id-collision fix `6b65521`.
+- Text identity can be checked only where September stored a `content_hash`: the 125 curated chunks, all unchanged. The 328 iSupport chunks had no stored hash in September, so their text can be compared only by id, title and tags, which match.
+- The newest `embedded_at` in the table is 22 Sep 14:16 UTC (47 chunks carry a date after 13 Sep, all on 22 Sep), so no chunk was re-embedded between 22 Sep and this reading. E4-S most likely ran against this same 454-chunk state. That is an inference from timestamps, not a measurement taken during E4-S.
+
 ## 3. E2-X — cross-family judge (§18.2)
 
 Full write-up: `docs/report/eval/final/judge-crossfamily_claude-sonnet-5-5.md`.

@@ -715,3 +715,107 @@ not used or reported anywhere. The Gemini adapter stays in `scripts/eval/lib/jud
 **Label.** "Apple on-device recogniser on macOS". The result is reported as a proxy for the iOS app, which requests server-capable recognition.
 
 **Cost.** US$0; the run is local.
+
+### 18.4 E4-B — spoken-turn latency in Chrome (primary and fallback recognisers)
+
+*Added 2026-10-09, committed and pushed before any E4-B turn (pilot or measured) was run. Nothing for E4-B had been run with the app, Chrome or a provider when this was written; it is fixed from the code and the E4-S artefacts. The only calls made beforehand were read-only: the ElevenLabs account meter and history (to size the budget) and the production Unity manifest (to match the build).*
+
+**Question.** In real Google Chrome, running the real web app's voice loop, how long does it take from the end of a spoken question to the start of answer audio playback in the page? Two conditions are measured: Chrome's own recogniser (the app's primary path) and the path the app takes when the browser has no `SpeechRecognition` (the fallback, which Firefox takes). Which stage dominates each? This answers the examiner's point that spoken latency "has not been measured in a real browser or on a device", for the browser half only.
+
+**Browser.** Google Chrome 155.0.8059.39 (official build) on the E4-S Mac: Apple M3, 8 GB, macOS 27.0.1, Wi-Fi. The harness launches Chrome itself, with a fresh temporary profile and only these switches:
+- `--mute-audio`: the page plays its audio, but nothing reaches the speakers.
+- `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream --use-file-for-fake-audio-capture=<turn.wav>%noloop`: the microphone is Chrome's fake capture device reading a WAV file, and the permission prompt is answered automatically. The real microphone is never opened. Without `%noloop` the fake device repeats the file, so the recogniser would hear the question again; with it the file plays once per capture stream, then silence.
+- `--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows`: the page behaves as a foreground page even when its small window is covered. These are Chrome's standard automation switches; they do not touch the app.
+- `--remote-debugging-port`, `--no-first-run`, `--no-default-browser-check` and a small window size and position. The harness drives Chrome over the DevTools protocol with `playwright-core`'s `connectOverCDP`, so none of Playwright's own launch defaults apply.
+
+Chrome runs headed (a small window), because Web Speech is not expected to run headless. The window makes no sound. Both conditions share one window and one page.
+
+**App as served.**
+- A production build (`vite build`) of `apps/web` at this branch's HEAD at run time. The `apps/` and `packages/` trees are identical to `origin/main` `7386425`; the harness checks this and records it.
+- Served by the harness on `http://localhost:<port>`, with the API routes on the same origin (`VITE_API_BASE_URL` empty), SPA fallback, and the `vercel.json` cache and `Content-Encoding: br` headers for the Unity files. The CSP header is not sent.
+- Unity WebGL: the author's git-ignored export, manifest version `356c7acb203d`, which is the version production serves on 9 Oct.
+- Settings: the web defaults E4-S used (balanced, jargon plain → `avoid`, warm, carer set-up, voice speed normal → 0.78), so push-to-talk (`handsFree` false) and `fasterVoice` false. Only `onboarded` is set. The avatar is Aaron on Unity, the web default; each run waits until Unity has loaded.
+- Unity lacks `supportsStreamingAudio` and the browser holds no ElevenLabs key, so speech goes through the REST cascade and the proxy, the same request E4-S timed.
+
+**Credential path.** No provider key enters the browser.
+- The harness server mounts the unchanged `apps/api/api` handlers (`chat`, `embed`, `transcribe`, `eleven-tts`, `speech`) the way `studyApiDevServer` in `apps/web/vite.config.js` does: a parsed JSON body unless the route opts out, plus `res.status` and `res.json`. The OpenAI and ElevenLabs keys are read from the git-ignored root `.env` into the server process only.
+- The browser holds a throwaway guest access code, random for each run and recorded nowhere. It is stored in `dg_access` exactly as `AccessCodeForm` stores an accepted code, and the server's `STUDY_ACCESS_CODES` holds the same value. The app therefore runs in its guest proxy mode (`services/transport.js`).
+- **No production writes, server side.** The guard's usage meter writes `study_usage` rows through `bump_study_usage` (`_lib/guard.js`), and fails closed without a service-role key. The server points the handlers' `SUPABASE_URL` at a local stub and gives them a dummy service-role key. The stub answers `bump_study_usage` with `true` and refuses everything else; any refused call stops the run. The real service-role key in `.env` is never loaded. `recordUsage` writes only for a signed-in user, and there is none.
+- **No production writes, browser side.** On load the app signs in anonymously to Supabase, and it writes conversations and messages to Supabase (`state/AuthContext.jsx`, `state/conversationStore.js`). The harness blocks the Supabase `auth/v1`, `rest/v1/conversations` and `rest/v1/messages` requests at the network layer (DevTools `Fetch`), so the app takes its existing "anonymous sign-in failed → device-local history" path. Every other request to the Supabase host is audited. Anything other than the read-only `match_chunks` RPC or a GET stops the run.
+- No study session is created, so the study event stream stays silent.
+
+**Conditions.**
+- **P, primary.** Chrome's `webkitSpeechRecognition`, used as the app uses it (`services/sttWeb.js`, live provider): en-NZ, interim results, a parallel MediaRecorder, and speculative retrieval on stable partials (`VOICE_SPECULATIVE_RAG`). A P turn counts only if its transcript came from the live recogniser. A turn that falls to the Whisper rescue, or to the sticky degrade, is a failed attempt; either shows as an `/api/transcribe` request.
+- **F, fallback.** The same page with `window.SpeechRecognition` and `window.webkitSpeechRecognition` deleted, so `startSttSession` takes the Whisper provider: MediaRecorder (webm/opus) → `/api/transcribe` → `whisper-1`.
+  - The deletion is installed by an init script and switched on or off before each turn. This is equivalent to deleting the constructors at load: `sttWeb.js` looks them up at every session start, and nothing else in the app refers to them.
+  - This is the path Firefox takes, run in Chrome. It is not a Firefox measurement.
+
+**Audio.**
+- The same synthesis as E4-S: `say -v Karen -o` (to a file, never played) with 300 ms of silence at each end, written as 48 kHz mono 16-bit WAV, the format the fake device reads.
+- The E4-S webm is regenerated from the same AIFF and its sha256 compared with E4-S's `clip_sha256`, to show the speech is the same.
+- Before each turn the harness overwrites the capture file with that turn's clip. Chrome reads the file afresh for each new capture stream.
+
+**Sample and order.**
+- The 30 Set-A questions × 2 repeats, in E4-S's round-robin order. Each item runs in both conditions back to back, and the order alternates (P then F, then F then P) from item to item. That gives n = 60 per condition, paired by item (question and repeat).
+- Two warm-up items first, A30 and A31 (the E4-S warm-ups), in both conditions: 4 turns, discarded.
+- Before every turn, the app's own "New conversation" control (Chat screen) clears the thread, so every turn is sent with no history, as in E4-S.
+- Turns are paced 5 s apart.
+- One page session for the whole run, with no reload between turns, so later turns run warm, as a carer's later questions would. The embedding cache (an LRU of 20 entries) cannot serve a repeat, because 30 other questions and their partial transcripts come between an item's two repeats. If the app's sticky degrade fires, the page is reloaded, one discarded warm-up turn is run in each condition, and the item is re-run.
+- **Pilot:** up to 5 turns for harness debugging may run before the measured run. They are discarded and reported only as a count.
+- **Retries, as E4-S.** A turn is a failed attempt if it gets a 429 or 5xx, falls to the OpenAI TTS fallback (`/api/speech`), falls to Whisper in P, or starts no audio within 30 s. It is re-run after 5 s × the attempt number, and the clean attempt is kept. A turn that fails three times is reported as failed, never imputed.
+
+**Turn mechanics and timing.** One clock throughout: the page's `performance.now()`.
+- The harness taps the mic (a real DevTools mouse click). Chrome starts capture, and the clip plays into the capture stream from its first sample.
+- **Capture start, t_cap.** In P, the recogniser's `audiostart` event: the recogniser opens its own capture stream, and that copy of the clip is the one transcribed. In F, the moment the app's `getUserMedia` call resolves.
+- **End of speech, t_eos** = t_cap + clip duration − 300 ms, the clip's trailing pad.
+- **Stop.** The harness taps "Tap when finished" at t_cap + clip duration, 300 ms after the end of speech. This stands in for a user who taps as they finish speaking; the app is push-to-talk by default. The tap's page time, t_tap, is read from the trusted click event; the app's own turn timer starts in the same click handler.
+- **First audio, t_audio.** The scheduled start of the first `AudioBufferSourceNode` started after t_tap, which is the moment the answer's first samples enter the Web Audio graph (`AvatarAudioEngine.playAudioWithVisemeTimeline` schedules it 10 ms ahead). The output latency (`baseLatency + outputLatency`) is recorded but not added.
+- **Alignment check.** Chrome starts the capture stream slightly before the page sees the event. In F, the app's own recording is analysed offline after each turn (ffmpeg `silencedetect`; nothing is played) to find where the speech starts within it. That onset's offset from the expected 300 ms measures the alignment error, and it is reported. P has no such check for the recogniser's stream; the F offsets stand as the estimate of its size.
+
+**Instrumentation.** Observation only; no app code is changed.
+- The app's own per-turn timer (`study/latency.js`), read from its `[LATENCY SUMMARY]` console line: `stt_ms`, `rag_ms`, `llm_to_token_ms`, `first_sentence_ms`, `tts_first_ms`, `to_first_audio_ms`, `playback_wait_ms` and `to_first_token_ms`. Also its `[RAG] speculative …` hit and miss lines.
+- Browser Resource Timing for `/api/transcribe`, `/api/embed`, `match_chunks`, `/api/chat` and `/api/eleven-tts`.
+- An init script that wraps, without changing what they do: `getUserMedia`; `MediaRecorder.prototype.start` and `stop`, plus a passive `dataavailable` listener that keeps a copy of the recording; `webkitSpeechRecognition.prototype.start`, to attach listeners for its audio, sound, speech, result and end events; `AudioBufferSourceNode.prototype.start`; and a capture-phase click listener.
+
+**TTS beyond the first sentence.** As in E4-S, ElevenLabs synthesises only the first sentence of each answer.
+- The app sends each sentence to `/api/eleven-tts` as soon as the model finishes it. The harness server passes the turn's first request to the unchanged handler. It holds every later request until the first has been answered, then returns a short silent placeholder in the same JSON shape, so the app neither falls back to OpenAI TTS nor errors.
+- Reason: the ElevenLabs account is pay-as-you-go, with 8,025 of its 10,000 meter units left this period. Whole answers (about 1,200 characters each) would exhaust it and break the US$5 cap.
+- Consequence: no later-sentence requests reach ElevenLabs while the first is in flight. Up to first audio, everything else runs as in the app.
+
+**Measures** (ms, per turn).
+- **H1, the headline:** t_eos → t_audio, end of speech → first audio playback in the page.
+- **H2:** t_tap → t_audio, the system's latency on the app's own clock. This is the counterpart of E4-S's clock, whose t0 was the start of the upload.
+- The app's stage marks listed above.
+- The tap delay, t_tap − t_eos (300 ms by design), and the app's `to_first_audio_ms` against t_audio (the app's mark comes before decode).
+- In P: the speculative-retrieval outcome, and the wait from stop to the recogniser's final result. In F: MediaRecorder finalisation (stop → blob) and the `/api/transcribe` round trip.
+- Sanity only, not a finding: transcript WER against the question text.
+- Statistics per condition: n, median, mean, p90, p95, sd, min and max, plus the share of turns over 3,000 ms on H1 and on H2.
+- Context, as E4-S: Chrome version, commit, Unity build version, network interface, and the baseline HTTPS round trip to api.openai.com, Supabase and api.elevenlabs.io.
+- **Knowledge-base state, read-only, at the start and at the end of the measured run:** the chunk count; a sha256 over the sorted `(id, content_hash)` pairs; `content_hash` recomputed from each chunk's title and content (`scripts/ingest/chunking.js`); and a comparison with the September snapshot (`docs/report/kb_chunks_reference.csv`, 453 chunks, frozen in `fa69e62`).
+
+**Expectations** (fixed now; each can fail).
+- B1: P's median H1 is lower than F's by at least 0.5 s. Reason: F pays a `whisper-1` upload (E4-S median 1.54 s). P pays the recogniser's final-result wait, which the app caps at 700 ms (`STT_FINAL_TIMEOUT_MS`), and may get retrieval off the critical path.
+- B2: F's median H2 exceeds 4.25 s, E4-S's headless headline (start of upload → first audio byte). Reason: the browser adds MediaRecorder finalisation, the proxy hop, waiting for the complete TTS response (E4-S: 0.24 s from first byte to complete) and decode. B2 is stated on H2 because H2 starts where E4-S's clock started; H1 adds the fixed 300 ms tap delay, which would make B2 easier to meet.
+- B3: more than half of P's turns have H1 over 3 s.
+- B4: by median, the largest of the five app stages (`stt_ms`, `rag_ms`, `llm_to_token_ms`, `first_sentence_ms`, `tts_first_ms`) is `stt_ms` in F, and is not `stt_ms` in P.
+
+**Analysis.** Descriptive only; no significance test.
+- For each condition, the statistics above.
+- **Between conditions, paired by item:** the median paired difference P − F, and the number of items on which P is faster. B1 is judged on the two medians, as stated.
+- **Against E4-S, paired by item:** F's H2 minus E4-S's `to_first_audio_byte`, and minus `to_first_audio_playable`. This is descriptive, because the runs were hours apart and E4-S's own medians moved by up to 0.8 s between two runs 37 minutes apart.
+- The 3 s yardstick is the report's (§4.5), as in E4-S.
+- **Label: "in-browser on a desktop Mac; synthetic speech; not a device; not real users".**
+
+**Contingencies.**
+- **Web Speech refuses to run under automation** (no live transcript in any of the first 3 P attempts, or no `audiostart`). The launch is changed once: microphone permission granted over DevTools instead of `--use-fake-ui-for-media-stream`. If that still fails, P is reported as not run, with the error seen. F then runs alone (n = 60): B1 and B3 cannot be tested, B2 and B4's F half still are.
+- **P fails intermittently.** P turns follow the retry policy. If more than 10 of the 60 P items end failed, P is reported with that caveat.
+- **The fake capture file cannot be read** (no speech captured). The run stops. There is no fallback to the real microphone.
+- **Unity does not load** within 120 s. The page is reloaded once. If it fails again, E4-B is reported as not run, rather than measured on a different avatar and voice.
+- **Spend guards.** The run stops if its OpenAI spend reaches US$3.50 or its ElevenLabs meter use reaches 3,000 units.
+
+**Budget.**
+- OpenAI ≈ US$1.4: about 130 turns of gpt-4o at about US$0.0105 each, `whisper-1` for about 66 F turns (≈ US$0.03), and negligible embeddings.
+- ElevenLabs: about 13,000 characters of first sentences, ≈ US$0.65 at the pay-as-you-go Flash/Turbo list price of US$0.05 per 1,000 characters, or about 1,400 meter units.
+- Total ≈ US$2.1, against the US$5 cap. Spend is computed from the returned token usage, the recording durations and the characters sent, and checked against the ElevenLabs meter read before and after.
+
+**Output.** `docs/report/eval/latency/browser-bench_<sha>_<tag>{.md,_raw.csv,_meta.json}`, with the harness in `scripts/eval/latency/` (`bench-browser.mjs` and the server and init script beside it).

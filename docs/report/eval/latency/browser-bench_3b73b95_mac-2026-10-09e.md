@@ -11,64 +11,64 @@
 - Credentials and writes: provider keys only in the harness server process; the browser held a throwaway guest code. The guard's usage meter went to a local stub (471 calls, all `bump_study_usage` answered locally); Supabase auth/conversations/messages blocked in the browser (1 requests blocked); Supabase requests that went out: POST /auth/v1/signup (blocked) ×1, POST /rest/v1/rpc/match_chunks ×132.
 - Microphone: none. The clip enters as a Web Audio track (init script); Web Speech gets it through `start(track)`. TCC watchdog: no real-microphone access request by the harness Chrome (5 status-only preflights); other apps' microphone use, ignored: com.google.Chrome (com.google.Chrome.helper) ×9.
 - Audio: `say -v Karen -o`, 300 ms silence each side, 48 kHz mono WAV; never played. Same speech as E4-S: 32 of 32 regenerated E4-S webm clips match E4-S's `clip_ms` and `clip_bytes` exactly (sha256 cannot match: the webm muxer writes a random 16-byte segment UID; `say` output is byte-identical across runs). Transcript WER against the question text (sanity check only): P median 0.000, max 0.273; F median 0.000, max 0.083.
-- Sample: 30 Set-A questions × 2 repeats, each item in both conditions back to back (order alternating P-F / F-P), after 2 warm-up items in both conditions (discarded); paced ≥ 5000 ms. Measured turns: P 57, F 56; failed after 3 attempts: 7; turns re-run: 9. Pilot turns before the run: 4 (discarded).
+- Sample: 30 Set-A questions × 2 repeats, each item in both conditions back to back (order alternating P-F / F-P), after 2 warm-up items in both conditions (discarded); paced ≥ 5000 ms. Measured turns: P 60, F 60; failed after 3 attempts: 0; turns re-run: 9. Pilot turns before the run: 4 (discarded).
 - KB (read-only): start 454 chunks, `0bc97ae0d17b…`; end 454 chunks, `0bc97ae0d17b…`; vs the September snapshot (453): unchanged during the run; 1 added (wellbeing_023), 0 removed, 0 changed.
-- Prices (`scripts/eval/pricing.2026-09.json`, checked 2026-09-18): gpt-4o US$2.5/10 per 1M tokens, embeddings US$0.02/1M, whisper-1 US$0.006/min, ElevenLabs Flash/Turbo pay-as-you-go US$0.05/1k characters. **Spend for this run ≈ US$1.757** (gpt-4o 1.119, whisper-1 0.0285, embeddings 0.00004, ElevenLabs 0.610 for 12201 characters; all 124 turns incl. warm-up and re-runs). ElevenLabs meter: 4186 → 5540 units of 10000 (1354 used; tier payg).
+- Prices (`scripts/eval/pricing.2026-09.json`, checked 2026-09-18): gpt-4o US$2.5/10 per 1M tokens, embeddings US$0.02/1M, whisper-1 US$0.006/min, ElevenLabs Flash/Turbo pay-as-you-go US$0.05/1k characters. **Spend for this run ≈ US$1.870** (gpt-4o 1.205, whisper-1 0.0312, embeddings 0.00004, ElevenLabs 0.634 for 12677 characters; all 126 turns incl. warm-up and re-runs, including the 9 turns of the re-run file). ElevenLabs meter: 4186 → 5540 units of 10000 (1354 used; tier payg).
 - Regenerate: `node scripts/eval/latency/bench-browser.mjs --questions 30 --repeats 2 --warmup 2 --tag mac-2026-10-09e --pilot-turns-before 4 --unity-dir /Users/richmantan/Project.Git/DementiaGuideAi/apps/web/public/unity`; rebuild this file from the raw CSV with `node scripts/eval/latency/bench-browser.mjs --summarise-only --tag mac-2026-10-09e --sha 3b73b95`.
 
 ## Headline and stages (ms, measured turns)
 
 | Measure | P n | P median | P p90 | P p95 | P mean | P min–max | F n | F median | F p90 | F p95 | F mean | F min–max |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **H1 end of speech → first audio in the page** | 57 | 3,849 | 5,359 | 9,481 | 4,563 | 2,497–17,331 | 56 | 5,878 | 8,837 | 11,963 | 6,587 | 3,880–21,254 |
-| H2 stop tap → first audio | 57 | 3,572 | 5,073 | 9,130 | 4,264 | 2,192–17,005 | 56 | 5,571 | 8,346 | 11,689 | 6,274 | 3,575–20,967 |
-| Tap delay (end of speech → tap; 300 by design) | 57 | 291 | 325 | 351 | 299 | 247–567 | 56 | 291 | 391 | 438 | 313 | 256–733 |
-| App `stt_ms` (tap → transcript) | 57 | 220 | 329 | 490 | 255 | 172–752 | 56 | 2,039 | 3,169 | 3,865 | 2,312 | 900–11,033 |
-| App `rag_ms` (transcript → passages) | 57 | 1,221 | 2,592 | 5,027 | 1,646 | 0–10,705 | 56 | 1,224 | 2,019 | 2,350 | 1,393 | 652–4,120 |
-| App `llm_to_token_ms` | 57 | 830 | 1,241 | 1,438 | 924 | 501–3,565 | 56 | 802 | 1,301 | 1,740 | 993 | 500–5,642 |
-| App `first_sentence_ms` (first token → first sentence) | 57 | 161 | 298 | 344 | 174 | 0–538 | 56 | 160 | 310 | 386 | 174 | 0–569 |
-| App `tts_first_ms` (TTS request → audio in hand; only where the app recorded it) | 53 | 1,046 | 1,229 | 1,305 | 1,108 | 816–2,974 | 48 | 1,048 | 1,338 | 1,454 | 1,094 | 779–2,217 |
-| TTS stage (app mark, else Resource Timing of the same request) | 57 | 1,050 | 1,306 | 2,276 | 1,214 | 816–4,097 | 56 | 1,056 | 2,079 | 2,819 | 1,322 | 779–4,541 |
-| App `playback_wait_ms` (audio in hand → app's firstAudio mark) | 53 | 0 | 0 | 0 | 0 | 0–0 | 48 | 0 | 0 | 0 | 0 | 0–1 |
-| App `to_first_audio_ms` (its own mark, before decode) | 53 | 3,475 | 4,667 | 6,407 | 3,973 | 2,623–16,857 | 48 | 5,238 | 6,885 | 7,907 | 5,483 | 3,559–10,844 |
-| Decode and schedule (app mark → samples start) | 53 | 25 | 77 | 102 | 38 | 14–174 | 48 | 26 | 94 | 126 | 45 | 15–191 |
-| App `to_first_token_ms` | 57 | 2,197 | 3,738 | 6,306 | 2,824 | 762–13,634 | 56 | 4,093 | 6,237 | 8,509 | 4,698 | 2,649–18,138 |
-| P: recogniser stop → final result (`end`) | 57 | 216 | 302 | 606 | 357 | 169–3,684 | 0 | — | — | — | — | — |
-| P: last transcript change after end of speech | 57 | 89 | 203 | 274 | 157 | -83–3,953 | 0 | — | — | — | — | — |
-| MediaRecorder stop → blob | 57 | 1 | 16 | 18 | 5 | 0–47 | 56 | 15 | 69 | 100 | 31 | 5–279 |
-| F: `/api/transcribe` round trip | 0 | — | — | — | — | — | 56 | 1,995 | 3,076 | 3,825 | 2,253 | 823–10,994 |
-| `/api/embed` round trip (first after tap) | 54 | 446 | 1,735 | 2,651 | 767 | 212–5,057 | 55 | 449 | 907 | 971 | 470 | 203–1,228 |
-| `match_chunks` round trip (first after tap) | 55 | 704 | 1,572 | 2,278 | 905 | 357–3,965 | 56 | 757 | 1,366 | 1,797 | 900 | 431–3,188 |
-| `/api/chat` request → headers | 57 | 826 | 1,193 | 1,399 | 900 | 482–3,530 | 56 | 786 | 1,218 | 1,726 | 968 | 498–5,636 |
-| `/api/eleven-tts` round trip (first sentence) | 57 | 1,048 | 1,286 | 2,248 | 1,203 | 809–4,097 | 56 | 1,051 | 2,055 | 2,819 | 1,309 | 777–4,541 |
-| Output latency reported by the AudioContext (not added) | 57 | 38 | 38 | 38 | 38 | 38–38 | 56 | 38 | 38 | 38 | 38 | 38–38 |
-| Renderer: frames per second, tap → first audio | 57 | 60 | 60 | 60 | 57 | 38–60 | 56 | 59 | 60 | 60 | 56 | 40–60 |
-| Renderer: long-task time in the page, capture start → first audio | 57 | 0 | 432 | 706 | 105 | 0–1,532 | 56 | 0 | 690 | 1,118 | 198 | 0–1,985 |
-| Renderer: longest long task in that window | 57 | 0 | 110 | 186 | 33 | 0–362 | 56 | 0 | 126 | 189 | 43 | 0–373 |
-| Harness: page timer lateness at the stop tap | 57 | 4 | 15 | 18 | 6 | 0–39 | 56 | 4 | 22 | 28 | 7 | 0–53 |
-| Alignment: speech onset in the app's recording − expected | 57 | 7 | 9 | 10 | 7 | 1–11 | 56 | 8 | 10 | 11 | 8 | -2–17 |
+| **H1 end of speech → first audio in the page** | 60 | 3,856 | 5,306 | 9,315 | 4,527 | 2,497–17,331 | 60 | 5,731 | 8,738 | 11,328 | 6,517 | 3,880–21,254 |
+| H2 stop tap → first audio | 60 | 3,577 | 5,029 | 9,005 | 4,227 | 2,192–17,005 | 60 | 5,400 | 8,266 | 11,063 | 6,205 | 3,575–20,967 |
+| Tap delay (end of speech → tap; 300 by design) | 60 | 291 | 327 | 356 | 300 | 247–567 | 60 | 292 | 390 | 430 | 312 | 256–733 |
+| App `stt_ms` (tap → transcript) | 60 | 218 | 306 | 449 | 253 | 172–752 | 60 | 2,039 | 3,151 | 3,738 | 2,286 | 900–11,033 |
+| App `rag_ms` (transcript → passages) | 60 | 1,205 | 2,412 | 4,938 | 1,620 | 0–10,705 | 60 | 1,224 | 2,029 | 2,571 | 1,399 | 652–4,120 |
+| App `llm_to_token_ms` | 60 | 826 | 1,232 | 1,323 | 913 | 501–3,565 | 60 | 802 | 1,251 | 1,641 | 979 | 500–5,642 |
+| App `first_sentence_ms` (first token → first sentence) | 60 | 149 | 294 | 332 | 169 | 0–538 | 60 | 158 | 300 | 383 | 169 | 0–569 |
+| App `tts_first_ms` (TTS request → audio in hand; only where the app recorded it) | 55 | 1,046 | 1,228 | 1,295 | 1,104 | 792–2,974 | 52 | 1,044 | 1,329 | 1,427 | 1,080 | 779–2,217 |
+| TTS stage (app mark, else Resource Timing of the same request) | 60 | 1,051 | 1,432 | 2,146 | 1,222 | 792–4,097 | 60 | 1,055 | 1,968 | 2,761 | 1,295 | 779–4,541 |
+| App `playback_wait_ms` (audio in hand → app's firstAudio mark) | 55 | 0 | 0 | 0 | 0 | 0–0 | 52 | 0 | 0 | 0 | 0 | 0–1 |
+| App `to_first_audio_ms` (its own mark, before decode) | 55 | 3,475 | 4,617 | 6,086 | 3,944 | 2,581–16,857 | 52 | 5,179 | 6,917 | 7,776 | 5,462 | 3,559–10,844 |
+| Decode and schedule (app mark → samples start) | 55 | 25 | 81 | 111 | 39 | 14–174 | 52 | 26 | 88 | 121 | 43 | 15–191 |
+| App `to_first_token_ms` | 60 | 2,172 | 3,606 | 6,084 | 2,785 | 762–13,634 | 60 | 4,083 | 6,171 | 8,411 | 4,665 | 2,649–18,138 |
+| P: recogniser stop → final result (`end`) | 60 | 216 | 284 | 471 | 350 | 169–3,684 | 0 | — | — | — | — | — |
+| P: last transcript change after end of speech | 60 | 88 | 203 | 249 | 150 | -106–3,953 | 0 | — | — | — | — | — |
+| MediaRecorder stop → blob | 60 | 1 | 16 | 18 | 4 | 0–47 | 60 | 15 | 66 | 100 | 31 | 5–279 |
+| F: `/api/transcribe` round trip | 0 | — | — | — | — | — | 60 | 1,995 | 3,069 | 3,705 | 2,226 | 823–10,994 |
+| `/api/embed` round trip (first after tap) | 57 | 439 | 1,485 | 2,425 | 752 | 212–5,057 | 59 | 449 | 906 | 946 | 472 | 203–1,228 |
+| `match_chunks` round trip (first after tap) | 58 | 683 | 1,350 | 2,233 | 890 | 357–3,965 | 60 | 757 | 1,400 | 1,791 | 903 | 431–3,188 |
+| `/api/chat` request → headers | 60 | 822 | 1,186 | 1,283 | 889 | 482–3,530 | 60 | 786 | 1,213 | 1,637 | 954 | 498–5,636 |
+| `/api/eleven-tts` round trip (first sentence) | 60 | 1,048 | 1,385 | 2,124 | 1,209 | 785–4,097 | 60 | 1,049 | 1,963 | 2,761 | 1,282 | 777–4,541 |
+| Output latency reported by the AudioContext (not added) | 60 | 38 | 38 | 38 | 38 | 38–38 | 60 | 38 | 38 | 38 | 38 | 38–38 |
+| Renderer: frames per second, tap → first audio | 60 | 60 | 60 | 60 | 57 | 38–60 | 60 | 59 | 60 | 60 | 56 | 40–60 |
+| Renderer: long-task time in the page, capture start → first audio | 60 | 0 | 382 | 702 | 101 | 0–1,532 | 60 | 0 | 662 | 1,050 | 185 | 0–1,985 |
+| Renderer: longest long task in that window | 60 | 0 | 112 | 175 | 33 | 0–362 | 60 | 0 | 120 | 167 | 40 | 0–373 |
+| Harness: page timer lateness at the stop tap | 60 | 4 | 16 | 18 | 7 | 0–39 | 60 | 4 | 19 | 27 | 7 | 0–53 |
+| Alignment: speech onset in the app's recording − expected | 60 | 7 | 10 | 11 | 7 | 1–12 | 60 | 8 | 10 | 11 | 8 | -2–17 |
 
-The app emits its `[LATENCY SUMMARY]` when the LLM stream ends, so a turn whose stream ended before playback started has no `tts_first_ms` / `to_first_audio_ms` in it: P 4 of 57, F 8 of 56 turns. H1 and H2 are measured by the harness for every turn.
+The app emits its `[LATENCY SUMMARY]` when the LLM stream ends, so a turn whose stream ended before playback started has no `tts_first_ms` / `to_first_audio_ms` in it: P 5 of 60, F 8 of 60 turns. H1 and H2 are measured by the harness for every turn.
 
-Speculative retrieval in P: hit 9, miss 12, not fired 36. Later-sentence TTS requests held and answered with a placeholder: 1591.
+Speculative retrieval in P: hit 10, miss 13, not fired 37. Later-sentence TTS requests held and answered with a placeholder: 1717.
 
 ## Against the 3 s yardstick (report §4.5)
 
-- P: H1 over 3,000 ms in 54 of 57 (94.7 %); H2 in 46 of 57 (80.7 %).
-- F: H1 over 3,000 ms in 56 of 56 (100.0 %); H2 in 56 of 56 (100.0 %).
+- P: H1 over 3,000 ms in 56 of 60 (93.3 %); H2 in 48 of 60 (80.0 %).
+- F: H1 over 3,000 ms in 60 of 60 (100.0 %); H2 in 60 of 60 (100.0 %).
 
 ## Paired comparisons (descriptive)
 
-- P − F on H1, paired by item (n = 56): median -1,864 ms (p10 -4,461, p90 -363); P faster on 52 of 56 items.
-- F's H2 − E4-S, paired by item (n = 56): − `to_first_audio_byte` median 1,215 ms; − `to_first_audio_playable` median 1,104 ms. The runs were hours apart (E4-S 09:46–09:57 NZDT).
+- P − F on H1, paired by item (n = 60): median -1,851 ms (p10 -4,408, p90 -70); P faster on 55 of 60 items.
+- F's H2 − E4-S, paired by item (n = 60): − `to_first_audio_byte` median 1,243 ms; − `to_first_audio_playable` median 1,104 ms. The runs were hours apart (E4-S 09:46–09:57 NZDT).
 
 ## Pre-specified expectations (§18.4)
 
 | Expectation | Result | Verdict |
 |---|---|---|
-| B1: P median H1 lower than F's by ≥ 0.5 s | P 3.85 s, F 5.88 s; gap 2.03 s | **Supported** |
-| B2: F median H2 > 4.25 s (E4-S headline) | 5.57 s | **Supported** |
-| B3: more than half of P turns have H1 > 3 s | 54 of 57 | **Supported** |
-| B4: largest of the five stages (`stt_ms`, `rag_ms`, `llm_to_token_ms`, `first_sentence_ms`, TTS) is `stt_ms` in F, and not `stt_ms` in P | F: `app_stt_ms` (2,039 ms); P: `app_rag_ms` (1,221 ms) | **Supported** |
+| B1: P median H1 lower than F's by ≥ 0.5 s | P 3.86 s, F 5.73 s; gap 1.88 s | **Supported** |
+| B2: F median H2 > 4.25 s (E4-S headline) | 5.40 s | **Supported** |
+| B3: more than half of P turns have H1 > 3 s | 56 of 60 | **Supported** |
+| B4: largest of the five stages (`stt_ms`, `rag_ms`, `llm_to_token_ms`, `first_sentence_ms`, TTS) is `stt_ms` in F, and not `stt_ms` in P | F: `app_stt_ms` (2,039 ms); P: `app_rag_ms` (1,205 ms) | **Supported** |
 
-Failed turns: F A27#1 (a1: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429 | a2: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429 | a3: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429); F A28#1 (a1: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429 | a2: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429 | a3: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429); P A28#1 (a1: no first audio; HTTP embed 429,chat 429 | a2: no first audio; HTTP embed 429,embed 429,chat 429 | a3: no first audio; HTTP embed 429,embed 429,chat 429); P A29#1 (a1: no first audio; HTTP embed 429,embed 429,chat 429 | a2: no first audio; HTTP embed 429,chat 429 | a3: no first audio; HTTP embed 429,chat 429); F A29#1 (a1: no first audio; HTTP embed 429,chat 429 | a2: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429 | a3: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429); F A33#1 (a1: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429 | a2: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429 | a3: no first audio; no [LATENCY SUMMARY]; empty transcript; HTTP transcribe 429); P A33#1 (a1: no first audio; HTTP embed 429,chat 429 | a2: no first audio; HTTP embed 429,chat 429 | a3: no first audio; HTTP embed 429,chat 429).
+**Merged re-run.** 7 measured turns that failed three times on OpenAI `insufficient_quota` (HTTP 429) at the end of this run were re-run, after the account was topped up, in `docs/report/eval/latency/browser-bench_6ba2e7a_mac-2026-10-09e-retry_raw.csv` (a fresh page session after one discarded warm-up per condition) and replace the failed rows here: F:A27#1, F:A28#1, P:A28#1, P:A29#1, F:A29#1, F:A33#1, P:A33#1. Their attempts count both runs.

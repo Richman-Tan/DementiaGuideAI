@@ -64,10 +64,10 @@
     // Recognise one clip served from this origin. Returns the app-style
     // transcript and the session's events; never throws.
     async recognise(url, o) {
-      const opt = { lang: 'en-NZ', processLocally: true, leadMs: 250, tailMs: 1000, endTimeoutMs: 20000, audiostartTimeoutMs: 5000, ...o };
-      const out = { text: '', errors: [], nResults: 0, lastFinal: null, audiostart: false, endedEarly: false, clipMs: null, finalWaitMs: null, wallMs: null, timeout: false };
+      const opt = { lang: 'en-NZ', processLocally: true, leadMs: 250, tailMs: 1000, endTimeoutMs: 20000, audiostartTimeoutMs: 5000, keepAlive: false, ...o };
+      const out = { text: '', errors: [], nResults: 0, lastFinal: null, audiostart: false, endedEarly: false, clipMs: null, finalWaitMs: null, wallMs: null, timeout: false, t: {} };
       const t0 = performance.now();
-      let rec = null; let track = null; let src = null;
+      let rec = null; let track = null; let src = null; let keep = null;
       try {
         const bytes = await fetch(url).then((r) => { if (!r.ok) throw new Error(`fetch ${r.status}`); return r.arrayBuffer(); });
         const buf = await actx().decodeAudioData(bytes);
@@ -77,6 +77,10 @@
         dest.channelCount = 1;
         dest.channelCountMode = 'explicit';
         track = dest.stream.getAudioTracks()[0];
+        // keepAlive: a zero-valued ConstantSourceNode feeds the destination from
+        // before start(), so the track carries digital silence (zeros) from the
+        // first frame rather than nothing until the clip is connected.
+        if (opt.keepAlive) { keep = actx().createConstantSource(); keep.offset.value = 0; keep.connect(dest); keep.start(); }
 
         rec = new SR();
         rec.lang = opt.lang;
@@ -93,8 +97,13 @@
           out.lastFinal = e.results[e.results.length - 1].isFinal;
         };
         rec.onerror = (e) => { out.errors.push(e.message ? `${e.error}:${e.message}` : e.error); };
-        const endP = new Promise((r) => { rec.onend = () => { ended = true; r('end'); }; });
-        const startP = new Promise((r) => { rec.onaudiostart = () => { out.audiostart = true; r('audiostart'); }; });
+        let tStart = 0;
+        const mark = (k) => { if (out.t[k] == null) out.t[k] = Math.round(performance.now() - tStart); };
+        for (const k of ['start', 'soundstart', 'speechstart', 'speechend', 'soundend', 'audioend']) rec.addEventListener(k, () => mark(k));
+        rec.addEventListener('result', () => mark('firstResult'));
+        const endP = new Promise((r) => { rec.onend = () => { ended = true; mark('end'); r('end'); }; });
+        const startP = new Promise((r) => { rec.onaudiostart = () => { out.audiostart = true; mark('audiostart'); r('audiostart'); }; });
+        tStart = performance.now();
         rec.start(track);
         await Promise.race([startP, endP, sleep(opt.audiostartTimeoutMs)]);
         if (!ended) {
@@ -104,10 +113,12 @@
           src.buffer = buf;
           src.connect(dest);
           src.start(actx().currentTime + opt.leadMs / 1000);
+          out.t.clipStart = Math.round(performance.now() - tStart + opt.leadMs);
           await Promise.race([endP, sleep(opt.leadMs + out.clipMs + opt.tailMs)]);
           if (ended) out.endedEarly = true;
         }
         const tStop = performance.now();
+        out.t.stop = Math.round(tStop - tStart);
         if (!ended) { try { rec.stop(); } catch (e) { out.errors.push(`stop:${e.name}`); } }
         const r = await Promise.race([endP, sleep(opt.endTimeoutMs).then(() => 'timeout')]);
         if (r === 'timeout') { out.timeout = true; out.errors.push('end-timeout'); try { rec.abort(); } catch { /* gone */ } }
@@ -117,6 +128,7 @@
       } finally {
         try { src?.stop(); } catch { /* not started */ }
         try { src?.disconnect(); } catch { /* gone */ }
+        try { keep?.stop(); keep?.disconnect(); } catch { /* gone */ }
         try { track?.stop(); } catch { /* gone */ }
       }
       out.wallMs = performance.now() - t0;

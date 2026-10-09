@@ -282,3 +282,38 @@ Everything else in §19C.1–§19C.12 is unchanged:
 - the scorer and the paired rows;
 - expectations C1–C4;
 - the stop rules and contingencies.
+
+## 19C.14 Deviation, 9–10 Oct 2026 — audio lead-in; one stopped start discarded; committed before the run restarts
+
+**What happened.**
+- The first en-NZ start ran at k = 1 from 21:09:28 NZDT on 9 October. Its guards were armed and its gate opened at 21:10:55. It was stopped by hand at 21:21:16, after 54 cuts. Then the five-hour usage limit intervened; work resumed at 09:26 on 10 October.
+- **Why it was stopped:** throughput was 0.37× real time, against the plan's estimate of about 0.75×. The per-cut timing in the cache showed a median of 5,029 ms between `start(track)` and the clip, which equals the harness's 5,000 ms `audiostart` timeout. 15 of the 54 outputs were empty, including utterances of 8–12 reference words.
+- The plan (§19C.5) says the clip begins 250 ms after the recogniser's `audiostart` event, with the track carrying silence until then. In this first harness, the track carried nothing until the clip's source was connected.
+
+**Diagnosis**, offline, synthetic audio only, every guard on (`chrome-ondevice-lead-diagnostic_f017660.json`, 10 Oct 09:27–09:29). The six English clips were recognised on-device in two ways.
+
+| Track before the clip | `start` event | `audiostart` | Clip begins | Mean WER |
+|---|---|---|---|---|
+| nothing connected (first harness) | ~5,020 ms, when the clip was connected after the 5 s fallback | 5,045–6,181 ms; **after** the clip had begun in one case (syn1, whose first word was lost) | ~5,258 ms | 0.013 |
+| zero-valued keep-alive source from before `start()` | ~9 ms | ~38 ms | ~288 ms (250 ms after `audiostart`) | 0.000 |
+
+On this path Chrome does not start the session until audio frames flow on the track. Without a source the track carries no frames, so the session started only when the clip was connected. The recogniser could then open after the speech had begun, losing its start.
+
+**Change** (tool version `chrome-ondevice-stt 2`, so no version-1 cache is reused):
+- A `ConstantSourceNode` with offset 0 feeds the destination from before `start(track)`, so the track carries digital zeros from the first frame. This realises the pre-registered timing: `audiostart` fires in about 40 ms, and the clip starts 250 ms after it.
+- **New check:** a cut whose `audiostart` came after the clip began is an error (`late-audiostart`). It is retried once, like the other errors.
+- Nothing else in the request changes: `continuous`, `interimResults`, `processLocally = true`, the 1,000 ms tail, the 20 s end cap and the hypothesis rule are as before.
+
+**The stopped start is discarded.** Its 54 hypotheses could have lost the start of speech, so they are not valid under the corrected method.
+- They are kept, never scored, in `data/dementiabank/cache/chrome-ondevice-en-NZ-stopped-lead5s/`, as a labelled discarded start.
+- A post-hoc audit of that session's NetLog after arming found:
+  - no speech URL;
+  - no URL outside the baseline (only `ListAccounts`, `c2dm/register3` and `pso/ping`);
+  - no socket address other than the IPv6 reachability probe.
+- No guard fired before the manual stop.
+
+**Before the run restarts:**
+1. This note and the tooling are committed and pushed.
+2. The offline proof (§19C.13 criteria) is re-run with the corrected harness and committed.
+
+The run then restarts from an empty cache: en-NZ, k = 1, headless, every monitor on. The expectations, sample, scorer and stop rules are unchanged.

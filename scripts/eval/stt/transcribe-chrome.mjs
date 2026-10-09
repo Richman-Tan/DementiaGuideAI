@@ -69,7 +69,7 @@ const args = process.argv.slice(2);
 const has = (n) => args.includes(n);
 const argVal = (n) => { const i = args.indexOf(n); return i === -1 ? null : args[i + 1]; };
 
-const MODE = has('--dry-run') ? 'dry' : has('--probe') ? 'probe' : has('--install') ? 'install' : has('--offline-proof') ? 'proof' : has('--cloud-diagnostic') ? 'cloudDiag' : 'run';
+const MODE = has('--dry-run') ? 'dry' : has('--probe') ? 'probe' : has('--install') ? 'install' : has('--offline-proof') ? 'proof' : has('--cloud-diagnostic') ? 'cloudDiag' : has('--lead-diagnostic') ? 'leadDiag' : 'run';
 const PROFILE = argVal('--profile') ? resolve(argVal('--profile')) : null;
 const LOCALE = argVal('--locale') ?? 'en-NZ';
 const LOCALES = (argVal('--locales') ?? 'en-NZ,en-US').split(',');
@@ -91,13 +91,18 @@ const OUT = resolve(DATA_ROOT, argVal('--out') ?? `data/dementiabank/hyps_${TAG}
 const CACHE_DIR = resolve(DATA_DIR, 'cache', CACHE_TAG);
 const SCRATCH = resolve(argVal('--scratch') ?? resolve(ROOT, '.cache/eval/chrome-ondevice'));
 const REPORT_DIR = resolve(ROOT, 'docs/report/eval/stt');
-const TOOL_VERSION = 'chrome-ondevice-stt 1';
+// 2: keep-alive source from before start() (plan §19C.14); caches of 1 are not reused.
+const TOOL_VERSION = 'chrome-ondevice-stt 2';
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const HARNESS_HTML = resolve(ROOT, 'scripts/eval/stt/chrome-ondevice/harness.html');
 // Request timing, fixed in the plan: the clip starts LEAD ms after the
 // recogniser's audiostart; stop() is called TAIL ms after the clip's last
 // sample; the final result is awaited until `end` (END_TIMEOUT cap).
-const REQ = { leadMs: 250, tailMs: 1000, endTimeoutMs: 20000, audiostartTimeoutMs: 5000 };
+// keepAlive (plan §19C.14): the track carries digital zeros from before
+// start(), so Chrome starts the session at once and audiostart precedes the
+// clip; without it Chrome waits for the first frames and audiostart can land
+// after the clip has begun.
+const REQ = { leadMs: 250, tailMs: 1000, endTimeoutMs: 20000, audiostartTimeoutMs: 5000, keepAlive: true };
 // Recogniser errors that stop the run: a path that is not local, or a set-up
 // failure. "no-speech" is routine (empty hypothesis); anything else is retried.
 const FATAL_ERRORS = /^(network|service-not-allowed|language-not-supported|not-allowed|phrases-not-supported|harness:)/;
@@ -830,6 +835,58 @@ async function modeCloudDiagnostic() {
   log(`wrote ${out}`);
 }
 
+// When does the on-device recogniser fire audiostart? Offline, synthetic audio
+// only: the six English clips, each recognised on-device with the track fed
+// (a) only once the clip is connected (the first harness) and (b) by a
+// zero-valued keep-alive source from before start(). Optionally quieter
+// copies (--gains "-20,-30" dB, via ffmpeg) to see whether level interacts.
+async function modeLeadDiagnostic() {
+  const netlog = resolve(SCRATCH, `netlog-leaddiag-${Date.now()}.json`);
+  const gains = (argVal('--gains') ?? '').split(',').filter(Boolean).map(Number);
+  const clips = [];
+  for (const c of SYNTH) {
+    clips.push({ ...c, gainDb: 0, path: synth(c) });
+    for (const gdb of gains) {
+      const out = resolve(SCRATCH, 'synth', `${c.id}_g${Math.abs(gdb)}.wav`);
+      if (!existsSync(out)) execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', synth(c), '-af', `volume=${gdb}dB`, '-c:a', 'pcm_s16le', out]);
+      clips.push({ ...c, id: `${c.id}_g${Math.abs(gdb)}`, gainDb: gdb, path: out });
+    }
+  }
+  const synthPaths = Object.fromEntries(clips.map((c) => [c.id, c.path]));
+  let chrome = null;
+  const g = await startGuards({ strict: false, onAbort: () => killTree(g, chrome) });
+  const server = await startPageServer({ synthPaths });
+  chrome = await launchChrome({ offline: true, netlog, proxyPort: g.sink.port });
+  g.chromePid = chrome.proc.pid;
+  g.attachNetLog(netlog);
+  const startedAt = now();
+  log(`OFFLINE lead diagnostic — Chrome ${chrome.version}, headless ${!HEADED}, pid ${g.chromePid}, ${clips.length} clips × 2 variants`);
+  const page = await openHarnessPage(chrome.context, server.port);
+  const runs = [];
+  for (const keepAlive of [false, true]) {
+    for (const c of clips) {
+      const r = await page.evaluate(([u, o]) => window.H.recognise(u, o), [`/synth/${c.id}`, { ...REQ, lang: LOCALE, processLocally: true, keepAlive }]);
+      runs.push({ keepAlive, id: c.id, gainDb: c.gainDb, hyp: r.text, wer: wer(c.text, r.text ?? '').wer, errors: r.errors, audiostart: r.audiostart, t: r.t, nResults: r.nResults, clipMs: Math.round(r.clipMs ?? -1), finalWaitMs: Math.round(r.finalWaitMs ?? -1), wallMs: Math.round(r.wallMs ?? -1) });
+      log(`keepAlive ${keepAlive} ${c.id}: WER ${runs[runs.length - 1].wer.toFixed(3)} t ${JSON.stringify(r.t)} errors ${JSON.stringify(r.errors)}`);
+    }
+  }
+  await closeChrome(chrome);
+  await sleep(2000);
+  await g.stop(); await server.close();
+  const med = (a) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.floor(b.length / 2)] : null; };
+  const summary = {};
+  for (const keepAlive of [false, true]) for (const gdb of [0, ...gains]) {
+    const rs = runs.filter((r) => r.keepAlive === keepAlive && r.gainDb === gdb);
+    summary[`keepAlive=${keepAlive} gain=${gdb}dB`] = { n: rs.length, meanWer: rs.reduce((a, r) => a + r.wer, 0) / rs.length, empty: rs.filter((r) => !r.hyp).length, medianAudiostartMs: med(rs.map((r) => r.t.audiostart).filter((x) => x != null)), medianClipStartMs: med(rs.map((r) => r.t.clipStart)), medianWallMs: med(rs.map((r) => r.wallMs)) };
+  }
+  const res = { mode: 'lead-diagnostic', startedAt, finishedAt: now(), chrome: chrome.version, os: osVersion(), headless: !HEADED, locale: LOCALE, request: REQ, summary, runs, guards: g.summary() };
+  const out = resolve(REPORT_DIR, `chrome-ondevice-lead-diagnostic_${gitSha()}.json`);
+  writeFileSync(out, JSON.stringify(res, null, 1) + '\n');
+  log(JSON.stringify(summary, null, 1));
+  log(`guards: lsof external ${res.guards.lsofExternal.length}, nettop ${res.guards.nettopTreeFlows.length}, sandbox ${res.guards.sandboxDenials.length}, speech URLs ${res.guards.netlogSpeechUrls}, TCC ${res.guards.tccTrips.length}`);
+  log(`wrote ${out}`);
+}
+
 const cacheKey = (bytes) => createHash('sha256').update(TOOL_VERSION).update('\0').update(LOCALE).update('\0').update(bytes).digest('hex');
 const cacheFile = (key, dir = CACHE_DIR) => resolve(dir, `${key}.json`);
 
@@ -931,8 +988,10 @@ async function modeRun() {
         const fatal = r.errors.find((e) => FATAL_ERRORS.test(e));
         if (fatal) { g.abortReason ??= `recogniser error "${fatal}" on cut ${i}`; return; }
         const nonRoutine = r.errors.filter((e) => e !== 'no-speech');
-        const error = !r.audiostart ? 'no-audiostart' : nonRoutine.length ? nonRoutine.join('|') : null;
-        const rec = { text: r.text, error, errors: r.errors, noSpeech: r.errors.includes('no-speech') && !r.text, empty: !r.text, lastFinal: r.lastFinal, nResults: r.nResults, endedEarly: r.endedEarly, finalWaitMs: Math.round(r.finalWaitMs ?? -1), wallMs: Math.round(r.wallMs ?? -1), clipMs: Math.round(r.clipMs ?? -1) };
+        // audiostart must precede the clip, or the start of speech may be lost.
+        const late = r.audiostart && r.t && r.t.audiostart != null && r.t.clipStart != null && r.t.audiostart > r.t.clipStart;
+        const error = !r.audiostart ? 'no-audiostart' : late ? 'late-audiostart' : nonRoutine.length ? nonRoutine.join('|') : null;
+        const rec = { text: r.text, error, errors: r.errors, noSpeech: r.errors.includes('no-speech') && !r.text, empty: !r.text, lastFinal: r.lastFinal, nResults: r.nResults, endedEarly: r.endedEarly, finalWaitMs: Math.round(r.finalWaitMs ?? -1), wallMs: Math.round(r.wallMs ?? -1), clipMs: Math.round(r.clipMs ?? -1), t: r.t };
         writeFileSync(cacheFile(keys[i]), JSON.stringify({ ...rec, locale: LOCALE, tool: TOOL_VERSION, chrome: chrome.version, concurrency: CONCURRENCY, retried: pass === 1, at: now() }));
         done++; audioS += Number(refs[i].duration_s) || 0; if (error) errors++;
         if (done % 50 === 0) { const el = (Date.now() - t0) / 1000; log(`  pass ${pass}: ${done} done (${errors} errors) — ${(audioS / 60).toFixed(1)} min audio in ${(el / 60).toFixed(1)} min wall, ${(audioS / el).toFixed(2)}× real time`); }
@@ -1004,5 +1063,5 @@ async function modeRun() {
   log(`Wrote ${OUT}: ${rows.length} rows; ${JSON.stringify(meta.counts)}`);
 }
 
-const main = { dry: modeRun, run: modeRun, probe: modeProbe, install: modeInstall, proof: modeProof, cloudDiag: modeCloudDiagnostic }[MODE];
+const main = { dry: modeRun, run: modeRun, probe: modeProbe, install: modeInstall, proof: modeProof, cloudDiag: modeCloudDiagnostic, leadDiag: modeLeadDiagnostic }[MODE];
 main().catch((e) => { console.error(e?.stack ?? e); process.exit(1); });

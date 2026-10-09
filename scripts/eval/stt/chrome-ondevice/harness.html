@@ -1,0 +1,138 @@
+<!doctype html>
+<!--
+  E9-C (docs/eval/plan-19c-chrome-ondevice.md): in-page harness for Chrome's
+  ON-DEVICE Web Speech recogniser. Served from 127.0.0.1 by
+  scripts/eval/stt/transcribe-chrome.mjs and driven over the DevTools protocol.
+
+  Audio path (the E4-B method, plan §18.4 deviation note): the clip is decoded
+  and played by an AudioContext that is NEVER connected to the speakers, into a
+  MediaStreamAudioDestinationNode; that track is handed to the recogniser with
+  start(track). Native capture is never called: getUserMedia is replaced with a
+  refusal, and start() without a track is refused.
+
+  Request settings mirror apps/web/src/services/sttWeb.js (lang, continuous,
+  interimResults; transcript = concatenation of every result's top alternative,
+  trimmed), plus processLocally.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>E9-C harness</title>
+</head>
+<body>
+<p id="status">E9-C harness</p>
+<button id="install" type="button">install</button>
+<script>
+(() => {
+  'use strict';
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // ── capture guards: the real microphone can never be opened from this page
+  if (navigator.mediaDevices) {
+    const refuse = async () => { throw new DOMException('E9-C harness: no capture device exists here', 'NotAllowedError'); };
+    navigator.mediaDevices.getUserMedia = refuse;
+    navigator.mediaDevices.getDisplayMedia = refuse;
+  }
+  if (SR) {
+    const origStart = SR.prototype.start;
+    SR.prototype.start = function (track) {
+      if (!(track instanceof MediaStreamTrack)) throw new DOMException('E9-C harness: start() needs a synthetic track', 'InvalidStateError');
+      return origStart.call(this, track);
+    };
+  }
+
+  let ctx = null;
+  const actx = () => (ctx ||= new AudioContext({ sampleRate: 48000, latencyHint: 'interactive' }));
+
+  const H = {
+    info() {
+      return {
+        ua: navigator.userAgent,
+        hasSR: Boolean(SR),
+        hasAvailable: typeof SR?.available === 'function',
+        hasInstall: typeof SR?.install === 'function',
+        hasProcessLocally: Boolean(SR && 'processLocally' in SR.prototype),
+        hasPhrases: Boolean(SR && 'phrases' in SR.prototype),
+      };
+    },
+    async available(lang, processLocally) {
+      try { return await SR.available({ langs: [lang], processLocally }); } catch (e) { return `error:${e.name}:${e.message}`; }
+    },
+    installLangs: null,
+    installResult: null,
+    // Recognise one clip served from this origin. Returns the app-style
+    // transcript and the session's events; never throws.
+    async recognise(url, o) {
+      const opt = { lang: 'en-NZ', processLocally: true, leadMs: 250, tailMs: 1000, endTimeoutMs: 20000, audiostartTimeoutMs: 5000, ...o };
+      const out = { text: '', errors: [], nResults: 0, lastFinal: null, audiostart: false, endedEarly: false, clipMs: null, finalWaitMs: null, wallMs: null, timeout: false };
+      const t0 = performance.now();
+      let rec = null; let track = null; let src = null;
+      try {
+        const bytes = await fetch(url).then((r) => { if (!r.ok) throw new Error(`fetch ${r.status}`); return r.arrayBuffer(); });
+        const buf = await actx().decodeAudioData(bytes);
+        out.clipMs = buf.duration * 1000;
+        if (actx().state !== 'running') await actx().resume();
+        const dest = actx().createMediaStreamDestination();
+        dest.channelCount = 1;
+        dest.channelCountMode = 'explicit';
+        track = dest.stream.getAudioTracks()[0];
+
+        rec = new SR();
+        rec.lang = opt.lang;
+        rec.interimResults = true;
+        rec.continuous = true;
+        rec.maxAlternatives = 1;
+        rec.processLocally = Boolean(opt.processLocally);
+        let ended = false;
+        rec.onresult = (e) => {
+          let t = '';
+          for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+          out.text = t.trim();
+          out.nResults++;
+          out.lastFinal = e.results[e.results.length - 1].isFinal;
+        };
+        rec.onerror = (e) => { out.errors.push(e.message ? `${e.error}:${e.message}` : e.error); };
+        const endP = new Promise((r) => { rec.onend = () => { ended = true; r('end'); }; });
+        const startP = new Promise((r) => { rec.onaudiostart = () => { out.audiostart = true; r('audiostart'); }; });
+        rec.start(track);
+        await Promise.race([startP, endP, sleep(opt.audiostartTimeoutMs)]);
+        if (!ended) {
+          // The clip starts leadMs after the recogniser has its audio; the
+          // track carries silence until then, so no speech is clipped.
+          src = actx().createBufferSource();
+          src.buffer = buf;
+          src.connect(dest);
+          src.start(actx().currentTime + opt.leadMs / 1000);
+          await Promise.race([endP, sleep(opt.leadMs + out.clipMs + opt.tailMs)]);
+          if (ended) out.endedEarly = true;
+        }
+        const tStop = performance.now();
+        if (!ended) { try { rec.stop(); } catch (e) { out.errors.push(`stop:${e.name}`); } }
+        const r = await Promise.race([endP, sleep(opt.endTimeoutMs).then(() => 'timeout')]);
+        if (r === 'timeout') { out.timeout = true; out.errors.push('end-timeout'); try { rec.abort(); } catch { /* gone */ } }
+        out.finalWaitMs = performance.now() - tStop;
+      } catch (e) {
+        out.errors.push(`harness:${e.name}:${e.message}`);
+      } finally {
+        try { src?.stop(); } catch { /* not started */ }
+        try { src?.disconnect(); } catch { /* gone */ }
+        try { track?.stop(); } catch { /* gone */ }
+      }
+      out.wallMs = performance.now() - t0;
+      return out;
+    },
+  };
+
+  // install() is called from a trusted click (user activation), language set
+  // beforehand by the driver in H.installLangs.
+  document.getElementById('install').addEventListener('click', async () => {
+    H.installResult = 'pending';
+    try { H.installResult = String(await SR.install({ langs: H.installLangs, processLocally: true })); } catch (e) { H.installResult = `error:${e.name}:${e.message}`; }
+  });
+  window.H = H;
+  document.getElementById('status').textContent = 'ready';
+})();
+</script>
+</body>
+</html>

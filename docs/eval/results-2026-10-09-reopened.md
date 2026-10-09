@@ -6,11 +6,14 @@
 - **E4-S with TTS** (§2.0), which replaces the first run as the headline, as §18.1 says;
 - **E2-X** (§3), with the judge §18.2 originally named. A short-lived Gemini deviation (`b1030da`) was withdrawn in `99566dc` before Claude judged any item.
 
+**Update 2, 9 Oct 2026 (afternoon).** E4-B, spoken-turn latency measured in real Google Chrome on the web app's own voice loop, was pre-registered as §18.4 (`b5cdced`, 13:57:59 NZDT) and run (§6).
+
 | Evaluation | Status | Headline | Artefacts |
 |---|---|---|---|
 | E9-A — Apple on-device recogniser, ADReSS-2020 condition (a) | **Run** (primary en-NZ; secondary en-US also run, §1.6) | pooled WER control 41.8 % / dementia 58.5 % vs `whisper-1` 26.3 % / 41.9 %; paired Δ +14.5 pp | `docs/report/eval/stt/wer_e65cdc2_apple-ondevice-en-NZ.*`, `wer_0b81b1c_apple-ondevice-en-US.*` |
 | E4-S — headless spoken-turn latency | **Run with TTS** (headline, §2.0); the earlier run without TTS is kept as a second sample (§2.1–2.4) | end of speech → **first audio byte: median 4.25 s, p90 5.14 s; 60/60 turns over 3 s**. L1, L2 and L3 supported | `docs/report/eval/latency/spoken-bench_3ec1cc0_mac-2026-10-09-tts*`; first run `spoken-bench_e65cdc2_mac-2026-10-09*` |
 | E2-X — cross-family judge (`claude-sonnet-5-5`) | **Run**, stage 1 only | **no dimension passes the κ ≥ 0.6 gate** (best: correctness κ 0.46 / 0.32 against R1 / R2, and degenerate); stage 2 not run. The judge is stricter than both raters on every dimension | `docs/report/eval/final/judge-crossfamily_claude-sonnet-5-5.md` and the files it lists |
+| E4-B — spoken-turn latency in Chrome, primary (Web Speech) and fallback (`whisper-1`) recognisers | **Run** (n = 60 per condition, §6). The real microphone was opened once in a pre-run feasibility check (§6.5) | end of speech → **first audio in the page: median 3.86 s (Web Speech) / 5.73 s (fallback)**; over 3 s in 56 of 60 / 60 of 60 turns. B1–B4 supported | `docs/report/eval/latency/browser-bench_3b73b95_mac-2026-10-09e*`, re-run merged from `browser-bench_6ba2e7a_mac-2026-10-09e-retry*` |
 
 ## 1. E9-A — Apple's on-device recogniser on dementia speech (§18.3)
 
@@ -172,6 +175,14 @@ Against the post-hoc 3 s yardstick (report §4.5):
 
   For a turn on a primary live recogniser, which delivers its transcript close to the stop, most of the `stt` stage (median 1.7 s) would not be paid, so the wait could be shorter. This run does not measure that path. It measures the cost of the fallback path. The web client takes that path when the browser has no `SpeechRecognition` (for example Firefox), when live recognition fails to start, or when it rescues an empty live result (`apps/web/src/services/sttWeb.js`).
 
+### 2.5 Knowledge-base state (post-hoc note, 9 Oct)
+
+**Knowledge-base state, added 9 Oct 2026 (post hoc; read after E4-S, not during it).** The examiner noted that E4-S recorded no knowledge-base state. `scripts/eval/latency/kb-fingerprint.mjs` (read-only GETs with the anon key) was run at 14:15 NZDT on 9 Oct, about 4.3 h after the E4-S headline run ended:
+- **454 chunks**; sha256 over the sorted `(id, content_hash)` pairs `0bc97ae0d17b…`; sha256 over the sorted `(id, sha256(content))` pairs `a778d5d49d4b…`; embedding vectors `29331f967138…` (all `text-embedding-3-small`).
+- **Against the September snapshot** (`docs/report/kb_chunks_reference.csv`, 453 chunks, frozen in `fa69e62` on 13 Sep): all 453 September chunks are present, with the same title, tags, category and provenance columns. One chunk was added: `wellbeing_023` ("Mindfulness and Box Breathing for Carer Stress", curated), embedded on 22 Sep by the id-collision fix `6b65521`.
+- Text identity can be checked only where September stored a `content_hash`: the 125 curated chunks, all unchanged. The 328 iSupport chunks had no stored hash in September, so their text can be compared only by id, title and tags, which match.
+- The newest `embedded_at` in the table is 22 Sep 14:16 UTC (47 chunks carry a date after 13 Sep, all on 22 Sep), so no chunk was re-embedded between 22 Sep and this reading. E4-S most likely ran against this same 454-chunk state. That is an inference from timestamps, not a measurement taken during E4-S.
+
 ## 3. E2-X — cross-family judge (§18.2)
 
 Full write-up: `docs/report/eval/final/judge-crossfamily_claude-sonnet-5-5.md`.
@@ -220,9 +231,13 @@ Prices are from `scripts/eval/pricing.2026-09.json` (checked 2026-09-18): gpt-4o
 | E2-X, `claude-sonnet-5-5`, 60 calls | **0.70** | 265,084 input and 17,250 output tokens at US$2 / 10 per 1M (Anthropic list price, 2026-10-08) |
 | E2-X, withdrawn Gemini run | 0 | free tier |
 | Earlier session, 2026-10-08 (tooling, Apple en-NZ pass, audio synthesis, dry runs) | ≈ 0 | **Estimated.** It left no latency, judge or generation output, and every step it ran is local. The provider dashboards were not checked |
-| **Total** | **≈ 1.97** | against the US$25 cap |
+| E4-B reported run + quota re-run, 133 turns incl. warm-ups and re-runs | **1.87** | gpt-4o 1.21, `whisper-1` 0.031, embeddings 0.00004 (from the proxy's token counts and the recording durations); ElevenLabs 0.63 for 12,677 first-sentence characters at the pay-as-you-go US$0.05 per 1,000 |
+| E4-B pilots (4 turns), the four stopped starts (31 turns kept in their files, plus failed attempts) and the no-provider diagnostics | **≈ 0.56** | gpt-4o ≈ 0.36, `whisper-1` ≈ 0.007, ElevenLabs ≈ 0.16 for 3,215 characters; the 3 failed attempts in the second start are estimated (≈ 0.03); the diagnostics' few speculative embeddings cost under US$0.001 |
+| **Total** | **≈ 4.40** | against the US$25 cap; E4-B alone ≈ US$2.43 against its US$5 cap |
 
 ## 5. Deviations from §18 and limitations
+
+- **E4-B** has its own list in §6.5: the real microphone was opened in a pre-run feasibility check; the audio entered through a synthetic in-page track instead of Chrome's fake capture file; four starts were stopped; and 7 turns were re-run after the OpenAI account ran out of quota.
 
 - **E4-S first ran without TTS,** under the pre-specified key contingency, because the ElevenLabs key was not yet in the root `.env`. Once the key was added, the same sample was re-run with synthesis (§2.0). That run is the headline, as §18.1 requires, and the first run is kept as a second sample.
 - **E2-X: a judge deviation was made and withdrawn, both before the replacement judge scored anything.** Gemini was chosen for cost (`b1030da`). Its free-tier daily cap stopped it at 7 of 60 items. It was replaced by the originally specified `claude-sonnet-5-5` (`99566dc`), and the 7 partial scores were discarded unexamined. See §3.
@@ -240,3 +255,141 @@ Prices are from `scripts/eval/pricing.2026-09.json` (checked 2026-09-18): gpt-4o
   - files, not a microphone stream;
   - a US-English corpus heard by an en-NZ model (§1.6 gives the en-US secondary condition);
   - Cookie Theft picture descriptions, not caregiver questions.
+
+## 6. E4-B — spoken-turn latency in Chrome, primary and fallback recognisers (§18.4)
+
+**Label: in-browser on a desktop Mac; synthetic speech; not a device; not real users.**
+
+**Artefacts.**
+- The reported run: `docs/report/eval/latency/browser-bench_3b73b95_mac-2026-10-09e{.md,_raw.csv,_meta.json}`.
+- The quota re-run, merged into that summary: `browser-bench_6ba2e7a_mac-2026-10-09e-retry{…}`.
+- The four stopped starts, kept for the record and not used: `browser-bench_{a740401,f4382d4,332a4ec,bc4ecd3}_*`.
+- The harness: `scripts/eval/latency/bench-browser.mjs`, with `browser-bench-server.mjs`, `browser-bench-init.js` and `kb-fingerprint.mjs`.
+
+**Order of events (NZDT, 9 Oct).**
+
+| Time | Event |
+|---|---|
+| 13:57:59 | §18.4 committed and pushed (`b5cdced`) |
+| 14:13:49 | Deviation 1 committed (`96ccc9f`), before any app turn |
+| 14:43:26 | First measured turn of any start (stopped start 1) |
+| 15:20:00 | Deviation 2 committed (`3b73b95`) |
+| 15:22:45 | First measured turn of the reported run |
+
+### 6.1 What was run
+
+| Item | Value |
+|---|---|
+| Browser | Google Chrome 155.0.8059.39 (official build), launched by the harness with a fresh profile. Driven over the DevTools protocol (`playwright-core` 1.63.0, `connectOverCDP`). Headed, in a 400×760 window at the right edge of the screen. Switches: `--mute-audio --use-fake-device-for-media-stream --use-fake-ui-for-media-stream --disable-audio-input --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows` |
+| App | Production `vite build` of `apps/web` at `3b73b95`; `apps/` and `packages/` are identical to `origin/main` `7386425`. Served on 127.0.0.1, with the API on the same origin. Unity WebGL `356c7acb203d`, the version production serves. Web defaults throughout. Avatar Aaron on Unity, rendering at about 60 fps during the turns. Speech synthesis by REST through the proxy |
+| Credentials | The keys stayed in the harness server process, read from the root `.env`. The `apps/api` handlers (`chat`, `embed`, `transcribe`, `eleven-tts`, `speech`) were unchanged. The browser held only a throwaway guest code |
+| No production writes | The usage meter went to a local stub: 471 + 33 `bump_study_usage` calls, all answered locally, none refused. In the browser, the one Supabase anonymous sign-up was blocked, and no conversation or message request was made. The only Supabase requests that left the browser were `match_chunks` (read-only): 132 + 10. No study session was created |
+| Microphone | None. Speech entered as a Web Audio track (deviation 1). The privacy-log watchdog recorded no microphone access by the harness Chrome. During the run the author's own Chrome used the microphone 9 times; this was logged and not acted on |
+| Audio | 32 clips made with `say -v Karen -o`, written as WAV with 300 ms of silence at each end; never played. The speech is the same as E4-S's: regenerating E4-S's webm files reproduces E4-S's duration and byte size for 32 of 32 clips |
+| Sample | 30 Set-A questions × 2 repeats × 2 conditions, interleaved and paired with the order alternating; 2 warm-up items in both conditions, discarded. **n = 60 per condition.** Every turn started from "New conversation", so history was 0 before every kept turn. Stop-tap delay after the end of speech: median 291 ms (P) and 292 ms (F); target 300 |
+| Re-runs | Two turns were re-run once within the run: F A1#0 (ElevenLabs failed, so the app fell back to OpenAI speech) and P A11#0 (empty live result, so the app used its Whisper rescue). Seven turns failed on OpenAI quota and were re-run after a top-up (§6.5) |
+| When and where | 9 Oct 15:20–16:36 NZDT, plus the re-run 16:40–16:44. Apple M3, 8 GB, macOS 27.0.1, Wi-Fi (en0); the author was using the Mac at the same time. Baseline round trip at the start: OpenAI 181 ms, Supabase 18 ms, ElevenLabs 321 ms. A probe every 30 s from 15:32 (not pre-specified; `scripts/eval/latency/rtt-probe.mjs`, log `browser-bench_3b73b95_mac-2026-10-09e_rttprobe.jsonl`) measured medians of 339, 155 and 320 ms (p90 487, 315 and 516): the network was busier during the run than at its start |
+| Knowledge base | 454 chunks at the start and end of the run and of the re-run, every hash unchanged (ids and hashes `0bc97ae0d17b…`, text `a778d5d49d4b…`, vectors `29331f967138…`). Against September: the 453 September chunks unchanged, plus `wellbeing_023` (§2.5) |
+| Spend | US$1.87 for the run and the re-run (§4) |
+
+### 6.2 Results (ms, n = 60 per condition)
+
+| Measure | P median | P p90 | P p95 | F median | F p90 | F p95 |
+|---|---:|---:|---:|---:|---:|---:|
+| **H1: end of speech → first audio in the page** | **3,856** | 5,306 | 9,315 | **5,731** | 8,738 | 11,328 |
+| H2: stop tap → first audio | 3,577 | 5,029 | 9,005 | 5,400 | 8,266 | 11,063 |
+| App `stt_ms`: tap → transcript | 218 | 306 | 449 | 2,039 | 3,151 | 3,738 |
+| App `rag_ms`: transcript → passages | 1,205 | 2,412 | 4,938 | 1,224 | 2,029 | 2,571 |
+| App `llm_to_token_ms` | 826 | 1,232 | 1,323 | 802 | 1,251 | 1,641 |
+| App `first_sentence_ms` | 149 | 294 | 332 | 158 | 300 | 383 |
+| TTS stage: request → audio in hand | 1,051 | 1,432 | 2,146 | 1,055 | 1,968 | 2,761 |
+| Decode and schedule: the app's first-audio mark → samples start | 25 | 81 | 111 | 26 | 88 | 121 |
+
+**Against the 3 s yardstick (report §4.5):**
+- P: H1 is over 3 s in **56 of 60** turns (93.3 %), and H2 in 48 of 60.
+- F: both are over 3 s in **60 of 60**.
+
+**Paired by item (descriptive):**
+- P − F on H1: median −1,851 ms (p10 −4,408, p90 −70). P is faster on 55 of 60 items.
+- F's H2 against E4-S: median +1,243 ms against E4-S's `to_first_audio_byte` and +1,104 ms against its `to_first_audio_playable`.
+
+### 6.3 Expectations (§18.4) against results
+
+| Pre-specified expectation | Result | Verdict |
+|---|---|---|
+| B1: P's median H1 is lower than F's by at least 0.5 s | 3.86 s against 5.73 s; gap 1.88 s | **Supported** |
+| B2: F's median H2 exceeds 4.25 s, E4-S's headless headline | 5.40 s | **Supported** |
+| B3: more than half of P's turns have H1 over 3 s | 56 of 60 | **Supported** |
+| B4: the largest of the five stages is `stt_ms` in F, and not `stt_ms` in P | F: `stt_ms`, 2,039 ms. P: `rag_ms`, 1,205 ms (TTS 1,051 ms) | **Supported** |
+
+B4's TTS stage is the app's `tts_first_ms` where the app recorded it, and the browser's Resource Timing of the same request otherwise (deviation 2). With the app's marks alone (n = 55 and 52) the verdict is the same.
+
+### 6.4 Descriptive notes (not pre-specified)
+
+- **Where P's time goes.** Chrome's final transcript arrived a median of 216 ms after the stop. After that, P's critical path is:
+  - retrieval, 1.2 s: the embedding through the proxy (439 ms) and `match_chunks` from the browser (683 ms);
+  - the model's first token, 0.8 s, and its first sentence, 0.15 s later;
+  - speech synthesis, 1.05 s.
+
+  Speculative retrieval rarely helped. It had fired by the time the transcript was final in 23 of 60 turns, and its result was used in 10. With its 600 ms stability window and a stop tap 300 ms after the speech, the speculative search usually starts too late to save anything. Median `rag_ms` was 1,641 ms when it was used, 904 ms when it missed and 1,340 ms when it did not fire.
+- **Where F's extra time goes.** The `whisper-1` upload through the proxy (`/api/transcribe`, median 1,995 ms) accounts for the 1.8 s gap. Every stage after the transcript has the same median in both conditions to within 0.05 s.
+- **Against E4-S.** F is 1.1–1.2 s slower per item than the headless run. Most of that difference lies in stages both runs measure, which were slower today:
+  - `whisper-1`: 2.0 s against 1.5 s;
+  - retrieval: 1.2 s against 0.76 s. Today's run adds the proxy hop and a busier network.
+
+  The steps that only the browser adds are small: MediaRecorder finalisation (15 ms), waiting for the complete TTS response, and decode (25 ms). The runs were six hours apart on different network conditions, so the comparison stays descriptive.
+- **The tails come from the network.** In episodes such as 15:23–15:27 every provider was slow at once: `whisper-1` up to 11 s, chat headers 8 s, Supabase 2.2 s.
+  - The page kept rendering at about 60 fps. Long tasks between capture start and first audio had a median of 0 ms and a p90 of 0.4–0.7 s.
+  - The repeats agree: median H1 3.81 / 3.87 s (P) and 5.73 / 5.81 s (F) for repeat 0 / repeat 1.
+- **A gap in the app's own instrumentation.**
+  - The app writes `[LATENCY SUMMARY]` when the model's stream ends. In 5 P and 8 F turns the stream ended before playback started, so the app's summary has no `to_first_audio_ms` or `tts_first_ms`.
+  - The study's in-app latency figures therefore leave out such turns, which are the short answers or the slow syntheses. That biases the app's own first-audio figures downward. It is worth one line in the report's limitations.
+  - Where the app did record first audio, its mark comes a median of 25 ms before the samples start (decode); that is negligible.
+
+### 6.5 Deviations and stopped starts
+
+- **The real microphone was opened once, before any app turn (deviation 1).** The prescribed route was Chrome's fake capture device (`--use-file-for-fake-audio-capture`). A feasibility check on a blank test page, with no app and no provider, showed that Chrome 155 on macOS opens the real microphone despite the fake-device switches. macOS's privacy log records:
+  - at 13:59:10, a microphone permission prompt attributed to Terminal;
+  - at 14:05:01, the prompt answered "Allow";
+  - at 14:05:19, a second check that opened the real microphone for about 14 s, until Chrome was killed.
+
+  No audio reached a page or a recogniser: no capture promise resolved and no recognition event fired. Nothing was recorded, sent or spoken. From then on:
+  - speech entered as a Web Audio track, and Web Speech received it through `start(track)`;
+  - native capture was never called, and `--disable-audio-input` was set as a guard;
+  - a watchdog killed Chrome at any microphone access by the harness Chrome. It never fired on the harness in the reported run.
+
+  The macOS permission granted at 14:05:01 still stands for Terminal.
+- **Four starts were stopped (deviation 2).** The causes:
+  1. a watchdog false positive on the author's own Chrome;
+  2. a validation bug (see the instrumentation note in §6.4);
+  3. late stop taps;
+  4. main-thread stalls in the page.
+
+  Their 15 measured turns are not used.
+- **OpenAI quota re-run (after the run; recorded here, not pre-specified).**
+  - From 16:21:51 every OpenAI call returned `insufficient_quota` (HTTP 429) on `transcribe`, `embed` and `chat`. Seven measured turns (F A27#1, F A28#1, P A28#1, P A29#1, F A29#1, F A33#1, P A33#1) failed three times each, as the retry policy allows.
+  - The author topped up the account at about 16:35.
+  - The seven turns were re-run at 16:40–16:44 with `--only`, in a fresh page session after one discarded warm-up per condition, which is the pre-registered rule after a reload. They are merged into the summary with `--merge`, and the re-run's own files are committed.
+  - They ran about an hour after their neighbours. Their H1 values (P 2.9–4.4 s, F 4.6–7.3 s) lie inside the run's ranges.
+  - Without them, the medians are P 3.85 s (n = 57) and F 5.88 s (n = 56). All four verdicts are unchanged.
+- **Pilot turns:** 4 of the 5 allowed, discarded.
+- **ElevenLabs synthesised only the first sentence of each answer, as pre-registered.** 1,717 later-sentence requests were answered locally with a short silent placeholder after the first had returned.
+- **Limitations.**
+  - One Mac, in use by the author during the run, on a shared office Wi-Fi with congestion episodes.
+  - Synthetic Australian-accented speech.
+  - A localhost proxy rather than the Vercel deployment; E11 measured that hop.
+  - Web Speech fed by a track rather than a device.
+  - F is Chrome without `SpeechRecognition`, not Firefox.
+  - A headed window that was partly off-screen; rendering was checked at about 60 fps.
+
+### 6.6 Side spike: Chrome on-device speech recognition (availability query only)
+
+The question was whether the installed Chrome could stand in, on device, for the cloud recogniser the web app uses, as Apple's on-device recogniser did for iOS in E9-A. Only availability was queried. `install()` was not called, no language pack was downloaded and no DementiaBank audio was used.
+- **Chrome 155.0.8059.39** (the author's running instance is 154.0.8037.98) has the on-device Web Speech surface: static `SpeechRecognition.available()` and `SpeechRecognition.install()`, and `processLocally` (and `phrases`) on the prototype. It does not have the older `availableOnDevice` and `installOnDevice`.
+- **`available({langs: [L], processLocally: true})`** returned **"downloadable"** for en-US, en-NZ, en-AU and en-GB, headed and headless, in a fresh profile. That means it is supported but not installed. The cloud recogniser (`processLocally: false`) returned "available" for all four.
+- **What running it would take.**
+  - Call `SpeechRecognition.install({langs: ['en-US'], processLocally: true})` from a page, probably with a user gesture. Chrome would then download Google's on-device speech pack; its size was not checked.
+  - Confirm that `available()` returns "available".
+  - Set `processLocally = true` and feed the WAV cuts as a Web Audio track through `start(track)`. E4-B shows that this route works in Chrome 155 with the cloud recogniser.
+  - Before any DementiaBank audio is used, show that nothing is uploaded, for example with Chrome offline or a DevTools network log with no speech traffic.
+- **If run, the label would be "Chrome on-device recogniser, desktop".** Like E9-A, it is a proxy: the web app itself uses Chrome's cloud recogniser. Whether to run it is the author's decision.

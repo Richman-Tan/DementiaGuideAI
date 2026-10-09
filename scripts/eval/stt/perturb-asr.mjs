@@ -57,7 +57,11 @@ const REC = model.recognisers;
 const retrievalItems = QUESTIONS.filter(q => ((q.relevant ?? []).length || (q.acceptable ?? []).length) && !q.pendingContent);
 const safetyItems = [...QUESTIONS.filter(q => q.set === 'S'), ...HELDOUT_QUESTIONS.filter(q => q.set === 'S')];
 const items = [...retrievalItems.map(q => ({ q, role: 'retrieval' })), ...safetyItems.map(q => ({ q, role: 'safety' }))];
-const vocabulary = items.map(({ q }) => questionText(q, 'v2'));
+// Near-neighbour substitution vocabulary. Pre-registered: the pooled wording of all source items.
+// --vocab-scope role (post-hoc sensitivity, results §19B): each role's own items only, so a
+// retrieval question cannot borrow a word that exists only in the safety items' wording.
+const VOCAB_SCOPE = argVal('--vocab-scope') ?? 'pooled';
+const vocabFor = (role) => items.filter(x => VOCAB_SCOPE === 'pooled' || x.role === role).map(({ q }) => questionText(q, 'v2'));
 
 const achieved = (clean, text) => (appBlankGuard(text) ? 1 : wer(clean, text, { fillers: 'keep' }).wer);
 
@@ -78,14 +82,14 @@ for (let draw = 0; draw < DRAWS; draw++) {
   for (const { q, role } of items) {
     const clean = questionText(q, 'v2');
     const base = { sourceId: q.id, role, set: q.set, category: q.category, relevant: q.relevant ?? [], acceptable: q.acceptable ?? [], cleanQuestion: clean };
-    const w = transcribe(clean, REC.w1.model, rndW, { vocabulary });
+    const w = transcribe(clean, REC.w1.model, rndW, { vocabulary: vocabFor(role) });
     w1Text.set(q.id, w);
     push({ ...base, id: `${q.id}__w1__d${draw}`, condition: 'w1', draw, question: w.text, path: w.emptyOutput ? 'whisper-1 empty → blank guard' : 'whisper-1', phrase: w.phrase, emptyOutput: w.emptyOutput });
   }
   for (const { q, role } of items) {
     const clean = questionText(q, 'v2');
     const base = { sourceId: q.id, role, set: q.set, category: q.category, relevant: q.relevant ?? [], acceptable: q.acceptable ?? [], cleanQuestion: clean };
-    const a = transcribe(clean, REC.ap.model, rndA, { vocabulary });
+    const a = transcribe(clean, REC.ap.model, rndA, { vocabulary: vocabFor(role) });
     const liveEmpty = a.emptyOutput || appBlankGuard(a.text);
     if (!liveEmpty) {
       push({ ...base, id: `${q.id}__ap__d${draw}`, condition: 'ap', draw, question: a.text, path: 'apple live', phrase: a.phrase, emptyOutput: false, liveEmpty: false, rescued: false });
@@ -128,7 +132,7 @@ for (const cond of ['clean', 'w1', 'ap']) {
 }
 writeFileSync(OUT_V, JSON.stringify({
   generatedAt: new Date().toISOString(), gitSha: sha, generator: 'scripts/eval/stt/perturb-asr.mjs', plan: 'docs/eval/plan-19b-propagation.md §19B.1',
-  errorModel: relative(ROOT, resolve(ROOT, MODEL_PATH)), seed: SEED, draws: DRAWS,
+  errorModel: relative(ROOT, resolve(ROOT, MODEL_PATH)), seed: SEED, draws: DRAWS, vocabScope: VOCAB_SCOPE,
   questionsFile: relative(ROOT, OUT_Q), questionsFileSha256: qSha,
   samples: { retrieval: retrievalItems.map(q => q.id), safety: safetyItems.map(q => q.id) },
   blankGuardRule: "apps/web/src/voice/useVoiceConversation.js:464 and apps/mobile/src/features/voice/hooks/useAvatarConversation.js:599 — (transcript ?? '').trim() empty → no retrieval, no model call",

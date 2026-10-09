@@ -48,6 +48,7 @@ const sources = (role) => V.samples[role];
 const md = [];
 const csv = ['part,view,turn_id,source_id,draw,blank_guard,phrase,achieved_wer,recall5,mrr,hit5,outcome,first111,failures'];
 md.push(`# §19B P1 — speech-recognition error propagation into retrieval and safety`, '');
+if (argVal('--banner')) md.push(`> **${argVal('--banner')}**`, '');
 md.push(`Pre-registered in \`docs/eval/plan-19b-propagation.md\` §19B.1. Generated ${new Date().toISOString()} by \`scripts/eval/stt/propagation-report.mjs\` from:`);
 md.push(`- variants \`${argVal('--variants')}\` (error model \`${V.errorModel}\`, seed ${V.seed}, ${V.draws} draws; question file sha256 \`${V.questionsFileSha256.slice(0, 16)}…\`)`);
 if (R) md.push(`- retrieval \`${argVal('--retrieval')}\` (sha ${R.gitSha}, ${R.generatedAt})`);

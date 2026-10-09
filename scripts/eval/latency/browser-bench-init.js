@@ -44,7 +44,7 @@
     const ct = ctx.currentTime;
     const lead = when > ct ? (when - ct) * 1000 : 0;
     ev('src.start', { at: t + lead, call: t, when, ctxTime: ct, dur: this.buffer ? this.buffer.duration : null,
-      base: ctx.baseLatency ?? null, out: ctx.outputLatency ?? null, state: ctx.state });
+      base: ctx.baseLatency ?? null, out: ctx.outputLatency ?? null, state: ctx.state, frames: E.frames ? E.frames() : null });
     return origSrcStart.call(this, when, ...rest);
   };
 
@@ -150,10 +150,27 @@
     return btoa(s);
   };
 
+  // ── renderer health: long tasks (the page's own work) and timer lateness
+  //    (scheduling/throttling). Passive observer + one 100 ms probe.
+  try {
+    new PerformanceObserver((list) => { for (const t of list.getEntries()) ev('longtask', { start: t.startTime, dur: t.duration }); })
+      .observe({ type: 'longtask', buffered: false });
+  } catch { /* unsupported */ }
+  let lastTick = now();
+  setInterval(() => { const t = now(); const late = t - lastTick - 100; if (late > 40) ev('timer.late', { late, at: t }); lastTick = t; }, 100);
+  // Frames the page actually produces (does the avatar render while we measure?).
+  let frames = 0;
+  const raf = () => { frames++; requestAnimationFrame(raf); };
+  requestAnimationFrame(raf);
+  E.frames = () => frames;
+  document.addEventListener('visibilitychange', () => ev('visibility', document.visibilityState));
+  window.addEventListener('blur', () => ev('blur'));
+  window.addEventListener('focus', () => ev('focus'));
+
   // ── trusted clicks (the mic taps) ─────────────────────────────────────────
   const onClick = (e) => {
     const btn = e.target && e.target.closest ? e.target.closest('button') : null;
-    ev('click', { trusted: e.isTrusted, label: btn ? btn.getAttribute('aria-label') || btn.textContent.trim().slice(0, 40) : null });
+    ev('click', { trusted: e.isTrusted, label: btn ? btn.getAttribute('aria-label') || btn.textContent.trim().slice(0, 40) : null, frames: E.frames ? E.frames() : null });
   };
   document.addEventListener('click', onClick, true);
 

@@ -839,6 +839,20 @@ Chrome runs headed (a small window), because Web Speech is not expected to run h
 - **Declared difference from a real microphone.** A track generated with Web Audio gets none of Chrome's capture processing (echo cancellation, noise suppression, gain control) and no device buffering. The recogniser receives it through Chrome's track path rather than its own device capture.
 - **The P contingency now reads:** if `start(track)` stops producing live transcripts, P is reported as not run. There is no fallback to the real microphone.
 
+**Deviation 2, 9 Oct 2026 — four stopped starts of the measured run; committed before the run that is reported.** Four starts were stopped before completion. None of their turns is used; their files are committed for the record (`docs/report/eval/latency/browser-bench_{a740401,f4382d4,332a4ec,bc4ecd3}_*`).
+1. **14:41 (`a740401`), 4 warm-ups + 1 measured turn.** The microphone watchdog stopped it. It had fired on the author's own Chrome (a separate app instance, pid 40618), which was using the microphone at 14:45:10, not on the harness Chrome. The watchdog now acts only on the harness Chrome: requests attributed to Terminal or to a process of its own profile. Other apps' microphone use is counted and reported, and not acted on.
+2. **14:49 (`f4382d4`), 4 warm-ups, no measured turn.** The harness wrongly treated a turn as failed when the app's summary lacked `to_first_audio_ms`.
+   - The app writes `[LATENCY SUMMARY]` when the model's stream ends. A turn whose stream finishes before playback starts therefore has no first-audio mark in it.
+   - Requiring the mark would have biased the sample towards long answers.
+   - The harness measures first audio for every turn. Where the app did not record its TTS figure, B4 uses the browser's Resource Timing of the same request instead.
+3. **14:55 (`332a4ec`), 4 warm-ups + 6 measured turns.** Stop taps landed up to 1.7 s late. The wait before the tap is now a timer on the page clock.
+4. **15:03 (`bc4ecd3`), 4 warm-ups + 8 measured turns.** Taps were still late on some fallback turns, because the page's own timer fired late: long tasks of up to about 2 s blocked the page's main thread.
+   - A diagnostic with no provider calls (cancelled captures only) showed such long tasks sporadically, wherever the window sat on screen, while the avatar kept rendering at about 55 fps.
+   - These stalls are how the real app behaves on this Mac, so they stay in the measurement. A real tap that lands during a stall is also processed only after it.
+   - Each turn now records the page's frame rate and long-task time from capture start to first audio, and how late the stop tap's timer fired, so their effect can be seen.
+
+The stopped starts used 33 turn attempts, on top of the 4 pilot turns: about US$0.40 of OpenAI usage and about 33 first sentences of ElevenLabs. The reported run is the next complete one, tag `mac-2026-10-09e`. The question, conditions, sample, measures, expectations and analysis are unchanged.
+
 ### 18.5 E2-R3 — independent health-care rater
 
 **Why.** The E2 human ratings rest on two raters, R1 (Richman) and R2 (JooHyun). Both built the system, which is the examiner's main criticism of them. This section adds one more rater, **R3**: someone who works in health care and had no part in building or evaluating DementiaGuide. R3 rates the same 60 answers, blind. Unlike §18.1–18.3, a person takes part. It is a rating task on system outputs. Nothing about the rater is measured except the eligibility answers below. As with E6, the author confirms with the supervisor that no ethics amendment is needed before sending the link. This section is committed and pushed **before the rating link is shared with anyone**. The commit order is the record that the criteria, analyses and expectations came first.

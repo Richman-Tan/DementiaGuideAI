@@ -60,7 +60,8 @@ const UNITY_DIR = argVal('--unity-dir') ? resolve(argVal('--unity-dir')) : resol
 const OUT_DIR = PILOT ? resolve(ROOT, '.cache/eval/browser-bench/pilot') : resolve(ROOT, argVal('--out-dir') ?? 'docs/report/eval/latency');
 const DRY_RUN = has('--dry-run');
 const SUMMARISE_ONLY = has('--summarise-only');
-const SMOKE = has('--smoke'); // open the app, exercise the harness without a voice turn (no provider call)
+const SMOKE = has('--smoke');
+const DIAG = has('--diag'); // renderer-health diagnostic: idle + cancelled captures, no provider call // open the app, exercise the harness without a voice turn (no provider call)
 const MAX_ATTEMPTS = 3;
 const APP_BASE_SHA = '7386425'; // origin/main when §18.4 was committed
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -95,6 +96,7 @@ const COLS = ['turn', 'phase', 'condition', 'question_id', 'repeat', 'item', 'sl
   'rec_final_wait_ms', 'rec_last_change_after_eos_ms', 'mr_finalise_ms',
   'rt_transcribe_ms', 'rt_embed_ms', 'rt_rpc_ms', 'rt_chat_headers_ms', 'rt_tts_ms', 'n_embed_before_tap', 'n_embed_after_tap', 'n_tts_requests', 'tts_held',
   'align_onset_err_ms', 'align_end_err_ms', 'recording_ms', 'tap_sched_late_ms', 'tap_dispatch_ms',
+  'fps_tap_to_audio', 'longtask_ms_cap_to_audio', 'longtask_max_ms', 'timer_late_max_ms',
   'prompt_tokens', 'completion_tokens', 'embed_tokens', 'tts_chars', 'history_before', 'history_after',
   'failed_attempt_notes', 'transcript'];
 
@@ -299,6 +301,14 @@ function parseTurn(data, srvTurn, clip, cond) {
       prompt_tokens: srvTurn?.chat?.prompt ?? '', completion_tokens: srvTurn?.chat?.completion ?? '', embed_tokens: srvTurn?.embedTokens ?? '',
       tts_chars: srvTurn?.elevenFirstChars ?? '',
       transcript,
+      fps_tap_to_audio: stopClick?.[2]?.frames != null && first?.[2]?.frames != null && tAudio > tTap ? ((first[2].frames - stopClick[2].frames) / ((tAudio - tTap) / 1000)).toFixed(1) : '',
+      ...(() => {
+        if (tCap == null || tAudio == null) return { longtask_ms_cap_to_audio: '', longtask_max_ms: '', timer_late_max_ms: '' };
+        const lt = at('longtask').map((e) => e[2]).filter((t) => t.start + t.dur > tCap && t.start < tAudio);
+        const overlap = lt.reduce((a, t) => a + Math.min(t.start + t.dur, tAudio) - Math.max(t.start, tCap), 0);
+        const tl = at('timer.late').map((e) => e[2]).filter((x) => x.at > tCap && x.at < tAudio + 100);
+        return { longtask_ms_cap_to_audio: num(overlap), longtask_max_ms: num(lt.length ? Math.max(...lt.map((t) => t.dur)) : 0), timer_late_max_ms: num(tl.length ? Math.max(...tl.map((x) => x.late)) : 0) };
+      })(),
     },
     mrStarted: mrStarted?.[0] ?? null,
   };
@@ -406,6 +416,10 @@ function summarise(rowsIn, meta) {
   md.push(statRow('`/api/chat` request → headers', 'rt_chat_headers_ms'));
   md.push(statRow('`/api/eleven-tts` round trip (first sentence)', 'rt_tts_ms'));
   md.push(statRow('Output latency reported by the AudioContext (not added)', 'output_latency_ms'));
+  md.push(statRow('Renderer: frames per second, tap → first audio', 'fps_tap_to_audio'));
+  md.push(statRow('Renderer: long-task time in the page, capture start → first audio', 'longtask_ms_cap_to_audio'));
+  md.push(statRow('Renderer: longest long task in that window', 'longtask_max_ms'));
+  md.push(statRow('Harness: page timer lateness at the stop tap', 'tap_sched_late_ms'));
   md.push(statRow('Alignment: speech onset in the app\'s recording − expected', 'align_onset_err_ms'));
   md.push('', `The app emits its \`[LATENCY SUMMARY]\` when the LLM stream ends, so a turn whose stream ended before playback started has no \`tts_first_ms\` / \`to_first_audio_ms\` in it: P ${missing('P', 'app_to_first_audio_ms')} of ${byCond.P.length}, F ${missing('F', 'app_to_first_audio_ms')} of ${byCond.F.length} turns. H1 and H2 are measured by the harness for every turn.`);
   md.push('', `Speculative retrieval in P: hit ${byCond.P.filter((r) => r.spec_status === 'hit').length}, miss ${byCond.P.filter((r) => r.spec_status === 'miss').length}, not fired ${byCond.P.filter((r) => r.spec_status === 'none').length}. Later-sentence TTS requests held and answered with a placeholder: ${sumCol('tts_held')}.`, '');
@@ -502,7 +516,8 @@ async function main() {
   await sleep(1500);
   const switches = ['--mute-audio', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--disable-audio-input',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows',
-    '--no-first-run', '--no-default-browser-check', '--window-size=400,760', '--window-position=1300,120'];
+    '--no-first-run', '--no-default-browser-check', '--window-size=400,760', '--window-position=1300,120',
+    ...(argVal('--chrome-extra') ? argVal('--chrome-extra').split(' ') : [])];
   const chromeEnv = { PATH: process.env.PATH, HOME: process.env.HOME, USER: process.env.USER, TMPDIR: process.env.TMPDIR, LANG: process.env.LANG ?? 'en_NZ.UTF-8' };
   chrome = spawn(CHROME, [`--user-data-dir=${udd}`, '--remote-debugging-port=0', ...switches, 'about:blank'], { stdio: 'ignore', env: chromeEnv });
   let wsPort = null;
@@ -544,6 +559,45 @@ async function main() {
   }
   await openApp();
   console.log('  app open, Unity ready');
+  if (DIAG) {
+    const bcdp = cdp;
+    const { windowId } = await bcdp.send('Browser.getWindowForTarget');
+    const stats = async (label, fn) => {
+      await page.evaluate(() => window.__e4b.reset());
+      const t0 = Date.now();
+      const f0 = await page.evaluate(() => window.__e4b.frames());
+      await fn();
+      const f1 = await page.evaluate(() => window.__e4b.frames());
+      const ev = await page.evaluate(() => window.__e4b.events);
+      const lt = ev.filter((e) => e[1] === 'longtask').map((e) => e[2].dur);
+      const tl = ev.filter((e) => e[1] === 'timer.late').map((e) => e[2].late);
+      const vis = ev.filter((e) => ['visibility', 'blur', 'focus'].includes(e[1])).map((e) => `${e[1]}:${e[2] ?? ''}`);
+      console.log(`${label.padEnd(28)} ${((Date.now() - t0) / 1000).toFixed(0)} s  fps ${((f1 - f0) / ((Date.now() - t0) / 1000)).toFixed(1)}  longtasks ${lt.length} (max ${Math.round(Math.max(0, ...lt))} ms, sum ${Math.round(lt.reduce((a, b) => a + b, 0))})  timer-late>40ms ${tl.length} (max ${Math.round(Math.max(0, ...tl))})  ${vis.join(' ')}`);
+    };
+    const capture = (cond) => async () => {
+      await page.evaluate((on) => window.__e4b.setLive(on), cond === 'P');
+      await page.evaluate(async (b64) => window.__e4b.loadClip(b64), clips[measuredQs[0].id].b64);
+      const talk = page.locator('button[aria-label="Tap to talk"]');
+      await talk.waitFor({ timeout: 20000 });
+      const box = await talk.boundingBox();
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await sleep(6500);
+      await page.evaluate(() => { location.hash = '#/app/chat'; }); // unmount = cancel(): nothing is uploaded
+      await sleep(800);
+      await page.evaluate(() => { location.hash = '#/app/voice'; });
+      await page.locator('button[aria-label="Tap to talk"]').waitFor({ timeout: 20000 });
+    };
+    for (const [label, bounds] of [['as configured (x=1300)', null], ['fully on screen (x=1060)', { left: 1060, top: 120 }]]) {
+      if (bounds) { await bcdp.send('Browser.setWindowBounds', { windowId, bounds }); await sleep(3000); }
+      await stats(`${label} idle`, () => sleep(10000));
+      if (!has('--diag-idle-only')) { await stats(`${label} F capture`, capture('F')); await stats(`${label} P capture`, capture('P')); }
+    }
+    console.log(JSON.stringify({ server: server.stats.totals.statuses, audit, watchdog: watchdog.seen }));
+    await browser.close().catch(() => {});
+    try { chrome.kill('SIGKILL'); } catch { /* gone */ }
+    await sleep(1500); watchdog.stop(); await server.close();
+    return;
+  }
   if (SMOKE) {
     await page.evaluate(() => { location.hash = '#/app/chat'; });
     await page.getByRole('button', { name: 'New conversation' }).click();

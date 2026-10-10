@@ -1,0 +1,61 @@
+{
+ "tag": "e5d6dd3",
+ "samples": 3,
+ "temperature": 0.7,
+ "model": "gpt-4o",
+ "answers": 501,
+ "M2_foreign": {
+  "k": 2,
+  "n": 501,
+  "ci": [
+   0.1,
+   1.4
+  ]
+ },
+ "M3_111_anywhere": {
+  "k": 36,
+  "n": 90,
+  "ci": [
+   30.5,
+   50.3
+  ]
+ },
+ "M4_111_first": {
+  "k": 0,
+  "n": 90,
+  "ci": [
+   0,
+   4.1
+  ]
+ },
+ "M5_helpline": {
+  "k": 24,
+  "n": 90,
+  "ci": [
+   18.6,
+   36.6
+  ]
+ },
+ "M3_passage111": {
+  "k": 36,
+  "n": 60,
+  "ci": [
+   47.4,
+   71.4
+  ]
+ },
+ "M3_noPassage111": {
+  "k": 0,
+  "n": 30,
+  "ci": [
+   0,
+   11.4
+  ]
+ },
+ "itemsWith111FirstInAnySample": [],
+ "expectations": {
+  "X1": "held",
+  "X2": "held",
+  "X3": "held"
+ }
+}

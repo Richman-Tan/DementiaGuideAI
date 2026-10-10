@@ -336,3 +336,40 @@ The run then restarts from an empty cache: en-NZ, k = 1, headless, every monitor
 - `update.googleapis.com` is added to the proxy-host baseline through the committed file `docs/report/eval/stt/chrome-ondevice-baseline-additions.json`, which the run reads with `--baseline-add`. The tool refuses any addition that mentions speech.
 - Every other stop rule is unchanged. A speech URL, an external socket or flow, a sandbox denial, a `network` error or a microphone request still abandons the run.
 - The run resumes from the (empty) cache. Any later background stop is handled the same way, with its own dated entry in the additions file and in this section.
+
+## 19C.16 Deviation, 10 Oct 2026 — a deliberate pause and the resume; committed before the run resumes
+
+**What happened.**
+- The restarted en-NZ run (§19C.15) opened its gate at 09:39:42 NZDT on 10 October: k = 1, headless, every monitor on, held to the baseline of `chrome-ondevice-offline-proof_3545bda.json` plus `chrome-ondevice-baseline-additions.json`. No guard fired.
+- At 11:27 NZDT the run was **stopped deliberately** (SIGTERM to the tool) because the author had to leave. This was a clean pause, not a guard stop.
+- By then 1,016 of the 2,063 cuts had a cached hypothesis: cuts 0–1015 in `references.csv` order. Throughput was 0.68× real time.
+- Because the tool was killed, it did not write that session's run record. The evidence for the session is:
+  - the run log shows no guard signal;
+  - a post-hoc audit of the session's NetLog after arming, with the tool's own parsing rules, found **0 speech URLs** and **nothing outside the baseline**. The only URLs were the component updater (`update2/json`, over HTTP and HTTPS), `c2dm/register3`, `pso/ping` and `ListAccounts`. The only socket address was the IPv6 reachability check (§19C.13, clarification 3).
+
+**Cache check, before resuming.** All 1,016 entries in `data/dementiabank/cache/chrome-ondevice-en-NZ/` were checked, reading counts and timings only:
+- every file parses, and its key matches exactly one cut;
+- every entry is tool version 2, en-NZ, Chrome 155.0.8059.39, k = 1, first pass;
+- no entry has an error, and no recogniser error event of any kind;
+- none ended early;
+- in every entry, `audiostart` came before the clip, the session reached `end`, and `stop()` came 1,000 ms after the clip's last sample.
+
+The seven entries written in the last minute before the pause (cuts 1009–1015, 11:26:44–11:27:22.8) are normal sessions by every one of these checks. Chrome's own log shows the next cut's session (cut 1016) still running about 5 s after the last entry was written. The pause therefore interrupted cut 1016, which left no entry, and it runs on the resume.
+
+Four entries (cuts 337, 474, 525 and 632, written between 10:16 and 10:44) have a decoded length 0.1–4.0 s shorter than the reference `duration_s`. Their WAV files are that length. This is a property of the prepared cuts, which every recogniser received; it is not caused by the pause.
+
+**No entry was removed.**
+
+**The resume.** The run resumes the same day, from the cache, with the same method and settings:
+- the same tool (version 2) and harness;
+- the same harness profile and language pack (SODA en-US Models 1.5075.0);
+- Chrome 155.0.8059.39, headless, k = 1;
+- the same request settings;
+- the same baseline (`chrome-ondevice-offline-proof_3545bda.json` plus the additions file);
+- the same stop rules.
+
+Before it resumes:
+1. this note is committed and pushed;
+2. the amended offline proof (§19C.13 criteria) is re-run with every monitor. The run resumes only if every criterion holds.
+
+The resumed session runs its own preflight before its gate opens. Cached cuts are not re-run. The expectations, sample, scorer and stop rules are unchanged.

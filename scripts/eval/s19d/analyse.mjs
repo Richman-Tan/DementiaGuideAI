@@ -248,6 +248,8 @@ writeFileSync(resolve(OUT_DIR, `s19d_E3-N_${TAG}.md`), md.join('\n'));
 writeFileSync(resolve(OUT_DIR, `s19d_E3-N_${TAG}.csv`), csv.join('\n') + '\n');
 const summary = {
   tag: TAG, analysedAt: new Date().toISOString(), gitSha: gitSha(), frozenSha256: S19A_SHA256, nItems: ids.length, thresholds: THRESHOLDS,
+  regenerate: `node scripts/eval/s19d/analyse.mjs ${args.join(' ')}`,
+  models: Object.fromEntries(KEYS.map(k => [k, files[k].run.model])), pricesUSDPer1M: { 'gpt-4o': PRICES['gpt-4o'], source: 'scripts/eval/pricing.2026-09.json' },
   files: Object.fromEntries(KEYS.map(k => [k, files[k].path])), sameRetrievalND, counts, sizes,
   perCondition: Object.fromEntries(KEYS.map(k => [k, { ...per[k] }])), tests, expectations, decision, newSpendUSD: newSpend,
 };

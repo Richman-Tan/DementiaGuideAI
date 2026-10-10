@@ -373,3 +373,32 @@ Before it resumes:
 2. the amended offline proof (§19C.13 criteria) is re-run with every monitor. The run resumes only if every criterion holds.
 
 The resumed session runs its own preflight before its gate opens. Cached cuts are not re-run. The expectations, sample, scorer and stop rules are unchanged.
+
+## 19C.17 Deviation, 10 Oct 2026 — a second deliberate pause (battery); committed before the run resumes
+
+**What happened.**
+- The resumed session (§19C.16) passed its preflight. Its guards were armed and its gate opened at 14:19:17 NZDT. No guard fired.
+- The Mac was running on battery: 62 % at 14:39, falling about 0.5 % a minute. The remaining audio needed more time than the battery had left.
+- A forced low-battery sleep in the middle of a cut could have cached a damaged session. To avoid that, a watcher was set to pause the run cleanly if the battery reached 15 % while unplugged. It would wait for the next cache entry to be written and then send SIGTERM to the run's process group: the same kind of clean pause as 11:27 (§19C.16).
+- **It paused the run at 16:06:57 NZDT, at 15 %.** That was 0.8 s after the 1,878th entry was written. Chrome's own log shows that no recognition session for the next cut (1878) had started.
+- The session cached 862 cuts at 0.61× real time. In total, 1,878 of 2,063 cuts have a hypothesis (cuts 0–1877); 185 remain.
+
+**Evidence for the session.** The tool was killed, so it wrote no run record for this session either.
+- The run log shows no guard signal.
+- The session's NetLog after arming, audited post hoc with the tool's parsing rules, shows **0 speech URLs** and **nothing outside the baseline**. The URLs were the same five background endpoints as in the first session, and the only socket address was the IPv6 reachability check.
+
+**Cache check, before resuming,** as in §19C.16, over all 1,878 entries:
+- every file parses and maps to exactly one cut, contiguous from 0;
+- every entry is tool version 2, en-NZ, Chrome 155.0.8059.39, k = 1, first pass;
+- no entry has an error or any recogniser error event;
+- none ended early;
+- in every entry, `audiostart` preceded the clip, the session reached `end`, and `stop()` came 1,000 ms after the clip's last sample.
+
+The ten entries written in the last minute before the pause (cuts 1868–1877) are normal by every one of these checks. The four short WAV files noted in §19C.16 are the only length mismatches. **No entry was removed.**
+
+**Observed during the session (descriptive, no action).** Between about 14:30 and 14:34, the machine was heavily loaded: the load average was about 10. `audiostart` came 190–490 ms after `start()`, against about 40 ms normally, and there were long gaps between cuts. `audiostart` still preceded every clip. This is recorded so that the results can say how many cuts ran under such load.
+
+**The resume.** The run resumes only when the Mac is on mains power. It uses the same method and settings as §19C.16: the same tool, harness, profile and pack, the same Chrome, headless, k = 1, the same request settings, baseline and stop rules. As before:
+1. this note is committed and pushed first;
+2. the amended offline proof is re-run with every monitor, and the run resumes from the cache only if every criterion holds;
+3. the resumed session runs its own preflight before its gate opens.

@@ -402,3 +402,13 @@ The ten entries written in the last minute before the pause (cuts 1868–1877) a
 1. this note is committed and pushed first;
 2. the amended offline proof is re-run with every monitor, and the run resumes from the cache only if every criterion holds;
 3. the resumed session runs its own preflight before its gate opens.
+
+### §19C.18 Deviation: guard stop at 17:34:15 on 10 Oct (operator error); committed before the run resumes
+
+The resume after §19C.17 was launched at 17:33:11 NZDT on mains power, after the offline proof `chrome-ondevice-offline-proof_8666ad7.json` passed every criterion. It was launched **without `--baseline-add docs/report/eval/stt/chrome-ondevice-baseline-additions.json`**, the flag that carries the §19C.15 addition for the component updater.
+- Nine seconds after the guards armed, the updater's `POST update.googleapis.com` fell outside the baseline. The guard stopped the run, as designed.
+- The local proxy refused the request. Nothing was forwarded, and no speech URL appeared.
+- One cut completed and was cached 5 s before the stop. Its entry is normal: no error, not ended early, results present. It is kept.
+- 1,879 of 2,063 cuts are now cached.
+
+The run resumes with the same method, settings and baseline, plus the same, unchanged additions file that §19C.15 committed. No new baseline item is added.

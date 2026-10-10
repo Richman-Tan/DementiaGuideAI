@@ -1,0 +1,464 @@
+{
+ "stimuliId": "e6-2026-10-08-b02737",
+ "files": [
+  "e6_R01_2026-10-08T20-36-11-718Z.csv",
+  "e6_R02_2026-10-08T20-51-38-523Z.csv",
+  "e6_R03_2026-10-08T21-00-46-438Z.csv",
+  "e6_R04_2026-10-08T22-17-58-518Z.csv",
+  "e6_R05_2026-10-08T22-42-17-056Z.csv",
+  "e6_R06_2026-10-08T22-49-40-153Z.csv",
+  "e6_R07_2026-10-08T23-39-29-965Z.csv",
+  "e6_R08_2026-10-08T23-48-49-784Z.csv",
+  "e6_R09_2026-10-09T01-13-15-823Z.csv",
+  "e6_R10_2026-10-09T20-42-51-161Z.csv",
+  "e6_R11_2026-10-09T20-49-17-977Z.csv",
+  "e6_R12_2026-10-09T20-56-53-861Z.csv",
+  "e6_R14_2026-10-09T21-15-45-023Z.csv",
+  "e6_R15_2026-10-09T21-21-37-731Z.csv",
+  "e6_R16_2026-10-09T22-08-10-518Z.csv",
+  "e6_R17_2026-10-09T22-15-19-655Z.csv",
+  "e6_R3_2026-10-09T21-06-55-993Z.csv"
+ ],
+ "raters": [
+  "R03",
+  "R04",
+  "R05",
+  "R06",
+  "R07",
+  "R08",
+  "R09",
+  "R10",
+  "R11",
+  "R12",
+  "R14",
+  "R15",
+  "R16",
+  "R17",
+  "R3"
+ ],
+ "exclusions": [
+  "R01 (R01-muzzpfw6-2x0v): took part in the usability study — excluded (plan: raters are not study participants)",
+  "R02 (R02-muzzz1ui-gs9): took part in the usability study — excluded (plan: raters are not study participants)"
+ ],
+ "notes": [],
+ "preference": {
+  "k": 107,
+  "n": 150,
+  "p": 1.772006870758654e-7,
+  "lo": 0.6363493407951355,
+  "hi": 0.7796629731693578
+ },
+ "preferenceRaterLevel": {
+  "per": [
+   {
+    "id": "R03",
+    "n": 10,
+    "share": 0.7
+   },
+   {
+    "id": "R04",
+    "n": 10,
+    "share": 0.4
+   },
+   {
+    "id": "R05",
+    "n": 10,
+    "share": 0.5
+   },
+   {
+    "id": "R06",
+    "n": 10,
+    "share": 0.6
+   },
+   {
+    "id": "R07",
+    "n": 10,
+    "share": 0.4
+   },
+   {
+    "id": "R08",
+    "n": 10,
+    "share": 0.6
+   },
+   {
+    "id": "R09",
+    "n": 10,
+    "share": 0.7
+   },
+   {
+    "id": "R10",
+    "n": 10,
+    "share": 0.4
+   },
+   {
+    "id": "R11",
+    "n": 10,
+    "share": 0.8
+   },
+   {
+    "id": "R12",
+    "n": 10,
+    "share": 0.9
+   },
+   {
+    "id": "R14",
+    "n": 10,
+    "share": 0.9
+   },
+   {
+    "id": "R15",
+    "n": 10,
+    "share": 1
+   },
+   {
+    "id": "R16",
+    "n": 10,
+    "share": 1
+   },
+   {
+    "id": "R17",
+    "n": 10,
+    "share": 0.9
+   },
+   {
+    "id": "R3",
+    "n": 10,
+    "share": 0.9
+   }
+  ],
+  "n": 14,
+  "positives": 11,
+  "negatives": 3,
+  "p": 0.057373046875000014,
+  "ties": 1,
+  "medianShare": 0.7
+ },
+ "sync": {
+  "pooled": {
+   "medianE": 4,
+   "medianO": 3,
+   "iqrE": "4.0–4.0",
+   "iqrO": "3.0–4.0",
+   "nE": 150,
+   "nO": 150
+  },
+  "raterMeans": {
+   "medianE": 3.9,
+   "medianO": 3.5,
+   "medianDiff": 0.4
+  },
+  "wilcoxon": {
+   "n": 14,
+   "wPlus": 101,
+   "wMinus": 4,
+   "z": -3.0184799086579694,
+   "p": 0.0009765625,
+   "rankBiserial": 0.9238095238095239,
+   "approx": "normal",
+   "method": "exact permutation"
+  },
+  "perRater": [
+   {
+    "id": "R03",
+    "meanE": 3.9,
+    "meanO": 3.5
+   },
+   {
+    "id": "R04",
+    "meanE": 3.7,
+    "meanO": 3.6
+   },
+   {
+    "id": "R05",
+    "meanE": 3.5,
+    "meanO": 3.6
+   },
+   {
+    "id": "R06",
+    "meanE": 3.8,
+    "meanO": 3.8
+   },
+   {
+    "id": "R07",
+    "meanE": 3.9,
+    "meanO": 3.7
+   },
+   {
+    "id": "R08",
+    "meanE": 3.5,
+    "meanO": 3.2
+   },
+   {
+    "id": "R09",
+    "meanE": 4,
+    "meanO": 3.4
+   },
+   {
+    "id": "R10",
+    "meanE": 3.4,
+    "meanO": 3.5
+   },
+   {
+    "id": "R11",
+    "meanE": 3.8,
+    "meanO": 2.9
+   },
+   {
+    "id": "R12",
+    "meanE": 3.5,
+    "meanO": 2.7
+   },
+   {
+    "id": "R14",
+    "meanE": 3.9,
+    "meanO": 3.4
+   },
+   {
+    "id": "R15",
+    "meanE": 4,
+    "meanO": 3.1
+   },
+   {
+    "id": "R16",
+    "meanE": 4,
+    "meanO": 2.9
+   },
+   {
+    "id": "R17",
+    "meanE": 4.1,
+    "meanO": 3.5
+   },
+   {
+    "id": "R3",
+    "meanE": 4,
+    "meanO": 3.6
+   }
+  ]
+ },
+ "naturalness": {
+  "pooled": {
+   "medianE": 4,
+   "medianO": 3,
+   "iqrE": "3.0–4.0",
+   "iqrO": "2.0–4.0",
+   "nE": 150,
+   "nO": 150
+  },
+  "raterMeans": {
+   "medianE": 3.6,
+   "medianO": 2.9,
+   "medianDiff": 0.5
+  },
+  "wilcoxon": {
+   "n": 15,
+   "wPlus": 110,
+   "wMinus": 10,
+   "z": -2.818808793765316,
+   "p": 0.00262451171875,
+   "rankBiserial": 0.8333333333333334,
+   "approx": "normal",
+   "method": "exact permutation"
+  },
+  "perRater": [
+   {
+    "id": "R03",
+    "meanE": 3.6,
+    "meanO": 3.3
+   },
+   {
+    "id": "R04",
+    "meanE": 3.6,
+    "meanO": 3.5
+   },
+   {
+    "id": "R05",
+    "meanE": 3.7,
+    "meanO": 3.4
+   },
+   {
+    "id": "R06",
+    "meanE": 3.5,
+    "meanO": 3.8
+   },
+   {
+    "id": "R07",
+    "meanE": 3.3,
+    "meanO": 3.4
+   },
+   {
+    "id": "R08",
+    "meanE": 3.1,
+    "meanO": 2.6
+   },
+   {
+    "id": "R09",
+    "meanE": 3.2,
+    "meanO": 3.3
+   },
+   {
+    "id": "R10",
+    "meanE": 2.9,
+    "meanO": 2.7
+   },
+   {
+    "id": "R11",
+    "meanE": 3.1,
+    "meanO": 2.6
+   },
+   {
+    "id": "R12",
+    "meanE": 2.6,
+    "meanO": 2.1
+   },
+   {
+    "id": "R14",
+    "meanE": 3.7,
+    "meanO": 2.9
+   },
+   {
+    "id": "R15",
+    "meanE": 3.7,
+    "meanO": 2.6
+   },
+   {
+    "id": "R16",
+    "meanE": 3.6,
+    "meanO": 2.4
+   },
+   {
+    "id": "R17",
+    "meanE": 3.6,
+    "meanO": 2.5
+   },
+   {
+    "id": "R3",
+    "meanE": 3.7,
+    "meanO": 3
+   }
+  ]
+ },
+ "holm": {
+  "preference": 5.316020612275963e-7,
+  "sync": 0.001953125,
+  "naturalness": 0.00262451171875
+ },
+ "perSentence": [
+  {
+   "sid": "S01",
+   "k": 8,
+   "n": 15,
+   "syncE": 4,
+   "syncO": 4,
+   "natE": 3,
+   "natO": 3
+  },
+  {
+   "sid": "S02",
+   "k": 11,
+   "n": 15,
+   "syncE": 4,
+   "syncO": 4,
+   "natE": 4,
+   "natO": 3
+  },
+  {
+   "sid": "S03",
+   "k": 12,
+   "n": 15,
+   "syncE": 4,
+   "syncO": 4,
+   "natE": 3,
+   "natO": 3
+  },
+  {
+   "sid": "S04",
+   "k": 11,
+   "n": 15,
+   "syncE": 4,
+   "syncO": 3,
+   "natE": 4,
+   "natO": 3
+  },
+  {
+   "sid": "S05",
+   "k": 11,
+   "n": 15,
+   "syncE": 4,
+   "syncO": 3,
+   "natE": 4,
+   "natO": 3
+  },
+  {
+   "sid": "S06",
+   "k": 7,
+   "n": 15,
+   "syncE": 4,
+   "syncO": 4,
+   "natE": 3,
+   "natO": 3
+  },
+  {
+   "sid": "S07",
+   "k": 13,
+   "n": 15,
+   "syncE": 4,
+   "syncO": 3,
+   "natE": 3,
+   "natO": 3
+  },
+  {
+   "sid": "S08",
+   "k": 10,
+   "n": 15,
+   "syncE": 4,
+   "syncO": 4,
+   "natE": 3,
+   "natO": 3
+  },
+  {
+   "sid": "S09",
+   "k": 12,
+   "n": 15,
+   "syncE": 4,
+   "syncO": 3,
+   "natE": 4,
+   "natO": 2
+  },
+  {
+   "sid": "S10",
+   "k": 12,
+   "n": 15,
+   "syncE": 4,
+   "syncO": 4,
+   "natE": 4,
+   "natO": 3
+  }
+ ],
+ "position": {
+  "k": 47,
+  "n": 150,
+  "p": 0.000005597619670017263,
+  "lo": 0.24454798684647927,
+  "hi": 0.3914412384345891
+ },
+ "consistency": {
+  "consistent": 145,
+  "n": 150
+ },
+ "control": {
+  "pref": {
+   "k": 14,
+   "n": 15,
+   "p": 0.0009765625000000009,
+   "lo": 0.7018292244757601,
+   "hi": 0.9881334113938051
+  },
+  "syncE": 4,
+  "syncO": 1,
+  "natE": 3,
+  "natO": 1,
+  "chooseStatic": [
+   "R05"
+  ]
+ }
+}

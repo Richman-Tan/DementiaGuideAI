@@ -2,13 +2,14 @@
 // during a task the participant is in the real app with StudyTaskOverlay on top.
 import React, { useEffect, useState } from 'react';
 import { useStudy, detectBrowser, SUPPORTED_BROWSERS } from '../StudyContext.jsx';
-import { armLabel, GROUPS, IDENTITY_WARNING } from '@core/study/studyConfig.mjs';
+import { armLabel, GROUPS, IDENTITY_WARNING, ARM_A, PROTOCOL_FEEDBACK, FEEDBACK_GROUPS } from '@core/study/studyConfig.mjs';
 import { useSettings } from '../../state/SettingsContext.jsx';
 import { useEffectiveAvatarProfile } from '../../avatar/effectiveProfile.js';
 import { Page, Button, Choice, LikertItem, TextArea, SupportNumbers, Disclaimer, card, PIS, PisLink } from '../ui.jsx';
 import { setupStartDisabled } from '../guards.js';
-import { navigate } from '../../state/router.js';
-import { CONSENT_ITEMS, SUS_ITEMS, LIKERT_ITEMS, BACKGROUND, POST_TASK, DEBRIEF, PLWD_ITEMS, PLWD_DEBRIEF, SUPPORTER_DEBRIEF } from '../instruments.js';
+import { navigate, getPath } from '../../state/router.js';
+import { CONSENT_ITEMS, SUS_ITEMS, LIKERT_ITEMS, BACKGROUND, POST_TASK, DEBRIEF, PLWD_ITEMS, PLWD_DEBRIEF, SUPPORTER_DEBRIEF, THINGS_TO_TRY, FEEDBACK_QUESTIONS, FEEDBACK_SUS_ITEMS } from '../instruments.js';
+import { feedbackEnabled, requestedProtocol, feedbackContact } from '../feedback.js';
 
 function StopBar({ onStop }) {
   // Two-step, matching the task overlay's stop. A stopped session cannot be
@@ -164,6 +165,16 @@ export default function StudyScreen() {
   // screen lands halfway down the next one and may never see its heading.
   useEffect(() => { window.scrollTo(0, 0); }, [step, st.stageIndex, st.taskIndex]);
 
+  // Before a session exists, the link decides the protocol: #/study/feedback for
+  // the feedback round, #/study for the tasks study. Afterwards the session's
+  // own protocol wins, whatever the address.
+  const wanted = requestedProtocol(getPath());
+  const offline = wanted === PROTOCOL_FEEDBACK && !feedbackEnabled();
+  const { chooseProtocol } = st;
+  useEffect(() => {
+    if (!st.sessionId && !offline) chooseProtocol(wanted);
+  }, [st.sessionId, wanted, offline, chooseProtocol]);
+
   // Before every step: a restored session has to be claimed by whoever is at the
   // keyboard, or the next person inherits it. See ResumeGate.
   if (st.needsResumeCheck) {
@@ -176,8 +187,65 @@ export default function StudyScreen() {
     );
   }
 
+  // Never a silent fall-back to the tasks study from a feedback link: that would
+  // put someone into the consented study without its consent form.
+  if (!st.sessionId && offline) {
+    return (
+      <Page title="Feedback sessions aren’t open yet" lead="Please check with the person who gave you this link.">
+        <Disclaimer />
+      </Page>
+    );
+  }
+  // One render while the effect above switches protocol — not the other flow's intro.
+  if (!st.sessionId && st.protocol !== wanted) return null;
+
   const answer = (k) => responses[k];
   const set = (k) => (v) => st.setResponse(k, v);
+  const contact = feedbackContact();
+
+  // ─── Feedback round ───────────────────────────────────────────────────────
+
+  if (st.isFeedback) {
+    if (step === 'intro') return <FeedbackIntro onNext={st.next} />;
+    if (step === 'privacy') return <PrivacyStep onNext={st.next} onStop={st.stop} />;
+    if (step === 'explore') return <ExploreStep assistant={assistant} />;
+    if (step === 'feedback') {
+      return (
+        <Page title="What did you think?" lead="Write as much or as little as you like. You can skip any of these.">
+          {FEEDBACK_QUESTIONS.map((q, i) => (
+            <div key={q.id} style={{ ...card, marginBottom: '.9rem' }}>
+              <p style={{ margin: '0 0 .8rem', fontSize: '1.02rem', lineHeight: 1.5 }}>{i + 1}. {q.text}</p>
+              <TextArea value={answer(`feedback.${q.id}`)} onChange={set(`feedback.${q.id}`)} label={q.text} />
+            </div>
+          ))}
+          <p style={{ marginTop: '.5rem', fontSize: '.95rem', color: 'var(--text2)', lineHeight: 1.6 }}>{IDENTITY_WARNING}</p>
+          <div style={{ marginTop: '1.25rem' }}><Button onClick={st.next}>Continue</Button></div>
+          <StopBar onStop={st.stop} />
+        </Page>
+      );
+    }
+    if (step === 'feedbacksus') {
+      const any = FEEDBACK_SUS_ITEMS.some((item) => answer(`sus.feedback.${item.id}`) != null);
+      return (
+        <Page
+          title="Ten quick questions (optional)"
+          lead="These are about the app as a whole. Go with your first reaction — or skip them and finish."
+        >
+          {FEEDBACK_SUS_ITEMS.map((item, i) => (
+            <LikertItem
+              key={item.id}
+              id={item.id}
+              text={`${i + 1}. ${item.text}`}
+              value={answer(`sus.feedback.${item.id}`)}
+              onChange={set(`sus.feedback.${item.id}`)}
+            />
+          ))}
+          <div style={{ marginTop: '1.25rem' }}><Button onClick={st.next}>{any ? 'Finish' : 'Skip and finish'}</Button></div>
+          <StopBar onStop={st.stop} />
+        </Page>
+      );
+    }
+  }
 
   // ─── Consent and setup ────────────────────────────────────────────────────
 
@@ -268,6 +336,11 @@ export default function StudyScreen() {
           Take as long as you like. When you have found what you need — or if you
           decide you can’t — use the buttons at the top of the screen to come back here.
         </p>
+        {stage.arm === ARM_A && (
+          <p style={{ marginTop: '.75rem', fontSize: '.95rem', color: 'var(--text2)', lineHeight: 1.6 }}>
+            {`To hear an answer again, press ↻ at the top right; ☰ shows the whole conversation as text, so you can re-read what ${assistant} said.`}
+          </p>
+        )}
         <div style={{ marginTop: '1.5rem' }}>
           <Button onClick={st.startTask}>Start</Button>
         </div>
@@ -432,6 +505,42 @@ export default function StudyScreen() {
     );
   }
 
+  if (step === 'stopped' && st.isFeedback) {
+    return (
+      <Page
+        title="You’ve stopped the session"
+        lead="That’s completely fine, and nothing more will be recorded. Thank you for the time you did give."
+      >
+        <SupportNumbers />
+        <p style={{ marginTop: '1.5rem', color: 'var(--text2)', lineHeight: 1.6 }}>
+          To have what was recorded deleted, {contact ? <>contact {contact}</> : 'ask the person who gave you your access code'},
+          quoting your session code — <strong>{st.participantCode}</strong>.
+        </p>
+        <NextParticipant onReset={st.reset} />
+      </Page>
+    );
+  }
+
+  if (step === 'done' && st.isFeedback) {
+    return (
+      <Page
+        title="Thank you — that’s everything"
+        lead="Your feedback has gone to the project team. It will help shape the next version of the app."
+      >
+        <SupportNumbers />
+        <div style={{ ...card, marginTop: '1.25rem' }}>
+          <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--text)' }}>
+            Your session code is <strong>{st.participantCode}</strong>. To see, correct or
+            delete what we hold, {contact ? <>contact {contact}</> : 'ask the person who gave you your access code'},
+            quoting it.
+          </p>
+        </div>
+        <Disclaimer />
+        <NextParticipant onReset={st.reset} />
+      </Page>
+    );
+  }
+
   if (step === 'stopped') {
     return (
       <Page
@@ -478,7 +587,7 @@ export default function StudyScreen() {
         lead="Something went out of step. Your answers so far are saved."
       >
         <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
-          <Button onClick={() => st.update({ step: 'armbrief' })}>Continue the study</Button>
+          <Button onClick={() => st.update({ step: st.isFeedback ? 'explore' : 'armbrief' })}>Continue the study</Button>
         </div>
         <p style={{ marginTop: '1rem', fontSize: '.95rem', color: 'var(--text2)', lineHeight: 1.6 }}>
           If this keeps happening, email the researcher with your participant code
@@ -571,23 +680,30 @@ function InfoStep({ onNext, onStop }) {
 function GroupStep({ onNext, onStop }) {
   const st = useStudy();
   const [group, setGroup] = useState(st.group || null);
+  // The feedback round has no group for people living with dementia: that
+  // group's safeguards belong to an approved protocol (see FEEDBACK_GROUPS).
+  const allowed = st.isFeedback ? FEEDBACK_GROUPS : GROUPS;
+  const options = [
+    { value: 'caregiver', label: 'I care, or recently cared, for someone with dementia' },
+    { value: 'worker', label: 'I work in dementia care or aged care' },
+    { value: 'plwd', label: 'I have a diagnosis of early-stage dementia' },
+    { value: 'pilot', label: st.isFeedback ? 'I am helping test this feedback session' : 'I am helping test the study itself' },
+  ].filter((o) => allowed.includes(o.value));
   return (
-    <Page title="Which best describes you?" lead="This decides which questions you are asked, and how long the session takes.">
+    <Page
+      title="Which best describes you?"
+      lead={st.isFeedback ? 'So the team knows whose views they are reading. Nothing else about you is asked.' : 'This decides which questions you are asked, and how long the session takes.'}
+    >
       <div style={card}>
         <Choice
           name="group"
-          options={[
-            { value: 'caregiver', label: 'I care, or recently cared, for someone with dementia' },
-            { value: 'worker', label: 'I work in dementia care or aged care' },
-            { value: 'plwd', label: 'I have a diagnosis of early-stage dementia' },
-            { value: 'pilot', label: 'I am helping test the study itself' },
-          ]}
+          options={options}
           value={group}
           onChange={(v) => { setGroup(v); st.update({ group: v }); }}
         />
       </div>
       <div style={{ marginTop: '1.5rem' }}>
-        <Button onClick={onNext} disabled={!GROUPS.includes(group)}>Continue</Button>
+        <Button onClick={onNext} disabled={!allowed.includes(group)}>Continue</Button>
       </div>
       <StopBar onStop={onStop} />
     </Page>
@@ -754,8 +870,13 @@ function SetupStep({ onStop }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  const feedback = st.isFeedback;
   const browser = detectBrowser();
   const browserOk = SUPPORTED_BROWSERS.includes(browser);
+  // Advisory since Oct 2026 (a tester on Firefox was turned away): typing works in
+  // any browser and speech falls back to the server recogniser; the choice to
+  // continue rides on session_start so the data can say which sessions used it.
+  const [browserAck, setBrowserAck] = useState(false);
 
   const checkMic = async () => {
     try {
@@ -782,6 +903,7 @@ function SetupStep({ onStop }) {
         // succeeds, so this is the only way the check's outcome reaches the data.
         micStatus: mic ?? 'skipped',
         micAck,
+        browserAck: !browserOk && browserAck,
       });
       // dg_settings survives "Clear this device" (deliberately — it is not
       // study state), so on a shared laptop the previous participant's text
@@ -790,23 +912,26 @@ function SetupStep({ onStop }) {
     } catch (err) {
       // Don't leave a rejected code sitting in localStorage — see transport.js.
       st.update({ accessCode: '' });
-      setError(friendlyStartError(err));
+      setError(friendlyStartError(err, feedback));
     } finally {
       setBusy(false);
     }
   };
 
-  if (!browserOk) {
+  // Advisory only on the feedback round: carers use it at home on whatever they
+  // have, often an iPad, and talking is optional. A note below says so instead.
+  if (!feedback && !browserOk && !browserAck) {
     return (
       <Page
-        title="Please switch to Chrome or Edge"
-        lead="The talking part of this app only works properly in Google Chrome or Microsoft Edge. In other browsers it can’t show what you are saying as you say it, which would change what we are measuring."
+        title="Talking works best in Chrome or Edge"
+        lead="Typing works in any browser. Speaking works best in Google Chrome or Microsoft Edge, which show what you are saying as you say it; in this browser it may be slower or less reliable."
       >
         <div style={card}>
-          <p style={{ margin: 0, lineHeight: 1.7 }}>
-            Please copy the link from your invitation email, open Chrome or Edge, and
-            paste it there. Nothing you have done so far will be lost.
+          <p style={{ margin: '0 0 1rem', lineHeight: 1.7 }}>
+            You can continue here, or copy the link from your invitation email, open Chrome or
+            Edge, and paste it there. Nothing you have done so far will be lost.
           </p>
+          <Button onClick={() => setBrowserAck(true)}>Continue in this browser</Button>
         </div>
         <p style={{ marginTop: '1rem', color: 'var(--text2)' }}>
           We detected: <strong>{browser}</strong>.
@@ -817,7 +942,12 @@ function SetupStep({ onStop }) {
   }
 
   return (
-    <Page title="Let’s get set up" lead="Two codes from your invitation email, and a quick microphone check.">
+    <Page
+      title="Let’s get set up"
+      lead={feedback
+        ? 'The access code you were given, and a microphone check if you’d like to talk to the app.'
+        : 'Two codes from your invitation email, and a quick microphone check.'}
+    >
       <div style={{ ...card, marginBottom: '.9rem' }}>
         <label style={{ display: 'block', fontSize: '1rem', marginBottom: '.5rem', color: 'var(--text)' }}>
           Your access code
@@ -825,7 +955,7 @@ function SetupStep({ onStop }) {
         <input
           value={accessCode}
           onChange={(e) => setAccessCode(e.target.value)}
-          placeholder="from your invitation email"
+          placeholder={feedback ? 'the code you were given' : 'from your invitation email'}
           autoComplete="off"
           style={inputStyle}
         />
@@ -856,7 +986,9 @@ function SetupStep({ onStop }) {
 
       <div style={{ ...card, marginBottom: '.9rem' }}>
         <p style={{ margin: '0 0 .8rem', fontSize: '1rem' }}>
-          Microphone check — part of this study involves speaking.
+          {feedback
+            ? 'Microphone check (optional) — only needed if you’d like to talk to the app.'
+            : 'Microphone check — part of this study involves speaking.'}
         </p>
         {mic === 'ok' ? (
           <p style={{ margin: 0, color: 'var(--primary-d)', fontWeight: 600 }}>Microphone is working.</p>
@@ -869,21 +1001,28 @@ function SetupStep({ onStop }) {
                 usually change this from the padlock icon in the address bar.
               </p>
             )}
+            {feedback && !browserOk && (
+              <p style={{ marginTop: '.75rem', color: 'var(--text2)', lineHeight: 1.6 }}>
+                Talking works best in Google Chrome or Microsoft Edge. Typing works in any browser.
+              </p>
+            )}
             {/* The explicit way past a mic that won't work. Start waits for the
                 check or this tick (see setupStartDisabled): the first tester to
                 skip the optional check found out mid-task that her mic was dead,
                 which read as the app being broken. Typing is a supported path
                 through every speaking task, so nobody is locked out — it just
                 can't be a surprise any more. */}
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '.9rem', cursor: 'pointer', lineHeight: 1.6 }}>
-              <input
-                type="checkbox"
-                checked={micAck}
-                onChange={(e) => setMicAck(e.target.checked)}
-                style={{ width: 22, height: 22, marginTop: 2, flexShrink: 0 }}
-              />
-              <span>Continue without the microphone — I’ll type my questions instead.</span>
-            </label>
+            {!feedback && (
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '.9rem', cursor: 'pointer', lineHeight: 1.6 }}>
+                <input
+                  type="checkbox"
+                  checked={micAck}
+                  onChange={(e) => setMicAck(e.target.checked)}
+                  style={{ width: 22, height: 22, marginTop: 2, flexShrink: 0 }}
+                />
+                <span>Continue without the microphone — I’ll type my questions instead.</span>
+              </label>
+            )}
           </>
         )}
       </div>
@@ -903,13 +1042,13 @@ function SetupStep({ onStop }) {
             color: 'var(--text2)', fontSize: '1rem', minHeight: 44,
           }}
         >
-          <span style={{ flex: 1 }}>I’ve done part of this before and have a participant code</span>
+          <span style={{ flex: 1 }}>{feedback ? 'I’ve started this before and have a session code' : 'I’ve done part of this before and have a participant code'}</span>
           <span>{resuming ? '▾' : '▸'}</span>
         </button>
         {resuming && (
           <div style={{ paddingTop: '.75rem' }}>
             <label style={{ display: 'block', fontSize: '1rem', marginBottom: '.5rem', color: 'var(--text)' }}>
-              Your participant code <span style={{ color: 'var(--text2)' }}>(looks like P07)</span>
+              {feedback ? 'Your session code' : 'Your participant code'} <span style={{ color: 'var(--text2)' }}>(looks like P07)</span>
             </label>
             <input
               value={participantCode}
@@ -933,9 +1072,9 @@ function SetupStep({ onStop }) {
       <div style={{ marginTop: '1.25rem' }}>
         <Button
           onClick={start}
-          disabled={setupStartDisabled({ busy, accessCode, group, supporterPresent, micStatus: mic, micAck })}
+          disabled={setupStartDisabled({ busy, accessCode, group, supporterPresent, micStatus: mic, micAck, protocol: st.protocol })}
         >
-          {busy ? 'Starting…' : 'Start the study'}
+          {busy ? 'Starting…' : feedback ? 'Start' : 'Start the study'}
         </Button>
       </div>
       <StopBar onStop={onStop} />
@@ -943,13 +1082,174 @@ function SetupStep({ onStop }) {
   );
 }
 
+// ─── Feedback round steps ───────────────────────────────────────────────────
+
+function FeedbackIntro({ onNext }) {
+  return (
+    <Page
+      title="Thank you for trying the app"
+      lead="You’ll use the app freely, as you would at home, then tell us what you thought. Allow about 30 minutes: 15 to 20 using the app, and about 10 for the questions."
+    >
+      <div style={card}>
+        <h2 style={{ margin: '0 0 .75rem', fontSize: '1.1rem' }}>What happens</h2>
+        <ol style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: 1.9, color: 'var(--text)' }}>
+          <li>A short privacy notice — we don’t ask for your name or contact details</li>
+          <li>Use the app freely. There’s a list of things to try if you’d like ideas</li>
+          <li>Flag any answer you don’t agree with</li>
+          <li>A few open questions at the end, and an optional short questionnaire</li>
+        </ol>
+      </div>
+      <p style={{ marginTop: '1.25rem', color: 'var(--text2)', lineHeight: 1.6 }}>
+        There are no right or wrong answers. <strong>We are testing the app, not you</strong> —
+        if something is confusing or wrong, that is exactly what we need to know.
+      </p>
+      <div style={{ marginTop: '1.5rem' }}><Button onClick={onNext}>Start</Button></div>
+      <Disclaimer />
+    </Page>
+  );
+}
+
+/**
+ * The privacy notice that replaces the information sheet and consent form on
+ * the feedback round. That round is not research — the approval it would have
+ * needed has expired — so there is nothing to consent to, but the Privacy Act
+ * still applies: IPP 3 asks that people know what is collected, why, who will
+ * see it, who holds it, that it is voluntary, and that they can see and correct
+ * it. Each card below answers one of those. Wording is a draft for the clinical
+ * collaborators to confirm (docs/study/protocol-feedback.md).
+ */
+function PrivacyStep({ onNext, onStop }) {
+  const st = useStudy();
+  const [transcripts, setTranscripts] = useState(null);
+  const contact = feedbackContact();
+  const h2 = { margin: '1.25rem 0 .6rem', fontSize: '1.05rem' };
+  return (
+    <Page
+      title="Before you start: your privacy"
+      lead="This is a feedback session to help improve the app. It is not a research study, and nothing from it will be published."
+    >
+      <div style={card}>
+        <h2 style={{ ...h2, marginTop: 0 }}>What we collect</h2>
+        <ul style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: 1.9 }}>
+          <li>A session code — never your name or contact details</li>
+          <li>How you use the app: the screens you open and how many questions you ask</li>
+          <li>Your answers to the questions at the end, and any answers you flag</li>
+          <li>Technical details — your browser, and how fast the app responded</li>
+        </ul>
+        <h2 style={h2}>What we don’t collect</h2>
+        <ul style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: 1.9 }}>
+          <li>Your name, email address, or any contact details</li>
+          <li>Any recording of your voice — speech is turned into text, and no audio is kept</li>
+          <li>Anything from your camera</li>
+        </ul>
+        <h2 style={h2}>Why, and who sees it</h2>
+        <p style={{ margin: 0, lineHeight: 1.65 }}>
+          To find out what works and what doesn’t, so the app can be improved for carers in
+          New Zealand. Only the project team sees what is collected. To answer you, the app
+          sends what you ask to AI services overseas (OpenAI, and ElevenLabs for the spoken voice).
+        </p>
+        <h2 style={h2}>It’s up to you</h2>
+        <p style={{ margin: 0, lineHeight: 1.65 }}>
+          You can skip any question and stop at any time. You can ask to see, correct or delete
+          what we hold about your session: {contact ? <>contact {contact}</> : 'ask the person who gave you your access code'},
+          quoting the session code you’ll be shown at the end.
+        </p>
+      </div>
+      <p style={{ marginTop: '1.25rem', lineHeight: 1.65, color: 'var(--text)' }}>{IDENTITY_WARNING}</p>
+
+      <div style={{ ...card, borderColor: 'var(--primary)', marginTop: '1.25rem' }}>
+        <h2 style={{ margin: '0 0 .5rem', fontSize: '1.05rem' }}>One choice</h2>
+        <p style={{ margin: '0 0 1rem', lineHeight: 1.6, color: 'var(--text)' }}>
+          May we keep <strong>the questions you ask the app and the answers it gives</strong>?
+          It helps the team check whether the app answered well. You can say no and still take part.
+        </p>
+        <Choice
+          name="transcripts"
+          options={[
+            { value: true, label: 'Yes, keep my conversation' },
+            { value: false, label: 'No, do not keep my conversation' },
+          ]}
+          value={transcripts}
+          onChange={setTranscripts}
+        />
+        {transcripts === false && (
+          <p style={{ margin: '.75rem 0 0', fontSize: '.95rem', color: 'var(--text2)', lineHeight: 1.6 }}>
+            An answer you choose to flag is still sent, with the question you asked — flagging
+            is how you send it to us.
+          </p>
+        )}
+      </div>
+
+      <div style={{ marginTop: '1.5rem' }}>
+        <Button
+          onClick={() => { st.update({ consent: { privacyNoticeRead: true }, consentTranscripts: transcripts }); onNext(); }}
+          disabled={transcripts === null}
+        >
+          I’ve read this — continue
+        </Button>
+      </div>
+      <StopBar onStop={onStop} />
+    </Page>
+  );
+}
+
+/** The brief before free use, and the screen for coming back to #/study during it. */
+function ExploreStep({ assistant }) {
+  const st = useStudy();
+  if (st.exploreStartedAt) {
+    return (
+      <Page title="You’re still using the app" lead="Nothing is lost — carry on, or tell us you’re finished.">
+        <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
+          <Button onClick={st.startExplore}>Back to the app</Button>
+          <Button variant="secondary" onClick={st.endExplore}>I’m finished</Button>
+        </div>
+        <StopBar onStop={st.stop} />
+      </Page>
+    );
+  }
+  const p = { margin: '0 0 .9rem', fontSize: '1.05rem', lineHeight: 1.65, color: 'var(--text)' };
+  return (
+    <Page
+      title="Use the app as you would at home"
+      lead={`Ask ${assistant} anything about caring for someone with dementia, by typing or by talking, and look through the library if you like.`}
+    >
+      <div style={card}>
+        <p style={p}>
+          If you’d like ideas, <strong>Things to try</strong> at the top of the screen has {THINGS_TO_TRY.length}.
+          They are suggestions, not tasks — try as many or as few as you like.
+        </p>
+        <p style={p}>
+          If an answer seems wrong, unhelpful or unsafe, press <strong>Flag this answer</strong> under
+          it. When you’re talking, open the conversation with ☰ at the top right to find it.
+        </p>
+        <p style={{ ...p, margin: 0 }}>
+          When you’re done, press <strong>I’m finished</strong> at the top of the screen.
+        </p>
+      </div>
+      <p style={{ marginTop: '1rem', fontSize: '.95rem', color: 'var(--text2)', lineHeight: 1.6 }}>{IDENTITY_WARNING}</p>
+      <div style={{ marginTop: '1.5rem' }}><Button onClick={st.startExplore}>Start using the app</Button></div>
+      <StopBar onStop={st.stop} />
+    </Page>
+  );
+}
+
 // The API's messages are accurate but written for a developer. A participant
 // needs to know which of the two codes to look at, and that it is not their fault.
-function friendlyStartError(err) {
+function friendlyStartError(err, feedback = false) {
   const msg = String(err?.message ?? '');
+  if (/not available/i.test(msg)) {
+    return 'Feedback sessions aren’t open at the moment. Please check with the '
+      + 'person who gave you your code.';
+  }
+  if (/different study/i.test(msg)) {
+    return 'That session code belongs to a different study. Leave the session '
+      + 'code blank to start a new session.';
+  }
   if (/access code/i.test(msg)) {
-    return 'That access code wasn’t recognised. Please check it against your '
-      + 'invitation email — it’s the second of the two codes.';
+    return feedback
+      ? 'That access code wasn’t recognised. Please check it against the one you were given.'
+      : 'That access code wasn’t recognised. Please check it against your '
+        + 'invitation email — it’s the second of the two codes.';
   }
   if (/participant code/i.test(msg)) {
     return 'That participant code doesn’t look right. It should be the letter P '

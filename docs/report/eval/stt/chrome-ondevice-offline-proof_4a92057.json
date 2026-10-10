@@ -1,0 +1,598 @@
+{
+ "mode": "offline-proof",
+ "startedAt": "2026-10-09T07:13:39.396Z",
+ "chrome": "155.0.8059.39",
+ "os": "macOS 27.0.1 (26A434)",
+ "headless": true,
+ "switches": [
+  "--user-data-dir=<profile>",
+  "--remote-debugging-port=0",
+  "--no-first-run",
+  "--no-default-browser-check",
+  "--mute-audio",
+  "--use-fake-device-for-media-stream",
+  "--use-fake-ui-for-media-stream",
+  "--disable-audio-input",
+  "--autoplay-policy=no-user-gesture-required",
+  "--disable-background-timer-throttling",
+  "--disable-renderer-backgrounding",
+  "--disable-backgrounding-occluded-windows",
+  "--headless=new",
+  "--proxy-server=http://127.0.0.1:64172",
+  "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1",
+  "--disable-quic",
+  "--disable-background-networking",
+  "--disable-sync",
+  "--no-pings",
+  "--disable-domain-reliability",
+  "--disable-client-side-phishing-detection",
+  "--disable-default-apps",
+  "--disable-extensions",
+  "--disable-breakpad",
+  "--metrics-recording-only",
+  "--log-net-log=<scratch>/netlog-proof-1791530010355.json",
+  "--net-log-capture-mode=Default"
+ ],
+ "request": {
+  "leadMs": 250,
+  "tailMs": 1000,
+  "endTimeoutMs": 20000,
+  "audiostartTimeoutMs": 5000
+ },
+ "info": {
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "hasSR": true,
+  "hasAvailable": true,
+  "hasInstall": true,
+  "hasProcessLocally": true,
+  "hasPhrases": true
+ },
+ "locales": [
+  {
+   "locale": "en-NZ",
+   "available": {
+    "local": "available",
+    "cloud": "available"
+   },
+   "sequential": {
+    "locale": "en-NZ",
+    "local": [
+     {
+      "id": "syn1",
+      "voice": "Samantha",
+      "script": "My mother keeps forgetting where she put her keys and it worries me.",
+      "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 29,
+      "finalWaitMs": 59,
+      "clipMs": 3499
+     },
+     {
+      "id": "syn2",
+      "voice": "Samantha",
+      "script": "What should I do when my father gets upset in the evening?",
+      "hyp": "What should I do when my father gets upset in the evening",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 22,
+      "finalWaitMs": 49,
+      "clipMs": 3067
+     },
+     {
+      "id": "syn3",
+      "voice": "Daniel",
+      "script": "The weather has been cold and wet for most of the week.",
+      "hyp": "The weather has been cold and wet for most of the week",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": false,
+      "nResults": 19,
+      "finalWaitMs": 38,
+      "clipMs": 2888
+     },
+     {
+      "id": "syn4",
+      "voice": "Karen",
+      "script": "Please remind me to call the doctor tomorrow morning about the new tablets.",
+      "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": false,
+      "nResults": 24,
+      "finalWaitMs": 80,
+      "clipMs": 4115
+     },
+     {
+      "id": "syn5",
+      "voice": "Samantha",
+      "script": "We went for a short walk to the park and then had a cup of tea.",
+      "hyp": "We went for a short walk to the park and then had a cup of tea",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 26,
+      "finalWaitMs": 33,
+      "clipMs": 3172
+     },
+     {
+      "id": "syn6",
+      "voice": "Daniel",
+      "script": "Is there a support group for carers that meets near the city?",
+      "hyp": "Is there a support group for carers that meets near the city",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 23,
+      "finalWaitMs": 181,
+      "clipMs": 3428
+     }
+    ],
+    "cloud": [
+     {
+      "id": "syn1",
+      "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+      "errors": [],
+      "audiostart": true
+     },
+     {
+      "id": "syn2",
+      "hyp": "What should I do when my father gets upset in the evening",
+      "errors": [],
+      "audiostart": true
+     }
+    ],
+    "localOk": true,
+    "cloudFailed": false,
+    "meanWer": 0,
+    "windows": {
+     "local": [
+      1791530019742,
+      1791530078823
+     ],
+     "cloud": [
+      1791530078823,
+      1791530098612
+     ]
+    }
+   },
+   "repeat": {
+    "meanWer": 0,
+    "identical": 6,
+    "n": 6
+   },
+   "concurrency": {
+    "2": {
+     "meanWer": 0,
+     "identicalToSequential": 6,
+     "n": 6,
+     "errors": [],
+     "results": [
+      {
+       "id": "syn1",
+       "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn2",
+       "hyp": "What should I do when my father gets upset in the evening",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn3",
+       "hyp": "The weather has been cold and wet for most of the week",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn4",
+       "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn5",
+       "hyp": "We went for a short walk to the park and then had a cup of tea",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn6",
+       "hyp": "Is there a support group for carers that meets near the city",
+       "wer": 0,
+       "errors": []
+      }
+     ]
+    },
+    "4": {
+     "meanWer": 0,
+     "identicalToSequential": 6,
+     "n": 6,
+     "errors": [],
+     "results": [
+      {
+       "id": "syn1",
+       "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn2",
+       "hyp": "What should I do when my father gets upset in the evening",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn3",
+       "hyp": "The weather has been cold and wet for most of the week",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn4",
+       "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn5",
+       "hyp": "We went for a short walk to the park and then had a cup of tea",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn6",
+       "hyp": "Is there a support group for carers that meets near the city",
+       "wer": 0,
+       "errors": []
+      }
+     ]
+    }
+   }
+  },
+  {
+   "locale": "en-US",
+   "available": {
+    "local": "available",
+    "cloud": "available"
+   },
+   "sequential": {
+    "locale": "en-US",
+    "local": [
+     {
+      "id": "syn1",
+      "voice": "Samantha",
+      "script": "My mother keeps forgetting where she put her keys and it worries me.",
+      "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 29,
+      "finalWaitMs": 97,
+      "clipMs": 3499
+     },
+     {
+      "id": "syn2",
+      "voice": "Samantha",
+      "script": "What should I do when my father gets upset in the evening?",
+      "hyp": "What should I do when my father gets upset in the evening",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 22,
+      "finalWaitMs": 28,
+      "clipMs": 3067
+     },
+     {
+      "id": "syn3",
+      "voice": "Daniel",
+      "script": "The weather has been cold and wet for most of the week.",
+      "hyp": "The weather has been cold and wet for most of the week",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": false,
+      "nResults": 19,
+      "finalWaitMs": 45,
+      "clipMs": 2888
+     },
+     {
+      "id": "syn4",
+      "voice": "Karen",
+      "script": "Please remind me to call the doctor tomorrow morning about the new tablets.",
+      "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": false,
+      "nResults": 24,
+      "finalWaitMs": 48,
+      "clipMs": 4115
+     },
+     {
+      "id": "syn5",
+      "voice": "Samantha",
+      "script": "We went for a short walk to the park and then had a cup of tea.",
+      "hyp": "We went for a short walk to the park and then had a cup of tea",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 26,
+      "finalWaitMs": 52,
+      "clipMs": 3172
+     },
+     {
+      "id": "syn6",
+      "voice": "Daniel",
+      "script": "Is there a support group for carers that meets near the city?",
+      "hyp": "Is there a support group for carers that meets near the city",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 23,
+      "finalWaitMs": 79,
+      "clipMs": 3428
+     }
+    ],
+    "cloud": [
+     {
+      "id": "syn1",
+      "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+      "errors": [],
+      "audiostart": true
+     },
+     {
+      "id": "syn2",
+      "hyp": "What should I do when my father gets upset in the evening",
+      "errors": [],
+      "audiostart": true
+     }
+    ],
+    "localOk": true,
+    "cloudFailed": false,
+    "meanWer": 0,
+    "windows": {
+     "local": [
+      1791530208489,
+      1791530267481
+     ],
+     "cloud": [
+      1791530267481,
+      1791530287475
+     ]
+    }
+   },
+   "repeat": {
+    "meanWer": 0,
+    "identical": 6,
+    "n": 6
+   },
+   "concurrency": {
+    "2": {
+     "meanWer": 0.013888888888888888,
+     "identicalToSequential": 5,
+     "n": 6,
+     "errors": [],
+     "results": [
+      {
+       "id": "syn1",
+       "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn2",
+       "hyp": "What should I do when my father gets upset in the evening",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn3",
+       "hyp": "The weather has been cold and wet for most of the week",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn4",
+       "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn5",
+       "hyp": "We went for a short walk to the park and then had a cup of tea",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn6",
+       "hyp": "Is there a support group for carers that meets near the",
+       "wer": 0.08333333333333333,
+       "errors": []
+      }
+     ]
+    },
+    "4": {
+     "meanWer": 0.012820512820512822,
+     "identicalToSequential": 5,
+     "n": 6,
+     "errors": [],
+     "results": [
+      {
+       "id": "syn1",
+       "hyp": "My mother keeps forgetting where she put her keys and it worries",
+       "wer": 0.07692307692307693,
+       "errors": []
+      },
+      {
+       "id": "syn2",
+       "hyp": "What should I do when my father gets upset in the evening",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn3",
+       "hyp": "The weather has been cold and wet for most of the week",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn4",
+       "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn5",
+       "hyp": "We went for a short walk to the park and then had a cup of tea",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn6",
+       "hyp": "Is there a support group for carers that meets near the city",
+       "wer": 0,
+       "errors": []
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "finishedAt": "2026-10-09T07:21:38.913Z",
+ "guards": {
+  "proxyRequests": 63,
+  "proxyByHost": {
+   "CONNECT update.googleapis.com:443": 5,
+   "CONNECT www.google.com:443": 31,
+   "CONNECT www.googleapis.com:443": 2,
+   "CONNECT accounts.google.com:443": 8,
+   "CONNECT mtalk.google.com:5228": 3,
+   "CONNECT android.clients.google.com:443": 5,
+   "CONNECT optimizationguide-pa.googleapis.com:443": 5,
+   "CONNECT mtalk.google.com:443": 2,
+   "POST update.googleapis.com": 1,
+   "CONNECT clients1.google.com:443": 1
+  },
+  "lsofSnapshots": 394,
+  "lsofMaxSockets": 6,
+  "lsofSocketKinds": {
+   "TCP loopback-local LISTEN": 394,
+   "TCP loopback-local->loopback ESTABLISHED": 661,
+   "TCP loopback-local->loopback CLOSE_WAIT": 198,
+   "TCP loopback-local->loopback CLOSED": 14
+  },
+  "lsofExternal": [],
+  "nettopSamples": 473,
+  "nettopFlowRowsAllProcesses": 49131,
+  "nettopTreeFlows": [],
+  "nettopTreeZeroByteUdp": {},
+  "sandboxDenials": [],
+  "sandboxDenialsOtherProcesses": {},
+  "tccTrips": [],
+  "tccPreflights": 3,
+  "tccOtherApps": {},
+  "netlogEvents": 12634,
+  "netlogUrls": {
+   "https://www.googleapis.com/chromewebstore/v1.1/items/verify": 4,
+   "https://accounts.google.com/ListAccounts": 28,
+   "https://update.googleapis.com/service/update2/json": 20,
+   "https://www.google.com/async/folae": 4,
+   "https://www.google.com/": 46,
+   "https://android.clients.google.com/c2dm/register3": 20,
+   "https://optimizationguide-pa.googleapis.com/v1:GetModels": 4,
+   "https://optimizationguide-pa.googleapis.com/downloads": 16,
+   "http://update.googleapis.com/service/update2/json": 4,
+   "https://clients1.google.com/tools/pso/ping": 4
+  },
+  "netlogAddrs": {
+   "UDP_CONNECT/UDP_SOCKET [2001:4860:4860::8888]:443": 53,
+   "SOCKET_CONNECT/UDP_CLIENT_SOCKET [2001:4860:4860::8888]:443": 53
+  },
+  "netlogSpeechUrls": 0,
+  "armedAt": null,
+  "abortReason": null
+ },
+ "speechUrls": {
+  "total": 0,
+  "duringCloudControl": 0,
+  "duringOnDevice": 0,
+  "keys": []
+ },
+ "proxyDuringCloudControl": [
+  "CONNECT update.googleapis.com:443",
+  "POST update.googleapis.com",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT android.clients.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443"
+ ],
+ "baseline": {
+  "urlKeys": [
+   "http://update.googleapis.com/service/update2/json",
+   "https://accounts.google.com/ListAccounts",
+   "https://android.clients.google.com/c2dm/register3",
+   "https://clients1.google.com/tools/pso/ping",
+   "https://optimizationguide-pa.googleapis.com/downloads",
+   "https://optimizationguide-pa.googleapis.com/v1:GetModels",
+   "https://update.googleapis.com/service/update2/json",
+   "https://www.google.com/",
+   "https://www.google.com/async/folae",
+   "https://www.googleapis.com/chromewebstore/v1.1/items/verify"
+  ],
+  "addrKeys": [
+   "SOCKET_CONNECT/UDP_CLIENT_SOCKET [2001:4860:4860::8888]:443",
+   "UDP_CONNECT/UDP_SOCKET [2001:4860:4860::8888]:443"
+  ],
+  "proxyHosts": [
+   "accounts.google.com:443",
+   "android.clients.google.com:443",
+   "clients1.google.com:443",
+   "mtalk.google.com:443",
+   "mtalk.google.com:5228",
+   "optimizationguide-pa.googleapis.com:443",
+   "update.googleapis.com:443",
+   "www.google.com:443",
+   "www.googleapis.com:443"
+  ]
+ },
+ "verdict": {
+  "onDeviceWorksOffline": true,
+  "cloudFailsOffline": false,
+  "noSpeechUrlOutsideCloudControl": true,
+  "noExternalSocket": true,
+  "noNettopFlow": true,
+  "noSandboxDenial": true,
+  "noTcpToExternalAddress": true,
+  "noMicrophone": true,
+  "pass": false
+ },
+ "tcpExternal": []
+}

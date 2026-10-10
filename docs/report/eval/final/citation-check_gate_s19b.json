@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-10-09T06:41:22.970Z",
+  "n": 40,
+  "kappaPrimary": 0.5640326975476839,
+  "agreementPrimary": 0.8,
+  "kappaAny": 1,
+  "kappa3": 0.596977329974811,
+  "kappa3Linear": 0.6652719665271967,
+  "agreement3": 0.8,
+  "degenerate": false,
+  "confusion": {
+    "supported": {
+      "supported": 23,
+      "partial": 8,
+      "not_supported": 0
+    },
+    "partial": {
+      "supported": 0,
+      "partial": 6,
+      "not_supported": 0
+    },
+    "not_supported": {
+      "supported": 0,
+      "partial": 0,
+      "not_supported": 3
+    }
+  },
+  "pass": false,
+  "reasons": [
+    "κ 0.564 < 0.6"
+  ],
+  "threshold": 0.6,
+  "minLabelled": 36,
+  "labelsFileSha256": "3b069ab5da49ea629f7fb1cfef0376044f43e2527de223531c6bf22001624217",
+  "judgedFileSha256": "909e2bae1fea1a666da493d30a7f6dd223c6f3f812ae04fa8ce7ffaa1f1b7517"
+}

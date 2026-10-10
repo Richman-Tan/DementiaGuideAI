@@ -1,0 +1,100 @@
+# Saving an API key in Settings and sending a typed chat message, then
+# clearing the conversation.
+#
+# The key is an obvious placeholder, never a real credential: the point is the
+# app's handling, not an answer. Saving it unlocks the chat input; sending a
+# message adds it to the transcript and the request fails. Online, OpenAI
+# rejects the placeholder (401) and the app shows its auth error and the key
+# banner again; offline, it shows the connection error. Either passes.
+# The placeholder lives only in the Simulator keychain, which every flow wipes.
+appId: com.anonymous.DementiaGuideAi
+name: Chat — placeholder key, send, clear history
+tags:
+  - chat
+  - settings
+env:
+  PLACEHOLDER_KEY: "sk-e2e-placeholder-not-a-real-key-0000"
+---
+- runFlow: subflows/skip-onboarding.yaml
+- tapOn:
+    id: "tab-settings"
+- extendedWaitUntil:
+    visible: "Personalise your DementiaGuide AI experience"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "OpenAI API Key"
+    direction: DOWN
+    centerElement: true
+
+# Open the editor and cancel: nothing changes
+- tapOn: "OpenAI API Key"
+- assertVisible: "OpenAI API Key input"
+- tapOn: "Cancel"
+- assertNotVisible: "OpenAI API Key input"
+- assertVisible: "OpenAI API Key"
+
+# Too short a key cannot be saved (the editor stays open)
+# Known defect: while the keyboard is up, the first tap on Save only closes
+# the keyboard (the Settings ScrollView has no keyboardShouldPersistTaps), so
+# the flow closes it first, as a person's first tap would.
+- tapOn: "OpenAI API Key"
+- tapOn: "OpenAI API Key input"
+- inputText: "sk-short"
+- hideKeyboard
+- tapOn: "Save"
+- assertVisible: "OpenAI API Key input"
+- assertNotVisible: "API Key Saved"
+- tapOn: "OpenAI API Key input"
+- eraseText: 20
+
+# A placeholder of valid length saves, with a confirmation
+- inputText: ${PLACEHOLDER_KEY}
+- hideKeyboard
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "API Key Saved"
+    timeout: 10000
+- assertVisible: "Aria will now use your OpenAI key."
+- tapOn: "OK"
+- assertNotVisible: "OpenAI API Key input"
+
+# Chat is now unlocked
+- tapOn:
+    id: "tab-chat"
+- extendedWaitUntil:
+    visible: "Message input Ask Aria anything…"
+    timeout: 10000
+- assertNotVisible: "Add API key in settings"
+- tapOn: "Message input.*"
+- inputText: "What is sundowning?"
+- tapOn: "Send message"
+- extendedWaitUntil:
+    visible: "What is sundowning?"
+    timeout: 10000
+- extendedWaitUntil:
+    visible: "Invalid API key — update it in Settings|Connection error — check your internet connection"
+    timeout: 45000
+- runFlow:
+    when:
+      visible: "Invalid API key — update it in Settings"
+    commands:
+      - assertVisible: "Add API key in settings"
+
+# Settings → Clear Conversation History empties the live transcript too
+- tapOn:
+    id: "tab-settings"
+- scrollUntilVisible:
+    element: "Clear Conversation History"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Clear Conversation History"
+- extendedWaitUntil:
+    visible: "(?s)This will remove all your conversation history.*"
+    timeout: 10000
+- tapOn: "Clear"
+- tapOn:
+    id: "tab-chat"
+- extendedWaitUntil:
+    visible: "(?s)Hello! I'm Aria, your DementiaGuide AI assistant.*"
+    timeout: 10000
+- assertNotVisible: "What is sundowning?"

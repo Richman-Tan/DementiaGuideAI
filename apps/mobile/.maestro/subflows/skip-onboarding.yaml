@@ -1,0 +1,16 @@
+# Fresh install, then "Skip setup" straight to the main tabs, then Aria's
+# voice switched off (subflows/audio-off.yaml) so nothing can be heard. Most
+# flows start here, so each one is independent of the others and of run order.
+appId: com.anonymous.DementiaGuideAi
+---
+- runFlow: launch-fresh.yaml
+# The first tap after a fresh launch is occasionally dropped (seen on
+# "Let's begin" too); tap again if Home hasn't appeared.
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn: "Skip setup — go straight to the app"
+      - extendedWaitUntil:
+          visible: "How can I help you today?"
+          timeout: 15000
+- runFlow: audio-off.yaml

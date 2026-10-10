@@ -1,0 +1,25 @@
+{
+  "tag": "mac-2026-10-09",
+  "sha": "e65cdc2",
+  "date": "2026-10-08",
+  "startedAt": "2026-10-08T20:08:28.613Z",
+  "command": "node scripts/eval/latency/bench-spoken.mjs --tag mac-2026-10-09",
+  "env": {
+    "machine": "Apple M3, 8 GB",
+    "os": "27.0.1",
+    "node": "v20.19.2",
+    "network": "Wi-Fi (en0)",
+    "timeZone": "Pacific/Auckland",
+    "rtt": {
+      "api.openai.com": 222.15141700000004,
+      "supabase": 31.671124999999847,
+      "api.elevenlabs.io": 329.37625000000116
+    }
+  },
+  "nQuestions": 30,
+  "repeats": 2,
+  "warmup": 2,
+  "paceMs": 5000,
+  "tts": false,
+  "finishedAt": "2026-10-08T20:21:03.530Z"
+}

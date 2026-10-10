@@ -12,12 +12,30 @@ import {
   GROUPS,
   STUDY_VERSION,
   CONSENT_FORM_VERSION,
+  PROTOCOLS,
+  PROTOCOL_TASKS,
+  PROTOCOL_FEEDBACK,
+  FEEDBACK_GROUPS,
+  FEEDBACK_NOTICE_VERSION,
   // Relative, not the '@dementiaguide/core' package specifier. The bundler
   // traces this file into the deployment either way, but it lands at its real
   // path (packages/core/...) with no node_modules in the lambda, so a bare
   // specifier resolves at build time and then throws ERR_MODULE_NOT_FOUND on
   // the first request — a 500 that no local build or test reproduces.
 } from '../../../../packages/core/study/studyConfig.mjs';
+
+/**
+ * The protocols this deployment accepts, from STUDY_PROTOCOLS (comma-separated,
+ * default "tasks"). A protocol must be both known and listed here.
+ *
+ * Off by default on purpose: the feedback round needs a migration, its own
+ * access codes and wording its owners have signed off, and none of that is
+ * implied by a code deploy. Read per request so a test can stub it.
+ */
+function enabledProtocols() {
+  const raw = process.env.STUDY_PROTOCOLS || PROTOCOL_TASKS;
+  return raw.split(',').map((p) => p.trim()).filter((p) => PROTOCOLS.includes(p));
+}
 
 export default async function handler(req, res) {
   // Not metered: session creation happens once and must never be the request
@@ -34,6 +52,7 @@ export default async function handler(req, res) {
 
   const {
     participantCode: rawCode,
+    protocol = PROTOCOL_TASKS,
     group = 'caregiver',
     consent = {},
     consentTranscripts = false,
@@ -60,13 +79,36 @@ export default async function handler(req, res) {
     res.status(400).json({ error: 'unknown participant group' });
     return;
   }
+  if (!PROTOCOLS.includes(protocol)) {
+    res.status(400).json({ error: 'unknown protocol' });
+    return;
+  }
+  const enabled = enabledProtocols();
+  if (!enabled.includes(protocol)) {
+    // 403 and a plain "not available", which the client shows as such. Never a
+    // silent fall-back to the tasks protocol: that would put someone into the
+    // consented study without its consent form.
+    res.status(403).json({ error: 'not available' });
+    return;
+  }
+  const feedback = protocol === PROTOCOL_FEEDBACK;
+  if (feedback && !FEEDBACK_GROUPS.includes(group)) {
+    res.status(400).json({ error: 'that group is not part of the feedback round' });
+    return;
+  }
+  // The protocol column exists only once scripts/migrations/2026-10-07_study_protocol.sql
+  // has run, and that migration is the first step of switching the feedback
+  // round on. So the column is read and written only when the round is enabled,
+  // and a deployment that has never enabled it behaves exactly as before.
+  const protocolColumn = enabled.includes(PROTOCOL_FEEDBACK);
 
   let existing;
   if (participantCode) {
     try {
       existing = await selectOne(
         'study_sessions',
-        'id,participant_code,participant_number,participant_group,arm_order,set_order,completed_at,step,stage_index,task_index,study_version',
+        'id,participant_code,participant_number,participant_group,arm_order,set_order,completed_at,step,stage_index,task_index,study_version'
+          + (protocolColumn ? ',protocol' : ''),
         `participant_code=eq.${encodeURIComponent(participantCode)}`
       );
     } catch (err) {
@@ -78,6 +120,13 @@ export default async function handler(req, res) {
 
   if (existing) {
     const s = existing;
+    // A code from one round must not resume a session of the other: the flows
+    // have different steps, and the tasks one would run without its consent.
+    const existingProtocol = s.protocol ?? PROTOCOL_TASKS;
+    if (protocolColumn && existingProtocol !== protocol) {
+      res.status(409).json({ error: 'that participant code belongs to a different study' });
+      return;
+    }
     res.status(200).json({
       sessionId: s.id,
       participantCode: s.participant_code,
@@ -96,6 +145,7 @@ export default async function handler(req, res) {
       // in their first half, and reporting the current constant here would claim
       // otherwise. Falls back only for rows written before the column existed.
       studyVersion: s.study_version ?? STUDY_VERSION,
+      protocol: existingProtocol,
     });
     return;
   }
@@ -122,7 +172,9 @@ export default async function handler(req, res) {
     participantCode = normaliseParticipantCode(`P${number}`);
   }
 
-  const { armOrder, setOrder } = assignmentFor(number);
+  // No arms on the feedback round, so no Latin-square cell: null, not a
+  // meaningless 'AB', so nothing downstream can mistake it for a tasks session.
+  const { armOrder, setOrder } = feedback ? { armOrder: null, setOrder: null } : assignmentFor(number);
   let inserted;
   try {
     inserted = await insertReturning('study_sessions', {
@@ -137,7 +189,10 @@ export default async function handler(req, res) {
       // says whether two sessions are poolable existed only in a JSON reply
       // nothing kept. Needs scripts/migrations/2026-08-19_study_version_stamp.sql.
       study_version: STUDY_VERSION,
-      consent: { ...consent, formVersion: CONSENT_FORM_VERSION },
+      // On the feedback round this records that the privacy notice was read, and
+      // which version — there is no consent form.
+      consent: { ...consent, formVersion: feedback ? FEEDBACK_NOTICE_VERSION : CONSENT_FORM_VERSION },
+      ...(protocolColumn ? { protocol } : {}),
       consent_transcripts: Boolean(consentTranscripts),
       supporter_present: typeof supporterPresent === 'boolean' ? supporterPresent : null,
       // A real identity alongside the hand-typed participant code, so a mistyped
@@ -165,5 +220,6 @@ export default async function handler(req, res) {
     resumed: false,
     completed: false,
     studyVersion: STUDY_VERSION,
+    protocol,
   });
 }

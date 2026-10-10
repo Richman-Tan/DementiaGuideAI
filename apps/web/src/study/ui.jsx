@@ -202,9 +202,10 @@ export function LikertItem({ id, text, value, onChange, scale = LIKERT }) {
   );
 }
 
-export function TextArea({ value, onChange, placeholder, rows = 4 }) {
+export function TextArea({ value, onChange, placeholder, rows = 4, label }) {
   return (
     <textarea
+      aria-label={label}
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}

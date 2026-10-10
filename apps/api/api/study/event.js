@@ -5,7 +5,7 @@
 // legitimately arrive twice. The unique index makes the second one a no-op
 // rather than a duplicate row.
 import { guard, jsonBody } from '../_lib/guard.js';
-import { insertIgnoringConflicts, adminConfigured } from '../_lib/supabaseAdmin.js';
+import { insertIgnoringConflicts } from '../_lib/supabaseAdmin.js';
 
 const MAX_BATCH = 100;
 const MAX_PAYLOAD_CHARS = 20000;
@@ -21,15 +21,12 @@ export default async function handler(req, res) {
   // backoff — so one participant on bad wifi can spend a lot of this on their
   // own. Running out here loses the study's own data, which is worse than the
   // cost of allowing it.
+  //
+  // No separate "backend not configured" check below, unlike session, progress
+  // and complete (which pass meter: false): this route is metered, and the meter
+  // fails closed with a 429 when the Supabase admin client is not configured
+  // (underLimit in _lib/guard.js). Past this line the backend is configured.
   if (!(await guard(req, res, { allowBodyCode: true, meterSuffix: ':events', meterLimit: 20000 }))) return;
-  // adminConfigured covers both SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY, so
-  // this is the single place the response is sent — requireEnv would have
-  // already replied, and a second send is a write-after-end.
-  if (!adminConfigured) {
-    console.error('[study] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not configured');
-    res.status(503).json({ error: 'study backend not configured' });
-    return;
-  }
 
   // jsonBody, not req.body: the unload beacon sends text/plain to dodge a
   // preflight it cannot finish, so the platform hands it over unparsed.

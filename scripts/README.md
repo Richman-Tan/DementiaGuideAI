@@ -31,6 +31,8 @@ Run everything from the repo root via the npm scripts — they are root-relative
 | `npm run rag:eval:safety` | Safety checks |
 | `npm run rag:eval:sweep` | Parameter sweep |
 | `npm run rag:grade` | Groundedness grading |
+| `npm run rag:eval:agent` | Adaptive Claude red-team agent — see [docs/rag/adaptive-agent-tester.md](../docs/rag/adaptive-agent-tester.md) |
+| `npm run rag:eval:quality-agent` | Claude quality/edge-case agent — see [docs/rag/quality-agent-tester.md](../docs/rag/quality-agent-tester.md) |
 | `npm run rag:introspect` | Inspect what retrieval returns for a query |
 
 Full methodology and results: [docs/rag/](../docs/rag/README.md).

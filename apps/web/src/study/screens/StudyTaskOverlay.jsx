@@ -8,7 +8,9 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useStudy } from '../StudyContext.jsx';
 import { useSettings } from '../../state/SettingsContext.jsx';
-import { OverlayBand, nextTextScale } from './OverlayBand.jsx';
+import { OverlayBand, ExploreBand, nextTextScale } from './OverlayBand.jsx';
+import { THINGS_TO_TRY } from '../instruments.js';
+import { edivaUrl } from '../feedback.js';
 
 export default function StudyTaskOverlay() {
   const st = useStudy();
@@ -17,9 +19,19 @@ export default function StudyTaskOverlay() {
   // brief seconds ago, and every line here is subtracted from the chat window.
   const [expanded, setExpanded] = useState(false);
   const [confirmStop, setConfirmStop] = useState(false);
+  // Feedback round: which confirmation is open, 'finish' | 'stop' | null.
+  const [confirm, setConfirm] = useState(null);
   const ref = useRef(null);
 
-  const showing = Boolean(st?.active && st.step === 'task' && st.task);
+  const exploring = Boolean(st?.exploring);
+  const showing = Boolean(st?.active && st.step === 'task' && st.task) || exploring;
+  // "Task n of N" across both arms, so a participant always knows how far along they are.
+  const progress = showing && Array.isArray(st.sequence)
+    ? {
+        n: st.sequence.slice(0, st.stageIndex).reduce((k, s) => k + (s.tasks?.length || 0), 0) + st.taskIndex + 1,
+        total: st.sequence.reduce((k, s) => k + (s.tasks?.length || 0), 0),
+      }
+    : null;
 
   // Publish the band's height as a custom property so the two full-viewport
   // screens (Home and Voice) can subtract it instead of being covered by it.
@@ -64,7 +76,7 @@ export default function StudyTaskOverlay() {
       root.style.setProperty('--study-overlay-h', '0px');
       document.body.style.paddingTop = '';
     };
-  }, [showing, expanded, confirmStop]);
+  }, [showing, expanded, confirmStop, confirm]);
 
   useEffect(() => () => {
     document.documentElement.style.setProperty('--study-overlay-h', '0px');
@@ -77,7 +89,7 @@ export default function StudyTaskOverlay() {
     <div
       ref={ref}
       role="region"
-      aria-label="Your current task"
+      aria-label={exploring ? 'Feedback session' : 'Your current task'}
       style={{
         position: 'fixed',
         top: 0,
@@ -92,19 +104,40 @@ export default function StudyTaskOverlay() {
         padding: '.75rem 1rem',
       }}
     >
-      <OverlayBand
-        task={st.task}
-        expanded={expanded}
-        onToggle={() => setExpanded((v) => !v)}
-        textScale={settings.textScale}
-        onCycleText={() => setSetting('textScale', nextTextScale(settings.textScale))}
-        onFound={() => st.endTask('yes')}
-        onNotFound={() => st.endTask('no')}
-        confirmStop={confirmStop}
-        onStopRequest={() => setConfirmStop(true)}
-        onStopConfirm={st.stop}
-        onStopCancel={() => setConfirmStop(false)}
-      />
+      {exploring ? (
+        <ExploreBand
+          items={THINGS_TO_TRY}
+          tried={st.tried}
+          edivaUrl={edivaUrl()}
+          expanded={expanded}
+          onToggle={() => setExpanded((v) => !v)}
+          onTry={st.markTried}
+          textScale={settings.textScale}
+          onCycleText={() => setSetting('textScale', nextTextScale(settings.textScale))}
+          confirm={confirm}
+          onFinishRequest={() => setConfirm('finish')}
+          onFinishConfirm={() => { setConfirm(null); setExpanded(false); st.endExplore(); }}
+          onStopRequest={() => setConfirm('stop')}
+          onStopConfirm={st.stop}
+          onCancel={() => setConfirm(null)}
+        />
+      ) : (
+        <OverlayBand
+          task={st.task}
+          progress={progress}
+          minutes="about 35–45 min in total"
+          expanded={expanded}
+          onToggle={() => setExpanded((v) => !v)}
+          textScale={settings.textScale}
+          onCycleText={() => setSetting('textScale', nextTextScale(settings.textScale))}
+          onFound={() => st.endTask('yes')}
+          onNotFound={() => st.endTask('no')}
+          confirmStop={confirmStop}
+          onStopRequest={() => setConfirmStop(true)}
+          onStopConfirm={st.stop}
+          onStopCancel={() => setConfirmStop(false)}
+        />
+      )}
     </div>
   );
 }

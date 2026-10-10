@@ -15,7 +15,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/theme/colors';
 import { Typography, FontSize } from '@/theme/typography';
 import { openaiService } from '@/lib/openaiService';
@@ -41,6 +40,12 @@ const SettingRow = ({ icon, iconColor = Colors.primary, label, sublabel, onPress
       onPress={onPress}
       disabled={!onPress && !right}
       activeOpacity={onPress ? 0.7 : 1}
+      // A row with its own action stays one accessible button. A row without
+      // one (a switch, the text-size buttons, or plain information) must not
+      // be a single accessibility element: on iOS that hides everything inside
+      // it, so VoiceOver (and the e2e tests in apps/mobile/.maestro) could
+      // neither reach the switch nor read its state or the row's details.
+      accessible={!!onPress}
       accessibilityLabel={label}
       accessibilityRole={onPress ? 'button' : 'none'}
     >
@@ -255,7 +260,7 @@ export const ProfileScreen = ({ navigation }) => {
   const {
     textSize, textScale, setTextSize,
     hapticFeedback, audioEnabled, avatarEnabled, autoPlayResponses,
-    updateSetting, toggleDarkMode, triggerHaptic,
+    updateSetting, toggleDarkMode, triggerHaptic, clearConversation,
     darkMode, highContrast, subtitlesEnabled, conciseMode, handsFreeMode, fastVoiceMode, colors,
   } = useSettings();
   const [apiKey, setApiKey]               = useState(null);
@@ -311,7 +316,7 @@ export const ProfileScreen = ({ navigation }) => {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Clear', style: 'destructive', onPress: async () => {
-            await AsyncStorage.removeItem('chat_messages_v1');
+            await clearConversation();
             triggerHaptic('success');
           },
         },

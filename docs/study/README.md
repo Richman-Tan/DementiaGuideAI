@@ -39,6 +39,7 @@ dementia in a supported, shortened variant.
 | [analysis-plan.md](analysis-plan.md) | Pre-specified analysis, table shells, success criteria, and what would make the study wrong |
 | [pilot-checklist.md](pilot-checklist.md) | Dry run with proxy participants, and the go/no-go gate |
 | [incidents.md](incidents.md) | Incident log — empty is the expected state |
+| [protocol-feedback.md](protocol-feedback.md) | **Oct 2026.** The clinical collaborators' feedback round: free use, flagged answers, open questions. Ships switched off |
 
 ### Ethics pack — `ethics/`
 
@@ -124,6 +125,7 @@ into the shell first.
 | Command | Does |
 |---|---|
 | `npm run study:export -- --with-transcripts` | Pull sessions and events into `docs/study/results/` |
+| `npm run study:export-feedback` | The feedback round's sessions, flags and open answers, as `feedback-*.csv` ([protocol-feedback.md](protocol-feedback.md)) |
 | `npm run study:safety` | Apply the eval harness's safety gates to real transcripts; exits 1 on a hit |
 | `npm run study:analyse` | Produce the tables in `analysis-plan.md` |
 | `npm run study:figures` | Figures into `docs/report/figures/` |
@@ -151,6 +153,7 @@ into the shell first.
 | `consent_rechecked` | PLWD halfway re-confirmation (protocol §3.3) |
 | `debrief_done` | free-text answers |
 | `session_complete` / `session_stopped` | — |
+| `explore_start`, `explore_end`, `page_view`, `try_done`, `answer_flagged`, `feedback_done` | Feedback round only — see [protocol-feedback.md](protocol-feedback.md#what-is-recorded) |
 
 Time on task is `task_end.durationMs`. **Turns are counted from `turn_start`, not
 `turn`**: the completing `turn` event fires after the spoken answer finishes

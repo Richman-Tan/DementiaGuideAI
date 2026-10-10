@@ -29,7 +29,11 @@ const withTranscripts = args.has('--with-transcripts');
 
 requireServiceKey();
 
-const allSessions = await selectAll('study_sessions', 'order=participant_number.asc');
+// The tasks study only. Feedback-round sessions (scripts/study/export-feedback-data.mjs)
+// share the table but have no arms or tasks; a row without the protocol column
+// predates that round and is a tasks session.
+const allSessions = (await selectAll('study_sessions', 'order=participant_number.asc'))
+  .filter((s) => (s.protocol ?? 'tasks') === 'tasks');
 const sessions = includePilot ? allSessions : allSessions.filter((s) => !s.is_pilot);
 const excludedPilots = allSessions.length - sessions.length;
 

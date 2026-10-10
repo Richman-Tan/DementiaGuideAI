@@ -1,0 +1,76 @@
+# FR-36 fallback drill: invalid ElevenLabs key.
+#
+# The key is set through the app's own Settings editor. It is a fake value,
+# never a real key. The editor refuses anything under 20 characters, so the
+# fake is padded ("invalid-test-key" alone would not save).
+#
+# What the Simulator can and cannot show. The voice cascade in ttsService.ts
+# (Azure → ElevenLabs → OpenAI TTS) only runs on text the language model has
+# already produced, and producing text needs a real OpenAI key, which this
+# suite never enters. So this drill checks everything up to that point: the
+# bad key is accepted and the app switches to describing an ElevenLabs voice;
+# a voice turn with it ends in the app's error message with the screen back
+# to idle, not a crash or a hang. The fallback to the OpenAI voice itself is
+# recorded as not feasible on the Simulator in docs/testing/ios-e2e.md: on top
+# of needing a real key, it would mean playing speech, and nothing may be
+# audible on the Mac running these tests (Aria's voice is off throughout,
+# subflows/audio-off.yaml).
+appId: com.anonymous.DementiaGuideAi
+name: Drill — invalid ElevenLabs key
+tags:
+  - drill
+  - voice
+  - settings
+env:
+  FAKE_ELEVEN_KEY: "invalid-test-key-not-real-0000"
+---
+- runFlow: subflows/skip-onboarding.yaml
+- tapOn:
+    id: "tab-settings"
+- extendedWaitUntil:
+    visible: "Personalise your DementiaGuide AI experience"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Powered by OpenAI"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "GPT-4o-mini with OpenAI voice"
+- scrollUntilVisible:
+    element: "ElevenLabs API Key"
+    direction: UP
+    centerElement: true
+
+- tapOn: "ElevenLabs API Key"
+- tapOn: "ElevenLabs API Key input"
+- inputText: ${FAKE_ELEVEN_KEY}
+# With the keyboard up, the first tap on Save only closes the keyboard (see
+# 06-chat-placeholder-key.yaml); close it first
+- hideKeyboard
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "ElevenLabs Key Saved"
+    timeout: 10000
+- tapOn: "OK"
+- assertNotVisible: "ElevenLabs API Key input"
+
+# The app now describes its voice as ElevenLabs
+- scrollUntilVisible:
+    element: "Powered by OpenAI"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "GPT-4o-mini \\+ ElevenLabs voice"
+
+# A voice turn with the bad key fails cleanly
+- tapOn:
+    id: "tab-home"
+- tapOn: "Start voice conversation"
+- extendedWaitUntil:
+    visible: "Start speaking"
+    timeout: 10000
+- tapOn: "Morning routine"
+- tapOn: "Send"
+- extendedWaitUntil:
+    visible: "No API key configured"
+    timeout: 20000
+- assertVisible: "Start speaking"
+- assertNotVisible: "Stop"

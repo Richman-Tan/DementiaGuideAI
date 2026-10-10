@@ -15,8 +15,10 @@ import { UnityAvatarMount } from '../avatar/unity/UnityAvatarStage.jsx';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { loadKeys, saveKeys } from '../state/keysStore.js';
+import { AccessCodeForm } from '../components/AccessCodeForm.jsx';
 import { hasCredentials } from '../services/transport.js';
 import { emit } from '../study/events.js';
+import FlagAnswer from '../study/FlagAnswer.jsx';
 
 // Once per page load: the Unity→fallback swap is a property of the session,
 // not of this component's mount count (mirrors the stt_whisper pattern).
@@ -83,7 +85,7 @@ function StatusChip({ vState, who }) {
 }
 
 // ── Keys setup card (no demo mode — replaces the controls) ──────────────────
-function SetupCard({ who, keys, setKeys, onSave }) {
+function SetupCard({ who, keys, setKeys, onSave, onAccess }) {
   const canSave = keys.openai.trim().length > 0;
   const field = (label, k, placeholder, helper) => (
     <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
@@ -102,7 +104,14 @@ function SetupCard({ who, keys, setKeys, onSave }) {
     <div style={{ width: 'min(430px, calc(100% - 36px))', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '20px', boxShadow: 'var(--shadow)', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
       <div style={{ fontWeight: 700, fontSize: '1.2rem' }}>Set up voice conversations</div>
       <p style={{ margin: 0, color: 'var(--text2)', fontSize: '.95rem', lineHeight: 1.5 }}>
-        To talk with {who}, add your OpenAI key. Your keys are stored only in this browser — they are never sent anywhere else.
+        To talk with {who}, enter the access code you were given, or add your own OpenAI key.
+      </p>
+      <AccessCodeForm onChange={onAccess} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text2)', fontSize: '.85rem' }}>
+        <span style={{ flex: '1', height: '1px', background: 'var(--border)' }} />or use your own key<span style={{ flex: '1', height: '1px', background: 'var(--border)' }} />
+      </div>
+      <p style={{ margin: 0, color: 'var(--text2)', fontSize: '.85rem', lineHeight: 1.5 }}>
+        Your keys are stored only in this browser — they are never sent anywhere else.
       </p>
       {field('OpenAI API key', 'openai', 'sk-…')}
       {field('ElevenLabs API key', 'eleven', 'Optional', `Optional — gives ${who} a more natural voice and better lip movement.`)}
@@ -151,6 +160,8 @@ export default function Voice() {
   // the live conversation — typing must not unlock; only "Save and start" does.
   const [keys, setKeys] = useState(loadKeys);
   const [savedKeys, setSavedKeys] = useState(loadKeys);
+  // Bumped when an access code is saved or removed, so hasKey is re-read.
+  const [, setAccessTick] = useState(0);
 
   const profile = useEffectiveAvatarProfile(settings.avatarId);
   const who = profile.name;
@@ -194,6 +205,11 @@ export default function Voice() {
   // such room and keep them above the controls.
   const width = useWidth();
   const sideCaptions = width >= 1024;
+  // The status chip is centred across the screen while the close button and the
+  // repeat/transcript pair are pinned to the corners; below ~520 px a chip such as
+  // "Tap the mic or type below" runs under the right-hand pair, so on narrow
+  // screens it drops to a row of its own beneath them.
+  const stackHeader = width < 520;
 
   const closeVoice = () => { history.length > 1 ? history.back() : navigate('#/app/home'); };
   const saveSetup = () => { saveKeys(keys); setSavedKeys(keys); };
@@ -238,7 +254,7 @@ export default function Voice() {
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '16px', pointerEvents: 'none' }}>
         <button onClick={closeVoice} aria-label="Close voice conversation" className="hv3" style={{ ...iconBtn, position: 'absolute', left: '16px', top: '16px', fontSize: '1.1rem', pointerEvents: 'auto' }}>✕</button>
         {hasKey && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', pointerEvents: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', pointerEvents: 'auto', marginTop: stackHeader ? '56px' : 0 }}>
             <StatusChip vState={vState} who={who} />
             {avatarFallback && (
               <div style={{ ...glass, borderRadius: '999px', padding: '6px 16px', fontSize: '.9rem', color: 'var(--text2)', maxWidth: '36em', textAlign: 'center' }}>
@@ -266,7 +282,7 @@ export default function Voice() {
       {/* Setup card (no keys) */}
       {!hasKey && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '18px' }}>
-          <SetupCard who={who} keys={keys} setKeys={setKeys} onSave={saveSetup} />
+          <SetupCard who={who} keys={keys} setKeys={setKeys} onSave={saveSetup} onAccess={() => setAccessTick((n) => n + 1)} />
         </div>
       )}
 
@@ -338,7 +354,15 @@ export default function Voice() {
               {m.role === 'user' ? (
                 <div style={{ alignSelf: 'flex-end', maxWidth: '85%', background: 'var(--primary)', color: '#fff', borderRadius: '16px 16px 4px 16px', padding: '10px 14px' }}>{m.text}</div>
               ) : (
-                <div style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--elev)', border: 'var(--bw) solid var(--border)', borderRadius: '16px 16px 16px 4px', padding: '10px 14px' }}>{m.text}</div>
+                <>
+                  <div style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--elev)', border: 'var(--bw) solid var(--border)', borderRadius: '16px 16px 16px 4px', padding: '10px 14px' }}>{m.text}</div>
+                  <FlagAnswer
+                    surface="voice"
+                    answer={m.text}
+                    question={messages[i - 1]?.role === 'user' ? messages[i - 1].text : ''}
+                    turnId={m.turnId || null}
+                  />
+                </>
               )}
             </div>
           ))}

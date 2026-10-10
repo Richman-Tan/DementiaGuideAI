@@ -12,6 +12,7 @@ import {
   Pressable,
   Alert,
   Platform,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -53,6 +54,7 @@ export const VoiceScreen = ({ navigation }) => {
   const [backdropUri, setBackdropUri] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuStep, setMenuStep] = useState('main'); // 'main' | 'persona'
+  const [activeCitation, setActiveCitation] = useState(null);
   const { textScale, avatarEnabled, subtitlesEnabled, audioEnabled, updateSetting, selectedAvatarId } = useSettings();
   const activeAvatarId  = selectedAvatarId ?? DEFAULT_AVATAR_ID;
   const activeProfile   = AVATAR_PROFILES[activeAvatarId] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];
@@ -138,6 +140,7 @@ export const VoiceScreen = ({ navigation }) => {
     error,
     clearError,
     currentSubtitle,
+    sources,
   } = useAvatarConversation({ avatarRef });
 
   const isActive = voiceState === VoiceState.LISTENING || voiceState === VoiceState.SPEAKING;
@@ -208,9 +211,13 @@ export const VoiceScreen = ({ navigation }) => {
           so iOS never has to present two Modals simultaneously. */}
       {menuVisible && (
         <Modal transparent animationType="none" onRequestClose={() => closeMenu()}>
+          {/* The backdrop Pressables below are accessible={false}: a Pressable is
+              one accessibility element by default, and on iOS that hides the
+              menu items and persona cards inside it from VoiceOver (and from
+              the e2e tests in apps/mobile/.maestro). Taps are unaffected. */}
           {menuStep === 'main' ? (
             /* ── Main dropdown ── */
-            <Pressable style={styles.menuOverlay} onPress={() => closeMenu()}>
+            <Pressable style={styles.menuOverlay} onPress={() => closeMenu()} accessible={false}>
               <Animated.View
                 style={[
                   styles.menuDropdown,
@@ -262,8 +269,8 @@ export const VoiceScreen = ({ navigation }) => {
             </Pressable>
           ) : (
             /* ── Persona selection ── */
-            <Pressable style={styles.personaOverlay} onPress={() => setMenuStep('main')}>
-              <Pressable style={styles.personaSheet} onPress={() => {}}>
+            <Pressable style={styles.personaOverlay} onPress={() => setMenuStep('main')} accessible={false}>
+              <Pressable style={styles.personaSheet} onPress={() => {}} accessible={false}>
                 <TouchableOpacity style={styles.personaBackRow} onPress={() => setMenuStep('main')}>
                   <MaterialCommunityIcons name="chevron-left" size={20} color="rgba(255,255,255,0.6)" />
                   <Text style={styles.personaBackText}>Back</Text>
@@ -314,6 +321,35 @@ export const VoiceScreen = ({ navigation }) => {
               </Pressable>
             </Pressable>
           )}
+        </Modal>
+      )}
+
+      {/* Citation detail modal */}
+      {activeCitation && (
+        <Modal transparent animationType="fade" onRequestClose={() => setActiveCitation(null)}>
+          <Pressable style={styles.citationOverlay} onPress={() => setActiveCitation(null)}>
+            <Pressable style={styles.citationCard} onPress={() => {}}>
+              <View style={styles.citationHeader}>
+                <MaterialCommunityIcons name="book-open-variant" size={16} color="#7C6FFF" />
+                <Text style={styles.citationHeaderText}>Source [{activeCitation.num}]</Text>
+                <TouchableOpacity onPress={() => setActiveCitation(null)} style={{ marginLeft: 'auto' }}>
+                  <MaterialCommunityIcons name="close" size={18} color="rgba(255,255,255,0.6)" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.citationTitle}>{activeCitation.title}</Text>
+              {activeCitation.org && (
+                <Text style={styles.citationOrg}>{activeCitation.org}</Text>
+              )}
+              <View style={styles.citationExcerptBox}>
+                <Text style={styles.citationExcerpt}>"{activeCitation.excerpt}"</Text>
+              </View>
+              {activeCitation.url && (
+                <TouchableOpacity onPress={() => Linking.openURL(activeCitation.url)}>
+                  <Text style={styles.citationLink}>View source ↗</Text>
+                </TouchableOpacity>
+              )}
+            </Pressable>
+          </Pressable>
         </Modal>
       )}
 
@@ -384,6 +420,27 @@ export const VoiceScreen = ({ navigation }) => {
               <MaterialCommunityIcons name="close" size={16} color="#FF6B6B" />
             </TouchableOpacity>
           </View>
+        )}
+
+        {/* Citation chips — sources cited in the latest response */}
+        {sources.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.citationRow}
+          >
+            <Text style={styles.citationLabel}>Sources:</Text>
+            {sources.map((s) => (
+              <TouchableOpacity
+                key={s.num}
+                style={styles.citationChip}
+                onPress={() => setActiveCitation(s)}
+                accessibilityLabel={`View source ${s.num}: ${s.title}`}
+              >
+                <Text style={styles.citationChipText}>{s.num}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         )}
 
         {/* Quick chips */}
@@ -584,6 +641,88 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingHorizontal: 0,
     gap: 14,
+  },
+  citationRow: {
+    paddingHorizontal: 16,
+    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  citationLabel: {
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 12,
+    fontWeight: '500',
+    marginRight: 2,
+  },
+  citationChip: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(124,111,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(124,111,255,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  citationChipText: {
+    color: '#7C6FFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  citationOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  citationCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#1A1530',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  citationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  citationHeaderText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  citationTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  citationOrg: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
+    marginBottom: 10,
+  },
+  citationExcerptBox: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  citationExcerpt: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 13,
+    lineHeight: 19,
+    fontStyle: 'italic',
+  },
+  citationLink: {
+    color: '#7C6FFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
   chipsRow: {
     paddingHorizontal: 16,

@@ -3,13 +3,17 @@
 // Two modes, and the app behaves identically in both:
 //   direct — a personal OpenAI/ElevenLabs key in localStorage (the shipped
 //            bring-your-own-key behaviour, unchanged)
-//   proxy  — a study access code, with the credentials held server-side in
-//            apps/web/api/
+//   proxy  — an access code, with the credentials held server-side in apps/api:
+//            either a study session's code, or a guest code (state/accessStore.js)
+//            that an invited carer enters once to use the app freely
+//
+// Precedence: personal key → study session → guest code → none (mock mode).
 //
 // Retrieval, prompt assembly and citation extraction stay client-side in either
 // mode, so the study measures the shipped pipeline rather than a parallel one.
 import { getOpenaiKey, getElevenKey } from '../state/keysStore.js';
 import { isStudyMode, studyAccessCode } from '../study/studyStore.js';
+import { guestAccessCode } from '../state/accessStore.js';
 import { apiUrl } from './apiBase.js';
 
 const OPENAI_BASE = 'https://api.openai.com/v1';
@@ -35,6 +39,10 @@ export function openaiTransport() {
   // visitor into a hybrid state — normal UI, but mock mode silently off, so a
   // keyless user got "your study access code was not accepted" in the chat.
   if (isStudyMode()) return { proxied: true, headers: { 'x-study-code': studyAccessCode() } };
+  // Only a code the server accepted is ever stored, so the stale-code problem
+  // above does not arise here.
+  const guest = guestAccessCode();
+  if (guest) return { proxied: true, guest: true, headers: { 'x-study-code': guest } };
   return null;
 }
 
@@ -50,7 +58,46 @@ export function elevenTransport() {
   const key = getElevenKey();
   if (key) return { proxied: false, headers: { 'xi-api-key': key } };
   if (isStudyMode()) return { proxied: true, headers: { 'x-study-code': studyAccessCode() } };
+  // A bring-your-own-key user keeps paying for their own voice: the guest code
+  // fills in only when there is no personal OpenAI key either.
+  const guest = !getOpenaiKey() && guestAccessCode();
+  if (guest) return { proxied: true, guest: true, headers: { 'x-study-code': guest } };
   return null;
+}
+
+/** 'key' | 'study' | 'guest' | 'none' — which credential the next OpenAI call uses. */
+export function transportKind() {
+  const t = openaiTransport();
+  if (!t) return 'none';
+  if (!t.proxied) return 'key';
+  return t.guest ? 'guest' : 'study';
+}
+
+/**
+ * Check an access code against the proxy without spending anything.
+ *
+ * POSTs an empty body to /api/speech: the server's guard runs before the body
+ * is read, so 401 = not accepted, 429 = accepted but over today's limit, and an
+ * accepted code then fails body validation with 400 before any provider call.
+ * → { ok, status: 'ok' | 'limit' | 'rejected' | 'invalid' | 'unavailable' }
+ */
+export async function validateAccessCode(raw) {
+  const code = String(raw || '').trim();
+  if (code.length < 16) return { ok: false, status: 'invalid' }; // the guard refuses shorter codes
+  let resp;
+  try {
+    resp = await fetch(apiUrl('/api/speech'), {
+      method: 'POST',
+      headers: { 'x-study-code': code, 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+  } catch {
+    return { ok: false, status: 'unavailable' };
+  }
+  if (resp.status === 400) return { ok: true, status: 'ok' };
+  if (resp.status === 429) return { ok: true, status: 'limit' };
+  if (resp.status === 401) return { ok: false, status: 'rejected' };
+  return { ok: false, status: 'unavailable' };
 }
 
 export const hasCredentials = () => Boolean(openaiTransport());

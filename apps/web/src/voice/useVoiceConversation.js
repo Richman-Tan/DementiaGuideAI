@@ -12,7 +12,7 @@ import { startSttSession } from '../services/sttWeb.js';
 import { sttErrorPresentation } from './sttErrorCopy.js';
 import { getElevenKey } from '../state/keysStore.js';
 import { createTurnTimer } from '../study/latency.js';
-import { emit } from '../study/events.js';
+import { emit, newUuid } from '../study/events.js';
 import { currentArm, currentTaskId, transcriptFields } from '../study/studyStore.js';
 import { mapSettingsToRag, speechRateFor } from '../state/mapSettingsToRag.js';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
@@ -23,6 +23,8 @@ import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
 import { detectSentiment } from '@core/sentiment/detectSentiment';
 import { createSentenceSplitter } from '@core/voice/sentenceTracker';
 import { MODALITY_SPOKEN, MODALITY_TYPED } from '@core/study/studyConfig.mjs';
+import { credentialErrorCopy } from '../services/credentialErrorCopy.js';
+import { transportKind } from '../services/transport.js';
 
 const MAX_QUERY_CHARS = 1000;
 
@@ -84,11 +86,15 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
   // reach every event this turn emits, and a fourth optional positional is the
   // kind of thing that gets passed in the wrong slot exactly once, silently, in
   // a live session.
+  //
+  // `userText` arrives trimmed and non-empty: each caller (stopAndTranscribe,
+  // askText) normalises and checks it at its own boundary, where a blank can
+  // still be answered properly. A blank check in here could only return early,
+  // leaving the screen on "thinking" with nothing in flight.
   const processQuery = useCallback(async (
     userText,
     { preRetrievedChunks = null, timer = null, modality = MODALITY_SPOKEN } = {},
   ) => {
-    if (!userText.trim()) return;
     if (userText.length > MAX_QUERY_CHARS) userText = userText.slice(0, MAX_QUERY_CHARS);
 
     const history = historyForModel();
@@ -210,10 +216,11 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       ttsStream.open().catch(handleStreamFailure);
     }
 
-    // REST segment queue (legacy path + streaming fallback target).
-    const addSegment = (text) => {
-      const clean = text.trim();
-      if (!clean || !audioOn) return;
+    // REST segment queue (legacy path + streaming fallback target). Only ever
+    // handed a sentence handleSentence has already trimmed and found non-empty,
+    // and only with audio on: its REST branch runs after the audio-off return,
+    // and the streaming replay needs audio on for the stream to exist at all.
+    const addSegment = (clean) => {
       const emotion = detectSentiment(clean);
       turn.mark('ttsRequest');
       queue.promises.push(
@@ -230,6 +237,8 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
 
     const handleSentence = (text) => {
       const clean = text.trim();
+      // The splitter marks boundaries with U+001F, so a stray one in the model's
+      // own output comes back as an empty "sentence"; nothing to say for it.
       if (!clean) return;
       turn.mark('firstSentence');
       if (!audioOn) {
@@ -284,12 +293,15 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           }
         }
       } finally {
+        // turnId joins a flagged answer (feedback protocol) to its `turn` event.
+        const turnId = newUuid();
         appendMessage({
           role: 'aria',
           text: fullText,
           citations: mapSourcesToCitations(citedSources),
           sources: citedSources,
           safety: false,
+          turnId,
         });
         turn.finish({ modality, streaming: streamingActive && !streamFailed, aborted: abortRef.current });
         // Transcript capture for rubric scoring and the safety scan. Retrieved
@@ -300,6 +312,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         emit('turn', {
           arm,
           taskId,
+          turnId,
           // Spoken or typed. The avatar screen keeps its message bar on purpose
           // (a participant who finds speaking hard must have a way through), so
           // an Arm A turn is not automatically a spoken one — and a typed turn
@@ -356,7 +369,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       await Promise.all([producerTask(), consumerTask()]);
     } catch (err) {
       console.error('[useVoiceConversation] processQuery error:', err);
-      setError(err.message ?? 'Something went wrong. Please try again.');
+      setError(credentialErrorCopy(err, transportKind()) ?? err.message ?? 'Something went wrong. Please try again.');
     } finally {
       subtitleTimers.forEach(clearTimeout);
       try { ttsStream?.abort(); } catch { /* completed */ }
@@ -441,8 +454,13 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
 
     const turn = createTurnTimer(currentArm(), currentTaskId());
     try {
-      const { transcript } = await session.stop();
+      const { transcript: heard } = await session.stop();
       turn.mark('sttDone');
+      // Normalised here, at the STT boundary, so a provider that ever returns a
+      // blank-but-untrimmed transcript gets the "didn't catch that" prompt like
+      // an empty one, rather than a turn that never starts and a screen stuck
+      // on "thinking". Today's providers already trim, so for them it is a no-op.
+      const transcript = (heard ?? '').trim();
       if (!transcript) {
         emit('stt_empty', { arm: currentArm(), taskId: currentTaskId() });
         speculativeRef.current?.cancel();

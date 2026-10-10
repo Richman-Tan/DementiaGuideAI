@@ -72,3 +72,54 @@ RTF ≈ 0.21 with output identical to fp16 on the probe clips, so it is the prim
 
 The model label in the CSV carries the repo suffix (`local:large-v2-mlx-8bit`) so a
 quantised run is never confused with an fp16 one. State the quantisation in the report.
+
+## Apple on-device recogniser (E9-A, plan §18.3)
+
+`transcribe-apple.mjs` builds `apple-ondevice/AppleOnDeviceSTT.swift` (with
+`swiftc`, Info.plist embedded so a CLI may ask for speech-recognition permission)
+and runs every cut through `SFSpeechRecognizer` with
+`requiresOnDeviceRecognition = true`. The tool refuses to start unless the
+recogniser reports `supportsOnDeviceRecognition` for the locale, so DementiaBank
+audio never reaches Apple's servers; audio is read from file and never played.
+Same CSV contract as the other transcribers; per-file cache under
+`data/dementiabank/cache/apple-ondevice-<locale>/`.
+
+```
+node scripts/eval/stt/transcribe-apple.mjs --dry-run
+node scripts/eval/stt/transcribe-apple.mjs --locale en-NZ        # the iOS app's locale
+node scripts/eval/stt/wer-report.mjs --hyps data/dementiabank/hyps_apple-ondevice-en-NZ.csv,data/dementiabank/hyps_whisper-1.csv
+```
+
+The iOS app starts recognition with `requiresOnDeviceRecognition: false`, so this
+is a proxy for what iOS users get, not the same service.
+
+## Chrome on-device recogniser (E9-C, `docs/eval/plan-19c-chrome-ondevice.md`)
+
+`transcribe-chrome.mjs` runs every cut through Chrome's Web Speech recogniser with
+`processLocally = true`, in a dedicated harness Chrome profile, with the request
+settings of the web app's `sttWeb.js`. Audio enters as an in-page Web Audio track
+(`start(track)`, the E4-B method): nothing is played, the real microphone is never
+opened, and a TCC watchdog guards it. Only `--install` has network; every other
+phase runs offline behind a refusing local proxy and resolver rules, with lsof,
+nettop, the kernel sandbox log, the proxy log and a live NetLog watched. The
+DementiaBank run repeats the offline proof (on-device works, cloud fails) before
+its gate opens, and stops at the first signal outside the proof's baseline.
+
+```
+P=<scratch>/e9c-profile      # the harness profile; holds the language pack
+node scripts/eval/stt/transcribe-chrome.mjs --install --profile $P --locales en-NZ,en-US        # ONLINE, no audio
+node scripts/eval/stt/transcribe-chrome.mjs --offline-proof --profile $P --locales en-NZ,en-US  # synthetic audio
+node scripts/eval/stt/transcribe-chrome.mjs --profile $P --locale en-NZ --root <main checkout> \
+  --baseline docs/report/eval/stt/chrome-ondevice-offline-proof_<sha>.json
+node scripts/eval/stt/transcribe-chrome.mjs --robustness --profile $P --locale en-NZ --root <main checkout> --baseline <same>
+```
+
+`--cloud-diagnostic` (offline, synthetic audio only) shows which path serves a request: it
+recognises an en-NZ clip with `processLocally` true and false, and a French clip (no pack
+installed) with both, and attributes proxy requests and NetLog URLs to each step. On
+9 Oct 2026 it showed that, with the English pack installed, Chrome 155 serves English
+requests on-device even with `processLocally = false`, so the pre-registered same-locale
+cloud control could not fail (results: `docs/eval/results-2026-10-10-e9c.md`).
+
+Same CSV contract; cache under `data/dementiabank/cache/chrome-ondevice-<locale>/`. The web
+app itself uses Chrome's cloud recogniser, so this is a proxy, as E9-A is for iOS.

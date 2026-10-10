@@ -1,0 +1,142 @@
+{
+ "mode": "install",
+ "startedAt": "2026-10-09T07:12:47.795Z",
+ "finishedAt": "2026-10-09T07:13:14.304Z",
+ "chrome": "155.0.8059.39",
+ "os": "macOS 27.0.1 (26A434)",
+ "headless": true,
+ "switches": [
+  "--user-data-dir=<profile>",
+  "--remote-debugging-port=0",
+  "--no-first-run",
+  "--no-default-browser-check",
+  "--mute-audio",
+  "--use-fake-device-for-media-stream",
+  "--use-fake-ui-for-media-stream",
+  "--disable-audio-input",
+  "--autoplay-policy=no-user-gesture-required",
+  "--disable-background-timer-throttling",
+  "--disable-renderer-backgrounding",
+  "--disable-backgrounding-occluded-windows",
+  "--headless=new",
+  "--log-net-log=<scratch>/netlog-install-1791529964403.json",
+  "--net-log-capture-mode=Default"
+ ],
+ "info": {
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "hasSR": true,
+  "hasAvailable": true,
+  "hasInstall": true,
+  "hasProcessLocally": true,
+  "hasPhrases": true
+ },
+ "availBefore": {
+  "en-NZ": {
+   "local": "downloadable",
+   "cloud": "available"
+  },
+  "en-US": {
+   "local": "downloadable",
+   "cloud": "available"
+  },
+  "en-AU": {
+   "local": "downloadable",
+   "cloud": "available"
+  },
+  "en-GB": {
+   "local": "downloadable",
+   "cloud": "available"
+  }
+ },
+ "installs": [
+  {
+   "locale": "en-NZ",
+   "installResult": "true",
+   "availableAfter": "available",
+   "seconds": 17
+  },
+  {
+   "locale": "en-US",
+   "installResult": "true",
+   "availableAfter": "available",
+   "seconds": 0
+  }
+ ],
+ "availAfter": {
+  "en-NZ": {
+   "local": "available",
+   "cloud": "available"
+  },
+  "en-US": {
+   "local": "available",
+   "cloud": "available"
+  },
+  "en-AU": {
+   "local": "available",
+   "cloud": "available"
+  },
+  "en-GB": {
+   "local": "available",
+   "cloud": "available"
+  }
+ },
+ "components": [
+  "SODA en-US Models - Version: 1.5075.0",
+  "Status - Updated",
+  "Check for update",
+  "SODA Library - Version: 1.2.12",
+  "Status - Updated",
+  "Check for update"
+ ],
+ "profileBefore": {
+  "profileKb": 9004,
+  "soda": []
+ },
+ "profileAfter": {
+  "profileKb": 486480,
+  "soda": [
+   {
+    "dir": "<profile>/SODA",
+    "kb": 25352,
+    "entries": [
+     "1.2.12"
+    ]
+   },
+   {
+    "dir": "<profile>/SODALanguagePacks",
+    "kb": 198272,
+    "entries": [
+     "en-US"
+    ]
+   }
+  ]
+ },
+ "tcc": {
+  "trips": [],
+  "preflights": 0,
+  "otherApps": {}
+ },
+ "tripped": null,
+ "netlogUrls": {
+  "http://clients2.google.com/time/1/current": 4,
+  "https://clientservices.googleapis.com/chrome-variations/seed": 4,
+  "https://accounts.google.com/ListAccounts": 4,
+  "https://clients2.google.com/service/update2/crx": 4,
+  "https://www.google.com/async/folae": 4,
+  "https://www.gstatic.com/ohttp_gateway/hpke_public_keys/v1/sbc_prod": 4,
+  "https://www.google.com/": 10,
+  "https://update.googleapis.com/service/update2/json": 24,
+  "https://clients2.googleusercontent.com/crx/blobs/AZPVhcQILdRgQxyclcENwOVmAUA7lWU2mLN7DEPhDL7eQKp9gczqMIehkjncU7a_EigR4Ip8ElIJGYg1mgBQeWWSOJNGU_J8Zva9cfI_aJ--IkwJbyPwnPfV9nmzwS17BIgAxlKa5c7TdpTpCgAddf44N1nzr3cqv7qK/GHBMNNJOOEKPMOECNNNILNNBDLOLHKHI_1_110_1_0.crx": 4,
+  "http://edgedl.me.gvt1.com/edgedl/diffgen-puffin/ceofaddefefcbblgcgnibnonglccbfja/929be2bea7b0acf7a94cb4149dc09ff3e49534b9c8cddd083cd6f7bcd6770df1": 4,
+  "http://redirector.gvt1.com/edgedl/chromewebstore/L2Nocm9tZV9leHRlbnNpb24vYmxvYnMvNzI0QUFXNV9zT2RvdUwyMERESEZGVmJnQQ/1.0.0.6_nmmhkkegccagdldgiimedpiccmgmieda.crx": 4,
+  "http://r4---sn-8vq54voxo1-53ad.gvt1.com/edgedl/chromewebstore/L2Nocm9tZV9leHRlbnNpb24vYmxvYnMvNzI0QUFXNV9zT2RvdUwyMERESEZGVmJnQQ/1.0.0.6_nmmhkkegccagdldgiimedpiccmgmieda.crx": 2,
+  "https://r4---sn-8vq54voxo1-53ad.gvt1.com/edgedl/chromewebstore/L2Nocm9tZV9leHRlbnNpb24vYmxvYnMvNzI0QUFXNV9zT2RvdUwyMERESEZGVmJnQQ/1.0.0.6_nmmhkkegccagdldgiimedpiccmgmieda.crx": 2,
+  "https://android.clients.google.com/checkin": 4,
+  "https://android.clients.google.com/c2dm/register3": 12,
+  "https://www.googleapis.com/chromewebstore/v1.1/items/verify": 4,
+  "http://edgedl.me.gvt1.com/edgedl/diffgen-puffin/icnkogojpkfjeajonkmlplionaamopkf/33d7cdaac2dd92ddcec667328228513262b4a2ac9927d3e6fe6db246b4d55a7f": 4,
+  "http://edgedl.me.gvt1.com/edgedl/release2/chrome_component/adpphd4qbclw7mpsmnqzvebeg7uq_1.5075.0/oegebmmcimckjhkhbggblnkjloogjdfg_1.5075.0_all_ltmdvxjnwoqj666nhf7xepe64e.crx3": 4,
+  "https://optimizationguide-pa.googleapis.com/v1:GetModels": 4,
+  "https://optimizationguide-pa.googleapis.com/downloads": 36
+ }
+}

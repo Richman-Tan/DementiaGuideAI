@@ -17,6 +17,7 @@ const SOURCES = [
   { workspace: 'vitest (apps/web)', file: 'apps/web/coverage/coverage-summary.json' },
   // Present once apps/api runs `vitest --coverage`; reported as missing until then.
   { workspace: 'vitest (apps/api)', file: 'apps/api/coverage/coverage-summary.json' },
+  { workspace: 'vitest (apps/admin)', file: 'apps/admin/coverage/coverage-summary.json' },
 ];
 
 // First match wins; order matters for the packages/core split.
@@ -46,7 +47,7 @@ const EXPECTED = [
   'packages/core/rag', 'packages/core/voice', 'packages/core/lipsync', 'packages/core/tts',
   'packages/core/study', 'scripts/eval/lib', 'scripts/ingest', 'apps/mobile/src/lib',
   'apps/mobile/src/features', 'apps/web/src/services', 'apps/web/src/study', 'apps/web/src/voice',
-  'apps/web/src/avatar', 'apps/web/src/screens', 'apps/api/api',
+  'apps/web/src/avatar', 'apps/web/src/screens', 'apps/api/api', 'apps/admin/src',
 ];
 
 const METRICS = ['statements', 'branches', 'functions', 'lines'];

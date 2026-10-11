@@ -84,6 +84,9 @@ export function applyCors(req, res) {
   }
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    // Authorization: shared with the knowledge-base admin intake endpoint
+    // (adminGuard.js), which reuses this helper for its own CORS and sends a
+    // real Supabase access token in that header, not a custom one.
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-study-code, Authorization');
     res.setHeader('Access-Control-Max-Age', '86400');
     res.status(204).end();

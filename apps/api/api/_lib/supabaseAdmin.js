@@ -71,6 +71,26 @@ export async function insertReturning(table, row, columns) {
 }
 
 /**
+ * Insert many rows and return the requested columns for each, PostgREST's own
+ * max URL/body size aside. Chunked at 50 per request (same batch size
+ * ingest.mjs uses for its upserts) so one oversized document can't exceed
+ * PostgREST's request limits in a single call.
+ */
+export async function insertManyReturning(table, rows, columns) {
+  const out = [];
+  for (let i = 0; i < rows.length; i += 50) {
+    const batch = rows.slice(i, i + 50);
+    const { rows: written } = await request(`${table}?select=${encodeURIComponent(columns)}`, {
+      method: 'POST',
+      headers: headers({ Prefer: 'return=representation' }),
+      body: JSON.stringify(batch),
+    });
+    if (Array.isArray(written)) out.push(...written);
+  }
+  return out;
+}
+
+/**
  * Insert many rows, skipping any that collide on `onConflict`.
  *
  * The event stream is retried and beacon-flushed, so the same (session, seq)

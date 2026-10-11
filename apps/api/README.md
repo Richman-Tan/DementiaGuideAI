@@ -66,7 +66,9 @@ addressable.
 |---|---|
 | `api/chat.js`, `api/embed.js`, `api/speech.js`, `api/transcribe.js`, `api/eleven-tts.js` | Credentialed proxies. Explicit per-endpoint allowlists, not a catch-all passthrough: a leaked access code must not reach an arbitrary model. |
 | `api/study/` | Session lifecycle and event capture for the usability study (`docs/study/`) |
+| `api/admin/ingest.js` | Knowledge-base intake for `apps/admin` (see that app's README) — chunks/tags/titles/embeds a submission via `scripts/ingest/pipeline.js` and writes it `review_status='pending'` |
 | `api/_lib/guard.js` | CORS, access-code auth, per-code metering, raw-body reading |
+| `api/_lib/adminGuard.js` | Auth for the admin intake endpoint — a verified Supabase Auth session checked against `ADMIN_ALLOWED_EMAILS`, not a shared secret like the study's access codes |
 | `api/_lib/supabaseAdmin.js` | PostgREST over `fetch` — **not** supabase-js, which throws on Node 20 for want of a native WebSocket (same reason `scripts/eval/lib.mjs` avoids it) |
 
 Shared logic comes from `@dementiaguide/core`, declared as a real workspace

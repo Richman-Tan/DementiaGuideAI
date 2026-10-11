@@ -39,7 +39,7 @@ export default function App() {
   }
 
   if (!auth.accessToken) {
-    return <SignIn sendMagicLink={auth.sendMagicLink} />;
+    return <SignIn signIn={auth.signIn} />;
   }
 
   return (
@@ -59,45 +59,49 @@ export default function App() {
   );
 }
 
-function SignIn({ sendMagicLink }) {
+function SignIn({ signIn }) {
   const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [signing, setSigning] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setSending(true);
+    setSigning(true);
+    setError(null);
     try {
-      await sendMagicLink(email.trim());
+      await signIn(email.trim(), password);
     } catch (err) {
-      // Logged, not shown: the message is the same either way so a caller
-      // can't tell a config error from "that email isn't allowed to sign in".
-      console.error(`[auth] sign-in request failed: ${err.message}`);
+      // Shown as-is, not replaced with a generic message: Supabase's own
+      // wrong-credentials message ("Invalid login credentials") is already
+      // vague enough not to leak which part was wrong, and anything else
+      // (network/CORS/config failures) is a different problem that needs to
+      // look different on screen — masking it here once already cost a long
+      // detour chasing a "wrong password" that was actually a CSP block.
+      setError(err.message);
     } finally {
-      setSending(false);
-      setSent(true);
+      setSigning(false);
     }
   }
 
   return (
     <div className="app">
       <h1>DementiaGuide AI — knowledge base intake</h1>
-      {sent ? (
-        <p>If that email has access, a sign-in link was just sent to it. Open it on this device to continue.</p>
-      ) : (
-        <>
-          <p>Enter the email address you were given access with.</p>
-          <form onSubmit={handleSubmit}>
-            <div className="field">
-              <label htmlFor="email">Email</label>
-              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus required />
-            </div>
-            <button type="submit" disabled={sending || !email.trim()}>
-              {sending ? 'Sending…' : 'Send sign-in link'}
-            </button>
-          </form>
-        </>
-      )}
+      <p>Sign in with the email and password you were given.</p>
+      <form onSubmit={handleSubmit}>
+        <div className="field">
+          <label htmlFor="email">Email</label>
+          <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus required />
+        </div>
+        <div className="field">
+          <label htmlFor="password">Password</label>
+          <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </div>
+        {error && <p className="error">{error}</p>}
+        <button type="submit" disabled={signing || !email.trim() || !password}>
+          {signing ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
     </div>
   );
 }

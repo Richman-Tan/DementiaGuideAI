@@ -1,11 +1,13 @@
 // Auth for this app is a real Supabase Auth session, not a pasted secret —
-// signInWithOtp() sends a magic-link email; Supabase's client auto-detects
-// the resulting token in the redirect URL (detectSessionInUrl defaults to
-// true) and onAuthStateChange picks it up here. shouldCreateUser: false
-// means only emails a developer already created in the Supabase dashboard
-// can request a link — typing an arbitrary email can't self-register.
+// signInWithPassword() against an account a developer already created in the
+// Supabase dashboard (sign-ups are not exposed anywhere in this app, so
+// there's no self-registration path to worry about). Switched from the
+// original magic-link (signInWithOtp) design: that depends on Supabase's
+// default email service actually delivering in a reasonable time, which has
+// a low rate limit and nothing to fall back on when it's hit — a bad
+// dependency for a tool meant to be quick for a non-technical client to use.
 // Mirrors apps/web/src/state/AuthContext.jsx's getSession-then-subscribe
-// shape, swapping signInAnonymously() for signInWithOtp().
+// shape, swapping signInAnonymously() for signInWithPassword().
 import { useCallback, useEffect, useState } from 'react';
 import { supabase, supabaseConfigured } from './supabase.js';
 
@@ -31,11 +33,8 @@ export function useAuth() {
     return () => { cancelled = true; sub?.subscription?.unsubscribe(); };
   }, []);
 
-  const sendMagicLink = useCallback(async (email) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: false, emailRedirectTo: window.location.origin },
-    });
+  const signIn = useCallback(async (email, password) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
   }, []);
 
@@ -48,7 +47,7 @@ export function useAuth() {
     status, // 'loading' | 'ready' | 'unavailable'
     accessToken: session?.access_token ?? null,
     email: session?.user?.email ?? null,
-    sendMagicLink,
+    signIn,
     signOut,
   };
 }

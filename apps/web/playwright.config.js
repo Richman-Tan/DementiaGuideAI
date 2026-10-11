@@ -10,12 +10,18 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = Number(process.env.E2E_PORT || 4173);
+// An instrumented dev server (E2E_COVERAGE=1) transforms and runs every module
+// several times slower; the same flows need more headroom there, not different
+// assertions.
+const SLOW = process.env.E2E_COVERAGE === '1' ? 3 : 1;
+// Specs for the production-like build (the `shipped` project below).
+const SHIPPED = /(account|feedback-off)\.spec\.js/;
 
 export default defineConfig({
   testDir: './e2e',
   testMatch: /.*\.spec\.js/,
-  timeout: 60_000,
-  expect: { timeout: 10_000 },
+  timeout: 60_000 * SLOW,
+  expect: { timeout: 10_000 * SLOW },
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
@@ -29,20 +35,58 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: {
-    command: `npx vite --port ${PORT} --strictPort --host 127.0.0.1`,
-    url: `http://127.0.0.1:${PORT}/`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: {
+  projects: [
+    { name: 'chromium', testIgnore: SHIPPED, use: { ...devices['Desktop Chrome'] } },
+    // The app as production builds it: Supabase configured, so anonymous
+    // sign-in, the server-side conversation threads and the account upgrade
+    // run; and the feedback round switched off, as it ships. The Supabase URL
+    // points at a host that does not exist; mockSupabase() in e2e/support.js
+    // answers every call in the browser.
+    {
+      name: 'shipped',
+      testMatch: SHIPPED,
+      use: { ...devices['Desktop Chrome'], baseURL: `http://127.0.0.1:${PORT + 1}` },
+    },
+  ],
+  webServer: [
+    server(PORT, {
       // Force the unconfigured Supabase path regardless of a developer's .env:
       // auth reports 'unavailable' (no anonymous sign-in call), conversation
       // persistence is skipped, and retrieval goes to a host the tests mock.
       VITE_SUPABASE_URL: '',
       VITE_SUPABASE_ANON_KEY: '',
+      // The feedback round ships switched off; this build switches it on, with
+      // the contact and e-DiVA link it must have before it goes live, so its
+      // flow is tested and every tasks-study flow is proven unaffected by it.
+      VITE_STUDY_FEEDBACK: '1',
+      VITE_STUDY_FEEDBACK_CONTACT: 'the DementiaGuide team at feedback@example.nz',
+      VITE_STUDY_EDIVA_URL: 'https://ediva.example.nz/',
+    }),
+    server(PORT + 1, {
+      VITE_SUPABASE_URL: 'https://e2e-supabase.invalid',
+      VITE_SUPABASE_ANON_KEY: 'e2e-anon-key',
+      VITE_STUDY_FEEDBACK: '',
+      VITE_STUDY_FEEDBACK_CONTACT: '',
+      VITE_STUDY_EDIVA_URL: '',
+    }),
+  ],
+});
+
+function server(port, appEnv) {
+  return {
+    command: `npx vite --port ${port} --strictPort --host 127.0.0.1`,
+    url: `http://127.0.0.1:${port}/`,
+    // Never reuse a server for a coverage run: a plain one left running locally
+    // would silently record nothing.
+    reuseExistingServer: !process.env.CI && process.env.E2E_COVERAGE !== '1',
+    timeout: 120_000,
+    env: {
+      ...appEnv,
       VITE_API_BASE_URL: '',
       VITE_FORCE_MOCK: '',
+      // `E2E_COVERAGE=1` instruments the dev server (vite.config.js) and makes
+      // the page fixture in e2e/support.js save each test's coverage.
+      E2E_COVERAGE: process.env.E2E_COVERAGE || '',
     },
-  },
-});
+  };
+}

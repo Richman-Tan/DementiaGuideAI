@@ -40,6 +40,12 @@ const SettingRow = ({ icon, iconColor = Colors.primary, label, sublabel, onPress
       onPress={onPress}
       disabled={!onPress && !right}
       activeOpacity={onPress ? 0.7 : 1}
+      // A row with its own action stays one accessible button. A row without
+      // one (a switch, the text-size buttons, or plain information) must not
+      // be a single accessibility element: on iOS that hides everything inside
+      // it, so VoiceOver (and the e2e tests in apps/mobile/.maestro) could
+      // neither reach the switch nor read its state or the row's details.
+      accessible={!!onPress}
       accessibilityLabel={label}
       accessibilityRole={onPress ? 'button' : 'none'}
     >

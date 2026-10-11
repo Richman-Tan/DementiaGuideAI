@@ -9,6 +9,8 @@ import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { useStudy } from '../study/StudyContext.jsx';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
 import { CitationText } from '../components/CitationText.jsx';
+import FlagAnswer from '../study/FlagAnswer.jsx';
+import { inLiveStudy } from '../study/guards.js';
 import { makeStickTracker } from '../lib/autoscroll.js';
 
 const Dots = () => (
@@ -30,7 +32,9 @@ export default function Chat({ isDesktop, isMobile }) {
   // Arm B is the text baseline — no avatar of any kind, including the desktop
   // bust panel. Leaving it visible would make the two arms differ by less than
   // the design says they do.
-  const armB = Boolean(study?.active && study.stage?.arm === 'B');
+  // Only while the session is live — a finished session left on the device
+  // must not hide the avatar for good (see inLiveStudy).
+  const armB = inLiveStudy(study) && study.stage?.arm === 'B';
   const [panel, setPanel] = useState(true);
   const chatEl = useRef(null);
 
@@ -56,10 +60,9 @@ export default function Chat({ isDesktop, isMobile }) {
     scrollCb.current && scrollCb.current();
   }, [messages, typing, scrollCb]);
 
-  const onTranscriptScroll = () => {
-    const el = chatEl.current;
-    if (!el) return;
-    stickRef.current.onScroll(el);
+  // The transcript's own scroll event: currentTarget is the element that scrolled.
+  const onTranscriptScroll = (e) => {
+    stickRef.current.onScroll(e.currentTarget);
     setDetached(!stickRef.current.stuck());
   };
   const jumpToLatest = () => {
@@ -131,6 +134,14 @@ export default function Chat({ isDesktop, isMobile }) {
                           <button key={j} onClick={() => setDrawer(c)} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', minHeight: '36px', padding: '4px 14px', borderRadius: '999px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '.85rem', cursor: 'pointer' }} className="hv8"><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: c.dot }} />{c.title}</button>
                         ))}
                       </div>
+                    )}
+                    {!m.streaming && (
+                      <FlagAnswer
+                        surface="chat"
+                        answer={m.text}
+                        question={messages[i - 1]?.role === 'user' ? messages[i - 1].text : ''}
+                        turnId={m.turnId || null}
+                      />
                     )}
                     <div style={{ alignSelf: 'flex-start', color: 'var(--text2)', fontSize: '.75rem', paddingLeft: '4px' }}>{m.time}</div>
                   </>

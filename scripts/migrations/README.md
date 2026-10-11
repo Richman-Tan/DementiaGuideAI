@@ -27,6 +27,7 @@ dated files.
 | `2026-08-19_study_version_stamp.sql` | ⏳ verify before enrolling | Adds `study_sessions.study_version`. `apps/api/api/study/session.js` selects **and** inserts this column, so if it is missing every session create fails |
 | `2026-09-16_display_title.sql` | ✅ confirmed live 2026-10-07 | Adds `knowledge_chunks.display_title` (caregiver-facing plain-language title, separate from the embedding-input `title`) and returns it from `match_chunks`. The row above was stale — a direct check against production (`pg_get_function_result`) found this version already live, 11-column return shape, before the review_status migration below was written against it |
 | `2026-10-07_review_status.sql` | ✅ run 2026-10-07 (corrected live, see below) | Adds `knowledge_chunks.review_status` (`pending`/`approved`/`rejected`, default `pending`, existing rows backfilled to `approved`) and gates `match_chunks` on `review_status = 'approved'`. Lets the new admin intake tool (`apps/admin` + `apps/api/api/admin/ingest.js`) write submissions that aren't retrievable until a reviewer approves them in the table editor |
+| `2026-10-07_study_protocol.sql` | ⏳ apply before enabling the feedback round | Adds `study_sessions.protocol` (`tasks` \| `feedback`) and lets a feedback session have no arm/set order. `session.js` uses the column only when `STUDY_PROTOCOLS` includes `feedback`, so run this first |
 
 After any corpus replacement (Stage 9), rebuild the ivfflat index so its
 training clusters match the new data: `reindex index knowledge_chunks_embedding_idx;`

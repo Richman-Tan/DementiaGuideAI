@@ -9,8 +9,9 @@
 //   node scripts/eval/agreement.mjs --a docs/report/eval/human/human-sheet_round1_R1.csv \
 //        --key docs/report/eval/human/human-sheet_round1_KEY.csv --judge docs/report/eval/judge_claude-opus-5_v2.csv [more judge csvs]
 //
-//   # judge vs judge (two judge CSVs over the same generation file)
-//   node scripts/eval/agreement.mjs --judge-a judge_claude-opus-5_v2.csv --judge-b judge_gpt-4o-mini_v2.csv
+//   # judge vs judge (judge CSVs over the same generation files; each side takes one or more,
+//   # joined on column, id, sample and dimension, so a subset judge pairs with its rows only)
+//   node scripts/eval/agreement.mjs --judge-a judge_claude-opus-5_v2.csv [more] --judge-b judge_gpt-4o-mini_v2.csv [more]
 //
 //   [--dims groundedness,correctness,helpfulness,tone,safety]
 import { readFileSync } from 'node:fs';
@@ -74,9 +75,9 @@ if (argVal('--a') && argVal('--b')) {
   for (const k of key) for (const d of DIMS) push(d, A.get(`${k.item}|${d}`), J.get(`${k.column}|${k.id}|${k.sample}|${d}`));
   report(`Human vs judge — ${argVal('--a')} vs ${argAll('--judge').join(', ')}`, pairsByDim);
 } else if (argVal('--judge-a') && argVal('--judge-b')) {
-  const A = judgeScores([argVal('--judge-a')]), B = judgeScores([argVal('--judge-b')]);
+  const A = judgeScores(argAll('--judge-a')), B = judgeScores(argAll('--judge-b'));
   for (const [k, x] of A) { const d = k.split('|').pop(); push(d, x, B.get(k)); }
-  report(`Judge vs judge — ${argVal('--judge-a')} vs ${argVal('--judge-b')}`, pairsByDim);
+  report(`Judge vs judge — ${argAll('--judge-a').join(', ')} vs ${argAll('--judge-b').join(', ')}`, pairsByDim);
 } else {
   console.error('Provide --a/--b (two sheets), --a/--key/--judge (sheet vs judge), or --judge-a/--judge-b.');
   process.exit(1);

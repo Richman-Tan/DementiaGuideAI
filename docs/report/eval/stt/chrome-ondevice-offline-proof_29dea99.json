@@ -1,0 +1,942 @@
+{
+ "mode": "offline-proof",
+ "startedAt": "2026-10-10T01:12:33.384Z",
+ "chrome": "155.0.8059.39",
+ "os": "macOS 27.0.1 (26A434)",
+ "headless": true,
+ "switches": [
+  "--user-data-dir=<profile>",
+  "--remote-debugging-port=0",
+  "--no-first-run",
+  "--no-default-browser-check",
+  "--mute-audio",
+  "--use-fake-device-for-media-stream",
+  "--use-fake-ui-for-media-stream",
+  "--disable-audio-input",
+  "--autoplay-policy=no-user-gesture-required",
+  "--disable-background-timer-throttling",
+  "--disable-renderer-backgrounding",
+  "--disable-backgrounding-occluded-windows",
+  "--headless=new",
+  "--proxy-server=http://127.0.0.1:64478",
+  "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1",
+  "--disable-quic",
+  "--disable-background-networking",
+  "--disable-sync",
+  "--no-pings",
+  "--disable-domain-reliability",
+  "--disable-client-side-phishing-detection",
+  "--disable-default-apps",
+  "--disable-extensions",
+  "--disable-breakpad",
+  "--metrics-recording-only",
+  "--log-net-log=<scratch>/netlog-proof-1791594749175.json",
+  "--net-log-capture-mode=Default"
+ ],
+ "request": {
+  "leadMs": 250,
+  "tailMs": 1000,
+  "endTimeoutMs": 20000,
+  "audiostartTimeoutMs": 5000,
+  "keepAlive": true
+ },
+ "info": {
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "hasSR": true,
+  "hasAvailable": true,
+  "hasInstall": true,
+  "hasProcessLocally": true,
+  "hasPhrases": true
+ },
+ "locales": [
+  {
+   "locale": "en-NZ",
+   "available": {
+    "local": "available",
+    "cloud": "available",
+    "frLocal": "downloadable",
+    "frCloud": "available"
+   },
+   "sequential": {
+    "locale": "en-NZ",
+    "local": [
+     {
+      "id": "syn1",
+      "voice": "Samantha",
+      "script": "My mother keeps forgetting where she put her keys and it worries me.",
+      "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 33,
+      "finalWaitMs": 19,
+      "clipMs": 3499
+     },
+     {
+      "id": "syn2",
+      "voice": "Samantha",
+      "script": "What should I do when my father gets upset in the evening?",
+      "hyp": "What should I do when my father gets upset in the evening",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 26,
+      "finalWaitMs": 0,
+      "clipMs": 3067
+     },
+     {
+      "id": "syn3",
+      "voice": "Daniel",
+      "script": "The weather has been cold and wet for most of the week.",
+      "hyp": "The weather has been cold and wet for most of the week",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 24,
+      "finalWaitMs": 0,
+      "clipMs": 2888
+     },
+     {
+      "id": "syn4",
+      "voice": "Karen",
+      "script": "Please remind me to call the doctor tomorrow morning about the new tablets.",
+      "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 28,
+      "finalWaitMs": 0,
+      "clipMs": 4115
+     },
+     {
+      "id": "syn5",
+      "voice": "Samantha",
+      "script": "We went for a short walk to the park and then had a cup of tea.",
+      "hyp": "We went for a short walk to the park and then had a cup of tea",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 28,
+      "finalWaitMs": 11,
+      "clipMs": 3172
+     },
+     {
+      "id": "syn6",
+      "voice": "Daniel",
+      "script": "Is there a support group for carers that meets near the city?",
+      "hyp": "Is there a support group for carers that meets near the city",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 26,
+      "finalWaitMs": 1,
+      "clipMs": 3428
+     }
+    ],
+    "englishFalse": [
+     {
+      "id": "syn1",
+      "lang": "en-NZ",
+      "processLocally": false,
+      "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+      "wer": 0,
+      "errors": [],
+      "nResults": 31,
+      "sameAsOnDevice": true,
+      "window": [
+       1791594793894,
+       1791594801030
+      ],
+      "speechUrls": 0,
+      "speechUrlKeys": [],
+      "proxyRequests": [],
+      "googleConnects": 0
+     },
+     {
+      "id": "syn2",
+      "lang": "en-NZ",
+      "processLocally": false,
+      "hyp": "What should I do when my father gets upset in the evening",
+      "wer": 0,
+      "errors": [],
+      "nResults": 26,
+      "sameAsOnDevice": true,
+      "window": [
+       1791594804033,
+       1791594811548
+      ],
+      "speechUrls": 0,
+      "speechUrlKeys": [],
+      "proxyRequests": [],
+      "googleConnects": 0
+     }
+    ],
+    "cloud": [
+     {
+      "id": "fr1",
+      "lang": "fr-FR",
+      "processLocally": false,
+      "hyp": "",
+      "errors": [
+       "network"
+      ],
+      "audiostart": true,
+      "window": [
+       1791594814702,
+       1791594816891
+      ],
+      "speechUrls": 8,
+      "speechUrlKeys": [
+       "https://www.google.com/speech-api/full-duplex/v1/down",
+       "https://www.google.com/speech-api/full-duplex/v1/up"
+      ],
+      "proxyRequests": [
+       "CONNECT www.google.com:443",
+       "CONNECT www.google.com:443"
+      ],
+      "googleConnects": 2
+     },
+     {
+      "id": "fr2",
+      "lang": "fr-FR",
+      "processLocally": false,
+      "hyp": "",
+      "errors": [
+       "network"
+      ],
+      "audiostart": true,
+      "window": [
+       1791594819892,
+       1791594822086
+      ],
+      "speechUrls": 8,
+      "speechUrlKeys": [
+       "https://www.google.com/speech-api/full-duplex/v1/down",
+       "https://www.google.com/speech-api/full-duplex/v1/up"
+      ],
+      "proxyRequests": [
+       "CONNECT www.google.com:443",
+       "CONNECT www.google.com:443"
+      ],
+      "googleConnects": 2
+     }
+    ],
+    "localOk": true,
+    "cloudFailed": true,
+    "meanWer": 0,
+    "windows": {
+     "local": [
+      1791594753824,
+      1791594783893
+     ]
+    },
+    "cloudRequestRefused": true,
+    "englishNoSpeechRequest": true
+   },
+   "repeat": {
+    "meanWer": 0,
+    "identical": 6,
+    "n": 6
+   },
+   "concurrency": {
+    "2": {
+     "meanWer": 0,
+     "identicalToSequential": 6,
+     "n": 6,
+     "errors": [],
+     "results": [
+      {
+       "id": "syn1",
+       "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn2",
+       "hyp": "What should I do when my father gets upset in the evening",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn3",
+       "hyp": "The weather has been cold and wet for most of the week",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn4",
+       "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn5",
+       "hyp": "We went for a short walk to the park and then had a cup of tea",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn6",
+       "hyp": "Is there a support group for carers that meets near the city",
+       "wer": 0,
+       "errors": []
+      }
+     ]
+    },
+    "4": {
+     "meanWer": 0,
+     "identicalToSequential": 6,
+     "n": 6,
+     "errors": [],
+     "results": [
+      {
+       "id": "syn1",
+       "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn2",
+       "hyp": "What should I do when my father gets upset in the evening",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn3",
+       "hyp": "The weather has been cold and wet for most of the week",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn4",
+       "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn5",
+       "hyp": "We went for a short walk to the park and then had a cup of tea",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn6",
+       "hyp": "Is there a support group for carers that meets near the city",
+       "wer": 0,
+       "errors": []
+      }
+     ]
+    }
+   }
+  },
+  {
+   "locale": "en-US",
+   "available": {
+    "local": "available",
+    "cloud": "available",
+    "frLocal": "downloadable",
+    "frCloud": "available"
+   },
+   "sequential": {
+    "locale": "en-US",
+    "local": [
+     {
+      "id": "syn1",
+      "voice": "Samantha",
+      "script": "My mother keeps forgetting where she put her keys and it worries me.",
+      "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 31,
+      "finalWaitMs": 0,
+      "clipMs": 3499
+     },
+     {
+      "id": "syn2",
+      "voice": "Samantha",
+      "script": "What should I do when my father gets upset in the evening?",
+      "hyp": "What should I do when my father gets upset in the evening",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 27,
+      "finalWaitMs": 0,
+      "clipMs": 3067
+     },
+     {
+      "id": "syn3",
+      "voice": "Daniel",
+      "script": "The weather has been cold and wet for most of the week.",
+      "hyp": "The weather has been cold and wet for most of the week",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 23,
+      "finalWaitMs": 14,
+      "clipMs": 2888
+     },
+     {
+      "id": "syn4",
+      "voice": "Karen",
+      "script": "Please remind me to call the doctor tomorrow morning about the new tablets.",
+      "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 28,
+      "finalWaitMs": 0,
+      "clipMs": 4115
+     },
+     {
+      "id": "syn5",
+      "voice": "Samantha",
+      "script": "We went for a short walk to the park and then had a cup of tea.",
+      "hyp": "We went for a short walk to the park and then had a cup of tea",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 30,
+      "finalWaitMs": 0,
+      "clipMs": 3172
+     },
+     {
+      "id": "syn6",
+      "voice": "Daniel",
+      "script": "Is there a support group for carers that meets near the city?",
+      "hyp": "Is there a support group for carers that meets near the city",
+      "wer": 0,
+      "errors": [],
+      "audiostart": true,
+      "lastFinal": true,
+      "nResults": 27,
+      "finalWaitMs": 0,
+      "clipMs": 3428
+     }
+    ],
+    "englishFalse": [
+     {
+      "id": "syn1",
+      "lang": "en-US",
+      "processLocally": false,
+      "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+      "wer": 0,
+      "errors": [],
+      "nResults": 30,
+      "sameAsOnDevice": true,
+      "window": [
+       1791594917693,
+       1791594924615
+      ],
+      "speechUrls": 0,
+      "speechUrlKeys": [],
+      "proxyRequests": [],
+      "googleConnects": 0
+     },
+     {
+      "id": "syn2",
+      "lang": "en-US",
+      "processLocally": false,
+      "hyp": "What should I do when my father gets upset in the evening",
+      "wer": 0,
+      "errors": [],
+      "nResults": 28,
+      "sameAsOnDevice": true,
+      "window": [
+       1791594927617,
+       1791594933994
+      ],
+      "speechUrls": 0,
+      "speechUrlKeys": [],
+      "proxyRequests": [
+       "CONNECT mtalk.google.com:443"
+      ],
+      "googleConnects": 0
+     }
+    ],
+    "cloud": [
+     {
+      "id": "fr1",
+      "lang": "fr-FR",
+      "processLocally": false,
+      "hyp": "",
+      "errors": [
+       "network"
+      ],
+      "audiostart": true,
+      "window": [
+       1791594936996,
+       1791594939152
+      ],
+      "speechUrls": 8,
+      "speechUrlKeys": [
+       "https://www.google.com/speech-api/full-duplex/v1/down",
+       "https://www.google.com/speech-api/full-duplex/v1/up"
+      ],
+      "proxyRequests": [
+       "CONNECT www.google.com:443",
+       "CONNECT www.google.com:443"
+      ],
+      "googleConnects": 2
+     },
+     {
+      "id": "fr2",
+      "lang": "fr-FR",
+      "processLocally": false,
+      "hyp": "",
+      "errors": [
+       "network"
+      ],
+      "audiostart": true,
+      "window": [
+       1791594942154,
+       1791594944196
+      ],
+      "speechUrls": 8,
+      "speechUrlKeys": [
+       "https://www.google.com/speech-api/full-duplex/v1/down",
+       "https://www.google.com/speech-api/full-duplex/v1/up"
+      ],
+      "proxyRequests": [
+       "CONNECT www.google.com:443",
+       "CONNECT www.google.com:443"
+      ],
+      "googleConnects": 2
+     }
+    ],
+    "localOk": true,
+    "cloudFailed": true,
+    "meanWer": 0,
+    "windows": {
+     "local": [
+      1791594879384,
+      1791594907634
+     ]
+    },
+    "cloudRequestRefused": true,
+    "englishNoSpeechRequest": true
+   },
+   "repeat": {
+    "meanWer": 0,
+    "identical": 6,
+    "n": 6
+   },
+   "concurrency": {
+    "2": {
+     "meanWer": 0,
+     "identicalToSequential": 6,
+     "n": 6,
+     "errors": [],
+     "results": [
+      {
+       "id": "syn1",
+       "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn2",
+       "hyp": "What should I do when my father gets upset in the evening",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn3",
+       "hyp": "The weather has been cold and wet for most of the week",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn4",
+       "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn5",
+       "hyp": "We went for a short walk to the park and then had a cup of tea",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn6",
+       "hyp": "Is there a support group for carers that meets near the city",
+       "wer": 0,
+       "errors": []
+      }
+     ]
+    },
+    "4": {
+     "meanWer": 0,
+     "identicalToSequential": 6,
+     "n": 6,
+     "errors": [],
+     "results": [
+      {
+       "id": "syn1",
+       "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn2",
+       "hyp": "What should I do when my father gets upset in the evening",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn3",
+       "hyp": "The weather has been cold and wet for most of the week",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn4",
+       "hyp": "Please remind me to call the doctor tomorrow morning about the new tablets",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn5",
+       "hyp": "We went for a short walk to the park and then had a cup of tea",
+       "wer": 0,
+       "errors": []
+      },
+      {
+       "id": "syn6",
+       "hyp": "Is there a support group for carers that meets near the city",
+       "wer": 0,
+       "errors": []
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "netlogCaughtUpLive": true,
+ "netlogCatchUpSeconds": 0,
+ "finishedAt": "2026-10-10T01:17:49.078Z",
+ "guards": {
+  "proxyRequests": 63,
+  "proxyByHost": {
+   "GET clients2.google.com": 1,
+   "CONNECT www.google.com:443": 40,
+   "CONNECT accounts.google.com:443": 7,
+   "CONNECT update.googleapis.com:443": 4,
+   "CONNECT mtalk.google.com:5228": 2,
+   "CONNECT android.clients.google.com:443": 4,
+   "CONNECT optimizationguide-pa.googleapis.com:443": 1,
+   "CONNECT mtalk.google.com:443": 2,
+   "POST update.googleapis.com": 1,
+   "CONNECT clients1.google.com:443": 1
+  },
+  "lsofSnapshots": 312,
+  "lsofMaxSockets": 6,
+  "lsofSocketKinds": {
+   "TCP loopback-local LISTEN": 312,
+   "TCP loopback-local->loopback ESTABLISHED": 585,
+   "TCP loopback-local->loopback CLOSE_WAIT": 110,
+   "TCP loopback-local->loopback CLOSED": 5
+  },
+  "lsofExternal": [],
+  "lsofIpv6ProbeUdp": 0,
+  "nettopSamples": 320,
+  "nettopFlowRowsAllProcesses": 21546,
+  "nettopTreeFlows": [],
+  "nettopTreeZeroByteUdp": {},
+  "sandboxDenials": [],
+  "sandboxDenialsOtherProcesses": {
+   "UnknownSendersBlastDoorService": 1,
+   "MessagesBlastDoorService": 1
+  },
+  "tccTrips": [],
+  "tccPreflights": 4,
+  "tccOtherApps": {},
+  "netlogEvents": 12268,
+  "netlogUrls": {
+   "http://clients2.google.com/time/1/current": 4,
+   "https://accounts.google.com/ListAccounts": 28,
+   "https://www.google.com/async/folae": 4,
+   "https://www.google.com/": 46,
+   "https://update.googleapis.com/service/update2/json": 16,
+   "https://android.clients.google.com/c2dm/register3": 16,
+   "https://optimizationguide-pa.googleapis.com/v1:GetModels": 4,
+   "http://update.googleapis.com/service/update2/json": 4,
+   "https://www.google.com/speech-api/full-duplex/v1/down": 16,
+   "https://www.google.com/speech-api/full-duplex/v1/up": 16,
+   "https://clients1.google.com/tools/pso/ping": 4
+  },
+  "netlogAddrs": {
+   "UDP_CONNECT/UDP_SOCKET [2001:4860:4860::8888]:443": 30,
+   "SOCKET_CONNECT/UDP_CLIENT_SOCKET [2001:4860:4860::8888]:443": 30
+  },
+  "netlogSpeechUrls": 32,
+  "armedAt": null,
+  "abortReason": null
+ },
+ "speechUrls": {
+  "total": 32,
+  "duringCloudControl": 32,
+  "duringOnDevice": 0,
+  "keys": [
+   "https://www.google.com/speech-api/full-duplex/v1/down",
+   "https://www.google.com/speech-api/full-duplex/v1/up"
+  ]
+ },
+ "controls": [
+  {
+   "locale": "en-NZ",
+   "englishFalse": [
+    {
+     "id": "syn1",
+     "lang": "en-NZ",
+     "processLocally": false,
+     "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+     "wer": 0,
+     "errors": [],
+     "nResults": 31,
+     "sameAsOnDevice": true,
+     "window": [
+      1791594793894,
+      1791594801030
+     ],
+     "speechUrls": 0,
+     "speechUrlKeys": [],
+     "proxyRequests": [],
+     "googleConnects": 0
+    },
+    {
+     "id": "syn2",
+     "lang": "en-NZ",
+     "processLocally": false,
+     "hyp": "What should I do when my father gets upset in the evening",
+     "wer": 0,
+     "errors": [],
+     "nResults": 26,
+     "sameAsOnDevice": true,
+     "window": [
+      1791594804033,
+      1791594811548
+     ],
+     "speechUrls": 0,
+     "speechUrlKeys": [],
+     "proxyRequests": [],
+     "googleConnects": 0
+    }
+   ],
+   "cloud": [
+    {
+     "id": "fr1",
+     "lang": "fr-FR",
+     "processLocally": false,
+     "hyp": "",
+     "errors": [
+      "network"
+     ],
+     "audiostart": true,
+     "window": [
+      1791594814702,
+      1791594816891
+     ],
+     "speechUrls": 8,
+     "speechUrlKeys": [
+      "https://www.google.com/speech-api/full-duplex/v1/down",
+      "https://www.google.com/speech-api/full-duplex/v1/up"
+     ],
+     "proxyRequests": [
+      "CONNECT www.google.com:443",
+      "CONNECT www.google.com:443"
+     ],
+     "googleConnects": 2
+    },
+    {
+     "id": "fr2",
+     "lang": "fr-FR",
+     "processLocally": false,
+     "hyp": "",
+     "errors": [
+      "network"
+     ],
+     "audiostart": true,
+     "window": [
+      1791594819892,
+      1791594822086
+     ],
+     "speechUrls": 8,
+     "speechUrlKeys": [
+      "https://www.google.com/speech-api/full-duplex/v1/down",
+      "https://www.google.com/speech-api/full-duplex/v1/up"
+     ],
+     "proxyRequests": [
+      "CONNECT www.google.com:443",
+      "CONNECT www.google.com:443"
+     ],
+     "googleConnects": 2
+    }
+   ],
+   "cloudFailed": true,
+   "cloudRequestRefused": true,
+   "englishNoSpeechRequest": true
+  },
+  {
+   "locale": "en-US",
+   "englishFalse": [
+    {
+     "id": "syn1",
+     "lang": "en-US",
+     "processLocally": false,
+     "hyp": "My mother keeps forgetting where she put her keys and it worries me",
+     "wer": 0,
+     "errors": [],
+     "nResults": 30,
+     "sameAsOnDevice": true,
+     "window": [
+      1791594917693,
+      1791594924615
+     ],
+     "speechUrls": 0,
+     "speechUrlKeys": [],
+     "proxyRequests": [],
+     "googleConnects": 0
+    },
+    {
+     "id": "syn2",
+     "lang": "en-US",
+     "processLocally": false,
+     "hyp": "What should I do when my father gets upset in the evening",
+     "wer": 0,
+     "errors": [],
+     "nResults": 28,
+     "sameAsOnDevice": true,
+     "window": [
+      1791594927617,
+      1791594933994
+     ],
+     "speechUrls": 0,
+     "speechUrlKeys": [],
+     "proxyRequests": [
+      "CONNECT mtalk.google.com:443"
+     ],
+     "googleConnects": 0
+    }
+   ],
+   "cloud": [
+    {
+     "id": "fr1",
+     "lang": "fr-FR",
+     "processLocally": false,
+     "hyp": "",
+     "errors": [
+      "network"
+     ],
+     "audiostart": true,
+     "window": [
+      1791594936996,
+      1791594939152
+     ],
+     "speechUrls": 8,
+     "speechUrlKeys": [
+      "https://www.google.com/speech-api/full-duplex/v1/down",
+      "https://www.google.com/speech-api/full-duplex/v1/up"
+     ],
+     "proxyRequests": [
+      "CONNECT www.google.com:443",
+      "CONNECT www.google.com:443"
+     ],
+     "googleConnects": 2
+    },
+    {
+     "id": "fr2",
+     "lang": "fr-FR",
+     "processLocally": false,
+     "hyp": "",
+     "errors": [
+      "network"
+     ],
+     "audiostart": true,
+     "window": [
+      1791594942154,
+      1791594944196
+     ],
+     "speechUrls": 8,
+     "speechUrlKeys": [
+      "https://www.google.com/speech-api/full-duplex/v1/down",
+      "https://www.google.com/speech-api/full-duplex/v1/up"
+     ],
+     "proxyRequests": [
+      "CONNECT www.google.com:443",
+      "CONNECT www.google.com:443"
+     ],
+     "googleConnects": 2
+    }
+   ],
+   "cloudFailed": true,
+   "cloudRequestRefused": true,
+   "englishNoSpeechRequest": true
+  }
+ ],
+ "proxyDuringCloudControl": [
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443",
+  "CONNECT www.google.com:443"
+ ],
+ "baseline": {
+  "urlKeys": [
+   "http://clients2.google.com/time/1/current",
+   "http://update.googleapis.com/service/update2/json",
+   "https://accounts.google.com/ListAccounts",
+   "https://android.clients.google.com/c2dm/register3",
+   "https://clients1.google.com/tools/pso/ping",
+   "https://optimizationguide-pa.googleapis.com/v1:GetModels",
+   "https://update.googleapis.com/service/update2/json",
+   "https://www.google.com/",
+   "https://www.google.com/async/folae"
+  ],
+  "addrKeys": [
+   "SOCKET_CONNECT/UDP_CLIENT_SOCKET [2001:4860:4860::8888]:443",
+   "UDP_CONNECT/UDP_SOCKET [2001:4860:4860::8888]:443"
+  ],
+  "proxyHosts": [
+   "accounts.google.com:443",
+   "android.clients.google.com:443",
+   "clients1.google.com:443",
+   "clients2.google.com",
+   "mtalk.google.com:443",
+   "mtalk.google.com:5228",
+   "optimizationguide-pa.googleapis.com:443",
+   "update.googleapis.com",
+   "update.googleapis.com:443",
+   "www.google.com:443"
+  ]
+ },
+ "verdict": {
+  "onDeviceWorksOffline": true,
+  "cloudControlFailsWithNetwork": true,
+  "cloudControlSpeechRequestRefused": true,
+  "englishProcessLocallyFalseMakesNoSpeechRequest": true,
+  "noSpeechUrlOutsideCloudControl": true,
+  "noExternalSocket": true,
+  "noNettopFlow": true,
+  "noSandboxDenial": true,
+  "noTcpToExternalAddress": true,
+  "noMicrophone": true,
+  "pass": true
+ },
+ "tcpExternal": []
+}

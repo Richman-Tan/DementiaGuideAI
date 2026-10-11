@@ -211,9 +211,13 @@ export const VoiceScreen = ({ navigation }) => {
           so iOS never has to present two Modals simultaneously. */}
       {menuVisible && (
         <Modal transparent animationType="none" onRequestClose={() => closeMenu()}>
+          {/* The backdrop Pressables below are accessible={false}: a Pressable is
+              one accessibility element by default, and on iOS that hides the
+              menu items and persona cards inside it from VoiceOver (and from
+              the e2e tests in apps/mobile/.maestro). Taps are unaffected. */}
           {menuStep === 'main' ? (
             /* ── Main dropdown ── */
-            <Pressable style={styles.menuOverlay} onPress={() => closeMenu()}>
+            <Pressable style={styles.menuOverlay} onPress={() => closeMenu()} accessible={false}>
               <Animated.View
                 style={[
                   styles.menuDropdown,
@@ -265,8 +269,8 @@ export const VoiceScreen = ({ navigation }) => {
             </Pressable>
           ) : (
             /* ── Persona selection ── */
-            <Pressable style={styles.personaOverlay} onPress={() => setMenuStep('main')}>
-              <Pressable style={styles.personaSheet} onPress={() => {}}>
+            <Pressable style={styles.personaOverlay} onPress={() => setMenuStep('main')} accessible={false}>
+              <Pressable style={styles.personaSheet} onPress={() => {}} accessible={false}>
                 <TouchableOpacity style={styles.personaBackRow} onPress={() => setMenuStep('main')}>
                   <MaterialCommunityIcons name="chevron-left" size={20} color="rgba(255,255,255,0.6)" />
                   <Text style={styles.personaBackText}>Back</Text>

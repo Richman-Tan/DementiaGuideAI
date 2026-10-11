@@ -1,0 +1,20 @@
+# First-launch state: no saved settings, no chat history and no API keys.
+#
+# clearState wipes the app's data container, which is where AsyncStorage
+# (settings, onboarding flag, chat history) lives. The iOS keychain survives
+# that, and survives a reinstall too, so the keys SecureStore keeps there
+# (OpenAI, ElevenLabs, Azure) need clearKeychain as well. clearKeychain wipes
+# the whole Simulator keychain, which is why scripts/ios-e2e.sh runs the suite
+# on its own Simulator device rather than on one you use day to day.
+appId: com.anonymous.DementiaGuideAi
+---
+- clearKeychain
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Let's begin"
+    timeout: 30000
+# A fresh install is still settling (settings hydration, the welcome fade-in)
+# when the first element appears; a tap in that window is dropped.
+- waitForAnimationToEnd:
+    timeout: 5000

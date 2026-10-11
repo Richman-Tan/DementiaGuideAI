@@ -6,9 +6,11 @@ import React, { useLayoutEffect, useRef } from 'react';
 
 export function GrowTextArea({ value, onChange, onSubmit, onGrow, maxHeight = 120, style, ...rest }) {
   const el = useRef(null);
+  // The textarea below is always rendered and its ref is always `el` (set after
+  // the spread, so a caller's `ref` prop cannot replace it), and React attaches
+  // refs before it runs layout effects, so `el.current` is the textarea here.
   useLayoutEffect(() => {
     const t = el.current;
-    if (!t) return;
     t.style.height = 'auto';
     t.style.height = Math.min(t.scrollHeight, maxHeight) + 'px';
     t.style.overflowY = t.scrollHeight > maxHeight ? 'auto' : 'hidden';
@@ -16,13 +18,13 @@ export function GrowTextArea({ value, onChange, onSubmit, onGrow, maxHeight = 12
   }, [value, maxHeight, onGrow]);
   return (
     <textarea
-      ref={el}
       rows={1}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(); } }}
       style={{ resize: 'none', overflowY: 'hidden', fontFamily: 'inherit', fontSize: '1rem', lineHeight: '1.5', color: 'var(--text)', boxSizing: 'border-box', ...style }}
       {...rest}
+      ref={el}
     />
   );
 }

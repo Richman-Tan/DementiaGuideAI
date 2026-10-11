@@ -175,3 +175,47 @@ describe('readUserId', () => {
     expect(mod.readUserId({ headers: {} })).toBeNull();
   });
 });
+
+describe('jsonBody', () => {
+  it('passes a parsed body through, and parses a text/plain beacon body', async () => {
+    const { mod } = await load('../api/_lib/guard.js');
+    expect(mod.jsonBody({ body: { a: 1 } })).toEqual({ a: 1 });
+    expect(mod.jsonBody({ body: '{"sessionId":"s","events":[]}' })).toEqual({ sessionId: 's', events: [] });
+  });
+
+  it('turns a missing, null or malformed body into an empty object rather than throwing', async () => {
+    const { mod } = await load('../api/_lib/guard.js');
+    expect(mod.jsonBody({})).toEqual({});
+    expect(mod.jsonBody({ body: 'null' })).toEqual({});
+    expect(mod.jsonBody({ body: '{"sessionId": "s", "ev' })).toEqual({}); // a beacon cut off mid-send
+  });
+
+  it('means a malformed beacon is refused as unauthenticated, not as a crash', async () => {
+    const { mod } = await load('../api/_lib/guard.js');
+    const res = makeRes();
+    expect(await mod.guard(makeReq({ code: null, body: '{"accessCode":' }), res, { allowBodyCode: true })).toBeNull();
+    expect(res.statusCode).toBe(401);
+  });
+});
+
+describe('readUserId, malformed tokens', () => {
+  it('is null for a three-part token whose payload is not JSON', async () => {
+    const { mod } = await load('../api/_lib/guard.js');
+    const notJson = Buffer.from('not json').toString('base64url');
+    expect(mod.readUserId({ headers: { authorization: `Bearer a.${notJson}.b` } })).toBeNull();
+  });
+
+  it('is null when the payload has no string sub', async () => {
+    const { mod } = await load('../api/_lib/guard.js');
+    const numeric = Buffer.from(JSON.stringify({ sub: 42 })).toString('base64url');
+    const none = Buffer.from(JSON.stringify({ role: 'anon' })).toString('base64url');
+    expect(mod.readUserId({ headers: { authorization: `Bearer a.${numeric}.b` } })).toBeNull();
+    expect(mod.readUserId({ headers: { authorization: `Bearer a.${none}.b` } })).toBeNull();
+  });
+
+  it('ignores a token sent without the Bearer scheme', async () => {
+    const { mod } = await load('../api/_lib/guard.js');
+    const claims = Buffer.from(JSON.stringify({ sub: 'user-1' })).toString('base64url');
+    expect(mod.readUserId({ headers: { authorization: `a.${claims}.b` } })).toBeNull();
+  });
+});

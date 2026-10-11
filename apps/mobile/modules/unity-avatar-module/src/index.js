@@ -54,5 +54,14 @@ export const NativeUnityAvatarModule = resolveNativeModule();
 
 export const UnityAvatarNativeView = resolveNativeView();
 
-/** True when the real native Unity module loaded (device build with the Unity artifact present). */
-export const isUnityAvatarAvailable = nativeModuleAvailable;
+/**
+ * True when the real native Unity module loaded (device build with the Unity artifact present).
+ *
+ * On iOS the module also loads when it was compiled WITHOUT UnityFramework
+ * (Simulator builds, EXPO_UNITY_AVATAR=0): UnityBridgeManager.swift compiles to
+ * a stub, so the module exists but can never show Unity. It says so through the
+ * `isUnityLinked` constant. Only an explicit `false` counts, so the Android
+ * module, which doesn't export the constant, behaves exactly as before.
+ */
+export const isUnityAvatarAvailable =
+  nativeModuleAvailable && NativeUnityAvatarModule.isUnityLinked !== false;

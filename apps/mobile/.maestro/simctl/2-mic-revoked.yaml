@@ -1,0 +1,42 @@
+# FR-36 drill, microphone revoked with `xcrun simctl privacy` — part 2 of 2.
+# See 1-prepare.yaml for the order scripts/ios-e2e.sh runs things in. The app
+# is already running when this starts, launched by `xcrun simctl launch`, and
+# this flow never calls launchApp, so the only permission change is the
+# script's revoke.
+#
+# Same checks as 11-drill-mic-denied.yaml: the app treats a refusal as a
+# silent no-op (useAvatarConversation.js, startRecording), so the mic stays
+# idle and no message explains why; typing still works.
+appId: com.anonymous.DementiaGuideAi
+name: Drill (simctl) — microphone revoked
+tags:
+  - drill
+  - voice
+---
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 30000
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn: "Start voice conversation"
+      - extendedWaitUntil:
+          visible: "Start speaking"
+          timeout: 10000
+
+# Tapping the mic: nothing happens, and nothing is shown
+- tapOn: "Start speaking"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible: "Start speaking"
+- assertNotVisible: "Stop"
+- assertNotVisible: "(?i).*(microphone|permission).*"
+
+# Typing still works: the typed question reaches the credential check
+- tapOn: "Morning routine"
+- tapOn: "Send"
+- extendedWaitUntil:
+    visible: "No API key configured"
+    timeout: 20000
+- assertVisible: "Start speaking"
+- stopApp

@@ -23,7 +23,15 @@ function nearCandidate(word, vocabulary, rnd) {
   return cands[Math.floor(rnd() * cands.length)];
 }
 
-function substituteFor(word, profile, vocab, rnd) {
+// Weighted draw from [{ w, n }] (n = count weight). One rnd() call.
+function weightedPick(list, rnd) {
+  const total = list.reduce((s, x) => s + x.n, 0);
+  let u = rnd() * total;
+  for (const x of list) { u -= x.n; if (u <= 0) return x.w; }
+  return list[list.length - 1].w;
+}
+
+function substituteFor(word, profile, vocab, rnd, insertWords = null) {
   const w = bare(word);
   const hits = (profile.confusions ?? []).filter(c => c.ref === w);
   if (hits.length) {
@@ -32,7 +40,10 @@ function substituteFor(word, profile, vocab, rnd) {
     for (const c of hits) { u -= c.n; if (u <= 0) return c.hyp; }
     return hits[hits.length - 1].hyp;
   }
-  return nearCandidate(w, vocab, rnd) ?? (profile.fillers ?? ['um'])[0];
+  // With an explicit insertion vocabulary (plan §19B, P1), a word with no
+  // confusion entry and no near neighbour becomes one of those words rather
+  // than a filler; without it the original behaviour is unchanged.
+  return nearCandidate(w, vocab, rnd) ?? (insertWords ? weightedPick(insertWords, rnd) : (profile.fillers ?? ['um'])[0]);
 }
 
 function restoreCase(original, replacement) {
@@ -47,7 +58,10 @@ function keepPunct(original, replacement) {
 
 // `level` ∈ profile.levels for ASR-style errors; 'disfluent' applies only the
 // disfluency rates (fillers, repetitions, retracings), no recognition errors.
-function perturb(text, profile, level, rnd, { vocabulary = [] } = {}) {
+// `insertWords` (optional, [{ w, n }]) replaces the filler as the inserted
+// word and as the substitution fallback; omitted, output is byte-identical to
+// the behaviour the E9 §5 variants were generated with.
+function perturb(text, profile, level, rnd, { vocabulary = [], insertWords = null } = {}) {
   const vocab = [...new Set(vocabulary.flatMap(v => v.split(/\s+/).map(bare)).filter(v => v.length > 2 && !FILLERS.has(v)))];
   const tokens = tokenise(text);
   const fillers = profile.fillers ?? ['um', 'uh'];
@@ -94,13 +108,13 @@ function perturb(text, profile, level, rnd, { vocabulary = [] } = {}) {
       continue;
     }
     if (u < pDel + rates.sub) {
-      out.push(keepPunct(t, restoreCase(t, substituteFor(t, profile, vocab, rnd))));
+      out.push(keepPunct(t, restoreCase(t, substituteFor(t, profile, vocab, rnd, insertWords))));
     } else {
       out.push(t);
     }
-    if (rnd() < rates.ins) out.push(' ', fillers[Math.floor(rnd() * fillers.length)]);
+    if (rnd() < rates.ins) out.push(' ', insertWords ? weightedPick(insertWords, rnd) : fillers[Math.floor(rnd() * fillers.length)]);
   }
   return out.join('').replace(/\s{2,}/g, ' ').replace(/\s+([.,?!])/g, '$1').trim();
 }
 
-module.exports = { perturb, tokenise };
+module.exports = { perturb, tokenise, weightedPick };

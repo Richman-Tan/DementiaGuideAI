@@ -1,0 +1,166 @@
+{
+ "mode": "run",
+ "locale": "en-NZ",
+ "cacheTag": "chrome-ondevice-en-NZ",
+ "tool": "chrome-ondevice-stt 2",
+ "chrome": "155.0.8059.39",
+ "os": "macOS 27.0.1 (26A434)",
+ "headless": true,
+ "concurrency": 1,
+ "request": {
+  "leadMs": 250,
+  "tailMs": 1000,
+  "endTimeoutMs": 20000,
+  "audiostartTimeoutMs": 5000,
+  "keepAlive": true
+ },
+ "baseline": "docs/report/eval/stt/chrome-ondevice-offline-proof_3545bda.json",
+ "startedAt": "2026-10-09T20:36:03.381Z",
+ "switches": [
+  "--user-data-dir=<profile>",
+  "--remote-debugging-port=0",
+  "--no-first-run",
+  "--no-default-browser-check",
+  "--mute-audio",
+  "--use-fake-device-for-media-stream",
+  "--use-fake-ui-for-media-stream",
+  "--disable-audio-input",
+  "--autoplay-policy=no-user-gesture-required",
+  "--disable-background-timer-throttling",
+  "--disable-renderer-backgrounding",
+  "--disable-backgrounding-occluded-windows",
+  "--headless=new",
+  "--proxy-server=http://127.0.0.1:59488",
+  "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1",
+  "--disable-quic",
+  "--disable-background-networking",
+  "--disable-sync",
+  "--no-pings",
+  "--disable-domain-reliability",
+  "--disable-client-side-phishing-detection",
+  "--disable-default-apps",
+  "--disable-extensions",
+  "--disable-breakpad",
+  "--metrics-recording-only",
+  "--log-net-log=<scratch>/netlog-run-chrome-ondevice-en-NZ-1791578163381.json",
+  "--net-log-capture-mode=Default"
+ ],
+ "only": null,
+ "robustness": false,
+ "preflight": {
+  "availLocal": "available",
+  "onDeviceMeanWer": 0,
+  "localOk": true,
+  "englishFalse": [
+   {
+    "id": "syn1",
+    "lang": "en-NZ",
+    "errors": [],
+    "sameAsOnDevice": true,
+    "speechUrls": 0,
+    "googleConnects": 0,
+    "proxyRequests": [
+     "CONNECT android.clients.google.com:443"
+    ]
+   },
+   {
+    "id": "syn2",
+    "lang": "en-NZ",
+    "errors": [],
+    "sameAsOnDevice": true,
+    "speechUrls": 0,
+    "googleConnects": 0,
+    "proxyRequests": []
+   }
+  ],
+  "cloud": [
+   {
+    "id": "fr1",
+    "lang": "fr-FR",
+    "errors": [
+     "network"
+    ],
+    "speechUrls": 8,
+    "googleConnects": 2,
+    "proxyRequests": [
+     "CONNECT www.google.com:443",
+     "CONNECT www.google.com:443"
+    ]
+   },
+   {
+    "id": "fr2",
+    "lang": "fr-FR",
+    "errors": [
+     "network"
+    ],
+    "speechUrls": 8,
+    "googleConnects": 2,
+    "proxyRequests": [
+     "CONNECT www.google.com:443",
+     "CONNECT www.google.com:443"
+    ]
+   }
+  ],
+  "cloudFailed": true,
+  "cloudRequestRefused": true,
+  "englishNoSpeechRequest": true,
+  "netlogCaughtUp": true,
+  "at": "2026-10-09T20:36:55.341Z"
+ },
+ "gateOpenedAt": "2026-10-09T20:36:55.345Z",
+ "abortedAt": "2026-10-09T20:37:07.380Z",
+ "abort": "proxy request outside the baseline: POST update.googleapis.com",
+ "cutsServed": 1,
+ "guards": {
+  "proxyRequests": 26,
+  "proxyByHost": {
+   "GET clients2.google.com": 1,
+   "CONNECT www.google.com:443": 9,
+   "CONNECT accounts.google.com:443": 6,
+   "CONNECT update.googleapis.com:443": 4,
+   "CONNECT mtalk.google.com:5228": 1,
+   "CONNECT android.clients.google.com:443": 2,
+   "CONNECT optimizationguide-pa.googleapis.com:443": 1,
+   "CONNECT mtalk.google.com:443": 1,
+   "POST update.googleapis.com": 1
+  },
+  "lsofSnapshots": 54,
+  "lsofMaxSockets": 7,
+  "lsofSocketKinds": {
+   "TCP loopback-local LISTEN": 54,
+   "TCP loopback-local->loopback ESTABLISHED": 107,
+   "TCP loopback-local->loopback CLOSE_WAIT": 20
+  },
+  "lsofExternal": [],
+  "lsofIpv6ProbeUdp": 0,
+  "nettopSamples": 64,
+  "nettopFlowRowsAllProcesses": 7481,
+  "nettopTreeFlows": [],
+  "nettopTreeZeroByteUdp": {},
+  "sandboxDenials": [],
+  "sandboxDenialsOtherProcesses": {},
+  "tccTrips": [],
+  "tccPreflights": 1,
+  "tccOtherApps": {},
+  "netlogEvents": 3027,
+  "netlogUrls": {
+   "http://clients2.google.com/time/1/current": 4,
+   "https://accounts.google.com/ListAccounts": 20,
+   "https://www.google.com/async/folae": 4,
+   "https://www.google.com/": 6,
+   "https://update.googleapis.com/service/update2/json": 16,
+   "https://android.clients.google.com/c2dm/register3": 8,
+   "https://optimizationguide-pa.googleapis.com/v1:GetModels": 4,
+   "https://www.google.com/speech-api/full-duplex/v1/down": 8,
+   "https://www.google.com/speech-api/full-duplex/v1/up": 8,
+   "http://update.googleapis.com/service/update2/json": 4
+  },
+  "netlogAddrs": {
+   "UDP_CONNECT/UDP_SOCKET [2001:4860:4860::8888]:443": 13,
+   "SOCKET_CONNECT/UDP_CLIENT_SOCKET [2001:4860:4860::8888]:443": 13
+  },
+  "netlogSpeechUrls": 16,
+  "armedAt": "2026-10-09T20:36:55.345Z",
+  "abortReason": "proxy request outside the baseline: POST update.googleapis.com"
+ }
+}

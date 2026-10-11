@@ -233,3 +233,32 @@ export const expectedModality = (arm) => (arm === ARM_A ? MODALITY_SPOKEN : MODA
 // participant. Stamped on every session row, so a mixed dataset stays separable.
 export const STUDY_VERSION = '1.1';
 export const CONSENT_FORM_VERSION = '1.0';
+
+// ─── Protocols ───────────────────────────────────────────────────────────────
+//
+// 'tasks' is the evaluated within-subjects study above, unchanged. 'feedback'
+// (Oct 2026) is the clinical collaborators' user-experience round: carers use
+// the app freely, flag answers they disagree with, then answer open questions.
+// It is not consented research (the original approval has expired), so it has a
+// privacy notice in place of the consent form, collects no names, and has no
+// arms, task sets or Latin square. See docs/study/protocol-feedback.md.
+//
+// The two share one participant-number sequence and one event table, and are
+// told apart by study_sessions.protocol — so STUDY_VERSION is deliberately NOT
+// bumped for this: the 1.1 tasks sessions are still poolable with each other.
+export const PROTOCOL_TASKS = 'tasks';
+export const PROTOCOL_FEEDBACK = 'feedback';
+export const PROTOCOLS = [PROTOCOL_TASKS, PROTOCOL_FEEDBACK];
+
+// No 'plwd': that group's safeguards (paper consent, a support person, the
+// halfway re-check) belong to an approved protocol, which this round is not.
+export const FEEDBACK_GROUPS = ['caregiver', 'worker', 'pilot'];
+
+// Stored in place of CONSENT_FORM_VERSION on a feedback session, so the record
+// says which privacy notice the person read.
+export const FEEDBACK_NOTICE_VERSION = 'feedback-privacy-1.0';
+
+// The local conversation key for a feedback session. Local only: the database's
+// conversations.study_arm allows just 'A' or 'B', so the thread itself is
+// stored with study_arm null and this key is what keeps it session-scoped.
+export const FEEDBACK_THREAD = 'free';

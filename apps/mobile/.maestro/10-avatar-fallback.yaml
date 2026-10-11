@@ -1,0 +1,68 @@
+# The avatar on a build without Unity. The Simulator build leaves UnityFramework
+# out (it has no Simulator slice), so the Voice screen must show AvatarUnity's
+# fallback card, not an empty space, and say that voice still works. With
+# "Show Avatar" off, the plain placeholder appears instead and reports the
+# conversation state (Ready → Listening… → Ready).
+appId: com.anonymous.DementiaGuideAi
+name: Avatar — fallback without Unity
+tags:
+  - avatar
+  - voice
+---
+- runFlow: subflows/skip-onboarding.yaml
+
+# Home's decorative avatar card
+- assertVisible: "Aria"
+- assertVisible: "Your AI Guide"
+
+# Avatar on (the default): the no-Unity fallback card
+- tapOn: "Start voice conversation"
+- extendedWaitUntil:
+    visible: "The 3D avatar isn't available on this build — voice still works."
+    timeout: 15000
+- assertVisible: "A"
+- assertVisible: "Aaron"
+- assertNotVisible: "Ready"
+
+# Switching persona keeps the fallback (Ariana's card)
+- tapOn: "Open menu"
+- tapOn: ".*Change Persona.*"
+- tapOn: "Select Ariana New"
+- extendedWaitUntil:
+    visible: "Ariana"
+    timeout: 10000
+- assertVisible: "The 3D avatar isn't available on this build — voice still works."
+
+# Avatar off: the placeholder, which shows the conversation state
+- tapOn: "Return to home"
+- tapOn:
+    id: "tab-settings"
+- scrollUntilVisible:
+    element: "Toggle Show Avatar"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Toggle Show Avatar"
+- assertVisible:
+    text: "Toggle Show Avatar"
+    checked: false
+- tapOn:
+    id: "tab-home"
+- tapOn: "Start voice conversation"
+- extendedWaitUntil:
+    visible: "Ready"
+    timeout: 10000
+- assertNotVisible: "The 3D avatar isn't available on this build — voice still works."
+- assertVisible: "Ariana"
+
+# Permissions are granted at launch here (Maestro's default), so the mic goes
+# straight to listening and the placeholder says so
+- tapOn: "Start speaking"
+- extendedWaitUntil:
+    visible: "Listening…"
+    timeout: 20000
+- tapOn:
+    text: "Stop"
+    index: 0
+- extendedWaitUntil:
+    visible: "Ready"
+    timeout: 30000

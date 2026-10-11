@@ -1,0 +1,273 @@
+# Settings: every toggle flips and is remembered across a relaunch, the text
+# size selector, each information dialog, the credential editors (opened and
+# cancelled — no keys are entered here), and the version details.
+appId: com.anonymous.DementiaGuideAi
+name: Settings — toggles, dialogs, persistence
+tags:
+  - settings
+---
+- runFlow: subflows/skip-onboarding.yaml
+- tapOn:
+    id: "tab-settings"
+- extendedWaitUntil:
+    visible: "Personalise your DementiaGuide AI experience"
+    timeout: 10000
+- assertVisible: "Settings"
+- assertVisible: "Caregiver"
+- assertVisible: "Family Member"
+
+# ── Profile placeholder ──
+- tapOn: "Edit profile"
+- extendedWaitUntil:
+    visible: "Profile customisation is coming in a future update."
+    timeout: 10000
+- tapOn: "OK"
+
+# ── Accessibility ──
+- assertVisible: "Text Size"
+- tapOn: "Text size large"
+- assertVisible:
+    text: "Text size large"
+    selected: true
+- assertVisible:
+    text: "Text size medium"
+    selected: false
+
+# Defaults on a fresh install: these start off…
+- assertVisible:
+    text: "Toggle High Contrast"
+    checked: false
+- assertVisible:
+    text: "Toggle Dark Mode"
+    checked: false
+# …and haptics start on
+- assertVisible:
+    text: "Toggle Haptic Feedback"
+    checked: true
+
+- tapOn: "Toggle High Contrast"
+- assertVisible:
+    text: "Toggle High Contrast"
+    checked: true
+- tapOn: "Toggle Haptic Feedback"
+- assertVisible:
+    text: "Toggle Haptic Feedback"
+    checked: false
+- tapOn: "Toggle Dark Mode"
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible:
+    text: "Toggle Dark Mode"
+    checked: true
+
+# ── Avatar & Audio ──
+# With large text this section is taller than the screen, so it is checked
+# a few switches at a time.
+- scrollUntilVisible:
+    element: "Toggle Subtitles"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Show Avatar"
+    checked: true
+# Audio Responses defaults to on; subflows/audio-off.yaml has switched it
+# off so nothing can be heard (09-voice.yaml covers switching it back on)
+- assertVisible:
+    text: "Toggle Audio Responses"
+    checked: false
+- assertVisible:
+    text: "Toggle Subtitles"
+    checked: true
+- tapOn: "Toggle Subtitles"
+- assertVisible:
+    text: "Toggle Subtitles"
+    checked: false
+
+# One switch at a time, each scrolled into view first. (Tapping a switch
+# that has drifted under the status bar scrolls the page to the top instead.)
+# Auto-play goes on here only as a setting: no question is ever sent in this
+# flow, so there is no answer to play and nothing can be heard.
+- scrollUntilVisible:
+    element: "Toggle Auto-play Responses"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Auto-play Responses"
+    checked: false
+- tapOn: "Toggle Auto-play Responses"
+- assertVisible:
+    text: "Toggle Auto-play Responses"
+    checked: true
+- scrollUntilVisible:
+    element: "Toggle Get to the Point"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Get to the Point"
+    checked: false
+- tapOn: "Toggle Get to the Point"
+- assertVisible:
+    text: "Toggle Get to the Point"
+    checked: true
+- scrollUntilVisible:
+    element: "Toggle Hands-free Conversation"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Hands-free Conversation"
+    checked: false
+- tapOn: "Toggle Hands-free Conversation"
+- assertVisible:
+    text: "Toggle Hands-free Conversation"
+    checked: true
+- scrollUntilVisible:
+    element: "Toggle Faster Voice Responses"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Faster Voice Responses"
+    checked: true
+- tapOn: "Toggle Faster Voice Responses"
+- assertVisible:
+    text: "Toggle Faster Voice Responses"
+    checked: false
+
+# ── Privacy & Trust dialogs ──
+# Each row is scrolled into view before it is tapped: a row left under the
+# status bar would scroll the page to the top instead.
+- scrollUntilVisible:
+    element: "Privacy Policy"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Privacy Policy"
+- extendedWaitUntil:
+    visible: "(?s)DementiaGuide AI is designed with privacy at its core.*"
+    timeout: 10000
+- tapOn: "OK"
+- scrollUntilVisible:
+    element: "Medical Disclaimer"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Medical Disclaimer"
+- extendedWaitUntil:
+    visible: "(?s)DementiaGuide AI provides information for general guidance only.*"
+    timeout: 10000
+- tapOn: "Understood"
+- assertVisible: "Data Security"
+- assertVisible: "Conversations are stored only on this device"
+# Clearing history is confirmed first; cancelling keeps it (the Clear path
+# runs in 06-chat-placeholder-key.yaml, where there is history to clear)
+- scrollUntilVisible:
+    element: "Clear Conversation History"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Clear Conversation History"
+- extendedWaitUntil:
+    visible: "(?s)This will remove all your conversation history.*"
+    timeout: 10000
+- tapOn: "Cancel"
+- assertNotVisible: "(?s)This will remove all your conversation history.*"
+
+# ── AI Configuration: open each credential editor and cancel ──
+# (A row with an action is one button on iOS, so its "Not configured" status
+# is read with the button, not checked here as separate text.)
+- scrollUntilVisible:
+    element: "Azure Speech"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Azure Speech"
+- assertVisible: "Azure API key input"
+- assertVisible: "Azure region input"
+- tapOn: "Cancel"
+- assertNotVisible: "Azure API key input"
+- scrollUntilVisible:
+    element: "ElevenLabs API Key"
+    direction: DOWN
+    centerElement: true
+- tapOn: "ElevenLabs API Key"
+- assertVisible: "ElevenLabs API Key input"
+- tapOn: "Cancel"
+- assertNotVisible: "ElevenLabs API Key input"
+
+# ── About ──
+- scrollUntilVisible:
+    element: "Powered by OpenAI"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "DementiaGuide AI v1.0.0"
+- assertVisible: "GPT-4o-mini with OpenAI voice"
+# The Simulator has no App Store, so "Rate the App" explains instead
+- scrollUntilVisible:
+    element: "Rate the App"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Rate the App"
+- extendedWaitUntil:
+    visible: "(?s)Thank you for your support!.*"
+    timeout: 10000
+- tapOn: "OK"
+- scrollUntilVisible:
+    element: "Your data stays on your device"
+    direction: DOWN
+
+# ── Every change above survives a relaunch ──
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "How can I help you today?"
+    timeout: 30000
+- tapOn:
+    id: "tab-settings"
+- extendedWaitUntil:
+    visible: "Personalise your DementiaGuide AI experience"
+    timeout: 10000
+- assertVisible:
+    text: "Text size large"
+    selected: true
+- assertVisible:
+    text: "Toggle High Contrast"
+    checked: true
+- assertVisible:
+    text: "Toggle Haptic Feedback"
+    checked: false
+- assertVisible:
+    text: "Toggle Dark Mode"
+    checked: true
+- scrollUntilVisible:
+    element: "Toggle Subtitles"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Subtitles"
+    checked: false
+- assertVisible:
+    text: "Toggle Audio Responses"
+    checked: false
+- scrollUntilVisible:
+    element: "Toggle Auto-play Responses"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Auto-play Responses"
+    checked: true
+- scrollUntilVisible:
+    element: "Toggle Get to the Point"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Get to the Point"
+    checked: true
+- scrollUntilVisible:
+    element: "Toggle Hands-free Conversation"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Hands-free Conversation"
+    checked: true
+- scrollUntilVisible:
+    element: "Toggle Faster Voice Responses"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: "Toggle Faster Voice Responses"
+    checked: false

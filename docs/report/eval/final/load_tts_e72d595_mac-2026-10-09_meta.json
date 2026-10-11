@@ -1,0 +1,48 @@
+{
+  "tag": "mac-2026-10-09",
+  "sha": "e72d595",
+  "startedAt": "2026-10-09T03:55:10.037Z",
+  "machine": "Apple M3, 8 GB",
+  "node": "v20.19.2",
+  "command": "node scripts/eval/load/tts-load.mjs --limit 3 --tag mac-2026-10-09",
+  "limit": 3,
+  "levels": [
+    1,
+    2,
+    3,
+    4,
+    8
+  ],
+  "meterBefore": {
+    "tier": "payg",
+    "status": "active",
+    "character_count": 5592,
+    "character_limit": 10000,
+    "can_extend_character_limit": false,
+    "allowed_to_extend_character_limit": false,
+    "next_character_count_reset_unix": 1792409882,
+    "billing_period": "monthly_period",
+    "character_refresh_period": "monthly_period",
+    "currency": "usd"
+  },
+  "limitSource": "passed with --limit; tier \"payg\" not in the documented table",
+  "rttMs": 278.785167,
+  "finishedAt": "2026-10-09T03:57:09.172Z",
+  "chars": 4194,
+  "warmup": {
+    "status": 200,
+    "headers_ms": 765.4560419999998
+  },
+  "meterAfter": {
+    "tier": "payg",
+    "status": "active",
+    "character_count": 5914,
+    "character_limit": 10000,
+    "can_extend_character_limit": false,
+    "allowed_to_extend_character_limit": false,
+    "next_character_count_reset_unix": 1792409882,
+    "billing_period": "monthly_period",
+    "character_refresh_period": "monthly_period",
+    "currency": "usd"
+  }
+}

@@ -4,11 +4,13 @@ import { useChat } from '../state/ChatContext.jsx';
 import { useUi } from '../state/UiContext.jsx';
 import { loadKeys, saveKeys as persistKeys, clearKeys as wipeKeys } from '../state/keysStore.js';
 import { useStudy } from '../study/StudyContext.jsx';
+import { inLiveStudy } from '../study/guards.js';
 import { useAuth } from '../state/AuthContext.jsx';
 import { navigate } from '../state/router.js';
 import { AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
 import { isUnityAvailable } from '../avatar/unity/unityBridge.js';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { AccessCodeForm } from '../components/AccessCodeForm.jsx';
 
 const Toggle = ({ label, on, onToggle }) => (
   <button role="switch" aria-checked={on ? 'true' : 'false'} aria-label={label} onClick={onToggle} style={{ position: 'relative', width: '52px', height: '32px', flexShrink: '0', borderRadius: '999px', border: 'none', cursor: 'pointer', background: on ? 'var(--primary)' : 'var(--border)', transition: 'background .2s' }}>
@@ -113,6 +115,10 @@ export default function Settings() {
   // A study participant reaches the model through the server-side proxy with an
   // access code. Showing them an API-key form would be a confusing dead end.
   const inStudy = Boolean(study?.active);
+  // The avatar is fixed for the tasks study, so every task is with the same one.
+  // Free use on the feedback round has no tasks, and trying both is fair game.
+  // Lifted when the session ends, which `inStudy` alone is not (see inLiveStudy).
+  const avatarFixed = inLiveStudy(study) && !study?.isFeedback;
   const [keys, setKeys] = useState(loadKeys);
   const [advOpen, setAdvOpen] = useState(false);
   // Re-renders when the Unity-build probe resolves (locks/unlocks the picker).
@@ -200,8 +206,8 @@ export default function Settings() {
               return (
                 <button
                   key={p.id}
-                  onClick={() => { if (!unityLocked) setSetting('avatarId', p.id); }}
-                  disabled={unityLocked}
+                  onClick={() => { if (!unityLocked && !avatarFixed) setSetting('avatarId', p.id); }}
+                  disabled={unityLocked || avatarFixed}
                   title={unityLocked ? 'Unity WebGL build not installed — see public/unity/README.md' : p.description}
                   style={{ minHeight: '44px', padding: '0 14px', borderRadius: '9px', border: 'none', cursor: unityLocked ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '.9rem', opacity: unityLocked ? 0.45 : 1, ...segStyle(on) }}
                 >
@@ -210,6 +216,11 @@ export default function Settings() {
               );
             })}
           </div>
+          {avatarFixed && (
+            <div style={{ width: '100%', color: 'var(--text2)', fontSize: '.85rem' }}>
+              {`Fixed for this study session, so every task is with ${effective.name}.`}
+            </div>
+          )}
           {storedLocked && (
             <div style={{ width: '100%', color: 'var(--text2)', fontSize: '.85rem' }}>
               {storedProfile.name} needs the Unity build — using {effective.name} meanwhile
@@ -237,6 +248,14 @@ export default function Settings() {
         {!inStudy && <button onClick={clearHistory} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Clear Conversation History</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>{savedToAccount ? 'Delete past conversations from your account and this device' : 'Delete past conversations from this device'}</span></span><span style={{ color: 'var(--text2)' }}>›</span></button>}
       </Card>
 
+      {!inStudy && <SectionTitle>Access code</SectionTitle>}
+      {!inStudy && (
+      <Card>
+        <p style={{ margin: '0 0 12px', color: 'var(--text2)', fontSize: '.92rem', lineHeight: 1.5 }}>{`If the DementiaGuide team gave you an access code, enter it here to talk with ${who} and get live answers. You don't need an API key.`}</p>
+        <div style={{ paddingBottom: '16px' }}><AccessCodeForm /></div>
+      </Card>
+      )}
+
       {!inStudy && <SectionTitle>Advanced</SectionTitle>}
       {!inStudy && (
       <Card>
@@ -249,7 +268,7 @@ export default function Settings() {
                 <input type="password" value={keys[k]} onChange={(e) => setKeys({ ...keys, [k]: e.target.value })} placeholder="Paste key…" style={{ minHeight: '48px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--elev)', color: 'var(--text)', fontSize: '.95rem', boxSizing: 'border-box' }} />
               </label>
             ))}
-            <p style={{ margin: '0', color: 'var(--text2)', fontSize: '.85rem' }}>Keys are stored only in this browser — never sent anywhere else. {`With an OpenAI key saved, ${who} answers with the live knowledge base; without one the app uses built-in example answers.`}</p>
+            <p style={{ margin: '0', color: 'var(--text2)', fontSize: '.85rem' }}>Keys are stored only in this browser — never sent anywhere else. {`With an OpenAI key or an access code saved, ${who} answers with the live knowledge base; without either the app uses built-in example answers.`}</p>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => { persistKeys(keys); showToast('Settings saved'); }} style={{ minHeight: '46px', padding: '0 20px', borderRadius: '12px', border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: '600', cursor: 'pointer' }} className="hv2">Save keys</button>
               <button onClick={() => { setKeys({ openai: '', eleven: '', azure: '' }); wipeKeys(); showToast('API keys cleared'); }} style={{ minHeight: '46px', padding: '0 20px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv3">Clear keys</button>

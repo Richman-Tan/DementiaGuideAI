@@ -3,7 +3,10 @@
 How the final-project evaluation is run, what each script produces, and how the
 numbers get into the report. The design, priorities and statistics behind it
 are in **[evaluation-plan.md](evaluation-plan.md)** (approved 2026-09-12); the
-results collected so far are in **[results-2026-09-13.md](results-2026-09-13.md)**.
+results collected so far are in **[results-2026-09-13.md](results-2026-09-13.md)**; the
+three reopened automated evaluations of plan §18 (E4-S, E2-X, E9-A) are in
+**[results-2026-10-09-reopened.md](results-2026-10-09-reopened.md)**.
+§19A (larger held-out safety set E3-X and the persona/helpline ablation E3-A) is pre-registered in **[plan-19a-safety.md](plan-19a-safety.md)**.
 
 Conventions: every generated artefact is stamped with the git sha and written
 under `docs/report/eval/` (raw, one file per run) or `docs/report/eval/final/`
@@ -25,10 +28,22 @@ scripts/eval/
   judge.mjs                   blinded rubric judge (Claude or gpt-4o-mini), CSV + audit JSON
   judge-pairwise.mjs          position-swapped pairwise preference
   human-sheet.mjs             stratified blinded rating sheets + separate KEY
+  e6-make-stimuli.mjs         E6 perceptual lip-sync clips (engine / legacy / static) + blinded rating page
+  e6-analyse.mjs              E6 analysis: binomial preference, Wilcoxon on ratings, medians
+  e6/                         sentences.json, recorder.html (virtual-time Unity capture), rating.html
+  clinician-review-sheet.mjs  blank second-clinician review sheet for the held-out set (private output)
+  r3-make-page.mjs            E2-R3 (plan §18.5): static rating page for an independent rater, built
+                              from the R3 sheet alone; proves it is R1's sheet; scans for condition ids
+  r3-validate.mjs             E2-R3: checks a returned file against the §18.5 exclusion rules, splits it
+  r3-summarise.mjs            E2-R3: the pre-registered C1–C5 / X1–X7 verdicts from the agreement tables
+  r3/rating.html              E2-R3 page template (data inlined by r3-make-page.mjs)
   agreement.mjs               κ (unweighted / linear / quadratic) human–human, human–judge, judge–judge
   report-tables.mjs           Tables A/B/C for the report
   build-phone-allowlist.mjs   verified numbers for the invented-number check
   latency/bench-pipeline.mjs  headless per-stage latency benchmark
+  latency/bench-spoken.mjs    headless SPOKEN-turn benchmark, fallback STT → first audio byte (plan §18.1)
+  stt/transcribe-apple.mjs    Apple SFSpeechRecognizer, on-device only, over the E9 cuts (plan §18.3;
+                              Swift tool in stt/apple-ondevice/)
   judges/rubrics.js           the ONE rubric text used by judge and humans
   lib/                        stats.js, checks.js, aggregate.js, textMetrics.js, csv.js, judgeClient.mjs
   fixtures/phone-allowlist.json
@@ -129,6 +144,80 @@ Three.js profiles if measured at all.
   pre-2026-07-12 character heuristic on knowledge-base sentences.
 * Re-running the Unity harness itself is manual: Editor → Tools › LipSync › Run
   All Fixtures (no captures), with `Time.captureFramerate = 60`.
+
+## Human evaluations: perceptual lip-sync (E6) and second clinician review
+
+Both produce material that must not be published, so every output goes to the
+git-ignored `docs/eval/human/private/` (or a folder outside the repo); the
+scripts refuse a tracked output folder. Nothing here generates ratings: the
+responses come from people.
+
+**E6 stimuli.** `npm run eval:e6:stimuli` (with `ELEVENLABS_API_KEY` set, or
+`E6_ACCESS_CODE` + `E6_API_BASE` for the deployed proxy) takes the ten caregiver
+sentences and one control sentence in `scripts/eval/e6/sentences.json`, fetches
+ElevenLabs audio with the web app's exact request (cached in `<out>/tts/`, so a
+re-run never re-bills), builds the payload with the production lip-sync code,
+and records Aaron from the Unity WebGL build (`apps/web/public/unity/Build`,
+git-ignored, so pass `--unity-build` from a worktree) in headless, muted Chrome.
+The conditions differ only in the `play` message: engine `{visemes, blendshapes}`
+(what production sends), legacy `{blendshapes}` (Unity's keyframe fallback, in
+place of the plan's `?lipsync=legacy` flag, so no app code changes), and static
+(no message; one control pair). The recorder steps Unity in virtual time
+(exactly 1/60 s per frame), because real-time capture held only about 12–18 fps,
+and ffmpeg lays the original audio in at play message + 10 ms, the app's
+look-ahead. Clips get random IDs. `<out>/rating/` (page, `stimuli.js`, clips) is
+what raters see, and `<out>/key/e6-key.json` maps each clip to its condition.
+A full run takes 20–25 minutes on an M3 laptop.
+
+**E6 rating and analysis.** `<out>/rating/index.html` works offline from
+`file://`. It shows a short information note, takes an anonymous code (it rejects
+anything that looks like a name) and asks whether the rater took part in the
+usability study. It randomises pair order and left/right per participant, and
+unlocks the questions only after both clips have played to the end. Each pair
+gets a 1–5 synchronisation and a 1–5 naturalness rating per clip, plus a forced
+choice of the more natural clip. Results download as a CSV, with a
+browser-local backup that the researcher can export.
+`npm run eval:e6:analyse -- --key <out>/key/e6-key.json <csv|dir>…` runs the
+plan's analysis:
+* exact binomial test with a Wilson CI on engine preference, plus a rater-level
+  sign test;
+* exact Wilcoxon signed-rank tests on per-rater mean synchronisation and
+  naturalness, with medians, IQRs and Holm adjustment across the three tests;
+* per-sentence, position-bias and consistency checks;
+* the static-mouth pair reported on its own.
+
+**Second clinician review.** `npm run eval:clinician-sheet` writes a CSV and a
+print-ready HTML page covering every held-out item. Each item shows the question,
+the expected safe behaviour (its `note`, plus what the deterministic check looks
+for) and the seeded production v2 answer from
+`docs/report/eval/generation_8a92ecd_v2_final.json`. The reviewer fills three
+columns: is the expected behaviour clinically right, is the answer safe, and a
+comment. The sheet shows no first-review judgements and no automated pass/fail
+results.
+
+**E2-R3, independent health-care rater (plan §18.5).** A third rater, outside
+the project, scores the same 60 round-1 items on a static web page.
+`human-sheet_round1_R3.{md,csv}` were written by `human-sheet.mjs` as it stood
+at `0615b79` (the commit that wrote R1's and R2's sheets), with the original
+arguments plus `--rater R3`:
+
+```
+git worktree add --detach /tmp/hs0615 0615b79 && mkdir -p /tmp/hs0615/.cache/eval && cp .cache/eval/chunks.json /tmp/hs0615/.cache/eval/
+(cd /tmp/hs0615 && E=docs/report/eval && node scripts/eval/human-sheet.mjs \
+  $E/generation_8a92ecd_{v2,v2-nosafety,v1,p0,v2_none}_final.json --per-condition 12 --heldout --tag round1 --rater R3 --out-dir <dir>)
+```
+
+`npm run eval:r3:page -- --out <dir outside the repo>` builds `index.html`
+(data inlined, no other requests) and a noindex `vercel.json` from the R3 sheet
+alone. The build stops unless the parse re-renders the sheet byte for byte, the
+Markdown equals R1's apart from the rater label, and the CSV matches it. It then
+scans the page for condition ids, file names and the word KEY;
+`--check <file>` repeats that scan on any file, such as the live page. The
+rater's file is the sheet in its exact format plus a private `#about` block.
+`npm run eval:r3:validate -- <file|dir> --write-sheet … --write-about …` applies
+the exclusion rules and splits it. `agreement.mjs` (unchanged) and
+`npm run eval:r3:summarise` produce the results. The author's
+`analyse-r3.sh` runs the whole chain in its own worktree.
 
 ## Speech recognition on dementia speech (E9)
 

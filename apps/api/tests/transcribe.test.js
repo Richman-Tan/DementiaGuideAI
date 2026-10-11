@@ -141,3 +141,79 @@ describe('bounds and pinning', () => {
     expect((await run(body, { response: jsonResponse({}, 500) })).res.statusCode).toBe(502);
   });
 });
+
+describe('malformed multipart', () => {
+  it('returns 400 for a body cut off before the closing boundary', async () => {
+    // Headers complete, bytes started, no delimiter after them: an upload that
+    // was truncated in transit. Forwarding a partial file would bill a garbled
+    // transcription.
+    const truncated = Buffer.concat([
+      Buffer.from(`--${B}\r\nContent-Disposition: form-data; name="file"; filename="r.webm"\r\nContent-Type: audio/webm\r\n\r\n`),
+      Buffer.alloc(64, 5),
+    ]);
+    const { res, fetch } = await run(truncated);
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ error: 'no audio file in request' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the body does not contain the declared boundary at all', async () => {
+    const body = multipart(part('file', Buffer.alloc(8, 1), { filename: 'r.webm', type: 'audio/webm' }));
+    const { res, fetch } = await run(body, { contentType: 'multipart/form-data; boundary=somethingElse' });
+    expect(res.statusCode).toBe(400);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the content type declares no boundary', async () => {
+    const body = multipart(part('file', Buffer.alloc(8, 1), { filename: 'r.webm', type: 'audio/webm' }));
+    const { res, fetch } = await run(body, { contentType: 'multipart/form-data' });
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ error: 'no audio file in request' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('guard, configuration and upstream failures', () => {
+  const body = () => multipart(part('file', Buffer.alloc(8, 3), { filename: 'r.webm', type: 'audio/webm' }));
+
+  it('refuses a caller without the access code before reading the body', async () => {
+    const { mod } = await load('../api/transcribe.js');
+    const fetch = stubFetch(jsonResponse({ text: 'x' }));
+    const req = makeReq({ code: null, chunks: [body()], headers: { 'content-type': `multipart/form-data; boundary=${B}` } });
+    const res = makeRes();
+    await mod.default(req, res);
+    expect(res.statusCode).toBe(401);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(req.readableEnded).toBe(false); // the audio was never read
+  });
+
+  it('returns 503 when the server key is not configured', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { mod } = await load('../api/transcribe.js', { env: { OPENAI_API_KEY: undefined } });
+    const fetch = stubFetch(jsonResponse({ text: 'x' }));
+    const res = makeRes();
+    await mod.default(makeReq({ chunks: [body()], headers: { 'content-type': `multipart/form-data; boundary=${B}` } }), res);
+    expect(res.statusCode).toBe(503);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('returns 502 when fetch itself throws, without metering', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { mod, admin } = await load('../api/transcribe.js');
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('ETIMEDOUT'); }));
+    const res = makeRes();
+    await mod.default(makeReq({ chunks: [body()], headers: { 'content-type': `multipart/form-data; boundary=${B}` } }), res);
+    expect(res.statusCode).toBe(502);
+    expect(res.body).toEqual({ error: 'upstream request failed' });
+    expect(err).toHaveBeenCalledWith('[study] transcribe upstream failed: ETIMEDOUT');
+    expect(admin.insertIgnoringConflicts).not.toHaveBeenCalled();
+  });
+
+  it('still answers 502 when the upstream error body cannot be read', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const broken = new Response(new ReadableStream({ start(c) { c.error(new Error('reset')); } }), { status: 500 });
+    const { res } = await run(body(), { response: broken });
+    expect(res.statusCode).toBe(502);
+    expect(err).toHaveBeenCalledWith('[study] transcribe upstream 500: ');
+  });
+});

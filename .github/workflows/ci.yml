@@ -77,11 +77,12 @@ jobs:
 
   e2e:
     # The assembled web app in a real browser with every provider mocked at the
-    # network layer (apps/web/e2e/support.js): OpenAI, the Supabase retrieval
-    # RPC and the study API are answered by fixtures, and the Unity build is
-    # refused. No secrets are needed. Five flows: chat with citations and the
-    # source drawer, the safety callout, the response-length setting, the
-    # study's text arm end to end, and the arm guard.
+    # network layer (apps/web/e2e/support.js): OpenAI, ElevenLabs, Supabase and
+    # the study API are answered by fixtures; the microphone, speech
+    # recognition and the Unity build are scripted fakes. No secrets are
+    # needed. Every user flow has a spec: landing, onboarding, home, chat,
+    # library, settings, voice, the avatar, the tasks study and the feedback
+    # round, plus a production-like project (Supabase on, feedback round off).
     name: End-to-end (Playwright, mocked providers)
     runs-on: ubuntu-latest
     steps:
@@ -112,3 +113,47 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report
           retention-days: 7
+
+  coverage:
+    # Unit and e2e coverage, merged and checked against the agreed scope
+    # (docs/testing/coverage.md, scripts/test/coverage-scope.mjs). The report
+    # lands in the job summary. Enforcing: the gate step fails this job unless
+    # every in-scope file is at 100% statements and lines, with no coverage-
+    # ignore comments in scope. (Whether the job is a *required* check is a
+    # branch-protection setting, not set here.)
+    name: Coverage (unit + e2e, scope gate)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx --workspace apps/web playwright install --with-deps chromium
+
+      - name: Unit coverage (jest, web, api)
+        run: npm run test:coverage:mobile && UNIT_COVERAGE=1 npm test -w apps/web && npm run test:coverage:api
+
+      - name: E2E coverage
+        run: npm run test:coverage:e2e
+        env:
+          CI: 'true'
+
+      - name: Coverage gate
+        run: node scripts/test/coverage-gate.mjs --enforce
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-gate
+          path: coverage/gate.md
+          retention-days: 14

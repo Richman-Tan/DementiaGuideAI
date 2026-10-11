@@ -8,6 +8,11 @@
 > verification, scalability and cost. EQ10–EQ13 and E9–E12 are defined in §17;
 > the detailed designs live in [functional-verification.md](functional-verification.md)
 > and [scalability.md](scalability.md).
+>
+> **Addendum 2026-10-08 (§18):** three automated evaluations reopened after data collection
+> closed: a headless spoken-turn latency benchmark, the cross-family (Claude) judge, and
+> Apple's on-device recogniser on the E9 dementia-speech cuts. §18 is committed before any of
+> them runs.
 
 ## Context
 
@@ -545,3 +550,389 @@ Design in [scalability.md](scalability.md). A capacity model per dependency from
 ### 17.5 Order of work
 
 Now: register at the TalkBank protected link, download ADReSS-2020, and ask the supervisor to sign off the API condition on the documented non-storage basis. Week 1: E12 (no external dependency) and E10. Week 2: E11 and the E9 tooling on synthetic fixtures. Week 3: E9 runs, Web Speech subset, perturbation, e2e. Week 4: dry-run record, fallback drills, Unity re-run, write-up. Week 5: buffer, chapter integration.
+
+## 18. Addendum 2026-10-08 — reopened automated evaluations (pre-specified)
+
+Data collection closed on 2026-10-07. On 2026-10-08 the user reopened it for three automated evaluations that the final report lists as not run. None involves a human participant; the perceptual lip-sync test (E6) and the clinician review stay out of scope. This section is committed **before any of the three runs**, so the commit order is the record that question, sample, measures, expectation and analysis were fixed first. Every result file records its commit sha, date, models, prices or plan, and its regeneration command. Total API spend is capped at about US$25, estimated before each run and recorded after it.
+
+### 18.1 E4-S — headless spoken-turn latency, fallback recogniser
+
+**Question.** On the production code path with the fallback recogniser, how long does it take from the end of a spoken question to the first byte of answer audio? Which stage dominates?
+
+**Path mirrored.** Each step follows the web voice pipeline (`apps/web/src/voice/useVoiceConversation.js` `stopAndTranscribe` → `processQuery`), call by call:
+1. `whisper-1` upload as `openaiClient.transcribe` sends it: `language: 'en'`, a webm/opus file.
+2. `text-embedding-3-small` query embedding.
+3. The `match_chunks` RPC: 50 candidates, `query_text` set to the transcript, then `capBySourceFamily`.
+4. `buildSystemPrompt` with the web defaults: balanced, jargon "plain" (mapped to `avoid`), warm, carer set-up, inline sources. Then `buildUserContent`.
+5. gpt-4o streaming: temperature 0.7, `max_tokens` 600, no history.
+6. `createMarkerStripper` → `createSentenceSplitter` → the first sentence → `normalizeSpokenText`.
+7. ElevenLabs REST `/with-timestamps`, as the study proxy sends it (`apps/api/api/eleven-tts.js`): `eleven_turbo_v2_5`, `mp3_44100_64`, the proxy's voice settings, speed 0.78 (the web default) and the Brian voice (Aaron, the default avatar).
+
+On this path no partial transcripts exist, so speculative retrieval never fires. The WebSocket streaming mode is not on the production path, and is not measured: the Unity renderer lacks `supportsStreamingAudio`, and study sessions hold no browser key (`ttsModeWeb.js`).
+
+**Declared differences from a real turn:**
+- Requests go straight from this Mac to the providers, not through the Vercel study proxy; E11 measured that hop.
+- `stream_options.include_usage` is added so tokens can be priced. It only appends a final chunk.
+- The app's embedding LRU cache is not used. A repeated question would otherwise hit it.
+- Audio is not decoded or played.
+
+**Audio.** Each Set-A question (v2 wording) is synthesised offline to a file with macOS `say -v Karen -o …`; Karen (en_AU) is the closest installed voice to New Zealand English. Each clip gets 300 ms of silence at each end and is encoded with ffmpeg as webm/opus, mono, 48 kHz, 32 kbit/s, the format Chrome's MediaRecorder produces. No audio is ever played. Because the speech is synthetic, its recognition accuracy is not a finding: the transcript's WER against the question text is recorded only as a sanity check.
+
+**Sample.** The 30 Set-A questions of the September headless bench, two repeats each, in round-robin order (repeat 0 for all 30, then repeat 1): n = 60 measured turns. Two warm-up turns on fixed A-neighbour items come first and are discarded. Turns are paced 5 s apart.
+- A turn that receives a 429 or 5xx is re-run from scratch after the wait; the timing kept is the clean attempt's, and re-runs are counted.
+- A turn that fails three times is reported as failed, never imputed.
+
+**Measures.** One clock per turn; t0 is the start of the upload, which stands in for the end of recording. Times are in ms.
+- Stage durations:
+  - `stt`, `embed`, `rpc`;
+  - `llm_ttft`: from request send to the first content token;
+  - `llm_first_sentence`: from request send to the first sentence out of the splitter;
+  - `tts_ttfb` (headers), `tts_first_byte` (first body byte) and `tts_complete` (full JSON, the point at which the audio can be played);
+  - `llm_total`.
+- Milestones from t0: `to_first_token`, `to_first_tts_request` (first sentence ready), **`to_first_audio_byte` (the headline)** and `to_first_audio_playable`.
+- Statistics: n, median, mean, p90, p95, sd, min and max for each, plus the share of turns above 3,000 ms for each milestone.
+- Context recorded: machine, OS, Node version, network interface, and the baseline HTTPS round trip to each provider host.
+
+**Key contingency.** If `ELEVENLABS_API_KEY` is absent at run time:
+- the TTS stage is not run and the headline is not reported;
+- `to_first_tts_request` is reported instead as a strict lower bound on time to first audio, since synthesis can only add time;
+- the share of turns whose lower bound already exceeds 3 s is a lower bound on the share whose first audio would.
+
+When a key exists, the same script and sample are re-run with `--tts`, and that run replaces this one as the headline.
+
+**Expectations (directional).**
+- L1: `stt` (the `whisper-1` upload) is the largest single stage before the model's first token.
+- L2: median `to_first_tts_request` lies between 2.0 and 3.5 s.
+- L3: median `to_first_audio_byte` exceeds 3 s, the yardstick. This is testable only with the ElevenLabs key.
+
+**Analysis.** Descriptive only, with no test, because there is one condition. Results are compared with the report's post-hoc 3 s yardstick (§4.5) and labelled **"headless pipeline, not perceived in-browser latency"**. The run excludes:
+- the proxy hop and MediaRecorder finalisation;
+- audio decode, the playback queue and the start of lip-sync;
+- the primary live recogniser, which delivers its transcript almost at stop (37–56 ms on the iPhone in July); the run uses the fallback instead.
+
+**Output.** `docs/report/eval/latency/spoken-bench_<sha>_<tag>{_raw.csv,.md}`.
+
+**Budget.** About US$0.80: gpt-4o at about US$0.011 per turn over 62 turns, `whisper-1` at about US$0.0005 per turn, and negligible embeddings. With a key, synthesis adds about 6,000 ElevenLabs characters from the plan's credits.
+
+### 18.2 E2-X — cross-family judge (Claude)
+
+**Question.** Does a judge from a different model family than the gpt-4o generator agree with the two human raters, R1 (Richman) and R2 (JooHyun), well enough to pass the pre-registered κ ≥ 0.6 gate (§5, E2 judge protocol step 4) on any dimension? Where it passes, what is the paired direction of v2 against each other condition?
+
+**Judge model.** `claude-sonnet-5-5`, Anthropic's current Sonnet, at US$2 / US$10 per million input / output tokens on 2026-10-08.
+- It is a different family from both the generator and the gpt-4o-mini judge.
+- `claude-opus-5-5` would cost about twice as much for the same calls.
+- `claude-haiku-5-5` is cheaper, but gpt-4o-mini failed by compressing every score to the ceiling, and a smaller judge is the more likely to repeat that.
+- Settings: effort `medium`; server-side refusal fallback `"default"`.
+- Temperature cannot be set on this model (a non-default value is rejected), so the plan's "temperature 0" is not honoured; this is declared.
+- Rubric and prompts: unchanged from `scripts/eval/judge.mjs` and `judges/rubrics.js` (RUBRIC_VERSION 2026-09-14). The human sheets were scored under the 2026-09-13 safety wording; the other four dimensions are identical.
+
+**Stage 1 — the gate.**
+- Items: the 60 human-rated items (`human/human-sheet_round1_KEY.csv`) from the seeded `generation_8a92ecd_*_final.json` files, on each item's applicable dimensions. That gives groundedness 49, correctness 20, helpfulness 35, tone 60 and safety 35: the items and dimensions of Table A.4.
+- Statistic: unweighted Cohen's κ, categories {0,1,2}, computed with `agreement.mjs` against R1 and against R2 separately.
+- A dimension **passes** only if both of these hold:
+  - κ ≥ 0.6 against both raters;
+  - it is not degenerate: neither the judge's scores nor either rater's take a single value on ≥ 95 % of the dimension's items. This fixes in advance the report's treatment of correctness (§4.3); by this rule R1's correctness (19 of 20 at 2) is already degenerate.
+- Linear and quadratic κ, and judge–judge κ against gpt-4o-mini, are reported descriptively.
+
+**Stage 2 — paired direction, only on passing dimensions.** Position-swapped pairwise judging with `judge-pairwise.mjs`, v2 against P0, v1, v2-nosafety and v2 without retrieval. It uses the same 106 seeded pairs per comparison as Table A.3: sets A, A-neighbour, B, N, S and J, matched by id.
+- The pairwise instrument has only `helpful` and `safe`, so the mapping is helpfulness → `helpful` and safety → `safe`.
+- A pass on groundedness, correctness or tone is reported as "passes; no position-swapped instrument exists", and nothing further is computed for it.
+- Reported for each comparison: wins, losses and ties; the count of position-inconsistent verdicts (counted as ties); and a sign test on decisive pairs, Holm-adjusted within the dimension across the four comparisons.
+- **Per-condition judge means are never reported.**
+
+**Expectation.** No dimension is expected to pass with confidence, because human scores sit near the ceiling (rater means 1.81 and 1.82). Directionally, Claude's κ against both raters should exceed gpt-4o-mini's on groundedness and safety, where gpt-4o-mini was at chance (0.015 / 0.001 and −0.035).
+
+**Output.** `docs/report/eval/final/`:
+- `judge_claude-sonnet-5-5_<column>_key60.{csv,json}`;
+- `agreement_human-R{1,2}_vs_claude-sonnet-5-5.md` and `agreement_claude-sonnet-5-5_vs_gpt-4o-mini.md`;
+- `pairwise_claude-sonnet-5-5_v2_final_vs_<x>.{csv,json}`;
+- a summary `judge-crossfamily_claude-sonnet-5-5.md`.
+
+**Budget.** Stage 1 is about 60 calls, about US$1. Stage 2 runs only if helpfulness or safety passes: up to 848 calls, about US$8–10.
+
+**Precondition.** `ANTHROPIC_API_KEY` must be present. If it is absent, this evaluation stops and is reported as not run; the specification above stands for when a key exists.
+
+
+**Deviation, 9 Oct 2026 — committed before any item was judged.** No Anthropic credential exists
+for this project, and the author chose a free judge over buying one, so the judge model changes
+from `claude-sonnet-5-5` to **`gemini-3.8-flash`** (Google, free tier, `v1` `generateContent`,
+temperature 0). It is still from a different family than both the gpt-4o generator and the
+gpt-4o-mini judge, which is the property §18.2 requires. Everything else stands as written above:
+the rubric and blinded prompts of `judge.mjs`, the same 60 rated items (`--key`), Cohen's κ against
+R1 and R2 separately with the κ ≥ 0.6 and non-degeneracy gate per dimension, stage 2 pairwise
+directions only on a dimension that passes, and no per-condition means. Two consequences, stated in
+advance: (1) a Flash-tier model is a weaker judge than the planned Sonnet, so a failed gate is less
+informative about cross-family judges in general; (2) Google may use free-tier prompts to improve
+its models — the prompts contain only the synthetic evaluation questions, retrieved corpus passages
+and the generated answers, no participant data. Outputs are named for the actual model
+(`judge_gemini-3-8-flash_*`, `agreement_human-R{1,2}_vs_gemini-3-8-flash.md`,
+`agreement_gemini-3-8-flash_vs_gpt-4o-mini.md`, `judge-crossfamily_gemini-3-8-flash.md`). The
+expectation is unchanged.
+
+**Deviation withdrawn, 9 Oct 2026 — committed before any item was judged by Claude.** The Gemini
+free tier allows 20 requests per model per day (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`),
+and the run scored 7 of the 60 items before it hit that cap. The author then supplied an Anthropic
+credential, so the judge reverts to the specification above, unchanged: `claude-sonnet-5-5`, effort
+`medium`, refusal fallback `"default"`, and the `claude-sonnet-5-5` output names. The 7 partial
+Gemini scores were never compared with the human ratings; they are discarded, not committed, and
+not used or reported anywhere. The Gemini adapter stays in `scripts/eval/lib/judgeClient.mjs`.
+
+### 18.3 E9-A — Apple's on-device recogniser on dementia speech
+
+**Question.** How accurately does Apple's on-device speech recogniser transcribe the ADReSS-2020 dementia and control speakers? How does it compare with the fallback (`whisper-1`) measured in E9?
+
+**App facts the label depends on.** The iOS app's primary recogniser is expo-speech-recognition, which uses SFSpeechRecognizer, started with `lang: 'en-NZ'` and **`requiresOnDeviceRecognition: false`** (`apps/mobile/src/lib/stt/expoSpeechRecognition.js`). iOS may therefore send the app's audio to Apple's servers, so an on-device measurement is a **proxy** for what iOS users get. The web app's primary recogniser is Chrome's Web Speech API, a Google cloud service; it is not measured, under the data rules below.
+
+**Data governance.** The 19 September sign-off covers only OpenAI's transcription endpoint, so no DementiaBank audio goes to any other cloud service.
+- The tool sets `requiresOnDeviceRecognition = true` and refuses to start unless the recogniser reports `supportsOnDeviceRecognition`.
+- Audio is read from the cut WAV files (`SFSpeechURLRecognitionRequest`) and never played.
+- Hypotheses stay in the git-ignored `data/dementiabank/`. Only the aggregates written by `wer-report.mjs` are committed.
+
+**Configuration.**
+- Platform: SFSpeechRecognizer on macOS 27.0.1, Apple M3.
+- Locale: en-NZ, the app's locale. On-device recognition supports it on this Mac.
+- Request: `shouldReportPartialResults = false`, since only the final transcript is scored and the app's partials end in the same final; `addsPunctuation = false` (the app's default); `taskHint` unspecified; no contextual strings.
+- Hypothesis: the final result's `bestTranscription.formattedString`.
+- A "no speech detected" result becomes an empty hypothesis, scored as deletions, as `whisper-1`'s empty outputs were.
+- Any other error is retried once, then left missing and counted.
+
+**Sample.** Condition (a) of E9: 2,063 utterance cuts from 156 speakers (78 dementia, 78 control), scored against the unchanged `data/dementiabank/references.csv`.
+
+**Measures and analysis.** `scripts/eval/stt/wer-report.mjs`, unchanged: the same scorer and normalisation as E9.
+- Both filler policies are reported; the primary policy strips fillers.
+- For each group: mean WER with a bootstrap 95 % CI over speakers, pooled WER, and the S/D/I split.
+- Dementia against control: Mann–Whitney with Cliff's δ, and Spearman ρ against MMSE.
+- The hallucination and empty-output table.
+- Secondary: a paired Wilcoxon over speakers against `whisper-1` condition (a) (`hyps_whisper-1.csv`).
+
+**Expectations (directional).**
+- A1: dementia WER exceeds control WER (Mann–Whitney p < 0.05, δ > 0), as it did for every recogniser in E9.
+- A2: pooled WER is higher than `whisper-1`'s condition (a) figures (26.3 % control, 41.9 % dementia) in both groups, with a positive paired Δ. The reasons are a smaller on-device model and an en-NZ model hearing US English.
+- A3: the stock-phrase rate falls below `whisper-1`'s, while the empty-output rate rises above it.
+
+**Secondary condition.** The en-US locale, which matches the corpus accent, with the same procedure. It runs only if time permits after the primary condition; otherwise it is reported as not run.
+
+**Label.** "Apple on-device recogniser on macOS". The result is reported as a proxy for the iOS app, which requests server-capable recognition.
+
+**Cost.** US$0; the run is local.
+
+### 18.4 E4-B — spoken-turn latency in Chrome (primary and fallback recognisers)
+
+*Added 2026-10-09, committed and pushed before any E4-B turn (pilot or measured) was run. Nothing for E4-B had been run with the app, Chrome or a provider when this was written; it is fixed from the code and the E4-S artefacts. The only calls made beforehand were read-only: the ElevenLabs account meter and history (to size the budget) and the production Unity manifest (to match the build).*
+
+**Question.** In real Google Chrome, running the real web app's voice loop, how long does it take from the end of a spoken question to the start of answer audio playback in the page? Two conditions are measured: Chrome's own recogniser (the app's primary path) and the path the app takes when the browser has no `SpeechRecognition` (the fallback, which Firefox takes). Which stage dominates each? This answers the examiner's point that spoken latency "has not been measured in a real browser or on a device", for the browser half only.
+
+**Browser.** Google Chrome 155.0.8059.39 (official build) on the E4-S Mac: Apple M3, 8 GB, macOS 27.0.1, Wi-Fi. The harness launches Chrome itself, with a fresh temporary profile and only these switches:
+- `--mute-audio`: the page plays its audio, but nothing reaches the speakers.
+- `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream --use-file-for-fake-audio-capture=<turn.wav>%noloop`: the microphone is Chrome's fake capture device reading a WAV file, and the permission prompt is answered automatically. The real microphone is never opened. Without `%noloop` the fake device repeats the file, so the recogniser would hear the question again; with it the file plays once per capture stream, then silence.
+- `--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows`: the page behaves as a foreground page even when its small window is covered. These are Chrome's standard automation switches; they do not touch the app.
+- `--remote-debugging-port`, `--no-first-run`, `--no-default-browser-check` and a small window size and position. The harness drives Chrome over the DevTools protocol with `playwright-core`'s `connectOverCDP`, so none of Playwright's own launch defaults apply.
+
+Chrome runs headed (a small window), because Web Speech is not expected to run headless. The window makes no sound. Both conditions share one window and one page.
+
+**App as served.**
+- A production build (`vite build`) of `apps/web` at this branch's HEAD at run time. The `apps/` and `packages/` trees are identical to `origin/main` `7386425`; the harness checks this and records it.
+- Served by the harness on `http://localhost:<port>`, with the API routes on the same origin (`VITE_API_BASE_URL` empty), SPA fallback, and the `vercel.json` cache and `Content-Encoding: br` headers for the Unity files. The CSP header is not sent.
+- Unity WebGL: the author's git-ignored export, manifest version `356c7acb203d`, which is the version production serves on 9 Oct.
+- Settings: the web defaults E4-S used (balanced, jargon plain → `avoid`, warm, carer set-up, voice speed normal → 0.78), so push-to-talk (`handsFree` false) and `fasterVoice` false. Only `onboarded` is set. The avatar is Aaron on Unity, the web default; each run waits until Unity has loaded.
+- Unity lacks `supportsStreamingAudio` and the browser holds no ElevenLabs key, so speech goes through the REST cascade and the proxy, the same request E4-S timed.
+
+**Credential path.** No provider key enters the browser.
+- The harness server mounts the unchanged `apps/api/api` handlers (`chat`, `embed`, `transcribe`, `eleven-tts`, `speech`) the way `studyApiDevServer` in `apps/web/vite.config.js` does: a parsed JSON body unless the route opts out, plus `res.status` and `res.json`. The OpenAI and ElevenLabs keys are read from the git-ignored root `.env` into the server process only.
+- The browser holds a throwaway guest access code, random for each run and recorded nowhere. It is stored in `dg_access` exactly as `AccessCodeForm` stores an accepted code, and the server's `STUDY_ACCESS_CODES` holds the same value. The app therefore runs in its guest proxy mode (`services/transport.js`).
+- **No production writes, server side.** The guard's usage meter writes `study_usage` rows through `bump_study_usage` (`_lib/guard.js`), and fails closed without a service-role key. The server points the handlers' `SUPABASE_URL` at a local stub and gives them a dummy service-role key. The stub answers `bump_study_usage` with `true` and refuses everything else; any refused call stops the run. The real service-role key in `.env` is never loaded. `recordUsage` writes only for a signed-in user, and there is none.
+- **No production writes, browser side.** On load the app signs in anonymously to Supabase, and it writes conversations and messages to Supabase (`state/AuthContext.jsx`, `state/conversationStore.js`). The harness blocks the Supabase `auth/v1`, `rest/v1/conversations` and `rest/v1/messages` requests at the network layer (DevTools `Fetch`), so the app takes its existing "anonymous sign-in failed → device-local history" path. Every other request to the Supabase host is audited. Anything other than the read-only `match_chunks` RPC or a GET stops the run.
+- No study session is created, so the study event stream stays silent.
+
+**Conditions.**
+- **P, primary.** Chrome's `webkitSpeechRecognition`, used as the app uses it (`services/sttWeb.js`, live provider): en-NZ, interim results, a parallel MediaRecorder, and speculative retrieval on stable partials (`VOICE_SPECULATIVE_RAG`). A P turn counts only if its transcript came from the live recogniser. A turn that falls to the Whisper rescue, or to the sticky degrade, is a failed attempt; either shows as an `/api/transcribe` request.
+- **F, fallback.** The same page with `window.SpeechRecognition` and `window.webkitSpeechRecognition` deleted, so `startSttSession` takes the Whisper provider: MediaRecorder (webm/opus) → `/api/transcribe` → `whisper-1`.
+  - The deletion is installed by an init script and switched on or off before each turn. This is equivalent to deleting the constructors at load: `sttWeb.js` looks them up at every session start, and nothing else in the app refers to them.
+  - This is the path Firefox takes, run in Chrome. It is not a Firefox measurement.
+
+**Audio.**
+- The same synthesis as E4-S: `say -v Karen -o` (to a file, never played) with 300 ms of silence at each end, written as 48 kHz mono 16-bit WAV, the format the fake device reads.
+- The E4-S webm is regenerated from the same AIFF and its sha256 compared with E4-S's `clip_sha256`, to show the speech is the same.
+- Before each turn the harness overwrites the capture file with that turn's clip. Chrome reads the file afresh for each new capture stream.
+
+**Sample and order.**
+- The 30 Set-A questions × 2 repeats, in E4-S's round-robin order. Each item runs in both conditions back to back, and the order alternates (P then F, then F then P) from item to item. That gives n = 60 per condition, paired by item (question and repeat).
+- Two warm-up items first, A30 and A31 (the E4-S warm-ups), in both conditions: 4 turns, discarded.
+- Before every turn, the app's own "New conversation" control (Chat screen) clears the thread, so every turn is sent with no history, as in E4-S.
+- Turns are paced 5 s apart.
+- One page session for the whole run, with no reload between turns, so later turns run warm, as a carer's later questions would. The embedding cache (an LRU of 20 entries) cannot serve a repeat, because 30 other questions and their partial transcripts come between an item's two repeats. If the app's sticky degrade fires, the page is reloaded, one discarded warm-up turn is run in each condition, and the item is re-run.
+- **Pilot:** up to 5 turns for harness debugging may run before the measured run. They are discarded and reported only as a count.
+- **Retries, as E4-S.** A turn is a failed attempt if it gets a 429 or 5xx, falls to the OpenAI TTS fallback (`/api/speech`), falls to Whisper in P, or starts no audio within 30 s. It is re-run after 5 s × the attempt number, and the clean attempt is kept. A turn that fails three times is reported as failed, never imputed.
+
+**Turn mechanics and timing.** One clock throughout: the page's `performance.now()`.
+- The harness taps the mic (a real DevTools mouse click). Chrome starts capture, and the clip plays into the capture stream from its first sample.
+- **Capture start, t_cap.** In P, the recogniser's `audiostart` event: the recogniser opens its own capture stream, and that copy of the clip is the one transcribed. In F, the moment the app's `getUserMedia` call resolves.
+- **End of speech, t_eos** = t_cap + clip duration − 300 ms, the clip's trailing pad.
+- **Stop.** The harness taps "Tap when finished" at t_cap + clip duration, 300 ms after the end of speech. This stands in for a user who taps as they finish speaking; the app is push-to-talk by default. The tap's page time, t_tap, is read from the trusted click event; the app's own turn timer starts in the same click handler.
+- **First audio, t_audio.** The scheduled start of the first `AudioBufferSourceNode` started after t_tap, which is the moment the answer's first samples enter the Web Audio graph (`AvatarAudioEngine.playAudioWithVisemeTimeline` schedules it 10 ms ahead). The output latency (`baseLatency + outputLatency`) is recorded but not added.
+- **Alignment check.** Chrome starts the capture stream slightly before the page sees the event. In F, the app's own recording is analysed offline after each turn (ffmpeg `silencedetect`; nothing is played) to find where the speech starts within it. That onset's offset from the expected 300 ms measures the alignment error, and it is reported. P has no such check for the recogniser's stream; the F offsets stand as the estimate of its size.
+
+**Instrumentation.** Observation only; no app code is changed.
+- The app's own per-turn timer (`study/latency.js`), read from its `[LATENCY SUMMARY]` console line: `stt_ms`, `rag_ms`, `llm_to_token_ms`, `first_sentence_ms`, `tts_first_ms`, `to_first_audio_ms`, `playback_wait_ms` and `to_first_token_ms`. Also its `[RAG] speculative …` hit and miss lines.
+- Browser Resource Timing for `/api/transcribe`, `/api/embed`, `match_chunks`, `/api/chat` and `/api/eleven-tts`.
+- An init script that wraps, without changing what they do: `getUserMedia`; `MediaRecorder.prototype.start` and `stop`, plus a passive `dataavailable` listener that keeps a copy of the recording; `webkitSpeechRecognition.prototype.start`, to attach listeners for its audio, sound, speech, result and end events; `AudioBufferSourceNode.prototype.start`; and a capture-phase click listener.
+
+**TTS beyond the first sentence.** As in E4-S, ElevenLabs synthesises only the first sentence of each answer.
+- The app sends each sentence to `/api/eleven-tts` as soon as the model finishes it. The harness server passes the turn's first request to the unchanged handler. It holds every later request until the first has been answered, then returns a short silent placeholder in the same JSON shape, so the app neither falls back to OpenAI TTS nor errors.
+- Reason: the ElevenLabs account is pay-as-you-go, with 8,025 of its 10,000 meter units left this period. Whole answers (about 1,200 characters each) would exhaust it and break the US$5 cap.
+- Consequence: no later-sentence requests reach ElevenLabs while the first is in flight. Up to first audio, everything else runs as in the app.
+
+**Measures** (ms, per turn).
+- **H1, the headline:** t_eos → t_audio, end of speech → first audio playback in the page.
+- **H2:** t_tap → t_audio, the system's latency on the app's own clock. This is the counterpart of E4-S's clock, whose t0 was the start of the upload.
+- The app's stage marks listed above.
+- The tap delay, t_tap − t_eos (300 ms by design), and the app's `to_first_audio_ms` against t_audio (the app's mark comes before decode).
+- In P: the speculative-retrieval outcome, and the wait from stop to the recogniser's final result. In F: MediaRecorder finalisation (stop → blob) and the `/api/transcribe` round trip.
+- Sanity only, not a finding: transcript WER against the question text.
+- Statistics per condition: n, median, mean, p90, p95, sd, min and max, plus the share of turns over 3,000 ms on H1 and on H2.
+- Context, as E4-S: Chrome version, commit, Unity build version, network interface, and the baseline HTTPS round trip to api.openai.com, Supabase and api.elevenlabs.io.
+- **Knowledge-base state, read-only, at the start and at the end of the measured run:** the chunk count; a sha256 over the sorted `(id, content_hash)` pairs; `content_hash` recomputed from each chunk's title and content (`scripts/ingest/chunking.js`); and a comparison with the September snapshot (`docs/report/kb_chunks_reference.csv`, 453 chunks, frozen in `fa69e62`).
+
+**Expectations** (fixed now; each can fail).
+- B1: P's median H1 is lower than F's by at least 0.5 s. Reason: F pays a `whisper-1` upload (E4-S median 1.54 s). P pays the recogniser's final-result wait, which the app caps at 700 ms (`STT_FINAL_TIMEOUT_MS`), and may get retrieval off the critical path.
+- B2: F's median H2 exceeds 4.25 s, E4-S's headless headline (start of upload → first audio byte). Reason: the browser adds MediaRecorder finalisation, the proxy hop, waiting for the complete TTS response (E4-S: 0.24 s from first byte to complete) and decode. B2 is stated on H2 because H2 starts where E4-S's clock started; H1 adds the fixed 300 ms tap delay, which would make B2 easier to meet.
+- B3: more than half of P's turns have H1 over 3 s.
+- B4: by median, the largest of the five app stages (`stt_ms`, `rag_ms`, `llm_to_token_ms`, `first_sentence_ms`, `tts_first_ms`) is `stt_ms` in F, and is not `stt_ms` in P.
+
+**Analysis.** Descriptive only; no significance test.
+- For each condition, the statistics above.
+- **Between conditions, paired by item:** the median paired difference P − F, and the number of items on which P is faster. B1 is judged on the two medians, as stated.
+- **Against E4-S, paired by item:** F's H2 minus E4-S's `to_first_audio_byte`, and minus `to_first_audio_playable`. This is descriptive, because the runs were hours apart and E4-S's own medians moved by up to 0.8 s between two runs 37 minutes apart.
+- The 3 s yardstick is the report's (§4.5), as in E4-S.
+- **Label: "in-browser on a desktop Mac; synthetic speech; not a device; not real users".**
+
+**Contingencies.**
+- **Web Speech refuses to run under automation** (no live transcript in any of the first 3 P attempts, or no `audiostart`). The launch is changed once: microphone permission granted over DevTools instead of `--use-fake-ui-for-media-stream`. If that still fails, P is reported as not run, with the error seen. F then runs alone (n = 60): B1 and B3 cannot be tested, B2 and B4's F half still are.
+- **P fails intermittently.** P turns follow the retry policy. If more than 10 of the 60 P items end failed, P is reported with that caveat.
+- **The fake capture file cannot be read** (no speech captured). The run stops. There is no fallback to the real microphone.
+- **Unity does not load** within 120 s. The page is reloaded once. If it fails again, E4-B is reported as not run, rather than measured on a different avatar and voice.
+- **Spend guards.** The run stops if its OpenAI spend reaches US$3.50 or its ElevenLabs meter use reaches 3,000 units.
+
+**Budget.**
+- OpenAI ≈ US$1.4: about 130 turns of gpt-4o at about US$0.0105 each, `whisper-1` for about 66 F turns (≈ US$0.03), and negligible embeddings.
+- ElevenLabs: about 13,000 characters of first sentences, ≈ US$0.65 at the pay-as-you-go Flash/Turbo list price of US$0.05 per 1,000 characters, or about 1,400 meter units.
+- Total ≈ US$2.1, against the US$5 cap. Spend is computed from the returned token usage, the recording durations and the characters sent, and checked against the ElevenLabs meter read before and after.
+
+**Output.** `docs/report/eval/latency/browser-bench_<sha>_<tag>{.md,_raw.csv,_meta.json}`, with the harness in `scripts/eval/latency/` (`bench-browser.mjs` and the server and init script beside it).
+
+**Deviation, 9 Oct 2026 — how the speech enters the page; committed before any app turn.**
+- **What happened.** Before any app turn, two feasibility checks ran on a blank local test page: no app, no provider call, only `webkitSpeechRecognition` and `getUserMedia`. They showed that Chrome 155 on this Mac opens the **real** default microphone despite `--use-fake-device-for-media-stream`, both for `webkitSpeechRecognition.start()` and for `getUserMedia({audio: true})`. The macOS privacy log (TCC) records:
+  - at 13:59:10, the first check's capture request raised a macOS microphone-permission prompt, attributed to Terminal, the harness's parent process;
+  - that prompt was answered "Allow" at 14:05:01;
+  - a later check at 14:05:19 then opened the real microphone for about 14 s, until Chrome was killed.
+
+  In neither check did any audio reach the page or a recogniser: no capture promise resolved and no recognition event fired. Nothing was recorded, nothing was sent, and nothing was spoken at the microphone. The prescribed `--use-file-for-fake-audio-capture` route cannot be used without touching the real microphone, so it is dropped.
+- **New method.**
+  - The init script replaces `navigator.mediaDevices.getUserMedia`, for audio-only requests, with a harness source. The turn's clip (the same WAV) is played by a separate `AudioContext`, never connected to the speakers, into a `MediaStreamAudioDestinationNode`, and the app receives that stream. Native capture is never called; the shim refuses any other request.
+  - Chrome 155's Web Speech accepts a `MediaStreamTrack` (`start(track)`). The init script's `start` wrapper passes the app's own capture track, so the recogniser and the app's parallel MediaRecorder hear the same single copy of the clip, as from one microphone. The app still calls `start()` itself.
+  - Switches: `--use-file-for-fake-audio-capture` is dropped and `--disable-audio-input` is added as a guard; the rest are unchanged.
+  - A watchdog reads the macOS privacy log throughout the run. At the first real-microphone access request (`kTCCServiceMicrophone`, other than a status preflight) or prompt, it kills Chrome and the run stops. A feasibility check of this method (one clip, blank page) triggered nothing.
+- **Consequences for timing.**
+  - t_cap becomes the scheduled start of the clip in the page, mapped from the harness `AudioContext` clock to `performance.now()`. It is the same in P and F, and replaces the `audiostart` and `getUserMedia` anchors.
+  - The stop tap and end-of-speech rules are unchanged: the tap at t_cap + clip duration, and t_eos = t_cap + clip duration − 300 ms.
+  - The F alignment check on the app's recording is kept, now as a check on what the shim delivers.
+- **Declared difference from a real microphone.** A track generated with Web Audio gets none of Chrome's capture processing (echo cancellation, noise suppression, gain control) and no device buffering. The recogniser receives it through Chrome's track path rather than its own device capture.
+- **The P contingency now reads:** if `start(track)` stops producing live transcripts, P is reported as not run. There is no fallback to the real microphone.
+
+**Deviation 2, 9 Oct 2026 — four stopped starts of the measured run; committed before the run that is reported.** Four starts were stopped before completion. None of their turns is used; their files are committed for the record (`docs/report/eval/latency/browser-bench_{a740401,f4382d4,332a4ec,bc4ecd3}_*`).
+1. **14:41 (`a740401`), 4 warm-ups + 1 measured turn.** The microphone watchdog stopped it. It had fired on the author's own Chrome (a separate app instance, pid 40618), which was using the microphone at 14:45:10, not on the harness Chrome. The watchdog now acts only on the harness Chrome: requests attributed to Terminal or to a process of its own profile. Other apps' microphone use is counted and reported, and not acted on.
+2. **14:49 (`f4382d4`), 4 warm-ups, no measured turn.** The harness wrongly treated a turn as failed when the app's summary lacked `to_first_audio_ms`.
+   - The app writes `[LATENCY SUMMARY]` when the model's stream ends. A turn whose stream finishes before playback starts therefore has no first-audio mark in it.
+   - Requiring the mark would have biased the sample towards long answers.
+   - The harness measures first audio for every turn. Where the app did not record its TTS figure, B4 uses the browser's Resource Timing of the same request instead.
+3. **14:55 (`332a4ec`), 4 warm-ups + 6 measured turns.** Stop taps landed up to 1.7 s late. The wait before the tap is now a timer on the page clock.
+4. **15:03 (`bc4ecd3`), 4 warm-ups + 8 measured turns.** Taps were still late on some fallback turns, because the page's own timer fired late: long tasks of up to about 2 s blocked the page's main thread.
+   - A diagnostic with no provider calls (cancelled captures only) showed such long tasks sporadically, wherever the window sat on screen, while the avatar kept rendering at about 55 fps.
+   - These stalls are how the real app behaves on this Mac, so they stay in the measurement. A real tap that lands during a stall is also processed only after it.
+   - Each turn now records the page's frame rate and long-task time from capture start to first audio, and how late the stop tap's timer fired, so their effect can be seen.
+
+The stopped starts used 33 turn attempts, on top of the 4 pilot turns: about US$0.40 of OpenAI usage and about 33 first sentences of ElevenLabs. The reported run is the next complete one, tag `mac-2026-10-09e`. The question, conditions, sample, measures, expectations and analysis are unchanged.
+
+### 18.5 E2-R3 — independent health-care rater
+
+**Why.** The E2 human ratings rest on two raters, R1 (Richman) and R2 (JooHyun). Both built the system, which is the examiner's main criticism of them. This section adds one more rater, **R3**: someone who works in health care and had no part in building or evaluating DementiaGuide. R3 rates the same 60 answers, blind. Unlike §18.1–18.3, a person takes part. It is a rating task on system outputs. Nothing about the rater is measured except the eligibility answers below. As with E6, the author confirms with the supervisor that no ethics amendment is needed before sending the link. This section is committed and pushed **before the rating link is shared with anyone**. The commit order is the record that the criteria, analyses and expectations came first.
+
+**Question.** Does a health-care worker who is independent of the project apply the E2 rubric the way R1 and R2 did? Do the report's E2 conclusions that rest on the human ratings still hold once an independent rater is included?
+
+**Who qualifies.** All four must hold:
+1. works in health care, in any role, for example nursing, medicine, allied health, pharmacy or care work;
+2. was not involved in building or evaluating DementiaGuide. That rules out the two student authors, the supervisor, and the clinical partners who reviewed its questions or answers;
+3. has not seen the answers being rated, or any other DementiaGuide evaluation output;
+4. did not take part in the DementiaGuide usability study (E7).
+
+The author checks all four when recruiting. The rater confirms each one on the page, by four separate statements and a consent tick. The page will not start until all five are ticked. Exactly one R3 is analysed: the first complete, eligible sheet received. If that sheet is excluded, the next complete, eligible sheet replaces it, and the replacement is reported.
+
+**Materials.** R3 gets the same items, order and rubric as R1 and R2.
+- The sheet is generated by `scripts/eval/human-sheet.mjs` as it stood at `0615b79`, the commit that wrote R1's and R2's sheets. It uses the same arguments with `--rater R3`: `generation_8a92ecd_{v2,v2-nosafety,v1,p0,v2_none}_final.json` in that order, `--per-condition 12 --heldout --tag round1`, seed 42.
+- Checked before this commit: `human-sheet_round1_R3.md` differs from R1's only in the rater label on line 1. The `KEY` file the run rewrote is byte-identical to the committed one. The CSV has the same items, sets, questions, answers and n/a pattern.
+- Content: 60 items and 199 judgements (groundedness 49, correctness 20, helpfulness 35, tone 60, safety 35). Each item shows the question, the passages the assistant was given, the reference material where correctness applies, and the answer, with only that item's dimensions.
+- Rubric wording: **RUBRIC_VERSION 2026-09-13**, the wording R1 and R2 used. The 2026-09-14 safety rewording that the judges used is not shown to R3. The general instruction is also the same: ignore citation markers and "Sources:" lists except for groundedness.
+- Order: R1 and R2 both had **one fixed order**, items 1–60 as the seeded shuffle numbered them in the sheet; `human-sheet.mjs` has no per-rater order. R3 gets the same order. The page lets R3 go back and change a score, but not skip ahead. Whether R1 or R2 ever moved out of order was not logged.
+- Blinding: R3 never sees the KEY, a condition name, a prompt version, a file name, or any R1, R2 or judge score. The page is built from the R3 sheet alone, and its build fails if any condition id or file name appears in it. R3 is told only that each answer was produced by the assistant during testing. Any question R3 asks about the rubric is answered by pointing back to the rubric text.
+
+**Declared differences from R1 and R2.**
+- Surface: R3 rates on a static web page, one item per screen, at `dementiaguide-r3.vercel.app`, page version `r3-rating-1.0`. R1 and R2 were given the Markdown and CSV sheet, and R1's recorded pass was entered through the rating-bench artifact. The content is the same; the presentation is not.
+- Timing: R3 rates in October 2026, R1 and R2 in September.
+- Domain: R3 is a health-care worker; R1 and R2 are engineering students.
+
+**What is returned.** One CSV, `r3_<code>_<timestamp>.csv`. Its first part is exactly the `human-sheet_round1_R*.csv` format: the same header, columns and quoting, then items 1–60 in order. After a blank line comes a block of `#about` rows: the eligibility answers, the optional job title, the page version, start and finish times, and the summed time items were on screen. `scripts/eval/r3-validate.mjs` splits the file:
+- the sheet part becomes `docs/report/eval/human/human-sheet_round1_R3.csv`, the record;
+- the `#about` block stays in the author's private folder and is never committed.
+
+**Analyses.** The commands are fixed in `analyse-r3.sh` and `scripts/eval/r3-summarise.mjs`, using `agreement.mjs` unchanged.
+- **A1 (primary).** Unweighted Cohen's κ, categories {0,1,2}, per dimension, R3 against R1 and R3 against R2 (`--a R1 --b R3`, `--a R2 --b R3`). Percent agreement, and linear and quadratic κ, are descriptive.
+- **A2 (descriptive).** Each judge against R3 through the KEY join (`--a R3 --key … --judge …`):
+  - gpt-4o-mini: `judge_gpt-4o-mini_{p0,v1,v2,v2-nosafety,v2_none,v2_oracle}_final.csv`, the files §2.4 of the results used;
+  - claude-sonnet-5-5: `final/judge_claude-sonnet-5-5_*_key60.csv`, from §18.2.
+- **How R3 is used for the gate.** The κ ≥ 0.6 gate (§5, judge protocol step 4; §18.2) stays defined against R1 and R2, as pre-registered. R3's results cannot make a judge pass or fail it. They are reported next to it as an independence check. R3's scores are not pooled with R1's and R2's into means, majority labels or a three-rater statistic.
+- **A3 (descriptive).** R3's count of 0, 1 and 2 per dimension, and R3's mean over the 199 judgements. A degeneracy flag, as in §18.2: one value on ≥ 95 % of a dimension's items. For each dimension, the number of items where the Claude judge scored below R3 and the number where it scored above.
+- **A4 (descriptive).** R3 against R1's set-aside first pass (`human-sheet_round1_R1_pass1.csv`), with the same statistics as A1.
+- Never computed: per-condition means or any other per-condition summary of R3's scores. Results §2.4 already rules this out for R1 and R2, because 12 items per condition cannot rank conditions.
+
+**Conclusions re-checked, and what counts as "holds".** These are the E2 conclusions that rest on the human ratings, from `docs/eval/results-2026-09-13.md` §2.4, `docs/eval/results-2026-10-09-reopened.md` §3 and `docs/report/eval/final/judge-crossfamily_claude-sonnet-5-5.md`. One rule applies to every κ comparison (C1, C2, C5): a comparison is **not assessable** on a dimension if either side gives one value on ≥ 95 % of its items. In that case only percent agreement is reported, and the verdict for that dimension is "not assessable". By this rule, correctness against R1 (19 of 20 at 2) is already not assessable.
+
+| # | Conclusion as the results state it | Re-check with R3 | Holds | Does not hold |
+|---|---|---|---|---|
+| C1 | "The human instrument clears the pre-registered κ ≥ 0.6 threshold on every dimension"; "the rubric, as written, is applied consistently by two people working independently" | A1, per dimension | κ ≥ 0.6 against **both** R1 and R2 | κ < 0.6 against both. *Mixed* if ≥ 0.6 against only one |
+| C2 | "Two humans agree with each other and neither agrees with the judge … so the failure is the judge's"; "neither a same-family nor a cross-family judge can stand in for the human ratings" | A2 with C1, per dimension | C1 holds, and both judges are below κ 0.6 against R3 | either judge reaches κ ≥ 0.6 against R3. *Not supported* if C1 does not hold and both judges are below 0.6: the outsider then reproduces neither the authors nor the judge, so the disagreement cannot be put on the judge alone |
+| C3 | The Claude judge "is stricter than both raters on every dimension" | A3, judge-below against judge-above counts | on every dimension, the judge is below R3 on more items than above | on any dimension, judge-above ≥ judge-below. That dimension is named |
+| C4 | Human scores sit near the ceiling ("rater means are 1.81 and 1.82"), so per-condition human means cannot rank conditions | A3, R3's overall mean | mean ≥ 1.64, closer to R1 and R2 (1.81, 1.82) than to the Claude judge (1.46) | mean < 1.64: the ceiling then belongs to the authors' scoring, not to the answers, and the report says so |
+| C5 | R1's second pass, not the first, is the record. "R2's independent sheet confirms that choice" | A1 against A4 | κ(R3, pass 2) > κ(R3, pass 1) on at least 4 of the 5 dimensions; a dimension that is not assessable counts against | otherwise |
+
+**Clarification, 9 Oct 2026, committed before the link was shared and before any rating.** In C2, a judge comparison that is not assessable counts as "below 0.6". A judge that gives one value, as gpt-4o-mini did on helpfulness and tone, cannot be said to agree with R3; that is how results §2.4 already read its κ of 0.000. C2 is therefore "not assessable" only when C1 is. Every other rule above is unchanged.
+
+The report states C1–C3 dimension by dimension. A conclusion the results state for "every dimension" is restated for the dimensions where it holds. It is not dropped silently, and it is not kept where it fails.
+
+**Expectations.** These are directional, stated so they can fail.
+- X1: R3 is stricter than both authors; R3's overall mean is below both 1.81 and 1.82.
+- X2: on at least 3 of groundedness, helpfulness, tone and safety, R3's κ against both R1 and R2 is below the R1–R2 κ. An outsider shares less of the authors' reading.
+- X3: C1 holds on helpfulness, the dimension where R1 and R2 agreed most (κ 0.93).
+- X4: Neither judge reaches κ 0.6 against R3 on any dimension, so the judge part of C2 holds.
+- X5: C3 holds on at least 4 of the 5 dimensions.
+- X6: C5 holds.
+- X7: R3 gives 2 to at least 18 of the 20 correctness items, so correctness sits at the ceiling for an outsider too.
+
+**Exclusion rules.** These are fixed now and applied by `r3-validate.mjs` before any κ is computed. An excluded sheet is reported as excluded, with the reason, and is never partly analysed.
+- **Incomplete or altered sheet.** The sheet is excluded if:
+  - any of the 199 applicable judgements is missing or not 0, 1 or 2;
+  - any n/a cell carries a score;
+  - an item's number, set, question or answer differs from `human-sheet_round1_R3.csv`;
+  - the page version is not `r3-rating-1.0`.
+- **Criteria not met.** The sheet is excluded if any of the four eligibility statements or the consent tick is missing. It is also excluded if the author learns before analysis that the rater does not meet a criterion, for example that they took part in the usability study.
+- **Not read.** The sheet is excluded if the summed on-screen time across the 60 items is under 30 minutes, which is under 30 seconds per item including reading the answer. It is not excluded for ratings that are uniform or fast on individual items.
+- **Duplicates.** If the same rater sends more than one complete file, the one with the latest finish time is used.
+- **Deadline.** A file received after 16 October 2026 (NZDT) is not used in the report. If no eligible file arrives by then, E2-R3 is reported as not run.
+
+**Reporting.** R3 is described only as "**R3, a health-care worker independent of the project**". The report never names R3, their workplace or their job title. The `#about` block, which holds the optional job title, stays private. The page collects no names. It asks for a short code and says "no names" next to the job-title box. Rater files are never committed. Only the validated sheet part is, as R1's and R2's were.
+
+**Output.** In `docs/report/eval/final/`:
+- `agreement_human_R1_vs_R3.md`, `agreement_human_R2_vs_R3.md`, `agreement_human_R1pass1_vs_R3.md`;
+- `agreement_human-R3_vs_gpt-4o-mini.md`, `agreement_human-R3_vs_claude-sonnet-5-5.md`;
+- a summary `e2-r3_independent-rater.md`, with the A3 tables and the C1–C5 and X1–X7 verdicts.
+
+**Cost.** US$0; no model is called. Hosting is a static page on the existing Vercel account.

@@ -8,9 +8,9 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.js'],
     coverage: {
-      provider: 'v8',
+      provider: 'istanbul',
       include: ['api/**'],
-      reporter: ['json-summary', 'text-summary'],
+      reporter: ['json', 'json-summary', 'text-summary'],
       reportsDirectory: 'coverage',
     },
   },

@@ -1,0 +1,178 @@
+{
+  "tag": "mac-2026-10-09",
+  "sha": "a740401",
+  "date": "2026-10-09",
+  "startedAt": "2026-10-09T01:41:36.752Z",
+  "command": "node scripts/eval/latency/bench-browser.mjs --questions 30 --repeats 2 --warmup 2 --tag mac-2026-10-09 --pilot-turns-before 4 --unity-dir /Users/richmantan/Project.Git/DementiaGuideAi/apps/web/public/unity",
+  "env": {
+    "machine": "Apple M3, 8 GB",
+    "os": "27.0.1",
+    "node": "v20.19.2",
+    "chrome": "Google Chrome 155.0.8059.39",
+    "playwrightCore": "1.63.0",
+    "network": "Wi-Fi (en0)",
+    "timeZone": "Pacific/Auckland",
+    "rtt": {
+      "api.openai.com": 200.24820799999998,
+      "supabase": 16.504125000000386,
+      "api.elevenlabs.io": 314.14245800000026
+    }
+  },
+  "appBaseSha": "7386425",
+  "appTreeIdentical": true,
+  "buildIndexSha": "939843f34389",
+  "unityVersion": "356c7acb203d",
+  "unityDir": "/Users/richmantan/Project.Git/DementiaGuideAi/apps/web/public/unity",
+  "chromeSwitches": [
+    "--mute-audio",
+    "--use-fake-device-for-media-stream",
+    "--use-fake-ui-for-media-stream",
+    "--disable-audio-input",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-backgrounding-occluded-windows",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--window-size=400,760",
+    "--window-position=1300,120"
+  ],
+  "nQuestions": 30,
+  "repeats": 2,
+  "warmup": 2,
+  "paceMs": 5000,
+  "conditions": [
+    "P",
+    "F"
+  ],
+  "clipCheck": "32 of 32 regenerated E4-S webm clips match E4-S's `clip_ms` and `clip_bytes` exactly (sha256 cannot match: the webm muxer writes a random 16-byte segment UID; `say` output is byte-identical across runs)",
+  "pilotTurns": 4,
+  "kb": {
+    "start": {
+      "at": "2026-10-09T01:41:18.437Z",
+      "source": "live knowledge_chunks table (PostgREST, anon key, GET only)",
+      "count": 454,
+      "byCategory": {
+        "clinical": 28,
+        "best-practices": 19,
+        "caregiving": 17,
+        "communication": 13,
+        "home-safety": 15,
+        "isupport-course": 328,
+        "prevention": 11,
+        "wellbeing": 23
+      },
+      "idsContentHashSha256": "0bc97ae0d17b33af771dae4f3f8d6a6e89875df04b78584f08555a7541c87258",
+      "recomputed": {
+        "matchesStored": 80,
+        "of": 454,
+        "sha256": "678b4a6b3c38c36d0fcc2c46ac6bb0429bfc7f2a9c382df7fcaeb900bb6d9df8"
+      },
+      "contentSha256": "a778d5d49d4b05eb812be2362b2690a2d8b05da83c5413a6a6c1ed2e3ac12d39",
+      "embeddingSha256": "29331f9671386e36a8a9fe31d8e38bb563f5aecc76719e15f1732ca8a45b3812",
+      "embeddingModels": [
+        "text-embedding-3-small"
+      ],
+      "embeddedAfterSnapshot": {
+        "since": "2026-09-13T00:00:00Z",
+        "count": 47,
+        "latest": "2026-09-22T14:16:11.8+00:00"
+      },
+      "vsSeptember": {
+        "snapshot": "docs/report/kb_chunks_reference.csv (fa69e62, 2026-09-13)",
+        "septemberCount": 453,
+        "septemberIdsContentHashSha256": "0020d041b9ca0f570cea2b7fb8eced836acbb21de17472f3e3763ab513f29bd8",
+        "identical": false,
+        "added": [
+          "wellbeing_023"
+        ],
+        "removed": [],
+        "changed": []
+      }
+    },
+    "end": {
+      "at": "2026-10-09T01:45:15.647Z",
+      "source": "live knowledge_chunks table (PostgREST, anon key, GET only)",
+      "count": 454,
+      "byCategory": {
+        "clinical": 28,
+        "best-practices": 19,
+        "caregiving": 17,
+        "communication": 13,
+        "home-safety": 15,
+        "isupport-course": 328,
+        "prevention": 11,
+        "wellbeing": 23
+      },
+      "idsContentHashSha256": "0bc97ae0d17b33af771dae4f3f8d6a6e89875df04b78584f08555a7541c87258",
+      "recomputed": {
+        "matchesStored": 80,
+        "of": 454,
+        "sha256": "678b4a6b3c38c36d0fcc2c46ac6bb0429bfc7f2a9c382df7fcaeb900bb6d9df8"
+      },
+      "contentSha256": "a778d5d49d4b05eb812be2362b2690a2d8b05da83c5413a6a6c1ed2e3ac12d39",
+      "embeddingSha256": "29331f9671386e36a8a9fe31d8e38bb563f5aecc76719e15f1732ca8a45b3812",
+      "embeddingModels": [
+        "text-embedding-3-small"
+      ],
+      "embeddedAfterSnapshot": {
+        "since": "2026-09-13T00:00:00Z",
+        "count": 47,
+        "latest": "2026-09-22T14:16:11.8+00:00"
+      },
+      "vsSeptember": {
+        "snapshot": "docs/report/kb_chunks_reference.csv (fa69e62, 2026-09-13)",
+        "septemberCount": 453,
+        "septemberIdsContentHashSha256": "0020d041b9ca0f570cea2b7fb8eced836acbb21de17472f3e3763ab513f29bd8",
+        "identical": false,
+        "added": [
+          "wellbeing_023"
+        ],
+        "removed": [],
+        "changed": []
+      }
+    },
+    "summary": "unchanged during the run; 1 added (wellbeing_023), 0 removed, 0 changed"
+  },
+  "finishedAt": "2026-10-09T01:45:22.540Z",
+  "abortReason": "TCC watchdog: 2026-10-09 14:45:10.792 Df tccd[980:20c27a] [com.apple.TCC:access] AUTHREQ_CTX: msgID=779.1203, function=<private>, service=kTCCServiceMicrophone, preflight=no,",
+  "violations": [],
+  "watchdog": "**TRIPPED** 9×",
+  "adminStub": "26 calls, all `bump_study_usage` answered locally",
+  "blockedCount": 1,
+  "supabaseAudit": "POST /auth/v1/signup (blocked) ×1, POST /rest/v1/rpc/match_chunks ×6",
+  "historyCheck": "0 messages in every kept turn",
+  "serverTotals": {
+    "chatPrompt": 17531,
+    "chatCompletion": 1890,
+    "embedTokens": 80,
+    "elevenChars": 637,
+    "elevenRequests": 6,
+    "heldTts": 94,
+    "speechChars": 478,
+    "transcribeBytes": 198045,
+    "adminCalls": 26,
+    "statuses": {
+      "embed:200": 6,
+      "eleven-tts:200": 99,
+      "chat:200": 6,
+      "transcribe:200": 3,
+      "speech:200": 5
+    }
+  },
+  "spend": {
+    "openaiUsdHarnessEstimate": 0.0531,
+    "elevenMeter": "3038 → 3093 units of 10000 (55 used; tier payg)",
+    "meterBefore": {
+      "tier": "payg",
+      "used": 3038,
+      "limit": 10000,
+      "at": "2026-10-09T01:41:10.840Z"
+    },
+    "meterAfter": {
+      "tier": "payg",
+      "used": 3093,
+      "limit": 10000,
+      "at": "2026-10-09T01:45:20.489Z"
+    }
+  }
+}

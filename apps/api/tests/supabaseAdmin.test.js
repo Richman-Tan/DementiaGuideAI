@@ -102,6 +102,38 @@ describe('insertReturning', () => {
   });
 });
 
+describe('insertManyReturning', () => {
+  it('POSTs the rows as an array and returns the representation for each', async () => {
+    const admin = await loadAdmin();
+    const written = [{ id: 'a', display_title: 'A' }, { id: 'b', display_title: 'B' }];
+    const fetch = stubFetch(jsonResponse(written, 201));
+    const rows = [{ id: 'a' }, { id: 'b' }];
+    expect(await admin.insertManyReturning('knowledge_chunks', rows, 'id,display_title')).toEqual(written);
+    const c = call(fetch);
+    expect(c.url).toBe(`${URL_BASE}/rest/v1/knowledge_chunks?select=id%2Cdisplay_title`);
+    expect(c.headers.Prefer).toBe('return=representation');
+    expect(c.json).toEqual(rows);
+  });
+
+  it('chunks more than 50 rows into separate requests', async () => {
+    const admin = await loadAdmin();
+    const fetch = stubFetch(() => jsonResponse([{ id: 'x' }], 201));
+    const rows = Array.from({ length: 120 }, (_, i) => ({ id: `r${i}` }));
+    const written = await admin.insertManyReturning('knowledge_chunks', rows, 'id');
+    expect(fetch).toHaveBeenCalledTimes(3); // 50 + 50 + 20
+    expect(call(fetch, 0).json).toHaveLength(50);
+    expect(call(fetch, 1).json).toHaveLength(50);
+    expect(call(fetch, 2).json).toHaveLength(20);
+    expect(written).toHaveLength(3); // one { id: 'x' } echoed back per batch in this stub
+  });
+
+  it('skips a batch whose response is not an array, without throwing', async () => {
+    const admin = await loadAdmin();
+    stubFetch(new Response(null, { status: 204 })); // return=representation but nothing came back
+    expect(await admin.insertManyReturning('knowledge_chunks', [{ id: 'a' }], 'id')).toEqual([]);
+  });
+});
+
 describe('insertIgnoringConflicts', () => {
   it('sends nothing for an empty batch', async () => {
     const admin = await loadAdmin();

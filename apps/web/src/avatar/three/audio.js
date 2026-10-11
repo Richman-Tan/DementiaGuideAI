@@ -27,6 +27,7 @@ export class AvatarAudioEngine {
     this.speechEmotion = 'neutral';
     this.streamSession = null;
     this._endWaiters = [];
+    this._playSeq = 0; // bumped by every stop, so a play stopped mid-decode stays silent
   }
 
   // ─── AudioContext lifecycle ────────────────────────────────────────────────
@@ -58,6 +59,7 @@ export class AvatarAudioEngine {
   }
 
   _stopCurrent() {
+    this._playSeq++;
     if (this.source) {
       this.source.onended = null;
       try { this.source.stop(); } catch { /* already stopped */ }
@@ -83,10 +85,14 @@ export class AvatarAudioEngine {
   }
 
   _emitEnd(payload) {
+    this._releaseWaiters(payload);
+    this.onAudioEnd(payload || {});
+  }
+
+  _releaseWaiters(payload) {
     const waiters = this._endWaiters;
     this._endWaiters = [];
     for (const w of waiters) w(payload);
-    this.onAudioEnd(payload || {});
   }
 
   _onAudioEnded(errorMsg) {
@@ -103,9 +109,11 @@ export class AvatarAudioEngine {
   // ─── RMS fallback path ─────────────────────────────────────────────────────
   async playAudioWithLipSync(dataUri) {
     this._stopCurrent();
+    const seq = this._playSeq;
     this.visemeMode = false;
     try {
       const decoded = await this._decode(dataUri);
+      if (seq !== this._playSeq) return; // stopped or replaced while decoding
       this.analyser = this.ctx.createAnalyser();
       this.analyser.fftSize = 512;
       this.analyserBuf = new Uint8Array(this.analyser.frequencyBinCount);
@@ -118,6 +126,7 @@ export class AvatarAudioEngine {
 
       this.source.onended = () => this._onAudioEnded(null);
       if (this.ctx.state === 'suspended') await this.ctx.resume();
+      if (seq !== this._playSeq) return;
       this.onAudioStart();
       this.source.start(0);
     } catch (err) {
@@ -128,11 +137,13 @@ export class AvatarAudioEngine {
   // ─── Viseme timeline path ──────────────────────────────────────────────────
   async playAudioWithVisemeTimeline(dataUri, timeline, emotion) {
     this._stopCurrent();
+    const seq = this._playSeq;
     this.visemeMode = true;
     this.visemeTimeline = timeline;
     this.speechEmotion = emotion || 'neutral';
     try {
       const decoded = await this._decode(dataUri);
+      if (seq !== this._playSeq) return; // stopped or replaced while decoding
       this.source = this.ctx.createBufferSource();
       this.source.buffer = decoded;
       this.source.connect(this.ctx.destination);
@@ -140,6 +151,7 @@ export class AvatarAudioEngine {
 
       this.source.onended = () => this._onAudioEnded(null);
       if (this.ctx.state === 'suspended') await this.ctx.resume();
+      if (seq !== this._playSeq) return;
       // 10ms look-ahead so the anchor matches actual sample playback.
       const startAt = this.ctx.currentTime + 0.010;
       this.audioStartTime = startAt;
@@ -266,6 +278,11 @@ export class AvatarAudioEngine {
   stopAudioLipSync() {
     this._stopStreaming();
     this._stopCurrent();
+    // Release whoever awaits the playback just cut off (mobile parity: the
+    // WebView's stopAudio resolves its pending play). Left waiting, they were
+    // released by the NEXT playback's end instead, waking a stopped answer in
+    // the middle of a new one.
+    this._releaseWaiters({ stopped: true });
   }
 
   // Read by the Three.js renderer every animation frame (phase d).

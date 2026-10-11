@@ -109,7 +109,15 @@ class ThreeAvatarController {
   setSpeechEmotion(emotion) { this.renderer?.setSpeechEmotion(emotion); }
   setAvatarState(state) { this.renderer?.setAvatarState(state); }
   setDebugMode(on) { this.renderer?.setDebugMode?.(on); }
-  stopAudio() { this.renderer?.stopAudioLipSync(); }
+  stopAudio() {
+    this.renderer?.stopAudioLipSync();
+    // Release whoever awaits the playback just cut off (mobile parity). The
+    // renderer posts no audioEnd for a stop, so they would otherwise wake on the
+    // NEXT playback's end, in the middle of a new answer.
+    const resolvers = this._audioEndResolvers;
+    this._audioEndResolvers = [];
+    for (const r of resolvers) r({ type: 'audioEnd', stopped: true });
+  }
 
   dispose() {
     this.renderer?.dispose();

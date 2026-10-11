@@ -78,3 +78,39 @@ under 30 on-screen minutes; duplicates; and a deadline): a file received after *
 Results go to `docs/eval/results-2026-10-15-s19f.md` and into the report whatever they show. If a
 stopping rule ends either part with fewer people than hoped, the number reached is reported with the
 reason. Study data stay out of the repository except the aggregate tables the export scripts write.
+
+## 19F.5 Amendment, Monday 12 October 2026: early close of E7-X (before any analysis)
+
+> Committed **before any outcome of a new session is read**: no SUS, Likert, task time, answer or
+> transcript of P17 onwards has been opened. Up to this point, the only data read from the new
+> sessions are each session's code, group, start and completion times, browser and the count of
+> fallback events, which were needed to count completed sessions and to check the voice service.
+
+**What changed.** The author closed family-carer recruitment at 11:55 NZDT on Monday 12 October. That
+was before both stopping points in §19F.2 (15 carers, or Thursday 15 October 18:00). The author had
+arranged five more carers on 11 October, and all five had taken part. The sample is **10 family
+carers** who completed both arms: the five of 9–10 October and **P18, P19, P20, P22 and P23**. No care
+worker was added. The care-worker part ends with the same close, and no session starts after it.
+
+**Disclosed with the results:**
+- **Incomplete sessions.** P17 started at 09:47 on 11 October, before this plan was committed. P21
+  started at 21:24 on 11 October. Neither reached `session_complete`, so neither is analysed, as in
+  the protocol. Both are reported as incomplete.
+- **Timing of P18.** P18 started at 12:38:47 on 11 October, the same second this plan's commit is
+  stamped with. The plan was pushed and merged as PR #138 at 12:51:31, so it was public before P18
+  finished (12:50:18) but not before P18 started. No outcome was read before the plan existed.
+  P18 stays in the sample, because §19F.2 says codes continue from P17.
+- **App unchanged.** The last production deployment of the web app is 9 October 20:48:33 NZDT, the
+  spoken-number fix that P16 used. This was checked with `vercel inspect`. Main received the
+  admin-intake merge (PR #139) on 11 October, but it did not deploy to production. Its
+  `review_status` migration was applied on 7 October, before the October round. Retrieval was the
+  same for all ten carers.
+- **Voice service.** On some turns the ElevenLabs voice returned an upstream error, and the reply was
+  spoken by the OpenAI fallback voice the app is built with. This happened on 78 turns in P19, 8 in
+  P21 and 3 in P23, and on none in P18, P20 or P22. The sessions are valid and kept. The counts are
+  reported descriptively. No analysis is added, changed or dropped because of them.
+
+**Analyses and expectations unchanged.** §19F.2's analyses and Z1–Z3 apply as written, on all 10
+family carers and on the 5 new carers alone. With 5 pairs, a two-sided exact Wilcoxon signed-rank
+test cannot go below p = 0.0625, so the new-carers-alone test is descriptive. E2-R4 (§19F.3) is
+unaffected, and its deadline is still Friday 16 October.

@@ -5,7 +5,7 @@
 // §19A items (sets S, C, N, I), production retrieval, injected passages where an item
 // carries them, the same prompt packages (resolveCondition) and max_tokens — and writes
 // the same JSON shape, so s19h/analyse.mjs and lib/aggregate.js read it unchanged.
-// Anthropic's API takes no seed; temperature 0 is used.
+// Anthropic's API takes no seed, and this model takes no temperature: its default sampling is used.
 //
 //   node scripts/eval/s19h/run-claude.mjs --prompt v2 --model claude-sonnet-5-5 --sha 17cb4b1 [--resume]
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
@@ -44,8 +44,8 @@ const header = () => ({
   generatedAt: new Date().toISOString(), gitSha: SHA, actualGitSha: gitSha(), condition: condition.id, promptVersion: condition.id,
   promptLabel: condition.label, region: condition.region, citationMode: condition.citationMode, retrievalMode: 'production',
   injection: true, questionVersion: 'v2', heldout: true, questionsFile: 'scripts/eval/questions.s19a.js', model: MODEL,
-  temperature: 0, seed: null, samples: 1, tag: 's19h', systemPromptSha256,
-  methodologyNote: 'Anthropic Messages API (no seed), temperature 0, max_tokens as run-generation.mjs; §19H.6.',
+  temperature: null, seed: null, samples: 1, tag: 's19h', systemPromptSha256,
+  methodologyNote: 'Anthropic Messages API: no seed, and no temperature (deprecated for this model; default sampling); max_tokens as run-generation.mjs; §19H.6.',
 });
 
 let rows = [];
@@ -82,7 +82,7 @@ for (const q of questions) {
   const chunks = [...base, ...injected];
   const userContent = condition.userContent(text, chunks);
   const msg = await withRetry(() => client.messages.create({
-    model: MODEL, max_tokens: maxTokens, temperature: 0, system: systemPrompt,
+    model: MODEL, max_tokens: maxTokens, system: systemPrompt,
     messages: [{ role: 'user', content: userContent }],
   }), q.id);
   const answer = msg.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();

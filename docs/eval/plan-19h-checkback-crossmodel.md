@@ -130,7 +130,9 @@ were in progress. No Part B result had been read when this was committed.
 **Runner:** `scripts/eval/s19h/run-claude.mjs`. It mirrors `run-generation.mjs` for Part B: the same
 167 items, production retrieval, injected passages, prompt packages and `max_tokens`, and the same
 output format.
-- Anthropic's API takes no seed, so temperature 0 is used without one.
+- Anthropic's API takes no seed. Its first call, before any answer was generated, was refused
+  because `claude-sonnet-5-5` takes no temperature setting, so the model's default sampling is used.
+  The Claude answers are therefore single samples, not seeded or greedy ones.
 - Retrieval still embeds each question with OpenAI's model, exactly as in the other runs.
 
 **Budget:** about US$6 more, charged to the Anthropic account.

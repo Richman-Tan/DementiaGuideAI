@@ -133,6 +133,12 @@ output format.
 - Anthropic's API takes no seed. Its first call, before any answer was generated, was refused
   because `claude-sonnet-5-5` takes no temperature setting, so the model's default sampling is used.
   The Claude answers are therefore single samples, not seeded or greedy ones.
+- **Second attempt.** The first complete Claude attempt cut off 164 of 167 answers at `max_tokens`,
+  because the model's hidden reasoning counted against the 600-token limit: the median visible
+  answer was 519 characters. Only truncation counts were inspected, not any measure. The attempt is
+  kept unanalysed, with the suffix `_ATTEMPT1-thinking-truncated`. Both Claude conditions are then
+  re-run with reasoning off (`thinking: {type: 'between_tools'}`, no tools), so the 600 tokens count
+  visible text only, as for the OpenAI models. Truncation counts are reported with the results.
 - Retrieval still embeds each question with OpenAI's model, exactly as in the other runs.
 
 **Budget:** about US$6 more, charged to the Anthropic account.

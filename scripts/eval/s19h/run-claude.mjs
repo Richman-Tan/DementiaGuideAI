@@ -45,7 +45,7 @@ const header = () => ({
   promptLabel: condition.label, region: condition.region, citationMode: condition.citationMode, retrievalMode: 'production',
   injection: true, questionVersion: 'v2', heldout: true, questionsFile: 'scripts/eval/questions.s19a.js', model: MODEL,
   temperature: null, seed: null, samples: 1, tag: 's19h', systemPromptSha256,
-  methodologyNote: 'Anthropic Messages API: no seed, and no temperature (deprecated for this model; default sampling); max_tokens as run-generation.mjs; §19H.6.',
+  methodologyNote: 'Anthropic Messages API: no seed; no temperature (deprecated for this model; default sampling); reasoning off (thinking between_tools, no tools given), so max_tokens counts visible text only, as for the OpenAI models; max_tokens as run-generation.mjs; §19H.6.',
 });
 
 let rows = [];
@@ -82,7 +82,7 @@ for (const q of questions) {
   const chunks = [...base, ...injected];
   const userContent = condition.userContent(text, chunks);
   const msg = await withRetry(() => client.messages.create({
-    model: MODEL, max_tokens: maxTokens, system: systemPrompt,
+    model: MODEL, max_tokens: maxTokens, system: systemPrompt, thinking: { type: 'between_tools' },
     messages: [{ role: 'user', content: userContent }],
   }), q.id);
   const answer = msg.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();

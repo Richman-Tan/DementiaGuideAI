@@ -118,3 +118,23 @@ node scripts/eval/s19h/analyse.mjs --sha <P>
 ```
 
 The results are written to `docs/eval/results-2026-10-12-s19h.md`.
+
+## 19H.6 Amendment, before any Claude call: a third model from a second provider
+
+Part B adds **`claude-sonnet-5-5`** (Anthropic) as a third model, so the escalation result is also
+tested across providers. This was the author's offer of Anthropic credit, made while the OpenAI runs
+were in progress. No Part B result had been read when this was committed.
+
+**Same conditions, items, measures and expectations** (M1–M4, applied per model).
+
+**Runner:** `scripts/eval/s19h/run-claude.mjs`. It mirrors `run-generation.mjs` for Part B: the same
+167 items, production retrieval, injected passages, prompt packages and `max_tokens`, and the same
+output format.
+- Anthropic's API takes no seed, so temperature 0 is used without one.
+- Retrieval still embeds each question with OpenAI's model, exactly as in the other runs.
+
+**Budget:** about US$6 more, charged to the Anthropic account.
+
+```bash
+for id in v2 v2-nohelplines; do node scripts/eval/s19h/run-claude.mjs --prompt $id --model claude-sonnet-5-5 --sha 17cb4b1 --resume; done
+```

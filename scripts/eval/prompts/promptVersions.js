@@ -29,6 +29,8 @@ const { buildSystemPrompt, buildSystemPromptV2, buildUserContent } = require('..
 const { ABLATION_CONDITIONS } = require('./ablation19a');
 // §19D jurisdiction-neutral prompt (v2 − 111 rule − helplines − the words "New Zealand").
 const { NEUTRAL_CONDITIONS } = require('./neutral19d');
+// §19G scope ablation (v2 − own-knowledge clause; v2 + scope rule; both).
+const { SCOPE_CONDITIONS } = require('./scope19g');
 
 // ── P0: the library prompt, resurrected verbatim ────────────────────────────
 // Ported from `_buildSystemPrompt` at commit 7c75fc0^ (2026-07-15, the last
@@ -157,6 +159,7 @@ const CONDITIONS = {
   },
   ...ABLATION_CONDITIONS,
   ...NEUTRAL_CONDITIONS,
+  ...SCOPE_CONDITIONS,
 };
 
 // Backward-compatible aliases: the existing runner/artefacts name the

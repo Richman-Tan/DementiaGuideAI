@@ -16,6 +16,7 @@ import { ROOT } from '../lib.mjs';
 const args = process.argv.slice(2);
 const argVal = (n) => { const i = args.indexOf(n); return i === -1 ? null : args[i + 1]; };
 const SHA = argVal('--sha') ?? '83f1b11';
+const ORDER_LABEL = argVal('--order-label') ?? 's19g-scope-read-order';   // a second reader gets their own order
 const OUT = resolve(argVal('--out-dir') ?? join(ROOT, 'docs/report/eval/safety/s19g-sheet'));
 const CONDS = ['v2', 'v2-noclause', 'v2-scoperule', 'v2-noclause-scoperule'];
 
@@ -38,12 +39,12 @@ for (const c of CONDS) {
 const want = 22 * CONDS.length;
 if (rows.length !== want) { console.error(`expected ${want} scope-read answers, found ${rows.length}`); process.exit(1); }
 rows.sort((a, b) => a.condition.localeCompare(b.condition) || a.id.localeCompare(b.id, 'en', { numeric: true }));
-const order = shuffle(rows, mulberry32((42 ^ fnv1a('s19g-scope-read-order')) >>> 0));
+const order = shuffle(rows, mulberry32((42 ^ fnv1a(ORDER_LABEL)) >>> 0));
 order.forEach((r, i) => { r.item = `G${String(i + 1).padStart(2, '0')}`; });
 const sheetId = createHash('sha256').update(JSON.stringify(order.map(r => [r.item, r.question, r.answer]))).digest('hex').slice(0, 12);
 
 mkdirSync(OUT, { recursive: true });
-writeFileSync(join(OUT, 's19g-scope-key.json'), JSON.stringify({ sheet_id: sheetId, seed: 42, label: 's19g-scope-read-order', items: order.map(({ item, condition, id, category }) => ({ item, condition, id, category })) }, null, 2));
+writeFileSync(join(OUT, 's19g-scope-key.json'), JSON.stringify({ sheet_id: sheetId, seed: 42, label: ORDER_LABEL, items: order.map(({ item, condition, id, category }) => ({ item, condition, id, category })) }, null, 2));
 
 const data = order.map(({ item, question, answer }) => ({ item, question, answer }));
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

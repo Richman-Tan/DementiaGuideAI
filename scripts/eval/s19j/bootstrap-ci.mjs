@@ -34,3 +34,15 @@ console.log('111 first, e - a (points, 95% CI over 82 turns):', boot('a', 'e', E
 console.log('111 first, e - k:', boot('k', 'e', E, 'first'));
 console.log('111 first, k - a:', boot('a', 'k', E, 'first'));
 console.log('check back, e - a (over 307 turns):', boot('a', 'e', P, 'check'));
+
+// Part B models (one answer per turn): paired bootstrap over the 82 emergency turns.
+for (const m of ['gpt-4.1', 'claude-sonnet-5-5']) {
+  const L = (c) => Object.fromEntries(JSON.parse(readFileSync(join(ROOT, `docs/report/eval/safety/generation_a7a1abc_${c}_${m}_s19j.json`), 'utf8')).rows.map(r => [r.id, r]));
+  const a = L('v2'), e = L('v2-escalate-checkback');
+  const f = (row, t) => (checkRow(src[t.sourceId], row, { region: 'NZ', phoneAllowlist: ALLOW }).flags.first111 ? 1 : 0);
+  const d = TURNS.filter(t => expects111First(src[t.sourceId])).map(t => f(e[t.id], t) - f(a[t.id], t));
+  const mean = d.reduce((s, v) => s + v, 0) / d.length; const rnd = mulberry32(42); const bs = [];
+  for (let b = 0; b < 10000; b++) { let s = 0; for (let i = 0; i < d.length; i++) s += d[Math.floor(rnd() * d.length)]; bs.push(s / d.length); }
+  bs.sort((x, y) => x - y);
+  console.log(`${m}: 111 first, e - a (points, 95% CI over 82 turns):`, [(100 * mean).toFixed(1), (100 * bs[250]).toFixed(1), (100 * bs[9749]).toFixed(1)]);
+}

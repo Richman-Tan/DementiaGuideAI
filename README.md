@@ -322,8 +322,8 @@ No participant media and no DementiaBank audio are included.
   `0214e82` (§19D), `5cde14f` (§19B propagation), `a7a1abc` (§19J).
 - **Unity project:** the submodule commit recorded in this repository
   (`git submodule status`); Unity 6000.5.0f1.
-- **This compendium:** the commit tagged TODO(tag), for example `compendium-2026-10-20`, at
-  submission.
+- **This compendium:** the commit tagged `compendium-2026-10-20`, the version submitted on
+  20 October 2026 (`git checkout compendium-2026-10-20 && git submodule update --init`).
 
 ---
 

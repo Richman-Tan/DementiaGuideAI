@@ -1,0 +1,94 @@
+{
+  "status": "post hoc reanalysis, 11 October 2026",
+  "seed": 20261011,
+  "bootstrap_replicates": 50000,
+  "raters": 15,
+  "sentences": 10,
+  "choices": 150,
+  "engine_choices": 107,
+  "mean_preference": 0.7133333333333334,
+  "two_way_percentile_95ci": [
+    0.56,
+    0.8533333333333334
+  ],
+  "rater_percentile_95ci": [
+    0.6066666666666667,
+    0.8200000000000001
+  ],
+  "p_raw": {
+    "preference_majority": 0.057373046875000014,
+    "synchronisation": 0.0009765625,
+    "naturalness": 0.00262451171875
+  },
+  "p_holm_rater_tests": {
+    "synchronisation": 0.0029296875,
+    "naturalness": 0.0052490234375,
+    "preference_majority": 0.057373046875000014
+  },
+  "position": {
+    "9 October": {
+      "raters": 7,
+      "trials": 70,
+      "engine_choices": 39,
+      "left_choices": 12,
+      "engine_left_trials": 37,
+      "engine_choices_when_left": 9,
+      "engine_right_trials": 33,
+      "engine_choices_when_right": 30,
+      "rater_share_range": [
+        0.4,
+        0.7
+      ]
+    },
+    "10 October": {
+      "raters": 8,
+      "trials": 80,
+      "engine_choices": 68,
+      "left_choices": 35,
+      "engine_left_trials": 37,
+      "engine_choices_when_left": 30,
+      "engine_right_trials": 43,
+      "engine_choices_when_right": 38,
+      "rater_share_range": [
+        0.4,
+        1.0
+      ]
+    },
+    "all": {
+      "raters": 15,
+      "trials": 150,
+      "engine_choices": 107,
+      "left_choices": 47,
+      "engine_left_trials": 74,
+      "engine_choices_when_left": 39,
+      "engine_right_trials": 76,
+      "engine_choices_when_right": 68,
+      "rater_share_range": [
+        0.4,
+        1.0
+      ]
+    }
+  },
+  "input_sha256": {
+    "e6_R01_2026-10-08T20-36-11-718Z.csv": "340a98c3ee035927cc73da05b23fd3ad03c95bf52ba010dede1bb0a02f4e5a33",
+    "e6_R02_2026-10-08T20-51-38-523Z.csv": "fd3fd547d3bc737c9af25883c66de8f296bf06a263f0c771ae54d987bafeca76",
+    "e6_R03_2026-10-08T21-00-46-438Z.csv": "6f5a281eea20f30090345fc2114e14ddef0d5642349ae2d14b6f7c8c5a50be3a",
+    "e6_R04_2026-10-08T22-17-58-518Z.csv": "6a4c6e02c10c4d5dc91857507f82edbfd7b319379ab09de14ed23ad08d335388",
+    "e6_R05_2026-10-08T22-42-17-056Z.csv": "3cb72ea40ffb223d838fc978a5a98ef24ae6d734bc6cbb1187221fde7ab80520",
+    "e6_R06_2026-10-08T22-49-40-153Z.csv": "af63ba455767c41953e69af55b8931d8cff8f80690564dc908c4903361e27c58",
+    "e6_R07_2026-10-08T23-39-29-965Z.csv": "e142408e34ddbdbb7f3f8aea45578c8ef723554335ecb8f75aad148431f8bf90",
+    "e6_R08_2026-10-08T23-48-49-784Z.csv": "17282b509388444bf682a9777087e869c9d74f67631e7eefc433287af5f3149c",
+    "e6_R09_2026-10-09T01-13-15-823Z.csv": "40c4e3ebd97c4887a5b529260b056f43aa6d94c2b41cba0543f4f8e7a6444096",
+    "e6_R10_2026-10-09T20-42-51-161Z.csv": "c1c8972b18ea1d905d102941ef1acc4dacd275c8866a962b48d614c31e089f98",
+    "e6_R11_2026-10-09T20-49-17-977Z.csv": "3382798f2291d5f8463f5727fdc13ef48c323afd59474d623cb407225b19b01a",
+    "e6_R12_2026-10-09T20-56-53-861Z.csv": "1b9af5cad538126bee38dcd3ab55bc350576f8f47d91de72555b1b3dd6d9dbce",
+    "e6_R14_2026-10-09T21-15-45-023Z.csv": "7430657b64eeb56d3ea9c9a26a56acd8ed36c5d47b0ea92a9faf020fef223665",
+    "e6_R15_2026-10-09T21-21-37-731Z.csv": "d0af0eeb4d8cf5f157d43828f45b3366d54e5730857a8fe18f2001f6e456c055",
+    "e6_R16_2026-10-09T22-08-10-518Z.csv": "d1124601ee53c87f4f2a8dd7923a5d7ea479da5218e1035054f480994dc7ace7",
+    "e6_R17_2026-10-09T22-15-19-655Z.csv": "b495799002f90b2227bf6d4d1abfac56721a2a66af5741e854cae757d2033573",
+    "e6_R3_2026-10-09T21-06-55-993Z.csv": "94ce401fae1fcbea52468086926c64c135268cf32ce347e67cf30a4bdb73d097"
+  },
+  "key_sha256": "3c5ed50723b26a87d7134957ba4e4e5a6eb9d348c9b1b40c1dc05ea522f634a2",
+  "aggregate_sha256": "0ed5a83c174c562015a149a20fe3c37e929e7470aa388244ce6e7a7a75b68975",
+  "limitations": "Post hoc; convenience sample; only ten fixed sentences; day and cohort confounded. Bootstrap resamples observed raters and sentences and does not remove recruitment bias."
+}

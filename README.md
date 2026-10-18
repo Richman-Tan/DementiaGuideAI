@@ -351,7 +351,7 @@ medical advice, diagnosis or treatment.
 
 | Name | Role | Contact |
 |---|---|---|
-| Richman Tan | Student; system, voice and avatar pipeline, evaluation programme | TODO(Richman): university email |
+| Richman Tan | Student; system, voice and avatar pipeline, evaluation programme | rtan654@aucklanduni.ac.nz |
 | JooHyun Kang | Student; knowledge base, retrieval, second rater | TODO(JooHyun): university email |
 | Assoc. Prof. Jing Sun | Supervisor | jing.sun@auckland.ac.nz |
 

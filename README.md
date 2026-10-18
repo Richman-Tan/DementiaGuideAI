@@ -1,11 +1,14 @@
 # DementiaGuide AI — Research Compendium
 
-This repository is the **research compendium** for Part IV project #49 (COMPSYS/ELECTENG/SOFTENG
+This is the **research compendium** for Part IV project #49 (COMPSYS/ELECTENG/SOFTENG
 700, 2026), Department of Electrical, Computer, and Software Engineering, University of Auckland.
 It holds the source code of the system that was built, the evaluation plans, the scripts that ran
 every evaluation, the data and per-run outputs those scripts produced, and the tables behind the
 figures. It is the online technical appendix the Part IV handbook asks for, and it is meant to let
-a later student or researcher repeat the work.
+a later student or researcher repeat the work. It is submitted on Canvas as
+`49_rtan654_TODO(JooHyun: UPI)-Compendium.zip` and kept as the git repository
+[Richman-Tan/DementiaGuideAI](https://github.com/Richman-Tan/DementiaGuideAI) (private). The zip
+holds the repository plus three folders that are not on GitHub (section 1).
 
 It supports two individual final reports, written independently:
 
@@ -14,8 +17,9 @@ It supports two individual final reports, written independently:
 | *DementiaGuide AI: An Avatar-Based Digital Resource Management System for Dementia Care* (18 Oct 2026) | Richman Tan |
 | TODO(JooHyun): title and date | JooHyun Kang |
 
-Supervisor: Assoc. Prof. Jing Sun. Neither report is stored here. Unless stated otherwise, the
-section, table and appendix numbers below refer to Richman Tan's report.
+Supervisor: Assoc. Prof. Jing Sun. Both reports, as submitted, are in the zip's `submissions/`
+folder. Unless stated otherwise, the section, table and appendix numbers below refer to Richman
+Tan's report.
 
 **What the project built.** DementiaGuide AI is an assistant for family carers of people living
 with dementia in Aotearoa New Zealand. A carer asks a question by typing or speaking; the system
@@ -41,6 +45,19 @@ evaluated client), iOS and Android.
 ---
 
 ## 1. How the compendium is organised
+
+### The Canvas zip
+
+The zip's root folder is this repository, checked out at the submission tag (section 8) with its
+full git history in `.git/`. The commit dates are the record that each plan was written before
+its run (`git log --follow docs/eval/plan-19j-replication.md`, for example). Three folders are
+added that are not on GitHub:
+
+| Path | What it is |
+|---|---|
+| `submissions/` | **Each student's files exactly as submitted on Canvas**, one folder per student (`Richman_Tan_rtan654/`, `JooHyun_Kang_TODO(JooHyun: UPI)/`). `submissions/README.md` lists every file with its Canvas assignment, date and SHA-256 checksum. |
+| `unity-avatar/UnityAvatarProject/` | **The Unity project** at the submodule commit (section 8): the co-articulation engine, the G2P, the articulation test harness and its fixtures, the scenes, packages and project settings. Its Character Creator characters and its iOS and Android build exports are left out because together they would take the zip over Canvas's 2 GB limit; the complete project is on GitHub at the same commit. |
+| `examiners-only/` | **Usability-study results that may be assessed but not published** (section 6): the October analysis and the report's Figure 5.3. |
 
 ### Top level
 
@@ -69,7 +86,7 @@ An npm-workspaces monorepo: three apps share one knowledge base and one core lib
 | `docs/eval/README.md` | **How to run the evaluation harness**: every script, its outputs, and the order of work. |
 | `docs/report/eval/` | **Per-run outputs**, one file per run: generated answers (`generation_*.json`), retrieval runs (`retrieval_*`), judge scores (`judge_*`), pairwise preferences (`pairwise_*`), safety checks (`safety_*`). Sub-folders: `final/` (the tables used in the report, agreement statistics, cost, load tests), `human/` (human rating sheets and labels), `safety/` (October safety runs), `stt/` (speech recognition), `latency/` (October latency runs), `lipsync/` (articulation harness), `e6/` (perceptual lip-sync test). |
 | `docs/report/figures/` | Report figures and lip-sync capture frames (section 7). |
-| `docs/study/` | **Usability study design**: protocol, analysis plan, instruments (SUS, Likert items, debrief), tasks, ethics documents, pilot checklist and incident log. The study's results are not here (section 6). |
+| `docs/study/` | **Usability study design**: protocol, analysis plan, instruments (SUS, Likert items, debrief), tasks, ethics documents, pilot checklist and incident log. The study's results are in the zip's `examiners-only/` (section 6). |
 | `docs/rag/` | How the retrieval pipeline is built and sourced, and the research behind it. |
 | `docs/testing/` | End-to-end test flows (Playwright for web, Maestro for iOS). |
 | `docs/seminar/` | The July conference presentation. |
@@ -127,7 +144,7 @@ under `scripts/eval/` unless shown otherwise.
 | E4-B | Spoken-turn latency in Chrome, primary and fallback recognisers | §5.3, Table E.3 | `evaluation-plan.md` §18.4 | `results-2026-10-09-reopened.md` §6 | `report/eval/latency/browser-bench_*` | `latency/bench-browser.mjs`, `latency/browser-bench-server.mjs`, `latency/rtt-probe.mjs` |
 | E5 | Articulation harness: 95 automatic checks that the avatar's mouth shapes match the sounds (for example, lips closed on m, b and p) | §5.3, Table E.1 | `evaluation-plan.md` §10 | `report/eval/lipsync/README.md` | `report/eval/lipsync/*.json`, `g2p-ablation_kb100.md` | `scripts/lipsync/`; the Unity harness in `unity-avatar/` (Tools › LipSync › Run All Fixtures) |
 | E6 | Perceptual lip-sync test: 15 raters compared the engine with the earlier one and a still face | §5.3, Table E.4 | `evaluation-plan.md` §10; `report/eval/e6/STOPPING-RULE.md` | `report/eval/e6/e6-results_FINAL-2026-10-10_n15.md` | `report/eval/e6/*.json` (aggregates; interim results kept), `e6-dependence-audit_2026-10-11.json` | `e6-make-stimuli.mjs`, `e6-analyse.mjs`, `e6/`, `scripts/report/reanalyse-e6.py` |
-| E7 | Usability study: avatar with voice (Arm A) against text (Arm B), within subjects | §4.4, §5.4, Appendix C | `docs/study/protocol.md`, `analysis-plan.md`; extension `plan-19f-extension.md` | not included (section 6) | not included (section 6); instruments in `docs/study/instruments.md`, `tasks.md` | `scripts/study/` |
+| E7 | Usability study: avatar with voice (Arm A) against text (Arm B), within subjects | §4.4, §5.4, Appendix C | `docs/study/protocol.md`, `analysis-plan.md`; extension `plan-19f-extension.md` | `examiners-only/results-2026-10-12-s19f.md` (zip only, section 6) | not included (section 6); instruments in `docs/study/instruments.md`, `tasks.md` | `scripts/study/` |
 | E10 | Functional verification: each requirement against the test or measurement that verifies it | §5.6, Appendix D | `evaluation-plan.md` §17.2 | `docs/eval/functional-verification.md` | the test suites (`npm test`), coverage `report/eval/final/coverage_775adeb.md`, end-to-end flows in `docs/testing/` | `coverage-summary.mjs` |
 | E11 | Capacity per dependency (proxy, retrieval call, model and speech providers) | §5.6, Table F.1 | `evaluation-plan.md` §17.3 | `docs/eval/scalability.md` | `report/eval/final/load_proxy_5a1a880_*`, `load_rpc_5a1a880_*` | `load/proxy-load.mjs`, `load/rpc-load.mjs` |
 | E11-L | Speech-synthesis load test | §5.6, Table F.2 | `plan-19b-propagation.md` §19B.3 | `report/eval/final/load_tts_e72d595_mac-2026-10-09.md` | the same name with `_raw.csv`, `_meta.json` | `load/tts-load.mjs` |
@@ -194,7 +211,8 @@ npm start            # mobile (Expo); npm run ios / npm run android for native b
 ```
 
 The Unity avatar needs a native build with the Unity export present (mobile), or the WebGL build
-synced in with `npm run sync:unity -w apps/web` (web); otherwise the Three.js avatar is used. Full
+synced in with `npm run sync:unity -w apps/web` (web); otherwise the Three.js avatar is used. The
+zip's copy of the Unity project has no characters (section 1), so build the avatar from GitHub. Full
 set-up: [docs/mobile-app.md](docs/mobile-app.md), [apps/web/README.md](apps/web/README.md),
 [apps/api/README.md](apps/api/README.md).
 
@@ -284,11 +302,10 @@ and the knowledge-base manifest.
 | What | Why | How to obtain it |
 |---|---|---|
 | **DementiaBank / ADReSS-2020 audio, reference transcripts and the recognisers' transcripts** | The TalkBank Ground Rules forbid sharing the data with anyone without access. They are kept in the git-ignored `data/dementiabank/`; only per-speaker and per-group aggregates are committed. | Apply for DementiaBank membership through [TalkBank](https://talkbank.org/), then download ADReSS-2020 from the DementiaBank media server and run `scripts/eval/stt/prepare-adress.py` (section 2, E9). |
-| **Usability-study data**: session exports, transcripts, free-text answers, per-participant results, the October extension analysis (`docs/eval/results-2026-10-12-s19f.md`) and the per-participant figure and tables in the report (Figure 5.3, Tables H.1–H.2) | The supervisor advised that this assessed, unpublished evaluation did not require ethics approval, so its results may be assessed but not published. The study's data-management plan (`docs/study/ethics/data-management-plan.md`, §6) also limits the project partner to aggregated results. Exports are written to the git-ignored `docs/study/results/`. | Held by the author with the study records; available to examiners through the supervisor. |
+| **Usability-study records**: session exports, transcripts, free-text answers and per-participant records | The study's data-management plan (`docs/study/ethics/data-management-plan.md`, §6) gives full access to the researcher and the supervisor only, and keeps transcripts from the project partner. Exports are written to the git-ignored `docs/study/results/`. | Held by the author with the study records; available to examiners through the supervisor. |
 | **The expert reviewers' written feedback** (1 October 2026) | Held with the study records on the same basis. | As above. |
 | **Knowledge-base source documents** (`content/sources/`) | Several are copyrighted; each is committed only if its licence allows redistribution. | Download from the URLs in `content/sources/MANIFEST.md`; the checksums there confirm the file. |
 | **API keys and `.env` files** | Secrets. | Use your own keys (section 4). |
-| **The final reports** | Each report is individual and was written independently. | Submitted through Canvas. |
 
 **Superseded files.** Some files predate the September evaluation and are kept for history only:
 `docs/report/rag_eval_*`, `docs/report/baseline/` and `docs/report/latency_results.csv`
@@ -299,13 +316,20 @@ working draft);
 `docs/study/data-state.md` (a database snapshot of 21 September, before the October round).
 `docs/architecture/backend-plan.md` describes the backend as planned before `apps/api/` was built.
 
+**In the Canvas zip only.** Two folders are kept off GitHub. `submissions/` holds both students'
+Canvas files: each report is individual and was written independently. `examiners-only/` holds the
+results of the October usability round: the analysis (`results-2026-10-12-s19f.md`) and Figure 5.3,
+which plots each carer's results and is drawn from the report's Table H.1. The supervisor advised
+that this assessed, unpublished evaluation did not need ethics approval, so its results may be
+assessed but not published.
+
 ---
 
 ## 7. Figures and media
 
 | What | Where |
 |---|---|
-| The final report's figures, except Figure 5.3 (per-participant study data, section 6) | `docs/report/figures/final/`. All but the app screenshot are drawn from the committed result files by `python3 scripts/report/make-report-figures.py` (needs matplotlib and numpy), then `--only F5 --yardstick-ms 3000` for the latency figure as printed; a re-run matches the committed figures pixel for pixel |
+| The final report's figures, except Figure 5.3 (per-carer study results; in the zip's `examiners-only/`, section 6) | `docs/report/figures/final/`. All but the app screenshot are drawn from the committed result files by `python3 scripts/report/make-report-figures.py` (needs matplotlib and numpy), then `--only F5 --yardstick-ms 3000` for the latency figure as printed; a re-run matches the committed figures pixel for pixel |
 | Mid-year report figures | `docs/report/figures/fig1_checks_passed.png`, `fig2_viseme_montage.png`, `fig3_bilabial_curves.png` (`scripts/make-figures.py`) |
 | Lip-sync capture frames (Aaron: bilabial, labiodental, open vowel) | `docs/report/figures/_captures/` |
 | Perceptual-test stimuli | generated by `scripts/eval/e6-make-stimuli.mjs` from `scripts/eval/e6/sentences.json` |

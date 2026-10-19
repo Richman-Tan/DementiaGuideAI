@@ -89,6 +89,7 @@ An npm-workspaces monorepo: three apps share one knowledge base and one core lib
 | `docs/study/` | **Usability study design**: protocol, analysis plan, instruments (SUS, Likert items, debrief), tasks, ethics documents, pilot checklist and incident log. The study's results are in the zip's `examiners-only/` (section 6). |
 | `docs/rag/` | How the retrieval pipeline is built and sourced, and the research behind it. |
 | `docs/testing/` | End-to-end test flows (Playwright for web, Maestro for iOS). |
+| `docs/meetings/` | **Meeting records**: notes of the weekly supervisor meetings (May to October 2026), and the material prepared for the 15 July meeting (the answer prompt's versions compared, a 47-question test run, and reference answers checked by the clinical collaborators). |
 | `docs/seminar/` | The July conference presentation. |
 | `docs/report/midyear-technical-report.md` (+ `.docx`, `.pdf`) | The mid-year technical report, kept for history. |
 | `docs/architecture/`, `docs/web/`, `docs/avatar.md`, `docs/android-unity.md`, `docs/voice-latency-streaming.md`, `docs/mobile-app.md`, `docs/design-system.md` | Engineering documentation for the apps and subsystems. Start at `docs/README.md`. |

@@ -63,6 +63,7 @@ These are point-in-time academic artefacts, not living reference docs.
 |---|---|
 | [`study/`](study/README.md) | **The human usability study**: protocol, task sets and rubric, instruments, analysis plan, pilot gate, and the full UAHPEC ethics pack. Start at [study/README.md](study/README.md). The last sessions were on 12 October 2026. The study data are git-ignored and not in the repository (root README, section 6); [study/data-state.md](study/data-state.md) is a database snapshot of 21 September, superseded. |
 | `report/` | Mid-year report and drafts, `baseline/`, and the evaluation outputs in `eval/`; `figures/final/` holds the final report's figures and `lit-review/` the October literature-search record. The final reports themselves are not stored. **Paths here are stable on purpose** — they are cited in submitted work, so do not reorganise. |
+| [`meetings/`](meetings/README.md) | Notes of the weekly supervisor meetings (May to October 2026) and the material prepared for the 15 July meeting, exported from the project's shared Google Drive |
 | `seminar/` | Conference-day deck prompt, research notes, speaker script |
 | `web/` | The design prompt used to generate the web front-end (this is `docs/web/`, not the app) |
 

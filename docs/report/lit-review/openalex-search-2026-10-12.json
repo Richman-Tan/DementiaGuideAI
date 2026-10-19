@@ -1,0 +1,2879 @@
+{
+ "date": "2026-10-12",
+ "source": "OpenAlex API",
+ "filters": "from 2015, articles/preprints/proceedings/reviews",
+ "queries": [
+  {
+   "strand": "S1 carers and digital interventions",
+   "query": "dementia caregiver information needs online intervention",
+   "count": 27545,
+   "top_relevance": [
+    {
+     "title": "Internet-Based Interventions Aimed at Supporting Family Caregivers of People With Dementia: Systematic Review",
+     "year": 2018,
+     "cited": 244,
+     "doi": "10.2196/jmir.9548",
+     "in_refs": true
+    },
+    {
+     "title": "iSupport: a WHO global online intervention for informal caregivers of people with dementia",
+     "year": 2019,
+     "cited": 106,
+     "doi": "10.1002/wps.20684",
+     "in_refs": false
+    },
+    {
+     "title": "Information needs and information seeking behaviour of people with dementia and their non-professional caregivers: a scoping review",
+     "year": 2020,
+     "cited": 138,
+     "doi": "10.1186/s12877-020-1454-y",
+     "in_refs": false
+    },
+    {
+     "title": "A systematic review on the implementation of eHealth interventions for informal caregivers of people with dementia",
+     "year": 2018,
+     "cited": 142,
+     "doi": "10.1016/j.invent.2018.07.002",
+     "in_refs": false
+    },
+    {
+     "title": "Adherence to Online Interventions for Family Caregivers of People With Dementia: A Meta-Analysis and Systematic Review",
+     "year": 2024,
+     "cited": 34,
+     "doi": "10.1016/j.jagp.2024.04.008",
+     "in_refs": false
+    },
+    {
+     "title": "In the Information Age, do dementia caregivers get the information they need? Semi-structured interviews to determine informal caregivers\u2019 education needs, barriers, and preferences",
+     "year": 2016,
+     "cited": 143,
+     "doi": "10.1186/s12877-016-0338-7",
+     "in_refs": false
+    },
+    {
+     "title": "Care to Plan: An Online Tool That Offers Tailored Support to Dementia Caregivers",
+     "year": 2015,
+     "cited": 49,
+     "doi": "10.1093/geront/gnv150",
+     "in_refs": false
+    },
+    {
+     "title": "Understanding the needs of caregivers of persons with dementia: a scoping review",
+     "year": 2019,
+     "cited": 142,
+     "doi": "10.1017/s1041610219000243",
+     "in_refs": false
+    },
+    {
+     "title": "Help-Seeking in Informal Family Caregivers of People with Dementia: A Qualitative Study with iSupport as a Case in Point",
+     "year": 2022,
+     "cited": 24,
+     "doi": "10.3390/ijerph19127504",
+     "in_refs": false
+    },
+    {
+     "title": "Retracted: Internet-Based Supportive Interventions for Family Caregivers of People With Dementia: Systematic Review and Meta-Analysis",
+     "year": 2020,
+     "cited": 182,
+     "doi": "10.2196/19468",
+     "in_refs": false
+    },
+    {
+     "title": "iSupport\u2010Portugal: Adapting an evidence\u2010based online intervention for dementia caregivers to a different culture",
+     "year": 2020,
+     "cited": 1,
+     "doi": "10.1002/alz.041369",
+     "in_refs": false
+    },
+    {
+     "title": "Effect of an IT\u2010based social care intervention for dementia caregivers on unmet resource needs",
+     "year": 2025,
+     "cited": 0,
+     "doi": "10.1002/alz70858_101635",
+     "in_refs": false
+    },
+    {
+     "title": "Caregiver Experiences with Dementia-Related Feeding/Eating Difficulties",
+     "year": 2024,
+     "cited": 17,
+     "doi": "10.3390/healthcare12020133",
+     "in_refs": false
+    },
+    {
+     "title": "Development and feasibility of Inlife: A pilot study of an online social support intervention for informal caregivers of people with dementia",
+     "year": 2017,
+     "cited": 83,
+     "doi": "10.1371/journal.pone.0183386",
+     "in_refs": false
+    },
+    {
+     "title": "iSupport\u2010Portugal: Adapting an evidence\u2010based online intervention for dementia caregivers to a different culture",
+     "year": 2020,
+     "cited": 0,
+     "doi": "10.1002/alz.041400",
+     "in_refs": false
+    },
+    {
+     "title": "Psychological Interventions for Dementia Caregivers: What We Have Achieved, What We Have Learned",
+     "year": 2019,
+     "cited": 281,
+     "doi": "10.1007/s11920-019-1045-9",
+     "in_refs": false
+    },
+    {
+     "title": "Acceptability of a guided self-help Internet intervention for family caregivers: mastery over dementia",
+     "year": 2015,
+     "cited": 60,
+     "doi": "10.1017/s1041610215000034",
+     "in_refs": false
+    },
+    {
+     "title": "Tele-Savvy: An Online Program for Dementia Caregivers",
+     "year": 2018,
+     "cited": 55,
+     "doi": "10.1177/1533317518755331",
+     "in_refs": false
+    },
+    {
+     "title": "Caregiver Burdens, Health Risks, Coping and Interventions among Caregivers of Dementia Patients: A Review of the Literature",
+     "year": 2023,
+     "cited": 43,
+     "doi": "10.2169/internalmedicine.0911-22",
+     "in_refs": false
+    },
+    {
+     "title": "Online training and support program (iSupport) for informal dementia caregivers: protocol for an intervention study in Portugal",
+     "year": 2020,
+     "cited": 36,
+     "doi": "10.1186/s12877-019-1364-z",
+     "in_refs": false
+    },
+    {
+     "title": "Acceptability of psychosocial interventions for dementia caregivers: a systematic review",
+     "year": 2019,
+     "cited": 52,
+     "doi": "10.1186/s12888-018-1976-4",
+     "in_refs": false
+    },
+    {
+     "title": "Online Training and Support Programs Designed to Improve Mental Health and Reduce Burden Among Caregivers of People With Dementia: A Systematic Review",
+     "year": 2018,
+     "cited": 167,
+     "doi": "10.1016/j.jamda.2017.10.023",
+     "in_refs": false
+    },
+    {
+     "title": "Information and education for informal dementia caregivers: the Age-it project",
+     "year": 2025,
+     "cited": 0,
+     "doi": "10.3389/fpubh.2025.1683288",
+     "in_refs": false
+    },
+    {
+     "title": "An Online Platform to Support the Network of Caregivers of People with Dementia",
+     "year": 2017,
+     "cited": 25,
+     "doi": "10.1155/2017/3076859",
+     "in_refs": false
+    },
+    {
+     "title": "The Psychoeducational Interventions: a valuable communication tool to support the caregiver of people with dementia",
+     "year": 2024,
+     "cited": 11,
+     "doi": "10.1186/s12877-024-05562-5",
+     "in_refs": false
+    }
+   ],
+   "top_cited": [
+    {
+     "title": "2016 ESC Guidelines for the diagnosis and treatment of acute and chronic heart failure",
+     "year": 2016,
+     "cited": 11449,
+     "doi": "10.1093/eurheartj/ehw128",
+     "in_refs": false
+    },
+    {
+     "title": "Dementia prevention, intervention, and care: 2020 report of the Lancet Commission",
+     "year": 2020,
+     "cited": 10393,
+     "doi": "10.1016/s0140-6736(20)30367-6",
+     "in_refs": false
+    },
+    {
+     "title": "2020 ESC Guidelines for the diagnosis and management of atrial fibrillation developed in collaboration with the European Association for Cardio-Thoracic Surgery (EACTS)",
+     "year": 2020,
+     "cited": 9995,
+     "doi": "10.1093/eurheartj/ehaa612",
+     "in_refs": false
+    },
+    {
+     "title": "2019 ESC/EAS Guidelines for the management of dyslipidaemias: lipid modification to reduce cardiovascular risk",
+     "year": 2019,
+     "cited": 9006,
+     "doi": "10.1093/eurheartj/ehz455",
+     "in_refs": false
+    },
+    {
+     "title": "2016 ESC Guidelines for the management of atrial fibrillation developed in collaboration with EACTS",
+     "year": 2016,
+     "cited": 6448,
+     "doi": "10.1093/europace/euw295",
+     "in_refs": false
+    },
+    {
+     "title": "2016 ESC Guidelines for the management of atrial fibrillation developed in collaboration with EACTS",
+     "year": 2016,
+     "cited": 6436,
+     "doi": "10.1093/eurheartj/ehw210",
+     "in_refs": false
+    },
+    {
+     "title": "2016 ESC Guidelines for the Diagnosis and Treatment of Acute and Chronic Heart Failure",
+     "year": 2016,
+     "cited": 5880,
+     "doi": "10.1002/ejhf.592",
+     "in_refs": false
+    },
+    {
+     "title": "Multidisciplinary research priorities for the COVID-19 pandemic: a call for action for mental health science",
+     "year": 2020,
+     "cited": 5770,
+     "doi": "10.1016/s2215-0366(20)30168-1",
+     "in_refs": false
+    },
+    {
+     "title": "Estimation of the global prevalence of dementia in 2019 and forecasted prevalence in 2050: an analysis for the Global Burden of Disease Study 2019",
+     "year": 2022,
+     "cited": 5503,
+     "doi": "10.1016/s2468-2667(21)00249-8",
+     "in_refs": false
+    },
+    {
+     "title": "2019 ESC/EAS guidelines for the management of dyslipidaemias: Lipid modification to reduce cardiovascular risk",
+     "year": 2019,
+     "cited": 4856,
+     "doi": "10.1016/j.atherosclerosis.2019.08.014",
+     "in_refs": false
+    },
+    {
+     "title": "Guidelines for the Provision and Assessment of Nutrition Support Therapy in the Adult Critically Ill Patient",
+     "year": 2016,
+     "cited": 3965,
+     "doi": "10.1177/0148607115621863",
+     "in_refs": false
+    },
+    {
+     "title": "Oral diseases: a global public health challenge",
+     "year": 2019,
+     "cited": 3899,
+     "doi": "10.1016/s0140-6736(19)31146-8",
+     "in_refs": false
+    },
+    {
+     "title": "Parkinson's disease",
+     "year": 2021,
+     "cited": 3859,
+     "doi": "10.1016/s0140-6736(21)00218-x",
+     "in_refs": false
+    },
+    {
+     "title": "The Lancet Commission on global mental health and sustainable development",
+     "year": 2018,
+     "cited": 3653,
+     "doi": "10.1016/s0140-6736(18)31612-x",
+     "in_refs": false
+    },
+    {
+     "title": "2024 ESC Guidelines for the management of atrial fibrillation developed in collaboration with the European Association for Cardio-Thoracic Surgery (EACTS)",
+     "year": 2024,
+     "cited": 3018,
+     "doi": "10.1093/eurheartj/ehae176",
+     "in_refs": false
+    },
+    {
+     "title": "Traumatic brain injury: integrated approaches to improve prevention, clinical care, and research",
+     "year": 2017,
+     "cited": 2599,
+     "doi": "10.1016/s1474-4422(17)30371-x",
+     "in_refs": false
+    },
+    {
+     "title": "Alzheimer's disease",
+     "year": 2017,
+     "cited": 2550,
+     "doi": "10.1111/ene.13439",
+     "in_refs": false
+    },
+    {
+     "title": "RE-AIM Planning and Evaluation Framework: Adapting to New Science and Practice With a 20-Year Review",
+     "year": 2019,
+     "cited": 2515,
+     "doi": "10.3389/fpubh.2019.00064",
+     "in_refs": false
+    },
+    {
+     "title": "Guidance on Conducting and REporting DElphi Studies (CREDES) in palliative care: Recommendations based on a methodological systematic review",
+     "year": 2017,
+     "cited": 2177,
+     "doi": "10.1177/0269216317690685",
+     "in_refs": false
+    },
+    {
+     "title": "Practice guideline update summary: Mild cognitive impairment [RETIRED]",
+     "year": 2017,
+     "cited": 2173,
+     "doi": "10.1212/wnl.0000000000004826",
+     "in_refs": false
+    },
+    {
+     "title": "The 2018 European Heart Rhythm Association Practical Guide on the use of non-vitamin K antagonist oral anticoagulants in patients with atrial fibrillation",
+     "year": 2018,
+     "cited": 2135,
+     "doi": "10.1093/eurheartj/ehy136",
+     "in_refs": false
+    },
+    {
+     "title": "The COMET Handbook: version 1.0",
+     "year": 2017,
+     "cited": 1992,
+     "doi": "10.1186/s13063-017-1978-4",
+     "in_refs": false
+    },
+    {
+     "title": "Global vascular guidelines on the management of chronic limb-threatening ischemia",
+     "year": 2019,
+     "cited": 1982,
+     "doi": "10.1016/j.jvs.2019.02.016",
+     "in_refs": false
+    },
+    {
+     "title": "The cholinergic system in the pathophysiology and treatment of Alzheimer\u2019s disease",
+     "year": 2018,
+     "cited": 1893,
+     "doi": "10.1093/brain/awy132",
+     "in_refs": false
+    },
+    {
+     "title": "Canadian Network for Mood and Anxiety Treatments ( CANMAT ) and International Society for Bipolar Disorders ( ISBD ) 2018 guidelines for the management of patients with bipolar disorder",
+     "year": 2018,
+     "cited": 1844,
+     "doi": "10.1111/bdi.12609",
+     "in_refs": false
+    }
+   ]
+  },
+  {
+   "strand": "S2 conversational agents in dementia care",
+   "query": "chatbot OR \"conversational agent\" dementia caregivers",
+   "count": 105545,
+   "top_relevance": [
+    {
+     "title": "Smart Home Sensing and Monitoring in Households With Dementia: User-Centered Design Approach",
+     "year": 2021,
+     "cited": 111,
+     "doi": "10.2196/27047",
+     "in_refs": false
+    },
+    {
+     "title": "Chatbots to Support People With Dementia and Their Caregivers: Systematic Review of Functions and Quality",
+     "year": 2021,
+     "cited": 100,
+     "doi": "10.2196/25006",
+     "in_refs": false
+    },
+    {
+     "title": "Psychological insights into the research and practice of embodied conversational agents, chatbots and social assistive robots: a systematic meta-review",
+     "year": 2023,
+     "cited": 48,
+     "doi": "10.1080/0144929x.2023.2286528",
+     "in_refs": false
+    },
+    {
+     "title": "Conversational Agents Supporting People With Dementia and Their Caregivers: A Scoping Review",
+     "year": 2025,
+     "cited": 0,
+     "doi": "10.17605/osf.io/w4vky",
+     "in_refs": false
+    },
+    {
+     "title": "Towards Conversational Agents to support Informal Caregivers of People with Dementia: Challenges and Opportunities",
+     "year": 2022,
+     "cited": 11,
+     "doi": "10.1134/s036176882208014x",
+     "in_refs": false
+    },
+    {
+     "title": "Challenges in Conversational Agents to support Informal Caregivers of People with Dementia",
+     "year": 2023,
+     "cited": 0,
+     "doi": "10.15514/ispras-2023-35(1)-2",
+     "in_refs": false
+    },
+    {
+     "title": "Conversational Agents in Health Care: Scoping Review and Conceptual Analysis",
+     "year": 2020,
+     "cited": 550,
+     "doi": "10.2196/17158",
+     "in_refs": false
+    },
+    {
+     "title": "Conversational agents for depression screening: A systematic review",
+     "year": 2023,
+     "cited": 25,
+     "doi": "10.1016/j.ijmedinf.2023.105272",
+     "in_refs": false
+    },
+    {
+     "title": "Conversational agents in healthcare: a systematic review",
+     "year": 2018,
+     "cited": 1368,
+     "doi": "10.1093/jamia/ocy072",
+     "in_refs": true
+    },
+    {
+     "title": "Artificial Intelligence-Based Conversational Agents for Chronic Conditions: Systematic Literature Review",
+     "year": 2020,
+     "cited": 266,
+     "doi": "10.2196/20701",
+     "in_refs": false
+    },
+    {
+     "title": "Evaluation of ChatGPT\u2019s responses to information needs and information seeking of dementia patients",
+     "year": 2024,
+     "cited": 43,
+     "doi": "10.1038/s41598-024-61068-5",
+     "in_refs": false
+    },
+    {
+     "title": "eDEM-CONNECT: Agitation ontology for the chatbot-based support of informal caregivers of people with dementia",
+     "year": 2025,
+     "cited": 0,
+     "doi": "10.21203/rs.3.rs-6289849/v1",
+     "in_refs": false
+    },
+    {
+     "title": "Adoption and Implementation of Chatbots in Dementia Care: A Scoping Review of the Landscape and Influencing Factors",
+     "year": 2025,
+     "cited": 0,
+     "doi": "10.17605/osf.io/szgtb",
+     "in_refs": false
+    },
+    {
+     "title": "Development and initial evaluation of a conversational agent for Alzheimer\u2019s disease",
+     "year": 2024,
+     "cited": 1,
+     "doi": "10.1101/2024.09.04.24312955",
+     "in_refs": false
+    },
+    {
+     "title": "Health-focused conversational agents in person-centered care: a review of apps",
+     "year": 2022,
+     "cited": 114,
+     "doi": "10.1038/s41746-022-00560-6",
+     "in_refs": false
+    },
+    {
+     "title": "Evolution of Chatbots as an Educational and Supportive Digital Intervention for Family Caregivers of People With Dementia: Protocol for a Systematic Integrative Review",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.2196/91741",
+     "in_refs": false
+    },
+    {
+     "title": "Automatic detection of cognitive impairment in elderly people using an entertainment chatbot with Natural Language Processing capabilities",
+     "year": 2022,
+     "cited": 57,
+     "doi": "10.1007/s12652-022-03849-2",
+     "in_refs": false
+    },
+    {
+     "title": "Applications of artificial intelligence in dementia",
+     "year": 2023,
+     "cited": 23,
+     "doi": "10.1111/ggi.14709",
+     "in_refs": false
+    },
+    {
+     "title": "Systematic review and meta-analysis of AI-based conversational agents for promoting mental health and well-being",
+     "year": 2023,
+     "cited": 574,
+     "doi": "10.1038/s41746-023-00979-5",
+     "in_refs": false
+    },
+    {
+     "title": "SUPPORTING CAREGIVERS AND CARE RECIPIENTS AFTER THE ONSET OF COGNITIVE IMPAIRMENT WITH HOME BASED TECHNOLOGY",
+     "year": 2018,
+     "cited": 1,
+     "doi": "10.1093/geroni/igy031.3697",
+     "in_refs": false
+    },
+    {
+     "title": "Artificial intelligence for educating family caregivers of people with dementia: A mixed methods systematic review",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.1016/j.gerinurse.2026.104019",
+     "in_refs": false
+    },
+    {
+     "title": "Roles, Users, Benefits, and Limitations of Chatbots in Health Care: Rapid Review",
+     "year": 2024,
+     "cited": 293,
+     "doi": "10.2196/56930",
+     "in_refs": false
+    },
+    {
+     "title": "Generative AI mental health chatbots: a scoping review of intervention design and user experience",
+     "year": 2026,
+     "cited": 2,
+     "doi": "10.1038/s41746-026-02972-0",
+     "in_refs": false
+    },
+    {
+     "title": "Usability and Acceptance of the Embodied Conversational Agent Anne by People with Dementia and their Caregivers: an exploratory study in home environment settings (Preprint)",
+     "year": 2020,
+     "cited": 32,
+     "doi": "10.2196/25891",
+     "in_refs": true
+    },
+    {
+     "title": "Artificial Intelligence and Chatbots in Psychiatry",
+     "year": 2022,
+     "cited": 243,
+     "doi": "10.1007/s11126-022-09973-8",
+     "in_refs": false
+    }
+   ],
+   "top_cited": [
+    {
+     "title": "2016 ESC Guidelines for the diagnosis and treatment of acute and chronic heart failure",
+     "year": 2016,
+     "cited": 11449,
+     "doi": "10.1093/eurheartj/ehw128",
+     "in_refs": false
+    },
+    {
+     "title": "Dementia prevention, intervention, and care: 2020 report of the Lancet Commission",
+     "year": 2020,
+     "cited": 10393,
+     "doi": "10.1016/s0140-6736(20)30367-6",
+     "in_refs": false
+    },
+    {
+     "title": "2018 ESC/ESH Guidelines for the management of arterial hypertension",
+     "year": 2018,
+     "cited": 10326,
+     "doi": "10.1093/eurheartj/ehy339",
+     "in_refs": false
+    },
+    {
+     "title": "2020 ESC Guidelines for the diagnosis and management of atrial fibrillation developed in collaboration with the European Association for Cardio-Thoracic Surgery (EACTS)",
+     "year": 2020,
+     "cited": 9995,
+     "doi": "10.1093/eurheartj/ehaa612",
+     "in_refs": false
+    },
+    {
+     "title": "2019 ESC/EAS Guidelines for the management of dyslipidaemias: lipid modification to reduce cardiovascular risk",
+     "year": 2019,
+     "cited": 9006,
+     "doi": "10.1093/eurheartj/ehz455",
+     "in_refs": false
+    },
+    {
+     "title": "2015 ESC Guidelines for the management of acute coronary syndromes in patients presenting without persistent ST-segment elevation",
+     "year": 2015,
+     "cited": 8281,
+     "doi": "10.1093/eurheartj/ehv320",
+     "in_refs": false
+    },
+    {
+     "title": "2016 ESC Guidelines for the management of atrial fibrillation developed in collaboration with EACTS",
+     "year": 2016,
+     "cited": 6448,
+     "doi": "10.1093/europace/euw295",
+     "in_refs": false
+    },
+    {
+     "title": "2016 ESC Guidelines for the management of atrial fibrillation developed in collaboration with EACTS",
+     "year": 2016,
+     "cited": 6436,
+     "doi": "10.1093/eurheartj/ehw210",
+     "in_refs": false
+    },
+    {
+     "title": "Neuroinflammation in Alzheimer's disease",
+     "year": 2015,
+     "cited": 6146,
+     "doi": "10.1016/s1474-4422(15)70016-5",
+     "in_refs": false
+    },
+    {
+     "title": "2016 ESC Guidelines for the Diagnosis and Treatment of Acute and Chronic Heart Failure",
+     "year": 2016,
+     "cited": 5880,
+     "doi": "10.1002/ejhf.592",
+     "in_refs": false
+    },
+    {
+     "title": "Multidisciplinary research priorities for the COVID-19 pandemic: a call for action for mental health science",
+     "year": 2020,
+     "cited": 5770,
+     "doi": "10.1016/s2215-0366(20)30168-1",
+     "in_refs": false
+    },
+    {
+     "title": "Estimation of the global prevalence of dementia in 2019 and forecasted prevalence in 2050: an analysis for the Global Burden of Disease Study 2019",
+     "year": 2022,
+     "cited": 5503,
+     "doi": "10.1016/s2468-2667(21)00249-8",
+     "in_refs": false
+    },
+    {
+     "title": "Alzheimer's disease",
+     "year": 2021,
+     "cited": 5180,
+     "doi": "10.1016/s0140-6736(20)32205-4",
+     "in_refs": false
+    },
+    {
+     "title": "2016 Alzheimer's disease facts and figures",
+     "year": 2016,
+     "cited": 5083,
+     "doi": "10.1016/j.jalz.2016.03.001",
+     "in_refs": false
+    },
+    {
+     "title": "2019 ESC/EAS guidelines for the management of dyslipidaemias: Lipid modification to reduce cardiovascular risk",
+     "year": 2019,
+     "cited": 4856,
+     "doi": "10.1016/j.atherosclerosis.2019.08.014",
+     "in_refs": false
+    },
+    {
+     "title": "Diagnosis and management of dementia with Lewy bodies",
+     "year": 2017,
+     "cited": 4468,
+     "doi": "10.1212/wnl.0000000000004058",
+     "in_refs": false
+    },
+    {
+     "title": "Guidelines for the Provision and Assessment of Nutrition Support Therapy in the Adult Critically Ill Patient",
+     "year": 2016,
+     "cited": 3965,
+     "doi": "10.1177/0148607115621863",
+     "in_refs": false
+    },
+    {
+     "title": "Clinical Practice Guidelines for the Prevention and Management of Pain, Agitation/Sedation, Delirium, Immobility, and Sleep Disruption in Adult Patients in the ICU",
+     "year": 2018,
+     "cited": 3960,
+     "doi": "10.1097/ccm.0000000000003299",
+     "in_refs": false
+    },
+    {
+     "title": "Oral diseases: a global public health challenge",
+     "year": 2019,
+     "cited": 3899,
+     "doi": "10.1016/s0140-6736(19)31146-8",
+     "in_refs": false
+    },
+    {
+     "title": "Parkinson's disease",
+     "year": 2021,
+     "cited": 3859,
+     "doi": "10.1016/s0140-6736(21)00218-x",
+     "in_refs": false
+    },
+    {
+     "title": "Dementia prevention, intervention, and care: 2024 report of the Lancet standing Commission",
+     "year": 2024,
+     "cited": 3720,
+     "doi": "10.1016/s0140-6736(24)01296-0",
+     "in_refs": false
+    },
+    {
+     "title": "The Lancet Commission on global mental health and sustainable development",
+     "year": 2018,
+     "cited": 3653,
+     "doi": "10.1016/s0140-6736(18)31612-x",
+     "in_refs": false
+    },
+    {
+     "title": "Gut Microbiota Regulate Motor Deficits and Neuroinflammation in a Model of Parkinson\u2019s Disease",
+     "year": 2016,
+     "cited": 3600,
+     "doi": "10.1016/j.cell.2016.11.018",
+     "in_refs": false
+    },
+    {
+     "title": "Community-Acquired Pneumonia Requiring Hospitalization among U.S. Adults",
+     "year": 2015,
+     "cited": 3356,
+     "doi": "10.1056/nejmoa1500245",
+     "in_refs": false
+    },
+    {
+     "title": "Alzheimer Disease: An Update on Pathobiology and Treatment Strategies",
+     "year": 2019,
+     "cited": 3202,
+     "doi": "10.1016/j.cell.2019.09.001",
+     "in_refs": false
+    }
+   ]
+  },
+  {
+   "strand": "S3 embodied agents and speech animation",
+   "query": "\"embodied conversational agent\" older adults",
+   "count": 1069,
+   "top_relevance": [
+    {
+     "title": "Embodied Conversational Agent Appearance for Health Assessment of Older Adults: Explorative Study",
+     "year": 2020,
+     "cited": 36,
+     "doi": "10.2196/19987",
+     "in_refs": false
+    },
+    {
+     "title": "Trust and acceptance of a virtual psychiatric interview between embodied conversational agents and outpatients",
+     "year": 2020,
+     "cited": 102,
+     "doi": "10.1038/s41746-019-0213-y",
+     "in_refs": false
+    },
+    {
+     "title": "Supporting eating behaviour of community-dwelling older adults: co-design of an embodied conversational agent",
+     "year": 2021,
+     "cited": 26,
+     "doi": "10.1080/24735132.2021.1885592",
+     "in_refs": false
+    },
+    {
+     "title": "A Review of Evaluation Practices of Gesture Generation in Embodied Conversational Agents",
+     "year": 2022,
+     "cited": 81,
+     "doi": "10.1109/thms.2022.3149173",
+     "in_refs": false
+    },
+    {
+     "title": "Developing Embodied Conversational Agents for Coaching People in a Healthy Lifestyle: Scoping Review",
+     "year": 2019,
+     "cited": 120,
+     "doi": "10.2196/14058",
+     "in_refs": false
+    },
+    {
+     "title": "Embodied Conversational Agents for Chronic Diseases: Scoping Review",
+     "year": 2023,
+     "cited": 49,
+     "doi": "10.2196/47134",
+     "in_refs": false
+    },
+    {
+     "title": "Embodied Conversational Agents for Patients With Dementia: Thematic Literature Analysis",
+     "year": 2021,
+     "cited": 31,
+     "doi": "10.2196/25381",
+     "in_refs": true
+    },
+    {
+     "title": "Evaluating embodied conversational agents in multimodal interfaces",
+     "year": 2015,
+     "cited": 32,
+     "doi": "10.1186/s40469-015-0006-9",
+     "in_refs": false
+    },
+    {
+     "title": "Who Do You Prefer? The Effect of Age, Gender and Role on Users\u2019 First Impressions of Embodied Conversational Agents in eHealth",
+     "year": 2019,
+     "cited": 103,
+     "doi": "10.1080/10447318.2019.1699744",
+     "in_refs": false
+    },
+    {
+     "title": "Effects of communication style on relational outcomes in interactions between customers and embodied conversational agents",
+     "year": 2023,
+     "cited": 67,
+     "doi": "10.1002/mar.21792",
+     "in_refs": false
+    },
+    {
+     "title": "Use and Effect of Embodied Conversational Agents for Improving Eating Behavior and Decreasing Loneliness Among Community-Dwelling Older Adults: Randomized Controlled Trial",
+     "year": 2022,
+     "cited": 30,
+     "doi": "10.2196/33974",
+     "in_refs": false
+    },
+    {
+     "title": "Pilot testing a digital pet avatar for older adults",
+     "year": 2017,
+     "cited": 55,
+     "doi": "10.1016/j.gerinurse.2017.04.002",
+     "in_refs": false
+    },
+    {
+     "title": "A Tablet Based Embodied Conversational Agent to Promote Smoking Cessation among Veterans: A Feasibility Study",
+     "year": 2018,
+     "cited": 39,
+     "doi": "10.2991/j.jegh.2018.08.104",
+     "in_refs": false
+    },
+    {
+     "title": "Age-related changes in gaze behaviour during social interaction: An eye-tracking study with an embodied conversational agent",
+     "year": 2020,
+     "cited": 21,
+     "doi": "10.1177/1747021820982165",
+     "in_refs": false
+    },
+    {
+     "title": "Impact of an Embodied Conversational Agent on Loneliness and Emotional States in Community Dwelling Older Adults: Initial Quantitative and Qualitative Evidence",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.31234/osf.io/9yfqp_v1",
+     "in_refs": false
+    },
+    {
+     "title": "An embodied conversational agent coach to support societal participation learning by low-literate users",
+     "year": 2022,
+     "cited": 34,
+     "doi": "10.1007/s10209-021-00865-5",
+     "in_refs": false
+    },
+    {
+     "title": "Usability and Acceptance of the Embodied Conversational Agent Anne by People with Dementia and their Caregivers: an exploratory study in home environment settings (Preprint)",
+     "year": 2020,
+     "cited": 32,
+     "doi": "10.2196/25891",
+     "in_refs": true
+    },
+    {
+     "title": "The Co-Design of an Embodied Conversational Agent to Help Stroke Survivors Manage Their Recovery",
+     "year": 2023,
+     "cited": 16,
+     "doi": "10.3390/robotics12050120",
+     "in_refs": false
+    },
+    {
+     "title": "Use and Effect of Web-Based Embodied Conversational Agents for Improving Eating Behavior and Decreasing Loneliness Among Community-Dwelling Older Adults: Protocol for a Randomized Controlled Trial",
+     "year": 2020,
+     "cited": 23,
+     "doi": "10.2196/22186",
+     "in_refs": false
+    },
+    {
+     "title": "Psychological insights into the research and practice of embodied conversational agents, chatbots and social assistive robots: a systematic meta-review",
+     "year": 2023,
+     "cited": 48,
+     "doi": "10.1080/0144929x.2023.2286528",
+     "in_refs": false
+    },
+    {
+     "title": "The uncanny valley effect in embodied conversational agents: a critical systematic review of attractiveness, anthropomorphism, and uncanniness",
+     "year": 2025,
+     "cited": 25,
+     "doi": "10.3389/fpsyg.2025.1625984",
+     "in_refs": false
+    },
+    {
+     "title": "User Requirements Analysis of an Embodied Conversational Agent for Coaching Older Adults to Choose Active and Healthy Ageing Behaviors during the Transition to Retirement: A Cross-National User Centered Design Study",
+     "year": 2021,
+     "cited": 24,
+     "doi": "10.3390/ijerph18189681",
+     "in_refs": false
+    },
+    {
+     "title": "Optimizing appreciation and persuasion of embodied conversational agents for health behavior change: A design experiment and focus group study",
+     "year": 2023,
+     "cited": 4,
+     "doi": "10.1177/14604582231183390",
+     "in_refs": false
+    },
+    {
+     "title": "Embodied conversational agents for shared decision-making: a scoping review protocol",
+     "year": 2025,
+     "cited": 3,
+     "doi": "10.1136/bmjopen-2024-095360",
+     "in_refs": false
+    },
+    {
+     "title": "A Semantic Memory Bank Assisted by an Embodied Conversational Agents for Mobile Devices",
+     "year": 2021,
+     "cited": 2,
+     "doi": "10.11648/j.eas.20210601.11",
+     "in_refs": false
+    }
+   ],
+   "top_cited": [
+    {
+     "title": "Systematic review of research on artificial intelligence applications in higher education \u2013 where are the educators?",
+     "year": 2019,
+     "cited": 6942,
+     "doi": "10.1186/s41239-019-0171-0",
+     "in_refs": false
+    },
+    {
+     "title": "Delivering Cognitive Behavior Therapy to Young Adults With Symptoms of Depression and Anxiety Using a Fully Automated Conversational Agent (Woebot): A Randomized Controlled Trial",
+     "year": 2017,
+     "cited": 2701,
+     "doi": "10.2196/mental.7785",
+     "in_refs": false
+    },
+    {
+     "title": "Conversational agents in healthcare: a systematic review",
+     "year": 2018,
+     "cited": 1368,
+     "doi": "10.1093/jamia/ocy072",
+     "in_refs": true
+    },
+    {
+     "title": "The growing field of digital psychiatry: current evidence and the future of apps, social media, chatbots, and virtual reality",
+     "year": 2021,
+     "cited": 1172,
+     "doi": "10.1002/wps.20883",
+     "in_refs": false
+    },
+    {
+     "title": "Your Robot Therapist Will See You Now: Ethical Implications of Embodied Artificial Intelligence in Psychiatry, Psychology, and Psychotherapy",
+     "year": 2019,
+     "cited": 850,
+     "doi": "10.2196/13216",
+     "in_refs": false
+    },
+    {
+     "title": "Interacting with educational chatbots: A systematic review",
+     "year": 2022,
+     "cited": 824,
+     "doi": "10.1007/s10639-022-11177-3",
+     "in_refs": false
+    },
+    {
+     "title": "Building a Stronger CASA: Extending the Computers Are Social Actors Paradigm",
+     "year": 2020,
+     "cited": 613,
+     "doi": "10.30658/hmc.1.5",
+     "in_refs": false
+    },
+    {
+     "title": "The Effectiveness of Artificial Intelligence Conversational Agents in Health Care: Systematic Review",
+     "year": 2020,
+     "cited": 598,
+     "doi": "10.2196/20346",
+     "in_refs": false
+    },
+    {
+     "title": "Social Eye Gaze in Human-Robot Interaction: A Review",
+     "year": 2017,
+     "cited": 595,
+     "doi": "10.5898/jhri.6.1.admoni",
+     "in_refs": false
+    },
+    {
+     "title": "Systematic review and meta-analysis of AI-based conversational agents for promoting mental health and well-being",
+     "year": 2023,
+     "cited": 574,
+     "doi": "10.1038/s41746-023-00979-5",
+     "in_refs": false
+    },
+    {
+     "title": "Conversational Agents in Health Care: Scoping Review and Conceptual Analysis",
+     "year": 2020,
+     "cited": 550,
+     "doi": "10.2196/17158",
+     "in_refs": false
+    },
+    {
+     "title": "Factors Influencing Adherence to mHealth Apps for Prevention or Management of Noncommunicable Diseases: Systematic Review",
+     "year": 2022,
+     "cited": 433,
+     "doi": "10.2196/35371",
+     "in_refs": false
+    },
+    {
+     "title": "Research-Based Design of Pedagogical Agent Roles: a Review, Progress, and Recommendations",
+     "year": 2015,
+     "cited": 422,
+     "doi": "10.1007/s40593-015-0055-y",
+     "in_refs": false
+    },
+    {
+     "title": "The potential for tourism and hospitality experience research in human-robot interactions",
+     "year": 2017,
+     "cited": 397,
+     "doi": "10.1108/ijchm-09-2016-0520",
+     "in_refs": false
+    },
+    {
+     "title": "Artificial Intelligence Chatbot Behavior Change Model for Designing Artificial Intelligence Chatbots to Promote Physical Activity and a Healthy Diet: Viewpoint",
+     "year": 2020,
+     "cited": 360,
+     "doi": "10.2196/22845",
+     "in_refs": false
+    },
+    {
+     "title": "AI-generated characters for supporting personalized learning and well-being",
+     "year": 2021,
+     "cited": 359,
+     "doi": "10.1038/s42256-021-00417-9",
+     "in_refs": false
+    },
+    {
+     "title": "Facial Displays Are Tools for Social Influence",
+     "year": 2018,
+     "cited": 338,
+     "doi": "10.1016/j.tics.2018.02.006",
+     "in_refs": false
+    },
+    {
+     "title": "Roles, Users, Benefits, and Limitations of Chatbots in Health Care: Rapid Review",
+     "year": 2024,
+     "cited": 293,
+     "doi": "10.2196/56930",
+     "in_refs": false
+    },
+    {
+     "title": "Using AI chatbots to provide self-help depression interventions for university students: A randomized trial of effectiveness",
+     "year": 2022,
+     "cited": 290,
+     "doi": "10.1016/j.invent.2022.100495",
+     "in_refs": false
+    },
+    {
+     "title": "Use of Social Robots in Mental Health and Well-Being Research: Systematic Review",
+     "year": 2019,
+     "cited": 289,
+     "doi": "10.2196/13322",
+     "in_refs": false
+    },
+    {
+     "title": "The Cognitive-Affective-Social Theory of Learning in digital Environments (CASTLE)",
+     "year": 2021,
+     "cited": 278,
+     "doi": "10.1007/s10648-021-09626-5",
+     "in_refs": false
+    },
+    {
+     "title": "Older Adults\u2019 Experiences With Using Wearable Devices: Qualitative Systematic Review and Meta-synthesis",
+     "year": 2021,
+     "cited": 273,
+     "doi": "10.2196/23832",
+     "in_refs": false
+    },
+    {
+     "title": "Artificial Intelligence Crime: An Interdisciplinary Analysis of Foreseeable Threats and Solutions",
+     "year": 2019,
+     "cited": 272,
+     "doi": "10.1007/s11948-018-00081-0",
+     "in_refs": false
+    },
+    {
+     "title": "Conversational Agents in the Treatment of Mental Health Problems: Mixed-Method Systematic Review",
+     "year": 2019,
+     "cited": 270,
+     "doi": "10.2196/14166",
+     "in_refs": false
+    },
+    {
+     "title": "Effectiveness of an Empathic Chatbot in Combating Adverse Effects of Social Exclusion on Mood",
+     "year": 2020,
+     "cited": 266,
+     "doi": "10.3389/fpsyg.2019.03061",
+     "in_refs": false
+    }
+   ]
+  },
+  {
+   "strand": "S3b speech animation",
+   "query": "speech animation coarticulation lip sync",
+   "count": 52,
+   "top_relevance": [
+    {
+     "title": "A deep learning approach for generalized speech animation",
+     "year": 2017,
+     "cited": 317,
+     "doi": "10.1145/3072959.3073699",
+     "in_refs": true
+    },
+    {
+     "title": "The Shape of Speech: A Geometric Measure of Coarticulation for Speech-Driven 3D Facial Animation",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2610.03436",
+     "in_refs": false
+    },
+    {
+     "title": "Co-articulation and speech synchronization in MPEG-4 based facial animation",
+     "year": 2015,
+     "cited": 1,
+     "doi": "10.4172/2324-9307.c1.001",
+     "in_refs": false
+    },
+    {
+     "title": "Real-Time Lip Sync for Live 2D Animation",
+     "year": 2019,
+     "cited": 9,
+     "doi": "10.48550/arxiv.1910.08685",
+     "in_refs": false
+    },
+    {
+     "title": "Audio\u2010driven emotional speech animation for interactive virtual characters",
+     "year": 2019,
+     "cited": 18,
+     "doi": "10.1002/cav.1892",
+     "in_refs": false
+    },
+    {
+     "title": "VisemeNet: Audio-Driven Animator-Centric Speech Animation",
+     "year": 2018,
+     "cited": 21,
+     "doi": "10.48550/arxiv.1805.09488",
+     "in_refs": false
+    },
+    {
+     "title": "Realistic Lip Syncing for Virtual Character Using Common Viseme Set",
+     "year": 2015,
+     "cited": 7,
+     "doi": "10.5539/cis.v8n3p71",
+     "in_refs": false
+    },
+    {
+     "title": "Exploring Phonetic Context-Aware Lip-Sync For Talking Face Generation",
+     "year": 2023,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2305.19556",
+     "in_refs": false
+    },
+    {
+     "title": "Realistic Lip Motion Generation Based on 3D Dynamic Viseme and Coarticulation Modeling for Human-Robot Interaction",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2604.01756",
+     "in_refs": false
+    },
+    {
+     "title": "Text-driven Speech Animation with Emotion Control",
+     "year": 2020,
+     "cited": 4,
+     "doi": "10.3837/tiis.2020.08.018",
+     "in_refs": false
+    },
+    {
+     "title": "FaceFormer: Speech-Driven 3D Facial Animation with Transformers",
+     "year": 2021,
+     "cited": 13,
+     "doi": "10.48550/arxiv.2112.05329",
+     "in_refs": false
+    },
+    {
+     "title": "EditEmoTalk: Controllable Speech-Driven 3D Facial Animation with Continuous Expression Editing",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2601.10000",
+     "in_refs": false
+    },
+    {
+     "title": "Similarity-Aware Viseme Caching for Efficient Lip-Synchronization of English Speech",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.1007/s44230-026-00170-5",
+     "in_refs": false
+    },
+    {
+     "title": "Joint Audio-Text Model for Expressive Speech-Driven 3D Facial Animation",
+     "year": 2021,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2112.02214",
+     "in_refs": false
+    },
+    {
+     "title": "MeshTalk: 3D Face Animation from Speech using Cross-Modality Disentanglement",
+     "year": 2021,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2104.08223",
+     "in_refs": false
+    },
+    {
+     "title": "Speech Animation Synthesis based on a Korean Co-articulation Model",
+     "year": 2020,
+     "cited": 2,
+     "doi": "10.15701/kcgs.2020.26.3.49",
+     "in_refs": false
+    },
+    {
+     "title": "Polyglot: Multilingual Style Preserving Speech-Driven Facial Animation",
+     "year": 2026,
+     "cited": 0,
+     "doi": "",
+     "in_refs": false
+    },
+    {
+     "title": "FaceXHuBERT: Text-less Speech-driven E(X)pressive 3D Facial Animation Synthesis Using Self-Supervised Speech Representation Learning",
+     "year": 2023,
+     "cited": 1,
+     "doi": "10.48550/arxiv.2303.05416",
+     "in_refs": false
+    },
+    {
+     "title": "Wav2Sem: Plug-and-Play Audio Semantic Decoupling for 3D Speech-Driven Facial Animation",
+     "year": 2025,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2505.23290",
+     "in_refs": false
+    },
+    {
+     "title": "FaceDiffuser: Speech-Driven 3D Facial Animation Synthesis Using Diffusion",
+     "year": 2023,
+     "cited": 2,
+     "doi": "10.48550/arxiv.2309.11306",
+     "in_refs": false
+    },
+    {
+     "title": "Audio-Driven Facial Animation with Deep Learning: A Survey",
+     "year": 2024,
+     "cited": 15,
+     "doi": "10.3390/info15110675",
+     "in_refs": false
+    },
+    {
+     "title": "DualTalker: A Cross-Modal Dual Learning Approach for Speech-Driven 3D Facial Animation",
+     "year": 2023,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2311.04766",
+     "in_refs": false
+    },
+    {
+     "title": "Speech Intelligibility in Virtual Avatars: Comparison Between Audio and Audio\u2013Visual-Driven Facial Animation",
+     "year": 2025,
+     "cited": 2,
+     "doi": "10.3390/acoustics7020030",
+     "in_refs": false
+    },
+    {
+     "title": "Review on 3D Facial Animation Techniques",
+     "year": 2018,
+     "cited": 3,
+     "doi": "10.14419/ijet.v7i4.44.26980",
+     "in_refs": false
+    },
+    {
+     "title": "Review on 3D Facial Animation Techniques",
+     "year": 2026,
+     "cited": 1,
+     "doi": "10.14419/ijet.v7i4.36.28996",
+     "in_refs": false
+    }
+   ],
+   "top_cited": [
+    {
+     "title": "A deep learning approach for generalized speech animation",
+     "year": 2017,
+     "cited": 317,
+     "doi": "10.1145/3072959.3073699",
+     "in_refs": true
+    },
+    {
+     "title": "Visemenet",
+     "year": 2018,
+     "cited": 237,
+     "doi": "10.1145/3197517.3201292",
+     "in_refs": false
+    },
+    {
+     "title": "Differential Gaze Patterns on Eyes and Mouth During Audiovisual Speech Segmentation",
+     "year": 2016,
+     "cited": 52,
+     "doi": "10.3389/fpsyg.2016.00052",
+     "in_refs": false
+    },
+    {
+     "title": "Real\u2010Time Facial Expression Transformation for Monocular RGB Video",
+     "year": 2018,
+     "cited": 33,
+     "doi": "10.1111/cgf.13586",
+     "in_refs": false
+    },
+    {
+     "title": "Timing in audiovisual speech perception: A mini review and new psychophysical data",
+     "year": 2015,
+     "cited": 31,
+     "doi": "10.3758/s13414-015-1026-y",
+     "in_refs": false
+    },
+    {
+     "title": "Animated virtual characters to explore audio-visual speech in controlled and naturalistic environments",
+     "year": 2020,
+     "cited": 21,
+     "doi": "10.1038/s41598-020-72375-y",
+     "in_refs": false
+    },
+    {
+     "title": "VisemeNet: Audio-Driven Animator-Centric Speech Animation",
+     "year": 2018,
+     "cited": 21,
+     "doi": "10.48550/arxiv.1805.09488",
+     "in_refs": false
+    },
+    {
+     "title": "The use of articulatory movement data in speech synthesis applications: An overview \u2014 Application of articulatory movements using machine learning algorithms \u2014",
+     "year": 2015,
+     "cited": 21,
+     "doi": "10.1250/ast.36.467",
+     "in_refs": false
+    },
+    {
+     "title": "Talking Face Generation by Conditional Recurrent Adversarial Network",
+     "year": 2018,
+     "cited": 20,
+     "doi": "10.48550/arxiv.1804.04786",
+     "in_refs": false
+    },
+    {
+     "title": "Smartphone-Based Speech Therapy for Poststroke Dysarthria: Pilot Randomized Controlled Trial Evaluating Efficacy and Feasibility",
+     "year": 2024,
+     "cited": 19,
+     "doi": "10.2196/56417",
+     "in_refs": false
+    },
+    {
+     "title": "Audio\u2010driven emotional speech animation for interactive virtual characters",
+     "year": 2019,
+     "cited": 18,
+     "doi": "10.1002/cav.1892",
+     "in_refs": false
+    },
+    {
+     "title": "Motion capture-based animated characters for the study of speech\u2013gesture integration",
+     "year": 2019,
+     "cited": 17,
+     "doi": "10.3758/s13428-019-01319-w",
+     "in_refs": false
+    },
+    {
+     "title": "Diffused Heads: Diffusion Models Beat GANs on Talking-Face Generation",
+     "year": 2023,
+     "cited": 16,
+     "doi": "10.48550/arxiv.2301.03396",
+     "in_refs": false
+    },
+    {
+     "title": "Audio-Driven Facial Animation with Deep Learning: A Survey",
+     "year": 2024,
+     "cited": 15,
+     "doi": "10.3390/info15110675",
+     "in_refs": false
+    },
+    {
+     "title": "FaceFormer: Speech-Driven 3D Facial Animation with Transformers",
+     "year": 2021,
+     "cited": 13,
+     "doi": "10.48550/arxiv.2112.05329",
+     "in_refs": false
+    },
+    {
+     "title": "Deep Learning for Visual Speech Analysis: A Survey",
+     "year": 2022,
+     "cited": 10,
+     "doi": "10.48550/arxiv.2205.10839",
+     "in_refs": false
+    },
+    {
+     "title": "Facial Modelling and Animation: An Overview of The State-of-The Art",
+     "year": 2021,
+     "cited": 9,
+     "doi": "10.37917/ijeee.18.1.4",
+     "in_refs": false
+    },
+    {
+     "title": "Real-Time Lip Sync for Live 2D Animation",
+     "year": 2019,
+     "cited": 9,
+     "doi": "10.48550/arxiv.1910.08685",
+     "in_refs": false
+    },
+    {
+     "title": "A Realistic Visual Speech Synthesis for Indonesian Using A Combination of Morphing Viseme and Syllable Concatenation Approach to Support Pronunciation Learning",
+     "year": 2018,
+     "cited": 9,
+     "doi": "10.3991/ijet.v13i08.8084",
+     "in_refs": false
+    },
+    {
+     "title": "Intuitive Facial Animation Editing Based On A Generative RNN Framework",
+     "year": 2020,
+     "cited": 8,
+     "doi": "10.1111/cgf.14117",
+     "in_refs": false
+    },
+    {
+     "title": "Realistic Lip Syncing for Virtual Character Using Common Viseme Set",
+     "year": 2015,
+     "cited": 7,
+     "doi": "10.5539/cis.v8n3p71",
+     "in_refs": false
+    },
+    {
+     "title": "Learning Audio-Driven Viseme Dynamics for 3D Face Animation",
+     "year": 2023,
+     "cited": 5,
+     "doi": "10.48550/arxiv.2301.06059",
+     "in_refs": false
+    },
+    {
+     "title": "Realistic Speech-Driven Talking Video Generation with Personalized Pose",
+     "year": 2020,
+     "cited": 4,
+     "doi": "10.1155/2020/6629634",
+     "in_refs": false
+    },
+    {
+     "title": "Text-driven Speech Animation with Emotion Control",
+     "year": 2020,
+     "cited": 4,
+     "doi": "10.3837/tiis.2020.08.018",
+     "in_refs": false
+    },
+    {
+     "title": "Review on 3D Facial Animation Techniques",
+     "year": 2018,
+     "cited": 3,
+     "doi": "10.14419/ijet.v7i4.44.26980",
+     "in_refs": false
+    }
+   ]
+  },
+  {
+   "strand": "S4 RAG and attribution in health",
+   "query": "\"retrieval-augmented generation\" medical question answering",
+   "count": 9416,
+   "top_relevance": [
+    {
+     "title": "PRAG: Paninian Retrieval-Augmented Generation for Safety-Critical Medical Question Answering",
+     "year": 2020,
+     "cited": 63,
+     "doi": "10.48550/arxiv.2009.13081",
+     "in_refs": false
+    },
+    {
+     "title": "Rationale-Guided Retrieval Augmented Generation for Medical Question Answering",
+     "year": 2024,
+     "cited": 7,
+     "doi": "10.48550/arxiv.2411.00300",
+     "in_refs": false
+    },
+    {
+     "title": "RadioRAG: Online Retrieval\u2013Augmented Generation for Radiology Question Answering",
+     "year": 2025,
+     "cited": 28,
+     "doi": "10.1148/ryai.240476",
+     "in_refs": false
+    },
+    {
+     "title": "Medical Question Answering System Based on Retrieval-augmented Generation",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.1051/itmconf/20268401001/pdf",
+     "in_refs": false
+    },
+    {
+     "title": "Iterative Multimodal Retrieval-Augmented Generation for Medical Question Answering",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2604.27724",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval-Augmented Generation for Large Language Models: A Survey",
+     "year": 2023,
+     "cited": 743,
+     "doi": "10.48550/arxiv.2312.10997",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval-Augmented Generation (RAG) in Healthcare: A Comprehensive Review",
+     "year": 2025,
+     "cited": 111,
+     "doi": "10.3390/ai6090226",
+     "in_refs": false
+    },
+    {
+     "title": "Towards Multimodal Retrieval-Augmented Generation for Medical Visual Question Answering",
+     "year": 2025,
+     "cited": 1,
+     "doi": "10.21203/rs.3.rs-7752202/v1",
+     "in_refs": false
+    },
+    {
+     "title": "Systematic Analysis of Retrieval-Augmented Generation-Based LLMs for Medical Chatbot Applications",
+     "year": 2024,
+     "cited": 61,
+     "doi": "10.3390/make6040116",
+     "in_refs": false
+    },
+    {
+     "title": "Comprehensive and Practical Evaluation of Retrieval-Augmented Generation Systems for Medical Question Answering",
+     "year": 2024,
+     "cited": 3,
+     "doi": "10.48550/arxiv.2411.09213",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval Augmented Generation for Domain-specific Question Answering",
+     "year": 2024,
+     "cited": 2,
+     "doi": "10.48550/arxiv.2404.14760",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval augmented generation for 10 large language models and its generalizability in assessing medical fitness",
+     "year": 2025,
+     "cited": 145,
+     "doi": "10.1038/s41746-025-01519-z",
+     "in_refs": false
+    },
+    {
+     "title": "Design and Implementation of a Medical Question Answering System Based on Retrieval-Augmented Generation",
+     "year": 2025,
+     "cited": 1,
+     "doi": "10.54097/4xqm5c93",
+     "in_refs": false
+    },
+    {
+     "title": "RAG-X: Systematic Diagnosis of Retrieval-Augmented Generation for Medical Question Answering",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2603.03541",
+     "in_refs": false
+    },
+    {
+     "title": "Benchmarking Retrieval-Augmented Generation for Medicine",
+     "year": 2024,
+     "cited": 24,
+     "doi": "10.48550/arxiv.2402.13178",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval-augmented generation for medical question answering: a multi-metric performance evaluation",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.7717/peerj-cs.4053",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval-Augmented Generation\u2013Enabled GPT-4 for Clinical Trial Screening",
+     "year": 2024,
+     "cited": 115,
+     "doi": "10.1056/aioa2400181",
+     "in_refs": false
+    },
+    {
+     "title": "A Retrieval-Augmented Generation Method for Question Answering on Airworthiness Regulations",
+     "year": 2025,
+     "cited": 7,
+     "doi": "10.3390/electronics14163314",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval-Augmented Generation (RAG)",
+     "year": 2025,
+     "cited": 82,
+     "doi": "10.1007/s12599-025-00945-3",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval-Augmented Generation for Medical Question Answering on a Heart Failure Dataset: Performance Analysis",
+     "year": 2026,
+     "cited": 3,
+     "doi": "10.2196/84932",
+     "in_refs": false
+    },
+    {
+     "title": "Enhancing Medical Question Answering with LLMs via a Hybrid Retrieval-Augmented Generation Framework",
+     "year": 2026,
+     "cited": 3,
+     "doi": "10.3390/info17020133",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval augmented generation for large language models in healthcare: A systematic review",
+     "year": 2025,
+     "cited": 248,
+     "doi": "10.1371/journal.pdig.0000877",
+     "in_refs": false
+    },
+    {
+     "title": "Medical LLMs: Fine-Tuning vs. Retrieval-Augmented Generation",
+     "year": 2025,
+     "cited": 28,
+     "doi": "10.3390/bioengineering12070687",
+     "in_refs": false
+    },
+    {
+     "title": "Expert-Guided Prompting and Retrieval-Augmented Generation for Emergency Medical Service Question Answering",
+     "year": 2025,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2511.10900",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval-augmented generation for generative artificial intelligence in health care",
+     "year": 2025,
+     "cited": 135,
+     "doi": "10.1038/s44401-024-00004-1",
+     "in_refs": false
+    }
+   ],
+   "top_cited": [
+    {
+     "title": "A Survey on Hallucination in Large Language Models: Principles, Taxonomy, Challenges, and Open Questions",
+     "year": 2024,
+     "cited": 2370,
+     "doi": "10.1145/3703155",
+     "in_refs": false
+    },
+    {
+     "title": "Sparks of Artificial General Intelligence: Early experiments with GPT-4",
+     "year": 2023,
+     "cited": 1528,
+     "doi": "10.48550/arxiv.2303.12712",
+     "in_refs": false
+    },
+    {
+     "title": "Unifying Large Language Models and Knowledge Graphs: A Roadmap",
+     "year": 2024,
+     "cited": 1325,
+     "doi": "10.1109/tkde.2024.3352100",
+     "in_refs": false
+    },
+    {
+     "title": "Toward expert-level medical question answering with large language models",
+     "year": 2025,
+     "cited": 967,
+     "doi": "10.1038/s41591-024-03423-7",
+     "in_refs": false
+    },
+    {
+     "title": "Retrieval-Augmented Generation for Large Language Models: A Survey",
+     "year": 2023,
+     "cited": 743,
+     "doi": "10.48550/arxiv.2312.10997",
+     "in_refs": false
+    },
+    {
+     "title": "LaMDA: Language Models for Dialog Applications",
+     "year": 2022,
+     "cited": 680,
+     "doi": "10.48550/arxiv.2201.08239",
+     "in_refs": false
+    },
+    {
+     "title": "The TRIPOD-LLM reporting guideline for studies using large language models",
+     "year": 2025,
+     "cited": 558,
+     "doi": "10.1038/s41591-024-03425-5",
+     "in_refs": false
+    },
+    {
+     "title": "Can Open Large Language Models Catch Vulnerabilities?",
+     "year": 2025,
+     "cited": 529,
+     "doi": "10.4230/oasics.icpec.2025.4",
+     "in_refs": false
+    },
+    {
+     "title": "Capabilities of GPT-4 on Medical Challenge Problems",
+     "year": 2023,
+     "cited": 511,
+     "doi": "10.48550/arxiv.2303.13375",
+     "in_refs": false
+    },
+    {
+     "title": "Unleashing the potential of prompt engineering for large language models",
+     "year": 2025,
+     "cited": 496,
+     "doi": "10.1016/j.patter.2025.101260",
+     "in_refs": false
+    },
+    {
+     "title": "Generative AI in Medicine and Healthcare: Promises, Opportunities and Challenges",
+     "year": 2023,
+     "cited": 408,
+     "doi": "10.3390/fi15090286",
+     "in_refs": false
+    },
+    {
+     "title": "Almanac \u2014 Retrieval-Augmented Language Models for Clinical Medicine",
+     "year": 2024,
+     "cited": 402,
+     "doi": "10.1056/aioa2300068",
+     "in_refs": false
+    },
+    {
+     "title": "A framework to assess clinical safety and hallucination rates of LLMs for medical text summarisation",
+     "year": 2025,
+     "cited": 385,
+     "doi": "10.1038/s41746-025-01670-7",
+     "in_refs": false
+    },
+    {
+     "title": "A Comprehensive Overview of Large Language Models",
+     "year": 2023,
+     "cited": 362,
+     "doi": "10.48550/arxiv.2307.06435",
+     "in_refs": false
+    },
+    {
+     "title": "Deep Learning applications for COVID-19",
+     "year": 2021,
+     "cited": 351,
+     "doi": "10.1186/s40537-020-00392-9",
+     "in_refs": false
+    },
+    {
+     "title": "A comprehensive survey of loss functions and metrics in deep learning",
+     "year": 2025,
+     "cited": 343,
+     "doi": "10.1007/s10462-025-11198-7",
+     "in_refs": false
+    },
+    {
+     "title": "Current applications and challenges in large language models for patient care: a systematic review",
+     "year": 2025,
+     "cited": 343,
+     "doi": "10.1038/s43856-024-00717-2",
+     "in_refs": false
+    },
+    {
+     "title": "Large Legal Fictions: Profiling Legal Hallucinations in Large Language Models",
+     "year": 2024,
+     "cited": 298,
+     "doi": "10.1093/jla/laae003",
+     "in_refs": false
+    },
+    {
+     "title": "The Crowdless Future? Generative AI and Creative Problem-Solving",
+     "year": 2024,
+     "cited": 293,
+     "doi": "10.1287/orsc.2023.18430",
+     "in_refs": false
+    },
+    {
+     "title": "Large language models for generative information extraction: a survey",
+     "year": 2024,
+     "cited": 290,
+     "doi": "10.1007/s11704-024-40555-y",
+     "in_refs": false
+    },
+    {
+     "title": "Can large language models reason about medical questions?",
+     "year": 2024,
+     "cited": 290,
+     "doi": "10.1016/j.patter.2024.100943",
+     "in_refs": false
+    },
+    {
+     "title": "Large Language Models for Mental Health Applications: Systematic Review",
+     "year": 2024,
+     "cited": 260,
+     "doi": "10.2196/57400",
+     "in_refs": false
+    },
+    {
+     "title": "A review of large language models and autonomous agents in chemistry",
+     "year": 2024,
+     "cited": 259,
+     "doi": "10.1039/d4sc03921a",
+     "in_refs": false
+    },
+    {
+     "title": "Galactica: A Large Language Model for Science",
+     "year": 2022,
+     "cited": 254,
+     "doi": "10.48550/arxiv.2211.09085",
+     "in_refs": false
+    },
+    {
+     "title": "AI Agents vs. Agentic AI: A Conceptual taxonomy, applications and challenges",
+     "year": 2025,
+     "cited": 252,
+     "doi": "10.1016/j.inffus.2025.103599",
+     "in_refs": false
+    }
+   ]
+  },
+  {
+   "strand": "S5 chatbot safety and jurisdiction",
+   "query": "large language model chatbot health advice safety evaluation",
+   "count": 8327,
+   "top_relevance": [
+    {
+     "title": "Large Language Models for Chatbot Health Advice Studies",
+     "year": 2025,
+     "cited": 265,
+     "doi": "10.1001/jamanetworkopen.2024.57879",
+     "in_refs": false
+    },
+    {
+     "title": "Evaluating AI chatbots for providing health advice on occupational sedentary behavior in the workplace",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.3389/fpubh.2026.1965655",
+     "in_refs": false
+    },
+    {
+     "title": "The Typing Cure: Experiences with Large Language Model Chatbots for Mental Health Support",
+     "year": 2025,
+     "cited": 40,
+     "doi": "10.1145/3757430",
+     "in_refs": false
+    },
+    {
+     "title": "Large Language Model\u2010Based Chatbots in Higher Education",
+     "year": 2024,
+     "cited": 112,
+     "doi": "10.1002/aisy.202400429",
+     "in_refs": false
+    },
+    {
+     "title": "The Typing Cure: Experiences with Large Language Model Chatbots for Mental Health Support",
+     "year": 2024,
+     "cited": 21,
+     "doi": "10.48550/arxiv.2401.14362",
+     "in_refs": false
+    },
+    {
+     "title": "A Comparison of Responses from Human Therapists and Large Language Model\u2013Based Chatbots to Assess Therapeutic Communication: Mixed Methods Study",
+     "year": 2025,
+     "cited": 64,
+     "doi": "10.2196/69709",
+     "in_refs": false
+    },
+    {
+     "title": "Large language models provide unsafe answers to patient-posed medical questions",
+     "year": 2026,
+     "cited": 50,
+     "doi": "10.1038/s41746-026-02428-5",
+     "in_refs": false
+    },
+    {
+     "title": "Comparison of Ophthalmologist and Large Language Model Chatbot Responses to Online Patient Eye Care Questions",
+     "year": 2023,
+     "cited": 249,
+     "doi": "10.1001/jamanetworkopen.2023.30320",
+     "in_refs": false
+    },
+    {
+     "title": "Chatbots and mental health: Insights into the safety of generative AI",
+     "year": 2023,
+     "cited": 197,
+     "doi": "10.1002/jcpy.1393",
+     "in_refs": false
+    },
+    {
+     "title": "Safety and quality of public chatbots for lung cancer prognostic information: a comparative evaluation",
+     "year": 2026,
+     "cited": 1,
+     "doi": "10.3389/fpubh.2026.1935121",
+     "in_refs": false
+    },
+    {
+     "title": "Development and evaluation of a lightweight large language model chatbot for medication enquiry",
+     "year": 2025,
+     "cited": 11,
+     "doi": "10.1371/journal.pdig.0000961",
+     "in_refs": false
+    },
+    {
+     "title": "Accuracy and clinical safety of large language model Chatbots as sources of sexual health information benchmarked against management guidelines",
+     "year": 2024,
+     "cited": 0,
+     "doi": "10.33545/26646633.2024.v1.i2a.22",
+     "in_refs": false
+    },
+    {
+     "title": "Evaluation of large language model chatbot responses to psychotic prompts",
+     "year": 2025,
+     "cited": 0,
+     "doi": "10.1101/2025.11.09.25339772",
+     "in_refs": false
+    },
+    {
+     "title": "Systematic review: The use of large language models as medical chatbots in digestive diseases",
+     "year": 2024,
+     "cited": 55,
+     "doi": "10.1111/apt.18058",
+     "in_refs": false
+    },
+    {
+     "title": "Privacy-by-Design Framework for Large Language Model Chatbots in Urology",
+     "year": 2025,
+     "cited": 1,
+     "doi": "10.5213/inj.2550274.137",
+     "in_refs": false
+    },
+    {
+     "title": "Safety of Large Language Models in Addressing Depression",
+     "year": 2023,
+     "cited": 61,
+     "doi": "10.7759/cureus.50729",
+     "in_refs": false
+    },
+    {
+     "title": "Large Language Models in Medical Chatbots: Opportunities, Challenges, and the Need to Address AI Risks",
+     "year": 2025,
+     "cited": 79,
+     "doi": "10.3390/info16070549",
+     "in_refs": false
+    },
+    {
+     "title": "The implications of AI chatbots built on large language models for youth mental health",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.1007/s43681-026-01199-9",
+     "in_refs": false
+    },
+    {
+     "title": "Evaluating Large Language Models: A Comprehensive Survey",
+     "year": 2023,
+     "cited": 64,
+     "doi": "10.48550/arxiv.2310.19736",
+     "in_refs": false
+    },
+    {
+     "title": "Suicide- and crisis-risk detection using large language models in mental-health chatbots",
+     "year": 2026,
+     "cited": 6,
+     "doi": "10.64898/2026.01.12.26343914",
+     "in_refs": false
+    },
+    {
+     "title": "Large language models in health care: Development, applications, and challenges",
+     "year": 2023,
+     "cited": 365,
+     "doi": "10.1002/hcs2.61",
+     "in_refs": false
+    },
+    {
+     "title": "Reporting guidelines for chatbot health advice studies: explanation and elaboration for the Chatbot Assessment Reporting Tool (CHART)",
+     "year": 2025,
+     "cited": 40,
+     "doi": "10.1136/bmj-2024-083305",
+     "in_refs": false
+    },
+    {
+     "title": "Effectiveness and Safety of Using Chatbots to Improve Mental Health: Systematic Review and Meta-Analysis",
+     "year": 2020,
+     "cited": 502,
+     "doi": "10.2196/16021",
+     "in_refs": false
+    },
+    {
+     "title": "Prompt Design and Framing in Large Language Model\u2013Based Health Chatbots: A Scoping Review",
+     "year": 2025,
+     "cited": 0,
+     "doi": "10.17605/osf.io/sbzf3",
+     "in_refs": false
+    },
+    {
+     "title": "Cross-sectional Comparative Evaluation of Five Large Language Model\u2013Driven Chatbots on a 44-Question Benchmark of Parent-Facing Questions About Pediatric Vitamin D Deficiency (Preprint)",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.2196/preprints.104931",
+     "in_refs": false
+    }
+   ],
+   "top_cited": [
+    {
+     "title": "Discernment and Social Learning as a Companion Training Layer",
+     "year": 2022,
+     "cited": 4240,
+     "doi": "10.48550/arxiv.2203.02155",
+     "in_refs": false
+    },
+    {
+     "title": "Revolutionizing healthcare: the role of artificial intelligence in clinical practice",
+     "year": 2023,
+     "cited": 3106,
+     "doi": "10.1186/s12909-023-04698-z",
+     "in_refs": false
+    },
+    {
+     "title": "Setting the future of digital and social media marketing research: Perspectives and research propositions",
+     "year": 2020,
+     "cited": 2622,
+     "doi": "10.1016/j.ijinfomgt.2020.102168",
+     "in_refs": false
+    },
+    {
+     "title": "GPT-4 Technical Report",
+     "year": 2023,
+     "cited": 2350,
+     "doi": "10.4230/lipics.cosit.2024.11",
+     "in_refs": false
+    },
+    {
+     "title": "Brave new world: service robots in the frontline",
+     "year": 2018,
+     "cited": 2279,
+     "doi": "10.1108/josm-04-2018-0119",
+     "in_refs": false
+    },
+    {
+     "title": "Impact of COVID-19 pandemic on information management research and practice: Transforming education, work and life",
+     "year": 2020,
+     "cited": 1235,
+     "doi": "10.1016/j.ijinfomgt.2020.102211",
+     "in_refs": false
+    },
+    {
+     "title": "Consumers and Artificial Intelligence: An Experiential Perspective",
+     "year": 2020,
+     "cited": 1197,
+     "doi": "10.1177/0022242920953847",
+     "in_refs": false
+    },
+    {
+     "title": "The growing field of digital psychiatry: current evidence and the future of apps, social media, chatbots, and virtual reality",
+     "year": 2021,
+     "cited": 1172,
+     "doi": "10.1002/wps.20883",
+     "in_refs": false
+    },
+    {
+     "title": "Investigating the emerging COVID-19 research trends in the field of business and management: A bibliometric analysis approach",
+     "year": 2020,
+     "cited": 1091,
+     "doi": "10.1016/j.jbusres.2020.06.057",
+     "in_refs": false
+    },
+    {
+     "title": "Embracing the future of Artificial Intelligence in the classroom: the relevance of AI literacy, prompt engineering, and critical thinking in modern education",
+     "year": 2024,
+     "cited": 1083,
+     "doi": "10.1186/s41239-024-00448-3",
+     "in_refs": false
+    },
+    {
+     "title": "Understanding of Machine Learning with Deep Learning: Architectures, Workflow, Applications and Future Directions",
+     "year": 2023,
+     "cited": 1054,
+     "doi": "10.3390/computers12050091",
+     "in_refs": false
+    },
+    {
+     "title": "A survey on large language model (LLM) security and privacy: The Good, The Bad, and The Ugly",
+     "year": 2024,
+     "cited": 1052,
+     "doi": "10.1016/j.hcc.2024.100211",
+     "in_refs": false
+    },
+    {
+     "title": "The future landscape of large language models in medicine",
+     "year": 2023,
+     "cited": 1031,
+     "doi": "10.1038/s43856-023-00370-1",
+     "in_refs": false
+    },
+    {
+     "title": "The imperative for regulatory oversight of large language models (or generative AI) in healthcare",
+     "year": 2023,
+     "cited": 1030,
+     "doi": "10.1038/s41746-023-00873-0",
+     "in_refs": false
+    },
+    {
+     "title": "Ethical and regulatory challenges of AI technologies in healthcare: A narrative review",
+     "year": 2024,
+     "cited": 1022,
+     "doi": "10.1016/j.heliyon.2024.e26297",
+     "in_refs": false
+    },
+    {
+     "title": "Artificial intelligence in the construction industry: A review of present status, opportunities and future challenges",
+     "year": 2021,
+     "cited": 991,
+     "doi": "10.1016/j.jobe.2021.103299",
+     "in_refs": false
+    },
+    {
+     "title": "Revolutionizing education with AI: Exploring the transformative potential of ChatGPT",
+     "year": 2023,
+     "cited": 965,
+     "doi": "10.30935/cedtech/13152",
+     "in_refs": false
+    },
+    {
+     "title": "Technological disruptions in services: lessons from tourism and hospitality",
+     "year": 2019,
+     "cited": 955,
+     "doi": "10.1108/josm-12-2018-0398",
+     "in_refs": false
+    },
+    {
+     "title": "A Review of the Role of Artificial Intelligence in Healthcare",
+     "year": 2023,
+     "cited": 899,
+     "doi": "10.3390/jpm13060951",
+     "in_refs": false
+    },
+    {
+     "title": "Human resource management in the age of generative artificial intelligence: Perspectives and research directions on ChatGPT",
+     "year": 2023,
+     "cited": 897,
+     "doi": "10.1111/1748-8583.12524",
+     "in_refs": false
+    },
+    {
+     "title": "Adapted large language models can outperform medical experts in clinical text summarization",
+     "year": 2024,
+     "cited": 859,
+     "doi": "10.1038/s41591-024-02855-5",
+     "in_refs": false
+    },
+    {
+     "title": "Chatbots applications in education: A systematic review",
+     "year": 2021,
+     "cited": 856,
+     "doi": "10.1016/j.caeai.2021.100033",
+     "in_refs": false
+    },
+    {
+     "title": "Implications of the use of artificial intelligence in public governance: A systematic literature review and a research agenda",
+     "year": 2021,
+     "cited": 777,
+     "doi": "10.1016/j.giq.2021.101577",
+     "in_refs": false
+    },
+    {
+     "title": "Artificial Intelligence, Values, and Alignment",
+     "year": 2020,
+     "cited": 751,
+     "doi": "10.1007/s11023-020-09539-2",
+     "in_refs": false
+    },
+    {
+     "title": "ChatGPT and Open-AI Models: A Preliminary Review",
+     "year": 2023,
+     "cited": 709,
+     "doi": "10.3390/fi15060192",
+     "in_refs": false
+    }
+   ]
+  },
+  {
+   "strand": "S6 dementia speech recognition",
+   "query": "automatic speech recognition dementia speech word error rate",
+   "count": 2774,
+   "top_relevance": [
+    {
+     "title": "Beyond word error rate: Multidimensional evaluation of ASR performance for digital speech biomarkers",
+     "year": 2026,
+     "cited": 1,
+     "doi": "10.21203/rs.3.rs-8824529/v1",
+     "in_refs": false
+    },
+    {
+     "title": "Automatic speech recognition alters diagnostic error and biomarker validity in AI-based dementia speech assessment",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.21203/rs.3.rs-9892520/v1",
+     "in_refs": false
+    },
+    {
+     "title": "A Speech Recognition-based Solution for the Automatic Detection of Mild Cognitive Impairment from Spontaneous Speech",
+     "year": 2017,
+     "cited": 293,
+     "doi": "10.2174/1567205014666171121114930",
+     "in_refs": false
+    },
+    {
+     "title": "Affective Speech for Alzheimer's Dementia Recognition.",
+     "year": 2020,
+     "cited": 9,
+     "doi": "",
+     "in_refs": false
+    },
+    {
+     "title": "Explainable Alzheimer\u2019s Disease Detection Using Linguistic Features from Automatic Speech Recognition",
+     "year": 2023,
+     "cited": 7,
+     "doi": "10.1159/000531818",
+     "in_refs": false
+    },
+    {
+     "title": "ASR and Emotional Speech: A Word-Level Investigation of the Mutual Impact of Speech and Emotion Recognition",
+     "year": 2023,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2305.16065",
+     "in_refs": false
+    },
+    {
+     "title": "Useful blunders: Can automated speech recognition errors improve downstream dementia classification?",
+     "year": 2024,
+     "cited": 17,
+     "doi": "10.1016/j.jbi.2024.104598",
+     "in_refs": true
+    },
+    {
+     "title": "Applications of automatic speech recognition and text-to-speech technologies for hearing assessment: a scoping review",
+     "year": 2024,
+     "cited": 17,
+     "doi": "10.1080/14992027.2024.2422390",
+     "in_refs": false
+    },
+    {
+     "title": "Dementia Assessment Using Mandarin Speech with an Attention-based Speech Recognition Encoder",
+     "year": 2023,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2310.03985",
+     "in_refs": false
+    },
+    {
+     "title": "Deep learning-based speech recognition for Korean elderly speech data including dementia patients",
+     "year": 2023,
+     "cited": 2,
+     "doi": "10.5351/kjas.2023.36.1.033",
+     "in_refs": false
+    },
+    {
+     "title": "Silent Speech Interfaces for Speech Restoration: A Review",
+     "year": 2020,
+     "cited": 140,
+     "doi": "10.1109/access.2020.3026579",
+     "in_refs": false
+    },
+    {
+     "title": "Alzheimer\u2019s Dementia Recognition From Spontaneous Speech Using Disfluency and Interactional Features",
+     "year": 2021,
+     "cited": 47,
+     "doi": "10.3389/fcomp.2021.640669",
+     "in_refs": false
+    },
+    {
+     "title": "The Far Side of Failure: Investigating the Impact of Speech Recognition Errors on Subsequent Dementia Classification",
+     "year": 2022,
+     "cited": 1,
+     "doi": "10.48550/arxiv.2211.07430",
+     "in_refs": false
+    },
+    {
+     "title": "An Automated Approach to Examining Pausing in the Speech of People With Dementia",
+     "year": 2020,
+     "cited": 37,
+     "doi": "10.1177/1533317520939773",
+     "in_refs": false
+    },
+    {
+     "title": "Interaction between people with dysarthria and speech recognition systems: A review",
+     "year": 2022,
+     "cited": 41,
+     "doi": "10.1080/10400435.2022.2061085",
+     "in_refs": false
+    },
+    {
+     "title": "Useful Blunders: Can Automated Speech Recognition Errors Improve Downstream Dementia Classification?",
+     "year": 2024,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2401.05551",
+     "in_refs": false
+    },
+    {
+     "title": "Recognition of Alzheimer\u2019s Dementia From the Transcriptions of Spontaneous Speech Using fastText and CNN Models",
+     "year": 2021,
+     "cited": 38,
+     "doi": "10.3389/fcomp.2021.624558",
+     "in_refs": false
+    },
+    {
+     "title": "Automatic speech analysis for the assessment of patients with predementia and Alzheimer's disease",
+     "year": 2015,
+     "cited": 383,
+     "doi": "10.1016/j.dadm.2014.11.012",
+     "in_refs": false
+    },
+    {
+     "title": "Refining Automatic Speech Recognition System for older adults",
+     "year": 2020,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2011.08346",
+     "in_refs": false
+    },
+    {
+     "title": "Automatic Speech Recognition And Limited Vocabulary: A Survey",
+     "year": 2021,
+     "cited": 1,
+     "doi": "10.48550/arxiv.2108.10254",
+     "in_refs": false
+    },
+    {
+     "title": "Predicting dementia from spontaneous speech using large language models",
+     "year": 2022,
+     "cited": 142,
+     "doi": "10.1371/journal.pdig.0000168",
+     "in_refs": false
+    },
+    {
+     "title": "Not All Errors Are Equal: Investigation of Speech Recognition Errors in Alzheimer's Disease Detection",
+     "year": 2024,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2412.06332",
+     "in_refs": false
+    },
+    {
+     "title": "Usability of Automatic Speech Recognition Systems for Individuals with Speech Disorders: Past, Present, Future, and A Proposed Model",
+     "year": 2019,
+     "cited": 5,
+     "doi": "",
+     "in_refs": false
+    },
+    {
+     "title": "A Method for Analysis of Patient Speech in Dialogue for Dementia Detection",
+     "year": 2018,
+     "cited": 34,
+     "doi": "10.48550/arxiv.1811.09919",
+     "in_refs": false
+    },
+    {
+     "title": "Correlating natural language processing and automated speech analysis with clinician assessment to quantify speech-language changes in mild cognitive impairment and Alzheimer\u2019s dementia",
+     "year": 2021,
+     "cited": 88,
+     "doi": "10.1186/s13195-021-00848-x",
+     "in_refs": false
+    }
+   ],
+   "top_cited": [
+    {
+     "title": "Artificial Intelligence (AI): Multidisciplinary perspectives on emerging challenges, opportunities, and agenda for research, practice and policy",
+     "year": 2019,
+     "cited": 4541,
+     "doi": "10.1016/j.ijinfomgt.2019.08.002",
+     "in_refs": false
+    },
+    {
+     "title": "A Survey on Explainable Artificial Intelligence (XAI): Toward Medical XAI",
+     "year": 2020,
+     "cited": 2478,
+     "doi": "10.1109/tnnls.2020.3027314",
+     "in_refs": false
+    },
+    {
+     "title": "Opportunities and obstacles for deep learning in biology and medicine",
+     "year": 2018,
+     "cited": 2317,
+     "doi": "10.1098/rsif.2017.0387",
+     "in_refs": false
+    },
+    {
+     "title": "The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS): A dynamic, multimodal set of facial and vocal expressions in North American English",
+     "year": 2018,
+     "cited": 1901,
+     "doi": "10.1371/journal.pone.0196391",
+     "in_refs": false
+    },
+    {
+     "title": "Deep learning-based electroencephalography analysis: a systematic review",
+     "year": 2019,
+     "cited": 1516,
+     "doi": "10.1088/1741-2552/ab260c",
+     "in_refs": false
+    },
+    {
+     "title": "Conversational agents in healthcare: a systematic review",
+     "year": 2018,
+     "cited": 1368,
+     "doi": "10.1093/jamia/ocy072",
+     "in_refs": true
+    },
+    {
+     "title": "Hearing Impairment and Cognitive Energy: The Framework for Understanding Effortful Listening (FUEL)",
+     "year": 2016,
+     "cited": 1325,
+     "doi": "10.1097/aud.0000000000000312",
+     "in_refs": false
+    },
+    {
+     "title": "Speech and language therapy for aphasia following stroke",
+     "year": 2016,
+     "cited": 1147,
+     "doi": "10.1002/14651858.cd000425.pub4",
+     "in_refs": false
+    },
+    {
+     "title": "RETRACTED ARTICLE: Artificial intelligence in disease diagnosis: a systematic literature review, synthesizing framework and future research agenda",
+     "year": 2022,
+     "cited": 1035,
+     "doi": "10.1007/s12652-021-03612-z",
+     "in_refs": false
+    },
+    {
+     "title": "Multiple instance learning: A survey of problem characteristics and applications",
+     "year": 2017,
+     "cited": 743,
+     "doi": "10.1016/j.patcog.2017.10.009",
+     "in_refs": false
+    },
+    {
+     "title": "A review on deep learning in medical image analysis",
+     "year": 2021,
+     "cited": 659,
+     "doi": "10.1007/s13735-021-00218-1",
+     "in_refs": false
+    },
+    {
+     "title": "The Effectiveness of Artificial Intelligence Conversational Agents in Health Care: Systematic Review",
+     "year": 2020,
+     "cited": 598,
+     "doi": "10.2196/20346",
+     "in_refs": false
+    },
+    {
+     "title": "Metrics for Polyphonic Sound Event Detection",
+     "year": 2016,
+     "cited": 597,
+     "doi": "10.3390/app6060162",
+     "in_refs": false
+    },
+    {
+     "title": "COVID-19 Artificial Intelligence Diagnosis Using Only Cough Recordings",
+     "year": 2020,
+     "cited": 592,
+     "doi": "10.1109/ojemb.2020.3026928",
+     "in_refs": false
+    },
+    {
+     "title": "Machine-Learning-Based Disease Diagnosis: A Comprehensive Review",
+     "year": 2022,
+     "cited": 586,
+     "doi": "10.3390/healthcare10030541",
+     "in_refs": false
+    },
+    {
+     "title": "Edge AI: A survey",
+     "year": 2023,
+     "cited": 558,
+     "doi": "10.1016/j.iotcps.2023.02.004",
+     "in_refs": false
+    },
+    {
+     "title": "Wearables in Medicine",
+     "year": 2018,
+     "cited": 557,
+     "doi": "10.1002/adma.201706910",
+     "in_refs": false
+    },
+    {
+     "title": "Sex and gender differences and biases in artificial intelligence for biomedicine and healthcare",
+     "year": 2020,
+     "cited": 549,
+     "doi": "10.1038/s41746-020-0288-5",
+     "in_refs": false
+    },
+    {
+     "title": "The challenge of abstract concepts.",
+     "year": 2017,
+     "cited": 517,
+     "doi": "10.1037/bul0000089",
+     "in_refs": false
+    },
+    {
+     "title": "Deep Learning with Graph Convolutional Networks: An Overview and Latest Applications in Computational Intelligence",
+     "year": 2023,
+     "cited": 467,
+     "doi": "10.1155/2023/8342104",
+     "in_refs": false
+    },
+    {
+     "title": "Exploring the role of the posterior middle temporal gyrus in semantic cognition: Integration of anterior temporal lobe with executive processes",
+     "year": 2016,
+     "cited": 442,
+     "doi": "10.1016/j.neuroimage.2016.05.051",
+     "in_refs": false
+    },
+    {
+     "title": "The Rotterdam Study: 2018 update on objectives, design and main results",
+     "year": 2017,
+     "cited": 436,
+     "doi": "10.1007/s10654-017-0321-4",
+     "in_refs": false
+    },
+    {
+     "title": "Generative AI in Medicine and Healthcare: Promises, Opportunities and Challenges",
+     "year": 2023,
+     "cited": 408,
+     "doi": "10.3390/fi15090286",
+     "in_refs": false
+    },
+    {
+     "title": "Large Language Models in Healthcare and Medical Domain: A Review",
+     "year": 2024,
+     "cited": 407,
+     "doi": "10.3390/informatics11030057",
+     "in_refs": false
+    },
+    {
+     "title": "EEG-based Brain-Computer Interfaces (BCIs): A Survey of Recent Studies \\n on Signal Sensing Technologies and Computational Intelligence Approaches and \\n their Applications",
+     "year": 2020,
+     "cited": 398,
+     "doi": "10.1109/tcbb.2021.3052811",
+     "in_refs": false
+    }
+   ]
+  },
+  {
+   "strand": "S7 LLM judges and evaluation",
+   "query": "\"LLM-as-a-judge\" agreement human evaluation",
+   "count": 6237,
+   "top_relevance": [
+    {
+     "title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena",
+     "year": 2023,
+     "cited": 482,
+     "doi": "10.48550/arxiv.2306.05685",
+     "in_refs": false
+    },
+    {
+     "title": "A Survey on LLM-as-a-Judge",
+     "year": 2024,
+     "cited": 45,
+     "doi": "10.4230/lipics.esem.2026.12",
+     "in_refs": false
+    },
+    {
+     "title": "Can LLMs Replace Human Evaluators? An Empirical Study of LLM-as-a-Judge in Software Engineering",
+     "year": 2025,
+     "cited": 62,
+     "doi": "10.1145/3728963",
+     "in_refs": false
+    },
+    {
+     "title": "Human evaluators vs. LLM-as-a-Judge: toward scalable evaluation of GenAI in global health",
+     "year": 2026,
+     "cited": 5,
+     "doi": "10.1038/s41746-026-02992-w",
+     "in_refs": false
+    },
+    {
+     "title": "Benchmarking LLM-as-a-Judge Models for 5W1H Extraction Evaluation",
+     "year": 2026,
+     "cited": 1,
+     "doi": "10.3390/electronics15030659",
+     "in_refs": false
+    },
+    {
+     "title": "Human-in-the-Loop Nugget Annotation for Accountable LLM-as-a-Judge Evaluations",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2606.29033",
+     "in_refs": false
+    },
+    {
+     "title": "Human-Centered Design Recommendations for LLM-as-a-Judge",
+     "year": 2024,
+     "cited": 1,
+     "doi": "10.48550/arxiv.2407.03479",
+     "in_refs": false
+    },
+    {
+     "title": "LLM-as-a-Judge: automated evaluation of search query parsing using large language models",
+     "year": 2025,
+     "cited": 15,
+     "doi": "10.3389/fdata.2025.1611389",
+     "in_refs": false
+    },
+    {
+     "title": "Human Evaluators vs. LLM-as-a-Judge: Toward Scalable, Real-Time Evaluation of GenAI in Global Health",
+     "year": 2025,
+     "cited": 3,
+     "doi": "10.1101/2025.10.27.25338910",
+     "in_refs": false
+    },
+    {
+     "title": "Generating and Refining Dynamic Evaluation Rubrics for LLM-as-a-Judge",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2605.30568",
+     "in_refs": false
+    },
+    {
+     "title": "A Judge Should Know What Changed:Construct Validity for LLM-as-a-Judge Evaluation",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2608.24419",
+     "in_refs": false
+    },
+    {
+     "title": "Dialectal Toxicity Detection: Evaluating LLM-as-a-Judge Consistency Across Language Varieties",
+     "year": 2024,
+     "cited": 1,
+     "doi": "10.48550/arxiv.2411.10954",
+     "in_refs": false
+    },
+    {
+     "title": "LLM-as-a-Judge for Human-AI Co-Creation: A Reliability-Aware Evaluation Framework for Coding",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2604.27727",
+     "in_refs": false
+    },
+    {
+     "title": "Benchmarking LLM-as-a-Judge for Long-Form Output Evaluation",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2606.01629",
+     "in_refs": false
+    },
+    {
+     "title": "Limitations of the LLM-as-a-Judge Approach for Evaluating LLM Outputs in Expert Knowledge Tasks",
+     "year": 2024,
+     "cited": 6,
+     "doi": "10.48550/arxiv.2410.20266",
+     "in_refs": false
+    },
+    {
+     "title": "Effect of evaluation prompt strategies on LLM-as-a-judge reliability in critical care",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.5114/ait/221943",
+     "in_refs": false
+    },
+    {
+     "title": "Evaluating generative AI chatbots for large-scale assessment data: comparing LLM-as-a-judge and human ratings",
+     "year": 2026,
+     "cited": 2,
+     "doi": "10.1186/s40536-026-00287-w",
+     "in_refs": false
+    },
+    {
+     "title": "LeMAJ (Legal LLM-as-a-Judge): Bridging Legal Reasoning and LLM Evaluation",
+     "year": 2025,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2510.07243",
+     "in_refs": false
+    },
+    {
+     "title": "CheckEval: A reliable LLM-as-a-Judge framework for evaluating text generation using checklists",
+     "year": 2024,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2403.18771",
+     "in_refs": false
+    },
+    {
+     "title": "JudgeSense: A Benchmark for Prompt Sensitivity in LLM-as-a-Judge Systems",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.48550/arxiv.2604.23478",
+     "in_refs": false
+    },
+    {
+     "title": "LLM-as-a-Judge: Rapid Evaluation of Legal Document Recommendation for Retrieval-Augmented Generation",
+     "year": 2025,
+     "cited": 1,
+     "doi": "10.48550/arxiv.2509.12382",
+     "in_refs": false
+    },
+    {
+     "title": "A Scoping Review of LLM-as-a-Judge in Healthcare and the MedJUDGE Framework",
+     "year": 2026,
+     "cited": 1,
+     "doi": "10.48550/arxiv.2604.25933",
+     "in_refs": false
+    },
+    {
+     "title": "LLMs Cannot Reliably Judge (Yet?): A Comprehensive Assessment on the Robustness of LLM-as-a-Judge",
+     "year": 2026,
+     "cited": 0,
+     "doi": "10.1109/tifs.2026.3737714",
+     "in_refs": false
+    },
+    {
+     "title": "Auditing and Debiasing LLM-as-a-Judge Evaluation with a Bias-Aware Panel",
+     "year": 2024,
+     "cited": 0,
+     "doi": "10.5281/zenodo.21158213",
+     "in_refs": false
+    },
+    {
+     "title": "RO-FIN-LLM: A Benchmark with LLM-as-a-Judge and Human Evaluators for Romanian Tax and Accounting",
+     "year": 2026,
+     "cited": 1,
+     "doi": "10.3390/systems14030244",
+     "in_refs": false
+    }
+   ],
+   "top_cited": [
+    {
+     "title": "Adapted large language models can outperform medical experts in clinical text summarization",
+     "year": 2024,
+     "cited": 859,
+     "doi": "10.1038/s41591-024-02855-5",
+     "in_refs": false
+    },
+    {
+     "title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena",
+     "year": 2023,
+     "cited": 482,
+     "doi": "10.48550/arxiv.2306.05685",
+     "in_refs": false
+    },
+    {
+     "title": "Benchmarking Large Language Models for News Summarization",
+     "year": 2024,
+     "cited": 356,
+     "doi": "10.1162/tacl_a_00632",
+     "in_refs": false
+    },
+    {
+     "title": "AI-to-AI Code Reviews of GitHub Pull Requests",
+     "year": 2022,
+     "cited": 326,
+     "doi": "10.4230/lipics.esem.2026.75",
+     "in_refs": false
+    },
+    {
+     "title": "Integrated image-based deep learning and language models for primary diabetes care",
+     "year": 2024,
+     "cited": 244,
+     "doi": "10.1038/s41591-024-03139-8",
+     "in_refs": false
+    },
+    {
+     "title": "Code of \"Sirens' Whisper: Inaudible Near-Ultrasonic Jailbreaks of Speech-Driven LLMs\"",
+     "year": 2023,
+     "cited": 197,
+     "doi": "10.48550/arxiv.2307.15043",
+     "in_refs": false
+    },
+    {
+     "title": "Hallucination\u2010Free? Assessing the Reliability of Leading AI Legal Research Tools",
+     "year": 2025,
+     "cited": 161,
+     "doi": "10.1111/jels.12413",
+     "in_refs": false
+    },
+    {
+     "title": "Evaluating large language model workflows in clinical decision support for triage and referral and diagnosis",
+     "year": 2025,
+     "cited": 159,
+     "doi": "10.1038/s41746-025-01684-1",
+     "in_refs": false
+    },
+    {
+     "title": "Sycophantic AI decreases prosocial intentions and promotes dependence",
+     "year": 2026,
+     "cited": 151,
+     "doi": "10.1126/science.aec8352",
+     "in_refs": false
+    },
+    {
+     "title": "Large language models surpass human experts in predicting neuroscience results",
+     "year": 2024,
+     "cited": 138,
+     "doi": "10.1038/s41562-024-02046-9",
+     "in_refs": false
+    },
+    {
+     "title": "Towards building multilingual language model for medicine",
+     "year": 2024,
+     "cited": 136,
+     "doi": "10.1038/s41467-024-52417-z",
+     "in_refs": false
+    },
+    {
+     "title": "Performance of an Open-Source Large Language Model in Extracting Information from Free-Text Radiology Reports",
+     "year": 2024,
+     "cited": 114,
+     "doi": "10.1148/ryai.230364",
+     "in_refs": false
+    },
+    {
+     "title": "A survey of multilingual large language models",
+     "year": 2025,
+     "cited": 109,
+     "doi": "10.1016/j.patter.2024.101118",
+     "in_refs": false
+    },
+    {
+     "title": "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model",
+     "year": 2024,
+     "cited": 106,
+     "doi": "10.48550/arxiv.2405.04434",
+     "in_refs": false
+    },
+    {
+     "title": "WizardLM: Empowering large pre-trained language models to follow complex instructions",
+     "year": 2023,
+     "cited": 106,
+     "doi": "10.48550/arxiv.2304.12244",
+     "in_refs": false
+    },
+    {
+     "title": "When helpfulness backfires: LLMs and the risk of false medical information due to sycophantic behavior",
+     "year": 2025,
+     "cited": 102,
+     "doi": "10.1038/s41746-025-02008-z",
+     "in_refs": false
+    },
+    {
+     "title": "Chatbot Arena: An Open Platform for Evaluating LLMs by Human Preference",
+     "year": 2024,
+     "cited": 101,
+     "doi": "10.4230/lipics.cp.2024.25",
+     "in_refs": false
+    },
+    {
+     "title": "A scoping review of large language model based approaches for information extraction from radiology reports",
+     "year": 2024,
+     "cited": 96,
+     "doi": "10.1038/s41746-024-01219-0",
+     "in_refs": false
+    },
+    {
+     "title": "Can large language models reason about medical questions?",
+     "year": 2022,
+     "cited": 83,
+     "doi": "10.48550/arxiv.2207.08143",
+     "in_refs": false
+    },
+    {
+     "title": "Instruction Tuning for Large Language Models: A Survey",
+     "year": 2025,
+     "cited": 81,
+     "doi": "10.1145/3777411",
+     "in_refs": false
+    },
+    {
+     "title": "A Large Language Model Approach to Educational Survey Feedback Analysis",
+     "year": 2024,
+     "cited": 73,
+     "doi": "10.1007/s40593-024-00414-0",
+     "in_refs": false
+    },
+    {
+     "title": "Medical foundation large language models for comprehensive text analysis and beyond",
+     "year": 2025,
+     "cited": 69,
+     "doi": "10.1038/s41746-025-01533-1",
+     "in_refs": false
+    },
+    {
+     "title": "Current and future state of evaluation of large language models for medical summarization tasks",
+     "year": 2025,
+     "cited": 63,
+     "doi": "10.1038/s44401-024-00011-2",
+     "in_refs": false
+    },
+    {
+     "title": "Can LLMs Replace Human Evaluators? An Empirical Study of LLM-as-a-Judge in Software Engineering",
+     "year": 2025,
+     "cited": 62,
+     "doi": "10.1145/3728963",
+     "in_refs": false
+    },
+    {
+     "title": "Cognitive Mirage: A Review of Hallucinations in Large Language Models",
+     "year": 2023,
+     "cited": 58,
+     "doi": "10.48550/arxiv.2309.06794",
+     "in_refs": false
+    }
+   ]
+  }
+ ]
+}

@@ -21,7 +21,7 @@ unaffected. `apps/api/README.md` records why Vercel Services was not used. See
 
 | Doc | What it covers |
 |---|---|
-| [architecture/backend-plan.md](architecture/backend-plan.md) | The planned backend + DB, why it exists (credentials, not tidiness), and what moves server-side. **Not built** — a target, not a description. |
+| [architecture/backend-plan.md](architecture/backend-plan.md) | The backend + DB as planned before `apps/api/` was built: why it exists (credentials, not tidiness) and what moves server-side. Kept as the plan; [`apps/api/README.md`](../apps/api/README.md) describes what was built. |
 | [design-system.md](design-system.md) | Colour tokens and the accessibility requirements |
 
 ## RAG pipeline
@@ -43,9 +43,9 @@ Config lives in `packages/core/rag/`; tooling in `scripts/eval/` and
 | [eval/results-e9-stt-2026-09-18.md](eval/results-e9-stt-2026-09-18.md) | E9: word-error rate of the transcription path on ADReSS-2020 dementia speech, four recognisers, downstream effect |
 | [eval/functional-verification.md](eval/functional-verification.md) | E10: requirements-to-evidence matrix, test levels, coverage, unverified requirements |
 | [eval/scalability.md](eval/scalability.md) | E11: per-turn call trace, capacity per dependency, the binding constraint, measured load |
-| [report/final/](report/final/README.md) | **The final report's skeleton**: every required section with its word budget, rubric hook, evidence pointers and status; check it with `python3 scripts/report/check-template.py` |
-| [report/rubric/](report/rubric/readiness.md) | **The final report's marking rubric** and what the project has and has not got against it |
-| [report/lit-review/](report/lit-review/alignment.md) | The April scope/objectives/literature submission, what has to change in it, and the redrafted Section 2 (research questions, aim, scope) |
+| [eval/plan-19a-safety.md](eval/plan-19a-safety.md) … [plan-19k-lead-passage.md](eval/plan-19k-lead-passage.md) | The October follow-ups (§19A–§19K), each plan written before its run; results in `eval/results-2026-10-*.md` |
+| [eval/errata-2026-09-30.md](eval/errata-2026-09-30.md) | Corrections to numbers in the results documents, which were left as written |
+| [Root README, section 2](../README.md#2-where-each-result-comes-from) | **Where each result in the final reports comes from**: plan, result document, data and scripts for every evaluation |
 
 ## Subsystems
 
@@ -61,8 +61,9 @@ These are point-in-time academic artefacts, not living reference docs.
 
 | Folder | Contents |
 |---|---|
-| [`study/`](study/README.md) | **The human usability study**: protocol, task sets and rubric, instruments, analysis plan, pilot gate, and the full UAHPEC ethics pack. Start at [study/README.md](study/README.md). Live — this one is being executed, not archived. [study/data-state.md](study/data-state.md) records what is in the database (the data itself is git-ignored). |
-| `report/` | Mid-year report: drafts, `figures/`, `baseline/`, `eval/` data, and `rubric/` (the final-report marking rubric + readiness analysis). **Paths here are stable on purpose** — they may be cited in submitted work, so do not reorganise. |
+| [`study/`](study/README.md) | **The human usability study**: protocol, task sets and rubric, instruments, analysis plan, pilot gate, and the full UAHPEC ethics pack. Start at [study/README.md](study/README.md). The last sessions were on 12 October 2026. The study data are git-ignored and not in the repository (root README, section 6); [study/data-state.md](study/data-state.md) is a database snapshot of 21 September, superseded. |
+| `report/` | Mid-year report and drafts, `baseline/`, and the evaluation outputs in `eval/`; `figures/final/` holds the final report's figures and `lit-review/` the October literature-search record. The final reports themselves are not stored. **Paths here are stable on purpose** — they are cited in submitted work, so do not reorganise. |
+| [`meetings/`](meetings/README.md) | Notes of the weekly supervisor meetings (May to October 2026) and the material prepared for the 15 July meeting, exported from the project's shared Google Drive |
 | `seminar/` | Conference-day deck prompt, research notes, speaker script |
 | `web/` | The design prompt used to generate the web front-end (this is `docs/web/`, not the app) |
 
@@ -71,6 +72,6 @@ These are point-in-time academic artefacts, not living reference docs.
 - Living technical docs go in a topic folder (`rag/`, `architecture/`) or at
   this level if they are standalone.
 - Anything submitted or presented goes under `report/` or `seminar/` and is then
-  left alone. `study/` is the exception: it is a live folder that will accumulate
-  results while the study runs.
+  left alone. `study/` was the exception while the study ran; its results stay
+  git-ignored.
 - Update this index when adding a folder.

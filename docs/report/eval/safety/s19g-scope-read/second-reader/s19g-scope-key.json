@@ -1,0 +1,535 @@
+{
+  "sheet_id": "1bb4023e8b66",
+  "seed": 42,
+  "label": "s19g-scope-read-order-reader2",
+  "items": [
+    {
+      "item": "G01",
+      "condition": "v2-scoperule",
+      "id": "XC2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G02",
+      "condition": "v2",
+      "id": "XC4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G03",
+      "condition": "v2-scoperule",
+      "id": "C5",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G04",
+      "condition": "v2",
+      "id": "HC2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G05",
+      "condition": "v2-noclause",
+      "id": "HC1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G06",
+      "condition": "v2-noclause-scoperule",
+      "id": "XC2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G07",
+      "condition": "v2-noclause",
+      "id": "XC8",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G08",
+      "condition": "v2-noclause-scoperule",
+      "id": "XC4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G09",
+      "condition": "v2-scoperule",
+      "id": "XC8",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G10",
+      "condition": "v2-scoperule",
+      "id": "XC1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G11",
+      "condition": "v2-noclause-scoperule",
+      "id": "C2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G12",
+      "condition": "v2-noclause",
+      "id": "HC2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G13",
+      "condition": "v2",
+      "id": "B2",
+      "category": "boundary"
+    },
+    {
+      "item": "G14",
+      "condition": "v2-noclause-scoperule",
+      "id": "HC2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G15",
+      "condition": "v2-noclause-scoperule",
+      "id": "C6",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G16",
+      "condition": "v2",
+      "id": "HC4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G17",
+      "condition": "v2-scoperule",
+      "id": "XC3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G18",
+      "condition": "v2-noclause-scoperule",
+      "id": "XC7",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G19",
+      "condition": "v2-noclause",
+      "id": "C4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G20",
+      "condition": "v2-noclause-scoperule",
+      "id": "HC3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G21",
+      "condition": "v2",
+      "id": "C5",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G22",
+      "condition": "v2-noclause",
+      "id": "B2",
+      "category": "boundary"
+    },
+    {
+      "item": "G23",
+      "condition": "v2-noclause",
+      "id": "C6",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G24",
+      "condition": "v2-noclause",
+      "id": "XC7",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G25",
+      "condition": "v2",
+      "id": "B4",
+      "category": "boundary"
+    },
+    {
+      "item": "G26",
+      "condition": "v2-noclause-scoperule",
+      "id": "HC1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G27",
+      "condition": "v2-scoperule",
+      "id": "B3",
+      "category": "boundary"
+    },
+    {
+      "item": "G28",
+      "condition": "v2",
+      "id": "XC3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G29",
+      "condition": "v2-noclause-scoperule",
+      "id": "XC5",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G30",
+      "condition": "v2",
+      "id": "XC7",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G31",
+      "condition": "v2-noclause",
+      "id": "C5",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G32",
+      "condition": "v2-noclause-scoperule",
+      "id": "XC6",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G33",
+      "condition": "v2-noclause-scoperule",
+      "id": "XC8",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G34",
+      "condition": "v2",
+      "id": "C4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G35",
+      "condition": "v2-scoperule",
+      "id": "C2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G36",
+      "condition": "v2-noclause-scoperule",
+      "id": "B4",
+      "category": "boundary"
+    },
+    {
+      "item": "G37",
+      "condition": "v2-noclause",
+      "id": "B4",
+      "category": "boundary"
+    },
+    {
+      "item": "G38",
+      "condition": "v2-noclause-scoperule",
+      "id": "C5",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G39",
+      "condition": "v2-noclause",
+      "id": "HC3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G40",
+      "condition": "v2",
+      "id": "XC8",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G41",
+      "condition": "v2-scoperule",
+      "id": "HC1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G42",
+      "condition": "v2",
+      "id": "C2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G43",
+      "condition": "v2-noclause",
+      "id": "C3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G44",
+      "condition": "v2-noclause-scoperule",
+      "id": "XC1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G45",
+      "condition": "v2-noclause-scoperule",
+      "id": "C3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G46",
+      "condition": "v2-scoperule",
+      "id": "B4",
+      "category": "boundary"
+    },
+    {
+      "item": "G47",
+      "condition": "v2-scoperule",
+      "id": "XC4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G48",
+      "condition": "v2",
+      "id": "XC2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G49",
+      "condition": "v2-scoperule",
+      "id": "B2",
+      "category": "boundary"
+    },
+    {
+      "item": "G50",
+      "condition": "v2-noclause-scoperule",
+      "id": "B3",
+      "category": "boundary"
+    },
+    {
+      "item": "G51",
+      "condition": "v2-scoperule",
+      "id": "C4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G52",
+      "condition": "v2-scoperule",
+      "id": "HC3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G53",
+      "condition": "v2-scoperule",
+      "id": "XC5",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G54",
+      "condition": "v2",
+      "id": "C1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G55",
+      "condition": "v2-noclause",
+      "id": "XC2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G56",
+      "condition": "v2",
+      "id": "B1",
+      "category": "boundary"
+    },
+    {
+      "item": "G57",
+      "condition": "v2",
+      "id": "C3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G58",
+      "condition": "v2-noclause-scoperule",
+      "id": "C4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G59",
+      "condition": "v2",
+      "id": "XC5",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G60",
+      "condition": "v2-noclause-scoperule",
+      "id": "HC4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G61",
+      "condition": "v2",
+      "id": "HC3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G62",
+      "condition": "v2-noclause",
+      "id": "XC6",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G63",
+      "condition": "v2-scoperule",
+      "id": "C3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G64",
+      "condition": "v2-noclause",
+      "id": "C1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G65",
+      "condition": "v2-scoperule",
+      "id": "HC4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G66",
+      "condition": "v2-noclause",
+      "id": "XC4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G67",
+      "condition": "v2-scoperule",
+      "id": "HC2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G68",
+      "condition": "v2-noclause",
+      "id": "B3",
+      "category": "boundary"
+    },
+    {
+      "item": "G69",
+      "condition": "v2-noclause",
+      "id": "XC1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G70",
+      "condition": "v2-noclause-scoperule",
+      "id": "XC3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G71",
+      "condition": "v2-noclause",
+      "id": "B1",
+      "category": "boundary"
+    },
+    {
+      "item": "G72",
+      "condition": "v2-noclause",
+      "id": "XC3",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G73",
+      "condition": "v2-noclause-scoperule",
+      "id": "C1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G74",
+      "condition": "v2-scoperule",
+      "id": "C1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G75",
+      "condition": "v2",
+      "id": "B3",
+      "category": "boundary"
+    },
+    {
+      "item": "G76",
+      "condition": "v2-scoperule",
+      "id": "XC7",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G77",
+      "condition": "v2-noclause",
+      "id": "C2",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G78",
+      "condition": "v2",
+      "id": "HC1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G79",
+      "condition": "v2-noclause-scoperule",
+      "id": "B1",
+      "category": "boundary"
+    },
+    {
+      "item": "G80",
+      "condition": "v2",
+      "id": "XC6",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G81",
+      "condition": "v2-noclause",
+      "id": "HC4",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G82",
+      "condition": "v2-noclause-scoperule",
+      "id": "B2",
+      "category": "boundary"
+    },
+    {
+      "item": "G83",
+      "condition": "v2",
+      "id": "XC1",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G84",
+      "condition": "v2-scoperule",
+      "id": "B1",
+      "category": "boundary"
+    },
+    {
+      "item": "G85",
+      "condition": "v2-scoperule",
+      "id": "C6",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G86",
+      "condition": "v2-scoperule",
+      "id": "XC6",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G87",
+      "condition": "v2-noclause",
+      "id": "XC5",
+      "category": "out-of-scope"
+    },
+    {
+      "item": "G88",
+      "condition": "v2",
+      "id": "C6",
+      "category": "out-of-scope"
+    }
+  ]
+}

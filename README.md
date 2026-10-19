@@ -39,8 +39,9 @@ evaluated client), iOS and Android.
 6. [Data: what is included, what is not, and why](#6-data-what-is-included-what-is-not-and-why)
 7. [Figures and media](#7-figures-and-media)
 8. [Versions](#8-versions)
-9. [Licence and third-party terms](#9-licence-and-third-party-terms)
-10. [People and contacts](#10-people-and-contacts)
+9. [Further development](#9-further-development)
+10. [Licence and third-party terms](#10-licence-and-third-party-terms)
+11. [People and contacts](#11-people-and-contacts)
 
 ---
 
@@ -50,15 +51,16 @@ evaluated client), iOS and Android.
 
 The zip's root folder is this repository, checked out at the submission tag (section 8) with its
 full git history in `.git/`. The commit dates are the record that each plan was written before
-its run (`git log --follow docs/eval/plan-19j-replication.md`, for example). Four folders are
-added that are not on GitHub:
+its run (`git log --follow docs/eval/plan-19j-replication.md`, for example), and the history as a
+whole (more than 650 commits from 22 April 2026) is the project's working journal; the meeting
+records are in `docs/meetings/`. Four folders are added that are not on GitHub:
 
 | Path | What it is |
 |---|---|
 | `submissions/` | **Each student's files exactly as submitted on Canvas**, one folder per student (`Richman_Tan_rtan654/`, `JooHyun_Kang_jkan172/`). `submissions/README.md` lists every file with its Canvas assignment, date and SHA-256 checksum. |
 | `unity-avatar/UnityAvatarProject/` | **The Unity project** at the submodule commit (section 8): the co-articulation engine, the G2P, the articulation test harness and its fixtures, the scenes, packages and project settings. Its Character Creator characters and its iOS and Android build exports are left out because together they would take the zip over Canvas's 2 GB limit; the complete project is on GitHub at the same commit. |
-| `examiners-only/` | **Usability-study results that may be assessed but not published** (section 6): the October analysis and the report's Figure 5.3. |
-| `demo/` | **A screen recording of the app** on an iPhone (2 min 37 s, with sound, 11 October 2026): a spoken question answered by the avatar with lip sync, captions and a source, then the chat, Library and Settings screens. It is 276 MB, too large for git. |
+| `examiners-only/` | **Results that may be assessed but not published** (section 6): the October usability analysis, the report's Figure 5.3, and the perceptual lip-sync test's coded per-rater responses (`e6-responses/`). |
+| `media/` | **Video too large for git.** `app-demo_2026-10-11.mp4` is a screen recording of the app on an iPhone (2 min 37 s, with sound): a spoken question answered by the avatar with lip sync, captions and a source, then the chat, Library and Settings screens. `e6-stimuli/` is the perceptual lip-sync test (E6) as the raters saw it: the rating page, the 22 clips, the key that says which clip is which, and the synthesised audio with its timing. |
 
 ### Top level
 
@@ -145,8 +147,8 @@ under `scripts/eval/` unless shown otherwise.
 | E4-S | Spoken-turn latency, headless, fallback recogniser | §5.3, Table E.2 | `evaluation-plan.md` §18.1 | `results-2026-10-09-reopened.md` §2 | `report/eval/latency/spoken-bench_*` (with `_raw.csv` and `_meta.json`), `spoken-bench_days_2026-10-09_to_11.md` | `latency/bench-spoken.mjs`, `latency/compare-days.mjs` |
 | E4-B | Spoken-turn latency in Chrome, primary and fallback recognisers | §5.3, Table E.3 | `evaluation-plan.md` §18.4 | `results-2026-10-09-reopened.md` §6 | `report/eval/latency/browser-bench_*` | `latency/bench-browser.mjs`, `latency/browser-bench-server.mjs`, `latency/rtt-probe.mjs` |
 | E5 | Articulation harness: 95 automatic checks that the avatar's mouth shapes match the sounds (for example, lips closed on m, b and p) | §5.3, Table E.1 | `evaluation-plan.md` §10 | `report/eval/lipsync/README.md` | `report/eval/lipsync/*.json`, `g2p-ablation_kb100.md` | `scripts/lipsync/`; the Unity harness in `unity-avatar/` (Tools › LipSync › Run All Fixtures) |
-| E6 | Perceptual lip-sync test: 15 raters compared the engine with the earlier one and a still face | §5.3, Table E.4 | `evaluation-plan.md` §10; `report/eval/e6/STOPPING-RULE.md` | `report/eval/e6/e6-results_FINAL-2026-10-10_n15.md` | `report/eval/e6/*.json` (aggregates; interim results kept), `e6-dependence-audit_2026-10-11.json` | `e6-make-stimuli.mjs`, `e6-analyse.mjs`, `e6/`, `scripts/report/reanalyse-e6.py` |
-| E7 | Usability study: avatar with voice (Arm A) against text (Arm B), within subjects | §4.4, §5.4, Appendix C | `docs/study/protocol.md`, `analysis-plan.md`; extension `plan-19f-extension.md` | `examiners-only/results-2026-10-12-s19f.md` (zip only, section 6) | not included (section 6); instruments in `docs/study/instruments.md`, `tasks.md` | `scripts/study/` |
+| E6 | Perceptual lip-sync test: 15 raters compared the engine with the earlier one and a still face | §5.3, Table E.4 | `evaluation-plan.md` §10; `report/eval/e6/STOPPING-RULE.md` | `report/eval/e6/e6-results_FINAL-2026-10-10_n15.md` | `report/eval/e6/*.json` (aggregates; interim results kept), `e6-dependence-audit_2026-10-11.json`; per-rater responses in the zip's `examiners-only/e6-responses/` and the clips in `media/e6-stimuli/` | `e6-make-stimuli.mjs`, `e6-analyse.mjs`, `e6/`, `scripts/report/reanalyse-e6.py` |
+| E7 | Usability study: avatar with voice (Arm A) against text (Arm B), within subjects | §4.4, §5.4, Appendix C | `docs/study/protocol.md`, `analysis-plan.md`; extension `plan-19f-extension.md` | `examiners-only/results-2026-10-12-s19f.md` (zip only, section 6; the report cites it as `docs/eval/results-2026-10-12-s19f.md`) | not included (section 6); instruments in `docs/study/instruments.md`, `tasks.md` | `scripts/study/` |
 | E10 | Functional verification: each requirement against the test or measurement that verifies it | §5.6, Appendix D | `evaluation-plan.md` §17.2 | `docs/eval/functional-verification.md` | the test suites (`npm test`), coverage `report/eval/final/coverage_775adeb.md`, end-to-end flows in `docs/testing/` | `coverage-summary.mjs` |
 | E11 | Capacity per dependency (proxy, retrieval call, model and speech providers) | §5.6, Table F.1 | `evaluation-plan.md` §17.3 | `docs/eval/scalability.md` | `report/eval/final/load_proxy_5a1a880_*`, `load_rpc_5a1a880_*` | `load/proxy-load.mjs`, `load/rpc-load.mjs` |
 | E11-L | Speech-synthesis load test | §5.6, Table F.2 | `plan-19b-propagation.md` §19B.3 | `report/eval/final/load_tts_e72d595_mac-2026-10-09.md` | the same name with `_raw.csv`, `_meta.json` | `load/tts-load.mjs` |
@@ -319,6 +321,8 @@ time. The committed per-run files are the record of what was measured.
 | Speech synthesis | ElevenLabs `eleven_turbo_v2_5`, with character-level timing used for lip sync |
 | Avatar | Unity 6000.5.0f1; Character Creator characters Ariana and Aaron; articulation harness at 60 frames per second (`Time.captureFramerate = 60`) |
 | Prices | `scripts/eval/pricing.2026-09.json`, checked 18 September 2026 |
+| Provider limits (rate limits, concurrency, plan tiers) | `docs/eval/scalability.md`, with the load tests behind them (E11, E11-L) |
+| Measurement checks (no physical equipment was used, so these stand in for calibration) | Every latency file records a baseline round-trip time to each provider (`latency/rtt-probe.mjs`). A model judge was used for a dimension only if it agreed with human raters at Cohen's κ of at least 0.6, and none did (E2, E2-X). Retrieval labels were checked by a second annotator (E1). The simulated recognition errors were checked against the real ones (`report/eval/stt/error-model-check_s19j.md`). The articulation harness runs the same fixtures on both characters (E5). |
 | Dates | September programme 13–19 September 2026 (articulation runs from July and 19 September); October follow-ups 8–15 October 2026; usability study September and 9–12 October 2026. Each result file gives the dates and times of its runs. |
 
 The usability study used the deployed web app. In September participants took part remotely and
@@ -359,8 +363,11 @@ Canvas files: each report is individual and was written independently. `examiner
 results of the October usability round: the analysis (`results-2026-10-12-s19f.md`) and Figure 5.3,
 which plots each carer's results and is drawn from the report's Table H.1. The supervisor advised
 that this assessed, unpublished evaluation did not need ethics approval, so its results may be
-assessed but not published. `demo/` holds the app demonstration recording, which is too large for
-git.
+assessed but not published. It also holds the perceptual lip-sync test's responses: 17 files, one per
+rater, identified only by a code (R01 to R17) with no free text (two raters had taken part in the
+usability study and were excluded as the plan required, leaving the report's 15); the raters were told their answers
+would be used only for the project's evaluation. `media/` holds the app demonstration and the
+perceptual test's clips, which are too large for git.
 
 ---
 
@@ -368,12 +375,13 @@ git.
 
 | What | Where |
 |---|---|
+| Schematics: the system architecture and the path of one spoken turn (Figure 3.1), the evaluation design (Figure 4.1) and the co-articulation engine | `docs/report/figures/final/fig3_1_architecture.png`, `fig4_1_evaluation_design.png`, `fig3_3_coarticulation.png`; the answer pipeline as a diagram in section 3 |
 | The final report's figures, except Figure 5.3 (per-carer study results; in the zip's `examiners-only/`, section 6) | `docs/report/figures/final/`. All but the app screenshot are drawn from the committed result files by `python3 scripts/report/make-report-figures.py` (needs matplotlib and numpy), then `--only F5 --yardstick-ms 3000` for the latency figure as printed; a re-run matches the committed figures pixel for pixel |
 | Mid-year report figures | `docs/report/figures/fig1_checks_passed.png`, `fig2_viseme_montage.png`, `fig3_bilabial_curves.png` (`scripts/make-figures.py`) |
 | Lip-sync capture frames (Aaron: bilabial, labiodental, open vowel) | `docs/report/figures/_captures/` |
-| Perceptual-test stimuli | generated by `scripts/eval/e6-make-stimuli.mjs` from `scripts/eval/e6/sentences.json` |
+| Perceptual-test stimuli (22 clips, the rating page and the key) | the zip's `media/e6-stimuli/`; generated by `scripts/eval/e6-make-stimuli.mjs` from `scripts/eval/e6/sentences.json` |
 | Conference presentation (July) | `docs/seminar/` |
-| App demonstration recording (iPhone, 11 October 2026) | the zip's `demo/` (section 1) |
+| App demonstration recording (iPhone, 11 October 2026) | the zip's `media/app-demo_2026-10-11.mp4` (section 1) |
 
 No participant media and no DementiaBank audio are included.
 
@@ -391,7 +399,64 @@ No participant media and no DementiaBank audio are included.
 
 ---
 
-## 9. Licence and third-party terms
+## 9. Further development
+
+What a student or team taking the project on should know, and what both reports suggest doing
+next. The reasons are in each report's Chapter 6 and Section 7.3.
+
+**Where to start.** Run the system and its checks (section 3). Continuous integration
+(`.github/workflows/ci.yml`) runs typecheck, lint, unit tests, a coverage gate and the Playwright
+end-to-end flows on every pull request. New resources enter the library through the intake tool
+(`apps/admin/README.md`), which chunks, tags and embeds them the same way as
+`scripts/ingest/ingest.mjs`; nothing is cited in chat until a reviewer approves it. Evaluations
+run through the harness in `docs/eval/README.md`; write each plan and its expected results down,
+and commit them, before the run, as was done here.
+
+**Known open items.**
+
+- Pull request #140 (an interrupted spoken answer no longer speaks over the next one) is open. It
+  was held back so that the evaluated system did not change while the study ran.
+- Two requirements are not verified: FR-36, the device fallback drills, and FR-37, lip sync checked
+  on a device through the native bridge (`docs/eval/functional-verification.md`).
+- The mobile app's screens and libraries have no automated tests (0% statement coverage in
+  `docs/report/eval/final/coverage_775adeb.md`), against 95.8% for the shared retrieval code and
+  99.2% for the voice core.
+- The mobile app calls the providers with keys the user enters in Settings; the web app goes
+  through the server-side proxy in `apps/api/`. The mobile app should move behind the proxy
+  before it is offered to anyone (`docs/mobile-app.md`, "API keys").
+- Any further study with carers needs ethics approval (UAHPEC). The study documents in
+  `docs/study/ethics/` are a starting point for the application.
+
+**Suggested next steps.**
+
+1. **Correctness of answers**, first, so that no later study shows carers answers of unknown
+   correctness: a clinician writes, for a sample of questions, the facts each answer must contain;
+   two raters calibrated on example answers score against that list; a judge model is used only
+   once it agrees with them. Held-out safety items should be written and reviewed by clinicians
+   outside the team.
+2. **Grounding:** make the model cite each claim and check support before an answer is shown;
+   recalibrate the sentence-level checker (E1-C) on more human-labelled pairs; enlarge the
+   retrieval benchmark beyond 33 questions, with annotators who did not build the retriever.
+3. **Speech:** measure the live recognisers, including Chrome's cloud recogniser, on consented
+   New Zealand speech from carers and people living with dementia; show the transcript and ask
+   for confirmation when it is short or uncertain; test the escalate-first rule (E9-K) on those
+   real errors.
+4. **Responsiveness:** start speech synthesis within each sentence through the WebSocket service
+   already built (FR-13) and start retrieval earlier; measure on phones over mobile networks
+   rather than one laptop.
+5. **Benefit:** an ethics-approved study over several weeks with carers recruited independently,
+   with arms for voice without the face and for the library alone. Detecting a 10-point SUS
+   difference needs about 20 carers completing both arms (Richman Tan's report, Section 7.3).
+   Test shorter spoken answers with the main steps first, which carers asked for.
+6. **Content:** more regional, Māori and Pacific resources and content in te reo Māori; a recorded
+   licence for every source, more than one reviewer, and a schedule for re-checking phone numbers
+   and service details.
+7. **Before release:** the privacy and governance work for health information, and the
+   personalisation that was out of scope.
+
+---
+
+## 10. Licence and third-party terms
 
 The project's code is proprietary, all rights reserved ([LICENSE](LICENSE)). Access to this
 repository is granted for assessment and supervision; that does not grant permission to use, copy,
@@ -411,7 +476,7 @@ medical advice, diagnosis or treatment.
 
 ---
 
-## 10. People and contacts
+## 11. People and contacts
 
 | Name | Role | Contact |
 |---|---|---|

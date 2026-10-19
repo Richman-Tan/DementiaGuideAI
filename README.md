@@ -15,7 +15,7 @@ It supports two individual final reports, written independently:
 | Report | Author |
 |---|---|
 | *DementiaGuide AI: An Avatar-Based Digital Resource Management System for Dementia Care* (18 Oct 2026) | Richman Tan |
-| TODO(JooHyun): title and date | JooHyun Kang |
+| *DementiaGuide AI: An Avatar-Based Digital Resource Management System for Dementia Care* (18 Oct 2026) | JooHyun Kang |
 
 Supervisor: Assoc. Prof. Jing Sun. Both reports, as submitted, are in the zip's `submissions/`
 folder. Unless stated otherwise, the section, table and appendix numbers below refer to Richman
@@ -177,8 +177,35 @@ E8 (reliability evidence) was folded into E10.
 
 ### JooHyun Kang's report
 
-TODO(JooHyun): map the sections of your report to the rows above, and add rows for any evidence
-your report uses that is not listed here.
+JooHyun's report numbers its research questions differently (RQ1 is the literature review, RQ2 to
+RQ7 the evaluations), so this table maps its sections to the codes in the tables above. It does
+not use E2-R4, E3-S, E3-M, E3-L or E9-K.
+
+| Report section | What it reports | Codes, or where to look |
+|---|---|---|
+| §3.2, Appendix E | The knowledge base, its ingestion pipeline and the review-gated intake tool | `scripts/ingest/`, `apps/admin/`, `apps/api/api/admin/ingest.js`, the review-status migration `scripts/migrations/2026-10-07_review_status.sql`; sources in `content/sources/MANIFEST.md` |
+| §3.3 | Answer generation and the New Zealand safety rules | `packages/core/rag/prompt.js`; the prompt conditions in `scripts/eval/prompts/promptVersions.js` |
+| §4.2 | Corpus, question sets, retrieval labels and speech corpus | E1 (labels), E3 and E3-X (the two held-out sets), E9 (ADReSS-2020); the development set in `scripts/eval/questions.js` |
+| §4.3, §5.1 | Judges and human raters, and their agreement | E2, E2-X, E2-R3 |
+| §5.1, Table 5.1 | Retrieval benchmark, with the pooled two-annotator labels | E1 |
+| §5.1 | Answers with no, production and oracle retrieval; citation validity; the pairwise judge | E2 |
+| §5.1 | Sentence-level citation check | E1-C |
+| §5.2, Table 5.2, Appendix A | The five prompt conditions on the deterministic gates | E2 (`report/eval/final/tables_samples.md`, `tables_seeded.md`) |
+| §5.2, Table B.1 | Original held-out set | E3 |
+| §5.2, Table 5.3, Figure 5.1, Table B.2 | Larger held-out set and the component ablation | E3-X, E3-A |
+| §5.2 | Neutral prompt | E3-N |
+| §5.3, Figure 5.2 | Stage, typed and spoken latency, including the 11 October repeat | E4, E4-S, E4-B |
+| §5.3, Figure 5.3 | Articulation checks | E5 |
+| §5.3 | Perceptual lip-sync test | E6 |
+| §5.4, Table 5.4, Figure 5.4 | Word-error rate of six recognisers | E9, E9-A, E9-C |
+| §5.4 | How recognition errors propagate into retrieval and safety | E9-P |
+| §5.5, Appendix D | Requirements and test coverage | E10 |
+| §5.5 | Capacity | E11, E11-L |
+| §5.5, Table 5.5 | Cost per turn, and the gpt-4o-mini alternative | E12; gpt-4o-mini on the gates in `report/eval/final/safety-report_mini-samples.md` |
+| §4.4, §5.6, Appendix C, Figure 5.5 | Informal carer study | E7 (Figure 5.5 is drawn from the same results as `examiners-only/`) |
+| §4.4, §5.6 | Researchers' written feedback | not included (section 6); the changes made in response are pull requests #82 to #89 (September) and #108 to #112 (October) |
+| Appendix F | App screens | `apps/mobile/` |
+| §2, Appendix G | Literature review and vector-database comparison | from published sources; nothing to reproduce |
 
 ---
 

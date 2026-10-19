@@ -6,7 +6,7 @@ It holds the source code of the system that was built, the evaluation plans, the
 every evaluation, the data and per-run outputs those scripts produced, and the tables behind the
 figures. It is the online technical appendix the Part IV handbook asks for, and it is meant to let
 a later student or researcher repeat the work. It is submitted on Canvas as
-`49_rtan654_TODO(JooHyun: UPI)-Compendium.zip` and kept as the git repository
+`49_rtan654_jkan172-Compendium.zip` and kept as the git repository
 [Richman-Tan/DementiaGuideAI](https://github.com/Richman-Tan/DementiaGuideAI) (private). The zip
 holds the repository plus three folders that are not on GitHub (section 1).
 
@@ -55,7 +55,7 @@ added that are not on GitHub:
 
 | Path | What it is |
 |---|---|
-| `submissions/` | **Each student's files exactly as submitted on Canvas**, one folder per student (`Richman_Tan_rtan654/`, `JooHyun_Kang_TODO(JooHyun: UPI)/`). `submissions/README.md` lists every file with its Canvas assignment, date and SHA-256 checksum. |
+| `submissions/` | **Each student's files exactly as submitted on Canvas**, one folder per student (`Richman_Tan_rtan654/`, `JooHyun_Kang_jkan172/`). `submissions/README.md` lists every file with its Canvas assignment, date and SHA-256 checksum. |
 | `unity-avatar/UnityAvatarProject/` | **The Unity project** at the submodule commit (section 8): the co-articulation engine, the G2P, the articulation test harness and its fixtures, the scenes, packages and project settings. Its Character Creator characters and its iOS and Android build exports are left out because together they would take the zip over Canvas's 2 GB limit; the complete project is on GitHub at the same commit. |
 | `examiners-only/` | **Usability-study results that may be assessed but not published** (section 6): the October analysis and the report's Figure 5.3. |
 
@@ -376,7 +376,7 @@ medical advice, diagnosis or treatment.
 | Name | Role | Contact |
 |---|---|---|
 | Richman Tan | Student; system, voice and avatar pipeline, evaluation programme | rtan654@aucklanduni.ac.nz |
-| JooHyun Kang | Student; knowledge base, retrieval, second rater | TODO(JooHyun): university email |
+| JooHyun Kang | Student; knowledge base, retrieval, second rater | jkan172@aucklanduni.ac.nz |
 | Assoc. Prof. Jing Sun | Supervisor | jing.sun@auckland.ac.nz |
 
 Each report's Statement of Contribution gives the full division of work.

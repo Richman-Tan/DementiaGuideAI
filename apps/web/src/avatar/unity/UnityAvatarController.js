@@ -39,14 +39,17 @@ export class UnityAvatarControllerImpl {
     const done = this.engine.waitForEnd();
     // No analyser path needed — Unity drives the mouth; the engine only plays.
     await this.engine.playAudioWithVisemeTimeline(segment.audio, segment.visemeTimeline ?? { frames: [], totalDuration: 0 }, segment.emotion);
-    sendBridgeMessage({
-      type: 'play',
-      duration,
-      visemes: cc4.visemes,
-      blendshapes: cc4.blendshapes,
-      emotion: cc4.emotion,
-      text: cc4.text,
-    });
+    // Stopped while decoding, or failed: no sound, so no mouth movement either.
+    if (this.engine.active) {
+      sendBridgeMessage({
+        type: 'play',
+        duration,
+        visemes: cc4.visemes,
+        blendshapes: cc4.blendshapes,
+        emotion: cc4.emotion,
+        text: cc4.text,
+      });
+    }
     await done;
   }
 

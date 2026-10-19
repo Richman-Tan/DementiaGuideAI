@@ -298,6 +298,26 @@ describe('Three.js controller', () => {
     await expect(Promise.all([p1, p2])).resolves.toEqual([undefined, undefined]);
   });
 
+  it('a stop releases the playback it cut off, so the next audioEnd cannot wake it', async () => {
+    const { getThreeAvatar } = await load();
+    setAvatar('aria');
+    const c = getThreeAvatar();
+    await started(c);
+    const r = fake.renderers[0];
+    let stoppedDone = false;
+    const stopped = c.playAudio({ audio: 'old' }).then(() => { stoppedDone = true; });
+    c.stopAudio(); // the renderer posts no audioEnd for a stop
+    await stopped;
+    expect(stoppedDone).toBe(true);
+    let nextDone = false;
+    const next = c.playAudio({ audio: 'new' }).then(() => { nextDone = true; });
+    await Promise.resolve();
+    expect(nextDone).toBe(false); // waits for its own end, not the stop
+    r.opts.onMessage({ type: 'audioEnd' });
+    await next;
+    expect(r.stopAudioLipSync).toHaveBeenCalledTimes(1);
+  });
+
   it('streams through the renderer and waits for audioEnd at the end of the stream', async () => {
     const { getThreeAvatar } = await load();
     setAvatar('aria');

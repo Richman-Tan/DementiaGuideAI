@@ -47,7 +47,12 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
   const visemeWeights = profile.visemeWeights;
 
   const sttSessionRef = useRef(null);
-  const abortRef = useRef(false);
+  // The turn that owns the screen (an answer or a repeat), as { aborted }.
+  // Every turn checks its OWN token. A single shared "aborted" flag used to be
+  // reset by each new question, so an interrupted answer, still parked on its
+  // playback promise, woke when the next answer's sentence ended and spoke the
+  // rest of itself over the new one.
+  const turnRef = useRef(null);
   const activeStreamRef = useRef(null);
   const speculativeRef = useRef(null);
   const stateRef = useRef('idle');
@@ -69,11 +74,22 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       sttSessionRef.current = null;
       speculativeRef.current?.cancel();
       speculativeRef.current = null;
-      abortRef.current = true;
+      if (turnRef.current) turnRef.current.aborted = true;
       activeStreamRef.current?.abort();
       avatar?.stopAudio();
     };
   }, [enabled, avatar]);
+
+  // A new turn supersedes, and silences, whatever is still registered.
+  const beginTurn = () => {
+    if (turnRef.current) {
+      turnRef.current.aborted = true;
+      avatar?.stopAudio();
+    }
+    const token = { aborted: false };
+    turnRef.current = token;
+    return token;
+  };
 
   const historyForModel = () =>
     messagesRef.current
@@ -100,7 +116,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     const history = historyForModel();
     appendMessage({ role: 'user', text: userText });
     setVState('thinking');
-    abortRef.current = false;
+    const token = beginTurn();
 
     const audioOn = settingsRef.current.audioResponses && !mutedRef.current;
     const arm = currentArm();
@@ -150,7 +166,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         const delay = Math.max(0, audioStartWallclock + streamSec * 1000 - Date.now());
         const idx = nextSubtitleIdx;
         subtitleTimers.push(setTimeout(() => {
-          if (abortRef.current || streamFailed) return;
+          if (token.aborted || streamFailed) return;
           setVSubtitle(sentences[idx].text);
           avatar?.setSpeechEmotion?.(sentences[idx].emotion);
           spokenIdx = idx;
@@ -161,7 +177,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
 
     // Mid-stream failure → REST cascade for the unspoken tail (sticky).
     const handleStreamFailure = (err) => {
-      if (streamFailed || abortRef.current) return;
+      if (streamFailed || token.aborted) return;
       streamFailed = true;
       markTtsDegraded(err?.message ?? String(err));
       subtitleTimers.forEach(clearTimeout);
@@ -180,7 +196,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         speechRate,
         onTextSent: (text) => { sentCharCount += text.length; },
         onAudioChunk: ({ pcmBase64, durationSec, alignment }) => {
-          if (abortRef.current || streamFailed) return;
+          if (token.aborted || streamFailed) return;
           const { frames, charTimes: newTimes } = accumulator.push(alignment, durationSec);
           for (const ct of newTimes) charTimes.push(ct);
           if (!sessionStarted) {
@@ -273,22 +289,22 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           skipThrottle: true,
           preRetrievedChunks,
         })) {
-          if (abortRef.current) break;
+          if (token.aborted) break;
           turn.mark('firstToken');
           fullText += chunk;
           if (streamingActive && !streamFailed && audioOn) ttsStream.sendText(chunk);
           for (const sentence of splitter.push(chunk)) handleSentence(sentence);
         }
 
-        if (!abortRef.current) {
+        if (!token.aborted) {
           const rest = splitter.finish();
           if (rest) handleSentence(rest);
         }
 
-        if (streamingActive && !streamFailed && !abortRef.current) {
+        if (streamingActive && !streamFailed && !token.aborted) {
           ttsStream.end();
           await wsFinalPromise;
-          if (sessionStarted && !streamFailed && !abortRef.current) {
+          if (sessionStarted && !streamFailed && !token.aborted) {
             await avatar?.endStreamingPlayback(sessionId);
           }
         }
@@ -303,7 +319,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           safety: false,
           turnId,
         });
-        turn.finish({ modality, streaming: streamingActive && !streamFailed, aborted: abortRef.current });
+        turn.finish({ modality, streaming: streamingActive && !streamFailed, aborted: token.aborted });
         // Transcript capture for rubric scoring and the safety scan. Retrieved
         // chunk ids travel with it so the analysis can check whether the two
         // arms retrieved differently — speech recognition changes the query, so
@@ -323,7 +339,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           // Withheld at source when the participant declined — see the chat arm.
           ...transcriptFields({ question: userText, answer: fullText }),
           sourceIds: (citedSources || []).map((c) => c.id ?? c.num ?? null),
-          aborted: abortRef.current,
+          aborted: token.aborted,
         });
         queue.done = true;
         wake();
@@ -340,10 +356,10 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         }
         if (i >= queue.promises.length) break;
         if (!speakingStart) { setVState('speaking'); speakingStart = true; }
-        if (abortRef.current) break;
+        if (token.aborted) break;
 
         const segment = await queue.promises[i];
-        if (abortRef.current) break;
+        if (token.aborted) break;
         setVSubtitle(segment.text ?? '');
         avatar?.setSpeechEmotion?.(segment.emotion);
 
@@ -360,23 +376,37 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         }
 
         const isLast = queue.done && i === queue.promises.length - 1;
-        if (!isLast && !abortRef.current) await new Promise((r) => setTimeout(r, 50));
+        if (!isLast && !token.aborted) await new Promise((r) => setTimeout(r, 50));
         i++;
       }
     };
 
+    let failed = false;
     try {
       await Promise.all([producerTask(), consumerTask()]);
     } catch (err) {
+      failed = true;
       console.error('[useVoiceConversation] processQuery error:', err);
       setError(credentialErrorCopy(err, transportKind()) ?? err.message ?? 'Something went wrong. Please try again.');
     } finally {
       subtitleTimers.forEach(clearTimeout);
       try { ttsStream?.abort(); } catch { /* completed */ }
-      activeStreamRef.current = null;
-      setVSubtitle('');
-      setVState('idle');
+      // Only the turn that still owns the screen resets it. A stopped turn was
+      // released by whatever stopped it, and a superseded one is history: a
+      // late "idle" from either would let a further question start on top of
+      // the answer now playing.
+      if (turnRef.current === token) {
+        // Promise.all settles on the first failure, so the other half of a
+        // failed turn (sentences already queued, or the rest of the answer
+        // streaming in) may still be running: it stays registered for the
+        // next turn to supersede.
+        if (!failed) turnRef.current = null;
+        activeStreamRef.current = null;
+        setVSubtitle('');
+        setVState('idle');
+      }
     }
+    return !token.aborted;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [avatar, appendMessage, speechRate, profile.id]);
 
@@ -478,10 +508,10 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         if (spec.status === 'hit') preRetrievedChunks = spec.chunks;
       }
 
-      await processQuery(transcript, { preRetrievedChunks, timer: turn, modality: MODALITY_SPOKEN });
+      const completed = await processQuery(transcript, { preRetrievedChunks, timer: turn, modality: MODALITY_SPOKEN });
 
       // Hands-free: re-arm listening after a completed (not interrupted) reply.
-      if (settingsRef.current.handsFree && !abortRef.current) {
+      if (settingsRef.current.handsFree && completed) {
         startRecordingRef.current?.();
       }
     } catch (err) {
@@ -494,9 +524,13 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
   useEffect(() => { stopAndTranscribeRef.current = stopAndTranscribe; }, [stopAndTranscribe]);
   useEffect(() => { startRecordingRef.current = startRecording; }, [startRecording]);
 
+  // Ends the turn in flight and releases the screen: every caller sets the
+  // state that follows (idle, or the next question's "thinking").
   const stopAudio = useCallback(() => {
-    abortRef.current = true;
+    if (turnRef.current) turnRef.current.aborted = true;
+    turnRef.current = null;
     activeStreamRef.current?.abort();
+    activeStreamRef.current = null;
     avatar?.stopAudio();
   }, [avatar]);
 
@@ -514,12 +548,13 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     const last = messagesRef.current.slice().reverse().find((m) => m.role === 'aria');
     if (!last || !last.text) return;
     avatar?.unlockAudio?.();
-    abortRef.current = false;
+    const token = beginTurn();
     setVState('speaking');
     try {
       const clean = last.text.replace(/\s*\[\d+\]/g, '');
       if (settingsRef.current.audioResponses && !mutedRef.current) {
         const segment = await tts(clean, { speechRate, visemeWeights, ...ttsVoiceOptions });
+        if (token.aborted) return; // interrupted while the audio was on its way
         setVSubtitle(clean);
         await avatar.playAudio({ ...segment, emotion: detectSentiment(clean) });
       } else {
@@ -529,8 +564,11 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     } catch (err) {
       setError(err.message ?? 'Could not play that back.');
     } finally {
-      setVSubtitle('');
-      setVState('idle');
+      if (turnRef.current === token) {
+        turnRef.current = null;
+        setVSubtitle('');
+        setVState('idle');
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [avatar, speechRate, profile.id]);
@@ -561,7 +599,6 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     setError(null);
     if (stateRef.current === 'speaking') stopAudio();
     avatar?.unlockAudio?.();
-    abortRef.current = false;
     await processQuery(t, { modality: MODALITY_TYPED });
   }, [avatar, processQuery, stopAudio]);
 

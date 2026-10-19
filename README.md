@@ -134,6 +134,13 @@ Full setup, native builds and the Android/Unity toolchain:
 
 ---
 
+## Live deployments
+
+| What | URL |
+|---|---|
+| Web app | https://dementiaguide-web.vercel.app |
+| Knowledge-base intake tool (admins only) | https://dementiaguide-admin.vercel.app |
+
 ## Documentation
 
 Start at **[docs/README.md](docs/README.md)**.

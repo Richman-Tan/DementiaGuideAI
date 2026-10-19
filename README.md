@@ -213,6 +213,15 @@ not use E2-R4, E3-S, E3-M, E3-L or E9-K.
 
 ## 3. Running the system
 
+The deployed versions, while they stay online:
+
+| What | URL |
+|---|---|
+| Web app | https://dementiaguide-web.vercel.app |
+| Knowledge-base intake tool (admins only) | https://dementiaguide-admin.vercel.app |
+
+To run it yourself:
+
 **Prerequisites:** Node 20.19.4 (see `.nvmrc`), an OpenAI API key, and a Supabase project with
 pgvector enabled. An ElevenLabs key enables speech with accurate lip sync. Xcode or Android Studio
 for mobile.

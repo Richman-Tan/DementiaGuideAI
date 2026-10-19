@@ -32,7 +32,7 @@ will reject every request). Deleting the Supabase user too is optional.
 
 ## Signing in
 
-Open the deployed URL and sign in with the email + password from above.
+Open the deployed URL (https://dementiaguide-admin.vercel.app) and sign in with the email + password from above.
 Auth is `supabase.auth.signInWithPassword` — see `src/lib/useAuth.js`.
 
 ## Submitting a resource

@@ -73,6 +73,7 @@ const PACE_MS = Number(argVal('--pace-ms') ?? 250);
 const SHA_LABEL = argVal('--sha');
 const QUESTIONS_FILE = argVal('--questions-file');
 const ONLY_FILE = has('--only-file'); // with --questions-file: generate only the items from that file
+const LEAD_CHUNK = argVal('--lead-chunk'); // §19K: put this corpus chunk first in every item's passages (off by default)
 const RESUME = has('--resume');
 const CHECKPOINT_EVERY = 10;
 
@@ -193,6 +194,7 @@ async function main() {
     region: condition.region,
     citationMode: condition.citationMode,
     retrievalMode: RETRIEVAL_MODE,
+    leadChunk: LEAD_CHUNK ?? null,
     injection: !NO_INJECT,
     questionVersion: QUESTION_VERSION,
     heldout: INCLUDE_HELDOUT,
@@ -222,13 +224,19 @@ async function main() {
   const checkpoint = (partial) => writeFileSync(outPath, JSON.stringify({ ...header(), partial, rows }, null, 2));
   let sinceCheckpoint = 0;
 
+  let leadRow = null;
   for (const q of questions) {
     const pending = Array.from({ length: SAMPLES }, (_, k) => k).filter(k => !done.has(`${q.id}#${k}`));
     if (!pending.length) continue;
     const text = questionText(q, QUESTION_VERSION);
     const { chunks: base, mode } = await passagesFor(q, text);
     const injected = injectedChunks(q);
-    const chunks = [...base, ...injected];
+    let chunks = [...base, ...injected];
+    if (LEAD_CHUNK) {
+      if (!leadRow) leadRow = (await withRetry(() => fetchChunks([LEAD_CHUNK]), 'lead fetch'))[0];
+      if (!leadRow) { console.error(`--lead-chunk ${LEAD_CHUNK} not found`); process.exit(1); }
+      chunks = [{ ...leadRow, similarity: null }, ...chunks.filter(c => c.id !== LEAD_CHUNK)];
+    }
     const userContent = condition.userContent(text, chunks);
 
     for (const sample of pending) {

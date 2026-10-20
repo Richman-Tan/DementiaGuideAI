@@ -374,4 +374,19 @@ test.describe('chat: changing course mid-answer', () => {
     await expect(page.getByText(/Step \[3\] of your plan/)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Open source 3' })).toHaveCount(0);
   });
+
+  test('an answer formatted in Markdown shows as a list with bold labels, never as asterisks', async ({ page }) => {
+    await mockProviders(page, {
+      answer: 'There are a few kinds of respite [S1].\n\n1. **In-home respite**: a carer comes to you.\n2. **Overnight respite**: a short stay in a care home [S2].\n\nA NASC assessment is the first step.',
+    });
+    await seedStorage(page);
+    await page.goto('/#/app/chat');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await ask(page, 'What respite options are there?');
+    const list = page.locator('ol').last();
+    await expect(list.locator('li')).toHaveCount(2);
+    await expect(list.locator('strong').first()).toHaveText('In-home respite');
+    await expect(list.getByRole('button', { name: 'Open source 2' })).toBeVisible();
+    await expect(page.getByText(/\*\*/)).toHaveCount(0);
+  });
 });

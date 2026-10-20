@@ -8,7 +8,7 @@ import { AvatarBust } from '../avatar/AvatarStage.jsx';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { useStudy } from '../study/StudyContext.jsx';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
-import { CitationText } from '../components/CitationText.jsx';
+import { AnswerText } from '../components/AnswerText.jsx';
 import FlagAnswer from '../study/FlagAnswer.jsx';
 import { inLiveStudy } from '../study/guards.js';
 import { makeStickTracker } from '../lib/autoscroll.js';
@@ -122,7 +122,7 @@ export default function Chat({ isDesktop, isMobile }) {
                 ) : (
                   <>
                     <div title={m.time} style={{ alignSelf: 'flex-start', maxWidth: '86%', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderLeft: m.safety ? '4px solid var(--amber)' : 'var(--bw) solid var(--border)', borderRadius: '18px 18px 18px 4px', padding: '14px 18px', lineHeight: '1.6', boxShadow: 'var(--shadow)', whiteSpace: 'pre-wrap' }}>
-                      <CitationText text={m.text} citations={m.citations} onCite={setDrawer} />
+                      <AnswerText text={m.text} citations={m.citations} onCite={setDrawer} />
                       {m.safety && (
                         <div style={{ marginTop: '12px', background: 'var(--amber-bg)', border: 'var(--bw) solid var(--amber-bd)', borderLeft: '4px solid var(--amber)', borderRadius: '12px', padding: '12px 14px', color: 'var(--text)' }}><strong>If you need help now:</strong> {S.SAFETY_NOTE}</div>
                       )}

@@ -22,6 +22,7 @@ import { ELEVEN_STREAM_SAMPLE_RATE, VOICE_SPECULATIVE_RAG } from '@core/voice/vo
 import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
 import { detectSentiment } from '@core/sentiment/detectSentiment';
 import { createSentenceSplitter } from '@core/voice/sentenceTracker';
+import { stripMarkdownForSpeech } from '../lib/markdown.js';
 import { MODALITY_SPOKEN, MODALITY_TYPED } from '@core/study/studyConfig.mjs';
 import { credentialErrorCopy } from '../services/credentialErrorCopy.js';
 import { transportKind } from '../services/transport.js';
@@ -252,7 +253,8 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     };
 
     const handleSentence = (text) => {
-      const clean = text.trim();
+      // Captions and speech carry no Markdown markers; the chat keeps them.
+      const clean = stripMarkdownForSpeech(text).trim();
       // The splitter marks boundaries with U+001F, so a stray one in the model's
       // own output comes back as an empty "sentence"; nothing to say for it.
       if (!clean) return;
@@ -292,7 +294,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           if (token.aborted) break;
           turn.mark('firstToken');
           fullText += chunk;
-          if (streamingActive && !streamFailed && audioOn) ttsStream.sendText(chunk);
+          if (streamingActive && !streamFailed && audioOn) ttsStream.sendText(stripMarkdownForSpeech(chunk));
           for (const sentence of splitter.push(chunk)) handleSentence(sentence);
         }
 
@@ -551,7 +553,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     const token = beginTurn();
     setVState('speaking');
     try {
-      const clean = last.text.replace(/\s*\[\d+\]/g, '');
+      const clean = stripMarkdownForSpeech(last.text.replace(/\s*\[\d+\]/g, ''));
       if (settingsRef.current.audioResponses && !mutedRef.current) {
         const segment = await tts(clean, { speechRate, visemeWeights, ...ttsVoiceOptions });
         if (token.aborted) return; // interrupted while the audio was on its way

@@ -3,7 +3,7 @@
 // the account upgrade in Settings, clearing history from the server, and what
 // happens when any of those calls fail. Supabase itself is the in-memory
 // backend in support.js (mockSupabase); the other providers are mocked as usual.
-import { test, mockProviders, mockSupabase, seedStorage, ask, expect, USER_ID, STUDY_ACCESS_CODE, SESSION_ID } from './support.js';
+import { test, mockProviders, mockSupabase, seedStorage, ask, expect, USER_ID } from './support.js';
 
 async function open(page, path, { supabase = {}, seed = {} } = {}) {
   const log = await mockProviders(page, { answer: 'Keep a calm routine in the evening [S1].' });
@@ -174,32 +174,5 @@ test.describe('when the account service misbehaves', () => {
     await ask(page, 'And at night?');
     await expect.poll(() => db.messages.length).toBe(2);
     await expect.poll(() => db.refused).toContain('touch');
-  });
-});
-
-test.describe('a study session with an account', () => {
-  test('each arm gets its own server thread for this session, remembered across a reload', async ({ page }) => {
-    const study = {
-      accessCode: STUDY_ACCESS_CODE, participantCode: 'P02', sessionId: SESSION_ID, group: 'caregiver',
-      armOrder: 'BA', setOrder: '12', step: 'task', stageIndex: 0, taskIndex: 0, taskId: 't1a', taskStartedAt: Date.now(), consentTranscripts: true,
-    };
-    const { db } = await open(page, '/#/app/chat', { seed: { keys: false, study } });
-    await expect.poll(() => db.conversations.length).toBe(1);
-    expect(db.conversations[0].study_arm).toBe('B');
-    const remembered = () => page.evaluate(() => JSON.parse(localStorage.getItem('dg_study')).convoIds.B);
-    await expect.poll(remembered).toBe(db.conversations[0].id);
-
-    await page.getByRole('button', { name: 'New conversation' }).click();
-    await expect.poll(() => db.conversations.length).toBe(2);
-    await expect.poll(remembered).toBe(db.conversations[1].id);
-
-    await ask(page, 'What can I do when the evenings get difficult?');
-    await expect.poll(() => db.messages.length).toBe(2);
-    // Without the local copy, the reload can only get the messages from the server.
-    await page.evaluate(() => localStorage.removeItem('dg_history'));
-    await page.reload();
-    // The same thread, from the server: no third conversation.
-    await expect(page.getByText('What can I do when the evenings get difficult?')).toBeVisible();
-    expect(db.conversations).toHaveLength(2);
   });
 });

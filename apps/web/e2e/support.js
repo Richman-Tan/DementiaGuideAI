@@ -3,9 +3,8 @@
 // Everything the app talks to is answered here, in the browser, before a
 // request leaves the page:
 //   - OpenAI embeddings and chat completions (BYO-key mode hits api.openai.com;
-//     study mode hits the same-origin /api/embed and /api/chat proxies)
+//     a guest code hits the same-origin /api/embed and /api/chat proxies)
 //   - Supabase `match_chunks` (the retrieval RPC, called directly by the client)
-//   - the study API (/api/study/session|progress|event|complete)
 //   - speech: OpenAI TTS and Whisper (direct and proxied), ElevenLabs REST
 //     with-timestamps (direct and proxied) and the ElevenLabs stream-input
 //     WebSocket, all answering with a short generated WAV / PCM clip
@@ -73,8 +72,6 @@ export const test = base.extend({
 export const slow = (ms) => ms * (process.env.E2E_COVERAGE === '1' ? 3 : 1);
 
 export const OPENAI_KEY = 'sk-e2e-not-a-real-key';
-export const STUDY_ACCESS_CODE = 'e2e-study-access-code-0001';
-export const SESSION_ID = '11111111-2222-4333-8444-555555555555';
 
 /** Five retrieval rows in the shape `match_chunks` returns (see citations.js). */
 export const CHUNKS = [
@@ -317,18 +314,17 @@ export function answerFor(body) {
 
 /**
  * Install every provider mock on a page. Returns the captured request log so
- * a test can assert on what the app sent (max_tokens, study events, …).
+ * a test can assert on what the app sent (max_tokens, request bodies, …).
  */
 export async function mockProviders(page, {
   answer = null, transcript = 'How do I manage sundowning in the evening?', audioSeconds = 0.25, streamChunkSeconds = 0.08,
 } = {}) {
-  // `warm` collects the study proxy's warm-up calls (a one-token chat and a
-  // 'warm-up' embedding fired at session start and task start) so the per-turn
+  // `warm` collects the proxy's warm-up calls (a one-token chat and a
+  // 'warm-up' embedding fired when a guest code is accepted) so the per-turn
   // counts in `chat`/`embed` stay exact.
   const log = {
     chat: [], embed: [], warm: [], rpc: [],
     speech: [], eleven: [], transcribe: [], stream: [],
-    study: { session: [], progress: [], event: [], complete: [] },
   };
 
   // Avatar models: a one-triangle GLB for every .glb (character and backdrop).
@@ -362,7 +358,7 @@ export async function mockProviders(page, {
   // BYO-key mode.
   await page.route('https://api.openai.com/v1/chat/completions', chatHandler);
   await page.route('https://api.openai.com/v1/embeddings', embedHandler);
-  // Study (proxied) mode — same-origin.
+  // Guest-code (proxied) mode — same-origin.
   await page.route('**/api/chat', chatHandler);
   await page.route('**/api/embed', embedHandler);
   // The proxy's audio routes double as the access-code check: an empty body
@@ -423,47 +419,6 @@ export async function mockProviders(page, {
   await page.route('**/rest/v1/rpc/match_chunks', async (route) => {
     log.rpc.push(route.request().postDataJSON());
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(CHUNKS) });
-  });
-
-  // Study API.
-  await page.route('**/api/study/session', async (route) => {
-    const body = route.request().postDataJSON();
-    log.study.session.push({ headers: route.request().headers(), body });
-    // Participant number 2 → Latin-square cell 2 → arm order BA, set order 12:
-    // the text arm comes first, which is what the Arm B flows need. A feedback
-    // session has no arms, as the real endpoint answers.
-    const feedback = body?.protocol === 'feedback';
-    await route.fulfill({
-      status: 201,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        sessionId: SESSION_ID,
-        participantCode: feedback ? 'P31' : 'P02',
-        participantNumber: feedback ? 31 : 2,
-        group: body?.group || 'caregiver',
-        armOrder: feedback ? null : 'BA',
-        setOrder: feedback ? null : '12',
-        resumed: false, completed: false, studyVersion: 'e2e',
-        protocol: feedback ? 'feedback' : 'tasks',
-      }),
-    });
-  });
-  await page.route('**/api/study/progress', async (route) => {
-    log.study.progress.push(route.request().postDataJSON());
-    await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
-  });
-  await page.route('**/api/study/event', async (route) => {
-    const req = route.request();
-    // sendBeacon posts text/plain; fetch posts JSON. Parse both.
-    let body = null;
-    try { body = JSON.parse(req.postData() || 'null'); } catch { body = null; }
-    log.study.event.push({ headers: req.headers(), body });
-    const n = body?.events?.length ?? 0;
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ received: n, inserted: n }) });
-  });
-  await page.route('**/api/study/complete', async (route) => {
-    log.study.complete.push(route.request().postDataJSON());
-    await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
   });
 
   return log;
@@ -587,31 +542,24 @@ export async function mockSupabase(page, { signedIn = null, conversations = [], 
   return db;
 }
 
-/** All study events flushed so far, flattened. */
-export function studyEvents(log) {
-  return log.study.event.flatMap((e) => e.body?.events || []);
-}
-
 /**
  * Seed localStorage before the app boots. `keys` puts a BYO OpenAI key in
  * place (so chat runs the real RAG path rather than mock mode) — `true` for the
  * OpenAI key alone, or an object such as `{ eleven: ELEVEN_KEY }` to add others;
  * `settings` is merged over the defaults with onboarding marked complete.
- * `history` seeds the chat cache, `study` a study session, `access` a guest
- * code. Seeding happens once per tab, so a test's page.reload() sees what the
+ * `history` seeds the chat cache, `access` a guest code. Seeding happens once per tab, so a test's page.reload() sees what the
  * app itself stored rather than the seed again.
  */
-export async function seedStorage(page, { keys = true, settings = {}, history = null, study = null, access = null } = {}) {
+export async function seedStorage(page, { keys = true, settings = {}, history = null, access = null } = {}) {
   const keyBlob = keys ? { openai: OPENAI_KEY, eleven: '', azure: '', ...(keys === true ? {} : keys) } : null;
-  await page.addInitScript(({ keyBlob, settings, history, study, access }) => {
+  await page.addInitScript(({ keyBlob, settings, history, access }) => {
     if (sessionStorage.getItem('dg_e2e_seeded')) return;
     sessionStorage.setItem('dg_e2e_seeded', '1');
     if (keyBlob) localStorage.setItem('dg_keys', JSON.stringify(keyBlob));
     localStorage.setItem('dg_settings', JSON.stringify({ onboarded: true, ...settings }));
     if (history) localStorage.setItem('dg_history', JSON.stringify(history));
-    if (study) localStorage.setItem('dg_study', JSON.stringify(study));
     if (access) localStorage.setItem('dg_access', JSON.stringify(access));
-  }, { keyBlob, settings, history, study, access });
+  }, { keyBlob, settings, history, access });
 }
 
 /** Type a question in the chat screen and wait for the reply bubble to finish. */

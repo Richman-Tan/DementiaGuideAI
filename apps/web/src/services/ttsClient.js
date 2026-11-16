@@ -9,7 +9,6 @@ import { timeoutSignal } from '@core/net/withTimeout';
 import { elevenTransport } from './transport.js';
 import { apiUrl } from './apiBase.js';
 import { openaiClient } from './openaiClient.js';
-import { emit } from '../study/events.js';
 
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io';
 const DEFAULT_MODEL_ID = 'eleven_turbo_v2_5';
@@ -83,9 +82,6 @@ export async function tts(text, options = {}) {
       return { audio: `data:audio/mpeg;base64,${audioBase64}`, visemeTimeline };
     } catch (err) {
       console.warn(`[TTS] elevenlabs failed: ${err?.message ?? err} — falling back to OpenAI TTS`);
-      // A low Arm A usability score alongside a high fallback count is a
-      // reliability finding, not an avatar finding (analysis-plan §4.3).
-      emit('fallback', { kind: 'tts_openai', reason: String(err?.message ?? err).slice(0, 120) });
     }
   }
 

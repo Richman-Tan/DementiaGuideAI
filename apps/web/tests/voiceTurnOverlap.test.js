@@ -20,8 +20,7 @@ vi.mock('../src/services/openaiClient.js', () => ({
 vi.mock('../src/services/ttsClient.js', () => ({ tts: vi.fn() }));
 vi.mock('../src/services/ttsModeWeb.js', () => ({ selectTtsMode: vi.fn(async () => 'rest'), markTtsDegraded: vi.fn() }));
 vi.mock('../src/services/sttWeb.js', () => ({ startSttSession: vi.fn() }));
-vi.mock('../src/study/latency.js', () => ({ createTurnTimer: vi.fn(() => ({ mark: vi.fn(), finish: vi.fn() })) }));
-vi.mock('../src/study/events.js', () => ({ emit: vi.fn(), newUuid: vi.fn(() => 'turn-uuid') }));
+vi.mock('../src/lib/latency.js', () => ({ createTurnTimer: vi.fn(() => ({ mark: vi.fn(), finish: vi.fn() })) }));
 vi.mock('../src/avatar/unity/unityBridge.js', () => ({ sendBridgeMessage: vi.fn(() => true), setCharacter: vi.fn() }));
 
 const { useVoiceConversation } = await import('../src/voice/useVoiceConversation.js');

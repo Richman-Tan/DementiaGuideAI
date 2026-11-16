@@ -9,11 +9,6 @@ import './styles/app.css';
 // moment the app opens, on the shared detached canvas — screens attach when
 // ready. Deferred a tick so loader-script parse doesn't contend first paint;
 // the probe also settles the effective-profile fallback.
-//
-// This matters most for study participants, not least: the download has to
-// happen during the consent and information screens, which take a few minutes
-// to read, rather than at the first task where it would land inside the
-// time-on-task measurement.
 setTimeout(ensureUnityBoot, 0);
 
 createRoot(document.getElementById('root')).render(

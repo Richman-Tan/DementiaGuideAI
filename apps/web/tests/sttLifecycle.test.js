@@ -8,7 +8,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 vi.mock('../src/services/openaiClient.js', () => ({
   openaiClient: { transcribe: vi.fn(async () => 'whisper text') },
 }));
-vi.mock('../src/study/events.js', () => ({ emit: vi.fn() }));
 
 // ─── browser fakes ───────────────────────────────────────────────────────────
 let recognizers;
@@ -66,10 +65,8 @@ async function freshModule() {
   vi.resetModules();
   const mod = await import('../src/services/sttWeb.js');
   const { openaiClient } = await import('../src/services/openaiClient.js');
-  const { emit } = await import('../src/study/events.js');
   openaiClient.transcribe.mockClear();
-  emit.mockClear();
-  return { ...mod, transcribe: openaiClient.transcribe, emit };
+  return { ...mod, transcribe: openaiClient.transcribe };
 }
 
 beforeEach(() => {
@@ -231,11 +228,10 @@ describe('recording support', () => {
   it('without MediaRecorder, both providers fail cleanly and release the mic', async () => {
     vi.stubGlobal('window', { SpeechRecognition: FakeRecognition });
     installMic();
-    const { startSttSession, emit } = await freshModule();
+    const { startSttSession } = await freshModule();
     await expect(startSttSession()).rejects.toThrow(/MediaRecorder/);
     expect(tracks).toHaveLength(2); // live attempt, then the Whisper fallback
     for (const t of tracks) expect(t.stop).toHaveBeenCalled();
-    expect(emit).toHaveBeenCalledWith('fallback', expect.objectContaining({ kind: 'stt_whisper' }));
   });
 
   it('with no preferred codec, records with the browser default as webm', async () => {

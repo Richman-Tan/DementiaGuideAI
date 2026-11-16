@@ -8,8 +8,7 @@ import { catStyle } from '../lib/catStyle.js';
 
 export default function Library() {
   const { settings, effDark } = useSettings();
-  // Whichever avatar actually resolved — the study brief names the assistant,
-  // and this screen is reachable mid-task, so it must agree.
+  // Whichever avatar actually resolved — the default, or the fallback.
   const who = useEffectiveAvatarProfile(settings.avatarId).name;
   const [libQ, setLibQ] = useState('');
   const [libCat, setLibCat] = useState(null);

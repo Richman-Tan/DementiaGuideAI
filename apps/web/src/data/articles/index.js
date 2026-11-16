@@ -1,5 +1,5 @@
 // Lazy-loaded library article bodies, one module (and one build chunk) per
-// category so the eagerly-loaded app bundle stays small for study participants.
+// category so the eagerly-loaded app bundle stays small.
 // Each category module exports BODIES: { [articleId]: { updated, sources, blocks } }
 // where sources is [{ org, title, url }] and blocks use the ArticleBody schema.
 

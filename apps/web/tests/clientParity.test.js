@@ -3,7 +3,7 @@
 // Retrieval, prompt and citations are shared through packages/core, but the
 // pacing and timeout constants around them are declared twice. Nothing else
 // ties the two copies together, so a value changed on one platform would leave
-// the study measuring a different client from the one the report describes.
+// the two clients behaving differently.
 //
 // This is a source-scan contract, like unityKeyboard.test.js and csp.test.js:
 // it reads both files as text and fails naming the constant that diverged.

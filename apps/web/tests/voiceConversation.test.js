@@ -1,15 +1,13 @@
 // @vitest-environment jsdom
 // The web voice loop (voice/useVoiceConversation.js): mic → STT → (speculative)
 // RAG + streamed LLM → sentence queue → TTS (REST or the ElevenLabs WebSocket
-// stream with its viseme clock) → avatar playback with synced subtitles, and
-// the study events each turn emits. Every provider is a recording fake; the
-// sentence splitter, sentiment, study store and credential copy are real.
+// stream with its viseme clock) → avatar playback with synced subtitles.
+// Every provider is a recording fake; the sentence splitter, sentiment and
+// credential copy are real.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, flush, settle, cleanup } from './helpers/render.js';
-import { saveStudy } from '../src/study/studyStore.js';
 import { saveKeys } from '../src/state/keysStore.js';
 import { mapSettingsToRag } from '../src/state/mapSettingsToRag.js';
-import { MODALITY_SPOKEN, MODALITY_TYPED } from '@core/study/studyConfig.mjs';
 import { ELEVEN_STREAM_SAMPLE_RATE } from '@core/voice/voiceConfig';
 
 const fx = vi.hoisted(() => ({ profile: null, streams: [], accumulators: [], specs: [], timers: [] }));
@@ -22,7 +20,7 @@ vi.mock('../src/services/openaiClient.js', () => ({
 vi.mock('../src/services/ttsClient.js', () => ({ tts: vi.fn() }));
 vi.mock('../src/services/ttsModeWeb.js', () => ({ selectTtsMode: vi.fn(async () => 'rest'), markTtsDegraded: vi.fn() }));
 vi.mock('../src/services/sttWeb.js', () => ({ startSttSession: vi.fn() }));
-vi.mock('../src/study/latency.js', () => ({
+vi.mock('../src/lib/latency.js', () => ({
   createTurnTimer: vi.fn(() => {
     const t = { marks: [] };
     t.mark = vi.fn((name) => t.marks.push(name));
@@ -31,7 +29,6 @@ vi.mock('../src/study/latency.js', () => ({
     return t;
   }),
 }));
-vi.mock('../src/study/events.js', () => ({ emit: vi.fn(), newUuid: vi.fn(() => 'turn-uuid') }));
 vi.mock('@core/tts/elevenLabsStreamService', () => ({
   createElevenLabsStream: vi.fn((opts) => {
     const s = { opts, open: vi.fn(async () => {}), flush: vi.fn(), end: vi.fn(), abort: vi.fn() };
@@ -65,8 +62,7 @@ const { openaiClient, mapSourcesToCitations } = await import('../src/services/op
 const { tts } = await import('../src/services/ttsClient.js');
 const { selectTtsMode, markTtsDegraded } = await import('../src/services/ttsModeWeb.js');
 const { startSttSession } = await import('../src/services/sttWeb.js');
-const { emit } = await import('../src/study/events.js');
-const { createTurnTimer } = await import('../src/study/latency.js');
+const { createTurnTimer } = await import('../src/lib/latency.js');
 
 // ─── fakes ───────────────────────────────────────────────────────────────────
 const deferred = () => { let resolve; let reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; };
@@ -143,8 +139,7 @@ afterEach(async () => {
 
 // ─── typed turns, REST audio ─────────────────────────────────────────────────
 describe('a typed question with REST audio', () => {
-  it('speaks each sentence in order, then records the answer and the turn', async () => {
-    saveStudy({ sessionId: 'sess', accessCode: 'study-access-code-0001', armOrder: 'AB', stageIndex: 0, step: 'task', taskId: 't3', consentTranscripts: true });
+  it('speaks each sentence in order, then records the answer', async () => {
     const sources = [{ id: 's1', num: 1, title: 'Sleep' }, { num: 2, title: 'Routine' }, { title: 'x' }];
     openaiClient.chatStream.mockImplementation(answer(['Rest helps. ', 'Try a routine.'], { sources }));
     const history = [
@@ -170,17 +165,12 @@ describe('a typed question with REST audio', () => {
 
     expect(props.appendMessage.mock.calls).toEqual([
       [{ role: 'user', text: 'How do I help him sleep?' }],
-      [{ role: 'aria', text: 'Rest helps. Try a routine.', citations: mapSourcesToCitations(sources), sources, safety: false, turnId: 'turn-uuid' }],
+      [{ role: 'aria', text: 'Rest helps. Try a routine.', citations: mapSourcesToCitations(sources), sources, safety: false }],
     ]);
     const timer = fx.timers[0];
-    expect(createTurnTimer).toHaveBeenCalledWith('A', 't3');
+    expect(createTurnTimer).toHaveBeenCalledTimes(1);
     expect(timer.marks).toEqual(expect.arrayContaining(['ragDone', 'llmSend', 'firstToken', 'firstSentence', 'ttsRequest', 'ttsResponse', 'firstAudio']));
-    expect(timer.finish).toHaveBeenCalledWith({ modality: MODALITY_TYPED, streaming: false, aborted: false });
-    expect(emit).toHaveBeenCalledWith('turn_start', { arm: 'A', taskId: 't3', modality: MODALITY_TYPED, chars: 24, avatar: 'aaron' });
-    expect(emit).toHaveBeenCalledWith('turn', {
-      arm: 'A', taskId: 't3', turnId: 'turn-uuid', modality: MODALITY_TYPED, avatar: 'aaron',
-      question: 'How do I help him sleep?', answer: 'Rest helps. Try a routine.', sourceIds: ['s1', 2, null], aborted: false,
-    });
+    expect(timer.finish).toHaveBeenCalledTimes(1);
     expect(result.current).toMatchObject({ vState: 'idle', vSubtitle: '', error: null });
   });
 
@@ -366,7 +356,7 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     expect(avatar.appendAudioChunk).toHaveBeenLastCalledWith(sessionId, '', ['tail-frame']);
     await run(() => p);
     expect(avatar.endStreamingPlayback).toHaveBeenCalledWith(sessionId);
-    expect(fx.timers[0].finish).toHaveBeenCalledWith({ modality: MODALITY_TYPED, streaming: true, aborted: false });
+    expect(fx.timers[0].finish).toHaveBeenCalledTimes(1);
     expect(result.current.vState).toBe('idle');
   });
 
@@ -409,7 +399,7 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     expect(avatar.playAudio).toHaveBeenCalledTimes(2);
     expect(avatar.appendAudioChunk).toHaveBeenCalledTimes(1);
     expect(avatar.endStreamingPlayback).not.toHaveBeenCalled();
-    expect(fx.timers[0].finish).toHaveBeenCalledWith({ modality: MODALITY_TYPED, streaming: false, aborted: false });
+    expect(fx.timers[0].finish).toHaveBeenCalledTimes(1);
   });
 
   it('a socket that fails to open falls back before any sentence, and later text goes to REST', async () => {
@@ -481,7 +471,7 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     await run(() => p);
     expect(markTtsDegraded).not.toHaveBeenCalled();
     expect(props.avatar.endStreamingPlayback).not.toHaveBeenCalled();
-    expect(fx.timers[0].finish).toHaveBeenCalledWith({ modality: MODALITY_TYPED, streaming: true, aborted: true });
+    expect(fx.timers[0].finish).toHaveBeenCalledTimes(1);
     expect(props.appendMessage.mock.calls[1][0].text).toBe('Rest helps. Try a routine.');
   });
 
@@ -518,7 +508,6 @@ describe('interrupting a REST answer', () => {
     expect(props.avatar.playAudio).toHaveBeenCalledTimes(1);
     const final = props.appendMessage.mock.calls[1][0];
     expect(final.text).toBe('One. Two. '); // the stream was abandoned
-    expect(emit).toHaveBeenCalledWith('turn', expect.objectContaining({ aborted: true }));
   });
 
   it('stopping while a segment’s audio is still being fetched drops it', async () => {
@@ -562,14 +551,10 @@ describe('turn failures', () => {
     expect(result.current.error).toBe('The answer was cut off — please try again.');
     expect(result.current.vState).toBe('idle');
     expect(props.appendMessage.mock.calls[1][0].text).toBe('Partial. ');
-    const turn = emit.mock.calls.find(([kind]) => kind === 'turn')[1];
-    expect(turn).toMatchObject({ modality: MODALITY_TYPED, aborted: false, sourceIds: [] });
-    expect(turn).not.toHaveProperty('answer'); // no study consent outside a session
     expect(console.error).toHaveBeenCalledWith('[useVoiceConversation] processQuery error:', expect.any(Error));
   });
 
   it('credential failures get the shared copy; errors with no message get a generic line', async () => {
-    saveStudy({ sessionId: 'sess', accessCode: 'study-access-code-0001' });
     openaiClient.chatStream.mockImplementation(async function* () { throw Object.assign(new Error('x'), { name: 'StudyLimitError' }); });
     const { result } = await mountVoice();
     await run(() => result.current.askText('Q'));
@@ -625,7 +610,6 @@ describe('recording and transcription', () => {
     expect(openaiClient.chatStream.mock.calls[0][3].preRetrievedChunks).toEqual(['pre-1', 'pre-2']);
     expect(createTurnTimer).toHaveBeenCalledTimes(1); // the STT timer is the turn timer
     expect(fx.timers[0].marks[0]).toBe('sttDone');
-    expect(emit).toHaveBeenCalledWith('turn_start', expect.objectContaining({ modality: MODALITY_SPOKEN }));
     expect(props.appendMessage.mock.calls[0][0]).toEqual({ role: 'user', text: 'how do I help' });
     expect(result.current.vState).toBe('idle');
   });
@@ -637,12 +621,11 @@ describe('recording and transcription', () => {
     expect(openaiClient.chatStream.mock.calls[0][3].preRetrievedChunks).toBeNull();
   });
 
-  it('nothing heard → a gentle retry prompt and a study event, no turn', async () => {
+  it('nothing heard → a gentle retry prompt, no turn', async () => {
     startSttSession.mockImplementation(async () => fakeSession(''));
     const { result } = await mountVoice();
     await flush(() => result.current.micTap());
     await run(() => result.current.micTap());
-    expect(emit).toHaveBeenCalledWith('stt_empty', { arm: null, taskId: null });
     expect(fx.specs[0].cancel).toHaveBeenCalled();
     expect(result.current.error).toBe("I didn't catch that — try again a little closer to the microphone.");
     expect(result.current.vState).toBe('idle');
@@ -656,7 +639,6 @@ describe('recording and transcription', () => {
     const { result, props } = await mountVoice();
     await flush(() => result.current.micTap());
     await run(() => result.current.micTap());
-    expect(emit).toHaveBeenCalledWith('stt_empty', { arm: null, taskId: null });
     expect(result.current.error).toBe("I didn't catch that — try again a little closer to the microphone.");
     expect(result.current.vState).toBe('idle');
     expect(openaiClient.chatStream).not.toHaveBeenCalled();
@@ -672,7 +654,6 @@ describe('recording and transcription', () => {
     expect(result.current.vTranscript).toBe('how do I help');
     expect(openaiClient.chatStream.mock.calls[0][0]).toBe('how do I help');
     expect(props.appendMessage.mock.calls[0][0]).toEqual({ role: 'user', text: 'how do I help' });
-    expect(emit).toHaveBeenCalledWith('turn_start', expect.objectContaining({ modality: MODALITY_SPOKEN, chars: 13 }));
   });
 
   it('a transcription failure is shown and the screen returns to idle', async () => {
@@ -741,7 +722,6 @@ describe('recording and transcription', () => {
   });
 
   it('a recognizer error mid-session ends listening with copy that offers typing', async () => {
-    saveStudy({ sessionId: 'sess', accessCode: 'study-access-code-0001', armOrder: 'AB', stageIndex: 0, step: 'task', taskId: 't1' });
     const session = fakeSession();
     startSttSession.mockResolvedValue(session);
     const { result } = await mountVoice();
@@ -749,23 +729,21 @@ describe('recording and transcription', () => {
     await flush(() => startSttSession.mock.calls[0][0].onError(new Error('speech recognition error: network')));
     expect(session.cancel).toHaveBeenCalled();
     expect(fx.specs[0].cancel).toHaveBeenCalled();
-    expect(emit).toHaveBeenCalledWith('stt_error', { arm: 'A', taskId: 't1', reason: 'speech recognition error: network' });
     expect(result.current.error).toMatch(/Something went wrong with the microphone/);
     expect(result.current.vState).toBe('idle');
     // A revoked permission is reported as a denial; a bare value is stringified.
     await flush(() => result.current.micTap());
     await flush(() => startSttSession.mock.calls[1][0].onError(Object.assign(new Error('denied'), { code: 'permission-denied' })));
-    expect(emit).toHaveBeenLastCalledWith('mic_denied', expect.objectContaining({ reason: 'denied' }));
+    expect(result.current.error).toMatch(/Your microphone was blocked/);
     await flush(() => result.current.micTap());
     await flush(() => startSttSession.mock.calls[2][0].onError('aborted'));
-    expect(emit).toHaveBeenLastCalledWith('stt_error', expect.objectContaining({ reason: 'aborted' }));
+    expect(result.current.error).toMatch(/Something went wrong with the microphone/);
   });
 
   it('a blocked microphone at start names the avatar and points to typing', async () => {
     startSttSession.mockRejectedValue(Object.assign(new Error('Microphone permission denied'), { code: 'permission-denied' }));
     const { result } = await mountVoice();
     await flush(() => result.current.micTap());
-    expect(emit).toHaveBeenCalledWith('mic_denied', { arm: null, taskId: null, reason: 'Microphone permission denied' });
     expect(result.current.error).toBe('Microphone access is blocked — allow it in your browser settings to talk with Aaron, or type your question below.');
     expect(result.current.vState).toBe('idle');
   });
@@ -775,7 +753,6 @@ describe('recording and transcription', () => {
     const { result } = await mountVoice();
     await flush(() => result.current.micTap());
     expect(result.current.error).toBe('Requested device not found');
-    expect(emit).toHaveBeenCalledWith('stt_error', expect.objectContaining({ reason: 'Requested device not found' }));
     startSttSession.mockRejectedValueOnce({});
     await flush(() => result.current.micTap());
     expect(result.current.error).toBe('Could not start listening.');

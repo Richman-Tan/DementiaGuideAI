@@ -6,11 +6,8 @@ import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
 import { AvatarBust } from '../avatar/AvatarStage.jsx';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
-import { useStudy } from '../study/StudyContext.jsx';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
 import { AnswerText } from '../components/AnswerText.jsx';
-import FlagAnswer from '../study/FlagAnswer.jsx';
-import { inLiveStudy } from '../study/guards.js';
 import { makeStickTracker } from '../lib/autoscroll.js';
 
 const Dots = () => (
@@ -24,17 +21,9 @@ const Dots = () => (
 export default function Chat({ isDesktop, isMobile }) {
   const { settings, effDark } = useSettings();
   // Whichever avatar actually resolved — the default, or the fallback.
-  // The study brief names the assistant, so this screen must agree with it.
   const who = useEffectiveAvatarProfile(settings.avatarId).name;
   const { messages, typing, chatError, chatErrorMsg, send, retry, newConvo, setDrawer, scrollCb } = useChat();
   const [chatInput, setChatInput] = useState('');
-  const study = useStudy();
-  // Arm B is the text baseline — no avatar of any kind, including the desktop
-  // bust panel. Leaving it visible would make the two arms differ by less than
-  // the design says they do.
-  // Only while the session is live — a finished session left on the device
-  // must not hide the avatar for good (see inLiveStudy).
-  const armB = inLiveStudy(study) && study.stage?.arm === 'B';
   const [panel, setPanel] = useState(true);
   const chatEl = useRef(null);
 
@@ -75,15 +64,15 @@ export default function Chat({ isDesktop, isMobile }) {
   // Keep the last message visible when the composer grows and shrinks the transcript.
   const growCb = useCallback(() => { scrollCb.current && scrollCb.current(); }, [scrollCb]);
   const chatEmpty = messages.length === 0 && !typing;
-  const showPanel = panel && isDesktop && !armB;
+  const showPanel = panel && isDesktop;
 
   return (
-    <section style={{ display: 'flex', gap: '20px', height: isMobile ? 'calc(100vh - 100px - var(--study-overlay-h, 0px))' : 'calc(100vh - 16px - var(--study-overlay-h, 0px))', padding: '14px 0', boxSizing: 'border-box' }}>
+    <section style={{ display: 'flex', gap: '20px', height: isMobile ? 'calc(100vh - 100px)' : 'calc(100vh - 16px)', padding: '14px 0', boxSizing: 'border-box' }}>
       <div style={{ flex: '1', minWidth: '0', maxWidth: '760px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
           <h1 style={{ margin: '0', fontSize: '1.35rem' }}>{`Chat with ${who}`}</h1>
           <div style={{ display: 'flex', gap: '8px' }}>
-            {isDesktop && !panel && !armB && (
+            {isDesktop && !panel && (
               <button onClick={() => setPanel(true)} style={{ minHeight: '44px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv3">{`Show ${who} panel`}</button>
             )}
             <button onClick={() => { stickRef.current.jump(); setDetached(false); newConvo(); }} style={{ minHeight: '44px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }} className="hv4">New conversation</button>
@@ -93,7 +82,7 @@ export default function Chat({ isDesktop, isMobile }) {
         <div ref={chatEl} onScroll={onTranscriptScroll} style={{ flex: '1', minHeight: '0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', padding: '6px 4px 16px' }}>
           {chatEmpty && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', padding: '36px 16px', textAlign: 'center' }}>
-              {!armB && <AvatarBust size={90} />}
+              <AvatarBust size={90} />
               <div style={{ fontWeight: '700', fontSize: '1.15rem' }}>{`Kia ora, I'm ${who}`}</div>
               <p style={{ margin: '0', color: 'var(--text2)', maxWidth: '30em', textWrap: 'pretty' }}>Ask me anything about dementia care — I'll answer in plain language, with sources from the trusted library.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '420px' }}>
@@ -134,14 +123,6 @@ export default function Chat({ isDesktop, isMobile }) {
                           <button key={j} onClick={() => setDrawer(c)} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', minHeight: '36px', padding: '4px 14px', borderRadius: '999px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '.85rem', cursor: 'pointer' }} className="hv8"><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: c.dot }} />{c.title}</button>
                         ))}
                       </div>
-                    )}
-                    {!m.streaming && (
-                      <FlagAnswer
-                        surface="chat"
-                        answer={m.text}
-                        question={messages[i - 1]?.role === 'user' ? messages[i - 1].text : ''}
-                        turnId={m.turnId || null}
-                      />
                     )}
                     <div style={{ alignSelf: 'flex-start', color: 'var(--text2)', fontSize: '.75rem', paddingLeft: '4px' }}>{m.time}</div>
                   </>

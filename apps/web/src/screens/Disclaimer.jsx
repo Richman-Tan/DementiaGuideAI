@@ -5,7 +5,7 @@ import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 export default function Disclaimer() {
   const { settings } = useSettings();
   // The resolved avatar's name; copy stays pronoun-free because the roster is
-  // mixed (see the convention note in @core/study/studyConfig.mjs).
+  // mixed.
   const who = useEffectiveAvatarProfile(settings.avatarId).name;
   return (
     <section style={{ padding: '32px 0 48px', maxWidth: '680px' }}>

@@ -93,7 +93,7 @@ tags:
 - extendedWaitUntil:
     visible: '(?s)One important thing.*to know'
     timeout: 10000
-- assertVisible: '(?s)Aria is here to help you find information.*not a doctor.*'
+- assertVisible: '(?s)Aria is here to help you find information.*not a doctor.*In an emergency, call 111.*Healthline on 0800 611 116.*'
 - tapOn: "I understand — let's go"
 
 # Summary reflects every answer

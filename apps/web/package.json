@@ -15,8 +15,7 @@
   "dependencies": {
     "@supabase/supabase-js": "2.106.0",
     "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "three": "^0.184.0"
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@istanbuljs/schema": "^0.1.3",

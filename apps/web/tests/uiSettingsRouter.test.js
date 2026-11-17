@@ -82,18 +82,12 @@ describe('SettingsContext', () => {
     expect(d.style.fontSize).toBe('25.5px');
   });
 
-  it('migrates a stored aria to aaron once, and persists the flag', async () => {
+  it('loads a stored avatarId as-is and never rewrites it (the roster lookup resolves retired ids)', async () => {
     localStorage.setItem('dg_settings', JSON.stringify({ avatarId: 'aria', onboarded: true }));
     const { result } = await mount();
-    expect(result.current.settings.avatarId).toBe('aaron');
-    expect(result.current.settings.onboarded).toBe(true);
-    expect(JSON.parse(localStorage.getItem('dg_settings'))).toMatchObject({ avatarId: 'aaron', avatarMigratedToUnity: true });
-  });
-
-  it('keeps a post-migration aria pick', async () => {
-    localStorage.setItem('dg_settings', JSON.stringify({ avatarId: 'aria', avatarMigratedToUnity: true }));
-    const { result } = await mount();
     expect(result.current.settings.avatarId).toBe('aria');
+    expect(result.current.settings.onboarded).toBe(true);
+    expect(JSON.parse(localStorage.getItem('dg_settings'))).toEqual({ avatarId: 'aria', onboarded: true });
   });
 
   it('a corrupt blob boots on the defaults', async () => {
@@ -103,11 +97,10 @@ describe('SettingsContext', () => {
     expect(result.current.settings.onboarded).toBe(false);
   });
 
-  it('full or blocked storage never breaks the migration or a settings change', async () => {
-    localStorage.setItem('dg_settings', JSON.stringify({ avatarId: 'aria' }));
+  it('full or blocked storage never breaks a settings change', async () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('QuotaExceededError'); });
     const { result } = await mount();
-    expect(result.current.settings.avatarId).toBe('aaron'); // migrated in memory
+    expect(result.current.settings.avatarId).toBe('aaron');
     await flush(() => result.current.setSetting('concise', true));
     expect(result.current.settings.concise).toBe(true);
   });

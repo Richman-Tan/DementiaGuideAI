@@ -1,6 +1,6 @@
 // Onboarding wizard: one helper name throughout, and a voice preview that never fails silently.
-// The e2e mocks refuse the Unity build, so the helper that resolves here is the fallback avatar;
-// the assertions therefore check consistency with the resolved name, not a fixed name.
+// The helper's name comes from the stored character, whether or not the 3D build is installed
+// (the e2e mocks refuse it); the assertions check consistency with the name shown.
 import { test, mockProviders, seedStorage, expect, slow } from './support.js';
 
 const fresh = { keys: false, settings: { onboarded: false } };
@@ -12,8 +12,6 @@ test.describe('onboarding wizard', () => {
     await page.goto('/#/onboarding/1');
     const heading = page.getByRole('heading', { name: /^Kia ora — I'm / });
     await expect(heading).toBeVisible();
-    // Let the Unity probe settle (it is refused here), then read the resolved name.
-    await page.waitForTimeout(500);
     const name = (await heading.textContent()).replace("Kia ora — I'm ", '').trim();
     expect(name.length).toBeGreaterThan(0);
 
@@ -57,7 +55,7 @@ test.describe('onboarding wizard', () => {
 test.describe('onboarding: the whole wizard', () => {
   test('every step, answered, adds up to the summary; Change goes back to a step; finishing opens Home', async ({ page }) => {
     await mockProviders(page);
-    await seedStorage(page, { keys: false, settings: { onboarded: false, avatarId: 'aria', darkMode: false } });
+    await seedStorage(page, { keys: false, settings: { onboarded: false, darkMode: false } });
     await page.goto('/#/onboarding/1');
     await page.getByRole('button', { name: "Let's begin" }).click();
 
@@ -71,8 +69,8 @@ test.describe('onboarding: the whole wizard', () => {
     await pick('What kind of helper feels right for you?', 'Calm & steady');
     await pick('When you ask a question, how much detail would you like?', 'Short and simple');
     await pick('When medical words come up, what would you prefer?', 'Medical terms are fine');
-    await pick('How would you like to talk with Aria?', /^Type my questions/);
-    await pick('How fast would you like Aria to speak?', 'Faster');
+    await pick('How would you like to talk with Aaron?', /^Type my questions/);
+    await pick('How fast would you like Aaron to speak?', 'Faster');
 
     await expect(page.getByRole('heading', { name: 'How would you like the text to appear?' })).toBeVisible();
     await page.getByRole('button', { name: /Large/ }).click();
@@ -80,7 +78,7 @@ test.describe('onboarding: the whole wizard', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
 
     await expect(page.getByRole('heading', { name: 'A few display choices' })).toBeVisible();
-    for (const label of ['Dark mode', 'High contrast', 'Subtitles during voice replies', 'Show Aria on screen']) {
+    for (const label of ['Dark mode', 'High contrast', 'Subtitles during voice replies', 'Show Aaron on screen']) {
       const sw = page.getByRole('switch', { name: label });
       const was = await sw.getAttribute('aria-checked');
       await sw.click();
@@ -106,7 +104,7 @@ test.describe('onboarding: the whole wizard', () => {
     await page.goto('/#/onboarding/12');
     await expect(page.getByText('Balanced', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Meet Aria →' }).click();
+    await page.getByRole('button', { name: 'Meet Aaron →' }).click();
     await expect(page).toHaveURL(/#\/app\/home$/);
     await expect(page.getByRole('status')).toHaveText("You're all set — welcome");
   });
@@ -135,12 +133,12 @@ test.describe('onboarding: the whole wizard', () => {
 
   test('Preview voice with a key plays the chosen voice, then settles', async ({ page }) => {
     const log = await mockProviders(page, { audioSeconds: 1.5 });
-    await seedStorage(page, { keys: true, settings: { onboarded: false, avatarId: 'aria', voiceSpeed: 'slower' } });
+    await seedStorage(page, { keys: true, settings: { onboarded: false, voiceSpeed: 'slower' } });
     await page.goto('/#/onboarding/8');
     await page.getByRole('button', { name: /Preview voice/ }).click();
-    await expect(page.getByText("“Kia ora — I'm Aria. This is about how I'll sound.”")).toBeVisible();
-    expect(log.speech[0]).toMatchObject({ voice: 'nova', input: "Kia ora — I'm Aria. This is about how I'll sound." });
+    await expect(page.getByText("“Kia ora — I'm Aaron. This is about how I'll sound.”")).toBeVisible();
+    expect(log.speech[0]).toMatchObject({ voice: 'onyx', input: "Kia ora — I'm Aaron. This is about how I'll sound." });
     // When the clip ends the preview returns to its button.
-    await expect(page.getByText("“Kia ora — I'm Aria. This is about how I'll sound.”")).toHaveCount(0, { timeout: slow(15_000) });
+    await expect(page.getByText("“Kia ora — I'm Aaron. This is about how I'll sound.”")).toHaveCount(0, { timeout: slow(15_000) });
   });
 });

@@ -5,7 +5,7 @@ import { useChat } from '../state/ChatContext.jsx';
 import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
 import { AvatarBust } from '../avatar/AvatarStage.jsx';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
 import { AnswerText } from '../components/AnswerText.jsx';
 import { makeStickTracker } from '../lib/autoscroll.js';
@@ -20,8 +20,7 @@ const Dots = () => (
 
 export default function Chat({ isDesktop, isMobile }) {
   const { settings, effDark } = useSettings();
-  // Whichever avatar actually resolved — the default, or the fallback.
-  const who = useEffectiveAvatarProfile(settings.avatarId).name;
+  const who = getAvatarProfile(settings.avatarId).name;
   const { messages, typing, chatError, chatErrorMsg, send, retry, newConvo, setDrawer, scrollCb } = useChat();
   const [chatInput, setChatInput] = useState('');
   const [panel, setPanel] = useState(true);

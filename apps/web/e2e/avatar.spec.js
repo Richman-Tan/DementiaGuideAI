@@ -1,7 +1,8 @@
 // The lifelike (Unity) avatars, with a scripted stand-in for the WebGL build
 // (installFakeUnity in support.js): the download and "preparing" progress, a
 // failed load and its retry, speaking through the avatar, switching between
-// Aaron and Ariana, and falling back to Aria when no build is installed.
+// Aaron and Ariana, the same character carrying on when no build is installed,
+// and the build being requested only once an avatar view opens.
 import { test, mockProviders, seedStorage, installFakeUnity, expect, slow } from './support.js';
 
 const unityTypes = (page) => page.evaluate(() => window.__unity.messages.map((m) => m.type));
@@ -89,61 +90,86 @@ test.describe('Unity avatar loading', () => {
     expect(await page.evaluate(() => window.__unity.calls)).toBe(0);
   });
 
-  test('when no build is installed, the tile switches from Aaron to Aria once that is known', async ({ page }) => {
+  test('when no build is installed, Home keeps Aaron as a drawn figure with a plain note', async ({ page }) => {
     await mockProviders(page);
-    // A slow "not found" for the build probe: Aaron is shown until it answers.
-    await page.route(/\/unity\/Build/, async (route) => {
-      await new Promise((r) => setTimeout(r, 1500));
-      await route.fulfill({ status: 404, contentType: 'text/html', body: '<!doctype html>' });
-    });
     await seedStorage(page, { keys: false });
     await page.goto('/#/app/home');
+    await expect(page.getByText("The 3D view isn't available right now. Aaron can still talk with you.")).toBeVisible();
     await expect(page.getByText('Aaron', { exact: true })).toBeVisible();
-    await expect(page.getByText('Aria', { exact: true })).toBeVisible({ timeout: slow(15_000) });
-    await expect(page.getByText('Aaron', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Aria', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Unity build not installed')).toHaveCount(0);
+    await expect(page.getByRole('main').locator('svg[viewBox="0 0 120 120"]')).toBeVisible();
   });
 });
 
-test.describe('the 3D (Three.js) avatar', () => {
-  const bust = (page) => page.getByRole('main').locator('svg[viewBox="0 0 120 120"]');
-
-  test('if the graphics context is lost, the 3D helper gives way to the drawn figure', async ({ page }) => {
-    await mockProviders(page);
-    await seedStorage(page, { keys: false, settings: { avatarId: 'aria' } });
-    await page.goto('/#/app/home');
-    const canvas = page.getByRole('main').locator('canvas');
-    // Loaded: the drawn placeholder is gone and the canvas is shown.
-    await expect(bust(page)).toHaveCount(0);
-    await expect(canvas).toBeVisible();
-    await page.evaluate(() => {
-      const c = document.querySelector('main canvas');
-      (c.getContext('webgl2') || c.getContext('webgl')).getExtension('WEBGL_lose_context').loseContext();
+// The 244 MB build is requested only when an avatar view mounts. Requests are
+// recorded at the page (before the mocks answer them), and matched on the
+// public build path: in dev the app's own source modules also live under an
+// `avatar/unity/` directory, which is not a download.
+test.describe('the build is fetched on first use, not on page load', () => {
+  const recordBuildRequests = (page) => {
+    const urls = [];
+    page.on('request', (r) => {
+      const { pathname } = new URL(r.url());
+      if (pathname.startsWith('/unity/')) urls.push(pathname);
     });
-    await expect(bust(page)).toBeVisible();
+    return urls;
+  };
+
+  test('the landing page and onboarding never request it; reaching Home does', async ({ page }) => {
+    await mockProviders(page);
+    await installFakeUnity(page, { auto: true });
+    await seedStorage(page, { keys: false, settings: { onboarded: false } });
+    const urls = recordBuildRequests(page);
+
+    await page.goto('/#/');
+    await expect(page.getByRole('heading', { name: 'Dementia care answers you can actually talk to.' })).toBeVisible();
+    await page.getByRole('button', { name: 'Open the app' }).first().click();
+    await expect(page).toHaveURL(/#\/onboarding\/1$/);
+    for (let step = 1; step < 12; step += 1) {
+      await page.evaluate((n) => { location.hash = `#/onboarding/${n}`; }, step + 1);
+      await expect(page).toHaveURL(new RegExp(`#/onboarding/${step + 1}$`));
+    }
+    await page.waitForTimeout(500);
+    expect(urls).toEqual([]);
+
+    await page.getByRole('button', { name: /^Meet Aaron/ }).click();
+    await expect(page).toHaveURL(/#\/app\/home$/);
+    await expect(page.locator('#unity-canvas')).toBeVisible();
+    expect(urls.some((u) => u.startsWith('/unity/Build/'))).toBe(true);
   });
 
-  test('switching between the two 3D helpers swaps the model on Home', async ({ page }) => {
+  test('Library, an article, Settings, Privacy and the Disclaimer never request it', async ({ page }) => {
     await mockProviders(page);
-    await seedStorage(page, { keys: false, settings: { avatarId: 'aria' } });
-    await page.goto('/#/app/home');
-    await expect(bust(page)).toHaveCount(0);
-    await page.getByRole('complementary').first().getByRole('button', { name: 'Settings' }).click();
-    await page.getByRole('group', { name: 'Avatar' }).getByRole('button', { name: 'Zhenja' }).click();
-    await page.getByRole('complementary').first().getByRole('button', { name: 'Home' }).click();
-    await expect(page.getByText('Zhenja', { exact: true })).toBeVisible();
-    await expect(page.getByRole('main').locator('canvas')).toBeVisible();
-    await expect(bust(page)).toHaveCount(0);
+    await installFakeUnity(page, { auto: true });
+    await seedStorage(page, { keys: false });
+    const urls = recordBuildRequests(page);
+    const screens = [
+      ['#/app/library', page.getByLabel('Search the library')],
+      ['#/app/library/diagnosis', page.getByRole('heading', { name: 'Understanding a Dementia Diagnosis', level: 1 })],
+      ['#/app/settings', page.getByRole('heading', { name: 'Settings' })],
+      ['#/privacy', page.getByRole('heading', { name: 'Privacy Policy' })],
+      ['#/disclaimer', page.getByRole('heading', { name: 'Medical Disclaimer' })],
+    ];
+    for (const [hash, marker] of screens) {
+      await page.goto(`/${hash}`);
+      await expect(marker).toBeVisible();
+      await page.waitForTimeout(300);
+    }
+    expect(urls).toEqual([]);
+    expect(await page.evaluate(() => window.__unity.calls)).toBe(0);
   });
 
-  test('a model that fails to download leaves the drawn figure in place', async ({ page }) => {
+  test('with the avatar switched off, Home and Voice never request it', async ({ page }) => {
     await mockProviders(page);
-    const warnings = [];
-    page.on('console', (m) => { if (m.type() === 'warning') warnings.push(m.text()); });
-    await page.route(/characters\/zhenja\/zhenja\.glb$/, (route) => route.fulfill({ status: 404, body: 'missing' }));
-    await seedStorage(page, { keys: false, settings: { avatarId: 'zhenja' } });
+    await installFakeUnity(page, { auto: true });
+    await seedStorage(page, { settings: { showAvatar: false } });
+    const urls = recordBuildRequests(page);
     await page.goto('/#/app/home');
-    await expect.poll(() => warnings.some((w) => w.startsWith('[avatar] renderer error:'))).toBe(true);
-    await expect(bust(page)).toBeVisible();
-    await expect(page.getByText('Zhenja', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening)$/ })).toBeVisible();
+    await page.goto('/#/app/voice');
+    await expect(page.getByText('Tap the mic or type below')).toBeVisible();
+    await page.waitForTimeout(400);
+    expect(urls).toEqual([]);
   });
 });

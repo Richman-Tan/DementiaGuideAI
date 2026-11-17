@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSettings } from '../state/SettingsContext.jsx';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 
 export default function Privacy() {
   const { settings } = useSettings();
   // The resolved avatar's name, not a hard-coded one.
-  const who = useEffectiveAvatarProfile(settings.avatarId).name;
+  const who = getAvatarProfile(settings.avatarId).name;
   return (
     <section style={{ padding: '32px 0 48px', maxWidth: '680px' }}>
       <h1 style={{ fontSize: '1.9rem', margin: '0 0 18px' }}>Privacy Policy</h1>

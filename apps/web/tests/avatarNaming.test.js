@@ -1,7 +1,7 @@
-// No screen may hard-code an avatar's name. The assistant's name is whichever
-// profile actually resolved — Aaron by default, the fallback when the Unity
-// build fails to load — and a hard-coded "Aria" splits the app's identity the
-// moment those differ: one screen says one name, another a different one.
+// No screen may hard-code an avatar's name. The assistant's name comes from the
+// stored character's profile (Aaron by default) and does not depend on whether
+// the 3D build loads; a hard-coded "Aria" splits the app's identity: one screen
+// says one name, another a different one.
 // That is precisely what the pilot tester reported ("I got confused between
 // Aaron and Aria – did it make any difference?").
 //
@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 // Every web screen. avatarProfiles.js is the one legitimate home of the names;
-// everything else must resolve the name through useEffectiveAvatarProfile.
+// everything else must resolve the name through getAvatarProfile.
 // Onboarding joined the scan once its literals were rewritten (a tester read
 // "Meet Aria" here, then met Aaron on Home).
 const SCREENS = [
@@ -40,11 +40,11 @@ describe('avatar naming', () => {
     });
   }
 
-  it('the screens above resolve the name through the effective profile', () => {
+  it('the screens above resolve the name through getAvatarProfile', () => {
     // The scan alone would pass on a screen that simply says nothing; the
     // screens that DO name the assistant must derive it.
     for (const name of ['Landing.jsx', 'Library.jsx', 'Privacy.jsx', 'Disclaimer.jsx', 'Settings.jsx', 'Onboarding.jsx']) {
-      expect(src(name), `${name} should use useEffectiveAvatarProfile`).toContain('useEffectiveAvatarProfile');
+      expect(src(name), `${name} should use getAvatarProfile`).toContain('getAvatarProfile');
     }
   });
 });

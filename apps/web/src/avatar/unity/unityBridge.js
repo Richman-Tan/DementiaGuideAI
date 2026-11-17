@@ -1,11 +1,14 @@
 // Unity WebGL bridge. The WebGL build under /unity/Build/ is a machine-made,
 // git-ignored artifact (run `npm run sync:unity` after a Unity export). When
-// it's absent, isUnityAvailable() stays false and the effective-profile
-// resolver falls the whole app back to the Three.js avatars.
+// it's absent, probeUnity() resolves false and the stage keeps the same
+// character as a bust, speaking through the headless audio engine.
 //
-// Boot is EAGER: main.jsx calls ensureUnityBoot() right after first paint so
-// the 234MB download starts the moment the app opens, on the shared detached
-// canvas; screens attach when they mount. Load progress is broadcast through
+// Boot is LAZY: nothing here runs until an avatar view mounts. UnityAvatarMount
+// calls probeUnity() then mountUnity() from its effect, which starts the 234MB
+// download (once; the shared canvas is parked off-screen until a screen
+// adopts it). ensureUnityBoot() is the "Try again" entry point. Pages with no
+// avatar view (landing, onboarding, Library, Settings...) never touch /unity/.
+// Load progress is broadcast through
 // onUnityLoadProgress — the loader reports byte progress 0→0.9 and then goes
 // silent while the engine compiles the wasm and boots the scene, so the state
 // machine surfaces that gap as an explicit 'preparing' phase.
@@ -62,16 +65,6 @@ export function onUnityLoadProgress(cb) {
   return () => loadSubscribers.delete(cb);
 }
 
-export function isUnityAvailable() {
-  return availability === true;
-}
-
-// Tri-state for the effective-profile resolver: null = probe still pending
-// (stay optimistic about Unity), true/false once resolved.
-export function getUnityAvailability() {
-  return availability;
-}
-
 // True once a Unity instance is live this session.
 export function isUnityBooted() {
   return unityInstance !== null;
@@ -103,11 +96,11 @@ export async function probeUnity() {
 }
 
 // One canvas for the app: Unity binds its GL context to the canvas it was
-// created with, so screens reparent this shared element (same pattern as the
-// Three controller's host) instead of handing Unity a fresh canvas per mount.
+// created with, so screens reparent this shared element instead of handing
+// Unity a fresh canvas per mount.
 //
-// It MUST be in the document before Unity boots. The boot is eager, so it
-// normally starts before any screen has mounted, and Chrome refuses a WebGL
+// It MUST be in the document before Unity boots. A mount starts the boot from
+// its effect, which can run before it has adopted the canvas, and Chrome refuses a WebGL
 // context on a detached zero-sized canvas — the engine logs "Unable to create
 // WebGL context." and then throws from its own cleanup path. The bridge caught
 // that as a transient failure and silently retried, re-downloading the whole
@@ -138,8 +131,11 @@ export function getUnityCanvas() {
 
 // Send the canvas back off-screen when a screen releases it, so it is never
 // left detached inside a removed subtree (which can drop the GL context).
-export function parkUnityCanvas() {
-  if (sharedCanvas && sharedCanvas.parentElement !== parkingHost) {
+// Only the mount that still holds it may park it: when layout changes unmount
+// one mount and mount another, the new one adopts the canvas first and the old
+// one's cleanup must not pull it back out.
+export function parkUnityCanvas(host) {
+  if (sharedCanvas && sharedCanvas.parentElement === host) {
     getParkingHost().appendChild(sharedCanvas);
   }
 }
@@ -209,6 +205,8 @@ export async function mountUnity() {
       codeUrl: base + files.code + v,
       companyName: 'DementiaGuideAI',
       productName: 'UnityAvatar',
+      // The loader reads this: cap it so a 3x phone doesn't render 9x the pixels.
+      devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
     }, (p) => {
       if (p >= 0.89) setLoadState('preparing', 1);
       else setLoadState('downloading', Math.min(p / 0.9, 1));
@@ -233,9 +231,9 @@ export async function mountUnity() {
   }
 }
 
-// Idempotent eager entry point — called from main.jsx right after first paint
-// so the download begins the moment the app opens, and from the "Try again"
-// affordance after a failure (mountPromise nulls on failure, so this retries).
+// Idempotent boot entry point, used by the "Try again" affordance after a
+// failure (mountPromise nulls on failure, so this retries). First boots come
+// from UnityAvatarMount's effect, not from here.
 export function ensureUnityBoot() {
   if (getSettingSnapshot().showAvatar === false) return;
   retriedOnce = false; // a manual "Try again" gets its own silent retry

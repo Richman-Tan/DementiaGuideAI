@@ -1,24 +1,19 @@
 // The avatar surface the voice pipeline talks to. Delegates per call to the
-// loaded Three.js controller when one is mounted and healthy, otherwise to the
-// headless audio engine — so voice works identically with the avatar visible,
-// hidden, still loading, or failed. Streaming sessions pin their target for
+// live Unity controller when one is mounted for the stored character,
+// otherwise to the headless audio engine — so voice works identically with the
+// avatar visible, hidden, still loading, or failed. Streaming sessions pin their target for
 // the whole stream (a model finishing to load mid-reply must not split one
 // stream across two audio engines).
-import { peekThreeAvatar } from './three/controller.js';
 import { peekUnityAvatar } from './unity/UnityAvatarController.js';
 import { getHeadlessAvatar } from './headlessAvatar.js';
 import { getSettingSnapshot } from '../state/settingsSnapshot.js';
-import { resolveEffectiveProfile } from './effectiveProfile.js';
+import { getAvatarProfile } from './avatarProfiles.js';
 
 const target = () => {
-  const profile = resolveEffectiveProfile(getSettingSnapshot().avatarId);
-  if (profile.renderer === 'unity') {
-    const unity = peekUnityAvatar();
-    if (unity && unity.characterId === profile.unityCharacterId) return unity;
-    return getHeadlessAvatar();
-  }
-  const three = peekThreeAvatar();
-  return three && three.loaded && !three.failed && three.renderer ? three : getHeadlessAvatar();
+  const profile = getAvatarProfile(getSettingSnapshot().avatarId);
+  const unity = peekUnityAvatar();
+  if (unity && unity.characterId === profile.unityCharacterId) return unity;
+  return getHeadlessAvatar();
 };
 
 let sessionTarget = null; // pinned engine for the active streaming session
@@ -55,10 +50,10 @@ export const voiceAvatar = {
   },
 
   setSpeechEmotion(emotion) { (sessionTarget ?? target()).setSpeechEmotion(emotion); },
-  setAvatarState(state) { peekThreeAvatar()?.setAvatarState(state); },
+  // The Unity mount also sends its state; the message is idempotent.
+  setAvatarState(state) { peekUnityAvatar()?.setAvatarState(state); },
   stopAudio() {
     // Broadcast — barge-in must silence whichever engine is playing.
-    peekThreeAvatar()?.stopAudio();
     peekUnityAvatar()?.stopAudio();
     getHeadlessAvatar().stopAudio();
     sessionTarget = null;

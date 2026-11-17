@@ -8,7 +8,7 @@ const CODE = 'e2e-guest-access-code-0001';
 
 async function openSettings(page, { settings = {}, keys = false, access = null } = {}) {
   const log = await mockProviders(page);
-  await seedStorage(page, { keys, access, settings: { avatarId: 'aria', ...settings } });
+  await seedStorage(page, { keys, access, settings: { ...settings } });
   await page.goto('/#/app/settings');
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
   return log;
@@ -62,23 +62,21 @@ test.describe('settings: accessibility and appearance', () => {
     expect((await stored(page)).voiceSpeed).toBe('slower');
     await speed.getByRole('button', { name: 'Faster' }).click();
     expect((await stored(page)).voiceSpeed).toBe('faster');
-    await expect(page.getByText('How fast Aria speaks')).toBeVisible();
+    await expect(page.getByText('How fast Aaron speaks')).toBeVisible();
   });
 
-  test('the avatar picker: Unity helpers are locked without their build, the light ones can be chosen', async ({ page }) => {
+  test('the avatar picker offers Aaron and Ariana, with or without the 3D build, and remembers the pick', async ({ page }) => {
     await openSettings(page, { settings: { avatarId: 'aaron' } });
     const picker = page.getByRole('group', { name: 'Avatar' });
-    await expect(picker.getByRole('button', { name: 'Aaron' })).toBeDisabled();
-    await expect(picker.getByRole('button', { name: 'Ariana' })).toBeDisabled();
-    await expect(page.getByText('Aaron needs the Unity build — using Aria meanwhile')).toBeVisible();
+    await expect(picker.getByRole('button')).toHaveText(['Aaron', 'Ariana']);
+    await expect(picker.getByRole('button', { name: 'Aaron' })).toBeEnabled();
+    await expect(picker.getByRole('button', { name: 'Ariana' })).toBeEnabled();
 
-    await picker.getByRole('button', { name: 'Zhenja' }).click();
-    await expect(page.getByText('Aaron needs the Unity build')).toHaveCount(0);
-    await expect(page.getByText("Display Zhenja's visual avatar interface")).toBeVisible();
-    expect((await stored(page)).avatarId).toBe('zhenja');
-    // A locked helper cannot be picked.
-    await picker.getByRole('button', { name: 'Aaron' }).click({ force: true });
-    expect((await stored(page)).avatarId).toBe('zhenja');
+    await picker.getByRole('button', { name: 'Ariana' }).click();
+    await expect(page.getByText("Display Ariana's visual avatar interface")).toBeVisible();
+    expect((await stored(page)).avatarId).toBe('ariana');
+    await picker.getByRole('button', { name: 'Aaron' }).click();
+    expect((await stored(page)).avatarId).toBe('aaron');
   });
 });
 
@@ -114,7 +112,7 @@ test.describe('settings: privacy and history', () => {
     await page.getByRole('alertdialog').getByRole('button', { name: 'Clear history' }).click();
     await expect(page.getByRole('status')).toHaveText('History cleared');
     await page.goto('/#/app/chat');
-    await expect(page.getByText("Kia ora, I'm Aria")).toBeVisible();
+    await expect(page.getByText("Kia ora, I'm Aaron")).toBeVisible();
     await expect(page.getByText('he lashes out at me')).toHaveCount(0);
   });
 

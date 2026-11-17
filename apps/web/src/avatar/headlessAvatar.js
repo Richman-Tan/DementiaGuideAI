@@ -1,10 +1,10 @@
 // Headless avatar: implements the renderer-agnostic AvatarBridgeProtocol
 // surface (playAudio/stopAudio/setOnAudioStart/streaming trio) over the
 // AvatarAudioEngine, with no 3D model. This is what the voice pipeline talks
-// to until phase (d) replaces it with the Three.js AvatarController — the
-// engine and its viseme clock carry over unchanged, so lipsync data is already
-// flowing (just unrendered).
-import { AvatarAudioEngine } from './three/audio.js';
+// to whenever no live Unity controller matches — the avatar is hidden, the 3D
+// build is still loading, not installed, or failed — so the same character
+// keeps speaking with the same voice.
+import { AvatarAudioEngine } from './audioEngine.js';
 
 let singleton = null;
 

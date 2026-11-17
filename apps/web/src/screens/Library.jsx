@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import * as S from '../data/services.js';
 import { warmAll } from '../data/articles/index.js';
 import { useSettings } from '../state/SettingsContext.jsx';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
 
 export default function Library() {
   const { settings, effDark } = useSettings();
   // Whichever avatar actually resolved — the default, or the fallback.
-  const who = useEffectiveAvatarProfile(settings.avatarId).name;
+  const who = getAvatarProfile(settings.avatarId).name;
   const [libQ, setLibQ] = useState('');
   const [libCat, setLibCat] = useState(null);
   const [, setWarmed] = useState(false);

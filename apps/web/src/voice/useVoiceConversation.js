@@ -13,7 +13,7 @@ import { sttErrorPresentation } from './sttErrorCopy.js';
 import { getElevenKey } from '../state/keysStore.js';
 import { createTurnTimer } from '../lib/latency.js';
 import { mapSettingsToRag, speechRateFor } from '../state/mapSettingsToRag.js';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { createElevenLabsStream } from '@core/tts/elevenLabsStreamService';
 import { createStreamingVisemeAccumulator } from '@core/lipsync/streamingVisemeAccumulator';
 import { ELEVEN_STREAM_SAMPLE_RATE, VOICE_SPECULATIVE_RAG } from '@core/voice/voiceConfig';
@@ -36,7 +36,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
   const speechRate = speechRateFor(settings);
   // Effective, not stored — with no Unity build the fallback avatar must also
   // bring its own TTS voice (not Aaron's voice over Aria's face).
-  const profile = useEffectiveAvatarProfile(settings.avatarId);
+  const profile = getAvatarProfile(settings.avatarId);
   const ttsVoiceOptions = {
     elevenVoiceId: profile.elevenVoiceId ?? null,
     openaiVoice: profile.openaiVoice ?? null,

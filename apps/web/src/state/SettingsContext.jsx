@@ -21,20 +21,12 @@ const DEFAULTS = {
   concise: false,
   handsFree: false,
   fasterVoice: false,
-  avatarId: 'aaron', // web roster: aaron | ariana (Unity) | aria | zhenja (legacy Three.js)
+  avatarId: 'aaron', // web roster: aaron | ariana (an unknown stored id resolves to aaron)
 };
 
 function load() {
   try {
     const stored = JSON.parse(localStorage.getItem('dg_settings') || '{}');
-    // One-time parity migration: before Unity became the web default, every
-    // saved settings blob carried the then-implicit avatarId:'aria'. Move
-    // those to aaron once; an explicit aria pick afterwards sticks (flag set).
-    if (stored.avatarId === 'aria' && !stored.avatarMigratedToUnity) {
-      stored.avatarId = 'aaron';
-      stored.avatarMigratedToUnity = true;
-      try { localStorage.setItem('dg_settings', JSON.stringify(stored)); } catch { /* full/blocked */ }
-    }
     return Object.assign({}, DEFAULTS, stored);
   } catch {
     return { ...DEFAULTS };

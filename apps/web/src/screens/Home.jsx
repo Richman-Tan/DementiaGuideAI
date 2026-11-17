@@ -9,7 +9,7 @@ import { useChat } from '../state/ChatContext.jsx';
 import { go, useWidth } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
 import { AvatarBust, AvatarHomeStage } from '../avatar/AvatarStage.jsx';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
 
 const MicIcon = () => (
@@ -20,7 +20,7 @@ export default function Home() {
   const { settings, effDark } = useSettings();
   const { askNow } = useChat();
   const [homeQ, setHomeQ] = useState('');
-  const who = useEffectiveAvatarProfile(settings.avatarId).name;
+  const who = getAvatarProfile(settings.avatarId).name;
   const width = useWidth();
   const isMobile = width < 768;
 

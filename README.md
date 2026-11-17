@@ -224,7 +224,7 @@ The deployed versions, while they stay online:
 
 To run it yourself:
 
-**Prerequisites:** Node 20.19.4 (see `.nvmrc`), an OpenAI API key, and a Supabase project with
+**Prerequisites:** Node 22 (see `.nvmrc`), an OpenAI API key, and a Supabase project with
 pgvector enabled. An ElevenLabs key enables speech with accurate lip sync. Xcode or Android Studio
 for mobile.
 

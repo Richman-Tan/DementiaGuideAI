@@ -66,19 +66,14 @@ the ElevenLabs WebSocket path needs the key in the browser.
   speculative retrieval are imported **verbatim from the mobile app** via the
   `@` alias (see `vite.config.js` — a tiny transform converts the five
   deliberately-CJS config modules to ESM).
-- The Three.js avatar renderer is **generated** from the mobile WebView
-  template: `node scripts/extract-renderer.mjs` re-derives
-  `apps/web/src/avatar/three/renderer.js` from `AvatarVRM.js`. Edit the mobile source,
-  not the generated file.
-- GLB models are referenced from `../assets` (aria 26 MB, zhenja 8.8 MB,
-  backdrop 9.6 MB) and content-hashed into `dist/` at build.
-- Unity avatars (Aaron default / Ariana) are the primary renderer — mobile
+- Unity avatars (Aaron default / Ariana) are the only renderer — mobile
   parity. The WebGL build is a git-ignored artifact: export from the Unity
   project (Tools → UaaL → Export WebGL), then `npm run sync:unity` copies it
-  into `public/unity/Build/` (see `public/unity/README.md`). Without a build
-  the app auto-falls back to the Three.js avatars (effective-profile
-  resolution — renderer, TTS voice and UI copy fall back together) and the
-  picker keeps the Unity entries locked.
+  into `public/unity/Build/` (see `public/unity/README.md`). The ~240 MB
+  download starts only when an avatar view first mounts (Home or Voice with
+  Show Avatar on), never on the landing page or other screens. Without a build,
+  or if it fails to load, the same character keeps its name and voice: the
+  stage shows the bust and speech plays through the headless audio engine.
 
 ## Deploy
 

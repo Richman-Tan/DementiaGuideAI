@@ -8,9 +8,6 @@
 //   - speech: OpenAI TTS and Whisper (direct and proxied), ElevenLabs REST
 //     with-timestamps (direct and proxied) and the ElevenLabs stream-input
 //     WebSocket, all answering with a short generated WAV / PCM clip
-//   - the avatar models: every .glb is answered with a one-triangle model, so
-//     the Three.js avatar loads in milliseconds instead of rendering a 26 MB
-//     character in software WebGL (which starved later tests of frames)
 //   - the Unity WebGL build, refused so the download never starts (or, with
 //     installFakeUnity, a scripted stand-in for its loader)
 //
@@ -157,34 +154,6 @@ export function elevenRestBody(text = '', seconds = 0.25) {
   };
 }
 
-/** A valid one-triangle binary glTF, served in place of every avatar model. */
-const TINY_GLB = (() => {
-  const bin = Buffer.from(new Float32Array([0, 0, 0, 0.3, 0, 0, 0, 0.3, 0]).buffer);
-  const gltf = {
-    asset: { version: '2.0' },
-    scene: 0,
-    scenes: [{ nodes: [0] }],
-    nodes: [{ mesh: 0, name: 'e2e_triangle' }],
-    meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
-    buffers: [{ byteLength: bin.length }],
-    bufferViews: [{ buffer: 0, byteOffset: 0, byteLength: bin.length, target: 34962 }],
-    accessors: [{ bufferView: 0, componentType: 5126, count: 3, type: 'VEC3', min: [0, 0, 0], max: [0.3, 0.3, 0] }],
-  };
-  let json = Buffer.from(JSON.stringify(gltf));
-  if (json.length % 4) json = Buffer.concat([json, Buffer.alloc(4 - (json.length % 4), 0x20)]);
-  const header = Buffer.alloc(12);
-  header.writeUInt32LE(0x46546c67, 0); // 'glTF'
-  header.writeUInt32LE(2, 4);
-  header.writeUInt32LE(12 + 8 + json.length + 8 + bin.length, 8);
-  const chunk = (data, type) => {
-    const h = Buffer.alloc(8);
-    h.writeUInt32LE(data.length, 0);
-    h.writeUInt32LE(type, 4);
-    return Buffer.concat([h, data]);
-  };
-  return Buffer.concat([header, chunk(json, 0x4e4f534a), chunk(bin, 0x004e4942)]);
-})();
-
 /**
  * Scripted stand-ins for the browser's audio-input stack, installed before the
  * app boots. A headless browser has no microphone and no speech service, so:
@@ -326,10 +295,6 @@ export async function mockProviders(page, {
     chat: [], embed: [], warm: [], rpc: [],
     speech: [], eleven: [], transcribe: [], stream: [],
   };
-
-  // Avatar models: a one-triangle GLB for every .glb (character and backdrop).
-  // Matched on the URL's end so Vite's `model.glb?import` module stays real.
-  await page.route(/\.glb$/, (route) => route.fulfill({ status: 200, contentType: 'model/gltf-binary', body: TINY_GLB }));
 
   // Unity: refuse the loader probe, manifest and build files so nothing large
   // is fetched. Only the public build path — the app's own source modules also

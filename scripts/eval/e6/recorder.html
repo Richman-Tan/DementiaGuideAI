@@ -14,7 +14,7 @@
   schedules frames through the global requestAnimationFrame, both at call time.)
 
   Message timing per clip reproduces apps/web/src/avatar/unity/UnityAvatarController.js
-  and AvatarAudioEngine (apps/web/src/avatar/three/audio.js):
+  and AvatarAudioEngine (apps/web/src/avatar/audioEngine.js):
     - setState 'speaking' shortly before speech (the voice screen's state change)
     - play message at time Tm; audio starts at Tm + 10 ms (the engine's look-ahead)
     - { type: 'stop' } when the audio ends (onAudioEnd → stop)

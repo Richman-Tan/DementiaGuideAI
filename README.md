@@ -70,9 +70,9 @@ An npm-workspaces monorepo: three apps share one knowledge base and one core lib
 |---|---|
 | `apps/web/` | **Web app** (Vite + React), deployed on Vercel. The client used in every evaluation and in the usability study. |
 | `apps/mobile/` | **Mobile app** (Expo / React Native, iOS and Android). `modules/unity-avatar-module/` embeds the Unity avatar natively. |
-| `apps/api/` | **Server-side proxy** (Vercel functions). Holds the provider keys, calls OpenAI and ElevenLabs on the clients' behalf, and stores study and usage data. |
+| `apps/api/` | **Server-side proxy** (Vercel functions). Holds the provider keys, calls OpenAI and ElevenLabs on the clients' behalf, and stores usage data. |
 | `packages/core/` | **Shared logic**, imported by all three as `@core/…`: RAG configuration, the prompt, retrieval, citation checking, the voice, speech-synthesis and lip-sync engines. |
-| `scripts/` | Tooling: `eval/` (every evaluation), `study/` (usability-study export and analysis), `ingest/` and `migrations/` (building the knowledge base), `lipsync/` (articulation results), `brand/`. |
+| `scripts/` | Tooling: `eval/` (every evaluation), `ingest/` and `migrations/` (building the knowledge base), `lipsync/` (articulation results), `brand/`. |
 | `docs/` | All documentation, evaluation plans, results and per-run data (next table). |
 | `content/` | Source documents for the knowledge base. `sources/MANIFEST.md` records each document's source, retrieval date, checksum and licence. Third-party documents are git-ignored (section 6); the project's own curated text is committed. |
 | `assets/` | The `.glb` avatar models used by the Three.js fallback renderer, and the logo. |

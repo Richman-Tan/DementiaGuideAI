@@ -3,22 +3,21 @@
 // Two modes, and the app behaves identically in both:
 //   direct — a personal OpenAI/ElevenLabs key in localStorage (the shipped
 //            bring-your-own-key behaviour, unchanged)
-//   proxy  — an access code, with the credentials held server-side in apps/api:
-//            either a study session's code, or a guest code (state/accessStore.js)
-//            that an invited carer enters once to use the app freely
+//   proxy  — a guest access code (state/accessStore.js) that an invited carer
+//            enters once to use the app freely, with the credentials held
+//            server-side in apps/api
 //
-// Precedence: personal key → study session → guest code → none (mock mode).
+// Precedence: personal key → guest code → none (mock mode).
 //
 // Retrieval, prompt assembly and citation extraction stay client-side in either
-// mode, so the study measures the shipped pipeline rather than a parallel one.
+// mode, so both run the same pipeline.
 import { getOpenaiKey, getElevenKey } from '../state/keysStore.js';
-import { isStudyMode, studyAccessCode } from '../study/studyStore.js';
 import { guestAccessCode } from '../state/accessStore.js';
 import { apiUrl } from './apiBase.js';
 
 const OPENAI_BASE = 'https://api.openai.com/v1';
 
-// OpenAI path → study endpoint. Explicit rather than a catch-all passthrough:
+// OpenAI path → proxy endpoint. Explicit rather than a catch-all passthrough:
 // a leaked access code should not be able to reach an arbitrary OpenAI API.
 const PROXY_ROUTES = {
   '/embeddings': '/api/embed',
@@ -34,13 +33,7 @@ const PROXY_ROUTES = {
 export function openaiTransport() {
   const key = getOpenaiKey();
   if (key) return { proxied: false, headers: { Authorization: `Bearer ${key}` } };
-  // isStudyMode(), not a bare access code: a failed setup attempt leaves the
-  // typed code in localStorage, and gating on the code alone put a NON-study
-  // visitor into a hybrid state — normal UI, but mock mode silently off, so a
-  // keyless user got "your study access code was not accepted" in the chat.
-  if (isStudyMode()) return { proxied: true, headers: { 'x-study-code': studyAccessCode() } };
-  // Only a code the server accepted is ever stored, so the stale-code problem
-  // above does not arise here.
+  // Only a code the server accepted is ever stored.
   const guest = guestAccessCode();
   if (guest) return { proxied: true, guest: true, headers: { 'x-study-code': guest } };
   return null;
@@ -49,7 +42,7 @@ export function openaiTransport() {
 export function openaiUrl(transport, path) {
   if (!transport?.proxied) return `${OPENAI_BASE}${path}`;
   const route = PROXY_ROUTES[path];
-  if (!route) throw new Error(`no study route for ${path}`);
+  if (!route) throw new Error(`no proxy route for ${path}`);
   return apiUrl(route);
 }
 
@@ -57,20 +50,11 @@ export function openaiUrl(transport, path) {
 export function elevenTransport() {
   const key = getElevenKey();
   if (key) return { proxied: false, headers: { 'xi-api-key': key } };
-  if (isStudyMode()) return { proxied: true, headers: { 'x-study-code': studyAccessCode() } };
   // A bring-your-own-key user keeps paying for their own voice: the guest code
   // fills in only when there is no personal OpenAI key either.
   const guest = !getOpenaiKey() && guestAccessCode();
   if (guest) return { proxied: true, guest: true, headers: { 'x-study-code': guest } };
   return null;
-}
-
-/** 'key' | 'study' | 'guest' | 'none' — which credential the next OpenAI call uses. */
-export function transportKind() {
-  const t = openaiTransport();
-  if (!t) return 'none';
-  if (!t.proxied) return 'key';
-  return t.guest ? 'guest' : 'study';
 }
 
 /**
@@ -103,16 +87,16 @@ export async function validateAccessCode(raw) {
 export const hasCredentials = () => Boolean(openaiTransport());
 
 /**
- * Wake the study proxy before the first real turn.
+ * Wake the proxy before the first real turn.
  *
- * The pre-launch dry run measured ~20s to first token on task 1 — nearly all
- * of it before the LLM call, in the retrieval leg riding on cold serverless
- * functions. One tiny authenticated embedding plus a one-token chat boots
- * /api/embed and /api/chat (and their OpenAI connections) so the participant's
- * first question doesn't pay the cold start. Fire-and-forget by design: a
- * failed warm-up costs nothing and must never surface to the participant.
+ * A first turn measured ~20s to first token — nearly all of it before the LLM
+ * call, in the retrieval leg riding on cold serverless functions. One tiny
+ * authenticated embedding plus a one-token chat boots /api/embed and /api/chat
+ * (and their OpenAI connections) so the first question doesn't pay the cold
+ * start. Fire-and-forget by design: a failed warm-up costs nothing and must
+ * never surface to the user.
  */
-export function warmStudyProxy() {
+export function warmProxy() {
   const t = openaiTransport();
   if (!t?.proxied) return;
   const post = (path, body) =>
@@ -125,9 +109,9 @@ export function warmStudyProxy() {
   post('/chat/completions', { model: 'gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'ok' }] });
   // The audio functions boot for free: both validate the body only after the
   // guard has run, so a JSON body they reject with a 400 still pays the cold
-  // start without an OpenAI call. Leaving them out meant the participant's
-  // first spoken turn raced a cold /api/transcribe against the 15s Whisper
-  // timeout — which read as "the mic doesn't work".
+  // start without an OpenAI call. Leaving them out meant the first spoken turn
+  // raced a cold /api/transcribe against the 15s Whisper timeout — which read
+  // as "the mic doesn't work".
   post('/audio/transcriptions', {});
   post('/audio/speech', {});
 }

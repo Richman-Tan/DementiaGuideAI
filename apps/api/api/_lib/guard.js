@@ -1,22 +1,19 @@
-// Shared request guard for the study API.
+// Shared request guard for the credentialed proxies.
 //
 // Why this exists: both clients hold their own OpenAI/ElevenLabs keys today
 // (docs/architecture/backend-plan.md, issue #48), so nobody can use the app
-// without a paid key of their own. The usability study is unmoderated and
-// remote, so participants cannot be handed one. These endpoints hold the
-// credentials server-side and admit callers by study access code instead.
+// without a paid key of their own. These endpoints hold the credentials
+// server-side and admit callers by access code (the `x-study-code` header and
+// `STUDY_ACCESS_CODES` names are historical) instead.
 //
-// This is a study-scoped slice of the planned backend, not the backend itself:
-// no accounts, no sessions, one shared credential, a fixed list of codes.
+// This is a thin slice of the planned backend, not the backend itself: no
+// accounts, no sessions, one shared credential, a fixed list of codes.
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { rpc, adminConfigured } from './supabaseAdmin.js';
 
-// Per-code, per-UTC-day. The study runs on ONE access code shared between all
-// participants, so this is a pool, not a per-person allowance: at the old 400
-// it covered roughly nine sessions a day in total, and the tenth participant
-// that day would have been refused mid-task with no way to tell that it was a
-// quota rather than a fault. Sized instead so a whole cohort can run in one
-// evening. The hard spend cap on the OpenAI account is the real backstop —
+// Per-code, per-UTC-day. A code may be shared between several people, so this
+// is a pool, not a per-person allowance, and is sized so a whole group can use
+// one code in an evening. The hard spend cap on the OpenAI account is the real backstop —
 // this meter only bounds the blast radius if the shared code gets passed on
 // further than intended.
 const DAILY_LIMIT = Number(process.env.STUDY_DAILY_REQUEST_LIMIT || 4000);
@@ -36,25 +33,6 @@ function validCodes() {
     console.error(`[study] ${weak.length} access code(s) shorter than ${MIN_CODE_LENGTH} characters — refusing to accept them`);
   }
   return codes.filter((c) => c.length >= MIN_CODE_LENGTH);
-}
-
-/**
- * The parsed JSON body.
- *
- * The unload flush uses sendBeacon, which must send a CORS-safelisted content
- * type or the browser demands a preflight it cannot complete while the page is
- * going away. That arrives as text/plain, which the platform leaves unparsed —
- * so without this the last batch of a participant's session, the one carrying
- * everything since the previous flush, would be rejected as malformed.
- */
-export function jsonBody(req) {
-  const body = req.body;
-  if (typeof body !== 'string') return body || {};
-  try {
-    return JSON.parse(body) || {};
-  } catch {
-    return {};
-  }
 }
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
@@ -95,15 +73,9 @@ export function applyCors(req, res) {
   return false;
 }
 
-export function readCode(req, { allowBody = false } = {}) {
+export function readCode(req) {
   const raw = req.headers['x-study-code'];
-  const header = (Array.isArray(raw) ? raw[0] : raw || '').trim();
-  if (header) return header;
-  // navigator.sendBeacon cannot set headers, so the unload flush carries the
-  // code in the body instead. Same secret, different envelope.
-  const code = allowBody ? jsonBody(req).accessCode : null;
-  if (typeof code === 'string') return code.trim();
-  return '';
+  return (Array.isArray(raw) ? raw[0] : raw || '').trim();
 }
 
 // Compare digests so neither the length nor a shared prefix is observable in
@@ -129,27 +101,26 @@ function isAllowed(code) {
  * credential between a stranger and the provider bill, readable in the
  * dashboard, in any export, and by anyone with project access. A digest counts
  * identically, because the same code always maps to the same key and nothing
- * needs to reverse it. The suffix stays in the clear so the AI and event
- * counters are still easy to tell apart at a glance.
+ * needs to reverse it.
  */
-function meterKey(code, suffix = '') {
-  return createHash('sha256').update(code).digest('hex').slice(0, 32) + suffix;
+function meterKey(code) {
+  return createHash('sha256').update(code).digest('hex').slice(0, 32);
 }
 
 // Per-code daily cap, counted in Postgres because functions are stateless.
 // Fails OPEN on a database error: losing a participant's session to a transient
 // outage costs more than the handful of requests the cap would have blocked.
 // The OpenAI account spend cap is the real backstop.
-async function underLimit(code, limit = DAILY_LIMIT, suffix = '') {
+async function underLimit(code) {
   // Fail CLOSED when the backend is not configured. This is not a transient
   // condition that will resolve itself: it means the meter can never run, so
-  // "allow anyway" would silently uncap spending for the whole study.
+  // "allow anyway" would silently uncap spending.
   if (!adminConfigured) {
     console.error('[study] usage meter unavailable — SUPABASE_SERVICE_ROLE_KEY not configured');
     return false;
   }
   try {
-    const under = await rpc('bump_study_usage', { p_code: meterKey(code, suffix), p_limit: limit });
+    const under = await rpc('bump_study_usage', { p_code: meterKey(code), p_limit: DAILY_LIMIT });
     return under !== false;
   } catch (err) {
     // Fail open only here: a transient database error should not cost a
@@ -162,8 +133,7 @@ async function underLimit(code, limit = DAILY_LIMIT, suffix = '') {
 
 // Returns the access code on success, or null after having sent the response.
 export async function guard(req, res, {
-  methods = ['POST'], meter = true, allowBodyCode = false,
-  meterSuffix = '', meterLimit = null,
+  methods = ['POST'], meter = true,
 } = {}) {
   // Before the method check: a preflight arrives as OPTIONS, which no route
   // lists, so checking methods first would answer every preflight with a 405
@@ -176,7 +146,7 @@ export async function guard(req, res, {
     return null;
   }
 
-  const code = readCode(req, { allowBody: allowBodyCode });
+  const code = readCode(req);
   if (!isAllowed(code)) {
     // Deliberately vague: a caller who guesses a code should not learn whether
     // it was the code or the configuration that was wrong.
@@ -184,7 +154,7 @@ export async function guard(req, res, {
     return null;
   }
 
-  if (meter && !(await underLimit(code, meterLimit ?? DAILY_LIMIT, meterSuffix))) {
+  if (meter && !(await underLimit(code))) {
     res.status(429).json({ error: 'study request limit reached for today' });
     return null;
   }

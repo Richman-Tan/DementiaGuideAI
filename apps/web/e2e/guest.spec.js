@@ -1,22 +1,21 @@
 // Guest access code: an invited carer enters a code once and uses the whole app
-// through the proxy, with no study session. Providers mocked (see support.js);
+// through the proxy. Providers mocked (see support.js);
 // /api/speech answers 400 to the empty validation body, which means "accepted".
 import { test, mockProviders, seedStorage, ask, expect } from './support.js';
 
 const CODE = 'e2e-guest-access-code-0001';
 
 async function recordProxyCalls(page) {
-  const seen = { chatCodes: [], study: [] };
+  const seen = { chatCodes: [] };
   await page.route('**/api/chat', async (route) => {
     seen.chatCodes.push(route.request().headers()['x-study-code'] ?? null);
     await route.fallback();
   });
-  page.on('request', (r) => { if (/\/api\/study\//.test(r.url())) seen.study.push(r.url()); });
   return seen;
 }
 
 test.describe('guest access code (mocked providers)', () => {
-  test('(a) a code entered in Settings turns on live answers through the proxy, with no study calls', async ({ page }) => {
+  test('(a) a code entered in Settings turns on live answers through the proxy', async ({ page }) => {
     await mockProviders(page);
     const seen = await recordProxyCalls(page);
     await seedStorage(page, { keys: false });
@@ -30,7 +29,6 @@ test.describe('guest access code (mocked providers)', () => {
     await ask(page, 'My mum gets restless and upset every evening. What can I try?');
     await expect(page.getByText(/close the curtains before dusk/).last()).toBeVisible();
     expect(seen.chatCodes.filter(Boolean)).toContain(CODE);
-    expect(seen.study).toEqual([]);
   });
 
   test('(b) the keyless voice setup card accepts a code and gives way to the conversation', async ({ page }) => {

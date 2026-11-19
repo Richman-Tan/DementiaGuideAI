@@ -14,9 +14,8 @@ export function markTtsDegraded(reason) {
 
 export async function selectTtsMode() {
   if (!VOICE_STREAMING_TTS || ttsDegraded) return 'rest';
-  // Study sessions land on 'rest' by construction: stream-input needs the key in
-  // the browser to open the socket, which is precisely what the server-side
-  // proxy exists to avoid. Recorded as a limitation in docs/study/protocol.md
-  // §10.4 — study latency figures are not comparable to the WebSocket ones.
+  // Guest-code sessions land on 'rest' by construction: stream-input needs the
+  // key in the browser to open the socket, which is precisely what the
+  // server-side proxy exists to avoid.
   return getElevenKey() ? 'eleven-stream' : 'rest';
 }

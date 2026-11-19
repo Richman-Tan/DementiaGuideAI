@@ -1,14 +1,12 @@
 // The web speech-to-text cascade (services/sttWeb.js): live Web Speech first,
 // a parallel recording kept for a Whisper rescue when the live result is empty,
 // and a sticky degrade to the Whisper-only provider after one live start
-// failure. These are the thresholds and the ordering the study relies on when
-// it reports STT fallbacks per arm — none of them was asserted anywhere.
+// failure. These are the thresholds and the ordering the cascade relies on.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../src/services/openaiClient.js', () => ({
   openaiClient: { transcribe: vi.fn(async () => 'rescued text') },
 }));
-vi.mock('../src/study/events.js', () => ({ emit: vi.fn() }));
 
 // ─── browser fakes ──────────────────────────────────────────────────────────
 let recognizers = [];
@@ -57,10 +55,8 @@ async function freshModule() {
   vi.resetModules();
   const mod = await import('../src/services/sttWeb.js');
   const { openaiClient } = await import('../src/services/openaiClient.js');
-  const { emit } = await import('../src/study/events.js');
   openaiClient.transcribe.mockClear();
-  emit.mockClear();
-  return { ...mod, transcribe: openaiClient.transcribe, emit };
+  return { ...mod, transcribe: openaiClient.transcribe };
 }
 
 beforeEach(() => {
@@ -111,13 +107,12 @@ describe('live provider', () => {
     expect(out).toEqual({ transcript: '', source: 'live' });
   });
 
-  it('records a failed rescue as a fallback event and returns empty', async () => {
+  it('a failed rescue returns empty', async () => {
     installSpeechRecognition(); installMediaRecorder(9000); installMic();
     const m = await freshModule();
     m.transcribe.mockRejectedValueOnce(new Error('whisper 500'));
     const out = await (await m.startSttSession()).stop();
     expect(out).toEqual({ transcript: '', source: 'live' });
-    expect(m.emit).toHaveBeenCalledWith('fallback', expect.objectContaining({ kind: 'stt_rescue_failed' }));
   });
 });
 
@@ -129,7 +124,6 @@ describe('sticky degrade', () => {
 
     const first = await m.startSttSession();
     expect(first.provider).toBe('whisper');
-    expect(m.emit).toHaveBeenCalledWith('fallback', expect.objectContaining({ kind: 'stt_whisper' }));
     expect(recognizers).toHaveLength(1);
 
     // Live would work now — but the degrade is sticky.
@@ -137,14 +131,12 @@ describe('sticky degrade', () => {
     const second = await m.startSttSession();
     expect(second.provider).toBe('whisper');
     expect(recognizers).toHaveLength(1);
-    expect(m.emit).toHaveBeenCalledTimes(1); // recorded once, not per session
   });
 
-  it('permission-denied is rethrown, not degraded — the participant is told, not silently moved to Whisper', async () => {
+  it('permission-denied is rethrown, not degraded — the user is told, not silently moved to Whisper', async () => {
     installSpeechRecognition(); installMediaRecorder(5000); installMic({ deny: true });
     const m = await freshModule();
     await expect(m.startSttSession()).rejects.toMatchObject({ code: 'permission-denied' });
-    expect(m.emit).not.toHaveBeenCalled();
   });
 
   it('goes straight to Whisper when the browser has no SpeechRecognition at all', async () => {

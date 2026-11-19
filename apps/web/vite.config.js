@@ -96,12 +96,12 @@ function unityBrotliHeaders() {
 // Same (req, res) contract Vercel gives them: a parsed JSON body (unless the
 // route opts out via `config.api.bodyParser === false`) plus res.status() and
 // res.json(). Dev only — `apply: 'serve'` keeps it out of the build entirely.
-function studyApiDevServer() {
+function apiDevServer() {
   // apps/api/api — the handlers sit in the `api/` directory Vercel serves
   // functions from, so the service root stays free for package.json and docs.
   const API_DIR = path.resolve(__dirname, '../api/api');
   return {
-    name: 'dg-study-api-dev',
+    name: 'dg-api-dev',
     apply: 'serve',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
@@ -207,7 +207,7 @@ export default defineConfig(({ mode }) => {
       // plain source, and which keeps every line in place) and before every
       // other transform, so unit and e2e runs instrument identical code.
       ...(COVERAGE ? [istanbulPre({ root: path.resolve(__dirname, '../..'), dirs: ['apps/web/src/', 'packages/core/'] })] : []),
-      unityBrotliHeaders(), studyApiDevServer(), react(),
+      unityBrotliHeaders(), apiDevServer(), react(),
     ],
     resolve: {
       alias: {

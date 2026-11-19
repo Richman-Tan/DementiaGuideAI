@@ -26,7 +26,7 @@ export function SafetyScreen({ navigation }) {
           color={Colors.info ?? Colors.primary}
         />
         <Text style={[styles.bodyText, { fontSize: 17 * textScale }]}>
-          {'Aria is here to help you find information — but she is not a doctor or medical professional.\n\nIf you or someone you care for is unwell, please contact your GP or a health professional.\n\nFor urgent help in Australia, call 000.'}
+          {'Aria is here to help you find information — but she is not a doctor or medical professional.\n\nIn an emergency, call 111.\n\nFor health concerns, contact your GP — or call Healthline on 0800 611 116, free, any time of day or night.'}
         </Text>
       </View>
     </OnboardingLayout>

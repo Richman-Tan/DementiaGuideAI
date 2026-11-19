@@ -157,11 +157,9 @@ describe('router', () => {
     expect(location.hash).toBe('#/onboarding/1');
   });
 
-  it('leaves onboarded users and study participants on /app', async () => {
+  it('leaves onboarded users on /app', async () => {
     location.hash = '#/app/home';
     await renderHook(() => useRoute(true));
-    expect(location.hash).toBe('#/app/home');
-    await renderHook(() => useRoute(false, true)); // study session: exempt
     expect(location.hash).toBe('#/app/home');
   });
 

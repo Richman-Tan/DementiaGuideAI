@@ -77,12 +77,12 @@ jobs:
 
   e2e:
     # The assembled web app in a real browser with every provider mocked at the
-    # network layer (apps/web/e2e/support.js): OpenAI, ElevenLabs, Supabase and
-    # the study API are answered by fixtures; the microphone, speech
+    # network layer (apps/web/e2e/support.js): OpenAI, ElevenLabs and Supabase
+    # are answered by fixtures; the microphone, speech
     # recognition and the Unity build are scripted fakes. No secrets are
     # needed. Every user flow has a spec: landing, onboarding, home, chat,
-    # library, settings, voice, the avatar, the tasks study and the feedback
-    # round, plus a production-like project (Supabase on, feedback round off).
+    # library, settings, voice, the avatar and guest access, plus a
+    # production-like project (Supabase on).
     name: End-to-end (Playwright, mocked providers)
     runs-on: ubuntu-latest
     steps:

@@ -4,7 +4,7 @@
 // the app has credentials is read from storage during render, which React does
 // not watch.
 import React, { useState } from 'react';
-import { validateAccessCode, warmStudyProxy } from '../services/transport.js';
+import { validateAccessCode, warmProxy } from '../services/transport.js';
 import { loadAccess, saveAccess, clearAccess } from '../state/accessStore.js';
 
 const RESULT = {
@@ -35,7 +35,7 @@ export function AccessCodeForm({ onChange }) {
       saveAccess(code, r.status);
       setSaved(loadAccess());
       setCode('');
-      warmStudyProxy();
+      warmProxy();
       onChange?.();
     }
     setMsg(RESULT[r.status]);

@@ -92,7 +92,7 @@ test.describe('stored data from older or damaged builds', () => {
     await page.addInitScript(() => {
       if (sessionStorage.getItem('dg_e2e_garbled')) return;
       sessionStorage.setItem('dg_e2e_garbled', '1');
-      for (const key of ['dg_settings', 'dg_keys', 'dg_history', 'dg_study', 'dg_access', 'dg_study_queue']) localStorage.setItem(key, '{not json');
+      for (const key of ['dg_settings', 'dg_keys', 'dg_history', 'dg_access']) localStorage.setItem(key, '{not json');
     });
     await page.goto('/');
     // Defaults: not onboarded, so the app opens on setup; no key, so chat is in example mode.
@@ -102,8 +102,6 @@ test.describe('stored data from older or damaged builds', () => {
     await page.getByRole('button', { name: 'Skip setup' }).click();
     await page.goto('/#/app/chat');
     await expect(page.getByText('Some evenings he lashes out at me and I get scared. What should I do?')).toBeVisible();
-    await page.goto('/#/study');
-    await expect(page.getByRole('heading', { name: 'Thank you for taking part' })).toBeVisible();
   });
 
   test('a settings blob from before Unity became the default moves to Aaron once', async ({ page }) => {

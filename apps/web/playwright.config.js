@@ -1,10 +1,10 @@
 // End-to-end tests of the assembled web app with every provider mocked at the
-// network layer (see e2e/support.js). No keys, no network: OpenAI, Supabase and
-// the study API are answered by page.route() fixtures, and the Unity build is
+// network layer (see e2e/support.js). No keys, no network: OpenAI, ElevenLabs and
+// Supabase are answered by page.route() fixtures, and the Unity build is
 // refused so the ~240 MB download never starts.
 //
 // The dev server (`vite`) is used rather than a production preview: the
-// studyApiDevServer middleware and the CJS→ESM transform are the same code the
+// apiDevServer middleware and the CJS→ESM transform are the same code the
 // preview uses, the routes are intercepted in the browser before they reach
 // any server, and skipping the build keeps a local run under a minute.
 import { defineConfig, devices } from '@playwright/test';
@@ -15,7 +15,7 @@ const PORT = Number(process.env.E2E_PORT || 4173);
 // assertions.
 const SLOW = process.env.E2E_COVERAGE === '1' ? 3 : 1;
 // Specs for the production-like build (the `shipped` project below).
-const SHIPPED = /(account|feedback-off)\.spec\.js/;
+const SHIPPED = /account\.spec\.js/;
 
 export default defineConfig({
   testDir: './e2e',
@@ -28,9 +28,8 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
-    // The study's browser gate reads the UA family; headless Chromium's UA
-    // still says Chrome/, but pin a plain Chrome UA so the gate is not what a
-    // future Playwright bump breaks.
+    // Pin a plain Chrome UA so a future Playwright bump changing the headless
+    // UA string cannot change what the app sees.
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -39,7 +38,7 @@ export default defineConfig({
     { name: 'chromium', testIgnore: SHIPPED, use: { ...devices['Desktop Chrome'] } },
     // The app as production builds it: Supabase configured, so anonymous
     // sign-in, the server-side conversation threads and the account upgrade
-    // run; and the feedback round switched off, as it ships. The Supabase URL
+    // run. The Supabase URL
     // points at a host that does not exist; mockSupabase() in e2e/support.js
     // answers every call in the browser.
     {
@@ -55,19 +54,10 @@ export default defineConfig({
       // persistence is skipped, and retrieval goes to a host the tests mock.
       VITE_SUPABASE_URL: '',
       VITE_SUPABASE_ANON_KEY: '',
-      // The feedback round ships switched off; this build switches it on, with
-      // the contact and e-DiVA link it must have before it goes live, so its
-      // flow is tested and every tasks-study flow is proven unaffected by it.
-      VITE_STUDY_FEEDBACK: '1',
-      VITE_STUDY_FEEDBACK_CONTACT: 'the DementiaGuide team at feedback@example.nz',
-      VITE_STUDY_EDIVA_URL: 'https://ediva.example.nz/',
     }),
     server(PORT + 1, {
       VITE_SUPABASE_URL: 'https://e2e-supabase.invalid',
       VITE_SUPABASE_ANON_KEY: 'e2e-anon-key',
-      VITE_STUDY_FEEDBACK: '',
-      VITE_STUDY_FEEDBACK_CONTACT: '',
-      VITE_STUDY_EDIVA_URL: '',
     }),
   ],
 });

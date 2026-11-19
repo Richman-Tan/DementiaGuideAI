@@ -4,7 +4,7 @@
 // status chip top-center, repeat/transcript icons top-right, captions above a
 // bottom cluster of mic + type-or-talk message bar (oshikoi-style). There is
 // NO demo mode — without an OpenAI key a setup card sits over the stage.
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { useChat } from '../state/ChatContext.jsx';
 import { useVoiceConversation } from '../voice/useVoiceConversation.js';
@@ -17,13 +17,7 @@ import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { loadKeys, saveKeys } from '../state/keysStore.js';
 import { AccessCodeForm } from '../components/AccessCodeForm.jsx';
 import { hasCredentials } from '../services/transport.js';
-import { emit } from '../study/events.js';
-import FlagAnswer from '../study/FlagAnswer.jsx';
 import { AnswerText } from '../components/AnswerText.jsx';
-
-// Once per page load: the Unity→fallback swap is a property of the session,
-// not of this component's mount count (mirrors the stt_whisper pattern).
-let fallbackAnnounced = false;
 
 // Translucent chrome over the live scene; readable in both themes.
 const glass = {
@@ -168,19 +162,12 @@ export default function Voice() {
   const who = profile.name;
   // The silent identity swap that confused a pilot tester: the stored choice
   // is a Unity profile, the ~240MB build fails to load, and the fallback appears with
-  // no explanation — a different name, face and voice. Say so, once, and
-  // record it so the analysis can tell which avatar each session actually saw.
+  // no explanation — a different name, face and voice. Say so.
   const storedProfile = getAvatarProfile(settings.avatarId);
   const avatarFallback = storedProfile.renderer === 'unity' && profile.id !== storedProfile.id;
-  useEffect(() => {
-    if (avatarFallback && !fallbackAnnounced) {
-      fallbackAnnounced = true;
-      emit('fallback', { kind: 'avatar_fallback', from: storedProfile.id, to: profile.id });
-    }
-  }, [avatarFallback, storedProfile.id, profile.id]);
-  // A study participant reaches the model through the server-side proxy with an
-  // access code, so there is nothing for them to set up — and showing them a
-  // raw `sk-…` field would be both confusing and a dead end.
+  // A visitor with a guest access code reaches the model through the server-side
+  // proxy, so there is nothing for them to set up — and showing them a raw
+  // `sk-…` field would be both confusing and a dead end.
   const hasKey = savedKeys.openai.trim().length > 0 || hasCredentials();
 
   const { vState, vTranscript, vDone, vSubtitle, micTap, askText, repeatLast, error, clearError } = useVoiceConversation({
@@ -245,7 +232,7 @@ export default function Voice() {
   ) : null;
 
   return (
-    <section style={{ position: 'fixed', top: 'var(--study-overlay-h, 0px)', left: 0, right: 0, height: 'calc(100dvh - var(--study-overlay-h, 0px))', zIndex: 50, overflow: 'hidden', background: 'radial-gradient(circle at 50% 30%, var(--tint) 0%, var(--bg) 80%)' }}>
+    <section style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', zIndex: 50, overflow: 'hidden', background: 'radial-gradient(circle at 50% 30%, var(--tint) 0%, var(--bg) 80%)' }}>
       {/* The scene fills the screen */}
       <div style={{ position: 'absolute', inset: 0 }}>
         <VoiceStage profile={profile} showAvatar={!!settings.showAvatar} state={vState} />
@@ -357,12 +344,6 @@ export default function Voice() {
               ) : (
                 <>
                   <div style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--elev)', border: 'var(--bw) solid var(--border)', borderRadius: '16px 16px 16px 4px', padding: '10px 14px' }}><AnswerText text={m.text} /></div>
-                  <FlagAnswer
-                    surface="voice"
-                    answer={m.text}
-                    question={messages[i - 1]?.role === 'user' ? messages[i - 1].text : ''}
-                    turnId={m.turnId || null}
-                  />
                 </>
               )}
             </div>

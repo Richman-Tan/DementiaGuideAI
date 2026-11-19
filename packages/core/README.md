@@ -31,12 +31,10 @@ so a new CommonJS module here has to be added there as well, or Vite ships raw
 `voice/`, `tts/`, `lipsync/` and `avatar/` files use ESM syntax and are only ever
 consumed by a bundler (Metro or Vite), which resolves them regardless.
 
-`study/studyConfig.mjs` is the exception that needs an explicit extension: it is
-imported by `apps/api` in **plain Node**, where a `.js` file containing `export`
-fails to parse in a package without `"type": "module"`. Anything else the backend
-and a client must agree on belongs here on the same terms — the study's arm
-assignment lives here precisely so what a participant is shown and what is written
-to the database cannot drift apart.
+A module that `apps/api` imports in **plain Node** needs an explicit `.mjs`
+extension: a `.js` file containing `export` fails to parse in a package without
+`"type": "module"`. Anything the backend and a client must agree on belongs here on
+the same terms, so the two cannot drift apart.
 
 ## The rule for what belongs here
 

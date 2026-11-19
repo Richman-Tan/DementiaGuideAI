@@ -10,7 +10,7 @@ import { catStyle } from '../lib/catStyle.js';
 
 export default function Article({ artId }) {
   const { settings, effDark } = useSettings();
-  // Resolved name, not a hard-coded one — this screen is reachable mid-study.
+  // Resolved name, not a hard-coded one.
   const who = useEffectiveAvatarProfile(settings.avatarId).name;
   const { askNow } = useChat();
   const art = S.getArticle(artId);

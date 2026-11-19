@@ -4,8 +4,7 @@ import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 
 export default function Privacy() {
   const { settings } = useSettings();
-  // The resolved avatar's name — this page is reachable mid-study, where the
-  // brief has already named whoever actually loaded.
+  // The resolved avatar's name, not a hard-coded one.
   const who = useEffectiveAvatarProfile(settings.avatarId).name;
   return (
     <section style={{ padding: '32px 0 48px', maxWidth: '680px' }}>
@@ -27,9 +26,6 @@ export default function Privacy() {
 
       <h2 style={{ fontSize: '1.3rem', margin: '26px 0 10px' }}>What we don't do</h2>
       <p style={{ lineHeight: '1.7', margin: '0 0 16px' }}>We don't collect analytics about your questions, sell or share your data, or use your conversations to train AI models. The library articles are the same for everyone — reading them reveals nothing about you to us.</p>
-
-      <h2 style={{ fontSize: '1.3rem', margin: '26px 0 10px' }}>If you are taking part in the research study</h2>
-      <p style={{ lineHeight: '1.7', margin: '0 0 16px' }}>Study sessions record additional information, and what is recorded is set out in the participant information sheet and consent form you were given. That consent governs the session — this page does not replace it.</p>
 
       <h2 style={{ fontSize: '1.3rem', margin: '26px 0 10px' }}>Questions</h2>
       <p style={{ lineHeight: '1.7', margin: '0 0 16px' }}>This app is a University of Auckland Part IV Software Engineering project. Questions about privacy can be directed to the project team through the University.</p>

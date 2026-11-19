@@ -1,11 +1,9 @@
 // Guest access code — localStorage `dg_access`.
 //
 // Lets an invited carer use the whole app (chat, voice, library) through the
-// credential proxy without a study session: no tasks, no questionnaires, and
-// nothing written to the study tables beyond the per-code request count that
-// every proxied call already adds. Kept apart from the study code in `dg_study`
-// so that finishing or clearing a study never removes it, and only a code the
-// server has accepted is ever stored (see validateAccessCode in transport.js).
+// credential proxy: nothing is written to the database beyond the per-code
+// request count that every proxied call already adds. Only a code the server
+// has accepted is ever stored (see validateAccessCode in transport.js).
 const KEY = 'dg_access';
 
 /** → { code, status: 'ok' | 'limit' | 'rejected', checkedAt } or null. */

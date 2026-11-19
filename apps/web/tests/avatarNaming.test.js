@@ -1,11 +1,11 @@
 // No screen may hard-code an avatar's name. The assistant's name is whichever
 // profile actually resolved — Aaron by default, the fallback when the Unity
 // build fails to load — and a hard-coded "Aria" splits the app's identity the
-// moment those differ: the study brief says one name, the library another.
+// moment those differ: one screen says one name, another a different one.
 // That is precisely what the pilot tester reported ("I got confused between
 // Aaron and Aria – did it make any difference?").
 //
-// A source scan, in the spirit of studyInstruments.test.js: cheaper than
+// A source scan: cheaper than
 // rendering each screen under its providers, and it catches comments-turned-
 // copy-paste as well. Case-sensitive \bAria\b leaves aria-label etc. alone.
 import { describe, it, expect } from 'vitest';

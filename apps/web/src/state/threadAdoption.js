@@ -6,12 +6,9 @@
 //     the cache renders instantly on load, and a server hiccup (or a write
 //     still in flight) returning nothing would wipe a real conversation.
 //   - For a DIFFERENT thread, the server copy must replace the screen even
-//     when it is empty. The study's arm switch is exactly this case: arm B's
-//     fresh thread has no messages, and keeping arm A's on screen lets the
-//     participant re-read them instead of searching — and feeds them to the
-//     model as arm B context, contaminating the headline comparison. The DB
-//     threads were correctly separate; the screen was not (found live in the
-//     2026-09-09 pilot run-through).
+//     when it is empty. Switching to a fresh thread is exactly this case: it has
+//     no messages, and keeping the previous thread's on screen would show them
+//     under the new one and feed them to the model as its context.
 export function shouldAdoptServerThread(prevId, nextId, serverLength) {
   if (serverLength > 0) return true;
   return Boolean(prevId) && prevId !== nextId;

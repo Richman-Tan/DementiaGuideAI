@@ -12,15 +12,9 @@ import { useAuth } from './AuthContext.jsx';
 import { navigate } from './router.js';
 import { useSettings } from './SettingsContext.jsx';
 import { isMockMode, generateReply } from '../services/chatService.js';
-import { isStudyMode, currentArm, currentTaskId, transcriptFields, studyConversationId, rememberStudyConversation, studyThreadKey } from '../study/studyStore.js';
-import { useStudy } from '../study/StudyContext.jsx';
-import { createTurnTimer } from '../study/latency.js';
-import { emit, newUuid } from '../study/events.js';
+import { createTurnTimer } from '../lib/latency.js';
 import { shouldAdoptServerThread } from './threadAdoption.js';
-import { resolveEffectiveProfile } from '../avatar/effectiveProfile.js';
-import { MODALITY_TYPED } from '@core/study/studyConfig.mjs';
 import { credentialErrorCopy } from '../services/credentialErrorCopy.js';
-import { transportKind } from '../services/transport.js';
 
 const ChatCtx = createContext(null);
 
@@ -41,10 +35,7 @@ export function ChatProvider({ children }) {
     // resolves. Waiting on the network would show an empty screen every load.
     const saved = loadCached();
     if (saved && saved.length) return saved;
-    // The demo seed opens on a distressing exchange ("he lashes out at me and I
-    // get scared"). Fine as prototype furniture; not acceptable as the first
-    // thing a study participant sees, and it would contaminate turn counts.
-    return isStudyMode() ? [] : S.seedThread();
+    return S.seedThread();
   });
   const [typing, setTyping] = useState(false);
   const [chatError, setChatError] = useState(false);
@@ -62,47 +53,9 @@ export function ChatProvider({ children }) {
   // would abort an in-flight turn.
   const convIdRef = useRef(null);
   useEffect(() => { convIdRef.current = conversationId; }, [conversationId]);
-  const studyArm = currentArm();
-  // The arm on the tasks protocol, 'free' on the feedback one: which
-  // session-scoped thread this provider writes to. See studyThreadKey().
-  const threadKey = studyThreadKey();
   const scrollCb = useRef(null); // Chat screen registers its scroll-to-bottom here
 
-  // The guard in the initialiser above runs once, at mount — which on a fresh
-  // browser is before the participant has entered their code, so isStudyMode()
-  // is still false and the demo seed wins. StudyProvider is a *parent* of this
-  // provider, so begin() re-renders us but never remounts, and the initialiser
-  // cannot re-run. Without this the seed survives into task 1: on screen, fed to
-  // the model as history, and counted as turns.
-  //
-  // Clearing on the transition rather than on `studyOn` itself is deliberate. A
-  // reload mid-task mounts with isStudyMode() already true, and must keep the
-  // messages the participant has legitimately accumulated.
-  //
-  // Read through the context, NOT straight from the store. This provider is
-  // handed to StudyProvider as `children`, so a study state change re-renders
-  // StudyProvider and then bails out before re-rendering us — the element is
-  // referentially identical. A localStorage read during render therefore stayed
-  // false right through begin(), the effect below never saw the transition, and
-  // the seed reached task 1. Context consumption is exempt from that bail-out.
-  // The same staleness applied to currentArm() below, which decides which
-  // conversation an arm's messages are written to.
-  const studyOn = useStudy().active;
-  const wasStudyOn = useRef(studyOn);
-  useEffect(() => {
-    const entering = studyOn && !wasStudyOn.current;
-    wasStudyOn.current = studyOn;
-    if (!entering) return;
-    // Also covers a device where someone used the app before the session: the
-    // participant starts from an empty screen either way.
-    setMessages([]);
-    clearCached();
-  }, [studyOn]);
-
-  // One conversation per (user, study arm). The arm key is what stops a
-  // within-subjects participant carrying arm A's answers into arm B, where they
-  // could re-read them instead of searching — measuring memory of the first arm
-  // rather than the second interface.
+  // One conversation per user.
   useEffect(() => {
     if (authStatus !== 'ready' || !userId) return undefined;
     let cancelled = false;
@@ -110,42 +63,21 @@ export function ChatProvider({ children }) {
       // Captured before setConversationId below: whether we are SWITCHING
       // threads decides if an empty server copy may replace the screen.
       const prevId = convIdRef.current;
-      let id;
-      if (isStudyMode() && threadKey) {
-        // A fresh thread per (session, arm). getOrCreateConversation reuses the
-        // anon user's most recent arm thread — on a shared study device that is
-        // the PREVIOUS participant's conversation, shown on screen and fed to
-        // the model as context. The session-scoped id lives in dg_study, so a
-        // reload rejoins this thread and "Clear this device" retires it.
-        // On the feedback protocol the key is 'free' and the stored arm null —
-        // the conversations table only allows A or B.
-        id = studyConversationId(threadKey);
-        if (!id) {
-          id = await startNewConversation(userId, { surface: 'chat', studyArm: studyArm || null });
-          if (id) rememberStudyConversation(threadKey, id);
-        }
-      } else {
-        id = await getOrCreateConversation(userId, { surface: 'chat', studyArm: null });
-      }
+      const id = await getOrCreateConversation(userId, { surface: 'chat' });
       if (cancelled || !id) return;
       setConversationId(id);
-      // Not during a study: importing a participant's own prior history into an
-      // arm would contaminate it.
-      if (!isStudyMode()) await migrateLegacyHistory(userId, id);
+      await migrateLegacyHistory(userId, id);
       const server = await loadMessages(id);
       if (cancelled) return;
       // A different thread replaces the screen even when its server copy is
-      // empty — the arm switch is exactly that case, and keeping the previous
-      // arm's messages visible let a participant re-read arm A during arm B
-      // while run() fed them to the model as context. Same-thread emptiness
-      // still keeps the cached render (a hiccup must not blank a real
-      // conversation). See threadAdoption.js.
+      // empty. Same-thread emptiness still keeps the cached render (a hiccup
+      // must not blank a real conversation). See threadAdoption.js.
       if (!shouldAdoptServerThread(prevId, id, server.length)) return;
       setMessages(server);
       saveCached(server);
     })();
     return () => { cancelled = true; };
-  }, [authStatus, userId, studyArm, threadKey]);
+  }, [authStatus, userId]);
 
   const persist = useCallback((msgs) => {
     setMessages(msgs);
@@ -171,28 +103,11 @@ export function ChatProvider({ children }) {
     setChatError(false);
     const ac = new AbortController();
     abortRef.current = ac;
-    // turnId joins a flagged answer (feedback protocol) to its `turn` event.
-    const msg = { role: 'aria', text: '', citations: [], safety: false, streaming: true, time: now(), turnId: newUuid() };
+    const msg = { role: 'aria', text: '', citations: [], safety: false, streaming: true, time: now() };
     let started = false;
-    // Text arm of the study. No STT or TTS stage here, so the turn timer records
-    // retrieval and time-to-first-token only — which is the fair comparison
-    // against the voice arm's to-first-audio.
-    //
-    // Read at call time, NOT from the render closure: `send` is memoized once
-    // at mount and calls the first render's `run`, whose captured studyArm is
-    // whatever the store held at page load — null for a participant whose chat
-    // arm comes first, which mis-tagged their turn/latency events (found in
-    // the 2026-09-02 regression run).
-    const arm = currentArm();
-    const taskId = currentTaskId();
-    const turn = createTurnTimer(arm, taskId);
-    // Always typed: this screen has no microphone. Recorded explicitly rather
-    // than inferred from the arm, so that "how did they ask?" is one field in
-    // both arms and neither has to be reconstructed from which code path ran.
-    // `avatar` is the resolved profile at call time (Arm B shows no avatar,
-    // but the same field in both arms keeps "which avatar" one column).
-    const avatar = resolveEffectiveProfile(settingsRef.current.avatarId).id;
-    emit('turn_start', { arm, taskId, modality: MODALITY_TYPED, chars: q.length, avatar });
+    // No STT or TTS stage here, so the turn timer records retrieval and
+    // time-to-first-token only.
+    const turn = createTurnTimer();
     try {
       const result = await generateReply({
         question: q,
@@ -225,40 +140,19 @@ export function ChatProvider({ children }) {
       persistMessage(convIdRef.current, {
         role: 'aria', text: result.text, citations: result.citations || [],
       });
-      turn.finish({ arm, taskId, modality: MODALITY_TYPED });
-      emit('turn', {
-        arm,
-        taskId,
-        turnId: msg.turnId,
-        modality: MODALITY_TYPED,
-        avatar,
-        // A participant who declines has their words withheld here, not at
-        // export: declining means the text never reaches the database. The turn
-        // is still recorded — turn count is a primary effectiveness measure and
-        // carries no content of its own.
-        ...transcriptFields({ question: q, answer: result.text }),
-        sourceIds: (result.sources || []).map((c) => c.id ?? c.num ?? null),
-      });
+      turn.finish();
     } catch (err) {
       if (ac.signal.aborted) return;
       console.warn('[chat] turn failed:', err?.message || err);
-      emit('turn_error', {
-        arm,
-        taskId,
-        modality: MODALITY_TYPED,
-        ...transcriptFields({ question: q }),
-        error: err?.name || 'Error',
-        message: String(err?.message ?? err).slice(0, 300),
-      });
       failedQ.current = q;
       setTyping(false);
       setChatError(true);
-      setChatErrorMsg(credentialErrorCopy(err, transportKind()) ?? "I couldn't reach the knowledge base — try again.");
+      setChatErrorMsg(credentialErrorCopy(err) ?? "I couldn't reach the knowledge base — try again.");
       setMessages(base); // drop the empty streaming bubble if any
     } finally {
       busyRef.current = false;
     }
-  }, [persist, studyArm]);
+  }, [persist]);
 
   const retry = useCallback(() => {
     const q = failedQ.current;
@@ -280,11 +174,9 @@ export function ChatProvider({ children }) {
     setMessages([]);
     // A new thread server-side too, or the screen clears while the next message
     // appends to the old conversation.
-    const id = await startNewConversation(userId, { surface: 'chat', studyArm: studyArm || null });
+    const id = await startNewConversation(userId, { surface: 'chat' });
     if (id) setConversationId(id);
-    // Remembered, or a reload during a session rejoins the thread just left.
-    if (id && isStudyMode() && threadKey) rememberStudyConversation(threadKey, id);
-  }, [userId, studyArm, threadKey]);
+  }, [userId]);
 
   // Voice appends fully-formed messages (its own streaming lives in the voice loop)
   const appendMessage = useCallback((m) => {
@@ -312,11 +204,10 @@ export function ChatProvider({ children }) {
     if (!result.deleted) return result;
     setMessages([]);
     setConversationId(null);
-    const id = await startNewConversation(userId, { surface: 'chat', studyArm: studyArm || null });
+    const id = await startNewConversation(userId, { surface: 'chat' });
     if (id) setConversationId(id);
-    if (id && isStudyMode() && threadKey) rememberStudyConversation(threadKey, id);
     return result;
-  }, [userId, studyArm, threadKey]);
+  }, [userId]);
 
   const value = {
     messages, typing, chatError, chatErrorMsg, send, retry, askNow, newConvo, clearHistory, appendMessage,

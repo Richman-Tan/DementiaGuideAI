@@ -1,20 +1,17 @@
 // @vitest-environment jsdom
 // The conversation store shared by Chat, Voice and Home (state/ChatContext.jsx):
-// what renders on first paint, which server thread a (user, study arm) writes
-// to, the typed-turn loop with its study events, failure + retry, cancelling a
-// turn, and "New conversation" vs "Clear history". The persistence layer,
-// auth, settings, the reply generator and the latency timer are faked; the
-// study store, router, credential copy and transport are the real ones.
+// what renders on first paint, which server thread a user writes to, the
+// typed-turn loop, failure + retry, cancelling a turn, and "New conversation"
+// vs "Clear history". The persistence layer, auth, settings, the reply
+// generator and the latency timer are faked; the router, credential copy and
+// transport are the real ones.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, flush, settle, cleanup } from './helpers/render.js';
-import { saveStudy, studyConversationId } from '../src/study/studyStore.js';
 import { saveAccess } from '../src/state/accessStore.js';
-import { MODALITY_TYPED, PROTOCOL_FEEDBACK } from '@core/study/studyConfig.mjs';
 
 const h = vi.hoisted(() => ({
   auth: { userId: 'u1', status: 'ready' },
   settings: { avatarId: 'aaron', concise: false },
-  study: { active: false },
   turn: { mark: () => {}, finish: () => {} },
 }));
 
@@ -32,22 +29,12 @@ vi.mock('../src/state/conversationStore.js', () => ({
 vi.mock('../src/state/AuthContext.jsx', () => ({ useAuth: () => h.auth }));
 vi.mock('../src/state/SettingsContext.jsx', () => ({ useSettings: () => ({ settings: h.settings }) }));
 vi.mock('../src/services/chatService.js', () => ({ isMockMode: vi.fn(() => false), generateReply: vi.fn() }));
-vi.mock('../src/study/StudyContext.jsx', () => ({ useStudy: () => h.study }));
-vi.mock('../src/study/latency.js', () => ({ createTurnTimer: vi.fn(() => h.turn) }));
-vi.mock('../src/study/events.js', () => ({ emit: vi.fn(), newUuid: vi.fn(() => 'turn-uuid') }));
-vi.mock('../src/avatar/effectiveProfile.js', () => ({ resolveEffectiveProfile: vi.fn((id) => ({ id: `effective-${id}` })) }));
+vi.mock('../src/lib/latency.js', () => ({ createTurnTimer: vi.fn(() => h.turn) }));
 
 const { ChatProvider, useChat } = await import('../src/state/ChatContext.jsx');
 const store = await import('../src/state/conversationStore.js');
 const { isMockMode, generateReply } = await import('../src/services/chatService.js');
-const { emit } = await import('../src/study/events.js');
-const { createTurnTimer } = await import('../src/study/latency.js');
-
-const SESSION = '11111111-2222-3333-4444-555555555555';
-const startStudy = (patch = {}) => saveStudy({
-  sessionId: SESSION, accessCode: 'study-access-code-0001', armOrder: 'BA', stageIndex: 0,
-  step: 'task', taskId: 'task-1', consentTranscripts: true, ...patch,
-});
+const { createTurnTimer } = await import('../src/lib/latency.js');
 
 const mount = () => renderHook(() => useChat(), { wrapper: ChatProvider });
 const texts = (msgs) => msgs.map((m) => `${m.role}:${m.text}`);
@@ -62,7 +49,6 @@ beforeEach(() => {
   location.hash = '';
   h.auth = { userId: 'u1', status: 'ready' };
   h.settings = { avatarId: 'aaron', concise: false };
-  h.study = { active: false };
   h.turn = { mark: vi.fn(), finish: vi.fn() };
   vi.clearAllMocks();
   store.loadCached.mockReturnValue(null);
@@ -87,14 +73,10 @@ describe('first paint', () => {
     expect(texts(result.current.messages)).toEqual(['user:cached question']);
   });
 
-  it('shows the demo seed outside a study, and an empty screen inside one', async () => {
+  it('shows the demo seed when there is no cache', async () => {
     h.auth = { userId: null, status: 'loading' };
-    const outside = await mount();
-    expect(outside.result.current.messages).toHaveLength(4);
-    await outside.unmount();
-    startStudy();
-    const inside = await mount();
-    expect(inside.result.current.messages).toEqual([]);
+    const { result } = await mount();
+    expect(result.current.messages).toHaveLength(4);
   });
 
   it('exposes the mock flag and the drawer state', async () => {
@@ -103,27 +85,6 @@ describe('first paint', () => {
     expect(result.current.mock).toBe(true);
     await flush(() => result.current.setDrawer({ title: 'src' }));
     expect(result.current.drawer).toEqual({ title: 'src' });
-  });
-});
-
-describe('entering a study session', () => {
-  it('clears the seed when the session starts after mount', async () => {
-    const { result, rerender } = await mount();
-    expect(result.current.messages).toHaveLength(4);
-    h.study = { active: true };
-    await rerender();
-    expect(result.current.messages).toEqual([]);
-    expect(store.clearCached).toHaveBeenCalledTimes(1);
-  });
-
-  it('a reload mid-session keeps what the participant has accumulated', async () => {
-    store.loadCached.mockReturnValue([{ role: 'user', text: 'task question' }]);
-    h.study = { active: true };
-    startStudy();
-    const { result, rerender } = await mount();
-    await rerender();
-    expect(texts(result.current.messages)).toEqual(['user:task question']);
-    expect(store.clearCached).not.toHaveBeenCalled();
   });
 });
 
@@ -139,11 +100,11 @@ describe('which server thread', () => {
     expect(store.getOrCreateConversation).not.toHaveBeenCalled();
   });
 
-  it('outside a study: reuses the user’s thread, migrates legacy history, adopts the server copy', async () => {
+  it('reuses the user’s thread, migrates legacy history, adopts the server copy', async () => {
     store.loadMessages.mockResolvedValue([{ role: 'user', text: 'from server' }]);
     const { result } = await mount();
     await settle();
-    expect(store.getOrCreateConversation).toHaveBeenCalledWith('u1', { surface: 'chat', studyArm: null });
+    expect(store.getOrCreateConversation).toHaveBeenCalledWith('u1', { surface: 'chat' });
     expect(store.migrateLegacyHistory).toHaveBeenCalledWith('u1', 'conv-1');
     expect(store.loadMessages).toHaveBeenCalledWith('conv-1');
     expect(texts(result.current.messages)).toEqual(['user:from server']);
@@ -167,63 +128,6 @@ describe('which server thread', () => {
     expect(store.loadMessages).not.toHaveBeenCalled();
   });
 
-  it('in a study: rejoins the session’s remembered thread for the arm, never migrating', async () => {
-    startStudy({ convoIds: { B: 'conv-b' } });
-    h.study = { active: true };
-    const { result } = await mount();
-    await settle();
-    expect(store.startNewConversation).not.toHaveBeenCalled();
-    expect(store.getOrCreateConversation).not.toHaveBeenCalled();
-    expect(store.migrateLegacyHistory).not.toHaveBeenCalled();
-    expect(store.loadMessages).toHaveBeenCalledWith('conv-b');
-    expect(result.current.conversationId).toBe('conv-b');
-  });
-
-  it('in a study with no thread yet: starts a fresh one for the arm and remembers it', async () => {
-    startStudy();
-    h.study = { active: true };
-    store.startNewConversation.mockResolvedValue('conv-b-new');
-    await mount();
-    await settle();
-    expect(store.startNewConversation).toHaveBeenCalledWith('u1', { surface: 'chat', studyArm: 'B' });
-    expect(studyConversationId('B')).toBe('conv-b-new');
-  });
-
-  it('on the feedback protocol the thread is keyed "free" and stored with no arm', async () => {
-    startStudy({ protocol: PROTOCOL_FEEDBACK });
-    h.study = { active: true };
-    await mount();
-    await settle();
-    expect(store.startNewConversation).toHaveBeenCalledWith('u1', { surface: 'chat', studyArm: null });
-    expect(studyConversationId('free')).toBe('conv-new');
-  });
-
-  it('a failed fresh-thread insert is not remembered', async () => {
-    startStudy();
-    h.study = { active: true };
-    store.startNewConversation.mockResolvedValue(null);
-    const { result } = await mount();
-    await settle();
-    expect(studyConversationId('B')).toBeNull();
-    expect(result.current.conversationId).toBeNull();
-  });
-
-  it('switching arms replaces the screen even when the new thread is empty', async () => {
-    startStudy({ convoIds: { B: 'conv-b' } });
-    h.study = { active: true };
-    store.loadMessages.mockImplementation(async (id) => (id === 'conv-b' ? [{ role: 'user', text: 'arm B question' }] : []));
-    store.startNewConversation.mockResolvedValue('conv-a');
-    const { result, rerender } = await mount();
-    await settle();
-    expect(texts(result.current.messages)).toEqual(['user:arm B question']);
-    saveStudy({ stageIndex: 1 }); // arm A
-    await rerender();
-    await settle();
-    expect(store.startNewConversation).toHaveBeenCalledWith('u1', { surface: 'chat', studyArm: 'A' });
-    expect(result.current.conversationId).toBe('conv-a');
-    expect(result.current.messages).toEqual([]);
-  });
-
   it('a lookup that resolves after unmount is dropped', async () => {
     const lookup = deferred();
     store.getOrCreateConversation.mockReturnValue(lookup.promise);
@@ -245,10 +149,7 @@ describe('which server thread', () => {
 });
 
 describe('a typed turn', () => {
-  it('streams the reply into one bubble, then finalises, persists and records the turn', async () => {
-    startStudy({ convoIds: { B: 'conv-b' } });
-    h.study = { active: true };
-    h.settings = { avatarId: 'ariana' };
+  it('streams the reply into one bubble, then finalises and persists it', async () => {
     const scroll = vi.fn();
     const seen = [];
     generateReply.mockImplementation(async ({ onToken, onStage, question, settings, history, signal }) => {
@@ -266,35 +167,28 @@ describe('a typed turn', () => {
 
     expect(seen[0].question).toBe('How do I rest?');
     expect(seen[0].settings).toBe(h.settings);
-    expect(texts(seen[0].history)).toEqual(['user:How do I rest?']);
+    expect(texts(seen[0].history).slice(-1)).toEqual(['user:How do I rest?']);
     expect(seen[0].signal).toBeInstanceOf(AbortSignal);
-    const [user, aria] = result.current.messages;
+    const [user, aria] = result.current.messages.slice(-2);
     expect(user).toMatchObject({ role: 'user', text: 'How do I rest?' });
     expect(user.time).toMatch(/^\d{1,2}:\d{2} (am|pm)$/);
     expect(aria).toMatchObject({
       role: 'aria', text: 'Rest helps [1].', citations: [{ num: 1 }], sources: [{ id: 's1' }, { num: 2 }, {}],
-      safety: true, streaming: false, turnId: 'turn-uuid',
+      safety: true, streaming: false,
     });
     expect(result.current.typing).toBe(false);
     expect(store.appendMessage.mock.calls).toEqual([
-      ['conv-b', { role: 'user', text: 'How do I rest?' }],
-      ['conv-b', { role: 'aria', text: 'Rest helps [1].', citations: [{ num: 1 }] }],
+      ['conv-1', { role: 'user', text: 'How do I rest?' }],
+      ['conv-1', { role: 'aria', text: 'Rest helps [1].', citations: [{ num: 1 }] }],
     ]);
     expect(scroll).toHaveBeenCalled();
 
-    expect(createTurnTimer).toHaveBeenCalledWith('B', 'task-1');
+    expect(createTurnTimer).toHaveBeenCalledTimes(1);
     expect(h.turn.mark).toHaveBeenCalledWith('ragDone');
-    expect(h.turn.finish).toHaveBeenCalledWith({ arm: 'B', taskId: 'task-1', modality: MODALITY_TYPED });
-    expect(emit).toHaveBeenCalledWith('turn_start', { arm: 'B', taskId: 'task-1', modality: MODALITY_TYPED, chars: 14, avatar: 'effective-ariana' });
-    expect(emit).toHaveBeenCalledWith('turn', {
-      arm: 'B', taskId: 'task-1', turnId: 'turn-uuid', modality: MODALITY_TYPED, avatar: 'effective-ariana',
-      question: 'How do I rest?', answer: 'Rest helps [1].', sourceIds: ['s1', 2, null],
-    });
+    expect(h.turn.finish).toHaveBeenCalledTimes(1);
   });
 
-  it('shows the typing state until the first token, and withholds the transcript when not consented', async () => {
-    startStudy({ consentTranscripts: false, convoIds: { B: 'conv-b' } });
-    h.study = { active: true };
+  it('shows the typing state until the first token', async () => {
     const gen = deferred();
     let onToken;
     generateReply.mockImplementation((opts) => { onToken = opts.onToken; return gen.promise; });
@@ -302,16 +196,12 @@ describe('a typed turn', () => {
     await settle();
     await flush(() => result.current.send('Q'));
     expect(result.current.typing).toBe(true);
-    expect(texts(result.current.messages)).toEqual(['user:Q']);
+    expect(texts(result.current.messages).slice(-1)).toEqual(['user:Q']);
     await flush(() => onToken('Partial'));
     expect(result.current.typing).toBe(false);
-    expect(result.current.messages[1]).toMatchObject({ role: 'aria', text: 'Partial', streaming: true });
+    expect(result.current.messages.at(-1)).toMatchObject({ role: 'aria', text: 'Partial', streaming: true });
     await flush(() => gen.resolve({ text: 'Done' }));
-    expect(result.current.messages[1]).toMatchObject({ text: 'Done', citations: [], sources: null, safety: false });
-    const turn = emit.mock.calls.find(([k]) => k === 'turn')[1];
-    expect(turn).not.toHaveProperty('question');
-    expect(turn).not.toHaveProperty('answer');
-    expect(turn.sourceIds).toEqual([]);
+    expect(result.current.messages.at(-1)).toMatchObject({ text: 'Done', citations: [], sources: null, safety: false });
   });
 
   it('ignores blank input and a second send while a turn is in flight', async () => {
@@ -329,7 +219,7 @@ describe('a typed turn', () => {
     await flush(() => gen.resolve({ text: 'ok', citations: [] }));
   });
 
-  it('a failure records the error, drops the empty bubble, and retry re-asks the same question', async () => {
+  it('a failure reports the error, drops the empty bubble, and retry re-asks the same question', async () => {
     generateReply.mockRejectedValueOnce(Object.assign(new Error('socket hang up'), { name: 'TypeError' }));
     const { result } = await mount();
     await settle();
@@ -339,7 +229,6 @@ describe('a typed turn', () => {
     expect(result.current.chatErrorMsg).toBe("I couldn't reach the knowledge base — try again.");
     expect(result.current.typing).toBe(false);
     expect(result.current.messages.at(-1)).toMatchObject({ role: 'user', text: 'Why?' });
-    expect(emit).toHaveBeenCalledWith('turn_error', { arm: null, taskId: null, modality: MODALITY_TYPED, error: 'TypeError', message: 'socket hang up' });
     expect(console.warn).toHaveBeenCalledWith('[chat] turn failed:', 'socket hang up');
 
     generateReply.mockResolvedValueOnce({ text: 'Because.', citations: [] });
@@ -367,7 +256,8 @@ describe('a typed turn', () => {
     await settle();
     await flush(() => result.current.send('Q'));
     await settle();
-    expect(emit).toHaveBeenCalledWith('turn_error', expect.objectContaining({ error: 'Error', message: 'kaput' }));
+    expect(console.warn).toHaveBeenCalledWith('[chat] turn failed:', 'kaput');
+    expect(result.current.chatError).toBe(true);
   });
 
   it('retry does nothing when nothing failed, or while a turn is running', async () => {
@@ -422,7 +312,7 @@ describe('cancelling a turn', () => {
     await flush(() => result.current.send('Q'));
     await flush(() => result.current.clearHistory());
     await flush(() => gen.reject(new DOMException('aborted', 'AbortError')));
-    expect(emit).not.toHaveBeenCalledWith('turn_error', expect.anything());
+    expect(console.warn).not.toHaveBeenCalledWith('[chat] turn failed:', expect.anything());
     expect(result.current.chatError).toBe(false);
   });
 
@@ -438,28 +328,22 @@ describe('cancelling a turn', () => {
 });
 
 describe('newConvo / appendMessage / clearHistory', () => {
+  it('a failed new-thread insert keeps the old conversation id', async () => {
+    const { result } = await mount();
+    await settle();
+    store.startNewConversation.mockResolvedValueOnce(null);
+    await flush(() => result.current.newConvo());
+    expect(result.current.conversationId).toBe('conv-1');
+  });
+
   it('newConvo empties the screen and the cache and starts a server thread', async () => {
     const { result } = await mount();
     await settle();
     await flush(() => result.current.newConvo());
     expect(result.current.messages).toEqual([]);
     expect(store.clearCached).toHaveBeenCalled();
-    expect(store.startNewConversation).toHaveBeenCalledWith('u1', { surface: 'chat', studyArm: null });
+    expect(store.startNewConversation).toHaveBeenCalledWith('u1', { surface: 'chat' });
     expect(result.current.conversationId).toBe('conv-new');
-  });
-
-  it('in a study, the new thread is remembered for the arm; a failed insert keeps the old id', async () => {
-    startStudy({ convoIds: { B: 'conv-b' } });
-    h.study = { active: true };
-    const { result } = await mount();
-    await settle();
-    store.startNewConversation.mockResolvedValueOnce('conv-b2');
-    await flush(() => result.current.newConvo());
-    expect(studyConversationId('B')).toBe('conv-b2');
-    store.startNewConversation.mockResolvedValueOnce(null);
-    await flush(() => result.current.newConvo());
-    expect(result.current.conversationId).toBe('conv-b2');
-    expect(studyConversationId('B')).toBe('conv-b2');
   });
 
   it('appendMessage adds a timestamped voice message, caches and persists it', async () => {
@@ -488,8 +372,6 @@ describe('newConvo / appendMessage / clearHistory', () => {
   });
 
   it('clearHistory empties the screen only after the delete succeeds, then starts afresh', async () => {
-    startStudy({ convoIds: { B: 'conv-b' } });
-    h.study = { active: true };
     store.startNewConversation.mockResolvedValue('conv-after-clear');
     const { result } = await mount();
     await settle();
@@ -499,7 +381,6 @@ describe('newConvo / appendMessage / clearHistory', () => {
     expect(store.deleteAllConversations).toHaveBeenCalledWith('u1');
     expect(result.current.messages).toEqual([]);
     expect(result.current.conversationId).toBe('conv-after-clear');
-    expect(studyConversationId('B')).toBe('conv-after-clear');
   });
 
   it('clearHistory with no new thread leaves no conversation id', async () => {

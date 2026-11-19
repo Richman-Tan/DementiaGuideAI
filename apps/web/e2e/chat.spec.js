@@ -15,7 +15,7 @@ test.describe('text chat (BYO key, mocked providers)', () => {
     await ask(page, 'My mum gets restless and upset every evening. What can I try?');
 
     // The reply renders with renumbered [1]/[2] badges (the raw [S#] markers
-    // are stripped by the real marker stripper). Outside a study the screen
+    // are stripped by the real marker stripper). The screen
     // also shows the seeded demo thread, which has badges of its own, so the
     // assertions are scoped to the newest reply.
     await expect(page.getByText(/close the curtains before dusk/).last()).toBeVisible();

@@ -1,13 +1,12 @@
 // Credential routing and the services that sit directly on it: the guarded
 // Supabase client, the OpenAI/ElevenLabs transports (direct key vs proxied
-// access code), the study-proxy warm-up, streaming-TTS mode selection, the
+// guest access code), the proxy warm-up, streaming-TTS mode selection, the
 // shared credential-error copy, and the chat facade's mock/real switch.
 // localStorage and fetch are stubbed; the stores and transport are real.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { saveKeys } from '../src/state/keysStore.js';
 import { saveAccess } from '../src/state/accessStore.js';
-import { saveStudy } from '../src/study/studyStore.js';
-import { openaiTransport, openaiUrl, elevenTransport, transportKind, warmStudyProxy } from '../src/services/transport.js';
+import { openaiTransport, openaiUrl, elevenTransport, warmProxy } from '../src/services/transport.js';
 import { credentialErrorCopy } from '../src/services/credentialErrorCopy.js';
 import { apiUrl, apiIsCrossOrigin } from '../src/services/apiBase.js';
 
@@ -20,9 +19,7 @@ vi.mock('../src/data/services.js', async (importOriginal) => {
   return { ...mod, mockReply: vi.fn(mod.mockReply) };
 });
 
-const STUDY = 'study-access-code-0001';
 const GUEST = 'guest-access-code-0001';
-const startStudy = () => saveStudy({ sessionId: '11111111-2222-3333-4444-555555555555', accessCode: STUDY });
 
 function memoryStorage() {
   const map = new Map();
@@ -105,7 +102,7 @@ describe('transport', () => {
     expect(openaiUrl(null, '/embeddings')).toBe('https://api.openai.com/v1/embeddings');
   });
 
-  it('openaiUrl maps each proxied OpenAI path to its study endpoint', () => {
+  it('openaiUrl maps each proxied OpenAI path to its proxy endpoint', () => {
     const t = { proxied: true };
     expect(openaiUrl(t, '/embeddings')).toBe(apiUrl('/api/embed'));
     expect(openaiUrl(t, '/chat/completions')).toBe(apiUrl('/api/chat'));
@@ -113,36 +110,31 @@ describe('transport', () => {
     expect(openaiUrl(t, '/audio/transcriptions')).toBe(apiUrl('/api/transcribe'));
   });
 
-  it('refuses to proxy any OpenAI path that has no explicit study route', () => {
-    expect(() => openaiUrl({ proxied: true }, '/files')).toThrow('no study route for /files');
+  it('refuses to proxy any OpenAI path that has no explicit proxy route', () => {
+    expect(() => openaiUrl({ proxied: true }, '/files')).toThrow('no proxy route for /files');
   });
 
-  it('ElevenLabs: a personal key goes direct, a study session proxies with the study code', () => {
+  it('ElevenLabs: a personal key goes direct, a guest code proxies with the code', () => {
     saveKeys({ openai: '', eleven: 'el-key', azure: '' });
     expect(elevenTransport()).toEqual({ proxied: false, headers: { 'xi-api-key': 'el-key' } });
     saveKeys({ openai: '', eleven: '', azure: '' });
-    startStudy();
-    expect(elevenTransport()).toEqual({ proxied: true, headers: { 'x-study-code': STUDY } });
-    expect(elevenTransport()).not.toHaveProperty('guest');
+    saveAccess(GUEST);
+    expect(elevenTransport()).toEqual({ proxied: true, guest: true, headers: { 'x-study-code': GUEST } });
   });
 
-  it('ElevenLabs is unavailable with no key, no session and no guest code', () => {
+  it('ElevenLabs is unavailable with no key and no guest code', () => {
     expect(elevenTransport()).toBeNull();
   });
 
-  it('transportKind distinguishes study from guest proxying', () => {
-    startStudy();
-    expect(transportKind()).toBe('study');
-  });
 });
 
-describe('warmStudyProxy', () => {
+describe('warmProxy', () => {
   it('does nothing without a proxied transport', () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    warmStudyProxy(); // no credentials at all
+    warmProxy(); // no credentials at all
     saveKeys({ openai: 'sk-1', eleven: '', azure: '' });
-    warmStudyProxy(); // personal key: not proxied
+    warmProxy(); // personal key: not proxied
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -150,7 +142,7 @@ describe('warmStudyProxy', () => {
     saveAccess(GUEST);
     const fetchMock = vi.fn(async () => { throw new TypeError('offline'); });
     vi.stubGlobal('fetch', fetchMock);
-    expect(() => warmStudyProxy()).not.toThrow();
+    expect(() => warmProxy()).not.toThrow();
     await Promise.resolve();
     await new Promise((r) => setTimeout(r, 0)); // let the rejected fetches settle
     const calls = fetchMock.mock.calls.map(([url, init]) => [url, JSON.parse(init.body), init.headers['x-study-code']]);
@@ -171,12 +163,12 @@ describe('credentialErrorCopy', () => {
   const named = (name) => Object.assign(new Error(name), { name });
 
   it('names the OpenAI key problem and the provider rate limit in the user’s terms', () => {
-    expect(credentialErrorCopy(named('OpenAIAuthError'), 'key')).toBe('Your OpenAI API key looks invalid — check it in Settings → Advanced.');
-    expect(credentialErrorCopy(named('OpenAIRateLimitError'), 'key')).toBe('The AI service is rate-limited right now — wait a moment and retry.');
+    expect(credentialErrorCopy(named('OpenAIAuthError'))).toBe('Your OpenAI API key looks invalid — check it in Settings → Advanced.');
+    expect(credentialErrorCopy(named('OpenAIRateLimitError'))).toBe('The AI service is rate-limited right now — wait a moment and retry.');
   });
 
   it('returns null for a missing error so callers keep their own fallback', () => {
-    expect(credentialErrorCopy(undefined, 'key')).toBeNull();
+    expect(credentialErrorCopy(undefined)).toBeNull();
   });
 });
 
@@ -189,7 +181,7 @@ describe('selectTtsMode / markTtsDegraded', () => {
   it('streams only with an ElevenLabs key in the browser', async () => {
     const { selectTtsMode } = await load();
     expect(await selectTtsMode()).toBe('rest');
-    startStudy(); // proxied ElevenLabs still cannot open the socket
+    saveAccess(GUEST); // proxied ElevenLabs still cannot open the socket
     expect(await selectTtsMode()).toBe('rest');
     saveKeys({ openai: '', eleven: 'el-key', azure: '' });
     expect(await selectTtsMode()).toBe('eleven-stream');
@@ -224,13 +216,6 @@ describe('chatService', () => {
       const { isMockMode } = await load();
       expect(isMockMode()).toBe(true);
       saveKeys({ openai: 'sk-1', eleven: '', azure: '' });
-      expect(isMockMode()).toBe(false);
-    });
-
-    it('is never on during a study session, even when forced', async () => {
-      const { isMockMode } = await load();
-      startStudy();
-      vi.stubEnv('VITE_FORCE_MOCK', '1');
       expect(isMockMode()).toBe(false);
     });
 

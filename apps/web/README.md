@@ -41,33 +41,24 @@ Settings → Advanced to go live:
 - Keys live only in this browser's localStorage — parity with the app's
   on-device key entry. Don't use this pattern for a public multi-tenant site.
 
-## Study mode
+## Guest access codes
 
-The usability study (`docs/study/`) runs on this app. Two things it needed that
-the shipped build could not do:
-
-- **Answer without the participant's own key.** The backend service
-  (`apps/api`, its own app — see its README for why it is not a folder in here)
-  holds the OpenAI and ElevenLabs credentials and admits callers by **study
-  access code**. Retrieval, prompt assembly and citation extraction stay in the
-  client, so both credential modes run byte-identical RAG.
-- **Produce data.** `src/study/` adds the `/study` flow (consent → tasks →
-  questionnaires) and records events to Supabase.
+A visitor without a key of their own can enter an **access code** in Settings.
+The backend service (`apps/api`, its own app — see its README for why it is not a
+folder in here) holds the OpenAI and ElevenLabs credentials and admits callers by
+access code (`x-study-code` header, `STUDY_ACCESS_CODES` on the server). Retrieval,
+prompt assembly and citation extraction stay in the client, so both credential
+modes run byte-identical RAG.
 
 Credential resolution lives in `src/services/transport.js`: a personal key in
-localStorage wins; otherwise a study access code routes to `/api/*`; otherwise
-mock mode. **Study sessions can never fall into mock mode** — canned replies
-would silently turn a session into a test of the prototype.
+localStorage wins; otherwise a guest access code routes to `/api/*`; otherwise
+mock mode.
 
 Set the server-side variables from `apps/api/.env.example` in the Vercel project
-(never with a `VITE_` prefix — that would inline them into the browser bundle) and
-run `scripts/migrations/2026-08-18_study_tables.sql`.
+(never with a `VITE_` prefix — that would inline them into the browser bundle).
 
-One constraint the study inherits, recorded in `docs/study/protocol.md` §10:
-text-to-speech uses the **REST cascade**, since the ElevenLabs WebSocket path
-needs the key in the browser. Arm A uses the deployed **Unity** avatar like every
-other visitor; the study records per session which renderer actually resolved,
-because the app degrades to Three.js on its own if the build fails to load.
+One constraint of the proxy path: text-to-speech uses the **REST cascade**, since
+the ElevenLabs WebSocket path needs the key in the browser.
 
 ## Architecture notes
 

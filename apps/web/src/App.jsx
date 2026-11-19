@@ -1,13 +1,8 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import { SettingsProvider, useSettings } from './state/SettingsContext.jsx';
 import { UiProvider } from './state/UiContext.jsx';
 import { AuthProvider } from './state/AuthContext.jsx';
 import { ChatProvider } from './state/ChatContext.jsx';
-import { StudyProvider, useStudy } from './study/StudyContext.jsx';
-import { wrongArmRedirect } from './study/guards.js';
-import { emit } from './study/events.js';
-import StudyScreen from './study/screens/StudyScreen.jsx';
-import StudyTaskOverlay from './study/screens/StudyTaskOverlay.jsx';
 import { useRoute, useWidth, navigate } from './state/router.js';
 import Shell from './components/Shell.jsx';
 import { SourceDrawer, ConfirmDialog, Toast } from './components/Chrome.jsx';
@@ -28,29 +23,11 @@ const Voice = React.lazy(() => import('./screens/Voice.jsx'));
 
 function Routed() {
   const { settings } = useSettings();
-  const study = useStudy();
-  const path = useRoute(settings.onboarded, Boolean(study?.active));
-  // Feedback round only: where in the app people went during free use. The
-  // route is all that is recorded — library paths carry the article id, which
-  // is how the export counts articles opened.
-  const exploring = Boolean(study?.exploring);
-  useEffect(() => {
-    if (exploring) emit('page_view', { path });
-  }, [path, exploring]);
+  const path = useRoute(settings.onboarded);
   const width = useWidth();
   const isDesktop = width >= 1024;
   const isTablet = width >= 768 && width < 1024;
   const isMobile = width < 768;
-
-  if (path.startsWith('/study')) return <StudyScreen />;
-
-  // Each arm has exactly one interface and the other must be unreachable, in
-  // both directions. Rule and rationale in study/guards.js.
-  const redirect = wrongArmRedirect(path, study);
-  if (redirect) {
-    navigate(redirect);
-    return null;
-  }
 
   if (path === '/') {
     const openApp = () => navigate(settings.onboarded ? '#/app/home' : '#/onboarding/1');
@@ -98,20 +75,11 @@ export default function App() {
     <SettingsProvider>
       <UiProvider>
         <AuthProvider>
-        <StudyProvider>
         <ChatProvider>
-          {/* Subtracts the study task band, which is position:fixed and paid for
-              by padding-top on <body>. Every screen inside already subtracts it
-              (Shell, Chat, Home, Voice); this wrapper did not, so during a task
-              the page was one band-height taller than the viewport and a
-              participant scrolling down found a screen of blank nothing below
-              the app. That overflow is also what made the scrollbar appear and
-              disappear, which is what drove the band's resize loop. */}
-          <div style={{ minHeight: 'calc(100vh - var(--study-overlay-h, 0px))', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem', lineHeight: '1.55' }}>
+          <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem', lineHeight: '1.55' }}>
             <RoutedWithChrome />
           </div>
         </ChatProvider>
-        </StudyProvider>
         </AuthProvider>
       </UiProvider>
     </SettingsProvider>
@@ -123,7 +91,6 @@ function RoutedWithChrome() {
   return (
     <ErrorBoundary>
       <Routed />
-      <StudyTaskOverlay />
       <SourceDrawer isMobile={width < 768} />
       <ConfirmDialog />
       <Toast />

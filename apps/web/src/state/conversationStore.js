@@ -2,9 +2,8 @@
 //
 // Replaces historyStore.js, which kept one localStorage blob (`dg_history`,
 // capped at 100 messages) shared by Chat AND Voice. That had two problems: a
-// user lost everything when storage was cleared, and in the study a
-// within-subjects participant carried arm A's conversation into arm B, where
-// they could re-read the answers instead of searching for them.
+// user lost everything when storage was cleared, and the thread could not be
+// separated per context (the `study_arm` column below is how it now is).
 //
 // Reads and writes go direct to Supabase under RLS rather than through the
 // backend: these are the user's own rows, the policy already scopes them to
@@ -43,8 +42,9 @@ export function clearCached() {
 const usable = (userId) => Boolean(supabaseConfigured && userId);
 
 /**
- * The conversation to write into. `studyArm` gives each arm of a study session
- * its own thread — the isolation the comparison depends on.
+ * The conversation to write into. `studyArm` scopes the lookup to a labelled
+ * thread (the column pre-dates the removal of the usability-study harness; the
+ * app now always passes null).
  */
 export async function getOrCreateConversation(userId, { surface = 'chat', studyArm = null } = {}) {
   if (!usable(userId)) return null;

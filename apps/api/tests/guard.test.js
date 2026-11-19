@@ -45,24 +45,22 @@ describe('access codes', () => {
     expect(await mod.guard(makeReq({ code: other }), makeRes())).toBe(other);
   });
 
-  it('reads the code from the body only when the route allows it (sendBeacon flush)', async () => {
+  it('reads the code from the x-study-code header only, never from the body', async () => {
     const { mod } = await load('../api/_lib/guard.js');
-    const body = JSON.stringify({ accessCode: CODE });
-    const denied = makeRes();
-    expect(await mod.guard(makeReq({ code: null, body }), denied)).toBeNull();
-    expect(denied.statusCode).toBe(401);
-    expect(await mod.guard(makeReq({ code: null, body }), makeRes(), { allowBodyCode: true })).toBe(CODE);
+    const res = makeRes();
+    expect(await mod.guard(makeReq({ code: null, body: JSON.stringify({ accessCode: CODE }) }), res)).toBeNull();
+    expect(res.statusCode).toBe(401);
   });
 });
 
 describe('meter key', () => {
-  it('meters against a digest prefix, never the raw code, with the suffix in the clear', async () => {
+  it('meters against a digest prefix, never the raw code, ', async () => {
     const { mod, admin } = await load('../api/_lib/guard.js');
-    await mod.guard(makeReq(), makeRes(), { meterSuffix: ':events', meterLimit: 20000 });
+    await mod.guard(makeReq(), makeRes());
     const args = admin.rpc.mock.calls[0];
     expect(args[0]).toBe('bump_study_usage');
-    const expected = createHash('sha256').update(CODE).digest('hex').slice(0, 32) + ':events';
-    expect(args[1]).toEqual({ p_code: expected, p_limit: 20000 });
+    const expected = createHash('sha256').update(CODE).digest('hex').slice(0, 32);
+    expect(args[1]).toEqual({ p_code: expected, p_limit: 4000 });
     expect(args[1].p_code).not.toContain(CODE);
   });
 
@@ -173,28 +171,6 @@ describe('readUserId', () => {
     expect(mod.readUserId({ headers: { authorization: `Bearer x.${claims}.y` } })).toBe('user-1');
     expect(mod.readUserId({ headers: { authorization: 'Bearer nope' } })).toBeNull();
     expect(mod.readUserId({ headers: {} })).toBeNull();
-  });
-});
-
-describe('jsonBody', () => {
-  it('passes a parsed body through, and parses a text/plain beacon body', async () => {
-    const { mod } = await load('../api/_lib/guard.js');
-    expect(mod.jsonBody({ body: { a: 1 } })).toEqual({ a: 1 });
-    expect(mod.jsonBody({ body: '{"sessionId":"s","events":[]}' })).toEqual({ sessionId: 's', events: [] });
-  });
-
-  it('turns a missing, null or malformed body into an empty object rather than throwing', async () => {
-    const { mod } = await load('../api/_lib/guard.js');
-    expect(mod.jsonBody({})).toEqual({});
-    expect(mod.jsonBody({ body: 'null' })).toEqual({});
-    expect(mod.jsonBody({ body: '{"sessionId": "s", "ev' })).toEqual({}); // a beacon cut off mid-send
-  });
-
-  it('means a malformed beacon is refused as unauthenticated, not as a crash', async () => {
-    const { mod } = await load('../api/_lib/guard.js');
-    const res = makeRes();
-    expect(await mod.guard(makeReq({ code: null, body: '{"accessCode":' }), res, { allowBodyCode: true })).toBeNull();
-    expect(res.statusCode).toBe(401);
   });
 });
 

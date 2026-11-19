@@ -2,8 +2,8 @@
 // same class shape, same reused RAG modules, same timeouts and error classes.
 // Differences from mobile, and nothing else:
 //   - credentials are resolved by services/transport.js: a personal key from
-//     localStorage (state/keysStore), or, during the usability study, a study
-//     access code with the key held server-side in apps/web/api/
+//     localStorage (state/keysStore), or a guest access code with the key held
+//     server-side in apps/api/
 //   - chatStream reads fetch's ReadableStream instead of the RN XHR workaround
 //   - transcribe() takes a Blob instead of an RN file-uri descriptor
 //   - device telemetry (recordRetrieval) is dropped
@@ -26,7 +26,6 @@ import { extractCitations, createMarkerStripper } from '@core/rag/citations';
 import { timeoutSignal } from '@core/net/withTimeout';
 import { getOpenaiKey, loadKeys, saveKeys } from '../state/keysStore.js';
 import { openaiTransport, openaiUrl } from './transport.js';
-import { emit } from '../study/events.js';
 
 const EMBED_CACHE_MAX = 20;
 const MIN_REQUEST_INTERVAL_MS = 750;
@@ -43,9 +42,9 @@ class OpenAIAuthError extends Error {
 class OpenAIRateLimitError extends Error {
   constructor(msg) { super(msg); this.name = 'OpenAIRateLimitError'; }
 }
-// Proxied mode only. A 401 there means the participant's study access code was
-// refused — telling them their API key is invalid would be nonsense, since they
-// never had one.
+// Proxied mode only. A 401 there means the guest access code was refused —
+// telling the user their API key is invalid would be nonsense, since they never
+// had one.
 class StudyAccessError extends Error {
   constructor(msg) { super(msg); this.name = 'StudyAccessError'; }
 }
@@ -62,7 +61,7 @@ class StudyLimitError extends Error {
 async function throwForStatus(resp, transport, label) {
   if (resp.status === 401) {
     throw transport.proxied
-      ? new StudyAccessError('Study access code was not accepted')
+      ? new StudyAccessError('Access code was not accepted')
       : new OpenAIAuthError('Invalid API key');
   }
   if (resp.status === 429) {
@@ -110,7 +109,7 @@ class OpenAIClient {
   async hasApiKey() {
     const k = getOpenaiKey();
     if (k && k.length > 10) return true;
-    // A study participant has no key of their own but can still reach the model.
+    // A guest has no key of their own but can still reach the model.
     return Boolean(openaiTransport());
   }
 
@@ -207,10 +206,8 @@ class OpenAIClient {
         chunks = await this.search(userMessage, TOP_K);
       } catch (err) {
         console.warn(`[RAG] retrieval failed (${err.message ?? err}) — answering without passages`);
-        emit('fallback', { kind: 'empty_retrieval', reason: String(err?.message ?? err).slice(0, 120) });
       }
     }
-    if (chunks.length === 0) emit('fallback', { kind: 'no_passages' });
     timingCbs?.onRagDone?.();
     const userContent = buildUserContent(userMessage, chunks);
 
@@ -436,7 +433,7 @@ export async function realGenerate({ question, settings, history, signal, onToke
   let final = null;
   let acc = '';
   // onStage carries the same stage boundaries the voice path marks, so the text
-  // arm of the study is measured on the same clock as the avatar arm.
+  // path is measured on the same clock as the voice path.
   const stream = openaiClient.chatStream(question, apiHistory, {
     onRagDone: () => onStage?.('ragDone'),
     onLlmSend: () => onStage?.('llmSend'),

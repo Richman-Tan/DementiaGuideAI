@@ -1,36 +1,19 @@
 // What the latency marks mean.
 //
-// The study's headline claim is an avatar-vs-text comparison of how long a
-// participant waits. That only holds if both arms are measured at the same point
-// in the participant's experience: Arm B at the moment text appears
-// (`to_first_token_ms`), Arm A at the moment speech becomes audible
+// A text answer and a spoken answer are only comparable if both are measured at
+// the same point in the user's experience: text at the moment it appears
+// (`to_first_token_ms`), speech at the moment it becomes audible
 // (`to_first_audio_ms`).
 //
-// They were not. `firstAudio` was marked when the TTS response resolved, which on
-// the REST path — the only path a study session takes — happens before the audio
-// is queued, decoded and played. Arm A therefore looked faster than it was, by an
-// interval nobody recorded. These tests pin the corrected meaning.
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createTurnTimer } from '../src/study/latency.js';
-
-function memoryStorage() {
-  const map = new Map();
-  return {
-    getItem: (k) => (map.has(k) ? map.get(k) : null),
-    setItem: (k, v) => map.set(k, String(v)),
-    removeItem: (k) => map.delete(k),
-    clear: () => map.clear(),
-  };
-}
-
-beforeEach(() => {
-  globalThis.localStorage = memoryStorage();
-  globalThis.fetch = vi.fn(() => Promise.resolve({ ok: true, status: 202, json: async () => ({}) }));
-});
+// `firstAudio` was once marked when the TTS response resolved, which on the REST
+// path happens before the audio is queued, decoded and played, so speech looked
+// faster than it was. These tests pin the corrected meaning.
+import { describe, it, expect, vi } from 'vitest';
+import { createTurnTimer } from '../src/lib/latency.js';
 
 /** Marks in the order the REST path produces them, with a gap before playback. */
 function restTurn({ playbackGapMs = 0 } = {}) {
-  const turn = createTurnTimer('A', 't1a');
+  const turn = createTurnTimer();
   turn.mark('sttDone');
   turn.mark('ragDone');
   turn.mark('llmSend');
@@ -68,10 +51,10 @@ describe('to_first_audio_ms measures time to audible, not time to arrival', () =
   });
 });
 
-describe('the two arms stay comparable', () => {
+describe('text and speech stay comparable', () => {
   it('measures each arm at the participant-visible moment', () => {
     const s = restTurn({ playbackGapMs: 20 }).summary();
-    // Arm B's analogue. Text appears before speech does, so a like-for-like
+    // The text analogue. Text appears before speech does, so a like-for-like
     // comparison requires audio to be timed at playback, which is now the case.
     expect(s.to_first_token_ms).toBeLessThanOrEqual(s.to_first_audio_ms);
   });
@@ -79,7 +62,7 @@ describe('the two arms stay comparable', () => {
   it('omits audio timings entirely rather than reporting a misleading zero', () => {
     // Audio off: no TTS marks at all. The turn still carries to_first_token_ms,
     // so it is not lost from the dataset, just not counted as audio latency.
-    const turn = createTurnTimer('A', 't1a');
+    const turn = createTurnTimer();
     turn.mark('sttDone');
     turn.mark('llmSend');
     turn.mark('firstToken');
@@ -88,5 +71,35 @@ describe('the two arms stay comparable', () => {
     expect(s.playback_wait_ms).toBeUndefined();
     expect(s.tts_first_ms).toBeUndefined();
     expect(s.to_first_token_ms).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('finish', () => {
+  it('prints one [LATENCY SUMMARY] line that parse-latency.mjs can read', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const turn = createTurnTimer();
+    turn.mark('llmSend');
+    turn.mark('firstToken');
+    const s = turn.finish();
+    expect(log).toHaveBeenCalledTimes(1);
+    const line = log.mock.calls[0][0];
+    expect(line.startsWith('[LATENCY SUMMARY] ')).toBe(true);
+    expect(JSON.parse(line.slice('[LATENCY SUMMARY] '.length))).toEqual(s);
+    log.mockRestore();
+  });
+
+  it('prints nothing for a turn with no marks', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    expect(createTurnTimer().finish()).toEqual({});
+    expect(log).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
+
+  it('ignores a repeated mark of the same name', () => {
+    const turn = createTurnTimer();
+    turn.mark('firstToken');
+    const first = turn.summary().to_first_token_ms;
+    turn.mark('firstToken');
+    expect(turn.summary().to_first_token_ms).toBe(first);
   });
 });

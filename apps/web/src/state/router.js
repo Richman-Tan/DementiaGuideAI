@@ -3,22 +3,19 @@ import { useEffect, useState } from 'react';
 
 export const getPath = () => (location.hash || '#/').replace(/^#/, '') || '/';
 
-export function useRoute(onboarded, exemptFromOnboarding = false) {
+export function useRoute(onboarded) {
   const [path, setPath] = useState(getPath);
   useEffect(() => {
     const onHash = () => setPath(getPath());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
-  // Guard: /app/* requires completed onboarding — except during a study session.
-  // A participant arrives in a clean browser where `onboarded` is false, so
-  // without the exemption the first task drops them into the 12-step wizard with
-  // the time-on-task clock already running.
+  // Guard: /app/* requires completed onboarding.
   useEffect(() => {
-    if (path.startsWith('/app') && !onboarded && !exemptFromOnboarding) {
+    if (path.startsWith('/app') && !onboarded) {
       location.hash = '#/onboarding/1';
     }
-  }, [path, onboarded, exemptFromOnboarding]);
+  }, [path, onboarded]);
   return path;
 }
 

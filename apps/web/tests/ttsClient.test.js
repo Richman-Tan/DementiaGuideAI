@@ -1,24 +1,21 @@
 // The web TTS cascade (services/ttsClient.js): ElevenLabs with character
-// alignment first — direct with a personal key, or through the study proxy —
+// alignment first — direct with a personal key, or through the guest-code proxy —
 // then OpenAI tts-1 with no alignment (the renderer falls back to RMS lipsync).
-// Every ElevenLabs failure is a fallback the study counts, so each one must
-// emit the event and still return audio.
+// Every ElevenLabs failure must warn and still return audio.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { saveKeys } from '../src/state/keysStore.js';
-import { saveStudy } from '../src/study/studyStore.js';
+import { saveAccess } from '../src/state/accessStore.js';
 import { apiUrl } from '../src/services/apiBase.js';
 
 vi.mock('../src/services/openaiClient.js', () => ({
   openaiClient: { tts: vi.fn(async (text, voice) => `data:audio/mpeg;base64,OPENAI:${voice}`) },
 }));
-vi.mock('../src/study/events.js', () => ({ emit: vi.fn() }));
 vi.mock('@core/lipsync/createVisemeTimeline', () => ({
   createVisemeTimeline: vi.fn((alignment, opts) => ({ frames: ['f'], totalDuration: 1, alignment, opts })),
 }));
 
 const { tts } = await import('../src/services/ttsClient.js');
 const { openaiClient } = await import('../src/services/openaiClient.js');
-const { emit } = await import('../src/study/events.js');
 const { createVisemeTimeline } = await import('@core/lipsync/createVisemeTimeline');
 
 const ALIGNMENT = { characters: ['h', 'i'], character_start_times_seconds: [0, 0.1], character_end_times_seconds: [0.1, 0.2] };
@@ -41,7 +38,6 @@ beforeEach(() => {
   vi.stubGlobal('fetch', fetchMock);
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   openaiClient.tts.mockClear();
-  emit.mockClear();
   createVisemeTimeline.mockClear();
 });
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -87,13 +83,13 @@ describe('ElevenLabs direct (personal key)', () => {
   });
 });
 
-describe('ElevenLabs proxied (study session)', () => {
-  it('sends only text, voice and rate to the proxy with the study code', async () => {
-    saveStudy({ sessionId: '11111111-2222-3333-4444-555555555555', accessCode: 'study-access-code-0001' });
+describe('ElevenLabs proxied (guest code)', () => {
+  it('sends only text, voice and rate to the proxy with the guest code', async () => {
+    saveAccess('guest-access-code-0001');
     await tts('Hello', { elevenVoiceId: 'v1', speechRate: 0.65 });
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe(apiUrl('/api/eleven-tts'));
-    expect(init.headers).toEqual({ 'x-study-code': 'study-access-code-0001', 'Content-Type': 'application/json' });
+    expect(init.headers).toEqual({ 'x-study-code': 'guest-access-code-0001', 'Content-Type': 'application/json' });
     expect(JSON.parse(init.body)).toEqual({ text: 'Hello', voiceId: 'v1', speechRate: 0.65 });
   });
 });
@@ -101,37 +97,37 @@ describe('ElevenLabs proxied (study session)', () => {
 describe('fallback to OpenAI TTS', () => {
   beforeEach(() => saveKeys({ openai: 'sk-1', eleven: 'el-key', azure: '' }));
 
-  it('an HTTP error carries the provider’s message into the fallback event', async () => {
+  it('an HTTP error carries the provider’s message into the fallback warning', async () => {
     fetchMock.mockResolvedValueOnce({ ok: false, status: 401, text: async () => 'invalid_api_key' });
     const out = await tts('Hi', { openaiVoice: 'onyx' });
     expect(out).toEqual({ audio: 'data:audio/mpeg;base64,OPENAI:onyx', visemeTimeline: null });
-    expect(emit).toHaveBeenCalledWith('fallback', { kind: 'tts_openai', reason: 'ElevenLabs TTS error: invalid_api_key' });
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('ElevenLabs TTS error: invalid_api_key'));
     expect(console.warn).toHaveBeenCalledWith(expect.stringMatching(/elevenlabs failed: .*falling back to OpenAI TTS/));
   });
 
   it('an unreadable error body falls back to the status code', async () => {
     fetchMock.mockResolvedValueOnce({ ok: false, status: 502, text: async () => { throw new Error('stream'); } });
     await tts('Hi');
-    expect(emit).toHaveBeenCalledWith('fallback', { kind: 'tts_openai', reason: 'ElevenLabs TTS error: HTTP 502' });
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('ElevenLabs TTS error: HTTP 502'));
   });
 
   it('a response with no audio is a failure, not silence', async () => {
     fetchMock.mockResolvedValueOnce(okJson({ alignment: ALIGNMENT }));
     await tts('Hi');
-    expect(emit).toHaveBeenCalledWith('fallback', { kind: 'tts_openai', reason: 'ElevenLabs response missing audio_base64' });
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('ElevenLabs response missing audio_base64'));
     expect(openaiClient.tts).toHaveBeenCalledTimes(1);
   });
 
-  it('a network failure falls back and truncates the reason to 120 characters', async () => {
+  it('a network failure falls back', async () => {
     fetchMock.mockRejectedValueOnce(new Error('x'.repeat(200)));
-    await tts('Hi');
-    expect(emit.mock.calls[0][1].reason).toHaveLength(120);
+    const out = await tts('Hi');
+    expect(out.audio).toBe('data:audio/mpeg;base64,OPENAI:nova');
   });
 
   it('a non-Error rejection is still reported', async () => {
     fetchMock.mockRejectedValueOnce('boom');
     await tts('Hi');
-    expect(emit).toHaveBeenCalledWith('fallback', { kind: 'tts_openai', reason: 'boom' });
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('boom'));
   });
 });
 
@@ -154,7 +150,7 @@ describe('a key that disappears between the check and the request', () => {
     });
     const out = await tts('Hi');
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(emit).toHaveBeenCalledWith('fallback', { kind: 'tts_openai', reason: 'No ElevenLabs API key configured' });
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('No ElevenLabs API key configured'));
     expect(out.audio).toBe('data:audio/mpeg;base64,OPENAI:nova');
   });
 });
@@ -164,7 +160,6 @@ describe('OpenAI voice selection', () => {
     saveKeys({ openai: 'sk-1', eleven: '', azure: '' });
     await tts('Hi', { openaiVoice: 'shimmer' });
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(emit).not.toHaveBeenCalled();
     expect(openaiClient.tts).toHaveBeenCalledWith('Hi', 'shimmer');
   });
 

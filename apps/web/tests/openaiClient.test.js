@@ -7,7 +7,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Buffer } from 'node:buffer';
 import { saveKeys, loadKeys } from '../src/state/keysStore.js';
-import { saveStudy } from '../src/study/studyStore.js';
 import { saveAccess } from '../src/state/accessStore.js';
 import { apiUrl } from '../src/services/apiBase.js';
 import { buildSystemPrompt, buildUserContent } from '@core/rag/prompt';
@@ -15,13 +14,11 @@ import { CHAT_MODEL, EMBEDDING_MODEL, MIN_SIMILARITY, GENERATION_TEMPERATURE } f
 
 const fake = vi.hoisted(() => ({ rpc: vi.fn() }));
 vi.mock('../src/services/supabase.js', () => ({ supabase: { rpc: fake.rpc }, supabaseConfigured: true }));
-vi.mock('../src/study/events.js', () => ({ emit: vi.fn() }));
 
 const {
   openaiClient, OpenAIAuthError, OpenAIRateLimitError, StudyAccessError, StudyLimitError,
   mapSourcesToCitations, realGenerate,
 } = await import('../src/services/openaiClient.js');
-const { emit } = await import('../src/study/events.js');
 
 // ─── fakes ───────────────────────────────────────────────────────────────────
 function memoryStorage() {
@@ -84,7 +81,6 @@ beforeEach(() => {
   openaiClient._embedCache.clear();
   openaiClient._lastRequestAt = 0;
   fake.rpc.mockReset();
-  emit.mockClear();
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -93,7 +89,7 @@ afterEach(() => {
 });
 
 const withKey = () => saveKeys({ openai: 'sk-test-key-123', eleven: '', azure: '' });
-const withStudy = () => saveStudy({ sessionId: '11111111-2222-3333-4444-555555555555', accessCode: 'study-access-code-0001' });
+const withGuest = () => saveAccess('guest-access-code-0001');
 
 // ─── key API ─────────────────────────────────────────────────────────────────
 describe('API key surface (mobile parity)', () => {
@@ -109,8 +105,8 @@ describe('API key surface (mobile parity)', () => {
 
   it('hasApiKey: a real key, or any proxied credential, can reach the model', async () => {
     expect(await openaiClient.hasApiKey()).toBe(false);
-    withStudy();
-    expect(await openaiClient.hasApiKey()).toBe(true); // participant: no key of their own
+    withGuest();
+    expect(await openaiClient.hasApiKey()).toBe(true); // guest: no key of their own
     await openaiClient.saveApiKey('sk-long-enough-key');
     expect(await openaiClient.hasApiKey()).toBe(true);
   });
@@ -130,8 +126,8 @@ describe('HTTP status → error mapping', () => {
     fetchMock.mockResolvedValue(new Response('', { status: 401 }));
     await expect(embed()).rejects.toMatchObject({ name: 'OpenAIAuthError', message: 'Invalid API key' });
     saveKeys({ openai: '', eleven: '', azure: '' });
-    withStudy();
-    await expect(embed()).rejects.toMatchObject({ name: 'StudyAccessError', message: 'Study access code was not accepted' });
+    withGuest();
+    await expect(embed()).rejects.toMatchObject({ name: 'StudyAccessError', message: 'Access code was not accepted' });
   });
 
   it('429 is the provider’s rate limit unless the proxy says the daily cap was reached', async () => {
@@ -164,7 +160,7 @@ describe('HTTP status → error mapping', () => {
     fetchMock.mockResolvedValueOnce({ status: 500, ok: false, text: () => Promise.reject(new Error('x')) });
     await expect(embed()).rejects.toThrow('OpenAI error: HTTP 500');
     saveKeys({ openai: '', eleven: '', azure: '' });
-    withStudy();
+    withGuest();
     fetchMock.mockResolvedValueOnce(new Response('secret upstream detail', { status: 502 }));
     await expect(embed()).rejects.toThrow('OpenAI error: HTTP 502');
   });
@@ -172,7 +168,7 @@ describe('HTTP status → error mapping', () => {
 
 describe('_callOpenAI', () => {
   it('an explicitly passed key overrides the stored credentials (key-validation path)', async () => {
-    withStudy();
+    withGuest();
     fetchMock.mockResolvedValue(jsonResponse({ ok: 1 }));
     expect(await openaiClient._callOpenAI('/chat/completions', { x: 1 }, 'sk-explicit')).toEqual({ ok: 1 });
     const [url, init] = fetchMock.mock.calls[0];
@@ -309,39 +305,36 @@ describe('chatStream', () => {
   });
 
   it('maps a failed response through the shared status mapping', async () => {
-    withStudy();
+    withGuest();
     fetchMock.mockResolvedValue(new Response('', { status: 401 }));
     await expect(drain(openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })))
       .rejects.toBeInstanceOf(StudyAccessError);
     expect(fetchMock.mock.calls[0][0]).toBe(apiUrl('/api/chat'));
   });
 
-  it('retrieves itself when not given chunks, and records an empty result', async () => {
+  it('retrieves itself when not given chunks', async () => {
     withKey();
     fetchMock.mockResolvedValueOnce(embeddingResponse()).mockResolvedValueOnce(sseResponse([delta('ok')]));
     rpcReturns({ data: [], error: null });
     await drain(openaiClient.chatStream('q', [], null, { skipThrottle: true }));
     expect(fake.rpc).toHaveBeenCalledTimes(1);
-    expect(emit).toHaveBeenCalledWith('fallback', { kind: 'no_passages' });
   });
 
-  it('a retrieval failure degrades to a zero-passage answer and is recorded', async () => {
+  it('a retrieval failure degrades to a zero-passage answer and is logged', async () => {
     withKey();
     fetchMock.mockResolvedValueOnce(embeddingResponse()).mockResolvedValueOnce(sseResponse([delta('ok')]));
     rpcReturns({ data: null, error: { message: 'down' } });
     const pieces = await drain(openaiClient.chatStream('q', [], null, { skipThrottle: true }));
     expect(pieces).toEqual(['ok']);
-    expect(emit).toHaveBeenCalledWith('fallback', { kind: 'empty_retrieval', reason: 'Supabase search error: down' });
-    expect(emit).toHaveBeenCalledWith('fallback', { kind: 'no_passages' });
     expect(console.warn).toHaveBeenCalledWith(expect.stringMatching(/retrieval failed/));
   });
 
-  it('a non-Error retrieval rejection is still recorded', async () => {
+  it('a non-Error retrieval rejection is still logged', async () => {
     withKey();
     vi.spyOn(openaiClient, 'search').mockRejectedValueOnce('rpc gone');
     fetchMock.mockResolvedValueOnce(sseResponse([]));
     await drain(openaiClient.chatStream('q', [], null, { skipThrottle: true }));
-    expect(emit).toHaveBeenCalledWith('fallback', { kind: 'empty_retrieval', reason: 'rpc gone' });
+    expect(console.warn).toHaveBeenCalledWith(expect.stringMatching(/retrieval failed \(rpc gone\)/));
   });
 
   it('throttles back-to-back requests to one per 750 ms unless told to skip', async () => {
@@ -441,13 +434,13 @@ describe('tts', () => {
   });
 
   it('proxied: sends only voice and input (nova by default)', async () => {
-    withStudy();
+    withGuest();
     fetchMock.mockResolvedValue(new Response(new Uint8Array([1, 2, 3]), { status: 200 }));
     expect(await openaiClient.tts('Hi')).toBe('data:audio/mpeg;base64,AQID');
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe(apiUrl('/api/speech'));
     expect(JSON.parse(init.body)).toEqual({ voice: 'nova', input: 'Hi' });
-    expect(init.headers['x-study-code']).toBe('study-access-code-0001');
+    expect(init.headers['x-study-code']).toBe('guest-access-code-0001');
   });
 
   it('labels its failures as TTS errors', async () => {

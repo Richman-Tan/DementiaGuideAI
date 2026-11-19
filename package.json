@@ -74,11 +74,6 @@
     "lipsync:summarise": "node scripts/lipsync/summarise-testresults.mjs",
     "lipsync:g2p-ablation": "node scripts/lipsync/g2p-ablation.mjs",
     "brand:icons": "node scripts/brand/build-icons.js",
-    "study:export": "node scripts/study/export-study-data.mjs",
-    "study:export-feedback": "node scripts/study/export-feedback-data.mjs",
-    "study:analyse": "node scripts/study/analyse-study.mjs",
-    "study:safety": "node scripts/study/safety-scan-transcripts.mjs",
-    "study:figures": "python3 scripts/study/make-study-figures.py",
     "kb:ingest": "node scripts/ingest/ingest.mjs",
     "kb:ingest:dry": "node scripts/ingest/ingest.mjs --dry-run",
     "postinstall": "patch-package"

@@ -11,9 +11,7 @@ import { selectTtsMode, markTtsDegraded } from '../services/ttsModeWeb.js';
 import { startSttSession } from '../services/sttWeb.js';
 import { sttErrorPresentation } from './sttErrorCopy.js';
 import { getElevenKey } from '../state/keysStore.js';
-import { createTurnTimer } from '../study/latency.js';
-import { emit, newUuid } from '../study/events.js';
-import { currentArm, currentTaskId, transcriptFields } from '../study/studyStore.js';
+import { createTurnTimer } from '../lib/latency.js';
 import { mapSettingsToRag, speechRateFor } from '../state/mapSettingsToRag.js';
 import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
 import { createElevenLabsStream } from '@core/tts/elevenLabsStreamService';
@@ -23,9 +21,7 @@ import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
 import { detectSentiment } from '@core/sentiment/detectSentiment';
 import { createSentenceSplitter } from '@core/voice/sentenceTracker';
 import { stripMarkdownForSpeech } from '../lib/markdown.js';
-import { MODALITY_SPOKEN, MODALITY_TYPED } from '@core/study/studyConfig.mjs';
 import { credentialErrorCopy } from '../services/credentialErrorCopy.js';
-import { transportKind } from '../services/transport.js';
 
 const MAX_QUERY_CHARS = 1000;
 
@@ -99,18 +95,13 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
 
   // ─── Core conversation loop (producer/consumer, mobile parity) ─────────────
   //
-  // Options object rather than three trailing positionals: `modality` has to
-  // reach every event this turn emits, and a fourth optional positional is the
-  // kind of thing that gets passed in the wrong slot exactly once, silently, in
-  // a live session.
-  //
   // `userText` arrives trimmed and non-empty: each caller (stopAndTranscribe,
   // askText) normalises and checks it at its own boundary, where a blank can
   // still be answered properly. A blank check in here could only return early,
   // leaving the screen on "thinking" with nothing in flight.
   const processQuery = useCallback(async (
     userText,
-    { preRetrievedChunks = null, timer = null, modality = MODALITY_SPOKEN } = {},
+    { preRetrievedChunks = null, timer = null } = {},
   ) => {
     if (userText.length > MAX_QUERY_CHARS) userText = userText.slice(0, MAX_QUERY_CHARS);
 
@@ -120,19 +111,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     const token = beginTurn();
 
     const audioOn = settingsRef.current.audioResponses && !mutedRef.current;
-    const arm = currentArm();
-    const taskId = currentTaskId();
-    const turn = timer || createTurnTimer(arm, taskId);
-    // Emitted at submit, not at completion. Turn counts are derived from these:
-    // the completing `turn` event can land after task_end and would be missed.
-    //
-    // `modality` is on the START event as well as the completing one because the
-    // task-window turn count is built from turn_start alone — without it here,
-    // the count could not be split into spoken and typed.
-    // `avatar` is the resolved profile, not the stored setting — a mid-session
-    // Unity failure swaps the face and voice, and each turn records who it was.
-    emit('turn_start', { arm, taskId, modality, chars: userText.length, avatar: profile.id });
-
+    const turn = timer || createTurnTimer();
     // Shared async queue — also the fallback target for a mid-stream WS failure.
     const queue = { promises: [], done: false, notify: null };
     const wake = () => { const n = queue.notify; queue.notify = null; n?.(); };
@@ -311,38 +290,14 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           }
         }
       } finally {
-        // turnId joins a flagged answer (feedback protocol) to its `turn` event.
-        const turnId = newUuid();
         appendMessage({
           role: 'aria',
           text: fullText,
           citations: mapSourcesToCitations(citedSources),
           sources: citedSources,
           safety: false,
-          turnId,
         });
-        turn.finish({ modality, streaming: streamingActive && !streamFailed, aborted: token.aborted });
-        // Transcript capture for rubric scoring and the safety scan. Retrieved
-        // chunk ids travel with it so the analysis can check whether the two
-        // arms retrieved differently — speech recognition changes the query, so
-        // a divergence there would mean the study measured STT, not interface
-        // (docs/study/analysis-plan.md §7).
-        emit('turn', {
-          arm,
-          taskId,
-          turnId,
-          // Spoken or typed. The avatar screen keeps its message bar on purpose
-          // (a participant who finds speaking hard must have a way through), so
-          // an Arm A turn is not automatically a spoken one — and a typed turn
-          // scored as evidence about the voice interface would confound the
-          // headline comparison with no trace in the data.
-          modality,
-          avatar: profile.id,
-          // Withheld at source when the participant declined — see the chat arm.
-          ...transcriptFields({ question: userText, answer: fullText }),
-          sourceIds: (citedSources || []).map((c) => c.id ?? c.num ?? null),
-          aborted: token.aborted,
-        });
+        turn.finish();
         queue.done = true;
         wake();
       }
@@ -389,7 +344,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     } catch (err) {
       failed = true;
       console.error('[useVoiceConversation] processQuery error:', err);
-      setError(credentialErrorCopy(err, transportKind()) ?? err.message ?? 'Something went wrong. Please try again.');
+      setError(credentialErrorCopy(err) ?? err.message ?? 'Something went wrong. Please try again.');
     } finally {
       subtitleTimers.forEach(clearTimeout);
       try { ttsStream?.abort(); } catch { /* completed */ }
@@ -454,8 +409,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
           sttSessionRef.current = null;
           speculativeRef.current?.cancel();
           speculativeRef.current = null;
-          const { kind, copy } = sttErrorPresentation(err);
-          emit(kind, { arm: currentArm(), taskId: currentTaskId(), reason: String(err?.message ?? err).slice(0, 120) });
+          const { copy } = sttErrorPresentation(err);
           setError(copy);
           setVState('idle');
         },
@@ -464,10 +418,6 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       sttSessionRef.current = session;
       setVState('listening');
     } catch (err) {
-      // Same event kinds as the mid-session path: without them a participant
-      // whose mic never worked at all left no trace in the study data.
-      const { kind } = sttErrorPresentation(err);
-      emit(kind, { arm: currentArm(), taskId: currentTaskId(), reason: String(err?.message ?? err).slice(0, 120) });
       if (err?.code === 'permission-denied') {
         setError(`Microphone access is blocked — allow it in your browser settings to talk with ${profile.name}, or type your question below.`);
         return;
@@ -484,7 +434,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     setVState('thinking');
     setVDone(true);
 
-    const turn = createTurnTimer(currentArm(), currentTaskId());
+    const turn = createTurnTimer();
     try {
       const { transcript: heard } = await session.stop();
       turn.mark('sttDone');
@@ -494,7 +444,6 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
       // on "thinking". Today's providers already trim, so for them it is a no-op.
       const transcript = (heard ?? '').trim();
       if (!transcript) {
-        emit('stt_empty', { arm: currentArm(), taskId: currentTaskId() });
         speculativeRef.current?.cancel();
         speculativeRef.current = null;
         setError("I didn't catch that — try again a little closer to the microphone.");
@@ -510,7 +459,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
         if (spec.status === 'hit') preRetrievedChunks = spec.chunks;
       }
 
-      const completed = await processQuery(transcript, { preRetrievedChunks, timer: turn, modality: MODALITY_SPOKEN });
+      const completed = await processQuery(transcript, { preRetrievedChunks, timer: turn });
 
       // Hands-free: re-arm listening after a completed (not interrupted) reply.
       if (settingsRef.current.handsFree && completed) {
@@ -589,11 +538,6 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
   // Typed question through the same pipeline (the avatar screen's message
   // bar): barge-in if speaking, ignore while listening/thinking. The send
   // click is the AudioContext unlock gesture, same as the mic tap.
-  //
-  // Kept available during a study session rather than hidden in Arm A. Removing
-  // it would force speech on the participants least able to produce it, which is
-  // the opposite of what an accessibility study should do; the turn is tagged
-  // MODALITY_TYPED instead so the analysis can see it.
   const askText = useCallback(async (text) => {
     const t = (text ?? '').trim();
     if (!t) return;
@@ -601,7 +545,7 @@ export function useVoiceConversation({ enabled, avatar, settings, messages, appe
     setError(null);
     if (stateRef.current === 'speaking') stopAudio();
     avatar?.unlockAudio?.();
-    await processQuery(t, { modality: MODALITY_TYPED });
+    await processQuery(t);
   }, [avatar, processQuery, stopAudio]);
 
   return { vState, vTranscript, vDone, vSubtitle, micTap, askText, repeatLast, stop, error, clearError: () => setError(null) };

@@ -3,8 +3,6 @@ import { useSettings } from '../state/SettingsContext.jsx';
 import { useChat } from '../state/ChatContext.jsx';
 import { useUi } from '../state/UiContext.jsx';
 import { loadKeys, saveKeys as persistKeys, clearKeys as wipeKeys } from '../state/keysStore.js';
-import { useStudy } from '../study/StudyContext.jsx';
-import { inLiveStudy } from '../study/guards.js';
 import { useAuth } from '../state/AuthContext.jsx';
 import { navigate } from '../state/router.js';
 import { AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
@@ -110,15 +108,7 @@ export default function Settings() {
   const { settings, setSetting, effDark } = useSettings();
   const { clearHistory: wipeConversations, conversationId } = useChat();
   const { showToast, askConfirm } = useUi();
-  const study = useStudy();
   const auth = useAuth();
-  // A study participant reaches the model through the server-side proxy with an
-  // access code. Showing them an API-key form would be a confusing dead end.
-  const inStudy = Boolean(study?.active);
-  // The avatar is fixed for the tasks study, so every task is with the same one.
-  // Free use on the feedback round has no tasks, and trying both is fair game.
-  // Lifted when the session ends, which `inStudy` alone is not (see inLiveStudy).
-  const avatarFixed = inLiveStudy(study) && !study?.isFeedback;
   const [keys, setKeys] = useState(loadKeys);
   const [advOpen, setAdvOpen] = useState(false);
   // Re-renders when the Unity-build probe resolves (locks/unlocks the picker).
@@ -206,8 +196,8 @@ export default function Settings() {
               return (
                 <button
                   key={p.id}
-                  onClick={() => { if (!unityLocked && !avatarFixed) setSetting('avatarId', p.id); }}
-                  disabled={unityLocked || avatarFixed}
+                  onClick={() => { if (!unityLocked) setSetting('avatarId', p.id); }}
+                  disabled={unityLocked}
                   title={unityLocked ? 'Unity WebGL build not installed — see public/unity/README.md' : p.description}
                   style={{ minHeight: '44px', padding: '0 14px', borderRadius: '9px', border: 'none', cursor: unityLocked ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '.9rem', opacity: unityLocked ? 0.45 : 1, ...segStyle(on) }}
                 >
@@ -216,11 +206,6 @@ export default function Settings() {
               );
             })}
           </div>
-          {avatarFixed && (
-            <div style={{ width: '100%', color: 'var(--text2)', fontSize: '.85rem' }}>
-              {`Fixed for this study session, so every task is with ${effective.name}.`}
-            </div>
-          )}
           {storedLocked && (
             <div style={{ width: '100%', color: 'var(--text2)', fontSize: '.85rem' }}>
               {storedProfile.name} needs the Unity build — using {effective.name} meanwhile
@@ -245,19 +230,16 @@ export default function Settings() {
         <a href="#/privacy" style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', borderBottom: 'var(--bw) solid var(--border)', textDecoration: 'none', color: 'var(--text)' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Privacy Policy</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>How this app handles your information</span></span><span style={{ color: 'var(--text2)' }}>›</span></a>
         <button onClick={() => showToast(storageDetail)} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', borderBottom: 'var(--bw) solid var(--border)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Data Security</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>{storageSummary}</span></span><span style={{ color: 'var(--text2)' }}>ⓘ</span></button>
         <a href="#/disclaimer" style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', borderBottom: 'var(--bw) solid var(--border)', textDecoration: 'none', color: 'var(--text)' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Medical Disclaimer</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>{`What ${who} can and can't help with`}</span></span><span style={{ color: 'var(--text2)' }}>›</span></a>
-        {!inStudy && <button onClick={clearHistory} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Clear Conversation History</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>{savedToAccount ? 'Delete past conversations from your account and this device' : 'Delete past conversations from this device'}</span></span><span style={{ color: 'var(--text2)' }}>›</span></button>}
+        <button onClick={clearHistory} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '60px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>Clear Conversation History</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>{savedToAccount ? 'Delete past conversations from your account and this device' : 'Delete past conversations from this device'}</span></span><span style={{ color: 'var(--text2)' }}>›</span></button>
       </Card>
 
-      {!inStudy && <SectionTitle>Access code</SectionTitle>}
-      {!inStudy && (
+      <SectionTitle>Access code</SectionTitle>
       <Card>
         <p style={{ margin: '0 0 12px', color: 'var(--text2)', fontSize: '.92rem', lineHeight: 1.5 }}>{`If the DementiaGuide team gave you an access code, enter it here to talk with ${who} and get live answers. You don't need an API key.`}</p>
         <div style={{ paddingBottom: '16px' }}><AccessCodeForm /></div>
       </Card>
-      )}
 
-      {!inStudy && <SectionTitle>Advanced</SectionTitle>}
-      {!inStudy && (
+      <SectionTitle>Advanced</SectionTitle>
       <Card>
         <button onClick={() => setAdvOpen(!advOpen)} aria-expanded={advOpen} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '56px', padding: '12px 0', width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', color: 'var(--text)', fontSize: '1rem' }}><span style={{ flex: '1' }}><span style={{ display: 'block', fontWeight: '600' }}>API Keys</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>For developers — connect live services</span></span><span style={{ color: 'var(--text2)' }}>{advOpen ? '▾' : '▸'}</span></button>
         {advOpen && (
@@ -276,9 +258,8 @@ export default function Settings() {
           </div>
         )}
       </Card>
-      )}
 
-      {!inStudy && auth?.status === 'ready' && (
+      {auth?.status === 'ready' && (
         <>
           <SectionTitle>Your conversations</SectionTitle>
           <Card>

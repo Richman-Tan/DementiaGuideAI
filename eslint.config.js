@@ -94,6 +94,9 @@ module.exports = [
       '**/node_modules/**',
       '**/dist/**',
       '**/.expo/**',
+      // Git worktrees that coding agents create under `.claude/worktrees/` are
+      // whole copies of the repo; without this, `eslint .` lints every copy.
+      '.claude/**',
       // Python virtual environment for the E9 speech tooling (site-packages ship JS).
       '.venv/**',
       // DementiaBank data directory (git-ignored; never lint or read it here).

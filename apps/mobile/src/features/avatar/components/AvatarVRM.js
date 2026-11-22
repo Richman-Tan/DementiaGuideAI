@@ -1,4 +1,12 @@
-import React, { useRef, useEffect, useMemo, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, {
+  useRef,
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 
@@ -2155,282 +2163,289 @@ requestAnimationFrame(animate);
 </html>`;
 }
 
-export const AvatarVRM = forwardRef(({
-  modelUrl = DEFAULT_VRM_MODEL_URL,
-  backdropUrl = null,
-  width,
-  height,
-  isListening   = false,
-  isSpeaking    = false,
-  isThinking    = false,
-  isEmpathetic  = false,
-  isWaiting     = false,
-  style,
-}, ref) => {
-  const webRef = useRef(null);
-  const stateRef = useRef('idle');
-  const audioEndResolveRef = useRef(null);
-  const audioStartCbRef = useRef(null);
+export const AvatarVRM = forwardRef(
+  (
+    {
+      modelUrl = DEFAULT_VRM_MODEL_URL,
+      backdropUrl = null,
+      width,
+      height,
+      isListening = false,
+      isSpeaking = false,
+      isThinking = false,
+      isEmpathetic = false,
+      isWaiting = false,
+      style,
+    },
+    ref
+  ) => {
+    const webRef = useRef(null);
+    const stateRef = useRef('idle');
+    const audioEndResolveRef = useRef(null);
+    const audioStartCbRef = useRef(null);
 
-  const [webKey, setWebKey] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+    const [webKey, setWebKey] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
-  useImperativeHandle(ref, () => ({
-    /**
-     * Play an audio segment and animate the avatar's mouth.
-     *
-     * @param {string|{audio:string, visemeTimeline:object|null}} payload
-     *   - Plain string: data URI → uses RMS-based fallback (legacy / OpenAI TTS).
-     *   - Object { audio, visemeTimeline }:
-     *       audio          — data:audio/mpeg;base64,... URI
-     *       visemeTimeline — { frames, totalDuration } from ElevenLabs alignment,
-     *                        or null to fall back to RMS mode automatically.
-     *
-     * Returns a Promise that resolves when the audio segment finishes playing.
-     *
-     * How the audio queue works (in useAvatarConversation):
-     *   Segments are generated concurrently (each sentence fires TTS immediately),
-     *   but playAudio() is awaited in order so the avatar speaks sentence-by-sentence
-     *   while later segments continue generating in the background.
-     */
-    playAudio: (payload) => new Promise(resolve => {
-      audioEndResolveRef.current = resolve;
+    useImperativeHandle(ref, () => ({
+      /**
+       * Play an audio segment and animate the avatar's mouth.
+       *
+       * @param {string|{audio:string, visemeTimeline:object|null}} payload
+       *   - Plain string: data URI → uses RMS-based fallback (legacy / OpenAI TTS).
+       *   - Object { audio, visemeTimeline }:
+       *       audio          — data:audio/mpeg;base64,... URI
+       *       visemeTimeline — { frames, totalDuration } from ElevenLabs alignment,
+       *                        or null to fall back to RMS mode automatically.
+       *
+       * Returns a Promise that resolves when the audio segment finishes playing.
+       *
+       * How the audio queue works (in useAvatarConversation):
+       *   Segments are generated concurrently (each sentence fires TTS immediately),
+       *   but playAudio() is awaited in order so the avatar speaks sentence-by-sentence
+       *   while later segments continue generating in the background.
+       */
+      playAudio: (payload) =>
+        new Promise((resolve) => {
+          audioEndResolveRef.current = resolve;
 
-      if (typeof payload === 'string') {
-        // Legacy / fallback: plain data URI → RMS lip sync
+          if (typeof payload === 'string') {
+            // Legacy / fallback: plain data URI → RMS lip sync
+            webRef.current?.injectJavaScript(
+              `window.playAudioWithLipSync(${JSON.stringify(payload)});true;`
+            );
+          } else {
+            // ElevenLabs path: pass audio + viseme timeline + sentence emotion into the WebView
+            const { audio, visemeTimeline, emotion } = payload;
+            if (visemeTimeline) {
+              webRef.current?.injectJavaScript(
+                `window.playAudioWithVisemeTimeline(${JSON.stringify(audio)}, ${JSON.stringify(visemeTimeline)}, ${JSON.stringify(emotion || 'neutral')});true;`
+              );
+            } else {
+              // Object payload but no timeline — use RMS fallback with the audio URI
+              webRef.current?.injectJavaScript(
+                `window.playAudioWithLipSync(${JSON.stringify(audio)});true;`
+              );
+            }
+          }
+        }),
+      stopAudio: () => {
+        // Resolve any in-flight playAudio/endStreamingPlayback promise so the
+        // caller's await doesn't dangle forever after a barge-in.
+        const resolve = audioEndResolveRef.current;
+        audioEndResolveRef.current = null;
+        audioStartCbRef.current = null;
+        webRef.current?.injectJavaScript(`window.stopAudioLipSync();true;`);
+        resolve?.();
+      },
+      setOnAudioStart: (cb) => {
+        audioStartCbRef.current = cb;
+      },
+
+      // ── Streaming playback (ElevenLabs WebSocket pipeline) ──────────────────
+      // Feature-detected by the hook via this flag; UnityAvatarBridge leaves it
+      // undefined so Unity profiles keep the whole-segment path.
+      supportsStreamingAudio: true,
+      /** Begin a streaming session. Chunks follow via appendAudioChunk. */
+      startStreamingPlayback: (sessionId, sampleRate, emotion) => {
         webRef.current?.injectJavaScript(
-          `window.playAudioWithLipSync(${JSON.stringify(payload)});true;`
+          `window.startStreamingPlayback(${JSON.stringify(sessionId)}, ${JSON.stringify(sampleRate)}, ${JSON.stringify(emotion || 'neutral')});true;`
         );
-      } else {
-        // ElevenLabs path: pass audio + viseme timeline + sentence emotion into the WebView
-        const { audio, visemeTimeline, emotion } = payload;
-        if (visemeTimeline) {
+      },
+      /** Append a PCM chunk (base64) + viseme frames in absolute stream time. */
+      appendAudioChunk: (sessionId, base64Pcm, visemeFrames) => {
+        webRef.current?.injectJavaScript(
+          `window.appendAudioChunk(${JSON.stringify(sessionId)}, ${JSON.stringify(base64Pcm)}, ${JSON.stringify(visemeFrames ?? [])});true;`
+        );
+      },
+      /** No more chunks: resolves when the last scheduled chunk finishes. */
+      endStreamingPlayback: (sessionId) =>
+        new Promise((resolve) => {
+          audioEndResolveRef.current = resolve;
           webRef.current?.injectJavaScript(
-            `window.playAudioWithVisemeTimeline(${JSON.stringify(audio)}, ${JSON.stringify(visemeTimeline)}, ${JSON.stringify(emotion || 'neutral')});true;`
+            `window.endStreamingPlayback(${JSON.stringify(sessionId)});true;`
           );
-        } else {
-          // Object payload but no timeline — use RMS fallback with the audio URI
-          webRef.current?.injectJavaScript(
-            `window.playAudioWithLipSync(${JSON.stringify(audio)});true;`
-          );
-        }
-      }
-    }),
-    stopAudio: () => {
-      // Resolve any in-flight playAudio/endStreamingPlayback promise so the
-      // caller's await doesn't dangle forever after a barge-in.
-      const resolve = audioEndResolveRef.current;
-      audioEndResolveRef.current = null;
-      audioStartCbRef.current = null;
-      webRef.current?.injectJavaScript(`window.stopAudioLipSync();true;`);
-      resolve?.();
-    },
-    setOnAudioStart: (cb) => { audioStartCbRef.current = cb; },
+        }),
+      /** Update the speaking emotion mid-stream (per-sentence, subtitle-synced). */
+      setSpeechEmotion: (emotion) => {
+        webRef.current?.injectJavaScript(
+          `window.setSpeechEmotion(${JSON.stringify(emotion || 'neutral')});true;`
+        );
+      },
+      /**
+       * Toggle the developer viseme overlay inside the WebView.
+       * Shows current active viseme, per-channel weights, and audio timing.
+       * Usage: avatarRef.current.setDebugMode(true)
+       */
+      setDebugMode: (on) => {
+        webRef.current?.injectJavaScript(`window.setDebugMode(${on ? 'true' : 'false'});true;`);
+      },
+    }));
 
-    // ── Streaming playback (ElevenLabs WebSocket pipeline) ──────────────────
-    // Feature-detected by the hook via this flag; UnityAvatarBridge leaves it
-    // undefined so Unity profiles keep the whole-segment path.
-    supportsStreamingAudio: true,
-    /** Begin a streaming session. Chunks follow via appendAudioChunk. */
-    startStreamingPlayback: (sessionId, sampleRate, emotion) => {
-      webRef.current?.injectJavaScript(
-        `window.startStreamingPlayback(${JSON.stringify(sessionId)}, ${JSON.stringify(sampleRate)}, ${JSON.stringify(emotion || 'neutral')});true;`
-      );
-    },
-    /** Append a PCM chunk (base64) + viseme frames in absolute stream time. */
-    appendAudioChunk: (sessionId, base64Pcm, visemeFrames) => {
-      webRef.current?.injectJavaScript(
-        `window.appendAudioChunk(${JSON.stringify(sessionId)}, ${JSON.stringify(base64Pcm)}, ${JSON.stringify(visemeFrames ?? [])});true;`
-      );
-    },
-    /** No more chunks: resolves when the last scheduled chunk finishes. */
-    endStreamingPlayback: (sessionId) => new Promise(resolve => {
-      audioEndResolveRef.current = resolve;
-      webRef.current?.injectJavaScript(
-        `window.endStreamingPlayback(${JSON.stringify(sessionId)});true;`
-      );
-    }),
-    /** Update the speaking emotion mid-stream (per-sentence, subtitle-synced). */
-    setSpeechEmotion: (emotion) => {
-      webRef.current?.injectJavaScript(
-        `window.setSpeechEmotion(${JSON.stringify(emotion || 'neutral')});true;`
-      );
-    },
-    /**
-     * Toggle the developer viseme overlay inside the WebView.
-     * Shows current active viseme, per-channel weights, and audio timing.
-     * Usage: avatarRef.current.setDebugMode(true)
-     */
-    setDebugMode: (on) => {
-      webRef.current?.injectJavaScript(`window.setDebugMode(${on ? 'true' : 'false'});true;`);
-    },
-  }));
+    const source = useMemo(
+      () => ({
+        html: buildHTML(modelUrl, backdropUrl),
+        baseUrl: 'https://localhost/',
+      }),
+      [modelUrl, backdropUrl]
+    );
 
-  const source = useMemo(
-    () => ({
-      html: buildHTML(modelUrl, backdropUrl),
-      baseUrl: 'https://localhost/',
-    }),
-    [modelUrl, backdropUrl]
-  );
+    const recoverWebView = useCallback((reason) => {
+      console.log('[AvatarVRM] Recovering WebView:', reason);
+      setLoading(true);
+      setError(false);
+      setWebKey((prev) => prev + 1);
+    }, []);
 
-  const recoverWebView = useCallback((reason) => {
-    console.log('[AvatarVRM] Recovering WebView:', reason);
-    setLoading(true);
-    setError(false);
-    setWebKey((prev) => prev + 1);
-  }, []);
+    useEffect(() => {
+      const next = isSpeaking
+        ? 'speaking'
+        : isThinking
+          ? 'thinking'
+          : isEmpathetic
+            ? 'empathy'
+            : isListening
+              ? 'listening'
+              : isWaiting
+                ? 'waiting'
+                : 'idle';
 
-  useEffect(() => {
-    const next = isSpeaking   ? 'speaking'
-               : isThinking   ? 'thinking'
-               : isEmpathetic ? 'empathy'
-               : isListening  ? 'listening'
-               : isWaiting    ? 'waiting'
-               : 'idle';
+      if (next === stateRef.current) return;
 
-    if (next === stateRef.current) return;
+      stateRef.current = next;
 
-    stateRef.current = next;
-
-    webRef.current?.injectJavaScript(`
+      webRef.current?.injectJavaScript(`
       if (window.setAvatarState) {
         window.setAvatarState('${next}');
       }
       true;
     `);
-  }, [isListening, isSpeaking, isThinking, isEmpathetic, isWaiting]);
+    }, [isListening, isSpeaking, isThinking, isEmpathetic, isWaiting]);
 
-  const handleMessage = useCallback(
-    (event) => {
-      console.log('[AvatarVRM] message:', event.nativeEvent.data);
+    const handleMessage = useCallback(
+      (event) => {
+        console.log('[AvatarVRM] message:', event.nativeEvent.data);
 
-      try {
-        const data = JSON.parse(event.nativeEvent.data);
+        try {
+          const data = JSON.parse(event.nativeEvent.data);
 
-        if (data.type === 'loaded') {
-          setLoading(false);
-          setError(false);
-        }
-
-        if (data.type === 'error') {
-          setLoading(false);
-          setError(true);
-        }
-
-        if (data.type === 'context_lost') {
-          recoverWebView('webgl-context-lost');
-        }
-
-        if (data.type === 'debug') {
-          console.log('[AvatarVRM]', data.message);
-        }
-
-        if (data.type === 'audioStart') {
-          const cb = audioStartCbRef.current;
-          audioStartCbRef.current = null;
-          cb?.();
-        }
-
-        if (data.type === 'audioEnd') {
-          const resolve = audioEndResolveRef.current;
-          audioEndResolveRef.current = null;
-          resolve?.();
-        }
-      } catch (e) {
-        console.log('[AvatarVRM] Failed to parse message:', e);
-      }
-    },
-    [recoverWebView]
-  );
-
-  const sizeStyle =
-    width != null || height != null
-      ? {
-          width: width ?? 300,
-          height: height ?? 420,
-        }
-      : {};
-
-  return (
-    <View style={[sizeStyle, styles.container, style]}>
-      <WebView
-        key={webKey}
-        ref={webRef}
-        source={source}
-        style={styles.webview}
-        backgroundColor="#100C1E"
-        containerStyle={styles.webviewContainer}
-        onLoadStart={() => {
-          setLoading(true);
-          setError(false);
-        }}
-        onLoadEnd={() => {
-          console.log('[AvatarVRM] WebView load ended');
-        }}
-        scrollEnabled={false}
-        bounces={false}
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-        javaScriptEnabled
-        originWhitelist={['*']}
-        allowFileAccess
-        domStorageEnabled
-        mixedContentMode="always"
-        androidLayerType="hardware"
-        allowsInlineMediaPlayback
-        mediaPlaybackRequiresUserAction={false}
-        onNavigationStateChange={(navState) => {
-          console.log(
-            '[AvatarVRM] nav',
-            navState.url,
-            'loading=',
-            navState.loading
-          );
-        }}
-        onShouldStartLoadWithRequest={(request) => {
-          const url = request?.url ?? '';
-
-          const allow =
-            url.startsWith('about:blank') ||
-            url.startsWith('https://localhost/') ||
-            url.startsWith('https://') ||
-            url.startsWith('http://') ||
-            url.startsWith('blob:') ||
-            url.startsWith('data:');
-
-          if (!allow) {
-            console.log('[AvatarVRM] Blocked navigation:', url);
+          if (data.type === 'loaded') {
+            setLoading(false);
+            setError(false);
           }
 
-          return allow;
-        }}
-        onMessage={handleMessage}
-        onContentProcessDidTerminate={() =>
-          recoverWebView('ios-content-process-terminated')
-        }
-        onRenderProcessGone={() => recoverWebView('android-render-process-gone')}
-        onError={(e) => {
-          console.log('[AvatarVRM] WebView error', e.nativeEvent);
-          setLoading(false);
-          setError(true);
-        }}
-        onHttpError={(e) => {
-          console.log('[AvatarVRM] HTTP error', e.nativeEvent.statusCode);
-          setLoading(false);
-          setError(true);
-        }}
-      />
+          if (data.type === 'error') {
+            setLoading(false);
+            setError(true);
+          }
 
-      {loading && !error && (
-        <View pointerEvents="none" style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="rgba(255,255,255,0.7)" />
-        </View>
-      )}
-    </View>
-  );
-});
+          if (data.type === 'context_lost') {
+            recoverWebView('webgl-context-lost');
+          }
+
+          if (data.type === 'debug') {
+            console.log('[AvatarVRM]', data.message);
+          }
+
+          if (data.type === 'audioStart') {
+            const cb = audioStartCbRef.current;
+            audioStartCbRef.current = null;
+            cb?.();
+          }
+
+          if (data.type === 'audioEnd') {
+            const resolve = audioEndResolveRef.current;
+            audioEndResolveRef.current = null;
+            resolve?.();
+          }
+        } catch (e) {
+          console.log('[AvatarVRM] Failed to parse message:', e);
+        }
+      },
+      [recoverWebView]
+    );
+
+    const sizeStyle =
+      width != null || height != null
+        ? {
+            width: width ?? 300,
+            height: height ?? 420,
+          }
+        : {};
+
+    return (
+      <View style={[sizeStyle, styles.container, style]}>
+        <WebView
+          key={webKey}
+          ref={webRef}
+          source={source}
+          style={styles.webview}
+          backgroundColor="#100C1E"
+          containerStyle={styles.webviewContainer}
+          onLoadStart={() => {
+            setLoading(true);
+            setError(false);
+          }}
+          onLoadEnd={() => {
+            console.log('[AvatarVRM] WebView load ended');
+          }}
+          scrollEnabled={false}
+          bounces={false}
+          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+          javaScriptEnabled
+          originWhitelist={['*']}
+          allowFileAccess
+          domStorageEnabled
+          mixedContentMode="always"
+          androidLayerType="hardware"
+          allowsInlineMediaPlayback
+          mediaPlaybackRequiresUserAction={false}
+          onNavigationStateChange={(navState) => {
+            console.log('[AvatarVRM] nav', navState.url, 'loading=', navState.loading);
+          }}
+          onShouldStartLoadWithRequest={(request) => {
+            const url = request?.url ?? '';
+
+            const allow =
+              url.startsWith('about:blank') ||
+              url.startsWith('https://localhost/') ||
+              url.startsWith('https://') ||
+              url.startsWith('http://') ||
+              url.startsWith('blob:') ||
+              url.startsWith('data:');
+
+            if (!allow) {
+              console.log('[AvatarVRM] Blocked navigation:', url);
+            }
+
+            return allow;
+          }}
+          onMessage={handleMessage}
+          onContentProcessDidTerminate={() => recoverWebView('ios-content-process-terminated')}
+          onRenderProcessGone={() => recoverWebView('android-render-process-gone')}
+          onError={(e) => {
+            console.log('[AvatarVRM] WebView error', e.nativeEvent);
+            setLoading(false);
+            setError(true);
+          }}
+          onHttpError={(e) => {
+            console.log('[AvatarVRM] HTTP error', e.nativeEvent.statusCode);
+            setLoading(false);
+            setError(true);
+          }}
+        />
+
+        {loading && !error && (
+          <View pointerEvents="none" style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="rgba(255,255,255,0.7)" />
+          </View>
+        )}
+      </View>
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   container: {

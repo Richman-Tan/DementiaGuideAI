@@ -9,7 +9,8 @@ import BrandMark from '../src/components/BrandMark.jsx';
 import { MARK, MARK_REVERSED, TILE, markBounds, markViewBox } from '@core/brand/mark';
 
 const html = (props) => renderToStaticMarkup(React.createElement(BrandMark, props));
-const attr = (markup, tag, name) => markup.match(new RegExp(`<${tag}[^>]*\\s${name}="([^"]*)"`))?.[1];
+const attr = (markup, tag, name) =>
+  markup.match(new RegExp(`<${tag}[^>]*\\s${name}="([^"]*)"`))?.[1];
 
 describe('the bare mark', () => {
   it('is a labelled image tinted from the theme, sized to the mark’s own bounds', () => {

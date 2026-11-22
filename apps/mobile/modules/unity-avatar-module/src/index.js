@@ -28,9 +28,10 @@ function resolveNativeModule() {
   } catch (e) {
     console.warn(
       `[UnityAvatarModule] native module unavailable (${e.message}) — Unity avatar disabled ` +
-      '(iOS simulator build, or Android build without the Unity android-export?)'
+        '(iOS simulator build, or Android build without the Unity android-export?)'
     );
-    const warnOnce = () => console.warn('[UnityAvatarModule] call ignored — native module unavailable');
+    const warnOnce = () =>
+      console.warn('[UnityAvatarModule] call ignored — native module unavailable');
     return {
       initialize: async () => warnOnce(),
       playAudio: async () => warnOnce(),

@@ -12,7 +12,13 @@ import { useUnityLoadState } from './useUnityLoadState.js';
 import { getUnityAvatar } from './UnityAvatarController.js';
 import { AvatarLoadProgress } from '../AvatarLoadProgress.jsx';
 
-export function UnityAvatarMount({ characterId, name = 'your avatar', compact = false, state = 'idle', children }) {
+export function UnityAvatarMount({
+  characterId,
+  name = 'your avatar',
+  compact = false,
+  state = 'idle',
+  children,
+}) {
   const hostRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
@@ -50,17 +56,53 @@ export function UnityAvatarMount({ characterId, name = 'your avatar', compact = 
     if (ready) getUnityAvatar(characterId)?.setAvatarState(state);
   }, [ready, characterId, state]);
 
-  const showProgress = !ready && !unavailable && (phase === 'downloading' || phase === 'preparing' || phase === 'failed');
+  const showProgress =
+    !ready &&
+    !unavailable &&
+    (phase === 'downloading' || phase === 'preparing' || phase === 'failed');
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit', overflow: 'hidden' }}>
-      <div ref={hostRef} style={{ position: 'absolute', inset: 0, opacity: ready ? 1 : 0, transition: 'opacity .5s' }} />
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        borderRadius: 'inherit',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        ref={hostRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: ready ? 1 : 0,
+          transition: 'opacity .5s',
+        }}
+      />
       {showProgress && <AvatarLoadProgress phase={phase} pct={pct} name={name} compact={compact} />}
       {!ready && !showProgress && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+        >
           {children}
           {unavailable && (
-            <div style={{ fontSize: '.75rem', color: 'var(--text2)', textAlign: 'center', padding: '0 12px' }}>
+            <div
+              style={{
+                fontSize: '.75rem',
+                color: 'var(--text2)',
+                textAlign: 'center',
+                padding: '0 12px',
+              }}
+            >
               The 3D view isn't available right now. {name} can still talk with you.
             </div>
           )}

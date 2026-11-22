@@ -24,7 +24,15 @@ const { mergeContents } = require('@expo/config-plugins/build/utils/generateCode
 // podspec here, and let CocoaPods do all the Xcode wiring via `pod install`.
 // Rebuild this folder's contents whenever Unity-side scripts/assets/scene
 // change — see the Phase 5 plan for the exact rebuild steps.
-const UNITY_LIBRARY_SOURCE_DIR = path.join(__dirname, '..', '..', '..', 'unity-avatar', 'UnityAvatarProject', 'UnityLibrary');
+const UNITY_LIBRARY_SOURCE_DIR = path.join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  'unity-avatar',
+  'UnityAvatarProject',
+  'UnityLibrary'
+);
 const UNITY_LIBRARY_DIR_NAME = 'UnityLibrary';
 
 // Android sibling of the committed iOS UnityLibrary/: the Gradle project that
@@ -33,14 +41,29 @@ const UNITY_LIBRARY_DIR_NAME = 'UnityLibrary';
 // ios/ for CocoaPods), Gradle supports out-of-tree modules via projectDir —
 // so the Android mods POINT at the export instead of copying ~1.5 GB into
 // android/ on every prebuild.
-const ANDROID_EXPORT_SOURCE_DIR = path.join(__dirname, '..', '..', '..', 'unity-avatar', 'UnityAvatarProject', 'android-export');
+const ANDROID_EXPORT_SOURCE_DIR = path.join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  'unity-avatar',
+  'UnityAvatarProject',
+  'android-export'
+);
 const ANDROID_UNITY_LIBRARY_DIR = path.join(ANDROID_EXPORT_SOURCE_DIR, 'unityLibrary');
 
 // Unity's exported launcher marks these APK entries uncompressed so il2cpp can
 // mmap them straight out of the APK. Streaming assets merge into the APP's
 // APK (unityLibrary is a library module), so the policy must be replicated on
 // the app module — a compressed .resS breaks Unity asset loading outright.
-const UNITY_NO_COMPRESS_EXTENSIONS = ['.unity3d', '.ress', '.resource', '.obb', '.bundle', '.unityexp'];
+const UNITY_NO_COMPRESS_EXTENSIONS = [
+  '.unity3d',
+  '.ress',
+  '.resource',
+  '.obb',
+  '.bundle',
+  '.unityexp',
+];
 
 // The committed UnityFramework.framework is a DEVICE slice only — it is built
 // with `xcodebuild -sdk iphoneos` (see the note above), so `lipo -info` reports
@@ -66,15 +89,15 @@ function iosUnityEnabled(modName) {
   if (IOS_UNITY_DISABLED) {
     console.warn(
       `[withUnityFramework] EXPO_UNITY_AVATAR=0 — skipping ${modName}. ` +
-      'The build will use the Three.js WebView avatar instead of Unity.'
+        'The build will use the Three.js WebView avatar instead of Unity.'
     );
     return false;
   }
   if (!iosExportExists()) {
     console.warn(
       `[withUnityFramework] No committed UnityLibrary at ${UNITY_LIBRARY_SOURCE_DIR} — ` +
-      `skipping ${modName} this prebuild. git-lfs pull the submodule, or set ` +
-      'EXPO_UNITY_AVATAR=0 to build without Unity deliberately.'
+        `skipping ${modName} this prebuild. git-lfs pull the submodule, or set ` +
+        'EXPO_UNITY_AVATAR=0 to build without Unity deliberately.'
     );
     return false;
   }
@@ -88,8 +111,8 @@ function androidExportExists() {
 function warnNoAndroidExport(modName) {
   console.warn(
     `[withUnityFramework] No Unity Android export at ${ANDROID_UNITY_LIBRARY_DIR} — ` +
-    `skipping ${modName} this prebuild. Run "Tools → UaaL → Export Android" in Unity ` +
-    '(see UaalExportBuildAndroid.cs) or git-lfs pull the committed export.'
+      `skipping ${modName} this prebuild. Run "Tools → UaaL → Export Android" in Unity ` +
+      '(see UaalExportBuildAndroid.cs) or git-lfs pull the committed export.'
   );
 }
 
@@ -111,7 +134,11 @@ function readExportUnityProperties() {
     const eq = trimmed.indexOf('=');
     if (eq <= 0) continue;
     const key = trimmed.slice(0, eq);
-    if (key.startsWith('unity.') || key === 'unityStreamingAssets' || key === 'unityTemplateVersion') {
+    if (
+      key.startsWith('unity.') ||
+      key === 'unityStreamingAssets' ||
+      key === 'unityTemplateVersion'
+    ) {
       result[key] = trimmed.slice(eq + 1);
     }
   }
@@ -185,7 +212,9 @@ function withUnityLibraryCopy(config) {
         try {
           execFileSync('plutil', ['-convert', 'xml1', fwInfoPlist]);
         } catch (e) {
-          console.warn(`[withUnityFramework] Could not convert ${fwInfoPlist} to XML: ${e.message}`);
+          console.warn(
+            `[withUnityFramework] Could not convert ${fwInfoPlist} to XML: ${e.message}`
+          );
         }
       }
       return config;
@@ -215,19 +244,14 @@ function withUnityDataCopyPhase(config) {
     const mainTargetUuid = project.getFirstTarget().uuid;
 
     const copyPhaseName = 'Copy Unity Data';
-    const hasCopyPhase = project.buildPhaseObject('PBXShellScriptBuildPhase', copyPhaseName, mainTargetUuid) != null;
+    const hasCopyPhase =
+      project.buildPhaseObject('PBXShellScriptBuildPhase', copyPhaseName, mainTargetUuid) != null;
     if (!hasCopyPhase) {
-      project.addBuildPhase(
-        [],
-        'PBXShellScriptBuildPhase',
-        copyPhaseName,
-        mainTargetUuid,
-        {
-          shellPath: '/bin/sh',
-          shellScript:
-            'ditto "${SRCROOT}/UnityLibrary/Data" "${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Data"',
-        }
-      );
+      project.addBuildPhase([], 'PBXShellScriptBuildPhase', copyPhaseName, mainTargetUuid, {
+        shellPath: '/bin/sh',
+        shellScript:
+          'ditto "${SRCROOT}/UnityLibrary/Data" "${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Data"',
+      });
     }
     return config;
   });
@@ -279,7 +303,9 @@ function withUnityAppDelegateLifecycle(config) {
       return config;
     }
     if (config.modResults.language !== 'swift') {
-      console.warn('[withUnityFramework] AppDelegate is not Swift — skipping lifecycle forwarding mod.');
+      console.warn(
+        '[withUnityFramework] AppDelegate is not Swift — skipping lifecycle forwarding mod.'
+      );
       return config;
     }
     if (config.modResults.contents.includes('unity-lifecycle-forward')) {
@@ -327,7 +353,8 @@ function withUnityAppDelegateLifecycle(config) {
       // new methods as class-body siblings — offset 1 (verified via a real
       // build) instead nests them inside that method's body, which fails to
       // compile since local funcs can't have `override`/`public`.
-      anchor: /return super\.application\(application, continue: userActivity, restorationHandler: restorationHandler\) \|\| result/,
+      anchor:
+        /return super\.application\(application, continue: userActivity, restorationHandler: restorationHandler\) \|\| result/,
       offset: 2,
       comment: '//',
     }).contents;
@@ -437,7 +464,9 @@ function withUnityGradleProperties(config) {
     }
 
     const setProperty = (key, value) => {
-      const existing = config.modResults.find((item) => item.type === 'property' && item.key === key);
+      const existing = config.modResults.find(
+        (item) => item.type === 'property' && item.key === key
+      );
       if (existing) {
         existing.value = value;
       } else {
@@ -485,7 +514,10 @@ function withUnityAndroidManifest(config) {
     // (conflicts with Expo's "false" — merger hard-errors without a replace)
     // and appCategory="game" (silently merges; wrong for a health app).
     const mergeToolsAttr = (attr, value) => {
-      const existing = (application.$[attr] || '').split(',').map((s) => s.trim()).filter(Boolean);
+      const existing = (application.$[attr] || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
       if (!existing.includes(value)) existing.push(value);
       application.$[attr] = existing.join(',');
     };

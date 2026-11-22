@@ -15,7 +15,9 @@ async function recordProxyCalls(page) {
 }
 
 test.describe('guest access code (mocked providers)', () => {
-  test('(a) a code entered in Settings turns on live answers through the proxy', async ({ page }) => {
+  test('(a) a code entered in Settings turns on live answers through the proxy', async ({
+    page,
+  }) => {
     await mockProviders(page);
     const seen = await recordProxyCalls(page);
     await seedStorage(page, { keys: false });
@@ -31,7 +33,9 @@ test.describe('guest access code (mocked providers)', () => {
     expect(seen.chatCodes.filter(Boolean)).toContain(CODE);
   });
 
-  test('(b) the keyless voice setup card accepts a code and gives way to the conversation', async ({ page }) => {
+  test('(b) the keyless voice setup card accepts a code and gives way to the conversation', async ({
+    page,
+  }) => {
     await mockProviders(page);
     await seedStorage(page, { keys: false });
     await page.goto('/#/app/voice');
@@ -43,7 +47,13 @@ test.describe('guest access code (mocked providers)', () => {
 
   test('(c) a refused code is not stored and says so', async ({ page }) => {
     await mockProviders(page);
-    await page.route('**/api/speech', (route) => route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"invalid or missing study access code"}' }));
+    await page.route('**/api/speech', (route) =>
+      route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: '{"error":"invalid or missing study access code"}',
+      })
+    );
     await seedStorage(page, { keys: false });
     await page.goto('/#/app/settings');
     await page.getByLabel('Access code').fill(CODE);
@@ -55,8 +65,17 @@ test.describe('guest access code (mocked providers)', () => {
   test('(d) the daily cap gets its own message, not a generic failure', async ({ page }) => {
     await mockProviders(page);
     await seedStorage(page, { keys: false });
-    await page.addInitScript((code) => localStorage.setItem('dg_access', JSON.stringify({ code, status: 'ok' })), CODE);
-    await page.route('**/api/chat', (route) => route.fulfill({ status: 429, contentType: 'application/json', body: '{"error":"study request limit reached for today"}' }));
+    await page.addInitScript(
+      (code) => localStorage.setItem('dg_access', JSON.stringify({ code, status: 'ok' })),
+      CODE
+    );
+    await page.route('**/api/chat', (route) =>
+      route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: '{"error":"study request limit reached for today"}',
+      })
+    );
     await page.goto('/#/app/chat');
     await page.getByRole('button', { name: 'New conversation' }).click();
     await ask(page, 'Where can I find respite care?');

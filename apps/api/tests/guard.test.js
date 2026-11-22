@@ -8,12 +8,18 @@ import { createHash } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { makeReq, makeRes, load, CODE, ORIGIN } from './helpers.js';
 
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
 
 describe('access codes', () => {
   it('refuses a code shorter than 16 characters at configuration time', async () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const { mod } = await load('../api/_lib/guard.js', { env: { STUDY_ACCESS_CODES: 'short-code' } });
+    const { mod } = await load('../api/_lib/guard.js', {
+      env: { STUDY_ACCESS_CODES: 'short-code' },
+    });
     const res = makeRes();
     const out = await mod.guard(makeReq({ code: 'short-code' }), res);
     expect(out).toBeNull();
@@ -41,14 +47,18 @@ describe('access codes', () => {
 
   it('accepts a second configured code and tolerates whitespace in the list', async () => {
     const other = 'another-code-abcdefghijklmnop';
-    const { mod } = await load('../api/_lib/guard.js', { env: { STUDY_ACCESS_CODES: ` ${CODE} , ${other} ` } });
+    const { mod } = await load('../api/_lib/guard.js', {
+      env: { STUDY_ACCESS_CODES: ` ${CODE} , ${other} ` },
+    });
     expect(await mod.guard(makeReq({ code: other }), makeRes())).toBe(other);
   });
 
   it('reads the code from the x-study-code header only, never from the body', async () => {
     const { mod } = await load('../api/_lib/guard.js');
     const res = makeRes();
-    expect(await mod.guard(makeReq({ code: null, body: JSON.stringify({ accessCode: CODE }) }), res)).toBeNull();
+    expect(
+      await mod.guard(makeReq({ code: null, body: JSON.stringify({ accessCode: CODE }) }), res)
+    ).toBeNull();
     expect(res.statusCode).toBe(401);
   });
 });
@@ -65,7 +75,9 @@ describe('meter key', () => {
   });
 
   it('defaults the limit to STUDY_DAILY_REQUEST_LIMIT', async () => {
-    const { mod, admin } = await load('../api/_lib/guard.js', { env: { STUDY_DAILY_REQUEST_LIMIT: '123' } });
+    const { mod, admin } = await load('../api/_lib/guard.js', {
+      env: { STUDY_DAILY_REQUEST_LIMIT: '123' },
+    });
     await mod.guard(makeReq(), makeRes());
     expect(admin.rpc.mock.calls[0][1].p_limit).toBe(123);
   });
@@ -91,7 +103,9 @@ describe('CORS', () => {
   it('answers a preflight with 204 before the method or code checks run', async () => {
     const { mod, admin } = await load('../api/_lib/guard.js');
     const res = makeRes();
-    const out = await mod.guard(makeReq({ method: 'OPTIONS', code: null }), res, { methods: ['POST'] });
+    const out = await mod.guard(makeReq({ method: 'OPTIONS', code: null }), res, {
+      methods: ['POST'],
+    });
     expect(out).toBeNull();
     expect(res.statusCode).toBe(204);
     expect(res.getHeader('Access-Control-Allow-Headers')).toMatch(/x-study-code/);
@@ -123,13 +137,19 @@ describe('daily meter', () => {
   it('fails OPEN on a transient database error', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { mod } = await load('../api/_lib/guard.js', {
-      admin: { rpc: vi.fn(async () => { throw new Error('PostgREST 503'); }) },
+      admin: {
+        rpc: vi.fn(async () => {
+          throw new Error('PostgREST 503');
+        }),
+      },
     });
     expect(await mod.guard(makeReq(), makeRes())).toBe(CODE);
   });
 
   it('returns 429 once bump_study_usage reports the cap reached', async () => {
-    const { mod } = await load('../api/_lib/guard.js', { admin: { rpc: vi.fn(async () => false) } });
+    const { mod } = await load('../api/_lib/guard.js', {
+      admin: { rpc: vi.fn(async () => false) },
+    });
     const res = makeRes();
     expect(await mod.guard(makeReq(), res)).toBeNull();
     expect(res.statusCode).toBe(429);
@@ -137,7 +157,9 @@ describe('daily meter', () => {
   });
 
   it('skips the meter entirely when the route opts out', async () => {
-    const { mod, admin } = await load('../api/_lib/guard.js', { admin: { rpc: vi.fn(async () => false) } });
+    const { mod, admin } = await load('../api/_lib/guard.js', {
+      admin: { rpc: vi.fn(async () => false) },
+    });
     expect(await mod.guard(makeReq(), makeRes(), { meter: false })).toBe(CODE);
     expect(admin.rpc).not.toHaveBeenCalled();
   });

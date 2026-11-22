@@ -34,7 +34,7 @@ describe('wordToPhonemes', () => {
       expect(wordToPhonemes("boss's")).toEqual(['B', 'AA', 'S', 'IH', 'Z']);
     });
 
-    it("falls through to null when the base word is unknown too", () => {
+    it('falls through to null when the base word is unknown too', () => {
       expect(wordToPhonemes("geriatrician's")).toBeNull();
     });
   });
@@ -66,7 +66,17 @@ describe('wordToPhonemes', () => {
 
 describe('arpabetToViseme', () => {
   it('maps every phone the lexicon produces to a viseme', () => {
-    for (const w of ['one', 'enough', 'hello', 'judge', 'garage', 'bath', 'church', 'thing', 'measure']) {
+    for (const w of [
+      'one',
+      'enough',
+      'hello',
+      'judge',
+      'garage',
+      'bath',
+      'church',
+      'thing',
+      'measure',
+    ]) {
       for (const p of wordToPhonemes(w) ?? []) expect(PHONE_TO_VISEME[p]).toBeDefined();
     }
   });

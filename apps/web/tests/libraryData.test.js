@@ -5,8 +5,19 @@
 import { describe, it, expect } from 'vitest';
 import * as idx from '../src/data/articles/index.js';
 import {
-  CATS, ARTICLES, getArticle, getCat, relatedTo, searchArticles, tagsFor, excerptFor,
-  mockReply, seedThread, FEATURED, QUICK_QUESTIONS, VOICE_QUESTIONS,
+  CATS,
+  ARTICLES,
+  getArticle,
+  getCat,
+  relatedTo,
+  searchArticles,
+  tagsFor,
+  excerptFor,
+  mockReply,
+  seedThread,
+  FEATURED,
+  QUICK_QUESTIONS,
+  VOICE_QUESTIONS,
 } from '../src/data/services.js';
 import { catStyle } from '../src/lib/catStyle.js';
 import { matchSourceToArticle } from '../src/services/kbToLibrary.js';
@@ -105,7 +116,11 @@ describe('mock replies', () => {
     expect(long.text).toMatch(/^Wandering usually has a reason/);
     expect(short.text.length).toBeLessThan(long.text.length);
     expect(long.citations.map((c) => c.id)).toEqual(['wandering', 'wayfinding']);
-    expect(long.citations[0]).toEqual({ id: 'wandering', title: getArticle('wandering').title, cat: 'safety' });
+    expect(long.citations[0]).toEqual({
+      id: 'wandering',
+      title: getArticle('wandering').title,
+      cat: 'safety',
+    });
     expect(long.safety).toBe(false);
   });
 
@@ -118,7 +133,9 @@ describe('mock replies', () => {
     expect(r.text).toMatch(/^That's a good question/);
     expect(r.citations.map((c) => c.id)).toEqual(['person-centred']);
     expect(r.safety).toBe(false);
-    expect(mockReply('Tell me about gardening', { concise: true }).text).toMatch(/^Look for the need/);
+    expect(mockReply('Tell me about gardening', { concise: true }).text).toMatch(
+      /^Look for the need/
+    );
   });
 
   it('can simulate a knowledge-base outage', () => {
@@ -140,19 +157,27 @@ describe('catStyle', () => {
   });
 
   it('falls back to the theme tokens for an unknown category', () => {
-    expect(catStyle('unknown', false)).toEqual({ bg: 'var(--tint)', fg: 'var(--primary-d)', dot: 'var(--primary)' });
+    expect(catStyle('unknown', false)).toEqual({
+      bg: 'var(--tint)',
+      fg: 'var(--primary-d)',
+      dot: 'var(--primary)',
+    });
   });
 });
 
 describe('matchSourceToArticle', () => {
   it('maps known bulk sources through the alias table', () => {
-    expect(matchSourceToArticle({ title: 'Module 3', org: 'WHO iSupport' }).id).toBe('person-centred');
+    expect(matchSourceToArticle({ title: 'Module 3', org: 'WHO iSupport' }).id).toBe(
+      'person-centred'
+    );
     expect(matchSourceToArticle({ title: 'Respite care in NZ' }).id).toBe('respite');
   });
 
   it('matches by title words when at least 60% of them appear in an article', () => {
     // "kitchen", "bathroom", "safety" → all in "Kitchen and Bathroom Safety".
-    expect(matchSourceToArticle({ title: 'Kitchen and bathroom safety', org: 'Dementia NZ' }).id).toBe('kitchen-bathroom');
+    expect(
+      matchSourceToArticle({ title: 'Kitchen and bathroom safety', org: 'Dementia NZ' }).id
+    ).toBe('kitchen-bathroom');
   });
 
   it('refuses a weak overlap rather than linking the wrong article', () => {

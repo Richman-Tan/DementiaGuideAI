@@ -52,31 +52,73 @@ export function AccessCodeForm({ onChange }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
       {saved && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ flex: '1', color: 'var(--text2)', fontSize: '.92rem' }}>{SAVED[saved.status] ?? SAVED.ok}</span>
-          <button onClick={remove} className="hv3" style={{ minHeight: '40px', padding: '0 14px', borderRadius: '10px', border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text2)', fontWeight: '600', cursor: 'pointer' }}>Remove</button>
+          <span style={{ flex: '1', color: 'var(--text2)', fontSize: '.92rem' }}>
+            {SAVED[saved.status] ?? SAVED.ok}
+          </span>
+          <button
+            onClick={remove}
+            className="hv3"
+            style={{
+              minHeight: '40px',
+              padding: '0 14px',
+              borderRadius: '10px',
+              border: 'var(--bw) solid var(--border)',
+              background: 'var(--surface)',
+              color: 'var(--text2)',
+              fontWeight: '600',
+              cursor: 'pointer',
+            }}
+          >
+            Remove
+          </button>
         </div>
       )}
       <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <span style={{ fontWeight: '600', fontSize: '.95rem' }}>{saved ? 'Replace the access code' : 'Access code'}</span>
+        <span style={{ fontWeight: '600', fontSize: '.95rem' }}>
+          {saved ? 'Replace the access code' : 'Access code'}
+        </span>
         <input
           type="password"
           autoComplete="off"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && canSubmit) submit(); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && canSubmit) submit();
+          }}
           placeholder="Paste the code you were given"
-          style={{ minHeight: '48px', padding: '0 14px', borderRadius: '12px', border: 'var(--bw) solid var(--border)', background: 'var(--elev)', color: 'var(--text)', fontSize: '.95rem', boxSizing: 'border-box' }}
+          style={{
+            minHeight: '48px',
+            padding: '0 14px',
+            borderRadius: '12px',
+            border: 'var(--bw) solid var(--border)',
+            background: 'var(--elev)',
+            color: 'var(--text)',
+            fontSize: '.95rem',
+            boxSizing: 'border-box',
+          }}
         />
       </label>
       <button
         onClick={submit}
         disabled={!canSubmit}
         className="hv2"
-        style={{ minHeight: '48px', borderRadius: '12px', border: 'none', background: canSubmit ? 'var(--primary)' : 'var(--border)', color: canSubmit ? '#fff' : 'var(--text2)', fontWeight: '700', cursor: canSubmit ? 'pointer' : 'not-allowed' }}
+        style={{
+          minHeight: '48px',
+          borderRadius: '12px',
+          border: 'none',
+          background: canSubmit ? 'var(--primary)' : 'var(--border)',
+          color: canSubmit ? '#fff' : 'var(--text2)',
+          fontWeight: '700',
+          cursor: canSubmit ? 'pointer' : 'not-allowed',
+        }}
       >
         {busy ? 'Checking…' : 'Use code'}
       </button>
-      {msg && <p role="status" style={{ margin: '0', color: 'var(--text2)', fontSize: '.92rem' }}>{msg}</p>}
+      {msg && (
+        <p role="status" style={{ margin: '0', color: 'var(--text2)', fontSize: '.92rem' }}>
+          {msg}
+        </p>
+      )}
     </div>
   );
 }

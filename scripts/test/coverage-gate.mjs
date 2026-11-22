@@ -71,10 +71,16 @@ function loadSources() {
   }
   sources.web = web;
 
-  for (const [id, file] of [['jest', 'apps/mobile/coverage/coverage-final.json'], ['api', 'apps/api/coverage/coverage-final.json']]) {
+  for (const [id, file] of [
+    ['jest', 'apps/mobile/coverage/coverage-final.json'],
+    ['api', 'apps/api/coverage/coverage-final.json'],
+  ]) {
     const p = path.join(ROOT, file);
     if (existsSync(p)) sources[id] = relMap(readJson(p));
-    else { sources[id] = libCoverage.createCoverageMap({}); missing.push(`${id} (${file})`); }
+    else {
+      sources[id] = libCoverage.createCoverageMap({});
+      missing.push(`${id} (${file})`);
+    }
   }
   return { sources, missing, counts };
 }
@@ -127,12 +133,16 @@ function uncoveredLines(fc) {
 function main() {
   const { sources, missing, counts } = loadSources();
   const lines = [];
-  const say = (s = '') => { lines.push(s); };
+  const say = (s = '') => {
+    lines.push(s);
+  };
   const failures = [];
 
   say(`# Coverage gate${ENFORCE ? ' (enforcing)' : ' (report only)'}`);
   say('');
-  say(`Scope: scripts/test/coverage-scope.mjs. Gated: ${GATED.join(' and ')} at 100% for every in-scope file.`);
+  say(
+    `Scope: scripts/test/coverage-scope.mjs. Gated: ${GATED.join(' and ')} at 100% for every in-scope file.`
+  );
   say(`Web snapshots merged: ${counts.unit} from unit test files, ${counts.e2e} from e2e tests.`);
   if (missing.length) {
     say('');
@@ -152,7 +162,8 @@ function main() {
         if (!map.files().includes(f)) continue;
         const fc = map.fileCoverageFor(f);
         const s = fc.toSummary();
-        if (!best || pct(s.statements) > pct(best.summary.statements)) best = { id, fc, summary: s };
+        if (!best || pct(s.statements) > pct(best.summary.statements))
+          best = { id, fc, summary: s };
       }
       if (!best) {
         // Never loaded by any test: still counted, at its real size, so an
@@ -160,28 +171,48 @@ function main() {
         const zero = zeroCoverage(f);
         if (zero) totals.merge(zero.toSummary());
         const n = zero ? zero.toSummary().statements.total : '?';
-        rows.push({ f, source: '—', statements: null, lines: null, uncovered: `never loaded by any test (${n} statements)` });
+        rows.push({
+          f,
+          source: '—',
+          statements: null,
+          lines: null,
+          uncovered: `never loaded by any test (${n} statements)`,
+        });
         failures.push(`${f}: never loaded by any test`);
         continue;
       }
       totals.merge(best.summary);
       const short = GATED.filter((k) => pct(best.summary[k]) < 100);
       if (short.length) {
-        rows.push({ f, source: best.id, statements: best.summary.statements, lines: best.summary.lines, uncovered: uncoveredLines(best.fc) });
-        failures.push(`${f}: ${short.map((k) => `${k} ${pct(best.summary[k]).toFixed(1)}%`).join(', ')}`);
+        rows.push({
+          f,
+          source: best.id,
+          statements: best.summary.statements,
+          lines: best.summary.lines,
+          uncovered: uncoveredLines(best.fc),
+        });
+        failures.push(
+          `${f}: ${short.map((k) => `${k} ${pct(best.summary[k]).toFixed(1)}%`).join(', ')}`
+        );
       }
     }
     const never = rows.filter((r) => r.statements === null).length;
     say('');
     say(`## ${area.label}`);
     say('');
-    say(`${inScope.length} files in scope, ${files.length - inScope.length} excluded. Loaded files: statements ${fmt(totals.statements)}, lines ${fmt(totals.lines)}, branches ${fmt(totals.branches)}, functions ${fmt(totals.functions)}${never ? `; ${never} file(s) never loaded` : ''}.`);
+    say(
+      `${inScope.length} files in scope, ${files.length - inScope.length} excluded. Loaded files: statements ${fmt(totals.statements)}, lines ${fmt(totals.lines)}, branches ${fmt(totals.branches)}, functions ${fmt(totals.functions)}${never ? `; ${never} file(s) never loaded` : ''}.`
+    );
     if (rows.length) {
       say('');
       say('| File | Source | Statements | Uncovered lines |');
       say('|---|---|---|---|');
-      for (const r of rows.sort((a, b) => (a.statements ? pct(a.statements) : -1) - (b.statements ? pct(b.statements) : -1))) {
-        say(`| ${r.f} | ${r.source} | ${r.statements ? fmt(r.statements) : '0% (not loaded)'} | ${r.uncovered.length > 120 ? `${r.uncovered.slice(0, 117)}…` : r.uncovered} |`);
+      for (const r of rows.sort(
+        (a, b) => (a.statements ? pct(a.statements) : -1) - (b.statements ? pct(b.statements) : -1)
+      )) {
+        say(
+          `| ${r.f} | ${r.source} | ${r.statements ? fmt(r.statements) : '0% (not loaded)'} | ${r.uncovered.length > 120 ? `${r.uncovered.slice(0, 117)}…` : r.uncovered} |`
+        );
       }
     } else {
       say('');
@@ -203,9 +234,11 @@ function main() {
   for (const area of AREAS) {
     for (const f of walk(path.join(ROOT, area.root))) {
       if (IGNORE.some((re) => re.test(f))) continue;
-      readFileSync(path.join(ROOT, f), 'utf8').split('\n').forEach((line, i) => {
-        if (/(istanbul|c8|v8) ignore/.test(line)) ignores.push(`${f}:${i + 1}`);
-      });
+      readFileSync(path.join(ROOT, f), 'utf8')
+        .split('\n')
+        .forEach((line, i) => {
+          if (/(istanbul|c8|v8) ignore/.test(line)) ignores.push(`${f}:${i + 1}`);
+        });
     }
   }
   say('');
@@ -214,12 +247,17 @@ function main() {
   if (ignores.length) failures.push(`${ignores.length} coverage-ignore comment(s) in scope`);
 
   say('');
-  say(failures.length ? `**${failures.length} in-scope file(s) or rule(s) below the gate.**` : '**All in-scope files at 100%.**');
+  say(
+    failures.length
+      ? `**${failures.length} in-scope file(s) or rule(s) below the gate.**`
+      : '**All in-scope files at 100%.**'
+  );
 
   const out = lines.join('\n');
   mkdirSync(path.join(ROOT, 'coverage'), { recursive: true });
   writeFileSync(path.join(ROOT, 'coverage/gate.md'), `${out}\n`);
-  if (process.env.GITHUB_STEP_SUMMARY) writeFileSync(process.env.GITHUB_STEP_SUMMARY, `${out}\n`, { flag: 'a' });
+  if (process.env.GITHUB_STEP_SUMMARY)
+    writeFileSync(process.env.GITHUB_STEP_SUMMARY, `${out}\n`, { flag: 'a' });
   console.log(out);
   if (ENFORCE && failures.length) process.exit(1);
 }

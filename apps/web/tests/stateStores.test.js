@@ -3,8 +3,20 @@
 // the non-React dg_settings snapshot. Each one has to survive corrupt or
 // blocked storage without throwing into the caller.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { loadKeys, saveKeys, clearKeys, getOpenaiKey, getElevenKey } from '../src/state/keysStore.js';
-import { loadAccess, saveAccess, markAccessRejected, clearAccess, guestAccessCode } from '../src/state/accessStore.js';
+import {
+  loadKeys,
+  saveKeys,
+  clearKeys,
+  getOpenaiKey,
+  getElevenKey,
+} from '../src/state/keysStore.js';
+import {
+  loadAccess,
+  saveAccess,
+  markAccessRejected,
+  clearAccess,
+  guestAccessCode,
+} from '../src/state/accessStore.js';
 import { getSettingSnapshot } from '../src/state/settingsSnapshot.js';
 
 function memoryStorage() {
@@ -19,9 +31,15 @@ function memoryStorage() {
 
 // Safari private mode and some embedded browsers throw on every access.
 const blockedStorage = () => ({
-  getItem: () => { throw new Error('SecurityError'); },
-  setItem: () => { throw new Error('QuotaExceededError'); },
-  removeItem: () => { throw new Error('SecurityError'); },
+  getItem: () => {
+    throw new Error('SecurityError');
+  },
+  setItem: () => {
+    throw new Error('QuotaExceededError');
+  },
+  removeItem: () => {
+    throw new Error('SecurityError');
+  },
 });
 
 let storage;
@@ -29,7 +47,9 @@ beforeEach(() => {
   storage = memoryStorage();
   vi.stubGlobal('localStorage', storage);
 });
-afterEach(() => { vi.unstubAllGlobals(); });
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('keysStore (dg_keys)', () => {
   it('fills missing fields with empty strings and trims what the getters return', () => {
@@ -41,7 +61,11 @@ describe('keysStore (dg_keys)', () => {
 
   it('round-trips saved keys and clearKeys removes the record', () => {
     saveKeys({ openai: 'sk-1', eleven: 'el-1', azure: '' });
-    expect(JSON.parse(storage.getItem('dg_keys'))).toEqual({ openai: 'sk-1', eleven: 'el-1', azure: '' });
+    expect(JSON.parse(storage.getItem('dg_keys'))).toEqual({
+      openai: 'sk-1',
+      eleven: 'el-1',
+      azure: '',
+    });
     expect(getElevenKey()).toBe('el-1');
     clearKeys();
     expect(storage.getItem('dg_keys')).toBeNull();

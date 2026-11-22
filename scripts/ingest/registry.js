@@ -29,7 +29,8 @@ const REGISTRY = [
     local_path: 'apps/mobile/src/features/library/data/knowledgeBase.js',
     category: null, // per-chunk categories come from the file itself
     enabled: true,
-    notes: '124 curated chunks (originally 10 per category, since extended). Paraphrased from cited orgs; per-chunk source_org/source_url preserved. 2026-09: reconciled the admin-added curated chunks into this file so source == DB (prune-safe). The 2026-08 mindfulness/box-breathing self-care chunk is wellbeing_023 (renamed from wellbeing_011 to resolve an id collision with the finances/scams chunk, which keeps wellbeing_011).',
+    notes:
+      '124 curated chunks (originally 10 per category, since extended). Paraphrased from cited orgs; per-chunk source_org/source_url preserved. 2026-09: reconciled the admin-added curated chunks into this file so source == DB (prune-safe). The 2026-08 mindfulness/box-breathing self-care chunk is wellbeing_023 (renamed from wellbeing_011 to resolve an id collision with the finances/scams chunk, which keeps wellbeing_011).',
   },
   {
     document_id: 'isupport-who-v2026',
@@ -44,7 +45,8 @@ const REGISTRY = [
     local_path: 'content/sources/who-isupport-manual-2019.pdf',
     category: 'isupport-course',
     enabled: true, // Licence + non-commercial use confirmed by project owner 2026-07-17.
-    notes: 'Replaces the provenance-free isupport-who chunks currently in production. Prune old isupport-who ids only after the new set passes rag:eval:retrieval.',
+    notes:
+      'Replaces the provenance-free isupport-who chunks currently in production. Prune old isupport-who ids only after the new set passes rag:eval:retrieval.',
   },
   {
     document_id: 'dg-delirium-v2026-09',
@@ -59,7 +61,8 @@ const REGISTRY = [
     local_path: 'content/sources/dg-curated-delirium-2026-09.txt',
     category: 'clinical',
     enabled: true, // Clinician (Sarah) sign-off recorded 2026-09-09; draft header removed, MANIFEST re-hashed.
-    notes: 'Closes the sleepiness→delirium retrieval gap found in the 2026-09-08 pilot: the corpus framed delirium only as sudden confusion/agitation, so "excessive sleepiness" retrieved insomnia-side chunks. Adapted from the web library articles; v2-nz-safety framing.',
+    notes:
+      'Closes the sleepiness→delirium retrieval gap found in the 2026-09-08 pilot: the corpus framed delirium only as sudden confusion/agitation, so "excessive sleepiness" retrieved insomnia-side chunks. Adapted from the web library articles; v2-nz-safety framing.',
   },
   {
     document_id: 'isupport-nz-v2026',
@@ -79,7 +82,7 @@ const REGISTRY = [
 ];
 
 function getEntry(documentId) {
-  return REGISTRY.find(e => e.document_id === documentId) ?? null;
+  return REGISTRY.find((e) => e.document_id === documentId) ?? null;
 }
 
 module.exports = { REGISTRY, getEntry };

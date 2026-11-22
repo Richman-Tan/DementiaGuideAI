@@ -10,10 +10,20 @@ class FakeWebSocket {
     this.sent = [];
     FakeWebSocket.instances.push(this);
   }
-  send(data) { this.sent.push(JSON.parse(data)); }
-  close() { this.readyState = 3; this.onclose?.({}); }
-  emitOpen() { this.readyState = 1; this.onopen?.(); }
-  emitMessage(obj) { this.onmessage?.({ data: JSON.stringify(obj) }); }
+  send(data) {
+    this.sent.push(JSON.parse(data));
+  }
+  close() {
+    this.readyState = 3;
+    this.onclose?.({});
+  }
+  emitOpen() {
+    this.readyState = 1;
+    this.onopen?.();
+  }
+  emitMessage(obj) {
+    this.onmessage?.({ data: JSON.stringify(obj) });
+  }
 }
 
 describe('pcmBase64DurationSec', () => {
@@ -107,10 +117,16 @@ describe('createElevenLabsStream', () => {
 
     it('holds a number until it is complete, then speaks it whole', () => {
       const { stream, ws, events } = open();
-      for (const t of ['Call', ' Health', 'line', ' on', ' 080', '0', ' 611', ' 116', '.', ' Then']) stream.sendText(t);
-      expect(texts(ws)).toEqual(['Call Healthline on oh eight hundred, six one one, one one six. ']);
+      for (const t of ['Call', ' Health', 'line', ' on', ' 080', '0', ' 611', ' 116', '.', ' Then'])
+        stream.sendText(t);
+      expect(texts(ws)).toEqual([
+        'Call Healthline on oh eight hundred, six one one, one one six. ',
+      ]);
       // onTextSent still mirrors the wire, so subtitle offsets stay in step.
-      expect(events.sentText).toEqual([' ', 'Call Healthline on oh eight hundred, six one one, one one six. ']);
+      expect(events.sentText).toEqual([
+        ' ',
+        'Call Healthline on oh eight hundred, six one one, one one six. ',
+      ]);
     });
 
     it('keeps "call" with the 111 that follows it', () => {
@@ -141,7 +157,9 @@ describe('createElevenLabsStream', () => {
       stream.flush(); // an early split at the earlier comma, mid-number
       stream.sendText('. Next');
       expect(texts(ws)).toEqual([
-        'Alzheimers New Zealand, ', ' [flush]', 'on oh eight hundred, oh oh four, oh oh one. ',
+        'Alzheimers New Zealand, ',
+        ' [flush]',
+        'on oh eight hundred, oh oh four, oh oh one. ',
       ]);
     });
 
@@ -160,7 +178,9 @@ describe('createElevenLabsStream', () => {
       stream.flush();
       stream.end();
       expect(texts(ws)).toEqual([
-        'Call Healthline on oh eight hundred, six one one, one one six. ', ' [flush]', '',
+        'Call Healthline on oh eight hundred, six one one, one one six. ',
+        ' [flush]',
+        '',
       ]);
     });
 
@@ -172,7 +192,7 @@ describe('createElevenLabsStream', () => {
     });
   });
 
-  it('flush() forces generation without stealing the next sentence\'s held word', () => {
+  it("flush() forces generation without stealing the next sentence's held word", () => {
     const { stream } = makeStream();
     stream.open();
     const ws = FakeWebSocket.instances[0];
@@ -205,7 +225,10 @@ describe('createElevenLabsStream', () => {
     ws.emitOpen();
 
     const b64 = Buffer.from(new Uint8Array(4410)).toString('base64'); // 100ms @22050
-    ws.emitMessage({ audio: b64, alignment: { chars: ['h', 'i'], charStartTimesMs: [0, 50], charDurationsMs: [50, 50] } });
+    ws.emitMessage({
+      audio: b64,
+      alignment: { chars: ['h', 'i'], charStartTimesMs: [0, 50], charDurationsMs: [50, 50] },
+    });
     expect(events.chunks).toHaveLength(1);
     expect(events.chunks[0].durationSec).toBeCloseTo(0.1, 3);
     expect(events.chunks[0].alignment.chars).toEqual(['h', 'i']);
@@ -261,7 +284,11 @@ describe('createElevenLabsStream', () => {
   });
 
   it('rejects open() when the WebSocket constructor throws, without arming the timeout', async () => {
-    global.WebSocket = class { constructor() { throw new Error('bad url'); } };
+    global.WebSocket = class {
+      constructor() {
+        throw new Error('bad url');
+      }
+    };
     const { stream } = makeStream();
     await expect(stream.open()).rejects.toThrow('bad url');
     expect(jest.getTimerCount()).toBe(0);
@@ -271,7 +298,9 @@ describe('createElevenLabsStream', () => {
     const { stream, events } = makeStream();
     const p = stream.open();
     const ws = FakeWebSocket.instances[0];
-    ws.send = () => { throw new Error('socket not writable'); };
+    ws.send = () => {
+      throw new Error('socket not writable');
+    };
     ws.emitOpen();
     await expect(p).rejects.toThrow('socket not writable');
     // The handshake never completed, so onTextSent never saw the BOS space.
@@ -315,7 +344,9 @@ describe('createElevenLabsStream', () => {
     ws.emitOpen();
     ws.emitMessage({ error: 'quota_exceeded', message: 'You have run out of characters' });
     expect(events.errors).toHaveLength(1);
-    expect(events.errors[0].message).toBe('ElevenLabs stream error: You have run out of characters');
+    expect(events.errors[0].message).toBe(
+      'ElevenLabs stream error: You have run out of characters'
+    );
     expect(ws.readyState).toBe(3); // the socket is closed on the way out
   });
 
@@ -333,7 +364,9 @@ describe('createElevenLabsStream', () => {
     stream.open();
     const ws = FakeWebSocket.instances[0];
     ws.emitOpen();
-    ws.send = () => { throw new Error('socket closed'); };
+    ws.send = () => {
+      throw new Error('socket closed');
+    };
     stream.sendText('First words here ');
     expect(events.errors.map((e) => e.message)).toEqual(['socket closed']);
     // The failed text was never confirmed as sent.
@@ -353,7 +386,11 @@ describe('createElevenLabsStream', () => {
     let calls = 0;
     const realSend = ws.send.bind(ws);
     // BOS goes through; the first queued payload fails.
-    ws.send = (data) => { calls++; if (calls > 1) throw new Error('write after close'); realSend(data); };
+    ws.send = (data) => {
+      calls++;
+      if (calls > 1) throw new Error('write after close');
+      realSend(data);
+    };
     ws.emitOpen();
     expect(ws.sent).toHaveLength(1); // BOS only
     expect(calls).toBe(2); // the second queued payload was never attempted

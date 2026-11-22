@@ -45,7 +45,13 @@ export class AvatarAudioEngine {
 
   // Must be called from a user gesture at least once (autoplay policy).
   unlock() {
-    try { this.ensureCtx().resume().catch(() => {}); } catch { /* no audio */ }
+    try {
+      this.ensureCtx()
+        .resume()
+        .catch(() => {});
+    } catch {
+      /* no audio */
+    }
   }
 
   async _decode(dataUri) {
@@ -62,7 +68,11 @@ export class AvatarAudioEngine {
     this._playSeq++;
     if (this.source) {
       this.source.onended = null;
-      try { this.source.stop(); } catch { /* already stopped */ }
+      try {
+        this.source.stop();
+      } catch {
+        /* already stopped */
+      }
       this.source = null;
     }
     this._stopStreaming();
@@ -79,7 +89,11 @@ export class AvatarAudioEngine {
     if (!s) return;
     for (const src of s.sources) {
       src.onended = null;
-      try { src.stop(); } catch { /* already stopped */ }
+      try {
+        src.stop();
+      } catch {
+        /* already stopped */
+      }
     }
     this.streamSession = null;
   }
@@ -153,7 +167,7 @@ export class AvatarAudioEngine {
       if (this.ctx.state === 'suspended') await this.ctx.resume();
       if (seq !== this._playSeq) return;
       // 10ms look-ahead so the anchor matches actual sample playback.
-      const startAt = this.ctx.currentTime + 0.010;
+      const startAt = this.ctx.currentTime + 0.01;
       this.audioStartTime = startAt;
       this.source.start(startAt);
       this.onAudioStart();
@@ -207,7 +221,7 @@ export class AvatarAudioEngine {
 
       if (!s.started) {
         // First chunk anchors the stream clock (same 10ms look-ahead).
-        this.audioStartTime = this.ctx.currentTime + 0.010;
+        this.audioStartTime = this.ctx.currentTime + 0.01;
         s.nextStartTime = this.audioStartTime;
         s.started = true;
         this.onAudioStart();
@@ -250,7 +264,10 @@ export class AvatarAudioEngine {
     if (visemeFrames && visemeFrames.length && this.visemeTimeline) {
       Array.prototype.push.apply(this.visemeTimeline.frames, visemeFrames);
       const last = visemeFrames[visemeFrames.length - 1];
-      this.visemeTimeline.totalDuration = Math.max(this.visemeTimeline.totalDuration, last.time + last.duration);
+      this.visemeTimeline.totalDuration = Math.max(
+        this.visemeTimeline.totalDuration,
+        last.time + last.duration
+      );
     }
   }
 

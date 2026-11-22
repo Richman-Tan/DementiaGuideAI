@@ -14,7 +14,7 @@
 // start still renders something.
 import { supabase, supabaseConfigured } from '../services/supabase.js';
 
-const CACHE_KEY = 'dg_history';       // same key the old store used, now a cache
+const CACHE_KEY = 'dg_history'; // same key the old store used, now a cache
 const LEGACY_MIGRATED = 'dg_history_migrated';
 const MAX_CACHED = 100;
 
@@ -30,11 +30,19 @@ export function loadCached() {
 }
 
 export function saveCached(msgs) {
-  try { localStorage.setItem(CACHE_KEY, JSON.stringify(msgs.slice(-MAX_CACHED))); } catch { /* full/blocked */ }
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(msgs.slice(-MAX_CACHED)));
+  } catch {
+    /* full/blocked */
+  }
 }
 
 export function clearCached() {
-  try { localStorage.removeItem(CACHE_KEY); } catch { /* blocked */ }
+  try {
+    localStorage.removeItem(CACHE_KEY);
+  } catch {
+    /* blocked */
+  }
 }
 
 // ─── Server ──────────────────────────────────────────────────────────────────
@@ -114,7 +122,8 @@ export async function appendMessage(conversationId, { role, text, citations }) {
     return;
   }
   // Keeps the "most recent" ordering honest for the lookup above.
-  await supabase.from('conversations')
+  await supabase
+    .from('conversations')
     .update({ updated_at: new Date().toISOString() })
     .eq('id', conversationId);
 }
@@ -189,7 +198,9 @@ export async function migrateLegacyHistory(userId, conversationId) {
 
     const { error } = await supabase.from('messages').insert(rows);
     if (error) console.warn(`[conversations] legacy migration failed: ${error.message}`);
-  } catch { /* storage blocked — nothing to migrate */ }
+  } catch {
+    /* storage blocked — nothing to migrate */
+  }
 }
 
 function formatTime(d) {

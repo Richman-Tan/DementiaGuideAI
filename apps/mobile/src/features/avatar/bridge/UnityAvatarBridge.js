@@ -57,13 +57,15 @@ async function playAudio(payload) {
 
   // Audio.Sound.createAsync doesn't reliably load data: URIs directly — write
   // to a temp file first, matching the established pattern in ChatScreen.js.
-  const base64    = segment.audio.replace(/^data:audio\/\w+;base64,/, '');
-  const tempPath  = `${FileSystem.cacheDirectory}cc4_avatar_${Date.now()}.mp3`;
-  await FileSystem.writeAsStringAsync(tempPath, base64, { encoding: FileSystem.EncodingType.Base64 });
+  const base64 = segment.audio.replace(/^data:audio\/\w+;base64,/, '');
+  const tempPath = `${FileSystem.cacheDirectory}cc4_avatar_${Date.now()}.mp3`;
+  await FileSystem.writeAsStringAsync(tempPath, base64, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
 
   const { sound } = await Audio.Sound.createAsync({ uri: tempPath }, { shouldPlay: false });
-  currentSound     = sound;
-  currentTempPath  = tempPath;
+  currentSound = sound;
+  currentTempPath = tempPath;
 
   return new Promise((resolve, reject) => {
     let started = false;
@@ -74,18 +76,20 @@ async function playAudio(payload) {
       if (!started && status.isPlaying) {
         started = true;
         onAudioStartCb?.();
-        NativeUnityAvatarModule.playAudio(JSON.stringify({
-          type:        'play',
-          duration:    (status.durationMillis ?? 0) / 1000,
-          // Raw 14-key viseme events — preferred by Unity's co-articulation
-          // engine. blendshapes kept as the legacy fallback path.
-          visemes:     cc4Payload.visemes,
-          blendshapes: cc4Payload.blendshapes,
-          // Sentence sentiment (positive|warm|concern|question|neutral) drives
-          // IdleAnimator's brow/smile layer. The web bridge has always sent this;
-          // mobile omitted it, so the face was flat on the platform most users are on.
-          emotion:     cc4Payload.emotion,
-        })).catch((err) => console.warn('[UnityAvatarBridge] native playAudio failed:', err));
+        NativeUnityAvatarModule.playAudio(
+          JSON.stringify({
+            type: 'play',
+            duration: (status.durationMillis ?? 0) / 1000,
+            // Raw 14-key viseme events — preferred by Unity's co-articulation
+            // engine. blendshapes kept as the legacy fallback path.
+            visemes: cc4Payload.visemes,
+            blendshapes: cc4Payload.blendshapes,
+            // Sentence sentiment (positive|warm|concern|question|neutral) drives
+            // IdleAnimator's brow/smile layer. The web bridge has always sent this;
+            // mobile omitted it, so the face was flat on the platform most users are on.
+            emotion: cc4Payload.emotion,
+          })
+        ).catch((err) => console.warn('[UnityAvatarBridge] native playAudio failed:', err));
       }
 
       if (status.didJustFinish) {

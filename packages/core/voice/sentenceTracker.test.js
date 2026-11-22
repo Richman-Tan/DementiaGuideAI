@@ -70,9 +70,24 @@ describe('createSentenceSplitter', () => {
   });
 
   it.each([
-    ['single piece', ['Aria helps with morning routines. She can remind you about medication, meals, and appointments whenever needed. What would you like to know?']],
-    ['token-sized pieces', tokenize('Sundowning is common in dementia. Try keeping the evening calm, with soft lighting; avoid caffeine late in the day. Would a routine help? Yes!')],
-    ['clause-heavy long text', tokenize(`When someone with dementia becomes agitated in the late afternoon${', it can help to dim the lights'.repeat(6)}, and keep noise low. Stay calm.`)],
+    [
+      'single piece',
+      [
+        'Aria helps with morning routines. She can remind you about medication, meals, and appointments whenever needed. What would you like to know?',
+      ],
+    ],
+    [
+      'token-sized pieces',
+      tokenize(
+        'Sundowning is common in dementia. Try keeping the evening calm, with soft lighting; avoid caffeine late in the day. Would a routine help? Yes!'
+      ),
+    ],
+    [
+      'clause-heavy long text',
+      tokenize(
+        `When someone with dementia becomes agitated in the late afternoon${', it can help to dim the lights'.repeat(6)}, and keep noise low. Stay calm.`
+      ),
+    ],
     ['no trailing punctuation', tokenize('First point. Second point without an ending')],
   ])('matches the original inline producer logic (%s)', (_name, pieces) => {
     expect(runSplitter(pieces)).toEqual(referenceSplit(pieces));

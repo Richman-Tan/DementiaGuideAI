@@ -26,7 +26,12 @@ export function AvatarMount({ state = 'idle', compact = false, children }) {
 
   if (settings.showAvatar) {
     return (
-      <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} state={state} compact={compact}>
+      <UnityAvatarMount
+        characterId={profile.unityCharacterId}
+        name={profile.name}
+        state={state}
+        compact={compact}
+      >
         {children}
       </UnityAvatarMount>
     );
@@ -34,7 +39,15 @@ export function AvatarMount({ state = 'idle', compact = false, children }) {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit' }}>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         {children}
       </div>
     </div>
@@ -48,11 +61,37 @@ export function AvatarStageCard({ caption, maxWidth = 360 }) {
   const profile = getAvatarProfile(settings.avatarId);
   caption = caption ?? `avatar stage · ${profile.name} (3D, lip-synced)`;
   return (
-    <div style={{ position: 'relative', width: '100%', maxWidth, aspectRatio: '1/1.05', borderRadius: '26px', border: 'var(--bw) solid var(--border)', background: 'radial-gradient(circle at 50% 32%,var(--tint) 0%,transparent 72%),linear-gradient(165deg,var(--tint),var(--surface))', boxShadow: 'var(--shadow)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        maxWidth,
+        aspectRatio: '1/1.05',
+        borderRadius: '26px',
+        border: 'var(--bw) solid var(--border)',
+        background:
+          'radial-gradient(circle at 50% 32%,var(--tint) 0%,transparent 72%),linear-gradient(165deg,var(--tint),var(--surface))',
+        boxShadow: 'var(--shadow)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '14px',
+      }}
+    >
       <div style={{ animation: 'dgBreathe 5.5s ease-in-out infinite' }}>
         <AvatarBust />
       </div>
-      <div style={{ fontSize: '.85rem', color: 'var(--text2)', fontFamily: 'ui-monospace,Menlo,monospace', letterSpacing: '.03em' }}>{caption}</div>
+      <div
+        style={{
+          fontSize: '.85rem',
+          color: 'var(--text2)',
+          fontFamily: 'ui-monospace,Menlo,monospace',
+          letterSpacing: '.03em',
+        }}
+      >
+        {caption}
+      </div>
     </div>
   );
 }
@@ -75,15 +114,49 @@ export function AvatarHomeStage() {
   );
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        borderRadius: 'inherit',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       {settings.showAvatar ? (
-        <div style={{ position: 'relative', height: '100%', aspectRatio: '3 / 4', maxWidth: '100%', flexShrink: 0 }}>
+        <div
+          style={{
+            position: 'relative',
+            height: '100%',
+            aspectRatio: '3 / 4',
+            maxWidth: '100%',
+            flexShrink: 0,
+          }}
+        >
           <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} compact>
             {bust}
           </UnityAvatarMount>
         </div>
-      ) : bust}
-      <div style={{ position: 'absolute', left: '12px', bottom: '12px', background: 'var(--surface)', border: 'var(--bw) solid var(--border)', borderRadius: '999px', padding: '4px 14px', fontWeight: 700, fontSize: '.92rem', boxShadow: 'var(--shadow)' }}>
+      ) : (
+        bust
+      )}
+      <div
+        style={{
+          position: 'absolute',
+          left: '12px',
+          bottom: '12px',
+          background: 'var(--surface)',
+          border: 'var(--bw) solid var(--border)',
+          borderRadius: '999px',
+          padding: '4px 14px',
+          fontWeight: 700,
+          fontSize: '.92rem',
+          boxShadow: 'var(--shadow)',
+        }}
+      >
         {profile.name}
       </div>
     </div>

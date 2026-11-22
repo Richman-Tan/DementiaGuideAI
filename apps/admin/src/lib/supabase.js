@@ -13,5 +13,5 @@ if (!supabaseConfigured) {
 
 export const supabase = createClient(
   SUPABASE_URL || 'https://unconfigured.invalid',
-  SUPABASE_ANON_KEY || 'unconfigured',
+  SUPABASE_ANON_KEY || 'unconfigured'
 );

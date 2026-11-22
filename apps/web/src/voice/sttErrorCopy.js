@@ -5,12 +5,14 @@
 export function sttErrorPresentation(err) {
   if (err?.code === 'permission-denied') {
     return {
-      copy: 'Your microphone was blocked. You can allow it from the padlock icon '
-        + 'in the address bar — or type your question below instead.',
+      copy:
+        'Your microphone was blocked. You can allow it from the padlock icon ' +
+        'in the address bar — or type your question below instead.',
     };
   }
   return {
-    copy: 'Something went wrong with the microphone. Tap the mic to try again, '
-      + 'or type your question below.',
+    copy:
+      'Something went wrong with the microphone. Tap the mic to try again, ' +
+      'or type your question below.',
   };
 }

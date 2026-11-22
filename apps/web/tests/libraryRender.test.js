@@ -10,7 +10,10 @@ const render = (blocks) => renderToStaticMarkup(React.createElement(ArticleBody,
 
 describe('ArticleBody', () => {
   it('renders headings and paragraphs', () => {
-    const html = render([{ t: 'h', x: 'Heading' }, { t: 'p', x: 'Body text.' }]);
+    const html = render([
+      { t: 'h', x: 'Heading' },
+      { t: 'p', x: 'Body text.' },
+    ]);
     expect(html).toContain('<h2');
     expect(html).toContain('Heading');
     expect(html).toContain('<p');
@@ -18,7 +21,10 @@ describe('ArticleBody', () => {
   });
 
   it('renders unordered and ordered lists with one li per item', () => {
-    const html = render([{ t: 'ul', x: ['one', 'two'] }, { t: 'ol', x: ['first', 'second', 'third'] }]);
+    const html = render([
+      { t: 'ul', x: ['one', 'two'] },
+      { t: 'ol', x: ['first', 'second', 'third'] },
+    ]);
     expect(html).toContain('<ul');
     expect(html).toContain('<ol');
     expect(html.match(/<li/g)).toHaveLength(5);
@@ -27,7 +33,10 @@ describe('ArticleBody', () => {
   });
 
   it('renders tip and warn callouts', () => {
-    const html = render([{ t: 'tip', x: 'A tip.' }, { t: 'warn', x: 'Call 111.' }]);
+    const html = render([
+      { t: 'tip', x: 'A tip.' },
+      { t: 'warn', x: 'Call 111.' },
+    ]);
     expect(html).toContain('A tip.');
     expect(html).toContain('Call 111.');
     expect(html).toContain('--amber');

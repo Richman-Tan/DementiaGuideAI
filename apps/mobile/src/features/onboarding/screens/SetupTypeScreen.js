@@ -46,7 +46,7 @@ export function SetupTypeScreen({ navigation, route }) {
       onSkip={handleSkip}
       onNext={handleNext}
       nextLabel="Next"
-      title={"Who is setting up\nthis app today?"}
+      title={'Who is setting up\nthis app today?'}
       subtitle="This helps Aria speak to you in the right way."
     >
       {OPTIONS.map((opt) => (

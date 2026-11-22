@@ -1,6 +1,9 @@
 :root {
   color-scheme: light dark;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 body {
@@ -30,9 +33,9 @@ h1 {
   font-weight: 600;
 }
 
-.field input[type="text"],
-.field input[type="url"],
-.field input[type="password"],
+.field input[type='text'],
+.field input[type='url'],
+.field input[type='password'],
 .field select,
 .field textarea {
   font-size: 1rem;

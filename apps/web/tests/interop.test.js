@@ -9,7 +9,16 @@ import { ELEVEN_STREAM_SAMPLE_RATE, SPECULATIVE_MIN_WORDS } from '@core/voice/vo
 import { createSpeculativeRag } from '@core/voice/speculativeRetrieval';
 import { createSentenceSplitter } from '@core/voice/sentenceTracker';
 import { timeoutSignal } from '@core/net/withTimeout';
-import { MARK, MARK_REVERSED, MARK_COMPACT, TILE, ANDROID_SAFE_ZONE_RATIO, markBounds, markFor, markEnclosingRadius } from '@core/brand/mark';
+import {
+  MARK,
+  MARK_REVERSED,
+  MARK_COMPACT,
+  TILE,
+  ANDROID_SAFE_ZONE_RATIO,
+  markBounds,
+  markFor,
+  markEnclosingRadius,
+} from '@core/brand/mark';
 
 describe('CJS libs through web alias', () => {
   it('exposes rag config constants', () => {
@@ -20,7 +29,12 @@ describe('CJS libs through web alias', () => {
   });
 
   it('builds the system prompt with mapped options', () => {
-    const p = buildSystemPrompt({ conciseMode: true, responseStyle: 'brief', jargonMode: 'avoid', ariaPersonality: 'warm' });
+    const p = buildSystemPrompt({
+      conciseMode: true,
+      responseStyle: 'brief',
+      jargonMode: 'avoid',
+      ariaPersonality: 'warm',
+    });
     expect(typeof p).toBe('string');
     expect(p.length).toBeGreaterThan(200);
   });
@@ -52,7 +66,10 @@ describe('CJS libs through web alias', () => {
 
   it('caps chunks per source family', () => {
     const mk = (id, source) => ({ id, source, similarity: 1 });
-    const capped = capBySourceFamily([mk('1', 'iSupport 1'), mk('2', 'iSupport 2'), mk('3', 'iSupport 3'), mk('4', 'Other')], 3);
+    const capped = capBySourceFamily(
+      [mk('1', 'iSupport 1'), mk('2', 'iSupport 2'), mk('3', 'iSupport 3'), mk('4', 'Other')],
+      3
+    );
     expect(capped.length).toBeLessThanOrEqual(3);
   });
 });

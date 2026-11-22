@@ -28,16 +28,19 @@ import { useAvatarConversation, VoiceState } from '@/features/voice/hooks/useAva
 import { useSettings } from '@/context/SettingsContext';
 import { prewarmVoicePipeline } from '@/lib/voice/prewarm';
 
-import { AVATAR_PROFILES, AVATAR_PROFILE_LIST, DEFAULT_AVATAR_ID } from '@/features/avatar/config/avatarProfiles';
+import {
+  AVATAR_PROFILES,
+  AVATAR_PROFILE_LIST,
+  DEFAULT_AVATAR_ID,
+} from '@/features/avatar/config/avatarProfiles';
 
 // All model assets must be required statically — Metro cannot handle dynamic require().
 const ASSET_MAP = {
-  sdk:       require('@assets/characters/aria/model.glb'),
-  rpm:       require('@assets/characters/zhenja/zhenja.glb'),
+  sdk: require('@assets/characters/aria/model.glb'),
+  rpm: require('@assets/characters/zhenja/zhenja.glb'),
   metahuman: require('@assets/characters/eric/eric.glb'),
 };
 const COZY_ROOM_ASSET = require('@assets/cozy_living_room_baked_small.glb');
-
 
 const QUICK_CHIPS = [
   'Morning routine',
@@ -55,14 +58,21 @@ export const VoiceScreen = ({ navigation }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuStep, setMenuStep] = useState('main'); // 'main' | 'persona'
   const [activeCitation, setActiveCitation] = useState(null);
-  const { textScale, avatarEnabled, subtitlesEnabled, audioEnabled, updateSetting, selectedAvatarId } = useSettings();
-  const activeAvatarId  = selectedAvatarId ?? DEFAULT_AVATAR_ID;
-  const activeProfile   = AVATAR_PROFILES[activeAvatarId] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];
+  const {
+    textScale,
+    avatarEnabled,
+    subtitlesEnabled,
+    audioEnabled,
+    updateSetting,
+    selectedAvatarId,
+  } = useSettings();
+  const activeAvatarId = selectedAvatarId ?? DEFAULT_AVATAR_ID;
+  const activeProfile = AVATAR_PROFILES[activeAvatarId] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];
   const isUnityRenderer = activeProfile.renderer === 'unity';
-  const avatarRef   = useRef(null);
-  const micPulse    = useRef(new Animated.Value(1)).current;
-  const menuAnim    = useRef(new Animated.Value(0)).current;
-  const insets      = useSafeAreaInsets();
+  const avatarRef = useRef(null);
+  const micPulse = useRef(new Animated.Value(1)).current;
+  const menuAnim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
 
   const openMenu = useCallback(() => {
     setMenuVisible(true);
@@ -74,17 +84,20 @@ export const VoiceScreen = ({ navigation }) => {
     }).start();
   }, [menuAnim]);
 
-  const closeMenu = useCallback((onClosed) => {
-    Animated.timing(menuAnim, {
-      toValue: 0,
-      duration: 180,
-      useNativeDriver: true,
-    }).start(() => {
-      setMenuVisible(false);
-      setMenuStep('main');
-      onClosed?.();
-    });
-  }, [menuAnim]);
+  const closeMenu = useCallback(
+    (onClosed) => {
+      Animated.timing(menuAnim, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }).start(() => {
+        setMenuVisible(false);
+        setMenuStep('main');
+        onClosed?.();
+      });
+    },
+    [menuAnim]
+  );
 
   // Warm API connections + credential caches while the user is still looking
   // at the screen, so the first voice turn doesn't pay TLS/SecureStore costs.
@@ -105,7 +118,7 @@ export const VoiceScreen = ({ navigation }) => {
 
     let cancelled = false;
     setModelUri(null); // clear stale model while new one loads
-    const profile    = AVATAR_PROFILES[activeAvatarId] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];
+    const profile = AVATAR_PROFILES[activeAvatarId] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];
     const modelAsset = ASSET_MAP[profile.modelKey];
     (async () => {
       try {
@@ -125,7 +138,9 @@ export const VoiceScreen = ({ navigation }) => {
         console.warn('[VoiceScreen] Failed to load assets:', e);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [activeAvatarId, isUnityRenderer]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const {
@@ -144,7 +159,6 @@ export const VoiceScreen = ({ navigation }) => {
   } = useAvatarConversation({ avatarRef });
 
   const isActive = voiceState === VoiceState.LISTENING || voiceState === VoiceState.SPEAKING;
-
 
   // Mic pulse animation
   useEffect(() => {
@@ -170,11 +184,12 @@ export const VoiceScreen = ({ navigation }) => {
     await processQuery(text);
   }, [inputText, voiceState, processQuery]);
 
-  const micColor = voiceState === VoiceState.LISTENING
-    ? '#4ECDC4'
-    : voiceState === VoiceState.SPEAKING
-    ? Colors.accent
-    : 'rgba(255,255,255,0.85)';
+  const micColor =
+    voiceState === VoiceState.LISTENING
+      ? '#4ECDC4'
+      : voiceState === VoiceState.SPEAKING
+        ? Colors.accent
+        : 'rgba(255,255,255,0.85)';
 
   return (
     <View style={styles.root}>
@@ -225,23 +240,45 @@ export const VoiceScreen = ({ navigation }) => {
                     top: insets.top + 58,
                     opacity: menuAnim,
                     transform: [
-                      { translateY: menuAnim.interpolate({ inputRange: [0,1], outputRange: [-12,0] }) },
-                      { scaleY:    menuAnim.interpolate({ inputRange: [0,1], outputRange: [0.92,1] }) },
+                      {
+                        translateY: menuAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-12, 0],
+                        }),
+                      },
+                      {
+                        scaleY: menuAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.92, 1],
+                        }),
+                      },
                     ],
                   },
                 ]}
               >
-                <BlurView intensity={Platform.OS === 'ios' ? 70 : 40} tint="dark" style={styles.menuBlur}>
+                <BlurView
+                  intensity={Platform.OS === 'ios' ? 70 : 40}
+                  tint="dark"
+                  style={styles.menuBlur}
+                >
                   <TouchableOpacity
                     style={styles.menuItem}
                     onPress={() => setMenuStep('persona')}
                     activeOpacity={0.7}
                   >
                     <View style={styles.menuItemIcon}>
-                      <MaterialCommunityIcons name="account-switch-outline" size={20} color="rgba(255,255,255,0.9)" />
+                      <MaterialCommunityIcons
+                        name="account-switch-outline"
+                        size={20}
+                        color="rgba(255,255,255,0.9)"
+                      />
                     </View>
                     <Text style={styles.menuItemText}>Change Persona</Text>
-                    <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.35)" />
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={18}
+                      color="rgba(255,255,255,0.35)"
+                    />
                   </TouchableOpacity>
 
                   <View style={styles.menuDivider} />
@@ -259,20 +296,36 @@ export const VoiceScreen = ({ navigation }) => {
                     activeOpacity={0.7}
                   >
                     <View style={styles.menuItemIcon}>
-                      <MaterialCommunityIcons name="information-outline" size={20} color="rgba(255,255,255,0.9)" />
+                      <MaterialCommunityIcons
+                        name="information-outline"
+                        size={20}
+                        color="rgba(255,255,255,0.9)"
+                      />
                     </View>
                     <Text style={styles.menuItemText}>About / Help</Text>
-                    <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.35)" />
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={18}
+                      color="rgba(255,255,255,0.35)"
+                    />
                   </TouchableOpacity>
                 </BlurView>
               </Animated.View>
             </Pressable>
           ) : (
             /* ── Persona selection ── */
-            <Pressable style={styles.personaOverlay} onPress={() => setMenuStep('main')} accessible={false}>
+            <Pressable
+              style={styles.personaOverlay}
+              onPress={() => setMenuStep('main')}
+              accessible={false}
+            >
               <Pressable style={styles.personaSheet} onPress={() => {}} accessible={false}>
                 <TouchableOpacity style={styles.personaBackRow} onPress={() => setMenuStep('main')}>
-                  <MaterialCommunityIcons name="chevron-left" size={20} color="rgba(255,255,255,0.6)" />
+                  <MaterialCommunityIcons
+                    name="chevron-left"
+                    size={20}
+                    color="rgba(255,255,255,0.6)"
+                  />
                   <Text style={styles.personaBackText}>Back</Text>
                 </TouchableOpacity>
 
@@ -280,7 +333,7 @@ export const VoiceScreen = ({ navigation }) => {
                 <Text style={styles.personaSubtitle}>Each guide has their own voice and style</Text>
 
                 <View style={styles.personaGrid}>
-                  {AVATAR_PROFILE_LIST.map(profile => {
+                  {AVATAR_PROFILE_LIST.map((profile) => {
                     const isSelected = profile.id === activeAvatarId;
                     return (
                       <TouchableOpacity
@@ -300,7 +353,12 @@ export const VoiceScreen = ({ navigation }) => {
                             color={isSelected ? '#7C6FFF' : 'rgba(255,255,255,0.6)'}
                           />
                         </View>
-                        <Text style={[styles.personaCardName, isSelected && styles.personaCardNameSelected]}>
+                        <Text
+                          style={[
+                            styles.personaCardName,
+                            isSelected && styles.personaCardNameSelected,
+                          ]}
+                        >
                           {profile.name}
                         </Text>
                         <Text style={styles.personaCardLabel}>{profile.label}</Text>
@@ -332,14 +390,15 @@ export const VoiceScreen = ({ navigation }) => {
               <View style={styles.citationHeader}>
                 <MaterialCommunityIcons name="book-open-variant" size={16} color="#7C6FFF" />
                 <Text style={styles.citationHeaderText}>Source [{activeCitation.num}]</Text>
-                <TouchableOpacity onPress={() => setActiveCitation(null)} style={{ marginLeft: 'auto' }}>
+                <TouchableOpacity
+                  onPress={() => setActiveCitation(null)}
+                  style={{ marginLeft: 'auto' }}
+                >
                   <MaterialCommunityIcons name="close" size={18} color="rgba(255,255,255,0.6)" />
                 </TouchableOpacity>
               </View>
               <Text style={styles.citationTitle}>{activeCitation.title}</Text>
-              {activeCitation.org && (
-                <Text style={styles.citationOrg}>{activeCitation.org}</Text>
-              )}
+              {activeCitation.org && <Text style={styles.citationOrg}>{activeCitation.org}</Text>}
               <View style={styles.citationExcerptBox}>
                 <Text style={styles.citationExcerpt}>"{activeCitation.excerpt}"</Text>
               </View>
@@ -379,25 +438,46 @@ export const VoiceScreen = ({ navigation }) => {
         ) : (
           <View style={styles.avatarPlaceholder}>
             <MaterialCommunityIcons
-              name={voiceState === VoiceState.LISTENING ? 'microphone' : voiceState === VoiceState.SPEAKING ? 'volume-high' : voiceState === VoiceState.PROCESSING ? 'dots-horizontal' : 'robot-excited-outline'}
+              name={
+                voiceState === VoiceState.LISTENING
+                  ? 'microphone'
+                  : voiceState === VoiceState.SPEAKING
+                    ? 'volume-high'
+                    : voiceState === VoiceState.PROCESSING
+                      ? 'dots-horizontal'
+                      : 'robot-excited-outline'
+              }
               size={64}
               color={isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)'}
             />
             <Text style={styles.avatarPlaceholderState}>
-              {voiceState === VoiceState.LISTENING ? 'Listening…' : voiceState === VoiceState.SPEAKING ? 'Speaking…' : voiceState === VoiceState.PROCESSING ? 'Thinking…' : 'Ready'}
+              {voiceState === VoiceState.LISTENING
+                ? 'Listening…'
+                : voiceState === VoiceState.SPEAKING
+                  ? 'Speaking…'
+                  : voiceState === VoiceState.PROCESSING
+                    ? 'Thinking…'
+                    : 'Ready'}
             </Text>
           </View>
         )}
 
         <View style={styles.nameBadge}>
-          <View style={[styles.nameBadgeDot, { backgroundColor: isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)' }]} />
+          <View
+            style={[
+              styles.nameBadgeDot,
+              { backgroundColor: isActive ? '#4ECDC4' : 'rgba(255,255,255,0.4)' },
+            ]}
+          />
           <Text style={styles.nameBadgeText}>{activeProfile.name}</Text>
         </View>
 
         {/* Subtitle bar — absolute overlay so it doesn't affect avatar size */}
         {currentSubtitle.length > 0 && voiceState === VoiceState.SPEAKING && (
           <View style={styles.subtitleBar}>
-            <Text style={styles.subtitleText} numberOfLines={3}>{currentSubtitle}</Text>
+            <Text style={styles.subtitleText} numberOfLines={3}>
+              {currentSubtitle}
+            </Text>
           </View>
         )}
         {/* {voiceState === VoiceState.IDLE && conversationHistory.length === 0 && (
@@ -456,7 +536,13 @@ export const VoiceScreen = ({ navigation }) => {
               onPress={() => handleChipPress(chip)}
               activeOpacity={0.75}
             >
-              <Text style={[styles.chipText, inputText === chip && styles.chipTextActive, { fontSize: 13 * textScale }]}>
+              <Text
+                style={[
+                  styles.chipText,
+                  inputText === chip && styles.chipTextActive,
+                  { fontSize: 13 * textScale },
+                ]}
+              >
                 {chip}
               </Text>
             </TouchableOpacity>
@@ -470,7 +556,11 @@ export const VoiceScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('Chat')}
             accessibilityLabel="Switch to text chat"
           >
-            <MaterialCommunityIcons name="keyboard-outline" size={22} color="rgba(255,255,255,0.8)" />
+            <MaterialCommunityIcons
+              name="keyboard-outline"
+              size={22}
+              color="rgba(255,255,255,0.8)"
+            />
           </TouchableOpacity>
 
           <Animated.View style={{ transform: [{ scale: micPulse }] }}>
@@ -519,7 +609,11 @@ export const VoiceScreen = ({ navigation }) => {
               <Text style={styles.stopText}>Stop</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.sendBtn} onPress={handleTextSend} accessibilityLabel="Send">
+            <TouchableOpacity
+              style={styles.sendBtn}
+              onPress={handleTextSend}
+              accessibilityLabel="Send"
+            >
               <MaterialCommunityIcons name="send" size={20} color="#fff" />
             </TouchableOpacity>
           )}

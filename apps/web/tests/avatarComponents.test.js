@@ -24,24 +24,43 @@ vi.mock('../src/avatar/unity/unityBridge.js', () => ({
   probeUnity: () => fake.probe(),
   mountUnity: () => fake.mount(),
   getUnityLoadState: () => fake.load,
-  onUnityLoadProgress: (cb) => { fake.subs.add(cb); cb(fake.load); return () => fake.subs.delete(cb); },
+  onUnityLoadProgress: (cb) => {
+    fake.subs.add(cb);
+    cb(fake.load);
+    return () => fake.subs.delete(cb);
+  },
   getUnityCanvas: () => fake.canvas,
   parkUnityCanvas: (...a) => fake.park(...a),
   ensureUnityBoot: (...a) => fake.boot(...a),
 }));
-vi.mock('../src/avatar/unity/UnityAvatarController.js', () => ({ getUnityAvatar: (...a) => fake.getUnityAvatar(...a) }));
+vi.mock('../src/avatar/unity/UnityAvatarController.js', () => ({
+  getUnityAvatar: (...a) => fake.getUnityAvatar(...a),
+}));
 
 const { AvatarLoadProgress } = await import('../src/avatar/AvatarLoadProgress.jsx');
-const { AvatarBust, AvatarMount, AvatarStageCard, AvatarHomeStage } = await import('../src/avatar/AvatarStage.jsx');
+const { AvatarBust, AvatarMount, AvatarStageCard, AvatarHomeStage } =
+  await import('../src/avatar/AvatarStage.jsx');
 const { UnityAvatarMount } = await import('../src/avatar/unity/UnityAvatarStage.jsx');
 const { useUnityLoadState } = await import('../src/avatar/unity/useUnityLoadState.js');
 
 const broadcast = async (state) => {
-  await flush(() => { fake.load = state; for (const cb of fake.subs) cb(state); });
+  await flush(() => {
+    fake.load = state;
+    for (const cb of fake.subs) cb(state);
+  });
 };
 const withSettings = (child) => h(SettingsProvider, null, child);
-const setAvatar = (avatarId, extra = {}) => localStorage.setItem('dg_settings', JSON.stringify({ avatarId, ...extra }));
-const deferred = () => { let resolve; let reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; };
+const setAvatar = (avatarId, extra = {}) =>
+  localStorage.setItem('dg_settings', JSON.stringify({ avatarId, ...extra }));
+const deferred = () => {
+  let resolve;
+  let reject;
+  const promise = new Promise((a, b) => {
+    resolve = a;
+    reject = b;
+  });
+  return { promise, resolve, reject };
+};
 
 beforeEach(() => {
   localStorage.clear();
@@ -71,7 +90,9 @@ describe('AvatarLoadProgress', () => {
     expect(bar.getAttribute('aria-label')).toBe('Downloading Aaron');
     expect(bar.firstChild.style.width).toBe('42%');
     expect(container.textContent).toContain('Getting Aaron ready');
-    expect(container.textContent).toContain('Downloading… 42% — Aaron is a large one-time download (about 230 MB), saved for your next visit.');
+    expect(container.textContent).toContain(
+      'Downloading… 42% — Aaron is a large one-time download (about 230 MB), saved for your next visit.'
+    );
     expect(container.querySelector('svg').getAttribute('width')).toBe('150');
   });
 
@@ -95,14 +116,16 @@ describe('AvatarLoadProgress', () => {
     const { container } = await show({ phase: 'failed' });
     expect(container.textContent).toContain("We couldn't finish loading Aaron.");
     expect(container.textContent).toContain('a brief drop in connection');
-    expect(container.textContent).toContain("The 3D view isn't available right now. Aaron can still talk with you.");
+    expect(container.textContent).toContain(
+      "The 3D view isn't available right now. Aaron can still talk with you."
+    );
     const button = container.querySelector('button');
     expect(button.textContent).toBe('Try again');
     await flush(() => button.click());
     expect(fake.boot).toHaveBeenCalledTimes(1);
     const compact = await show({ phase: 'failed', compact: true });
     expect(compact.container.textContent).not.toContain('a brief drop in connection');
-    expect(compact.container.textContent).toContain("Aaron can still talk with you.");
+    expect(compact.container.textContent).toContain('Aaron can still talk with you.');
   });
 
   it('any other phase shows only the breathing bust', async () => {
@@ -126,7 +149,9 @@ describe('AvatarBust / AvatarStageCard', () => {
     const b = await render(withSettings(h(AvatarStageCard)));
     expect(b.container.textContent).toBe('avatar stage · Ariana (3D, lip-synced)');
     expect(fake.probe).not.toHaveBeenCalled(); // the landing card never touches /unity/
-    const c = await render(withSettings(h(AvatarStageCard, { caption: 'Meet your guide', maxWidth: 200 })));
+    const c = await render(
+      withSettings(h(AvatarStageCard, { caption: 'Meet your guide', maxWidth: 200 }))
+    );
     expect(c.container.textContent).toBe('Meet your guide');
     expect(c.container.firstChild.style.maxWidth).toBe('200px');
   });
@@ -176,7 +201,9 @@ describe('AvatarHomeStage', () => {
     await settle();
     expect(container.querySelector('canvas')).toBe(fake.canvas);
     expect(container.textContent).toContain('Aaron');
-    expect([...container.querySelectorAll('div')].some((d) => d.style.aspectRatio === '3 / 4')).toBe(true);
+    expect(
+      [...container.querySelectorAll('div')].some((d) => d.style.aspectRatio === '3 / 4')
+    ).toBe(true);
   });
 
   it('avatar off: the bust and the name tag, with no probe and no download', async () => {
@@ -193,7 +220,8 @@ describe('AvatarHomeStage', () => {
 
 describe('UnityAvatarMount', () => {
   const child = h('span', { className: 'bust' }, 'bust');
-  const mountUnity = (props = {}) => render(h(UnityAvatarMount, { characterId: 'ariana', name: 'Ariana', ...props }, child));
+  const mountUnity = (props = {}) =>
+    render(h(UnityAvatarMount, { characterId: 'ariana', name: 'Ariana', ...props }, child));
 
   it('adopts the shared canvas, boots the character and reveals it, then forwards state', async () => {
     const r = await mountUnity({ state: 'listening' });
@@ -216,7 +244,9 @@ describe('UnityAvatarMount', () => {
     const { container } = await mountUnity();
     await settle();
     expect(container.querySelector('.bust')).not.toBeNull();
-    expect(container.textContent).toContain("The 3D view isn't available right now. Ariana can still talk with you.");
+    expect(container.textContent).toContain(
+      "The 3D view isn't available right now. Ariana can still talk with you."
+    );
     expect(container.textContent).not.toContain('Unity build');
     expect(fake.mount).not.toHaveBeenCalled();
   });
@@ -225,7 +255,9 @@ describe('UnityAvatarMount', () => {
     fake.mount = vi.fn(() => new Promise(() => {}));
     fake.load = { phase: 'downloading', pct: 0.5 };
     const { container } = await mountUnity({ name: undefined, compact: true });
-    expect(container.querySelector('[role="progressbar"]').getAttribute('aria-valuenow')).toBe('50');
+    expect(container.querySelector('[role="progressbar"]').getAttribute('aria-valuenow')).toBe(
+      '50'
+    );
     expect(container.textContent).toContain('Getting your avatar ready… 50%');
     expect(container.querySelector('.bust')).toBeNull();
     await broadcast({ phase: 'preparing', pct: 1 });
@@ -233,7 +265,9 @@ describe('UnityAvatarMount', () => {
   });
 
   it('a failed boot is logged and leaves the retry card up', async () => {
-    fake.mount = vi.fn(async () => { throw new Error('wasm compile failed'); });
+    fake.mount = vi.fn(async () => {
+      throw new Error('wasm compile failed');
+    });
     fake.load = { phase: 'failed', pct: 0.9 };
     const { container } = await mountUnity();
     await settle();
@@ -243,7 +277,9 @@ describe('UnityAvatarMount', () => {
   });
 
   it('a non-Error boot failure is logged as-is', async () => {
-    fake.mount = vi.fn(async () => { throw 'gone'; });
+    fake.mount = vi.fn(async () => {
+      throw 'gone';
+    });
     await mountUnity();
     await settle();
     expect(console.warn).toHaveBeenCalledWith('[unity] mount failed:', 'gone');

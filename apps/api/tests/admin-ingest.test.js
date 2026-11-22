@@ -5,7 +5,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { makeReq, makeRes, load, ADMIN_EMAIL } from './helpers.js';
 
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
 
 // Two hand-built minimal PDFs (no fixture files needed): one with a real text
 // run, one with a page but zero text objects — pdf-parse succeeds on both
@@ -13,8 +17,10 @@ afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(
 // them useful for exercising the "extracted nothing usable" branch without
 // mocking pdf-parse (not possible here — it's required by pipeline.js via
 // Node's own `require`, outside Vite's module graph, so vi.mock can't see it).
-const TEXT_PDF_B64 = 'JVBERi0xLjEKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PmVuZG9iagozIDAgb2JqPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9SZXNvdXJjZXM8PC9Gb250PDwvRjEgNSAwIFI+Pj4+L01lZGlhQm94WzAgMCA0MDAgMjAwXS9Db250ZW50cyA0IDAgUj4+ZW5kb2JqCjQgMCBvYmo8PC9MZW5ndGggNzk+PnN0cmVhbQpCVCAvRjEgMTggVGYgMjAgMTAwIFRkIChTdW5kb3duaW5nIGNhdXNlcyBldmVuaW5nIGNvbmZ1c2lvbiBpbiBkZW1lbnRpYS4pIFRqIEVUCmVuZHN0cmVhbSBlbmRvYmoKNSAwIG9iajw8L1R5cGUvRm9udC9TdWJ0eXBlL1R5cGUxL0Jhc2VGb250L0hlbHZldGljYT4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4K';
-const EMPTY_PDF_B64 = 'JVBERi0xLjEKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PmVuZG9iagozIDAgb2JqPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9SZXNvdXJjZXM8PD4+L01lZGlhQm94WzAgMCAyMDAgMjAwXT4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4K';
+const TEXT_PDF_B64 =
+  'JVBERi0xLjEKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PmVuZG9iagozIDAgb2JqPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9SZXNvdXJjZXM8PC9Gb250PDwvRjEgNSAwIFI+Pj4+L01lZGlhQm94WzAgMCA0MDAgMjAwXS9Db250ZW50cyA0IDAgUj4+ZW5kb2JqCjQgMCBvYmo8PC9MZW5ndGggNzk+PnN0cmVhbQpCVCAvRjEgMTggVGYgMjAgMTAwIFRkIChTdW5kb3duaW5nIGNhdXNlcyBldmVuaW5nIGNvbmZ1c2lvbiBpbiBkZW1lbnRpYS4pIFRqIEVUCmVuZHN0cmVhbSBlbmRvYmoKNSAwIG9iajw8L1R5cGUvRm9udC9TdWJ0eXBlL1R5cGUxL0Jhc2VGb250L0hlbHZldGljYT4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4K';
+const EMPTY_PDF_B64 =
+  'JVBERi0xLjEKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PmVuZG9iagozIDAgb2JqPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9SZXNvdXJjZXM8PD4+L01lZGlhQm94WzAgMCAyMDAgMjAwXT4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4K';
 
 function adminReq(body, { token = 'valid-session-token', method = 'POST', headers = {} } = {}) {
   return makeReq({
@@ -25,9 +31,10 @@ function adminReq(body, { token = 'valid-session-token', method = 'POST', header
   });
 }
 
-const ARTICLE_HTML = '<!doctype html><title>Sundowning</title><article>'
-  + 'Sundowning causes evening confusion and agitation in people with dementia. '.repeat(10)
-  + '</article>';
+const ARTICLE_HTML =
+  '<!doctype html><title>Sundowning</title><article>' +
+  'Sundowning causes evening confusion and agitation in people with dementia. '.repeat(10) +
+  '</article>';
 
 /**
  * Routes fetch by URL + request body: /auth/v1/user for the Supabase login
@@ -40,19 +47,27 @@ function stubBackends({ authEmail = ADMIN_EMAIL, authStatus = 200, authThrows = 
     const u = String(url);
     if (u.includes('/auth/v1/user')) {
       if (authThrows) throw new Error('network down');
-      return jsonOk(authStatus === 200 ? { email: authEmail } : { error: 'invalid token' }, authStatus);
+      return jsonOk(
+        authStatus === 200 ? { email: authEmail } : { error: 'invalid token' },
+        authStatus
+      );
     }
     if (u.includes('example.com/article')) {
       return new Response(ARTICLE_HTML, { status: 200 });
     }
     const body = init?.body ? JSON.parse(init.body) : {};
     if (u.includes('/chat/completions')) {
-      const content = body.max_tokens === 60 ? '["sundowning", "evening agitation"]' : 'Evening confusion and agitation';
+      const content =
+        body.max_tokens === 60
+          ? '["sundowning", "evening agitation"]'
+          : 'Evening confusion and agitation';
       return jsonOk({ choices: [{ message: { content } }] });
     }
     if (u.includes('/embeddings')) {
       const inputs = Array.isArray(body.input) ? body.input : [body.input];
-      return jsonOk({ data: inputs.map((_, i) => ({ index: i, embedding: new Array(8).fill(0.01) })) });
+      return jsonOk({
+        data: inputs.map((_, i) => ({ index: i, embedding: new Array(8).fill(0.01) })),
+      });
     }
     throw new Error(`unhandled fetch in test: ${url}`);
   });
@@ -61,7 +76,10 @@ function stubBackends({ authEmail = ADMIN_EMAIL, authStatus = 200, authThrows = 
 }
 
 function jsonOk(body, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 async function post(body, { token, method, admin, env, authEmail, authStatus, authThrows } = {}) {
@@ -140,7 +158,11 @@ describe('auth and validation reject before any OpenAI/DB call', () => {
   });
 
   it('413s a PDF payload over the size cap without attempting to parse it', async () => {
-    const { res } = await post({ ...textBody(), sourceType: 'pdf', payload: 'A'.repeat(5_000_000) });
+    const { res } = await post({
+      ...textBody(),
+      sourceType: 'pdf',
+      payload: 'A'.repeat(5_000_000),
+    });
     expect(res.statusCode).toBe(413);
     // Auth still had to run (it's checked first), but no chat/completions or embeddings call.
     const calledUrls = global.fetch.mock.calls.map(([url]) => String(url));
@@ -175,7 +197,10 @@ describe('extraction failures', () => {
     vi.stubGlobal('fetch', fn);
     const { mod } = await load('../api/admin/ingest.js', {});
     const res = makeRes();
-    await mod.default(adminReq({ ...textBody(), sourceType: 'url', payload: 'https://example.com/missing' }), res);
+    await mod.default(
+      adminReq({ ...textBody(), sourceType: 'url', payload: 'https://example.com/missing' }),
+      res
+    );
     expect(res.statusCode).toBe(422);
   });
 });
@@ -253,7 +278,10 @@ describe('happy path (URL)', () => {
 function textBody() {
   return {
     sourceType: 'text',
-    payload: 'Sundowning is a pattern of increased confusion and agitation in the evening hours. '.repeat(5),
+    payload:
+      'Sundowning is a pattern of increased confusion and agitation in the evening hours. '.repeat(
+        5
+      ),
     title: 'Evening confusion in dementia',
     category: 'caregiving',
   };

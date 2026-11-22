@@ -30,7 +30,10 @@ export function useAuth() {
       setStatus('ready');
     });
 
-    return () => { cancelled = true; sub?.subscription?.unsubscribe(); };
+    return () => {
+      cancelled = true;
+      sub?.subscription?.unsubscribe();
+    };
   }, []);
 
   const signIn = useCallback(async (email, password) => {

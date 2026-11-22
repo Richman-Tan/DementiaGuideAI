@@ -10,14 +10,27 @@ import { saveKeys, loadKeys } from '../src/state/keysStore.js';
 import { saveAccess } from '../src/state/accessStore.js';
 import { apiUrl } from '../src/services/apiBase.js';
 import { buildSystemPrompt, buildUserContent } from '@core/rag/prompt';
-import { CHAT_MODEL, EMBEDDING_MODEL, MIN_SIMILARITY, GENERATION_TEMPERATURE } from '@core/rag/ragConfig';
+import {
+  CHAT_MODEL,
+  EMBEDDING_MODEL,
+  MIN_SIMILARITY,
+  GENERATION_TEMPERATURE,
+} from '@core/rag/ragConfig';
 
 const fake = vi.hoisted(() => ({ rpc: vi.fn() }));
-vi.mock('../src/services/supabase.js', () => ({ supabase: { rpc: fake.rpc }, supabaseConfigured: true }));
+vi.mock('../src/services/supabase.js', () => ({
+  supabase: { rpc: fake.rpc },
+  supabaseConfigured: true,
+}));
 
 const {
-  openaiClient, OpenAIAuthError, OpenAIRateLimitError, StudyAccessError, StudyLimitError,
-  mapSourcesToCitations, realGenerate,
+  openaiClient,
+  OpenAIAuthError,
+  OpenAIRateLimitError,
+  StudyAccessError,
+  StudyLimitError,
+  mapSourcesToCitations,
+  realGenerate,
 } = await import('../src/services/openaiClient.js');
 
 // ─── fakes ───────────────────────────────────────────────────────────────────
@@ -34,7 +47,10 @@ const enc = new TextEncoder();
 const delta = (content) => `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n`;
 function sseResponse(parts, status = 200) {
   const body = new ReadableStream({
-    start(c) { for (const p of parts) c.enqueue(enc.encode(p)); c.close(); },
+    start(c) {
+      for (const p of parts) c.enqueue(enc.encode(p));
+      c.close();
+    },
   });
   return new Response(body, { status });
 }
@@ -50,9 +66,14 @@ function hangingBody(signal, firstChunk = null) {
     body: {
       getReader: () => ({
         read: () => {
-          if (!sent) { sent = true; return Promise.resolve({ done: false, value: enc.encode(firstChunk) }); }
+          if (!sent) {
+            sent = true;
+            return Promise.resolve({ done: false, value: enc.encode(firstChunk) });
+          }
           return new Promise((_, reject) => {
-            signal.addEventListener('abort', () => reject(new DOMException('The operation was aborted.', 'AbortError')));
+            signal.addEventListener('abort', () =>
+              reject(new DOMException('The operation was aborted.', 'AbortError'))
+            );
           });
         },
       }),
@@ -60,10 +81,24 @@ function hangingBody(signal, firstChunk = null) {
   };
 }
 
-const rpcReturns = (result) => fake.rpc.mockImplementation(() => ({ abortSignal: () => Promise.resolve(result) }));
+const rpcReturns = (result) =>
+  fake.rpc.mockImplementation(() => ({ abortSignal: () => Promise.resolve(result) }));
 const CHUNKS = [
-  { id: 'c1', title: 'Sundowning', display_title: 'Late-day restlessness', source_org: 'Alzheimers NZ', source_url: 'https://a.nz/s', content: 'Keep evenings calm.' },
-  { id: 'c2', title: 'Routine', source_org: 'Dementia NZ', source_url: null, content: 'A steady routine helps.' },
+  {
+    id: 'c1',
+    title: 'Sundowning',
+    display_title: 'Late-day restlessness',
+    source_org: 'Alzheimers NZ',
+    source_url: 'https://a.nz/s',
+    content: 'Keep evenings calm.',
+  },
+  {
+    id: 'c2',
+    title: 'Routine',
+    source_org: 'Dementia NZ',
+    source_url: null,
+    content: 'A steady routine helps.',
+  },
 ];
 
 async function drain(gen) {
@@ -124,10 +159,16 @@ describe('HTTP status → error mapping', () => {
   it('401 with a personal key → OpenAIAuthError; through the proxy → StudyAccessError', async () => {
     withKey();
     fetchMock.mockResolvedValue(new Response('', { status: 401 }));
-    await expect(embed()).rejects.toMatchObject({ name: 'OpenAIAuthError', message: 'Invalid API key' });
+    await expect(embed()).rejects.toMatchObject({
+      name: 'OpenAIAuthError',
+      message: 'Invalid API key',
+    });
     saveKeys({ openai: '', eleven: '', azure: '' });
     withGuest();
-    await expect(embed()).rejects.toMatchObject({ name: 'StudyAccessError', message: 'Access code was not accepted' });
+    await expect(embed()).rejects.toMatchObject({
+      name: 'StudyAccessError',
+      message: 'Access code was not accepted',
+    });
   });
 
   it('429 is the provider’s rate limit unless the proxy says the daily cap was reached', async () => {
@@ -136,19 +177,27 @@ describe('HTTP status → error mapping', () => {
     await expect(embed()).rejects.toBeInstanceOf(OpenAIRateLimitError); // direct: body not consulted
     saveKeys({ openai: '', eleven: '', azure: '' });
     saveAccess('guest-access-code-0001');
-    fetchMock.mockResolvedValueOnce(new Response('Access code limit reached for today', { status: 429 }));
+    fetchMock.mockResolvedValueOnce(
+      new Response('Access code limit reached for today', { status: 429 })
+    );
     await expect(embed()).rejects.toBeInstanceOf(StudyLimitError);
     fetchMock.mockResolvedValueOnce(new Response('upstream busy', { status: 429 }));
     await expect(embed()).rejects.toBeInstanceOf(OpenAIRateLimitError);
     // An unreadable body is treated as the provider's limit.
-    fetchMock.mockResolvedValueOnce({ status: 429, ok: false, clone: () => ({ text: () => Promise.reject(new Error('x')) }) });
+    fetchMock.mockResolvedValueOnce({
+      status: 429,
+      ok: false,
+      clone: () => ({ text: () => Promise.reject(new Error('x')) }),
+    });
     await expect(embed()).rejects.toBeInstanceOf(OpenAIRateLimitError);
   });
 
   it('403 says the key may be unavailable in the region, not that it is invalid', async () => {
     withKey();
     fetchMock.mockResolvedValue(new Response('', { status: 403 }));
-    await expect(embed()).rejects.toThrow('OpenAI error: refused (403) — the key may be unavailable in your region');
+    await expect(embed()).rejects.toThrow(
+      'OpenAI error: refused (403) — the key may be unavailable in your region'
+    );
   });
 
   it('other failures keep the upstream body when direct, and only the status when proxied', async () => {
@@ -157,7 +206,11 @@ describe('HTTP status → error mapping', () => {
     await expect(embed()).rejects.toThrow('OpenAI error: {"error":"model_not_found"}');
     fetchMock.mockResolvedValueOnce(new Response('', { status: 500 }));
     await expect(embed()).rejects.toThrow('OpenAI error: HTTP 500');
-    fetchMock.mockResolvedValueOnce({ status: 500, ok: false, text: () => Promise.reject(new Error('x')) });
+    fetchMock.mockResolvedValueOnce({
+      status: 500,
+      ok: false,
+      text: () => Promise.reject(new Error('x')),
+    });
     await expect(embed()).rejects.toThrow('OpenAI error: HTTP 500');
     saveKeys({ openai: '', eleven: '', azure: '' });
     withGuest();
@@ -170,7 +223,9 @@ describe('_callOpenAI', () => {
   it('an explicitly passed key overrides the stored credentials (key-validation path)', async () => {
     withGuest();
     fetchMock.mockResolvedValue(jsonResponse({ ok: 1 }));
-    expect(await openaiClient._callOpenAI('/chat/completions', { x: 1 }, 'sk-explicit')).toEqual({ ok: 1 });
+    expect(await openaiClient._callOpenAI('/chat/completions', { x: 1 }, 'sk-explicit')).toEqual({
+      ok: 1,
+    });
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://api.openai.com/v1/chat/completions');
     expect(init.headers.Authorization).toBe('Bearer sk-explicit');
@@ -187,7 +242,10 @@ describe('_embedQuery', () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://api.openai.com/v1/embeddings');
     expect(JSON.parse(init.body)).toEqual({ model: EMBEDDING_MODEL, input: 'Sleep problems' });
-    expect(init.headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer sk-test-key-123' });
+    expect(init.headers).toEqual({
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer sk-test-key-123',
+    });
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
@@ -219,7 +277,10 @@ describe('search', () => {
     rpcReturns({ data: rows, error: null });
     const out = await openaiClient.search('evening agitation', 3);
     expect(fake.rpc).toHaveBeenCalledWith('match_chunks', {
-      query_embedding: [0.5], query_text: 'evening agitation', match_count: 30, min_similarity: MIN_SIMILARITY,
+      query_embedding: [0.5],
+      query_text: 'evening agitation',
+      match_count: 30,
+      min_similarity: MIN_SIMILARITY,
     });
     expect(out.map((r) => r.id)).toEqual(['r0', 'r1', 'r2']);
   });
@@ -228,7 +289,9 @@ describe('search', () => {
     rpcReturns({ data: null, error: null });
     expect(await openaiClient.search('q')).toEqual([]);
     rpcReturns({ data: null, error: { message: 'statement timeout' } });
-    await expect(openaiClient.search('q2')).rejects.toThrow('Supabase search error: statement timeout');
+    await expect(openaiClient.search('q2')).rejects.toThrow(
+      'Supabase search error: statement timeout'
+    );
   });
 });
 
@@ -241,57 +304,112 @@ describe('chatStream', () => {
   it('builds the request from the shared prompt modules and the last six history turns', async () => {
     withKey();
     fetchMock.mockResolvedValue(sseResponse([delta('Hi.')]));
-    const history = Array.from({ length: 8 }, (_, i) => ({ role: i % 2 ? 'assistant' : 'user', content: `m${i}`, extra: 1 }));
-    const opts = { conciseMode: false, responseStyle: 'detailed', jargonMode: 'avoid', ariaPersonality: 'calm', isCaregiversSetup: true, skipThrottle: true, preRetrievedChunks: CHUNKS };
+    const history = Array.from({ length: 8 }, (_, i) => ({
+      role: i % 2 ? 'assistant' : 'user',
+      content: `m${i}`,
+      extra: 1,
+    }));
+    const opts = {
+      conciseMode: false,
+      responseStyle: 'detailed',
+      jargonMode: 'avoid',
+      ariaPersonality: 'calm',
+      isCaregiversSetup: true,
+      skipThrottle: true,
+      preRetrievedChunks: CHUNKS,
+    };
     await drain(openaiClient.chatStream('How do I help at night?', history, null, opts));
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://api.openai.com/v1/chat/completions');
     const body = JSON.parse(init.body);
-    expect(body).toMatchObject({ model: CHAT_MODEL, max_tokens: 900, temperature: GENERATION_TEMPERATURE, stream: true });
+    expect(body).toMatchObject({
+      model: CHAT_MODEL,
+      max_tokens: 900,
+      temperature: GENERATION_TEMPERATURE,
+      stream: true,
+    });
     expect(body.messages[0]).toEqual({
       role: 'system',
-      content: buildSystemPrompt({ conciseMode: false, responseStyle: 'detailed', jargonMode: 'avoid', ariaPersonality: 'calm', isCaregiversSetup: true, includeSources: true }),
+      content: buildSystemPrompt({
+        conciseMode: false,
+        responseStyle: 'detailed',
+        jargonMode: 'avoid',
+        ariaPersonality: 'calm',
+        isCaregiversSetup: true,
+        includeSources: true,
+      }),
     });
-    expect(body.messages.slice(1, -1)).toEqual(history.slice(-6).map(({ role, content }) => ({ role, content })));
-    expect(body.messages.at(-1)).toEqual({ role: 'user', content: buildUserContent('How do I help at night?', CHUNKS) });
+    expect(body.messages.slice(1, -1)).toEqual(
+      history.slice(-6).map(({ role, content }) => ({ role, content }))
+    );
+    expect(body.messages.at(-1)).toEqual({
+      role: 'user',
+      content: buildUserContent('How do I help at night?', CHUNKS),
+    });
     expect(fake.rpc).not.toHaveBeenCalled(); // pre-retrieved chunks skip search
   });
 
   it('defaults to a balanced, warm, non-carer prompt', async () => {
     withKey();
     fetchMock.mockResolvedValue(sseResponse([]));
-    await drain(openaiClient.chatStream('q', undefined, null, { skipThrottle: true, preRetrievedChunks: CHUNKS }));
+    await drain(
+      openaiClient.chatStream('q', undefined, null, {
+        skipThrottle: true,
+        preRetrievedChunks: CHUNKS,
+      })
+    );
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.messages).toHaveLength(2);
-    expect(body.messages[0].content).toBe(buildSystemPrompt({ conciseMode: false, responseStyle: 'balanced', jargonMode: 'explain', ariaPersonality: 'warm', isCaregiversSetup: false, includeSources: true }));
+    expect(body.messages[0].content).toBe(
+      buildSystemPrompt({
+        conciseMode: false,
+        responseStyle: 'balanced',
+        jargonMode: 'explain',
+        ariaPersonality: 'warm',
+        isCaregiversSetup: false,
+        includeSources: true,
+      })
+    );
   });
 
   it('parses SSE across chunk boundaries and skips comments, [DONE], bad JSON and empty deltas', async () => {
     withKey();
     const split = delta(' world');
-    fetchMock.mockResolvedValue(sseResponse([
-      ': keep-alive\n',
-      delta('Hello'),
-      'data: {not json}\n',
-      'data: {"choices":[{"delta":{}}]}\n',
-      split.slice(0, 12), split.slice(12),
-      'data: [DONE]\n',
-    ]));
-    const pieces = await drain(openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS }));
+    fetchMock.mockResolvedValue(
+      sseResponse([
+        ': keep-alive\n',
+        delta('Hello'),
+        'data: {not json}\n',
+        'data: {"choices":[{"delta":{}}]}\n',
+        split.slice(0, 12),
+        split.slice(12),
+        'data: [DONE]\n',
+      ])
+    );
+    const pieces = await drain(
+      openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })
+    );
     expect(pieces.join('')).toBe('Hello world');
   });
 
   it('strips inline [S#] markers while streaming and reports renumbered citations at the end', async () => {
     withKey();
-    fetchMock.mockResolvedValue(sseResponse([delta('Keep evenings calm [S'), delta('2]. Try a routine [S1, S2]. See [note')]));
+    fetchMock.mockResolvedValue(
+      sseResponse([delta('Keep evenings calm [S'), delta('2]. Try a routine [S1, S2]. See [note')])
+    );
     const cbs = { onRagDone: vi.fn(), onLlmSend: vi.fn(), onSources: vi.fn(), onFinal: vi.fn() };
-    const pieces = await drain(openaiClient.chatStream('q', [], cbs, { skipThrottle: true, preRetrievedChunks: CHUNKS }));
+    const pieces = await drain(
+      openaiClient.chatStream('q', [], cbs, { skipThrottle: true, preRetrievedChunks: CHUNKS })
+    );
     const streamed = pieces.join('');
     expect(streamed).not.toMatch(/\[S/);
     expect(streamed.endsWith('[note')).toBe(true); // ordinary bracket text survives the flush
     const final = cbs.onFinal.mock.calls[0][0];
     expect(final.text).toBe('Keep evenings calm [1]. Try a routine [2][1]. See [note');
-    expect(final.sources.map((s) => [s.num, s.id, s.title])).toEqual([[1, 'c2', 'Routine'], [2, 'c1', 'Late-day restlessness']]);
+    expect(final.sources.map((s) => [s.num, s.id, s.title])).toEqual([
+      [1, 'c2', 'Routine'],
+      [2, 'c1', 'Late-day restlessness'],
+    ]);
     expect(cbs.onSources).toHaveBeenCalledWith(final.sources);
     expect(cbs.onRagDone).toHaveBeenCalledTimes(1);
     expect(cbs.onLlmSend).toHaveBeenCalledTimes(1);
@@ -299,22 +417,32 @@ describe('chatStream', () => {
 
   it('a stream_interrupted event from the proxy is an error, not a short answer', async () => {
     withKey();
-    fetchMock.mockResolvedValue(sseResponse([delta('Partial'), 'data: {"error":"stream_interrupted"}\n']));
-    await expect(drain(openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })))
-      .rejects.toThrow('The answer was cut off — please try again.');
+    fetchMock.mockResolvedValue(
+      sseResponse([delta('Partial'), 'data: {"error":"stream_interrupted"}\n'])
+    );
+    await expect(
+      drain(
+        openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })
+      )
+    ).rejects.toThrow('The answer was cut off — please try again.');
   });
 
   it('maps a failed response through the shared status mapping', async () => {
     withGuest();
     fetchMock.mockResolvedValue(new Response('', { status: 401 }));
-    await expect(drain(openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })))
-      .rejects.toBeInstanceOf(StudyAccessError);
+    await expect(
+      drain(
+        openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })
+      )
+    ).rejects.toBeInstanceOf(StudyAccessError);
     expect(fetchMock.mock.calls[0][0]).toBe(apiUrl('/api/chat'));
   });
 
   it('retrieves itself when not given chunks', async () => {
     withKey();
-    fetchMock.mockResolvedValueOnce(embeddingResponse()).mockResolvedValueOnce(sseResponse([delta('ok')]));
+    fetchMock
+      .mockResolvedValueOnce(embeddingResponse())
+      .mockResolvedValueOnce(sseResponse([delta('ok')]));
     rpcReturns({ data: [], error: null });
     await drain(openaiClient.chatStream('q', [], null, { skipThrottle: true }));
     expect(fake.rpc).toHaveBeenCalledTimes(1);
@@ -322,7 +450,9 @@ describe('chatStream', () => {
 
   it('a retrieval failure degrades to a zero-passage answer and is logged', async () => {
     withKey();
-    fetchMock.mockResolvedValueOnce(embeddingResponse()).mockResolvedValueOnce(sseResponse([delta('ok')]));
+    fetchMock
+      .mockResolvedValueOnce(embeddingResponse())
+      .mockResolvedValueOnce(sseResponse([delta('ok')]));
     rpcReturns({ data: null, error: { message: 'down' } });
     const pieces = await drain(openaiClient.chatStream('q', [], null, { skipThrottle: true }));
     expect(pieces).toEqual(['ok']);
@@ -334,7 +464,9 @@ describe('chatStream', () => {
     vi.spyOn(openaiClient, 'search').mockRejectedValueOnce('rpc gone');
     fetchMock.mockResolvedValueOnce(sseResponse([]));
     await drain(openaiClient.chatStream('q', [], null, { skipThrottle: true }));
-    expect(console.warn).toHaveBeenCalledWith(expect.stringMatching(/retrieval failed \(rpc gone\)/));
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/retrieval failed \(rpc gone\)/)
+    );
   });
 
   it('throttles back-to-back requests to one per 750 ms unless told to skip', async () => {
@@ -354,10 +486,17 @@ describe('chatStream', () => {
   it('times out after 12 s with no first byte', async () => {
     vi.useFakeTimers();
     withKey();
-    fetchMock.mockImplementation((url, init) => new Promise((_, reject) => {
-      init.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
-    }));
-    const settled = drain(openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })).catch((e) => e);
+    fetchMock.mockImplementation(
+      (url, init) =>
+        new Promise((_, reject) => {
+          init.signal.addEventListener('abort', () =>
+            reject(new DOMException('aborted', 'AbortError'))
+          );
+        })
+    );
+    const settled = drain(
+      openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })
+    ).catch((e) => e);
     await vi.advanceTimersByTimeAsync(12000);
     expect((await settled).message).toBe('OpenAI stream timed out waiting for first response');
   });
@@ -365,15 +504,21 @@ describe('chatStream', () => {
   it('a network failure before the response is rethrown as-is', async () => {
     withKey();
     fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
-    await expect(drain(openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })))
-      .rejects.toThrow('Failed to fetch');
+    await expect(
+      drain(
+        openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS })
+      )
+    ).rejects.toThrow('Failed to fetch');
   });
 
   it('caps the whole stream at 60 s even after the first byte', async () => {
     vi.useFakeTimers();
     withKey();
     fetchMock.mockImplementation(async (url, init) => hangingBody(init.signal, delta('Start')));
-    const gen = openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS });
+    const gen = openaiClient.chatStream('q', [], null, {
+      skipThrottle: true,
+      preRetrievedChunks: CHUNKS,
+    });
     expect((await gen.next()).value).toBe('Start');
     const settled = gen.next().catch((e) => e);
     await vi.advanceTimersByTimeAsync(59999);
@@ -386,7 +531,11 @@ describe('chatStream', () => {
     const ac = new AbortController();
     const remove = vi.spyOn(ac.signal, 'removeEventListener');
     fetchMock.mockImplementation(async (url, init) => hangingBody(init.signal, delta('Start')));
-    const gen = openaiClient.chatStream('q', [], null, { skipThrottle: true, preRetrievedChunks: CHUNKS, signal: ac.signal });
+    const gen = openaiClient.chatStream('q', [], null, {
+      skipThrottle: true,
+      preRetrievedChunks: CHUNKS,
+      signal: ac.signal,
+    });
     expect((await gen.next()).value).toBe('Start');
     const settled = gen.next().catch((e) => e);
     ac.abort();
@@ -398,17 +547,35 @@ describe('chatStream', () => {
 describe('chatStream with the legacy trailing-citation mode', () => {
   it('passes content through untouched and reports no inline sources', async () => {
     vi.resetModules();
-    vi.doMock('@core/rag/ragConfig', async (importOriginal) => ({ ...(await importOriginal()), CITATION_MODE: 'trailing' }));
+    vi.doMock('@core/rag/ragConfig', async (importOriginal) => ({
+      ...(await importOriginal()),
+      CITATION_MODE: 'trailing',
+    }));
     try {
       const mod = await import('../src/services/openaiClient.js');
       withKey();
       fetchMock.mockResolvedValue(sseResponse([delta('Calm evenings [S1].')]));
       const onFinal = vi.fn();
-      const pieces = await drain(mod.openaiClient.chatStream('q', [], { onFinal }, { skipThrottle: true, preRetrievedChunks: CHUNKS }));
+      const pieces = await drain(
+        mod.openaiClient.chatStream(
+          'q',
+          [],
+          { onFinal },
+          { skipThrottle: true, preRetrievedChunks: CHUNKS }
+        )
+      );
       expect(pieces).toEqual(['Calm evenings [S1].']);
       expect(onFinal).not.toHaveBeenCalled();
-      expect(JSON.parse(fetchMock.mock.calls[0][1].body).messages[0].content)
-        .toBe(buildSystemPrompt({ conciseMode: false, responseStyle: 'balanced', jargonMode: 'explain', ariaPersonality: 'warm', isCaregiversSetup: false, includeSources: false }));
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body).messages[0].content).toBe(
+        buildSystemPrompt({
+          conciseMode: false,
+          responseStyle: 'balanced',
+          jargonMode: 'explain',
+          ariaPersonality: 'warm',
+          isCaregiversSetup: false,
+          includeSources: false,
+        })
+      );
     } finally {
       vi.doUnmock('@core/rag/ragConfig');
       vi.resetModules();
@@ -430,7 +597,12 @@ describe('tts', () => {
     expect(uri).toBe(`data:audio/mpeg;base64,${Buffer.from(bytes).toString('base64')}`);
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://api.openai.com/v1/audio/speech');
-    expect(JSON.parse(init.body)).toEqual({ model: 'tts-1', voice: 'shimmer', input: 'Hello', response_format: 'mp3' });
+    expect(JSON.parse(init.body)).toEqual({
+      model: 'tts-1',
+      voice: 'shimmer',
+      input: 'Hello',
+      response_format: 'mp3',
+    });
   });
 
   it('proxied: sends only voice and input (nova by default)', async () => {
@@ -479,9 +651,13 @@ describe('transcribe', () => {
   it('an abort is reported as a timeout the participant can act on', async () => {
     withKey();
     fetchMock.mockRejectedValueOnce(new DOMException('x', 'AbortError'));
-    await expect(openaiClient.transcribe(new Blob(['a']))).rejects.toThrow('Transcription timed out — please check your connection and try again');
+    await expect(openaiClient.transcribe(new Blob(['a']))).rejects.toThrow(
+      'Transcription timed out — please check your connection and try again'
+    );
     fetchMock.mockRejectedValueOnce(new Error('The user aborted a request.'));
-    await expect(openaiClient.transcribe(new Blob(['a']))).rejects.toThrow(/Transcription timed out/);
+    await expect(openaiClient.transcribe(new Blob(['a']))).rejects.toThrow(
+      /Transcription timed out/
+    );
   });
 
   it('other network errors are rethrown unchanged', async () => {
@@ -496,7 +672,9 @@ describe('transcribe', () => {
   it('labels HTTP failures as Whisper errors', async () => {
     withKey();
     fetchMock.mockResolvedValue(new Response('unsupported format', { status: 400 }));
-    await expect(openaiClient.transcribe(new Blob(['a']))).rejects.toThrow('Whisper error: unsupported format');
+    await expect(openaiClient.transcribe(new Blob(['a']))).rejects.toThrow(
+      'Whisper error: unsupported format'
+    );
   });
 });
 
@@ -508,7 +686,15 @@ describe('mapSourcesToCitations', () => {
       { num: 2, title: 'Zebra', org: 'Nobody', url: null, excerpt: 'z' },
     ]);
     expect(out).toEqual([
-      { title: 'Respite options', org: 'Dementia NZ', url: 'u', excerpt: 'e', num: 1, articleId: 'respite', cat: 'wellbeing' },
+      {
+        title: 'Respite options',
+        org: 'Dementia NZ',
+        url: 'u',
+        excerpt: 'e',
+        num: 1,
+        articleId: 'respite',
+        cat: 'wellbeing',
+      },
       { title: 'Zebra', org: 'Nobody', url: null, excerpt: 'z', num: 2 },
     ]);
   });
@@ -527,14 +713,25 @@ describe('realGenerate', () => {
   }
 
   it('streams accumulated text, marks the stages, and returns the final transcript with citations', async () => {
-    const final = { text: 'Rest helps [1].', sources: [{ num: 1, id: 's1', title: 'Respite care', org: 'NZ', url: null, excerpt: '' }] };
-    const spy = vi.spyOn(openaiClient, 'chatStream').mockImplementation((q, h, cbs) => yields(['Rest ', 'helps.'], cbs, final));
+    const final = {
+      text: 'Rest helps [1].',
+      sources: [{ num: 1, id: 's1', title: 'Respite care', org: 'NZ', url: null, excerpt: '' }],
+    };
+    const spy = vi
+      .spyOn(openaiClient, 'chatStream')
+      .mockImplementation((q, h, cbs) => yields(['Rest ', 'helps.'], cbs, final));
     const onToken = vi.fn();
     const onStage = vi.fn();
     const ac = new AbortController();
     const out = await realGenerate({
       question: 'Is respite available?',
-      settings: { concise: true, responseStyle: 'thorough', jargon: 'fine', ariaStyle: 'calm', setupType: 'exploring' },
+      settings: {
+        concise: true,
+        responseStyle: 'thorough',
+        jargon: 'fine',
+        ariaStyle: 'calm',
+        setupType: 'exploring',
+      },
       history: [
         { role: 'aria', text: 'Hello' },
         { role: 'user', text: '' },
@@ -548,34 +745,83 @@ describe('realGenerate', () => {
     const [q, history, , opts] = spy.mock.calls[0];
     expect(q).toBe('Is respite available?');
     expect(history).toEqual([{ role: 'assistant', content: 'Hello' }]); // current question dropped
-    expect(opts).toEqual({ conciseMode: true, responseStyle: 'detailed', jargonMode: 'ok', ariaPersonality: 'calm', isCaregiversSetup: false, signal: ac.signal });
+    expect(opts).toEqual({
+      conciseMode: true,
+      responseStyle: 'detailed',
+      jargonMode: 'ok',
+      ariaPersonality: 'calm',
+      isCaregiversSetup: false,
+      signal: ac.signal,
+    });
     expect(onToken.mock.calls.map((c) => c[0])).toEqual(['Rest ', 'Rest helps.']);
-    expect(onStage.mock.calls.map((c) => c[0])).toEqual(['ragDone', 'llmSend', 'firstToken', 'firstToken']);
+    expect(onStage.mock.calls.map((c) => c[0])).toEqual([
+      'ragDone',
+      'llmSend',
+      'firstToken',
+      'firstToken',
+    ]);
     expect(out).toEqual({
       text: 'Rest helps [1].',
-      citations: [{ title: 'Respite care', org: 'NZ', url: null, excerpt: '', num: 1, articleId: 'respite', cat: 'wellbeing' }],
+      citations: [
+        {
+          title: 'Respite care',
+          org: 'NZ',
+          url: null,
+          excerpt: '',
+          num: 1,
+          articleId: 'respite',
+          cat: 'wellbeing',
+        },
+      ],
       sources: final.sources,
       safety: false,
     });
   });
 
   it('without a final result it returns the streamed text; a high-risk question sets the safety flag', async () => {
-    vi.spyOn(openaiClient, 'chatStream').mockImplementation((q, h, cbs) => yields(['Stay ', 'safe.'], cbs, null));
-    const out = await realGenerate({ question: 'He hit me today', settings: undefined, history: undefined, onToken: vi.fn() });
+    vi.spyOn(openaiClient, 'chatStream').mockImplementation((q, h, cbs) =>
+      yields(['Stay ', 'safe.'], cbs, null)
+    );
+    const out = await realGenerate({
+      question: 'He hit me today',
+      settings: undefined,
+      history: undefined,
+      onToken: vi.fn(),
+    });
     expect(out).toEqual({ text: 'Stay safe.', citations: [], sources: [], safety: true });
   });
 
   it('keeps an earlier identical user turn that is not the last one', async () => {
-    const spy = vi.spyOn(openaiClient, 'chatStream').mockImplementation((q, h, cbs) => yields([], cbs, null));
-    await realGenerate({ question: 'Q', history: [{ role: 'user', text: 'Q' }, { role: 'aria', text: 'A' }], onToken: vi.fn() });
-    expect(spy.mock.calls[0][1]).toEqual([{ role: 'user', content: 'Q' }, { role: 'assistant', content: 'A' }]);
+    const spy = vi
+      .spyOn(openaiClient, 'chatStream')
+      .mockImplementation((q, h, cbs) => yields([], cbs, null));
+    await realGenerate({
+      question: 'Q',
+      history: [
+        { role: 'user', text: 'Q' },
+        { role: 'aria', text: 'A' },
+      ],
+      onToken: vi.fn(),
+    });
+    expect(spy.mock.calls[0][1]).toEqual([
+      { role: 'user', content: 'Q' },
+      { role: 'assistant', content: 'A' },
+    ]);
   });
 
   it('runs end to end over a real stream', async () => {
     withKey();
-    fetchMock.mockResolvedValueOnce(embeddingResponse()).mockResolvedValueOnce(sseResponse([delta('Calm evenings help [S1].')]));
+    fetchMock
+      .mockResolvedValueOnce(embeddingResponse())
+      .mockResolvedValueOnce(sseResponse([delta('Calm evenings help [S1].')]));
     rpcReturns({ data: [], error: null });
-    const out = await realGenerate({ question: 'Evenings?', settings: {}, history: [], onToken: vi.fn(), signal: undefined });
+    const out = await realGenerate({
+      question: 'Evenings?',
+      settings: {},
+      history: [],
+      onToken: vi.fn(),
+      signal: undefined,
+    });
     // Zero passages retrieved → the model's [S1] cites nothing real and is dropped.
     expect(out.text).toBe('Calm evenings help.');
     expect(out.sources).toEqual([]);

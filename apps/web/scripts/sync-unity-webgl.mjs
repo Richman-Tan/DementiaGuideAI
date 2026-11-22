@@ -14,7 +14,20 @@
 // meshes with ~400 blendshapes per character dominate and can't be texture-
 // capped away), so files over 100 MB only WARN, and the script fails hard
 // near the Pro ceiling.
-import { closeSync, cpSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  closeSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  readSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,10 +36,12 @@ const webRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const src = resolve(webRoot, '../../unity-avatar/UnityAvatarProject/Builds/WebGL/Build');
 const dest = join(webRoot, 'public', 'unity', 'Build');
 const HOBBY_BYTES = 100 * 1024 * 1024; // Hobby per-file cap — warn only
-const MAX_BYTES = 950 * 1024 * 1024;   // just under the Pro 1 GB cap — fail
+const MAX_BYTES = 950 * 1024 * 1024; // just under the Pro 1 GB cap — fail
 
 if (!existsSync(src)) {
-  console.error(`No Unity WebGL export at ${src}\nRun Tools → UaaL → Export WebGL in the Unity Editor first.`);
+  console.error(
+    `No Unity WebGL export at ${src}\nRun Tools → UaaL → Export WebGL in the Unity Editor first.`
+  );
   process.exit(1);
 }
 
@@ -38,10 +53,14 @@ cpSync(src, dest, { recursive: true });
 // suffix chain ".framework.js.unityweb". Rename base → "unity".
 const manifest = {};
 const roleOf = (chain) =>
-  chain.startsWith('.loader') ? 'loader'
-    : chain.startsWith('.data') ? 'data'
-      : chain.startsWith('.framework') ? 'framework'
-        : chain.startsWith('.wasm') ? 'code'
+  chain.startsWith('.loader')
+    ? 'loader'
+    : chain.startsWith('.data')
+      ? 'data'
+      : chain.startsWith('.framework')
+        ? 'framework'
+        : chain.startsWith('.wasm')
+          ? 'code'
           : null;
 
 for (const entry of readdirSync(dest)) {
@@ -56,7 +75,9 @@ for (const entry of readdirSync(dest)) {
 
 const missing = ['loader', 'data', 'framework', 'code'].filter((r) => !manifest[r]);
 if (missing.length) {
-  console.error(`Export is missing expected files: ${missing.join(', ')} (found: ${readdirSync(dest).join(', ')})`);
+  console.error(
+    `Export is missing expected files: ${missing.join(', ')} (found: ${readdirSync(dest).join(', ')})`
+  );
   process.exit(1);
 }
 
@@ -97,12 +118,17 @@ console.log(`Build version: ${manifest.version}`);
 function detectEncoding(file) {
   const buf = Buffer.alloc(64);
   const fd = openSync(file, 'r');
-  try { readSync(fd, buf, 0, 64, 0); } finally { closeSync(fd); }
+  try {
+    readSync(fd, buf, 0, 64, 0);
+  } finally {
+    closeSync(fd);
+  }
   // Unity's decompression-fallback files carry a marker in a skippable
   // metadata block (which is why they are still valid br/gzip streams).
   const head = buf.toString('latin1');
   if (head.includes('UnityWeb Compressed Content (brotli)') || file.endsWith('.br')) return 'br';
-  if (head.includes('UnityWeb Compressed Content (gzip)') || (buf[0] === 0x1f && buf[1] === 0x8b)) return 'gzip';
+  if (head.includes('UnityWeb Compressed Content (gzip)') || (buf[0] === 0x1f && buf[1] === 0x8b))
+    return 'gzip';
   return null; // uncompressed — served as-is, no header needed
 }
 
@@ -120,20 +146,24 @@ for (const [role, name] of Object.entries(manifest)) {
   const encoding = detectEncoding(join(dest, name));
   const sent = headerFor(name);
   if (encoding && sent['Content-Encoding'] !== encoding) {
-    headerProblems.push(`  ${name}: is ${encoding}-compressed but vercel.json sends Content-Encoding: ${sent['Content-Encoding'] ?? '(none)'}`);
+    headerProblems.push(
+      `  ${name}: is ${encoding}-compressed but vercel.json sends Content-Encoding: ${sent['Content-Encoding'] ?? '(none)'}`
+    );
   }
   if (REQUIRED_TYPE[role] && sent['Content-Type'] !== REQUIRED_TYPE[role]) {
-    headerProblems.push(`  ${name}: needs Content-Type: ${REQUIRED_TYPE[role]}, vercel.json sends ${sent['Content-Type'] ?? '(none)'}`);
+    headerProblems.push(
+      `  ${name}: needs Content-Type: ${REQUIRED_TYPE[role]}, vercel.json sends ${sent['Content-Type'] ?? '(none)'}`
+    );
   }
 }
 
 if (headerProblems.length) {
   console.error(
-    `\nvercel.json does not match this build's files:\n${headerProblems.join('\n')}\n\n`
-      + 'Update the "/unity/Build/<file>" header rules in apps/web/vercel.json (and the\n'
-      + 'UNITY_COMPRESSED_TYPES map in apps/web/vite.config.js) to match the names above.\n'
-      + 'Shipping without them makes the browser decompress ~245MB in JS on the main\n'
-      + 'thread — a >20 minute load that reports no error.',
+    `\nvercel.json does not match this build's files:\n${headerProblems.join('\n')}\n\n` +
+      'Update the "/unity/Build/<file>" header rules in apps/web/vercel.json (and the\n' +
+      'UNITY_COMPRESSED_TYPES map in apps/web/vite.config.js) to match the names above.\n' +
+      'Shipping without them makes the browser decompress ~245MB in JS on the main\n' +
+      'thread — a >20 minute load that reports no error.'
   );
   process.exit(1);
 }
@@ -146,7 +176,9 @@ for (const entry of readdirSync(dest)) {
   const over = bytes >= MAX_BYTES;
   const hobby = bytes >= HOBBY_BYTES;
   tooBig = tooBig || over;
-  console.log(`  ${entry.padEnd(28)} ${mb.padStart(8)} MB${over ? '  ← OVER the 1 GB Vercel Pro per-file limit' : hobby ? '  (over 100 MB — needs the Pro plan to deploy)' : ''}`);
+  console.log(
+    `  ${entry.padEnd(28)} ${mb.padStart(8)} MB${over ? '  ← OVER the 1 GB Vercel Pro per-file limit' : hobby ? '  (over 100 MB — needs the Pro plan to deploy)' : ''}`
+  );
 }
 
 if (tooBig) {

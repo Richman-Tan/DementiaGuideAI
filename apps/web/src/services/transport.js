@@ -104,9 +104,15 @@ export function warmProxy() {
       method: 'POST',
       headers: { ...t.headers, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-    }).catch(() => { /* warming is best-effort */ });
+    }).catch(() => {
+      /* warming is best-effort */
+    });
   post('/embeddings', { model: 'text-embedding-3-small', input: 'warm-up' });
-  post('/chat/completions', { model: 'gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'ok' }] });
+  post('/chat/completions', {
+    model: 'gpt-4o-mini',
+    max_tokens: 1,
+    messages: [{ role: 'user', content: 'ok' }],
+  });
   // The audio functions boot for free: both validate the body only after the
   // guard has run, so a JSON body they reject with a 400 still pays the cold
   // start without an OpenAI call. Leaving them out meant the first spoken turn

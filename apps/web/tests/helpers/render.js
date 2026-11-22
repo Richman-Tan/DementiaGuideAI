@@ -23,16 +23,23 @@ export async function render(element) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  await act(async () => { root.render(element); });
+  await act(async () => {
+    root.render(element);
+  });
   const unmount = async () => {
     if (!mounted.delete(unmount)) return;
-    await act(async () => { root.unmount(); });
+    await act(async () => {
+      root.unmount();
+    });
     container.remove();
   };
   mounted.add(unmount);
   return {
     container,
-    rerender: (el) => act(async () => { root.render(el); }),
+    rerender: (el) =>
+      act(async () => {
+        root.render(el);
+      }),
     unmount,
   };
 }
@@ -65,7 +72,13 @@ export async function renderHook(hook, { initialProps, wrapper } = {}) {
 }
 
 /** Run a callback inside act() and let effects and microtasks settle. */
-export const flush = (fn = () => {}) => act(async () => { await fn(); });
+export const flush = (fn = () => {}) =>
+  act(async () => {
+    await fn();
+  });
 
 /** Let every pending promise chain (async effects, mocked I/O) run to completion. */
-export const settle = () => act(async () => { await new Promise((r) => realSetTimeout(r, 0)); });
+export const settle = () =>
+  act(async () => {
+    await new Promise((r) => realSetTimeout(r, 0));
+  });

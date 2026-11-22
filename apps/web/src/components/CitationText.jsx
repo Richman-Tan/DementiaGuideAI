@@ -25,7 +25,31 @@ export function CitationText({ text, citations, onCite }) {
     typeof p === 'string' ? (
       <React.Fragment key={i}>{p}</React.Fragment>
     ) : (
-      <button key={i} onClick={() => onCite(p.c)} aria-label={`Open source ${p.num}`} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '20px', height: '20px', padding: '0 5px', margin: '0 1px', borderRadius: '999px', border: 'none', background: 'var(--tint)', color: 'var(--primary-d)', fontSize: '.78rem', fontWeight: '700', cursor: 'pointer', verticalAlign: 'text-bottom' }} className="hv7">{p.num}</button>
+      <button
+        key={i}
+        onClick={() => onCite(p.c)}
+        aria-label={`Open source ${p.num}`}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minWidth: '20px',
+          height: '20px',
+          padding: '0 5px',
+          margin: '0 1px',
+          borderRadius: '999px',
+          border: 'none',
+          background: 'var(--tint)',
+          color: 'var(--primary-d)',
+          fontSize: '.78rem',
+          fontWeight: '700',
+          cursor: 'pointer',
+          verticalAlign: 'text-bottom',
+        }}
+        className="hv7"
+      >
+        {p.num}
+      </button>
     )
   );
 }

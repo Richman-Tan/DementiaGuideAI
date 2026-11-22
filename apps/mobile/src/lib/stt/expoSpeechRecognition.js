@@ -45,7 +45,9 @@ function restorePlaybackSession() {
       categoryOptions: [],
       mode: 'default',
     });
-  } catch { /* android / older module: nothing to restore */ }
+  } catch {
+    /* android / older module: nothing to restore */
+  }
   Audio.setAudioModeAsync(PLAYBACK_MODE).catch(() => {});
 }
 
@@ -73,7 +75,12 @@ export function isLiveRecognitionAvailable() {
  *   getRecordedUri: () => string|null, // persisted audio for Whisper rescue
  * }>}
  */
-export async function startLiveSession({ handsFree = false, onPartial, onEndOfSpeech, onError } = {}) {
+export async function startLiveSession({
+  handsFree = false,
+  onPartial,
+  onEndOfSpeech,
+  onError,
+} = {}) {
   const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
   if (!perm.granted) {
     const err = new Error('Speech recognition permission not granted');
@@ -95,9 +102,19 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
   const subs = [];
 
   const cleanup = () => {
-    if (stopTimer) { clearTimeout(stopTimer); stopTimer = null; }
-    if (endpointTimer) { clearInterval(endpointTimer); endpointTimer = null; }
-    subs.forEach(s => { try { s.remove(); } catch {} });
+    if (stopTimer) {
+      clearTimeout(stopTimer);
+      stopTimer = null;
+    }
+    if (endpointTimer) {
+      clearInterval(endpointTimer);
+      endpointTimer = null;
+    }
+    subs.forEach((s) => {
+      try {
+        s.remove();
+      } catch {}
+    });
     subs.length = 0;
   };
 
@@ -122,67 +139,99 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
   const fireEndOfSpeech = (reason) => {
     if (endOfSpeechFired || stopping || !handsFree) return;
     endOfSpeechFired = true;
-    try { onEndOfSpeech?.({ reason }); } catch {}
+    try {
+      onEndOfSpeech?.({ reason });
+    } catch {}
   };
 
-  subs.push(ExpoSpeechRecognitionModule.addListener('result', (ev) => {
-    const transcript = ev?.results?.[0]?.transcript ?? '';
-    if (transcript) {
-      if (transcript !== lastTranscript) lastChangeAt = Date.now();
-      lastTranscript = transcript;
-      sawSpeech = true;
-      try { onPartial?.(transcript, { isFinal: !!ev.isFinal }); } catch {}
-    }
-    if (ev?.isFinal) {
-      gotFinal = true;
-      settleStop();
-    }
-  }));
+  subs.push(
+    ExpoSpeechRecognitionModule.addListener('result', (ev) => {
+      const transcript = ev?.results?.[0]?.transcript ?? '';
+      if (transcript) {
+        if (transcript !== lastTranscript) lastChangeAt = Date.now();
+        lastTranscript = transcript;
+        sawSpeech = true;
+        try {
+          onPartial?.(transcript, { isFinal: !!ev.isFinal });
+        } catch {}
+      }
+      if (ev?.isFinal) {
+        gotFinal = true;
+        settleStop();
+      }
+    })
+  );
 
   // Resolved when the recognizer confirms its audio tap is open — speech
   // before this moment is simply lost, so the caller must not show
   // "listening" until it fires (empty-transcript turns were falling back to
   // the slow Whisper rescue because users spoke during session spin-up).
   let audioReadyResolve = null;
-  const audioReady = new Promise((resolve) => { audioReadyResolve = resolve; });
+  const audioReady = new Promise((resolve) => {
+    audioReadyResolve = resolve;
+  });
 
   // The persisted-recording URI arrives on audiostart (iOS) / audioend.
-  subs.push(ExpoSpeechRecognitionModule.addListener('audiostart', (ev) => {
-    if (ev?.uri) recordedUri = ev.uri;
-    if (audioReadyResolve) { const r = audioReadyResolve; audioReadyResolve = null; r(); }
-  }));
-  subs.push(ExpoSpeechRecognitionModule.addListener('start', () => {
-    if (audioReadyResolve) { const r = audioReadyResolve; audioReadyResolve = null; r(); }
-  }));
-  subs.push(ExpoSpeechRecognitionModule.addListener('audioend', (ev) => {
-    if (ev?.uri) recordedUri = ev.uri;
-  }));
+  subs.push(
+    ExpoSpeechRecognitionModule.addListener('audiostart', (ev) => {
+      if (ev?.uri) recordedUri = ev.uri;
+      if (audioReadyResolve) {
+        const r = audioReadyResolve;
+        audioReadyResolve = null;
+        r();
+      }
+    })
+  );
+  subs.push(
+    ExpoSpeechRecognitionModule.addListener('start', () => {
+      if (audioReadyResolve) {
+        const r = audioReadyResolve;
+        audioReadyResolve = null;
+        r();
+      }
+    })
+  );
+  subs.push(
+    ExpoSpeechRecognitionModule.addListener('audioend', (ev) => {
+      if (ev?.uri) recordedUri = ev.uri;
+    })
+  );
 
-  subs.push(ExpoSpeechRecognitionModule.addListener('end', () => {
-    ended = true;
-    // Android < 33 has no continuous mode: the OS recognizer auto-endpoints
-    // itself after silence. Surface that as the hands-free end-of-speech
-    // signal so the UI stops "listening" instead of waiting on the (never
-    // firing) volume-based endpoint timer.
-    if (!ANDROID_MODERN_STT) fireEndOfSpeech('recognizer-end');
-    settleStop();
-  }));
+  subs.push(
+    ExpoSpeechRecognitionModule.addListener('end', () => {
+      ended = true;
+      // Android < 33 has no continuous mode: the OS recognizer auto-endpoints
+      // itself after silence. Surface that as the hands-free end-of-speech
+      // signal so the UI stops "listening" instead of waiting on the (never
+      // firing) volume-based endpoint timer.
+      if (!ANDROID_MODERN_STT) fireEndOfSpeech('recognizer-end');
+      settleStop();
+    })
+  );
 
-  subs.push(ExpoSpeechRecognitionModule.addListener('error', (ev) => {
-    // 'aborted' follows our own abort(); 'no-speech' is an empty utterance,
-    // not a failure — both settle quietly.
-    const code = ev?.error ?? 'unknown';
-    if (code !== 'aborted' && code !== 'no-speech' && !stopping) {
-      try { onError?.(new Error(`Speech recognition error: ${code}${ev?.message ? ` (${ev.message})` : ''}`)); } catch {}
-    }
-    ended = true;
-    settleStop();
-  }));
+  subs.push(
+    ExpoSpeechRecognitionModule.addListener('error', (ev) => {
+      // 'aborted' follows our own abort(); 'no-speech' is an empty utterance,
+      // not a failure — both settle quietly.
+      const code = ev?.error ?? 'unknown';
+      if (code !== 'aborted' && code !== 'no-speech' && !stopping) {
+        try {
+          onError?.(
+            new Error(`Speech recognition error: ${code}${ev?.message ? ` (${ev.message})` : ''}`)
+          );
+        } catch {}
+      }
+      ended = true;
+      settleStop();
+    })
+  );
 
   if (handsFree) {
-    subs.push(ExpoSpeechRecognitionModule.addListener('volumechange', (ev) => {
-      if (typeof ev?.value === 'number') currentVolume = ev.value;
-    }));
+    subs.push(
+      ExpoSpeechRecognitionModule.addListener('volumechange', (ev) => {
+        if (typeof ev?.value === 'number') currentVolume = ev.value;
+      })
+    );
 
     const startedAt = Date.now();
     endpointTimer = setInterval(() => {
@@ -209,7 +258,10 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
       // by the Whisper fallback (Android 13+/iOS only; null uri elsewhere —
       // sttService already skips the rescue when getRecordedUri() is null).
       recordingOptions: ANDROID_MODERN_STT ? { persist: true } : undefined,
-      volumeChangeEventOptions: { enabled: handsFree, intervalMillis: HANDS_FREE_VOLUME_INTERVAL_MS },
+      volumeChangeEventOptions: {
+        enabled: handsFree,
+        intervalMillis: HANDS_FREE_VOLUME_INTERVAL_MS,
+      },
       // playAndRecord shares the AVAudioSession with the avatar's WebView
       // playback instead of fighting it — without this, recognition dies at
       // start with "Audio session was interrupted" whenever the WebView's
@@ -227,37 +279,37 @@ export async function startLiveSession({ handsFree = false, onPartial, onEndOfSp
 
   // Block (briefly) until audio is actually flowing; cap the wait so a
   // recognizer that never emits 'start' can't hang the mic button.
-  await Promise.race([
-    audioReady,
-    new Promise((resolve) => setTimeout(resolve, 1500)),
-  ]);
+  await Promise.race([audioReady, new Promise((resolve) => setTimeout(resolve, 1500))]);
 
   return {
     provider: 'live',
     getRecordedUri: () => recordedUri,
 
-    stop: () => new Promise((resolve) => {
-      stopping = true;
-      if (gotFinal || ended) {
-        cleanup();
-        restorePlaybackSession();
-        resolve(lastTranscript.trim());
-        return;
-      }
-      stopResolve = resolve;
-      stopTimer = setTimeout(settleStop, STT_FINAL_TIMEOUT_MS);
-      try {
-        ExpoSpeechRecognitionModule.stop();
-      } catch {
-        settleStop();
-      }
-    }),
+    stop: () =>
+      new Promise((resolve) => {
+        stopping = true;
+        if (gotFinal || ended) {
+          cleanup();
+          restorePlaybackSession();
+          resolve(lastTranscript.trim());
+          return;
+        }
+        stopResolve = resolve;
+        stopTimer = setTimeout(settleStop, STT_FINAL_TIMEOUT_MS);
+        try {
+          ExpoSpeechRecognitionModule.stop();
+        } catch {
+          settleStop();
+        }
+      }),
 
     cancel: () => {
       stopping = true;
       settled = true; // block any pending settle from resolving after cancel
       cleanup();
-      try { ExpoSpeechRecognitionModule.abort(); } catch {}
+      try {
+        ExpoSpeechRecognitionModule.abort();
+      } catch {}
       restorePlaybackSession();
     },
   };

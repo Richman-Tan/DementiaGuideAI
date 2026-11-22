@@ -8,7 +8,12 @@ import {
 // is not present in any test runner, but the data it is sent is plain JSON and
 // is pinned here.
 
-const frame = (viseme, weight = 1, time = 0, duration = 0.1) => ({ time, viseme, duration, weight });
+const frame = (viseme, weight = 1, time = 0, duration = 0.1) => ({
+  time,
+  viseme,
+  duration,
+  weight,
+});
 const timeline = (...frames) => ({ frames, totalDuration: 1 });
 
 describe('visemeTimelineToCC4', () => {
@@ -33,7 +38,22 @@ describe('visemeTimelineToCC4', () => {
   });
 
   it('drives only symmetric pairs: every _L/_R and DL/DR, UL/UR pair moves together', () => {
-    const all = ['aa', 'ih', 'ou', 'ee', 'oh', 'v_pp', 'v_ff', 'v_th', 'v_dd', 'v_kk', 'v_ch', 'v_ss', 'v_nn', 'v_rr'];
+    const all = [
+      'aa',
+      'ih',
+      'ou',
+      'ee',
+      'oh',
+      'v_pp',
+      'v_ff',
+      'v_th',
+      'v_dd',
+      'v_kk',
+      'v_ch',
+      'v_ss',
+      'v_nn',
+      'v_rr',
+    ];
     for (const v of all) {
       const [{ weights }] = visemeTimelineToCC4(timeline(frame(v)), null);
       expect(Object.keys(weights).length).toBeGreaterThan(0);
@@ -59,7 +79,11 @@ describe('visemeTimelineToCC4', () => {
 
   it('uses the default CC4 scale of 1.0 when the profile has no scalar for that viseme', () => {
     const [kf] = visemeTimelineToCC4(timeline(frame('v_pp', 0.5)), { aa: 0.1 });
-    expect(kf.weights).toEqual({ V_Explosive: 0.5, Mouth_Lips_Press_L: 0.2, Mouth_Lips_Press_R: 0.2 });
+    expect(kf.weights).toEqual({
+      V_Explosive: 0.5,
+      Mouth_Lips_Press_L: 0.2,
+      Mouth_Lips_Press_R: 0.2,
+    });
   });
 
   it('clamps every shape at 1.0 when a profile boosts past full', () => {
@@ -78,7 +102,10 @@ describe('visemeTimelineToCC4', () => {
 
   it('closes the mouth on silence and on an unknown viseme, keeping the keyframe time', () => {
     const out = visemeTimelineToCC4(timeline(frame('neutral', 1, 0.1), frame('zz', 1, 0.2)), null);
-    expect(out).toEqual([{ time: 0.1, weights: {} }, { time: 0.2, weights: {} }]);
+    expect(out).toEqual([
+      { time: 0.1, weights: {} },
+      { time: 0.2, weights: {} },
+    ]);
   });
 });
 
@@ -89,7 +116,9 @@ describe('visemeTimelineToEvents', () => {
   });
 
   it('carries viseme identity, timing and weight in the compact Unity shape', () => {
-    const out = visemeTimelineToEvents(timeline(frame('v_pp', 0.7, 0.5, 0.08), frame('aa', 0.6, 0.58, 0.12)));
+    const out = visemeTimelineToEvents(
+      timeline(frame('v_pp', 0.7, 0.5, 0.08), frame('aa', 0.6, 0.58, 0.12))
+    );
     expect(out).toEqual([
       { t: 0.5, d: 0.08, v: 'v_pp', w: 0.7 },
       { t: 0.58, d: 0.12, v: 'aa', w: 0.6 },
@@ -100,7 +129,10 @@ describe('visemeTimelineToEvents', () => {
 describe('segmentToCC4Payload', () => {
   it('builds both the raw events and the pre-translated blendshapes from one segment', () => {
     const tl = timeline(frame('ee', 1, 0));
-    const payload = segmentToCC4Payload({ audio: 'BASE64', visemeTimeline: tl, text: 'Kia ora', emotion: 'happy' }, null);
+    const payload = segmentToCC4Payload(
+      { audio: 'BASE64', visemeTimeline: tl, text: 'Kia ora', emotion: 'happy' },
+      null
+    );
     expect(payload).toEqual({
       audio: 'BASE64',
       visemes: [{ t: 0, d: 0.1, v: 'ee', w: 1 }],
@@ -112,6 +144,12 @@ describe('segmentToCC4Payload', () => {
 
   it('defaults the emotion to neutral and tolerates a segment with no timeline', () => {
     const payload = segmentToCC4Payload({ audio: 'A', visemeTimeline: null, text: 'Hi' }, null);
-    expect(payload).toEqual({ audio: 'A', visemes: [], blendshapes: [], emotion: 'neutral', text: 'Hi' });
+    expect(payload).toEqual({
+      audio: 'A',
+      visemes: [],
+      blendshapes: [],
+      emotion: 'neutral',
+      text: 'Hi',
+    });
   });
 });

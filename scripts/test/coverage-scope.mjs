@@ -13,25 +13,36 @@ export const AREAS = [
   // Shared core: the mobile Jest suite and the web Vitest suite both exercise it,
   // with different instrumenters, so their maps cannot be summed; each file is
   // credited with the better of the two (a lower bound on the true union).
-  { id: 'core', label: 'Shared core — packages/core', root: 'packages/core/', sources: ['jest', 'web'] },
+  {
+    id: 'core',
+    label: 'Shared core — packages/core',
+    root: 'packages/core/',
+    sources: ['jest', 'web'],
+  },
   { id: 'api', label: 'API — apps/api/api', root: 'apps/api/api/', sources: ['api'] },
 ];
 
 /** Source files that are part of an area but not of the gate: path → reason. */
 export const EXCLUDED = {
   'apps/web/src/avatar/audioEngine.js':
-    'Drives the Web Audio API (AudioContext scheduling, AnalyserNode); extracted verbatim from the '
-    + 'mobile renderer, and its timing depends on a real audio clock rather than on logic a test can stub.',
+    'Drives the Web Audio API (AudioContext scheduling, AnalyserNode); extracted verbatim from the ' +
+    'mobile renderer, and its timing depends on a real audio clock rather than on logic a test can stub.',
   'apps/web/src/avatar/unity/unityBridge.js':
-    'Loads and drives the Unity WebGL runtime (loader script, createUnityInstance, canvas parking); '
-    + 'the 244 MB build is git-ignored and absent from CI, so the runtime it talks to cannot be present.',
+    'Loads and drives the Unity WebGL runtime (loader script, createUnityInstance, canvas parking); ' +
+    'the 244 MB build is git-ignored and absent from CI, so the runtime it talks to cannot be present.',
   'apps/web/src/avatar/unity/UnityAvatarController.js':
-    'Unity runtime glue: forwards blendshape payloads to the Unity instance over SendMessage. The payload '
-    + 'itself is built by packages/core/avatar/blendshapeTranslator.js, which is in scope.',
+    'Unity runtime glue: forwards blendshape payloads to the Unity instance over SendMessage. The payload ' +
+    'itself is built by packages/core/avatar/blendshapeTranslator.js, which is in scope.',
 };
 
 /** Never measured: tests, fixtures and type declarations. */
-export const IGNORE = [/\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/, /\.d\.ts$/, /__tests__\//, /__mocks__\//];
+export const IGNORE = [
+  /\.test\.[jt]sx?$/,
+  /\.spec\.[jt]sx?$/,
+  /\.d\.ts$/,
+  /__tests__\//,
+  /__mocks__\//,
+];
 
 /** Extensions that count as source. */
 export const EXTENSIONS = ['.js', '.jsx', '.mjs', '.ts', '.tsx'];

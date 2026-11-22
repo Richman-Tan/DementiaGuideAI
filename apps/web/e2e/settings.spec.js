@@ -17,7 +17,9 @@ async function openSettings(page, { settings = {}, keys = false, access = null }
 const stored = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('dg_settings')));
 
 test.describe('settings: accessibility and appearance', () => {
-  test('text size, high contrast and dark mode apply to the whole app at once', async ({ page }) => {
+  test('text size, high contrast and dark mode apply to the whole app at once', async ({
+    page,
+  }) => {
     await openSettings(page, { settings: { darkMode: false } });
     const html = page.locator('html');
     await page.getByRole('button', { name: 'Text size large' }).click();
@@ -42,9 +44,13 @@ test.describe('settings: accessibility and appearance', () => {
   test('every avatar and audio switch turns on and off, and is remembered', async ({ page }) => {
     await openSettings(page);
     for (const [label, key] of [
-      ['Show Avatar', 'showAvatar'], ['Audio Responses', 'audioResponses'], ['Subtitles', 'subtitles'],
-      ['Auto-play Responses', 'autoPlay'], ['Get to the Point', 'concise'],
-      ['Hands-free Conversation', 'handsFree'], ['Faster Voice Responses', 'fasterVoice'],
+      ['Show Avatar', 'showAvatar'],
+      ['Audio Responses', 'audioResponses'],
+      ['Subtitles', 'subtitles'],
+      ['Auto-play Responses', 'autoPlay'],
+      ['Get to the Point', 'concise'],
+      ['Hands-free Conversation', 'handsFree'],
+      ['Faster Voice Responses', 'fasterVoice'],
     ]) {
       const toggle = page.getByRole('switch', { name: label });
       const before = await toggle.getAttribute('aria-checked');
@@ -65,7 +71,9 @@ test.describe('settings: accessibility and appearance', () => {
     await expect(page.getByText('How fast Aaron speaks')).toBeVisible();
   });
 
-  test('the avatar picker offers Aaron and Ariana, with or without the 3D build, and remembers the pick', async ({ page }) => {
+  test('the avatar picker offers Aaron and Ariana, with or without the 3D build, and remembers the pick', async ({
+    page,
+  }) => {
     await openSettings(page, { settings: { avatarId: 'aaron' } });
     const picker = page.getByRole('group', { name: 'Avatar' });
     await expect(picker.getByRole('button')).toHaveText(['Aaron', 'Ariana']);
@@ -81,11 +89,17 @@ test.describe('settings: accessibility and appearance', () => {
 });
 
 test.describe('settings: privacy and history', () => {
-  test('the privacy, data-security and disclaimer rows explain where things are kept', async ({ page }) => {
+  test('the privacy, data-security and disclaimer rows explain where things are kept', async ({
+    page,
+  }) => {
     await openSettings(page);
-    await expect(page.getByText('Saved on this device only — no account is available')).toBeVisible();
+    await expect(
+      page.getByText('Saved on this device only — no account is available')
+    ).toBeVisible();
     await page.getByRole('button', { name: /Data Security/ }).click();
-    await expect(page.getByRole('status')).toContainText('Sign-in is unavailable, so your conversations are saved on this device only');
+    await expect(page.getByRole('status')).toContainText(
+      'Sign-in is unavailable, so your conversations are saved on this device only'
+    );
 
     await page.getByRole('link', { name: /Privacy Policy/ }).click();
     await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible();
@@ -94,7 +108,9 @@ test.describe('settings: privacy and history', () => {
     await expect(page.getByRole('heading', { name: 'Medical Disclaimer' })).toBeVisible();
   });
 
-  test('clearing history asks first; "Keep history" changes nothing, "Clear history" empties the chat', async ({ page }) => {
+  test('clearing history asks first; "Keep history" changes nothing, "Clear history" empties the chat', async ({
+    page,
+  }) => {
     await openSettings(page);
     await page.goto('/#/app/chat');
     await ask(page, 'How do I manage sundowning?');
@@ -103,8 +119,12 @@ test.describe('settings: privacy and history', () => {
     await page.goto('/#/app/settings');
     await page.getByRole('button', { name: /Clear Conversation History/ }).click();
     const dialog = page.getByRole('alertdialog');
-    await expect(dialog.getByRole('heading', { name: 'Clear conversation history?' })).toBeVisible();
-    await expect(dialog).toContainText('This removes all past conversations from this device. It cannot be undone.');
+    await expect(
+      dialog.getByRole('heading', { name: 'Clear conversation history?' })
+    ).toBeVisible();
+    await expect(dialog).toContainText(
+      'This removes all past conversations from this device. It cannot be undone.'
+    );
     await dialog.getByRole('button', { name: 'Keep history' }).click();
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
 
@@ -125,13 +145,17 @@ test.describe('settings: privacy and history', () => {
 });
 
 test.describe('settings: access code', () => {
-  test('a code is checked, saved, and can be removed (alongside a personal key)', async ({ page }) => {
+  test('a code is checked, saved, and can be removed (alongside a personal key)', async ({
+    page,
+  }) => {
     await openSettings(page, { keys: true });
     const field = page.getByLabel('Access code');
     await expect(page.getByRole('button', { name: 'Use code' })).toBeDisabled();
     await field.fill(CODE);
     await field.press('Enter');
-    await expect(page.getByRole('status')).toHaveText('Code accepted. Voice and live answers are on.');
+    await expect(page.getByRole('status')).toHaveText(
+      'Code accepted. Voice and live answers are on.'
+    );
     await expect(page.getByText('An access code is saved on this device.')).toBeVisible();
     await expect(page.getByLabel('Replace the access code')).toBeVisible();
 
@@ -142,40 +166,68 @@ test.describe('settings: access code', () => {
 
   test('a code over today’s limit is kept, and says when it resets', async ({ page }) => {
     await openSettings(page);
-    await page.route('**/api/speech', (route) => route.fulfill({ status: 429, contentType: 'application/json', body: '{"error":"study request limit reached for today"}' }));
+    await page.route('**/api/speech', (route) =>
+      route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: '{"error":"study request limit reached for today"}',
+      })
+    );
     await page.getByLabel('Access code').fill(CODE);
     await page.getByRole('button', { name: 'Use code' }).click();
-    await expect(page.getByRole('status')).toContainText('Code accepted, but today’s limit is used up.');
-    await expect(page.getByText('An access code is saved on this device (today’s limit was reached).')).toBeVisible();
+    await expect(page.getByRole('status')).toContainText(
+      'Code accepted, but today’s limit is used up.'
+    );
+    await expect(
+      page.getByText('An access code is saved on this device (today’s limit was reached).')
+    ).toBeVisible();
   });
 
   test('a code that is too short, or that cannot be checked, is not saved', async ({ page }) => {
     await openSettings(page);
     await page.getByLabel('Access code').fill('short-code');
     await page.getByRole('button', { name: 'Use code' }).click();
-    await expect(page.getByRole('status')).toHaveText('Access codes are at least 16 characters. Check you copied all of it.');
+    await expect(page.getByRole('status')).toHaveText(
+      'Access codes are at least 16 characters. Check you copied all of it.'
+    );
 
     await page.route('**/api/speech', (route) => route.fulfill({ status: 503, body: 'down' }));
     await page.getByLabel('Access code').fill(CODE);
     await page.getByRole('button', { name: 'Use code' }).click();
-    await expect(page.getByRole('status')).toHaveText('The code could not be checked just now. Try again in a moment.');
+    await expect(page.getByRole('status')).toHaveText(
+      'The code could not be checked just now. Try again in a moment.'
+    );
 
     await page.route('**/api/speech', (route) => route.abort('internetdisconnected'));
     await page.getByRole('button', { name: 'Use code' }).click();
-    await expect(page.getByRole('status')).toHaveText('The code could not be checked just now. Try again in a moment.');
+    await expect(page.getByRole('status')).toHaveText(
+      'The code could not be checked just now. Try again in a moment.'
+    );
     expect(await page.evaluate(() => localStorage.getItem('dg_access'))).toBeNull();
   });
 
-  test('a saved code the server stops accepting is flagged in Chat and in Settings', async ({ page }) => {
+  test('a saved code the server stops accepting is flagged in Chat and in Settings', async ({
+    page,
+  }) => {
     await openSettings(page, { access: { code: CODE, status: 'ok' } });
-    await page.route('**/api/chat', (route) => route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"invalid or missing study access code"}' }));
+    await page.route('**/api/chat', (route) =>
+      route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: '{"error":"invalid or missing study access code"}',
+      })
+    );
     await page.goto('/#/app/chat');
     await page.getByRole('button', { name: 'New conversation' }).click();
     await ask(page, 'Where can I find respite care?');
-    await expect(page.getByText('Your access code is no longer accepted — update it in Settings.')).toBeVisible();
+    await expect(
+      page.getByText('Your access code is no longer accepted — update it in Settings.')
+    ).toBeVisible();
 
     await page.goto('/#/app/settings');
-    await expect(page.getByText('The saved access code is no longer accepted. Enter a new one.')).toBeVisible();
+    await expect(
+      page.getByText('The saved access code is no longer accepted. Enter a new one.')
+    ).toBeVisible();
   });
 });
 
@@ -191,7 +243,11 @@ test.describe('settings: advanced API keys', () => {
     await page.getByLabel('Azure Speech key (not used on web)').fill('az-key');
     await page.getByRole('button', { name: 'Save keys' }).click();
     await expect(page.getByRole('status')).toHaveText('Settings saved');
-    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dg_keys')))).toEqual({ openai: OPENAI_KEY, eleven: 'el-key', azure: 'az-key' });
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dg_keys')))).toEqual({
+      openai: OPENAI_KEY,
+      eleven: 'el-key',
+      azure: 'az-key',
+    });
 
     await page.getByRole('button', { name: 'Clear keys' }).click();
     await expect(page.getByRole('status')).toHaveText('API keys cleared');

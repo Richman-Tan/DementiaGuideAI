@@ -4,9 +4,15 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import * as S from '../data/services.js';
 import {
-  loadCached, saveCached, clearCached,
-  getOrCreateConversation, loadMessages, appendMessage as persistMessage,
-  startNewConversation, migrateLegacyHistory, deleteAllConversations,
+  loadCached,
+  saveCached,
+  clearCached,
+  getOrCreateConversation,
+  loadMessages,
+  appendMessage as persistMessage,
+  startNewConversation,
+  migrateLegacyHistory,
+  deleteAllConversations,
 } from './conversationStore.js';
 import { useAuth } from './AuthContext.jsx';
 import { navigate } from './router.js';
@@ -52,7 +58,9 @@ export function ChatProvider({ children }) {
   // Read by the fire-and-forget writes without re-creating the callbacks, which
   // would abort an in-flight turn.
   const convIdRef = useRef(null);
-  useEffect(() => { convIdRef.current = conversationId; }, [conversationId]);
+  useEffect(() => {
+    convIdRef.current = conversationId;
+  }, [conversationId]);
   const scrollCb = useRef(null); // Chat screen registers its scroll-to-bottom here
 
   // One conversation per user.
@@ -76,7 +84,9 @@ export function ChatProvider({ children }) {
       setMessages(server);
       saveCached(server);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [authStatus, userId]);
 
   const persist = useCallback((msgs) => {
@@ -97,62 +107,76 @@ export function ChatProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const run = useCallback(async (q, base) => {
-    busyRef.current = true;
-    setTyping(true);
-    setChatError(false);
-    const ac = new AbortController();
-    abortRef.current = ac;
-    const msg = { role: 'aria', text: '', citations: [], safety: false, streaming: true, time: now() };
-    let started = false;
-    // No STT or TTS stage here, so the turn timer records retrieval and
-    // time-to-first-token only.
-    const turn = createTurnTimer();
-    try {
-      const result = await generateReply({
-        question: q,
-        settings: settingsRef.current,
-        history: base,
-        signal: ac.signal,
-        onStage: (stage) => turn.mark(stage),
-        onToken: (fullText) => {
-          if (ac.signal.aborted) return;
-          if (!started) {
-            started = true;
-            setTyping(false);
-            setMessages(base.concat([msg]));
-          }
-          msg.text = fullText;
-          setMessages(base.concat([{ ...msg }]));
-          queueMicrotask(() => scrollCb.current && scrollCb.current());
-        },
-      });
-      if (ac.signal.aborted) return;
-      Object.assign(msg, {
-        text: result.text,
-        citations: result.citations || [],
-        sources: result.sources || null,
-        safety: !!result.safety,
-        streaming: false,
-      });
-      setTyping(false);
-      persist(base.concat([{ ...msg }]));
-      persistMessage(convIdRef.current, {
-        role: 'aria', text: result.text, citations: result.citations || [],
-      });
-      turn.finish();
-    } catch (err) {
-      if (ac.signal.aborted) return;
-      console.warn('[chat] turn failed:', err?.message || err);
-      failedQ.current = q;
-      setTyping(false);
-      setChatError(true);
-      setChatErrorMsg(credentialErrorCopy(err) ?? "I couldn't reach the knowledge base — try again.");
-      setMessages(base); // drop the empty streaming bubble if any
-    } finally {
-      busyRef.current = false;
-    }
-  }, [persist]);
+  const run = useCallback(
+    async (q, base) => {
+      busyRef.current = true;
+      setTyping(true);
+      setChatError(false);
+      const ac = new AbortController();
+      abortRef.current = ac;
+      const msg = {
+        role: 'aria',
+        text: '',
+        citations: [],
+        safety: false,
+        streaming: true,
+        time: now(),
+      };
+      let started = false;
+      // No STT or TTS stage here, so the turn timer records retrieval and
+      // time-to-first-token only.
+      const turn = createTurnTimer();
+      try {
+        const result = await generateReply({
+          question: q,
+          settings: settingsRef.current,
+          history: base,
+          signal: ac.signal,
+          onStage: (stage) => turn.mark(stage),
+          onToken: (fullText) => {
+            if (ac.signal.aborted) return;
+            if (!started) {
+              started = true;
+              setTyping(false);
+              setMessages(base.concat([msg]));
+            }
+            msg.text = fullText;
+            setMessages(base.concat([{ ...msg }]));
+            queueMicrotask(() => scrollCb.current && scrollCb.current());
+          },
+        });
+        if (ac.signal.aborted) return;
+        Object.assign(msg, {
+          text: result.text,
+          citations: result.citations || [],
+          sources: result.sources || null,
+          safety: !!result.safety,
+          streaming: false,
+        });
+        setTyping(false);
+        persist(base.concat([{ ...msg }]));
+        persistMessage(convIdRef.current, {
+          role: 'aria',
+          text: result.text,
+          citations: result.citations || [],
+        });
+        turn.finish();
+      } catch (err) {
+        if (ac.signal.aborted) return;
+        console.warn('[chat] turn failed:', err?.message || err);
+        failedQ.current = q;
+        setTyping(false);
+        setChatError(true);
+        setChatErrorMsg(
+          credentialErrorCopy(err) ?? "I couldn't reach the knowledge base — try again."
+        );
+        setMessages(base); // drop the empty streaming bubble if any
+      } finally {
+        busyRef.current = false;
+      }
+    },
+    [persist]
+  );
 
   const retry = useCallback(() => {
     const q = failedQ.current;
@@ -161,10 +185,13 @@ export function ChatProvider({ children }) {
     run(q, messagesRef.current);
   }, [run]);
 
-  const askNow = useCallback((q) => {
-    navigate('#/app/chat');
-    setTimeout(() => send(q), 450);
-  }, [send]);
+  const askNow = useCallback(
+    (q) => {
+      navigate('#/app/chat');
+      setTimeout(() => send(q), 450);
+    },
+    [send]
+  );
 
   const newConvo = useCallback(async () => {
     if (abortRef.current) abortRef.current.abort();
@@ -210,8 +237,21 @@ export function ChatProvider({ children }) {
   }, [userId]);
 
   const value = {
-    messages, typing, chatError, chatErrorMsg, send, retry, askNow, newConvo, clearHistory, appendMessage,
-    drawer, setDrawer, scrollCb, mock: isMockMode(), conversationId,
+    messages,
+    typing,
+    chatError,
+    chatErrorMsg,
+    send,
+    retry,
+    askNow,
+    newConvo,
+    clearHistory,
+    appendMessage,
+    drawer,
+    setDrawer,
+    scrollCb,
+    mock: isMockMode(),
+    conversationId,
   };
   return <ChatCtx.Provider value={value}>{children}</ChatCtx.Provider>;
 }

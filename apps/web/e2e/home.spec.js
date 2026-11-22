@@ -21,7 +21,9 @@ test.describe('home', () => {
     await expect(page.getByText('Aaron', { exact: true })).toBeVisible();
   });
 
-  test('a question typed on Home is asked in Chat, and an empty one goes nowhere', async ({ page }) => {
+  test('a question typed on Home is asked in Chat, and an empty one goes nowhere', async ({
+    page,
+  }) => {
     await openHome(page);
     // Nothing typed: Send does nothing.
     await page.getByRole('button', { name: 'Send question' }).click();
@@ -34,13 +36,17 @@ test.describe('home', () => {
     await expect(page.getByText('What about bathing and hygiene?')).toBeVisible();
     // The example reply streams in, with its sources underneath.
     await expect(page.getByText(/Bathing is one of the most common flashpoints/)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Personal Hygiene and Bathing Assistance' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Personal Hygiene and Bathing Assistance' })
+    ).toBeVisible();
 
     // The send button works too.
     await page.goto('/#/app/home');
     await box.fill('How do I respond to repeated questions?');
     await page.getByRole('button', { name: 'Send question' }).click();
-    await expect(page.getByText(/Repeated questions happen because the brain isn't storing the answer/)).toBeVisible();
+    await expect(
+      page.getByText(/Repeated questions happen because the brain isn't storing the answer/)
+    ).toBeVisible();
   });
 
   test('a quick question is asked straight away', async ({ page }) => {
@@ -70,7 +76,9 @@ test.describe('home', () => {
     await page.goto('/#/app/home');
     await main.getByRole('button', { name: /Understanding the Stages of Dementia/ }).click();
     await expect(page).toHaveURL(/#\/app\/library\/stages$/);
-    await expect(page.getByRole('heading', { name: 'Understanding the Stages of Dementia' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Understanding the Stages of Dementia' })
+    ).toBeVisible();
   });
 
   test('the desktop sidebar navigates, opens voice, and switches the theme', async ({ page }) => {
@@ -91,14 +99,18 @@ test.describe('home', () => {
 });
 
 test.describe('home when the window changes size', () => {
-  test('narrowing the window swaps the sidebar for the phone tab bar, and back', async ({ page }) => {
+  test('narrowing the window swaps the sidebar for the phone tab bar, and back', async ({
+    page,
+  }) => {
     await openHome(page);
     await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible();
     await page.setViewportSize({ width: 1280, height: 720 });
     await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
-    await expect(page.getByRole('complementary').first().getByRole('button', { name: 'Talk to Aaron' })).toBeVisible();
+    await expect(
+      page.getByRole('complementary').first().getByRole('button', { name: 'Talk to Aaron' })
+    ).toBeVisible();
   });
 });
 
@@ -120,7 +132,9 @@ test.describe('home on a tablet', () => {
 test.describe('home on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('a bottom tab bar replaces the sidebar, and the quick questions scroll sideways', async ({ page }) => {
+  test('a bottom tab bar replaces the sidebar, and the quick questions scroll sideways', async ({
+    page,
+  }) => {
     await openHome(page);
     // No subtitle line under the greeting on a phone.
     await expect(page.getByText('Ask a question, explore resources')).toHaveCount(0);

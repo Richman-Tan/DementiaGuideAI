@@ -10,8 +10,13 @@ import { GrowTextArea } from '../src/components/GrowTextArea.jsx';
 // jsdom does no layout, so scrollHeight is whatever the test says the content
 // needs.
 let contentHeight = 0;
-Object.defineProperty(HTMLTextAreaElement.prototype, 'scrollHeight', { configurable: true, get: () => contentHeight });
-afterAll(() => { delete HTMLTextAreaElement.prototype.scrollHeight; });
+Object.defineProperty(HTMLTextAreaElement.prototype, 'scrollHeight', {
+  configurable: true,
+  get: () => contentHeight,
+});
+afterAll(() => {
+  delete HTMLTextAreaElement.prototype.scrollHeight;
+});
 
 afterEach(async () => {
   await cleanup();
@@ -65,15 +70,21 @@ describe('keys', () => {
     const p = props({ value: 'hello' });
     const { ta } = await mount(p);
     let e;
-    await flush(() => { e = key(ta, { key: 'Enter' }); });
+    await flush(() => {
+      e = key(ta, { key: 'Enter' });
+    });
     expect(p.onSubmit).toHaveBeenCalledTimes(1);
     expect(e.defaultPrevented).toBe(true);
 
-    await flush(() => { e = key(ta, { key: 'Enter', shiftKey: true }); });
+    await flush(() => {
+      e = key(ta, { key: 'Enter', shiftKey: true });
+    });
     expect(p.onSubmit).toHaveBeenCalledTimes(1);
     expect(e.defaultPrevented).toBe(false);
 
-    await flush(() => { key(ta, { key: 'a' }); });
+    await flush(() => {
+      key(ta, { key: 'a' });
+    });
     expect(p.onSubmit).toHaveBeenCalledTimes(1);
   });
 

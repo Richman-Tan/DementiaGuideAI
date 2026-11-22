@@ -23,7 +23,9 @@ function restTurn({ playbackGapMs = 0 } = {}) {
   turn.mark('ttsResponse');
   if (playbackGapMs) {
     const until = Date.now() + playbackGapMs;
-    while (Date.now() < until) { /* deliberate busy wait: marks use a real clock */ }
+    while (Date.now() < until) {
+      /* deliberate busy wait: marks use a real clock */
+    }
   }
   turn.mark('firstAudio');
   return turn;

@@ -17,7 +17,7 @@ export function SafetyScreen({ navigation }) {
       onBack={() => navigation.goBack()}
       onNext={handleNext}
       nextLabel="I understand — let's go"
-      title={"One important thing\nto know"}
+      title={'One important thing\nto know'}
     >
       <View style={styles.card}>
         <MaterialCommunityIcons
@@ -26,7 +26,9 @@ export function SafetyScreen({ navigation }) {
           color={Colors.info ?? Colors.primary}
         />
         <Text style={[styles.bodyText, { fontSize: 17 * textScale }]}>
-          {'Aria is here to help you find information — but she is not a doctor or medical professional.\n\nIn an emergency, call 111.\n\nFor health concerns, contact your GP — or call Healthline on 0800 611 116, free, any time of day or night.'}
+          {
+            'Aria is here to help you find information — but she is not a doctor or medical professional.\n\nIn an emergency, call 111.\n\nFor health concerns, contact your GP — or call Healthline on 0800 611 116, free, any time of day or night.'
+          }
         </Text>
       </View>
     </OnboardingLayout>

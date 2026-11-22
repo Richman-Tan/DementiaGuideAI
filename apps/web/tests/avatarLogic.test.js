@@ -14,10 +14,23 @@ vi.mock('../src/avatar/audioEngine.js', () => ({
     constructor(opts) {
       this.opts = opts;
       this.ended = null;
-      for (const m of ['unlock', 'playAudioWithVisemeTimeline', 'playAudioWithLipSync', 'startStreamingPlayback',
-        'appendAudioChunk', 'setSpeechEmotion', 'stopAudioLipSync']) this[m] = vi.fn(async () => {});
+      for (const m of [
+        'unlock',
+        'playAudioWithVisemeTimeline',
+        'playAudioWithLipSync',
+        'startStreamingPlayback',
+        'appendAudioChunk',
+        'setSpeechEmotion',
+        'stopAudioLipSync',
+      ])
+        this[m] = vi.fn(async () => {});
       this.endStreamingPlayback = vi.fn(async () => 'ended');
-      this.waitForEnd = vi.fn(() => new Promise((r) => { this.ended = r; }));
+      this.waitForEnd = vi.fn(
+        () =>
+          new Promise((r) => {
+            this.ended = r;
+          })
+      );
       fake.engines.push(this);
     }
   },
@@ -38,14 +51,24 @@ describe('avatar roster', () => {
     const { AVATAR_PROFILES, DEFAULT_AVATAR_ID } = await import('../src/avatar/avatarProfiles.js');
     expect(Object.keys(AVATAR_PROFILES)).toEqual(['aaron', 'ariana']);
     expect(DEFAULT_AVATAR_ID).toBe('aaron');
-    expect(AVATAR_PROFILES.aaron).toMatchObject({ renderer: 'unity', unityCharacterId: 'aaron', openaiVoice: 'onyx', visemeWeights: null });
-    expect(AVATAR_PROFILES.ariana).toMatchObject({ renderer: 'unity', unityCharacterId: 'ariana', openaiVoice: 'nova' });
+    expect(AVATAR_PROFILES.aaron).toMatchObject({
+      renderer: 'unity',
+      unityCharacterId: 'aaron',
+      openaiVoice: 'onyx',
+      visemeWeights: null,
+    });
+    expect(AVATAR_PROFILES.ariana).toMatchObject({
+      renderer: 'unity',
+      unityCharacterId: 'ariana',
+      openaiVoice: 'nova',
+    });
   });
 
   it('getAvatarProfile resolves the retired Three.js ids and anything unknown to the default', async () => {
     const { getAvatarProfile, AVATAR_PROFILES } = await import('../src/avatar/avatarProfiles.js');
     expect(getAvatarProfile('ariana')).toBe(AVATAR_PROFILES.ariana);
-    for (const id of ['aria', 'zhenja', 'nobody', undefined]) expect(getAvatarProfile(id)).toBe(AVATAR_PROFILES.aaron);
+    for (const id of ['aria', 'zhenja', 'nobody', undefined])
+      expect(getAvatarProfile(id)).toBe(AVATAR_PROFILES.aaron);
   });
 });
 
@@ -78,10 +101,18 @@ describe('headless avatar', () => {
     const a = (await load())();
     const engine = fake.engines[0];
     let done = false;
-    const p = a.playAudio({ audio: 'data:a', visemeTimeline: { frames: [] }, emotion: 'calm' }).then(() => { done = true; });
+    const p = a
+      .playAudio({ audio: 'data:a', visemeTimeline: { frames: [] }, emotion: 'calm' })
+      .then(() => {
+        done = true;
+      });
     await Promise.resolve();
     await Promise.resolve();
-    expect(engine.playAudioWithVisemeTimeline).toHaveBeenCalledWith('data:a', { frames: [] }, 'calm');
+    expect(engine.playAudioWithVisemeTimeline).toHaveBeenCalledWith(
+      'data:a',
+      { frames: [] },
+      'calm'
+    );
     expect(done).toBe(false);
     engine.ended();
     await p;

@@ -16,7 +16,9 @@ describe('parseBlocks', () => {
   });
 
   it('reads headings, bullets of every kind, and numbered lists with their start', () => {
-    const blocks = parseBlocks('## Respite options\n- in-home\n* day programmes\n• residential\n· overnight\n\n3. Ask for a NASC assessment\n4) Plan ahead');
+    const blocks = parseBlocks(
+      '## Respite options\n- in-home\n* day programmes\n• residential\n· overnight\n\n3. Ask for a NASC assessment\n4) Plan ahead'
+    );
     expect(blocks).toEqual([
       { type: 'heading', text: 'Respite options' },
       { type: 'ul', items: ['in-home', 'day programmes', 'residential', 'overnight'] },
@@ -25,14 +27,28 @@ describe('parseBlocks', () => {
   });
 
   it('joins an indented line onto the list item above it, and ends the list at a plain line', () => {
-    expect(parseBlocks('1. **Overnight respite**: a short stay\n   in an aged-care facility.\nAfter the list.')).toEqual([
-      { type: 'ol', start: 1, items: ['**Overnight respite**: a short stay in an aged-care facility.'] },
+    expect(
+      parseBlocks(
+        '1. **Overnight respite**: a short stay\n   in an aged-care facility.\nAfter the list.'
+      )
+    ).toEqual([
+      {
+        type: 'ol',
+        start: 1,
+        items: ['**Overnight respite**: a short stay in an aged-care facility.'],
+      },
       { type: 'para', lines: ['After the list.'] },
     ]);
   });
 
   it('starts a new list when the kind changes, and a heading or paragraph ends one', () => {
-    expect(parseBlocks('- a\n1. b\n# Title\nText\n- c').map((b) => b.type)).toEqual(['ul', 'ol', 'heading', 'para', 'ul']);
+    expect(parseBlocks('- a\n1. b\n# Title\nText\n- c').map((b) => b.type)).toEqual([
+      'ul',
+      'ol',
+      'heading',
+      'para',
+      'ul',
+    ]);
   });
 
   it('does not mistake bold at the start of a line for a bullet', () => {
@@ -68,7 +84,9 @@ describe('parseInline', () => {
   });
 
   it('drops a marker that has no partner yet, as while an answer streams in', () => {
-    expect(parseInline('**Overnight res')).toEqual([{ text: 'Overnight res', bold: false, italic: false }]);
+    expect(parseInline('**Overnight res')).toEqual([
+      { text: 'Overnight res', bold: false, italic: false },
+    ]);
   });
 
   it('leaves a lone asterisk that is not emphasis', () => {
@@ -90,7 +108,9 @@ describe('parseInline', () => {
 
 describe('stripMarkdownForSpeech', () => {
   it('removes emphasis and heading markers', () => {
-    expect(stripMarkdownForSpeech('## Respite\n**Overnight** or *day* care')).toBe(' Respite\nOvernight or day care');
+    expect(stripMarkdownForSpeech('## Respite\n**Overnight** or *day* care')).toBe(
+      ' Respite\nOvernight or day care'
+    );
   });
 
   it('keeps a hash before a number', () => {
@@ -105,7 +125,10 @@ describe('stripMarkdownForSpeech', () => {
 
 describe('AnswerText', () => {
   const render = (props) => renderToStaticMarkup(React.createElement(AnswerText, props));
-  const citations = [{ num: 1, title: 'Taking Breaks for Family Caregivers' }, { num: 2, title: 'Support Resources' }];
+  const citations = [
+    { num: 1, title: 'Taking Breaks for Family Caregivers' },
+    { num: 2, title: 'Support Resources' },
+  ];
 
   it('renders the respite answer as a list with bold labels and no asterisks', () => {
     const html = render({
@@ -127,7 +150,9 @@ describe('AnswerText', () => {
   });
 
   it('renders headings, bullets, italics, line breaks and a list that starts later', () => {
-    const html = render({ text: '### Day programmes\nOne line\nnext line\n\n- *Ask* your GP\n\n3. Third step' });
+    const html = render({
+      text: '### Day programmes\nOne line\nnext line\n\n- *Ask* your GP\n\n3. Third step',
+    });
     expect(html).toContain('font-weight:700">Day programmes</p>');
     expect(html).toContain('One line<br/>next line');
     expect(html).toContain('<ul');
@@ -136,7 +161,9 @@ describe('AnswerText', () => {
   });
 
   it('shows plain text unchanged when there is no Markdown or citation', () => {
-    expect(render({ text: 'Call 111 immediately.' })).toBe('<p style="margin:0 0 0">Call 111 immediately.</p>');
+    expect(render({ text: 'Call 111 immediately.' })).toBe(
+      '<p style="margin:0 0 0">Call 111 immediately.</p>'
+    );
     expect(render({ text: '' })).toBe('');
   });
 });

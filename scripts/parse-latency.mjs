@@ -30,25 +30,28 @@ const require = createRequire(import.meta.url);
 const { summary } = require('./eval/lib/stats.js');
 
 const args = process.argv.slice(2);
-const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
+const argVal = (name) => {
+  const i = args.indexOf(name);
+  return i === -1 ? null : args[i + 1];
+};
 const GROUP_BY = argVal('--group-by');
 const OUT = argVal('--out');
 const RAW_CSV = argVal('--raw-csv');
 
 // stage key → human label (order = Table 3 order)
 const STAGES = [
-  ['stt_ms',            'Speech-to-text'],
-  ['rag_ms',            'Retrieval'],
-  ['llm_to_token_ms',   'LLM time to first token'],
+  ['stt_ms', 'Speech-to-text'],
+  ['rag_ms', 'Retrieval'],
+  ['llm_to_token_ms', 'LLM time to first token'],
   ['first_sentence_ms', 'First token → first sentence'],
-  ['tts_first_ms',      'TTS request → first audio'],
+  ['tts_first_ms', 'TTS request → first audio'],
   ['to_first_audio_ms', 'End to end → first avatar audio'],
 ];
 const EXTRA_STAGES = [
-  ['playback_wait_ms',   'Audio received → audible'],
-  ['to_first_token_ms',  'End to end → first text token'],
-  ['turn_total_ms',      'End to end → audio finished'],
-  ['ws_open_ms',         'TTS WebSocket open'],
+  ['playback_wait_ms', 'Audio received → audible'],
+  ['to_first_token_ms', 'End to end → first text token'],
+  ['turn_total_ms', 'End to end → audio finished'],
+  ['ws_open_ms', 'TTS WebSocket open'],
   ['tts_first_chunk_ms', 'TTS first streamed chunk'],
 ];
 
@@ -56,7 +59,11 @@ function readInput() {
   const flagArgs = new Set(['--group-by', '--out', '--raw-csv']);
   const arg = args.find((a, i) => !a.startsWith('--') && !flagArgs.has(args[i - 1]));
   if (arg) return readFileSync(arg, 'utf8');
-  try { return readFileSync(0, 'utf8'); } catch { return ''; }
+  try {
+    return readFileSync(0, 'utf8');
+  } catch {
+    return '';
+  }
 }
 
 const text = readInput();
@@ -68,36 +75,62 @@ if (!text.trim()) {
 // Pull the JSON object following each [LATENCY SUMMARY] marker.
 const summaries = [];
 for (const m of text.matchAll(/\[LATENCY SUMMARY\]\s*(\{[^\n}]*\})/g)) {
-  try { summaries.push(JSON.parse(m[1])); } catch { /* skip malformed */ }
+  try {
+    summaries.push(JSON.parse(m[1]));
+  } catch {
+    /* skip malformed */
+  }
 }
 if (!summaries.length) {
   console.error('No [LATENCY SUMMARY] {...} lines found in the input.');
   process.exit(1);
 }
 
-const present = new Set(summaries.flatMap(s => Object.keys(s)));
+const present = new Set(summaries.flatMap((s) => Object.keys(s)));
 const stages = [...STAGES, ...EXTRA_STAGES.filter(([k]) => present.has(k))];
-const groups = GROUP_BY ? [...new Set(summaries.map(s => String(s[GROUP_BY] ?? 'unknown')))] : [null];
+const groups = GROUP_BY
+  ? [...new Set(summaries.map((s) => String(s[GROUP_BY] ?? 'unknown')))]
+  : [null];
 
-const csv = ['"Group","Stage","Median (ms)","Range (ms)","n","Mean (ms)","P90 (ms)","P95 (ms)","SD (ms)"'];
-console.log(`Parsed ${summaries.length} latency summaries${GROUP_BY ? ` (grouped by ${GROUP_BY}: ${groups.join(', ')})` : ''}.\n`);
+const csv = [
+  '"Group","Stage","Median (ms)","Range (ms)","n","Mean (ms)","P90 (ms)","P95 (ms)","SD (ms)"',
+];
+console.log(
+  `Parsed ${summaries.length} latency summaries${GROUP_BY ? ` (grouped by ${GROUP_BY}: ${groups.join(', ')})` : ''}.\n`
+);
 const f = (x) => (x == null ? '' : String(Math.round(x)));
 for (const g of groups) {
-  const subset = g == null ? summaries : summaries.filter(s => String(s[GROUP_BY] ?? 'unknown') === g);
-  console.log(`${g == null ? '' : `[${GROUP_BY} = ${g}] `}Stage                              Median    Mean     p90     p95      SD   Range          n`);
+  const subset =
+    g == null ? summaries : summaries.filter((s) => String(s[GROUP_BY] ?? 'unknown') === g);
+  console.log(
+    `${g == null ? '' : `[${GROUP_BY} = ${g}] `}Stage                              Median    Mean     p90     p95      SD   Range          n`
+  );
   for (const [key, label] of stages) {
-    const vals = subset.map(s => s[key]).filter(v => typeof v === 'number' && Number.isFinite(v));
+    const vals = subset
+      .map((s) => s[key])
+      .filter((v) => typeof v === 'number' && Number.isFinite(v));
     const st = summary(vals);
     const range = vals.length ? `${st.min} to ${st.max}` : '';
-    csv.push([g ?? '', label, f(st.median), range, vals.length, f(st.mean), f(st.p90), f(st.p95), f(st.sd)].map(v => `"${v}"`).join(','));
-    console.log(`${label.padEnd(34)} ${f(st.median).padStart(6)} ${f(st.mean).padStart(7)} ${f(st.p90).padStart(7)} ${f(st.p95).padStart(7)} ${f(st.sd).padStart(7)}   ${range.padEnd(14)} ${vals.length}`);
+    csv.push(
+      [g ?? '', label, f(st.median), range, vals.length, f(st.mean), f(st.p90), f(st.p95), f(st.sd)]
+        .map((v) => `"${v}"`)
+        .join(',')
+    );
+    console.log(
+      `${label.padEnd(34)} ${f(st.median).padStart(6)} ${f(st.mean).padStart(7)} ${f(st.p90).padStart(7)} ${f(st.p95).padStart(7)} ${f(st.sd).padStart(7)}   ${range.padEnd(14)} ${vals.length}`
+    );
   }
   console.log('');
 }
 
 if (RAW_CSV) {
-  const keys = [...new Set(summaries.flatMap(s => Object.keys(s)))];
-  const raw = [keys.join(','), ...summaries.map(s => keys.map(k => (s[k] == null ? '' : JSON.stringify(s[k]).replace(/^"|"$/g, ''))).join(','))];
+  const keys = [...new Set(summaries.flatMap((s) => Object.keys(s)))];
+  const raw = [
+    keys.join(','),
+    ...summaries.map((s) =>
+      keys.map((k) => (s[k] == null ? '' : JSON.stringify(s[k]).replace(/^"|"$/g, ''))).join(',')
+    ),
+  ];
   writeFileSync(resolve(process.cwd(), RAW_CSV), raw.join('\n') + '\n');
   console.log(`Wrote raw turns to ${RAW_CSV}`);
 }

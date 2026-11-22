@@ -34,5 +34,4 @@ export const AVATAR_PROFILES = {
 
 export const DEFAULT_AVATAR_ID = 'aaron';
 
-export const getAvatarProfile = (id) =>
-  AVATAR_PROFILES[id] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];
+export const getAvatarProfile = (id) => AVATAR_PROFILES[id] ?? AVATAR_PROFILES[DEFAULT_AVATAR_ID];

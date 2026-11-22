@@ -11,14 +11,23 @@ vi.mock('../src/services/openaiClient.js', () => ({
   openaiClient: { tts: vi.fn(async (text, voice) => `data:audio/mpeg;base64,OPENAI:${voice}`) },
 }));
 vi.mock('@core/lipsync/createVisemeTimeline', () => ({
-  createVisemeTimeline: vi.fn((alignment, opts) => ({ frames: ['f'], totalDuration: 1, alignment, opts })),
+  createVisemeTimeline: vi.fn((alignment, opts) => ({
+    frames: ['f'],
+    totalDuration: 1,
+    alignment,
+    opts,
+  })),
 }));
 
 const { tts } = await import('../src/services/ttsClient.js');
 const { openaiClient } = await import('../src/services/openaiClient.js');
 const { createVisemeTimeline } = await import('@core/lipsync/createVisemeTimeline');
 
-const ALIGNMENT = { characters: ['h', 'i'], character_start_times_seconds: [0, 0.1], character_end_times_seconds: [0.1, 0.2] };
+const ALIGNMENT = {
+  characters: ['h', 'i'],
+  character_start_times_seconds: [0, 0.1],
+  character_end_times_seconds: [0.1, 0.2],
+};
 
 function memoryStorage() {
   const map = new Map();
@@ -40,13 +49,20 @@ beforeEach(() => {
   openaiClient.tts.mockClear();
   createVisemeTimeline.mockClear();
 });
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe('ElevenLabs direct (personal key)', () => {
   beforeEach(() => saveKeys({ openai: '', eleven: 'el-key', azure: '' }));
 
   it('posts the full request to the with-timestamps endpoint and builds a viseme timeline', async () => {
-    const out = await tts('Hello there', { elevenVoiceId: 'voice/1', speechRate: 0.9, visemeWeights: { aa: 0.5 } });
+    const out = await tts('Hello there', {
+      elevenVoiceId: 'voice/1',
+      speechRate: 0.9,
+      visemeWeights: { aa: 0.5 },
+    });
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://api.elevenlabs.io/v1/text-to-speech/voice%2F1/with-timestamps');
     expect(init.method).toBe('POST');
@@ -59,7 +75,10 @@ describe('ElevenLabs direct (personal key)', () => {
       voice_settings: { stability: 0.4, similarity_boost: 0.75, style: 0.2, speed: 0.9 },
     });
     expect(createVisemeTimeline).toHaveBeenCalledWith(ALIGNMENT, { visemeWeights: { aa: 0.5 } });
-    expect(out).toEqual({ audio: 'data:audio/mpeg;base64,QUJD', visemeTimeline: expect.objectContaining({ frames: ['f'] }) });
+    expect(out).toEqual({
+      audio: 'data:audio/mpeg;base64,QUJD',
+      visemeTimeline: expect.objectContaining({ frames: ['f'] }),
+    });
     expect(openaiClient.tts).not.toHaveBeenCalled();
   });
 
@@ -89,7 +108,10 @@ describe('ElevenLabs proxied (guest code)', () => {
     await tts('Hello', { elevenVoiceId: 'v1', speechRate: 0.65 });
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe(apiUrl('/api/eleven-tts'));
-    expect(init.headers).toEqual({ 'x-study-code': 'guest-access-code-0001', 'Content-Type': 'application/json' });
+    expect(init.headers).toEqual({
+      'x-study-code': 'guest-access-code-0001',
+      'Content-Type': 'application/json',
+    });
     expect(JSON.parse(init.body)).toEqual({ text: 'Hello', voiceId: 'v1', speechRate: 0.65 });
   });
 });
@@ -98,23 +120,41 @@ describe('fallback to OpenAI TTS', () => {
   beforeEach(() => saveKeys({ openai: 'sk-1', eleven: 'el-key', azure: '' }));
 
   it('an HTTP error carries the provider’s message into the fallback warning', async () => {
-    fetchMock.mockResolvedValueOnce({ ok: false, status: 401, text: async () => 'invalid_api_key' });
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      text: async () => 'invalid_api_key',
+    });
     const out = await tts('Hi', { openaiVoice: 'onyx' });
     expect(out).toEqual({ audio: 'data:audio/mpeg;base64,OPENAI:onyx', visemeTimeline: null });
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('ElevenLabs TTS error: invalid_api_key'));
-    expect(console.warn).toHaveBeenCalledWith(expect.stringMatching(/elevenlabs failed: .*falling back to OpenAI TTS/));
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining('ElevenLabs TTS error: invalid_api_key')
+    );
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/elevenlabs failed: .*falling back to OpenAI TTS/)
+    );
   });
 
   it('an unreadable error body falls back to the status code', async () => {
-    fetchMock.mockResolvedValueOnce({ ok: false, status: 502, text: async () => { throw new Error('stream'); } });
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      text: async () => {
+        throw new Error('stream');
+      },
+    });
     await tts('Hi');
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('ElevenLabs TTS error: HTTP 502'));
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining('ElevenLabs TTS error: HTTP 502')
+    );
   });
 
   it('a response with no audio is a failure, not silence', async () => {
     fetchMock.mockResolvedValueOnce(okJson({ alignment: ALIGNMENT }));
     await tts('Hi');
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('ElevenLabs response missing audio_base64'));
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining('ElevenLabs response missing audio_base64')
+    );
     expect(openaiClient.tts).toHaveBeenCalledTimes(1);
   });
 
@@ -150,7 +190,9 @@ describe('a key that disappears between the check and the request', () => {
     });
     const out = await tts('Hi');
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('No ElevenLabs API key configured'));
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining('No ElevenLabs API key configured')
+    );
     expect(out.audio).toBe('data:audio/mpeg;base64,OPENAI:nova');
   });
 });

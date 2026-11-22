@@ -38,15 +38,26 @@ copy-pasted, and not imported across app boundaries.
 Everything, from the repo root:
 
 ```bash
-npm run typecheck && npm run lint && npm test
+npm run typecheck && npm run lint && npm run format:check && npm test
 ```
 
 `npm test` runs both suites — Jest over `apps/mobile`, `packages/core` and
 `scripts/`, then Vitest over `apps/web`. CI runs exactly these plus
-`expo prebuild` for both platforms.
+`expo prebuild` for both platforms, the Playwright suite and the coverage gate.
 
-Lint currently reports ~155 warnings and **0 errors** — keep errors at zero; the
+Lint currently reports ~150 warnings and **0 errors** — keep errors at zero; the
 warnings are a known backlog, so don't let a new error hide in the noise.
+
+Formatting is Prettier's, and CI checks it. `npm install` sets up a pre-commit
+hook that formats and lints the files you stage, so you rarely need to run
+`npm run format` yourself. `.prettierignore` lists what is deliberately left
+alone (Markdown, the frozen research harness, HTML entry documents, Maestro
+flows) and why. The one commit that formatted the whole codebase is listed in
+`.git-blame-ignore-revs`; to have `git blame` skip it locally, run once:
+
+```bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
 
 Touching anything under `packages/core`? The web suite is what catches a break in
 the shared boundary — `apps/web/tests/interop.test.js` imports core the way the

@@ -1,0 +1,8 @@
+# Format and lint the staged files (the lint-staged block in package.json).
+# Skipped when dependencies are not installed, as in a fresh worktree: CI runs
+# the same checks on every pull request, so nothing gets through unformatted.
+if [ ! -x node_modules/.bin/lint-staged ]; then
+  echo "pre-commit: lint-staged is not installed (run npm ci); skipping. CI still checks."
+  exit 0
+fi
+npx --no-install lint-staged

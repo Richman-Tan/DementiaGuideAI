@@ -2,7 +2,7 @@
 import React from 'react';
 import { go } from '../state/router.js';
 import { useSettings } from '../state/SettingsContext.jsx';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import BrandMark from './BrandMark.jsx';
 
 const I = {
@@ -28,7 +28,7 @@ const navStyle = (on) => ({
 
 export default function Shell({ active, isDesktop, isTablet, isMobile, children }) {
   const { settings, setSetting, effDark } = useSettings();
-  const talkTo = `Talk to ${useEffectiveAvatarProfile(settings.avatarId).name}`;
+  const talkTo = `Talk to ${getAvatarProfile(settings.avatarId).name}`;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>

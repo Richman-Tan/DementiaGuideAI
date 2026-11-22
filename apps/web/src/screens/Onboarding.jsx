@@ -3,8 +3,7 @@ import { useSettings, isSystemDark } from '../state/SettingsContext.jsx';
 import { useUi } from '../state/UiContext.jsx';
 import { navigate } from '../state/router.js';
 import { AvatarBust } from '../avatar/AvatarStage.jsx';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
-import { AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
+import { getAvatarProfile, AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
 import { hasCredentials } from '../services/transport.js';
 import { tts } from '../services/ttsClient.js';
 import { speechRateFor } from '../state/mapSettingsToRag.js';
@@ -24,13 +23,12 @@ const OBDEFS = {
 
 const L = (map, v) => map[v] || v || '—';
 const listNames = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0] || '');
-const LIFELIKE = listNames(Object.values(AVATAR_PROFILES).filter((p) => p.renderer === 'unity').map((p) => p.name));
-const LIGHTER = listNames(Object.values(AVATAR_PROFILES).filter((p) => p.renderer !== 'unity').map((p) => p.name));
+const LIFELIKE = listNames(Object.values(AVATAR_PROFILES).map((p) => p.name));
 
 export default function Onboarding({ step }) {
   const { settings, setSetting, setMany, effDark } = useSettings();
   const { showToast } = useUi();
-  const profile = useEffectiveAvatarProfile(settings.avatarId);
+  const profile = getAvatarProfile(settings.avatarId);
   const name = profile.name;
   const withName = (s) => (s || '').replace(/\{name\}/g, name);
   // Voice preview: idle | loading | playing | nokey | error. It used to animate
@@ -232,7 +230,7 @@ export default function Onboarding({ step }) {
               <h1 style={{ margin: '0', fontSize: '1.45rem' }}>Here's how you've set things up</h1>
               <p style={{ margin: '-6px 0 0', color: 'var(--text2)' }}>Tap Change to adjust anything.</p>
               <p style={{ margin: '0', padding: '12px 14px', borderRadius: '12px', background: 'var(--tint)' }}>
-                <strong>{name}</strong> will help you, in the style you chose. You can pick a different helper in Settings at any time: {LIFELIKE} are lifelike 3D helpers, and {LIGHTER} load faster on slower devices.
+                <strong>{name}</strong> will help you, in the style you chose. You can pick a different helper in Settings at any time: {LIFELIKE} are lifelike 3D helpers.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {summary.map(([label, value, n]) => (

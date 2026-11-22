@@ -9,8 +9,8 @@
 //   playAudioWithVisemeTimeline(dataUri, timeline, emo) — one-shot with alignment
 //   startStreamingPlayback / appendAudioChunk / endStreamingPlayback — WS stream
 //
-// The phase-(d) Three.js renderer reads getClock() every frame to drive the
-// mouth; until then the engine runs headless (audio only).
+// The Unity controller and the headless avatar both play through this engine;
+// it only plays audio and keeps the viseme clock (getClock()).
 
 export class AvatarAudioEngine {
   constructor({ onAudioStart, onAudioEnd } = {}) {
@@ -285,7 +285,7 @@ export class AvatarAudioEngine {
     this._releaseWaiters({ stopped: true });
   }
 
-  // Read by the Three.js renderer every animation frame (phase d).
+  // The viseme clock (audio-anchored time).
   getClock() {
     return {
       active: this.active,

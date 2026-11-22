@@ -8,7 +8,7 @@ import { test, mockProviders, mockSupabase, seedStorage, ask, expect, USER_ID } 
 async function open(page, path, { supabase = {}, seed = {} } = {}) {
   const log = await mockProviders(page, { answer: 'Keep a calm routine in the evening [S1].' });
   const db = await mockSupabase(page, supabase);
-  await seedStorage(page, { settings: { avatarId: 'aria' }, ...seed });
+  await seedStorage(page, { ...seed });
   await page.goto(path);
   return { log, db };
 }
@@ -147,7 +147,7 @@ test.describe('when the account service misbehaves', () => {
     // "New conversation" cannot make a server thread either, and the screen still clears.
     await page.goto('/#/app/chat');
     await page.getByRole('button', { name: 'New conversation' }).click();
-    await expect(page.getByText("Kia ora, I'm Aria")).toBeVisible();
+    await expect(page.getByText("Kia ora, I'm Aaron")).toBeVisible();
     await expect.poll(() => db.refused.filter((r) => r === 'createConversation').length).toBe(2);
   });
 

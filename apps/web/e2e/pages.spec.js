@@ -9,9 +9,9 @@ test.describe('landing page', () => {
     await seedStorage(page, { keys: false, settings: { onboarded: false } });
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Dementia care answers you can actually talk to.' })).toBeVisible();
-    // The helper named is the one that resolved (no Unity build here → Aria).
-    await expect(page.getByText('Aria is a caring AI guide who answers your questions with trusted, cited information — by text or voice.')).toBeVisible();
-    await expect(page.getByText('avatar stage · Aria (3D, lip-synced)')).toBeVisible();
+    // The helper named is the one that resolved (no Unity build here → Aaron).
+    await expect(page.getByText('Aaron is a caring AI guide who answers your questions with trusted, cited information — by text or voice.')).toBeVisible();
+    await expect(page.getByText('avatar stage · Aaron (3D, lip-synced)')).toBeVisible();
     await expect(page.getByText('DementiaGuide AI provides general information, not medical advice.')).toBeVisible();
 
     await page.getByRole('button', { name: 'Browse the library' }).click();
@@ -39,14 +39,14 @@ test.describe('landing page', () => {
     await page.goto('/');
     await page.getByRole('link', { name: 'Privacy Policy' }).click();
     await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible();
-    await expect(page.getByText(/Your conversations with Aria are saved to an account/)).toBeVisible();
+    await expect(page.getByText(/Your conversations with Aaron are saved to an account/)).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Deleting them' })).toBeVisible();
 
     await page.goto('/#/');
     await page.getByRole('link', { name: 'Medical Disclaimer' }).click();
     await expect(page.getByRole('heading', { name: 'Medical Disclaimer' })).toBeVisible();
     await expect(page.getByText('In an emergency, call 111.')).toBeVisible();
-    await expect(page.getByText(/Aria is not a doctor, nurse, or health professional/)).toBeVisible();
+    await expect(page.getByText(/Aaron is not a doctor, nurse, or health professional/)).toBeVisible();
   });
 });
 
@@ -104,21 +104,24 @@ test.describe('stored data from older or damaged builds', () => {
     await expect(page.getByText('Some evenings he lashes out at me and I get scared. What should I do?')).toBeVisible();
   });
 
-  test('a settings blob from before Unity became the default moves to Aaron once', async ({ page }) => {
-    await mockProviders(page);
-    await installFakeUnity(page, { auto: true });
-    await page.addInitScript(() => {
-      if (sessionStorage.getItem('dg_e2e_legacy')) return;
-      sessionStorage.setItem('dg_e2e_legacy', '1');
-      localStorage.setItem('dg_settings', JSON.stringify({ onboarded: true, avatarId: 'aria' }));
+  for (const retired of ['aria', 'zhenja']) {
+    test(`a settings blob that still names the retired "${retired}" avatar shows Aaron`, async ({ page }) => {
+      await mockProviders(page);
+      await installFakeUnity(page, { auto: true });
+      await page.addInitScript((avatarId) => {
+        if (sessionStorage.getItem('dg_e2e_legacy')) return;
+        sessionStorage.setItem('dg_e2e_legacy', '1');
+        localStorage.setItem('dg_settings', JSON.stringify({ onboarded: true, avatarId }));
+      }, retired);
+      await page.goto('/#/app/home');
+      await expect(page.getByText('Aaron', { exact: true })).toBeVisible();
+      await expect.poll(() => page.evaluate(() => window.__unity.messages.filter((m) => m.type === 'setCharacter').map((m) => m.id))).toContain('aaron');
+      // Nothing is rewritten; Settings highlights Aaron and the picker still works.
+      expect((await page.evaluate(() => JSON.parse(localStorage.getItem('dg_settings')))).avatarId).toBe(retired);
+      await page.goto('/#/app/settings');
+      await page.getByRole('group', { name: 'Avatar' }).getByRole('button', { name: 'Ariana' }).click();
+      await page.reload();
+      await expect(page.getByText("Display Ariana's visual avatar interface")).toBeVisible();
     });
-    await page.goto('/#/app/home');
-    await expect(page.getByText('Aaron', { exact: true })).toBeVisible();
-    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dg_settings')))).toMatchObject({ avatarId: 'aaron', avatarMigratedToUnity: true });
-    // A deliberate pick of Aria afterwards sticks.
-    await page.goto('/#/app/settings');
-    await page.getByRole('group', { name: 'Avatar' }).getByRole('button', { name: 'Aria', exact: true }).click();
-    await page.reload();
-    await expect(page.getByText("Display Aria's visual avatar interface")).toBeVisible();
-  });
+  }
 });

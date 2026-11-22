@@ -5,7 +5,7 @@ import { test, mockProviders, seedStorage, expect } from './support.js';
 
 async function openLibrary(page, path = '/#/app/library') {
   await mockProviders(page);
-  await seedStorage(page, { keys: false, settings: { avatarId: 'aria' } });
+  await seedStorage(page, { keys: false });
   await page.goto(path);
 }
 
@@ -13,7 +13,7 @@ test.describe('library', () => {
   test('a category narrows the list, and its chip clears it again', async ({ page }) => {
     await openLibrary(page);
     await expect(page.getByText('49 articles', { exact: true })).toBeVisible();
-    await expect(page.getByText('Trusted, curated dementia-care guidance — the same knowledge Aria uses.')).toBeVisible();
+    await expect(page.getByText('Trusted, curated dementia-care guidance — the same knowledge Aaron uses.')).toBeVisible();
 
     const homeSafety = page.getByRole('button', { name: /^Home Safety Making the home safe/ });
     await homeSafety.click();
@@ -46,7 +46,7 @@ test.describe('library', () => {
     await page.getByLabel('Search the library').fill('zzqx no such topic');
     await expect(page.getByText('No matches')).toBeVisible();
     await expect(page.getByText('0 articles matching “zzqx no such topic”')).toBeVisible();
-    await page.getByRole('button', { name: 'Ask Aria in Chat' }).click();
+    await page.getByRole('button', { name: 'Ask Aaron in Chat' }).click();
     await expect(page).toHaveURL(/#\/app\/chat$/);
   });
 
@@ -72,10 +72,10 @@ test.describe('library', () => {
     await expect(page).toHaveURL(/#\/app\/library$/);
   });
 
-  test('"Ask Aria about this" asks about the article in Chat', async ({ page }) => {
+  test('"Ask Aaron about this" asks about the article in Chat', async ({ page }) => {
     await openLibrary(page, '/#/app/library/wandering');
     await expect(page.getByRole('heading', { name: 'Wandering Prevention and Safe-Return Strategies', level: 1 })).toBeVisible();
-    await page.getByRole('button', { name: 'Ask Aria about this' }).click();
+    await page.getByRole('button', { name: 'Ask Aaron about this' }).click();
     await expect(page).toHaveURL(/#\/app\/chat$/);
     await expect(page.getByText('Tell me more about wandering prevention and safe-return strategies')).toBeVisible();
     await expect(page.getByText(/Wandering usually has a reason behind it/)).toBeVisible();

@@ -55,11 +55,10 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
       {phase === 'failed' && (
         <>
           <div style={{ fontWeight: 700, fontSize: titleSize }}>We couldn't finish loading {name}.</div>
-          {!compact && (
-            <div style={{ color: 'var(--text2)', fontSize: subSize, maxWidth: '30em' }}>
-              The download is large (about 230 MB), so a brief drop in connection can interrupt it. You can keep using the rest of the app either way.
-            </div>
-          )}
+          <div style={{ color: 'var(--text2)', fontSize: subSize, maxWidth: '30em' }}>
+            {`The 3D view isn't available right now. ${name} can still talk with you.`}
+            {!compact && ' The download is large (about 230 MB), so a brief drop in connection can interrupt it.'}
+          </div>
           <button
             onClick={ensureUnityBoot}
             className="hv2"

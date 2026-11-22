@@ -10,9 +10,8 @@ import { useChat } from '../state/ChatContext.jsx';
 import { useVoiceConversation } from '../voice/useVoiceConversation.js';
 import { voiceAvatar } from '../avatar/avatarBridge.js';
 import { navigate, useWidth } from '../state/router.js';
-import { AvatarBust, ThreeAvatarMount } from '../avatar/AvatarStage.jsx';
-import { UnityAvatarMount } from '../avatar/unity/UnityAvatarStage.jsx';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { AvatarBust, AvatarMount } from '../avatar/AvatarStage.jsx';
+import { useUnityLoadState } from '../avatar/unity/useUnityLoadState.js';
 import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { loadKeys, saveKeys } from '../state/keysStore.js';
 import { AccessCodeForm } from '../components/AccessCodeForm.jsx';
@@ -29,27 +28,13 @@ const glass = {
 };
 
 // ── Stage: the scene IS the screen ──────────────────────────────────────────
-function VoiceStage({ profile, showAvatar, state }) {
+function VoiceStage({ state }) {
   const bigBust = (
     <div style={{ animation: 'dgBreathe 5.5s ease-in-out infinite' }}>
       <AvatarBust size={170} />
     </div>
   );
-  if (!showAvatar) {
-    return (
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {bigBust}
-      </div>
-    );
-  }
-  if (profile.renderer === 'unity') {
-    return (
-      <UnityAvatarMount characterId={profile.unityCharacterId} name={profile.name} state={state}>
-        {bigBust}
-      </UnityAvatarMount>
-    );
-  }
-  return <ThreeAvatarMount state={state}>{bigBust}</ThreeAvatarMount>;
+  return <AvatarMount state={state}>{bigBust}</AvatarMount>;
 }
 
 // ── Status chip: state label + ornaments, top-center ────────────────────────
@@ -158,13 +143,13 @@ export default function Voice() {
   // Bumped when an access code is saved or removed, so hasKey is re-read.
   const [, setAccessTick] = useState(0);
 
-  const profile = useEffectiveAvatarProfile(settings.avatarId);
-  const who = profile.name;
-  // The silent identity swap that confused a pilot tester: the stored choice
-  // is a Unity profile, the ~240MB build fails to load, and the fallback appears with
-  // no explanation — a different name, face and voice. Say so.
-  const storedProfile = getAvatarProfile(settings.avatarId);
-  const avatarFallback = storedProfile.renderer === 'unity' && profile.id !== storedProfile.id;
+  const who = getAvatarProfile(settings.avatarId).name;
+  // The 3D view can be missing (no build installed) or fail to load. The same
+  // character keeps talking, so say plainly that only the picture is missing.
+  // Only the avatar view starts a load, so with the avatar hidden this stays
+  // quiet.
+  const { phase: unityPhase } = useUnityLoadState();
+  const avatarFallback = !!settings.showAvatar && (unityPhase === 'unavailable' || unityPhase === 'failed');
   // A visitor with a guest access code reaches the model through the server-side
   // proxy, so there is nothing for them to set up — and showing them a raw
   // `sk-…` field would be both confusing and a dead end.
@@ -235,7 +220,7 @@ export default function Voice() {
     <section style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', zIndex: 50, overflow: 'hidden', background: 'radial-gradient(circle at 50% 30%, var(--tint) 0%, var(--bg) 80%)' }}>
       {/* The scene fills the screen */}
       <div style={{ position: 'absolute', inset: 0 }}>
-        <VoiceStage profile={profile} showAvatar={!!settings.showAvatar} state={vState} />
+        <VoiceStage state={vState} />
       </div>
 
       {/* Top overlay */}
@@ -246,7 +231,7 @@ export default function Voice() {
             <StatusChip vState={vState} who={who} />
             {avatarFallback && (
               <div style={{ ...glass, borderRadius: '999px', padding: '6px 16px', fontSize: '.9rem', color: 'var(--text2)', maxWidth: '36em', textAlign: 'center' }}>
-                {`${storedProfile.name} isn’t available right now, so you’ll talk with ${who} instead — everything else works the same.`}
+                {`The 3D view isn’t available right now. ${who} can still talk with you.`}
               </div>
             )}
           </div>

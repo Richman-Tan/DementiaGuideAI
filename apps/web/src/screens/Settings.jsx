@@ -5,9 +5,7 @@ import { useUi } from '../state/UiContext.jsx';
 import { loadKeys, saveKeys as persistKeys, clearKeys as wipeKeys } from '../state/keysStore.js';
 import { useAuth } from '../state/AuthContext.jsx';
 import { navigate } from '../state/router.js';
-import { AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
-import { isUnityAvailable } from '../avatar/unity/unityBridge.js';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { AVATAR_PROFILES, getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { AccessCodeForm } from '../components/AccessCodeForm.jsx';
 
 const Toggle = ({ label, on, onToggle }) => (
@@ -111,11 +109,9 @@ export default function Settings() {
   const auth = useAuth();
   const [keys, setKeys] = useState(loadKeys);
   const [advOpen, setAdvOpen] = useState(false);
-  // Re-renders when the Unity-build probe resolves (locks/unlocks the picker).
-  const effective = useEffectiveAvatarProfile(settings.avatarId);
+  // A stored id no longer on the roster resolves to the default character.
+  const effective = getAvatarProfile(settings.avatarId);
   const who = effective.name;
-  const storedProfile = AVATAR_PROFILES[settings.avatarId];
-  const storedLocked = storedProfile?.renderer === 'unity' && storedProfile.id !== effective.id;
 
   const avRows = [
     ['showAvatar', 'Show Avatar', `Display ${who}'s visual avatar interface`],
@@ -189,28 +185,19 @@ export default function Settings() {
           <span style={{ flex: '1', minWidth: '180px' }}><span style={{ display: 'block', fontWeight: '600' }}>Avatar</span><span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>Who you talk with</span></span>
           <div role="group" aria-label="Avatar" style={{ display: 'flex', flexWrap: 'wrap', background: 'var(--elev)', border: 'var(--bw) solid var(--border)', borderRadius: '12px', padding: '3px', gap: '3px' }}>
             {Object.values(AVATAR_PROFILES).map((p) => {
-              const unityLocked = p.renderer === 'unity' && !isUnityAvailable();
-              // Highlight the EFFECTIVE profile: with the stored Unity pick
-              // locked (no build), the fallback shows as active instead.
               const on = effective.id === p.id;
               return (
                 <button
                   key={p.id}
-                  onClick={() => { if (!unityLocked) setSetting('avatarId', p.id); }}
-                  disabled={unityLocked}
-                  title={unityLocked ? 'Unity WebGL build not installed — see public/unity/README.md' : p.description}
-                  style={{ minHeight: '44px', padding: '0 14px', borderRadius: '9px', border: 'none', cursor: unityLocked ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '.9rem', opacity: unityLocked ? 0.45 : 1, ...segStyle(on) }}
+                  onClick={() => setSetting('avatarId', p.id)}
+                  title={p.description}
+                  style={{ minHeight: '44px', padding: '0 14px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '.9rem', ...segStyle(on) }}
                 >
                   {p.name}
                 </button>
               );
             })}
           </div>
-          {storedLocked && (
-            <div style={{ width: '100%', color: 'var(--text2)', fontSize: '.85rem' }}>
-              {storedProfile.name} needs the Unity build — using {effective.name} meanwhile
-            </div>
-          )}
         </div>
         {avRows.map(([k, label, sub]) => (
           <ToggleRow key={k} label={label} sub={sub} on={!!settings[k]} onToggle={() => setSetting(k, !settings[k])} />

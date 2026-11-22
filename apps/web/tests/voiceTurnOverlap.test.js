@@ -10,8 +10,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, flush, cleanup } from './helpers/render.js';
 
-vi.mock('../src/avatar/effectiveProfile.js', () => ({
-  useEffectiveAvatarProfile: () => ({ id: 'aaron', name: 'Aaron', elevenVoiceId: 'v', openaiVoice: 'onyx', visemeWeights: null }),
+vi.mock('../src/avatar/avatarProfiles.js', () => ({
+  getAvatarProfile: () => ({ id: 'aaron', name: 'Aaron', elevenVoiceId: 'v', openaiVoice: 'onyx', visemeWeights: null }),
 }));
 vi.mock('../src/services/openaiClient.js', () => ({
   openaiClient: { chatStream: vi.fn(), search: vi.fn(async () => []) },

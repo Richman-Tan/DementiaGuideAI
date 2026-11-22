@@ -19,11 +19,7 @@ export const AREAS = [
 
 /** Source files that are part of an area but not of the gate: path → reason. */
 export const EXCLUDED = {
-  'apps/web/src/avatar/three/renderer.js':
-    'Generated (apps/web/scripts/extract-renderer.mjs) from the mobile WebView renderer and marked '
-    + 'do-not-edit; a WebGL/Three.js scene whose correctness is visual. The e2e suite still loads and '
-    + 'runs it as the fallback avatar.',
-  'apps/web/src/avatar/three/audio.js':
+  'apps/web/src/avatar/audioEngine.js':
     'Drives the Web Audio API (AudioContext scheduling, AnalyserNode); extracted verbatim from the '
     + 'mobile renderer, and its timing depends on a real audio clock rather than on logic a test can stub.',
   'apps/web/src/avatar/unity/unityBridge.js':

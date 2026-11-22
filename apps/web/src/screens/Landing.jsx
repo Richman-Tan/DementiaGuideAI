@@ -2,14 +2,13 @@ import React from 'react';
 import { AvatarStageCard } from '../avatar/AvatarStage.jsx';
 import BrandMark from '../components/BrandMark.jsx';
 import { useSettings } from '../state/SettingsContext.jsx';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 
 export default function Landing({ openApp, browseLibrary }) {
   const { settings } = useSettings();
-  // Whichever avatar actually resolved — naming one the visitor won't meet
-  // (the Unity build can fail to load, swapping in the fallback avatar) broke
-  // trust on the very first screen.
-  const who = useEffectiveAvatarProfile(settings.avatarId).name;
+  // The name never depends on whether the 3D build is installed — the same
+  // character keeps its name and voice either way.
+  const who = getAvatarProfile(settings.avatarId).name;
   return (
     <section style={{ maxWidth: '1160px', margin: '0 auto', padding: '0 24px 40px' }}>
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '20px 0' }}>

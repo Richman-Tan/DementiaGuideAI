@@ -1,15 +1,14 @@
 // @vitest-environment jsdom
 // The avatar's on-screen states: the Unity download/prepare/failed progress
-// card, the shared Three.js canvas mount with its bust fallback, the Unity
-// canvas mount, the landing card and the Home hero tile. The Unity bridge, the
-// Unity controller and the Three.js controller are fakes (their runtimes are
-// excluded from coverage); SettingsProvider and the profile resolver are real.
+// card, the AvatarMount (Unity view, or the bust when the avatar is off), the
+// Unity canvas mount, the landing card and the Home hero tile. The Unity bridge
+// and the Unity controller are fakes (their runtimes are excluded from
+// coverage); SettingsProvider and the profile lookup are real.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { h, render, renderHook, flush, settle, cleanup } from './helpers/render.js';
 import { SettingsProvider } from '../src/state/SettingsContext.jsx';
 
 const fake = vi.hoisted(() => ({
-  availability: true,
   probe: null,
   mount: null,
   load: { phase: 'idle', pct: 0 },
@@ -19,12 +18,9 @@ const fake = vi.hoisted(() => ({
   boot: null,
   unityAvatar: null,
   getUnityAvatar: null,
-  three: null,
-  getThreeAvatar: null,
 }));
 
 vi.mock('../src/avatar/unity/unityBridge.js', () => ({
-  getUnityAvailability: () => fake.availability,
   probeUnity: () => fake.probe(),
   mountUnity: () => fake.mount(),
   getUnityLoadState: () => fake.load,
@@ -34,10 +30,9 @@ vi.mock('../src/avatar/unity/unityBridge.js', () => ({
   ensureUnityBoot: (...a) => fake.boot(...a),
 }));
 vi.mock('../src/avatar/unity/UnityAvatarController.js', () => ({ getUnityAvatar: (...a) => fake.getUnityAvatar(...a) }));
-vi.mock('../src/avatar/three/controller.js', () => ({ getThreeAvatar: (...a) => fake.getThreeAvatar(...a) }));
 
 const { AvatarLoadProgress } = await import('../src/avatar/AvatarLoadProgress.jsx');
-const { AvatarBust, ThreeAvatarMount, AvatarStageCard, AvatarHomeStage } = await import('../src/avatar/AvatarStage.jsx');
+const { AvatarBust, AvatarMount, AvatarStageCard, AvatarHomeStage } = await import('../src/avatar/AvatarStage.jsx');
 const { UnityAvatarMount } = await import('../src/avatar/unity/UnityAvatarStage.jsx');
 const { useUnityLoadState } = await import('../src/avatar/unity/useUnityLoadState.js');
 
@@ -45,21 +40,11 @@ const broadcast = async (state) => {
   await flush(() => { fake.load = state; for (const cb of fake.subs) cb(state); });
 };
 const withSettings = (child) => h(SettingsProvider, null, child);
-const setAvatar = (avatarId, extra = {}) => localStorage.setItem('dg_settings', JSON.stringify({ avatarId, avatarMigratedToUnity: true, ...extra }));
+const setAvatar = (avatarId, extra = {}) => localStorage.setItem('dg_settings', JSON.stringify({ avatarId, ...extra }));
 const deferred = () => { let resolve; let reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; };
-
-function threeController({ loaded = false, failed = false } = {}) {
-  const c = { host: document.createElement('div'), loaded, failed, listeners: new Set(), setAvatarState: vi.fn() };
-  c.host.className = 'three-host';
-  c.off = vi.fn();
-  c.onStatusChange = (fn) => { c.listeners.add(fn); return () => { c.listeners.delete(fn); c.off(); }; };
-  c.emit = (patch) => { Object.assign(c, patch); for (const fn of c.listeners) fn(c); };
-  return c;
-}
 
 beforeEach(() => {
   localStorage.clear();
-  fake.availability = true;
   fake.probe = vi.fn(async () => true);
   fake.mount = vi.fn(async () => {});
   fake.load = { phase: 'idle', pct: 0 };
@@ -69,8 +54,6 @@ beforeEach(() => {
   fake.boot = vi.fn();
   fake.unityAvatar = { setAvatarState: vi.fn() };
   fake.getUnityAvatar = vi.fn(() => fake.unityAvatar);
-  fake.three = threeController();
-  fake.getThreeAvatar = vi.fn(() => fake.three);
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 afterEach(async () => {
@@ -112,12 +95,14 @@ describe('AvatarLoadProgress', () => {
     const { container } = await show({ phase: 'failed' });
     expect(container.textContent).toContain("We couldn't finish loading Aaron.");
     expect(container.textContent).toContain('a brief drop in connection');
+    expect(container.textContent).toContain("The 3D view isn't available right now. Aaron can still talk with you.");
     const button = container.querySelector('button');
     expect(button.textContent).toBe('Try again');
     await flush(() => button.click());
     expect(fake.boot).toHaveBeenCalledTimes(1);
     const compact = await show({ phase: 'failed', compact: true });
     expect(compact.container.textContent).not.toContain('a brief drop in connection');
+    expect(compact.container.textContent).toContain("Aaron can still talk with you.");
   });
 
   it('any other phase shows only the breathing bust', async () => {
@@ -134,83 +119,58 @@ describe('AvatarBust / AvatarStageCard', () => {
     expect(container.querySelector('svg').getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('the landing card captions the effective avatar, or a supplied caption', async () => {
+  it('the landing card captions the stored avatar, or a supplied caption', async () => {
     const a = await render(withSettings(h(AvatarStageCard)));
     expect(a.container.textContent).toBe('avatar stage · Aaron (3D, lip-synced)');
-    fake.availability = false; // no Unity build → Aria
+    setAvatar('ariana');
     const b = await render(withSettings(h(AvatarStageCard)));
-    expect(b.container.textContent).toBe('avatar stage · Aria (3D, lip-synced)');
+    expect(b.container.textContent).toBe('avatar stage · Ariana (3D, lip-synced)');
+    expect(fake.probe).not.toHaveBeenCalled(); // the landing card never touches /unity/
     const c = await render(withSettings(h(AvatarStageCard, { caption: 'Meet your guide', maxWidth: 200 })));
     expect(c.container.textContent).toBe('Meet your guide');
     expect(c.container.firstChild.style.maxWidth).toBe('200px');
   });
 });
 
-describe('ThreeAvatarMount', () => {
+describe('AvatarMount', () => {
   const bust = h('span', { className: 'bust' }, 'bust');
-  const mountThree = (props = {}) => render(withSettings(h(ThreeAvatarMount, props, bust)));
 
-  it('reparents the shared canvas host and shows the bust until the model loads', async () => {
-    setAvatar('aria');
-    const { container } = await mountThree();
-    const host = container.querySelector('.three-host');
-    expect(host).not.toBeNull();
-    expect(host.parentElement.style.opacity).toBe('0');
-    expect(container.querySelector('.bust')).not.toBeNull();
-    expect(fake.three.setAvatarState).not.toHaveBeenCalled();
-    await flush(() => fake.three.emit({ loaded: true }));
-    expect(host.parentElement.style.opacity).toBe('1');
-    expect(container.querySelector('.bust')).toBeNull();
-    expect(fake.three.setAvatarState).toHaveBeenCalledWith('idle');
-  });
-
-  it('forwards conversational state once ready, and unsubscribes on unmount', async () => {
-    setAvatar('zhenja');
-    fake.three = threeController({ loaded: true });
-    const r = await render(withSettings(h(ThreeAvatarMount, { state: 'listening' }, bust)));
-    expect(fake.three.setAvatarState).toHaveBeenLastCalledWith('listening');
-    await r.rerender(withSettings(h(ThreeAvatarMount, { state: 'speaking' }, bust)));
-    expect(fake.three.setAvatarState).toHaveBeenLastCalledWith('speaking');
-    await r.unmount();
-    expect(fake.three.off).toHaveBeenCalled();
-  });
-
-  it('a failed model keeps the bust', async () => {
-    setAvatar('aria');
-    fake.three = threeController({ loaded: true, failed: true });
-    const { container } = await mountThree();
-    expect(container.querySelector('.bust')).not.toBeNull();
-    await flush(() => fake.three.emit({ failed: true }));
-    expect(container.querySelector('.bust')).not.toBeNull();
-  });
-
-  it('no controller, or the avatar switched off, shows the bust and mounts nothing', async () => {
-    setAvatar('aria');
-    fake.getThreeAvatar.mockReturnValueOnce(null);
-    const a = await mountThree();
-    expect(a.container.querySelector('.bust')).not.toBeNull();
-    expect(a.container.querySelector('.three-host')).toBeNull();
-    await a.unmount();
-    fake.getThreeAvatar.mockClear();
-    setAvatar('aria', { showAvatar: false });
-    const b = await mountThree();
-    expect(b.container.querySelector('.bust')).not.toBeNull();
-    expect(fake.getThreeAvatar).not.toHaveBeenCalled();
-  });
-
-  it('a Unity profile hands over to the Unity mount', async () => {
+  it('avatar on: hands over to the Unity mount for the stored character and forwards state', async () => {
     setAvatar('ariana');
-    const { container } = await render(withSettings(h(ThreeAvatarMount, { state: 'thinking' }, bust)));
+    const { container } = await render(withSettings(h(AvatarMount, { state: 'thinking' }, bust)));
     await settle();
     expect(container.querySelector('canvas')).toBe(fake.canvas);
     expect(fake.getUnityAvatar).toHaveBeenCalledWith('ariana');
     expect(fake.unityAvatar.setAvatarState).toHaveBeenCalledWith('thinking');
-    expect(fake.getThreeAvatar).not.toHaveBeenCalled();
+  });
+
+  it('a retired stored id (aria, zhenja) shows the default character', async () => {
+    setAvatar('zhenja');
+    await render(withSettings(h(AvatarMount, null, bust)));
+    await settle();
+    expect(fake.getUnityAvatar).toHaveBeenCalledWith('aaron');
+  });
+
+  it('compact reaches the load card', async () => {
+    fake.mount = vi.fn(() => new Promise(() => {}));
+    fake.load = { phase: 'downloading', pct: 0.5 };
+    const { container } = await render(withSettings(h(AvatarMount, { compact: true }, bust)));
+    expect(container.textContent).toContain('Getting Aaron ready… 50%');
+  });
+
+  it('avatar off: just the bust — nothing is probed, mounted or parked', async () => {
+    setAvatar('aaron', { showAvatar: false });
+    const { container } = await render(withSettings(h(AvatarMount, { state: 'thinking' }, bust)));
+    await settle();
+    expect(container.querySelector('.bust')).not.toBeNull();
+    expect(container.querySelector('canvas')).toBeNull();
+    expect(fake.probe).not.toHaveBeenCalled();
+    expect(fake.mount).not.toHaveBeenCalled();
   });
 });
 
 describe('AvatarHomeStage', () => {
-  it('Unity: a portrait column with the Unity canvas and a name tag', async () => {
+  it('a portrait column with the Unity canvas and a name tag', async () => {
     setAvatar('aaron');
     const { container } = await render(withSettings(h(AvatarHomeStage)));
     await settle();
@@ -219,12 +179,15 @@ describe('AvatarHomeStage', () => {
     expect([...container.querySelectorAll('div')].some((d) => d.style.aspectRatio === '3 / 4')).toBe(true);
   });
 
-  it('Three.js: the shared canvas in its "waiting" pose', async () => {
-    setAvatar('zhenja');
-    fake.three = threeController({ loaded: true });
+  it('avatar off: the bust and the name tag, with no probe and no download', async () => {
+    setAvatar('ariana', { showAvatar: false });
     const { container } = await render(withSettings(h(AvatarHomeStage)));
-    expect(container.textContent).toBe('Zhenja');
-    expect(fake.three.setAvatarState).toHaveBeenCalledWith('waiting');
+    await settle();
+    expect(container.querySelector('svg')).not.toBeNull();
+    expect(container.querySelector('canvas')).toBeNull();
+    expect(container.textContent).toBe('Ariana');
+    expect(fake.probe).not.toHaveBeenCalled();
+    expect(fake.mount).not.toHaveBeenCalled();
   });
 });
 
@@ -243,16 +206,18 @@ describe('UnityAvatarMount', () => {
     expect(fake.unityAvatar.setAvatarState).toHaveBeenLastCalledWith('listening');
     await r.rerender(h(UnityAvatarMount, { characterId: 'ariana', state: 'speaking' }, child));
     expect(fake.unityAvatar.setAvatarState).toHaveBeenLastCalledWith('speaking');
+    const host = canvas.parentElement;
     await r.unmount();
-    expect(fake.park).toHaveBeenCalled();
+    expect(fake.park).toHaveBeenCalledWith(host); // only parks if it still holds the canvas
   });
 
-  it('no build installed: the bust plus a plain note, and no boot attempt', async () => {
+  it('no build installed: the bust plus plain copy, and no boot attempt', async () => {
     fake.probe = vi.fn(async () => false);
     const { container } = await mountUnity();
     await settle();
     expect(container.querySelector('.bust')).not.toBeNull();
-    expect(container.textContent).toContain('Unity build not installed');
+    expect(container.textContent).toContain("The 3D view isn't available right now. Ariana can still talk with you.");
+    expect(container.textContent).not.toContain('Unity build');
     expect(fake.mount).not.toHaveBeenCalled();
   });
 

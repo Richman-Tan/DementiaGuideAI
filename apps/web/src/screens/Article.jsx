@@ -3,7 +3,7 @@ import * as S from '../data/services.js';
 import ArticleBody from '../components/ArticleBody.jsx';
 import { loadBody } from '../data/articles/index.js';
 import { useSettings } from '../state/SettingsContext.jsx';
-import { useEffectiveAvatarProfile } from '../avatar/effectiveProfile.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { useChat } from '../state/ChatContext.jsx';
 import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
@@ -11,7 +11,7 @@ import { catStyle } from '../lib/catStyle.js';
 export default function Article({ artId }) {
   const { settings, effDark } = useSettings();
   // Resolved name, not a hard-coded one.
-  const who = useEffectiveAvatarProfile(settings.avatarId).name;
+  const who = getAvatarProfile(settings.avatarId).name;
   const { askNow } = useChat();
   const art = S.getArticle(artId);
   const [attempt, setAttempt] = useState(0);

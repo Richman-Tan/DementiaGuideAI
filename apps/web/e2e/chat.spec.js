@@ -90,19 +90,19 @@ test.describe('text chat (BYO key, mocked providers)', () => {
 test.describe('chat without a key (built-in example answers)', () => {
   test('the demo conversation, then a new one: empty state, a suggested question, sources and the article they come from', async ({ page }) => {
     await mockProviders(page);
-    await seedStorage(page, { keys: false, settings: { avatarId: 'aria' } });
+    await seedStorage(page, { keys: false });
     await page.goto('/#/app/chat');
     // The demo thread, with its safety callout on the aggression answer.
     await expect(page.getByText('Some evenings he lashes out at me and I get scared. What should I do?')).toBeVisible();
     await expect(page.getByText('If you need help now:')).toBeVisible();
 
     await page.getByRole('button', { name: 'New conversation' }).click();
-    await expect(page.getByText("Kia ora, I'm Aria")).toBeVisible();
+    await expect(page.getByText("Kia ora, I'm Aaron")).toBeVisible();
     await expect(page.getByText('he lashes out at me')).toHaveCount(0);
     await page.getByRole('button', { name: 'What are early signs of dementia?' }).click();
     await expect(page.getByText(/Early dementia usually shows up as changes/)).toBeVisible();
     // While the answer streams the panel says so; afterwards it is listening again.
-    await expect(page.getByText('Aria is listening')).toBeVisible();
+    await expect(page.getByText('Aaron is listening')).toBeVisible();
 
     // A source chip opens the drawer on the library article it came from.
     await page.getByRole('button', { name: 'What Are the Early Signs of Dementia' }).click();
@@ -128,12 +128,12 @@ test.describe('chat without a key (built-in example answers)', () => {
 
   test('the side panel hides and comes back', async ({ page }) => {
     await mockProviders(page);
-    await seedStorage(page, { keys: false, settings: { avatarId: 'aria' } });
+    await seedStorage(page, { keys: false });
     await page.goto('/#/app/chat');
     await page.getByRole('button', { name: 'Hide panel' }).click();
     await expect(page.getByRole('button', { name: 'Hide panel' })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Show Aria panel' }).click();
-    await expect(page.getByText('Aria is listening')).toBeVisible();
+    await page.getByRole('button', { name: 'Show Aaron panel' }).click();
+    await expect(page.getByText('Aaron is listening')).toBeVisible();
   });
 });
 
@@ -338,12 +338,12 @@ test.describe('chat: changing course mid-answer', () => {
 
   test('"New conversation" while an example answer is coming cancels it', async ({ page }) => {
     await mockProviders(page);
-    await seedStorage(page, { keys: false, settings: { avatarId: 'aria' } });
+    await seedStorage(page, { keys: false });
     await page.goto('/#/app/chat');
     await page.getByRole('button', { name: 'New conversation' }).click();
     await ask(page, 'How do I manage sundowning?');
     await page.getByRole('button', { name: 'New conversation' }).click();
-    await expect(page.getByText("Kia ora, I'm Aria")).toBeVisible();
+    await expect(page.getByText("Kia ora, I'm Aaron")).toBeVisible();
     // The cancelled answer never arrives.
     await page.waitForTimeout(1500);
     await expect(page.getByText(/Sundowning — becoming more restless/)).toHaveCount(0);
@@ -352,7 +352,7 @@ test.describe('chat: changing course mid-answer', () => {
 
   test('"New conversation" while a live answer is on its way cancels the request', async ({ page }) => {
     await mockProviders(page);
-    await seedStorage(page, { settings: { avatarId: 'aria' } });
+    await seedStorage(page);
     let pending = false;
     await page.route('https://api.openai.com/v1/chat/completions', () => { pending = true; }); // never answered
     await page.goto('/#/app/chat');
@@ -360,7 +360,7 @@ test.describe('chat: changing course mid-answer', () => {
     await ask(page, 'What helps in the evenings?');
     await expect.poll(() => pending).toBe(true);
     await page.getByRole('button', { name: 'New conversation' }).click();
-    await expect(page.getByText("Kia ora, I'm Aria")).toBeVisible();
+    await expect(page.getByText("Kia ora, I'm Aaron")).toBeVisible();
     await expect(page.getByText("I couldn't reach the knowledge base — try again.")).toHaveCount(0);
   });
 

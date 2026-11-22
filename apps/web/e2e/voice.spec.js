@@ -6,48 +6,46 @@
 // microphone and speech recognition are the scripted fakes in installFakeMedia.
 //
 // The avatar is hidden in most of these (Settings → Show Avatar off, a real
-// option) so a software-rendered WebGL scene does not slow every turn; the
-// first test runs with the 3D avatar on screen and voiced through it.
-import { test, mockProviders, seedStorage, installFakeMedia, expect, ELEVEN_KEY, OPENAI_KEY, slow } from './support.js';
+// option); the first test runs with the 3D avatar on screen (the scripted
+// Unity stand-in) and voiced through it, and the last ones cover the 3D view
+// being unavailable.
+import { test, mockProviders, seedStorage, installFakeMedia, installFakeUnity, expect, ELEVEN_KEY, OPENAI_KEY, slow } from './support.js';
 
 // Two short sentences, each cited — long enough to have two caption lines,
 // short enough that a turn takes a couple of seconds.
 const ANSWER = 'Keep a calm routine in the evening [S1]. Close the curtains before dusk [S2].';
 const IDLE = 'Tap the mic or type below';
 
-async function openVoice(page, { settings = {}, keys = true, media = {}, providers = {} } = {}) {
+async function openVoice(page, { settings = {}, keys = true, media = {}, providers = {}, fakeUnity = false } = {}) {
   const log = await mockProviders(page, { answer: ANSWER, audioSeconds: 0.8, ...providers });
-  await seedStorage(page, { keys, settings: { avatarId: 'aria', showAvatar: false, ...settings } });
+  if (fakeUnity) await installFakeUnity(page, { auto: true });
+  await seedStorage(page, { keys, settings: { showAvatar: false, ...settings } });
   await installFakeMedia(page, media);
   await page.goto('/#/app/voice');
   return log;
 }
 
-// The drawn placeholder figure; it leaves once the 3D avatar has loaded.
-const placeholder = (page) => page.locator('section svg[viewBox="0 0 120 120"]');
-
-async function typeTurn(page, text, who = 'Aria') {
+async function typeTurn(page, text, who = 'Aaron') {
   await page.getByLabel(`Message ${who}`).fill(text);
   await page.getByRole('button', { name: 'Send message' }).click();
 }
 
 test.describe('voice: typed turns, transcript, repeat and mute', () => {
   test('a typed question is answered aloud through the 3D avatar, with captions, a transcript and repeat', async ({ page }) => {
-    const log = await openVoice(page, { settings: { showAvatar: true } });
-    // The avatar replaces the placeholder once the (stand-in) model has loaded,
-    // so the answer is voiced through it.
-    await expect(page.locator('canvas').first()).toBeVisible();
-    await expect(placeholder(page)).toHaveCount(0);
+    const log = await openVoice(page, { settings: { showAvatar: true }, fakeUnity: true });
+    // The answer is voiced through the avatar once the (stand-in) build is live.
+    await expect(page.locator('#unity-canvas')).toBeVisible();
+    await expect(page.getByText("The 3D view isn’t available right now")).toHaveCount(0);
     await expect(page.getByText(IDLE)).toBeVisible();
 
     await typeTurn(page, 'What helps in the evenings?');
-    await expect(page.getByText('Aria is speaking')).toBeVisible();
+    await expect(page.getByText('Aaron is speaking')).toBeVisible();
     // Captions follow the spoken sentence, markers stripped.
     await expect(page.getByText(/Keep a calm routine in the evening/)).toBeVisible();
     await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.chat).toHaveLength(1);
-    // One OpenAI TTS request per sentence, in Aria's voice.
-    expect(log.speech.map((s) => s.voice)).toEqual(['nova', 'nova']);
+    // One OpenAI TTS request per sentence, in Aaron's voice.
+    expect(log.speech.map((s) => s.voice)).toEqual(['onyx', 'onyx']);
 
     // The transcript sheet holds both sides of the exchange.
     await page.getByRole('button', { name: 'Show transcript' }).click();
@@ -58,7 +56,7 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
 
     // Repeat replays the last answer as one clip.
     await page.getByRole('button', { name: 'Repeat last answer' }).click();
-    await expect(page.getByText('Aria is speaking')).toBeVisible();
+    await expect(page.getByText('Aaron is speaking')).toBeVisible();
     await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.speech).toHaveLength(3);
     expect(log.speech[2].input).toMatch(/^Keep a calm routine in the evening/);
@@ -66,8 +64,8 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
 
   test('muted, a reply and a repeat are shown as paced captions instead of being spoken', async ({ page }) => {
     const log = await openVoice(page, { providers: { answer: 'Keep a calm routine [S1].' } });
-    await page.getByRole('button', { name: 'Mute Aria' }).click();
-    await expect(page.getByRole('button', { name: 'Unmute Aria' })).toBeVisible();
+    await page.getByRole('button', { name: 'Mute Aaron' }).click();
+    await expect(page.getByRole('button', { name: 'Unmute Aaron' })).toBeVisible();
 
     await typeTurn(page, 'How do I manage sundowning?');
     await expect(page.getByText(/^Keep a calm routine/)).toBeVisible();
@@ -77,8 +75,8 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
     await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.speech).toHaveLength(0);
 
-    await page.getByRole('button', { name: 'Unmute Aria' }).click();
-    await expect(page.getByRole('button', { name: 'Mute Aria' })).toBeVisible();
+    await page.getByRole('button', { name: 'Unmute Aaron' }).click();
+    await expect(page.getByRole('button', { name: 'Mute Aaron' })).toBeVisible();
   });
 
   test('with audio replies off in Settings, the answer still arrives as captions', async ({ page }) => {
@@ -92,7 +90,7 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
   test('tapping the mic while the answer is playing cuts it off, and typing over it starts a new turn', async ({ page }) => {
     const log = await openVoice(page, { providers: { audioSeconds: 6 } });
     await typeTurn(page, 'How do I manage sundowning?');
-    await expect(page.getByText('Aria is speaking')).toBeVisible();
+    await expect(page.getByText('Aaron is speaking')).toBeVisible();
     // Repeat does nothing while an answer is already playing.
     await page.getByRole('button', { name: 'Repeat last answer' }).click();
     expect(log.speech.length).toBeLessThanOrEqual(2);
@@ -100,7 +98,7 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
     await expect(page.getByText(IDLE)).toBeVisible();
 
     await typeTurn(page, 'And what about mornings?');
-    await expect(page.getByText('Aria is speaking')).toBeVisible();
+    await expect(page.getByText('Aaron is speaking')).toBeVisible();
     await typeTurn(page, 'And at night?');
     await expect.poll(() => log.chat.length).toBe(3);
     await page.getByRole('button', { name: 'Tap to interrupt' }).click();
@@ -109,7 +107,7 @@ test.describe('voice: typed turns, transcript, repeat and mute', () => {
 
   test('pressing Enter with nothing typed sends nothing; a repeat that cannot be voiced says so', async ({ page }) => {
     const log = await openVoice(page);
-    await page.getByLabel('Message Aria').press('Enter');
+    await page.getByLabel('Message Aaron').press('Enter');
     await expect(page.getByText(IDLE)).toBeVisible();
     expect(log.chat).toHaveLength(0);
 
@@ -154,7 +152,7 @@ test.describe('voice: speaking a question', () => {
     await expect.poll(() => log.rpc.length).toBe(1);
 
     await page.getByRole('button', { name: 'Tap when finished' }).click();
-    await expect(page.getByText('Aria is speaking')).toBeVisible();
+    await expect(page.getByText('Aaron is speaking')).toBeVisible();
     await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     // The early retrieval was reused: no second search for the same words.
     expect(log.rpc).toHaveLength(1);
@@ -164,10 +162,10 @@ test.describe('voice: speaking a question', () => {
   test('hands-free: the end of speech is noticed, the reply plays, and listening resumes by itself', async ({ page }) => {
     const log = await openVoice(page, { settings: { handsFree: true }, media: { recorderBytes: 1000 } });
     await page.getByRole('button', { name: 'Tap to talk' }).click();
-    await expect(page.getByText('Aria will notice when you finish speaking')).toBeVisible();
+    await expect(page.getByText('Aaron will notice when you finish speaking')).toBeVisible();
     await page.evaluate(() => window.__stt.say('How can I help him sleep'));
     // No tap: silence after the words ends the turn.
-    await expect(page.getByText('Aria is speaking')).toBeVisible({ timeout: slow(15_000) });
+    await expect(page.getByText('Aaron is speaking')).toBeVisible({ timeout: slow(15_000) });
     await expect(page.getByRole('button', { name: 'End conversation' })).toBeVisible({ timeout: slow(20_000) });
     expect(log.chat).toHaveLength(1);
 
@@ -219,7 +217,7 @@ test.describe('voice: speaking a question', () => {
     const log = await openVoice(page);
     await page.getByRole('button', { name: 'Tap to talk' }).click();
     await page.getByRole('button', { name: 'Tap when finished' }).click();
-    await expect(page.getByText('Aria is speaking')).toBeVisible({ timeout: slow(15_000) });
+    await expect(page.getByText('Aaron is speaking')).toBeVisible({ timeout: slow(15_000) });
     expect(log.transcribe).toHaveLength(1);
     expect(log.chat[0].messages.at(-1).content).toContain('How do I manage sundowning in the evening?');
   });
@@ -295,7 +293,7 @@ test.describe('voice: speaking a question', () => {
   test('leaving the voice screen while listening lets go of the microphone', async ({ page }) => {
     await openVoice(page, { media: { live: false, recorderTypes: [] } });
     await page.goto('/#/app/home');
-    await page.getByRole('button', { name: 'Ask Aria by voice' }).click();
+    await page.getByRole('button', { name: 'Ask Aaron by voice' }).click();
     await page.getByRole('button', { name: 'Tap to talk' }).click();
     await expect(page.getByText('Listening…')).toBeVisible();
     expect(await page.evaluate(() => window.__stt.micReleased())).toBe(false);
@@ -317,7 +315,6 @@ test.describe('voice: speaking a question', () => {
 test.describe('voice: ElevenLabs voices', () => {
   test('with an ElevenLabs key, each sentence is voiced with character timings for lip-sync', async ({ page }) => {
     const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY }, settings: { showAvatar: true } });
-    await expect(placeholder(page)).toHaveCount(0);
     await typeTurn(page, 'How do I manage sundowning?');
     await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     expect(log.eleven.map((r) => r.text)).toEqual([expect.stringMatching(/^Keep a calm routine/), expect.stringMatching(/^Close the curtains/)]);
@@ -339,9 +336,8 @@ test.describe('voice: ElevenLabs voices', () => {
 
   test('"Faster Voice Responses" streams the answer as it is written', async ({ page }) => {
     const log = await openVoice(page, { keys: { eleven: ELEVEN_KEY }, settings: { fasterVoice: true, showAvatar: true }, providers: { streamChunkSeconds: 0.5 } });
-    await expect(placeholder(page)).toHaveCount(0);
     await typeTurn(page, 'How do I manage sundowning?');
-    await expect(page.getByText('Aria is speaking')).toBeVisible();
+    await expect(page.getByText('Aaron is speaking')).toBeVisible();
     await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
     const sent = log.stream[0].messages;
     expect(sent[0]).toMatchObject({ xi_api_key: ELEVEN_KEY });
@@ -354,7 +350,7 @@ test.describe('voice: ElevenLabs voices', () => {
   test('a streamed answer can be interrupted like any other', async ({ page }) => {
     await openVoice(page, { keys: { eleven: ELEVEN_KEY }, settings: { fasterVoice: true }, providers: { streamChunkSeconds: 3 } });
     await typeTurn(page, 'How do I manage sundowning?');
-    await expect(page.getByText('Aria is speaking')).toBeVisible();
+    await expect(page.getByText('Aaron is speaking')).toBeVisible();
     await page.getByRole('button', { name: 'Tap to interrupt' }).click();
     await expect(page.getByText(IDLE)).toBeVisible();
   });
@@ -400,15 +396,26 @@ test.describe('voice: setup, navigation and layout', () => {
   test('closing the voice screen goes back to where the person came from', async ({ page }) => {
     await openVoice(page);
     await page.goto('/#/app/home');
-    await page.getByRole('button', { name: 'Ask Aria by voice' }).click();
+    await page.getByRole('button', { name: 'Ask Aaron by voice' }).click();
     await expect(page.getByText(IDLE)).toBeVisible();
     await page.getByRole('button', { name: 'Close voice conversation' }).click();
     await expect(page).toHaveURL(/#\/app\/home$/);
   });
 
-  test('a Unity avatar that cannot load is replaced by Aria, and the screen says so', async ({ page }) => {
-    await openVoice(page, { settings: { avatarId: 'aaron' } });
-    await expect(page.getByText('Aaron isn’t available right now, so you’ll talk with Aria instead — everything else works the same.')).toBeVisible();
+  test('with no 3D build, the same character keeps talking and the screen says only the picture is missing', async ({ page }) => {
+    const log = await openVoice(page, { settings: { showAvatar: true } });
+    await expect(page.getByText('The 3D view isn’t available right now. Aaron can still talk with you.').first()).toBeVisible();
+    await typeTurn(page, 'What helps in the evenings?');
+    await expect(page.getByText('Aaron is speaking')).toBeVisible();
+    await expect(page.getByText(IDLE)).toBeVisible({ timeout: slow(20_000) });
+    // Still Aaron's voice, played through the headless audio engine.
+    expect(log.speech.map((s) => s.voice)).toEqual(['onyx', 'onyx']);
+  });
+
+  test('with the avatar switched off, the unavailable notice stays away', async ({ page }) => {
+    await openVoice(page);
+    await expect(page.getByText(IDLE)).toBeVisible();
+    await expect(page.getByText(/The 3D view isn’t available right now/)).toHaveCount(0);
   });
 });
 
@@ -426,7 +433,7 @@ test.describe('voice on a phone-sized screen', () => {
 test.describe('voice with a guest access code', () => {
   test('a guest with a code talks through the proxy, voiced by ElevenLabs there', async ({ page }) => {
     const log = await mockProviders(page, { answer: ANSWER, audioSeconds: 0.5 });
-    await seedStorage(page, { keys: false, access: { code: 'e2e-guest-access-code-0001', status: 'ok' }, settings: { avatarId: 'aria', showAvatar: false } });
+    await seedStorage(page, { keys: false, access: { code: 'e2e-guest-access-code-0001', status: 'ok' }, settings: { showAvatar: false } });
     await installFakeMedia(page);
     await page.goto('/#/app/voice');
     await typeTurn(page, 'How do I manage sundowning?');

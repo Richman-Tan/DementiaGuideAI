@@ -6,7 +6,7 @@
 // supportsStreamingAudio=false routes the voice pipeline to the REST cascade —
 // exactly how mobile treats the Unity renderer.
 import { segmentToCC4Payload } from '@core/avatar/blendshapeTranslator';
-import { AvatarAudioEngine } from '../three/audio.js';
+import { AvatarAudioEngine } from '../audioEngine.js';
 import { sendBridgeMessage, setCharacter } from './unityBridge.js';
 
 let instance = null;

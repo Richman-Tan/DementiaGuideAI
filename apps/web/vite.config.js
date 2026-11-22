@@ -212,14 +212,9 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         // The web app resolves nothing out of the mobile tree — everything it
-        // shares with mobile lives in packages/core. (The one remaining link is
-        // scripts/extract-renderer.mjs, which *generates* three/renderer.js from
-        // the mobile WebView source at build time; that reads the file with fs.)
+        // shares with mobile lives in packages/core.
         '@core': repoCore,
         '@web': path.resolve(__dirname, 'src'),
-        // Shared 3D models live at the workspace root because both apps load
-        // them. Aliased so neither app counts ../ levels to reach them.
-        '@assets': path.resolve(__dirname, '../../assets'),
       },
     },
     define: {
@@ -228,7 +223,6 @@ export default defineConfig(({ mode }) => {
       'process.env.EXPO_PUBLIC_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ''),
       'process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ''),
     },
-    assetsInclude: ['**/*.glb'],
     server: {
       fs: { allow: [path.resolve(__dirname, '../..')] },
     },

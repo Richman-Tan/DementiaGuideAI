@@ -109,17 +109,12 @@ describe('getSettingSnapshot (dg_settings outside React)', () => {
     expect(getSettingSnapshot()).toEqual({ avatarId: 'aaron' });
   });
 
-  it('applies the aria→aaron migration on read without writing it back', () => {
+  it('returns a stored avatarId untouched (retired ids are resolved by getAvatarProfile)', () => {
     storage.setItem('dg_settings', JSON.stringify({ avatarId: 'aria', textScale: 1.2 }));
-    expect(getSettingSnapshot()).toEqual({ avatarId: 'aaron', textScale: 1.2 });
+    expect(getSettingSnapshot()).toEqual({ avatarId: 'aria', textScale: 1.2 });
     expect(JSON.parse(storage.getItem('dg_settings')).avatarId).toBe('aria');
-  });
-
-  it('keeps an explicit aria pick made after the migration', () => {
-    storage.setItem('dg_settings', JSON.stringify({ avatarId: 'aria', avatarMigratedToUnity: true }));
-    expect(getSettingSnapshot().avatarId).toBe('aria');
-    storage.setItem('dg_settings', JSON.stringify({ avatarId: 'zhenja' }));
-    expect(getSettingSnapshot().avatarId).toBe('zhenja');
+    storage.setItem('dg_settings', JSON.stringify({ avatarId: 'ariana' }));
+    expect(getSettingSnapshot().avatarId).toBe('ariana');
   });
 
   it('a corrupt blob falls back to the default avatar', () => {

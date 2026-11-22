@@ -2,22 +2,23 @@
 // resources and the avatar tile — and the app shell around it at desktop,
 // tablet and phone widths. No key is stored, so questions asked from Home are
 // answered by the built-in example replies (mock mode).
-import { test, mockProviders, seedStorage, expect } from './support.js';
+import { test, mockProviders, seedStorage, installFakeUnity, expect } from './support.js';
 
 const GREETING = /^Good (morning|afternoon|evening)$/;
 
-async function openHome(page, settings = {}) {
+async function openHome(page, settings = {}, { fakeUnity = false } = {}) {
   await mockProviders(page);
-  await seedStorage(page, { keys: false, settings: { avatarId: 'aria', showAvatar: false, ...settings } });
+  if (fakeUnity) await installFakeUnity(page, { auto: true });
+  await seedStorage(page, { keys: false, settings: { showAvatar: false, ...settings } });
   await page.goto('/#/app/home');
   await expect(page.getByRole('heading', { name: GREETING })).toBeVisible();
 }
 
 test.describe('home', () => {
   test('the avatar tile shows the 3D helper with a name tag', async ({ page }) => {
-    await openHome(page, { showAvatar: true });
-    await expect(page.locator('canvas').first()).toBeVisible();
-    await expect(page.getByText('Aria', { exact: true })).toBeVisible();
+    await openHome(page, { showAvatar: true }, { fakeUnity: true });
+    await expect(page.locator('#unity-canvas')).toBeVisible();
+    await expect(page.getByText('Aaron', { exact: true })).toBeVisible();
   });
 
   test('a question typed on Home is asked in Chat, and an empty one goes nowhere', async ({ page }) => {
@@ -53,7 +54,7 @@ test.describe('home', () => {
     await openHome(page);
     const main = page.getByRole('main');
     for (const [card, url, heading] of [
-      [/^Chat\s*Ask questions$/, /#\/app\/chat$/, 'Chat with Aria'],
+      [/^Chat\s*Ask questions$/, /#\/app\/chat$/, 'Chat with Aaron'],
       [/^Library\s*49 curated articles$/, /#\/app\/library$/, 'Library'],
       [/^Settings\s*Make it yours$/, /#\/app\/settings$/, 'Settings'],
     ]) {
@@ -62,7 +63,7 @@ test.describe('home', () => {
       await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
       await page.goto('/#/app/home');
     }
-    await main.getByRole('button', { name: /^Voice\s*Talk with Aria$/ }).click();
+    await main.getByRole('button', { name: /^Voice\s*Talk with Aaron$/ }).click();
     await expect(page).toHaveURL(/#\/app\/voice$/);
     await expect(page.getByText('Set up voice conversations')).toBeVisible();
 
@@ -77,7 +78,7 @@ test.describe('home', () => {
     const sidebar = page.getByRole('complementary').first();
     await sidebar.getByRole('button', { name: 'Library' }).click();
     await expect(page).toHaveURL(/#\/app\/library$/);
-    await sidebar.getByRole('button', { name: 'Talk to Aria' }).click();
+    await sidebar.getByRole('button', { name: 'Talk to Aaron' }).click();
     await expect(page).toHaveURL(/#\/app\/voice$/);
     await page.goto('/#/app/home');
 
@@ -97,7 +98,7 @@ test.describe('home when the window changes size', () => {
     await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible();
     await page.setViewportSize({ width: 1280, height: 720 });
     await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
-    await expect(page.getByRole('complementary').first().getByRole('button', { name: 'Talk to Aria' })).toBeVisible();
+    await expect(page.getByRole('complementary').first().getByRole('button', { name: 'Talk to Aaron' })).toBeVisible();
   });
 });
 
@@ -111,7 +112,7 @@ test.describe('home on a tablet', () => {
     await expect(page).toHaveURL(/#\/app\/chat$/);
     await rail.getByRole('button', { name: 'Settings' }).click();
     await expect(page).toHaveURL(/#\/app\/settings$/);
-    await rail.getByRole('button', { name: 'Talk to Aria' }).click();
+    await rail.getByRole('button', { name: 'Talk to Aaron' }).click();
     await expect(page).toHaveURL(/#\/app\/voice$/);
   });
 });
@@ -128,7 +129,7 @@ test.describe('home on a phone', () => {
     await expect(page).toHaveURL(/#\/app\/library$/);
     await tabs.getByRole('button', { name: 'Home' }).click();
     await expect(page).toHaveURL(/#\/app\/home$/);
-    await tabs.getByRole('button', { name: 'Talk to Aria' }).click();
+    await tabs.getByRole('button', { name: 'Talk to Aaron' }).click();
     await expect(page).toHaveURL(/#\/app\/voice$/);
     await page.goto('/#/app/home');
     await page.getByRole('button', { name: 'What respite care options are available?' }).click();

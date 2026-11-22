@@ -12,7 +12,7 @@ import { ELEVEN_STREAM_SAMPLE_RATE } from '@core/voice/voiceConfig';
 
 const fx = vi.hoisted(() => ({ profile: null, streams: [], accumulators: [], specs: [], timers: [] }));
 
-vi.mock('../src/avatar/effectiveProfile.js', () => ({ useEffectiveAvatarProfile: () => fx.profile }));
+vi.mock('../src/avatar/avatarProfiles.js', () => ({ getAvatarProfile: () => fx.profile }));
 vi.mock('../src/services/openaiClient.js', () => ({
   openaiClient: { chatStream: vi.fn(), search: vi.fn(async () => ['searched']) },
   mapSourcesToCitations: vi.fn((sources) => (sources || []).map((s) => ({ num: s.num, title: s.title }))),
@@ -209,7 +209,7 @@ describe('a typed question with REST audio', () => {
   });
 
   it('a profile without its own voices passes nulls to TTS', async () => {
-    fx.profile = { id: 'aria', name: 'Aria', visemeWeights: { aa: 0.6 } };
+    fx.profile = { id: 'custom', name: 'Custom', visemeWeights: { aa: 0.6 } };
     const { result } = await mountVoice({ settings: { ...SETTINGS, voiceSpeed: 'slower' } });
     await run(() => result.current.askText('Q'));
     expect(tts.mock.calls[0][1]).toEqual({ speechRate: 0.65, visemeWeights: { aa: 0.6 }, elevenVoiceId: null, openaiVoice: null });

@@ -1,9 +1,9 @@
 // Single source of truth for RAG pipeline configuration.
 //
-// Plain CommonJS on purpose: this module is consumed by the React Native app
-// (Metro), by Jest, and by the Node .mjs scripts under scripts/ (via CJS
-// named-export interop) — so it must not import React Native modules and must
-// not use ESM syntax. Change values here, never in per-script copies.
+// An ES module with no platform imports: it is consumed by the React Native app
+// (Metro), the web app (Vite), Jest and the Node scripts under scripts/ (which
+// import it, or load it with require on Node 22). Change values here, never in
+// per-script copies.
 
 const EMBEDDING_MODEL = 'text-embedding-3-small'; // 1536 dims — must match knowledge_chunks.embedding
 const CHAT_MODEL = 'gpt-4o';
@@ -48,7 +48,7 @@ function maxTokensForStyle(responseStyle, conciseMode) {
         : 600;
 }
 
-module.exports = {
+export {
   EMBEDDING_MODEL,
   CHAT_MODEL,
   MIN_SIMILARITY,

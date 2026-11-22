@@ -26,8 +26,8 @@ import {
   ELEVEN_CHUNK_SCHEDULE,
   WS_OPEN_TIMEOUT_MS,
   WS_STALL_TIMEOUT_MS,
-} from '../voice/voiceConfig';
-import { normalizeSpokenText, unsettledTailStart } from './normalizeSpokenText';
+} from '../voice/voiceConfig.js';
+import { normalizeSpokenText, unsettledTailStart } from './normalizeSpokenText.js';
 
 const ELEVENLABS_WS_BASE = 'wss://api.elevenlabs.io';
 

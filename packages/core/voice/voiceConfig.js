@@ -1,7 +1,7 @@
 // Single source of truth for voice-pipeline latency configuration.
 //
-// Plain CommonJS on purpose, mirroring rag/ragConfig.js: consumable by Metro,
-// Jest, and Node scripts without ESM interop surprises. Developer flags live
+// An ES module with no platform imports, like rag/ragConfig.js: consumable by
+// Metro, Vite, Jest and Node scripts. Developer flags live
 // here; user-facing kill switches (handsFreeMode, fastVoiceMode) live in
 // SettingsContext and are ANDed with these at runtime.
 
@@ -59,7 +59,7 @@ const SPECULATIVE_MIN_WORDS = 4; // don't fire on fragments
 const SPECULATIVE_MAX_FIRES = 2; // cap wasted embedding tokens per turn
 const SPECULATIVE_REUSE_JACCARD = 0.8; // token overlap needed to reuse the result
 
-module.exports = {
+export {
   VOICE_STREAMING_STT,
   STT_FINAL_TIMEOUT_MS,
   HANDS_FREE_SILENCE_MS,

@@ -13,28 +13,24 @@ convention, all of which must stay in step:
 | Mobile tests | `apps/mobile/jest.config.js` → `moduleNameMapper` |
 | Web (dev + build) | `apps/web/vite.config.js` → `resolve.alias` |
 | Web types + lint | `apps/web/tsconfig.json` → `paths` |
-| Node scripts | plain relative `require('../../packages/core/…')` |
-| Backend (`apps/api`) | `@dementiaguide/core/…` — a real workspace dependency, so the bundler includes it |
+| Node scripts | a relative `import` of `../../packages/core/…` (or `require()`, which loads ES modules on Node 22) |
+| Backend (`apps/api`) | a relative `import` of `../../../../packages/core/…`, which Vercel's bundler can trace; a package specifier resolves at build time and then fails at run time |
 
-**Inside this directory, imports are relative** (`./voiceConfig`,
-`../voice/voiceConfig`) — never `@core/…`. That is what lets `scripts/eval/*` and
-`scripts/ingest/ingest.mjs` pull core in with a bare `require()` and no alias
-configured at all.
+**Inside this directory, imports are relative and carry their extension**
+(`./ragConfig.js`, `../voice/voiceConfig.js`) — never `@core/…`. That is what
+lets `scripts/eval/*`, `scripts/ingest/ingest.mjs` and `apps/api` load core in
+plain Node with no alias configured at all.
 
-For the same reason `package.json` here deliberately has **no `"type": "module"`**.
-The `rag/` and `brand/` files are CommonJS on purpose so plain Node can
-`require()` them; declaring the package ESM would break `scripts/eval`,
-`scripts/ingest` and `scripts/brand`. Note that the web build converts these
-files with an **explicit allowlist** — `CJS_LIBS` in `apps/web/vite.config.js` —
-so a new CommonJS module here has to be added there as well, or Vite ships raw
-`module.exports` to the browser. `apps/web/tests/interop.test.js` is the canary. The
-`voice/`, `tts/`, `lipsync/` and `avatar/` files use ESM syntax and are only ever
-consumed by a bundler (Metro or Vite), which resolves them regardless.
+**Every file here is an ES module**, and `package.json` says so with
+`"type": "module"`. Node 22 (the version `.nvmrc` pins) can `require()` an ES
+module, so the older CommonJS scripts under `scripts/` keep working unchanged;
+that only holds while no module here uses top-level `await`. Until November 2026
+six files (`rag/*`, `voice/voiceConfig.js`, `brand/mark.js`) were CommonJS and
+the web build converted them with a regex over an allowlist; that converter is
+gone, and `apps/web/tests/interop.test.js` checks the web aliases resolve.
 
-A module that `apps/api` imports in **plain Node** needs an explicit `.mjs`
-extension: a `.js` file containing `export` fails to parse in a package without
-`"type": "module"`. Anything the backend and a client must agree on belongs here on
-the same terms, so the two cannot drift apart.
+Anything the backend and a client must agree on belongs here on the same terms,
+so the two cannot drift apart.
 
 ## The rule for what belongs here
 

@@ -17,7 +17,7 @@ import {
   SPECULATIVE_MIN_WORDS,
   SPECULATIVE_MAX_FIRES,
   SPECULATIVE_REUSE_JACCARD,
-} from './voiceConfig';
+} from './voiceConfig.js';
 
 const tokenize = (text) =>
   text

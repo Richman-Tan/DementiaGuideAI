@@ -1,5 +1,5 @@
 // Post-retrieval candidate filtering shared by the app and the eval scripts.
-// Plain CommonJS — no React Native imports (see ragConfig.js header).
+// No React Native imports (see ragConfig.js header).
 
 // Group a chunk by its bulk-source family: the iSupport course is one family;
 // everything else keeps its own document id, or 'curated' for hand-authored
@@ -30,4 +30,4 @@ function capBySourceFamily(rows, k, maxPerFamily) {
   return out;
 }
 
-module.exports = { sourceFamilyOf, capBySourceFamily };
+export { sourceFamilyOf, capBySourceFamily };

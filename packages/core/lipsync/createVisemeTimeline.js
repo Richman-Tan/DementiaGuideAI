@@ -4,9 +4,13 @@ import {
   CHAR_WEIGHT_OVERRIDE,
   DEFAULT_CONSONANT_VISEME,
   DEFAULT_CONSONANT_WEIGHT,
-} from './phonemeMap';
-import { wordToPhonemes } from './g2p/g2p';
-import { PHONE_TO_VISEME, PHONE_WEIGHT_OVERRIDE, phoneDurationWeight } from './g2p/arpabetToViseme';
+} from './phonemeMap.js';
+import { wordToPhonemes } from './g2p/g2p.js';
+import {
+  PHONE_TO_VISEME,
+  PHONE_WEIGHT_OVERRIDE,
+  phoneDurationWeight,
+} from './g2p/arpabetToViseme.js';
 
 // ── Digraph table ─────────────────────────────────────────────────────────────
 // Common English letter-pair patterns and their best-fit viseme.

@@ -19,7 +19,7 @@
 //   ...on each WS message: frames = acc.push(alignment, pcmDurationSec);
 //   ...on stream end:      frames = acc.flush();
 
-import { createVisemeTimeline } from './createVisemeTimeline';
+import { createVisemeTimeline } from './createVisemeTimeline.js';
 
 const EPSILON_SEC = 0.25; // tolerance when classifying chunk- vs stream-relative times
 

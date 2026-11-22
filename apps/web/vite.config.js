@@ -8,38 +8,6 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoCore = path.resolve(__dirname, '../../packages/core');
 
-// The six deliberately-CommonJS shared libs (see core/rag/ragConfig.js header).
-// They are all `const X = …; module.exports = { shorthand list };` with at most
-// a destructured require — convertible to ESM with two regexes. One transform
-// used by BOTH dev serve and the Rollup build, so the pipelines can't diverge.
-// A new CJS lib in packages/core has to be added here too, or the web build
-// ships raw `module.exports`; apps/web/tests/interop.test.js is the canary.
-const CJS_LIBS = [
-  'rag/ragConfig.js',
-  'rag/prompt.js',
-  'rag/retrieval.js',
-  'rag/citations.js',
-  'voice/voiceConfig.js',
-  'brand/mark.js',
-].map((p) => path.join(repoCore, p));
-
-function cjsLibsToEsm() {
-  return {
-    name: 'dg-cjs-libs-to-esm',
-    enforce: 'pre',
-    transform(code, id) {
-      if (!CJS_LIBS.includes(id)) return null;
-      const out = code
-        .replace(/const\s*\{([^}]+)\}\s*=\s*require\((['"][^'"]+['"])\);?/g, 'import {$1} from $2;')
-        .replace(/module\.exports\s*=\s*\{/, 'export {');
-      if (out.includes('module.exports') || out.includes('require(')) {
-        throw new Error(`dg-cjs-libs-to-esm: unconverted CJS remains in ${id}`);
-      }
-      return { code: out, map: null };
-    },
-  };
-}
-
 // Unity's WebGL build ships brotli-compressed `.unityweb` files. Despite the
 // opaque extension they are REAL brotli streams — the leading "UnityWeb
 // Compressed Content (brotli)" text is a skippable brotli metadata block — so
@@ -223,13 +191,11 @@ export default defineConfig(({ mode }) => {
   };
   return {
     plugins: [
-      cjsLibsToEsm(),
       // Coverage instrumentation for the gate (scripts/test/coverage-gate.mjs),
       // only when asked: E2E_COVERAGE=1 for Playwright, UNIT_COVERAGE=1 for
       // Vitest. A normal dev server and `vite build` (Vercel) are never
-      // instrumented. Straight after the CJS shim (whose regexes must see the
-      // plain source, and which keeps every line in place) and before every
-      // other transform, so unit and e2e runs instrument identical code.
+      // instrumented. Before every other transform, so unit and e2e runs
+      // instrument identical code.
       ...(COVERAGE
         ? [
             istanbulPre({

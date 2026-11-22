@@ -9,13 +9,15 @@ import { createRequire } from 'node:module';
 import { adminGuard } from '../_lib/adminGuard.js';
 import { requireEnv } from '../_lib/guard.js';
 import { insertManyReturning } from '../_lib/supabaseAdmin.js';
+import { EMBEDDING_MODEL, CATEGORIES } from '../../../../packages/core/rag/ragConfig.js';
 
-// createRequire, not a bare `import` of these CommonJS modules: ingest.mjs
-// uses the same trick for the same reason (see its header comment) — a
+// Relative paths, not package specifiers, for everything outside this app: a
 // relative path lets Vercel's bundler trace the real files into the
-// deployment, where a package specifier would 404 at runtime instead of
-// build time. These modules have no I/O of their own beyond fetch, so
-// nothing here depends on Node's CLI-specific env/file handling.
+// deployment, where a package specifier would 404 at runtime instead of build
+// time. scripts/ingest/pipeline.js is CommonJS, hence createRequire (ingest.mjs
+// loads it the same way); ragConfig.js is an ES module and is imported. These
+// modules have no I/O of their own beyond fetch, so nothing here depends on
+// Node's CLI-specific env/file handling.
 const require = createRequire(import.meta.url);
 const {
   withRetry,
@@ -24,7 +26,6 @@ const {
   textToChunks,
   makeOpenAIClient,
 } = require('../../../../scripts/ingest/pipeline.js');
-const { EMBEDDING_MODEL, CATEGORIES } = require('../../../../packages/core/rag/ragConfig.js');
 
 // Vercel's serverless request body cap is ~4.5MB and isn't configurable in
 // code. Base64 inflates a PDF by ~4/3, so this leaves headroom for the JSON

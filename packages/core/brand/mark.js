@@ -3,10 +3,10 @@
 // The mark ("Companion") is two overlapping circles — one solid, one outlined —
 // standing for two people side by side. It replaced the old letter-"A" tile.
 //
-// Plain CommonJS on purpose, same as rag/ragConfig.js: this module is consumed
-// by the React Native app (Metro), by Vite, and by the Node .mjs generator under
-// scripts/brand/ — so it must not use ESM syntax and must not import anything
-// platform-specific. Change the geometry here, never in a per-renderer copy.
+// An ES module, same as rag/ragConfig.js: it is consumed by the React Native
+// app (Metro), by Vite, and by the Node generator under scripts/brand/ — so it
+// must not import anything platform-specific. Change the geometry here, never
+// in a per-renderer copy.
 
 // Circles are expressed in a 48x48 coordinate space. Note they are NOT centred
 // in that box — see markBounds() below, which every renderer must use.
@@ -113,7 +113,7 @@ function markEnclosingRadius(mark) {
   );
 }
 
-module.exports = {
+export {
   MARK,
   MARK_REVERSED,
   MARK_COMPACT,

@@ -1,5 +1,5 @@
 // Interop canary: the reused mobile libs must resolve and behave through the
-// web aliases + CJS→ESM transform. If this file fails, phase (b)/(c) reuse breaks.
+// web aliases. If this file fails, the web app cannot load packages/core.
 import { describe, it, expect } from 'vitest';
 import { TOP_K, MAX_HISTORY, PROMPT_VERSION, CHAT_MODEL } from '@core/rag/ragConfig';
 import { buildSystemPrompt, buildUserContent } from '@core/rag/prompt';
@@ -20,7 +20,7 @@ import {
   markEnclosingRadius,
 } from '@core/brand/mark';
 
-describe('CJS libs through web alias', () => {
+describe('rag and brand modules through the web alias', () => {
   it('exposes rag config constants', () => {
     expect(TOP_K).toBeGreaterThan(0);
     expect(MAX_HISTORY).toBe(6);
@@ -74,7 +74,7 @@ describe('CJS libs through web alias', () => {
   });
 });
 
-describe('ESM libs importing CJS constants', () => {
+describe('voice modules through the web alias', () => {
   it('voiceConfig constants resolve', () => {
     expect(ELEVEN_STREAM_SAMPLE_RATE).toBe(22050);
     expect(SPECULATIVE_MIN_WORDS).toBeGreaterThan(0);

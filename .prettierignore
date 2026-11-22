@@ -18,3 +18,17 @@ apps/web/public
 # frozen. The .md files there are already covered above; these are the .json
 # evaluation artefacts, which Prettier would otherwise re-indent.
 docs/report
+
+# The research evaluation harness is frozen with the report whose results it
+# produced: its item files and fixtures are cited there by path, and some are
+# large generated data. Reformatting would churn all of them for no gain.
+scripts/eval
+
+# Entry documents carry inline scripts whose hashes are pinned in the Content
+# Security Policy (vercel.json). Reformatting one changes its hash, and the
+# browser then refuses to run it.
+*.html
+
+# Maestro flows only run on a simulator, which CI does not have, so a
+# reformatted flow could not be shown to still work.
+apps/mobile/.maestro

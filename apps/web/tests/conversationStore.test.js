@@ -11,20 +11,29 @@ const fake = vi.hoisted(() => {
   function from(table) {
     const chain = { table, ops: [] };
     calls.push(chain);
-    const proxy = new Proxy({}, {
-      get(_, prop) {
-        if (prop === 'then') {
-          const r = results.length ? results.shift() : { data: null, error: null };
-          return (resolve, reject) => Promise.resolve(r).then(resolve, reject);
-        }
-        return (...args) => { chain.ops.push([prop, ...args]); return proxy; };
-      },
-    });
+    const proxy = new Proxy(
+      {},
+      {
+        get(_, prop) {
+          if (prop === 'then') {
+            const r = results.length ? results.shift() : { data: null, error: null };
+            return (resolve, reject) => Promise.resolve(r).then(resolve, reject);
+          }
+          return (...args) => {
+            chain.ops.push([prop, ...args]);
+            return proxy;
+          };
+        },
+      }
+    );
     return proxy;
   }
   return { calls, results, supabase: { from: (t) => from(t) } };
 });
-vi.mock('../src/services/supabase.js', () => ({ supabase: fake.supabase, supabaseConfigured: true }));
+vi.mock('../src/services/supabase.js', () => ({
+  supabase: fake.supabase,
+  supabaseConfigured: true,
+}));
 
 const store = await import('../src/state/conversationStore.js');
 
@@ -37,9 +46,15 @@ function memoryStorage() {
   };
 }
 const blocked = () => ({
-  getItem: () => { throw new Error('blocked'); },
-  setItem: () => { throw new Error('blocked'); },
-  removeItem: () => { throw new Error('blocked'); },
+  getItem: () => {
+    throw new Error('blocked');
+  },
+  setItem: () => {
+    throw new Error('blocked');
+  },
+  removeItem: () => {
+    throw new Error('blocked');
+  },
 });
 
 const queue = (...rs) => fake.results.push(...rs);
@@ -51,7 +66,10 @@ beforeEach(() => {
   vi.stubGlobal('localStorage', memoryStorage());
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe('cache (dg_history)', () => {
   it('round-trips and keeps only the last 100 messages', () => {
@@ -91,7 +109,11 @@ describe('getOrCreateConversation', () => {
     expect(await store.getOrCreateConversation('u1')).toBe('conv-1');
     expect(fake.calls[0].table).toBe('conversations');
     expect(ops(0)).toEqual([
-      ['select', 'id'], ['eq', 'user_id', 'u1'], ['order', 'updated_at', { ascending: false }], ['limit', 1], ['is', 'study_arm', null],
+      ['select', 'id'],
+      ['eq', 'user_id', 'u1'],
+      ['order', 'updated_at', { ascending: false }],
+      ['limit', 1],
+      ['is', 'study_arm', null],
     ]);
   });
 
@@ -103,9 +125,13 @@ describe('getOrCreateConversation', () => {
 
   it('creates a thread when none exists', async () => {
     queue({ data: [], error: null }, { data: { id: 'new-conv' }, error: null });
-    expect(await store.getOrCreateConversation('u1', { surface: 'voice', studyArm: 'A' })).toBe('new-conv');
+    expect(await store.getOrCreateConversation('u1', { surface: 'voice', studyArm: 'A' })).toBe(
+      'new-conv'
+    );
     expect(ops(1)).toEqual([
-      ['insert', { user_id: 'u1', surface: 'voice', study_arm: 'A' }], ['select', 'id'], ['single'],
+      ['insert', { user_id: 'u1', surface: 'voice', study_arm: 'A' }],
+      ['select', 'id'],
+      ['single'],
     ]);
   });
 
@@ -141,7 +167,9 @@ describe('loadMessages', () => {
       { role: 'aria', text: 'B', citations: [], time: '12:00 pm' },
     ]);
     expect(ops(0)).toEqual([
-      ['select', 'role, content, citations, created_at'], ['eq', 'conversation_id', 'c1'], ['order', 'created_at', { ascending: true }],
+      ['select', 'role, content, citations, created_at'],
+      ['eq', 'conversation_id', 'c1'],
+      ['order', 'created_at', { ascending: true }],
     ]);
   });
 
@@ -163,7 +191,12 @@ describe('appendMessage', () => {
   it('inserts the message, then bumps the thread’s updated_at', async () => {
     await store.appendMessage('c1', { role: 'aria', text: 'Answer', citations: [{ num: 1 }] });
     expect(fake.calls[0].table).toBe('messages');
-    expect(ops(0)).toEqual([['insert', { conversation_id: 'c1', role: 'assistant', content: 'Answer', citations: [{ num: 1 }] }]]);
+    expect(ops(0)).toEqual([
+      [
+        'insert',
+        { conversation_id: 'c1', role: 'assistant', content: 'Answer', citations: [{ num: 1 }] },
+      ],
+    ]);
     expect(fake.calls[1].table).toBe('conversations');
     const [[update, patch], eq] = ops(1);
     expect(update).toBe('update');
@@ -173,7 +206,12 @@ describe('appendMessage', () => {
 
   it('defaults missing text and citations, and keeps the user role', async () => {
     await store.appendMessage('c1', { role: 'user' });
-    expect(ops(0)[0][1]).toEqual({ conversation_id: 'c1', role: 'user', content: '', citations: [] });
+    expect(ops(0)[0][1]).toEqual({
+      conversation_id: 'c1',
+      role: 'user',
+      content: '',
+      citations: [],
+    });
   });
 
   it('a failed insert warns and skips the timestamp update', async () => {
@@ -202,7 +240,11 @@ describe('deleteAllConversations', () => {
   it('a failed delete keeps the cache so the screen does not pretend it worked', async () => {
     store.saveCached([{ text: 'x' }]);
     queue({ error: { message: 'offline' } });
-    expect(await store.deleteAllConversations('u1')).toEqual({ deleted: false, scope: 'server', message: 'offline' });
+    expect(await store.deleteAllConversations('u1')).toEqual({
+      deleted: false,
+      scope: 'server',
+      message: 'offline',
+    });
     expect(store.loadCached()).toEqual([{ text: 'x' }]);
   });
 });
@@ -241,10 +283,15 @@ describe('migrateLegacyHistory', () => {
     ]);
     await store.migrateLegacyHistory('u1', 'c1');
     expect(fake.calls).toHaveLength(1);
-    expect(ops(0)).toEqual([['insert', [
-      { conversation_id: 'c1', role: 'user', content: 'Q1', citations: [] },
-      { conversation_id: 'c1', role: 'assistant', content: 'A1', citations: [{ num: 1 }] },
-    ]]]);
+    expect(ops(0)).toEqual([
+      [
+        'insert',
+        [
+          { conversation_id: 'c1', role: 'user', content: 'Q1', citations: [] },
+          { conversation_id: 'c1', role: 'assistant', content: 'A1', citations: [{ num: 1 }] },
+        ],
+      ],
+    ]);
     expect(localStorage.getItem('dg_history_migrated')).toBe('1');
     await store.migrateLegacyHistory('u1', 'c1');
     expect(fake.calls).toHaveLength(1);

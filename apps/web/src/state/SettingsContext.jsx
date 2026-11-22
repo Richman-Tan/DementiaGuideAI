@@ -54,7 +54,11 @@ export function SettingsProvider({ children }) {
   const setMany = useCallback((obj) => {
     setSettings((prev) => {
       const next = { ...prev, ...obj };
-      try { localStorage.setItem('dg_settings', JSON.stringify(next)); } catch { /* full/blocked */ }
+      try {
+        localStorage.setItem('dg_settings', JSON.stringify(next));
+      } catch {
+        /* full/blocked */
+      }
       return next;
     });
   }, []);

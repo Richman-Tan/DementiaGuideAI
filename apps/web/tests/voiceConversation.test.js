@@ -10,15 +10,26 @@ import { saveKeys } from '../src/state/keysStore.js';
 import { mapSettingsToRag } from '../src/state/mapSettingsToRag.js';
 import { ELEVEN_STREAM_SAMPLE_RATE } from '@core/voice/voiceConfig';
 
-const fx = vi.hoisted(() => ({ profile: null, streams: [], accumulators: [], specs: [], timers: [] }));
+const fx = vi.hoisted(() => ({
+  profile: null,
+  streams: [],
+  accumulators: [],
+  specs: [],
+  timers: [],
+}));
 
 vi.mock('../src/avatar/avatarProfiles.js', () => ({ getAvatarProfile: () => fx.profile }));
 vi.mock('../src/services/openaiClient.js', () => ({
   openaiClient: { chatStream: vi.fn(), search: vi.fn(async () => ['searched']) },
-  mapSourcesToCitations: vi.fn((sources) => (sources || []).map((s) => ({ num: s.num, title: s.title }))),
+  mapSourcesToCitations: vi.fn((sources) =>
+    (sources || []).map((s) => ({ num: s.num, title: s.title }))
+  ),
 }));
 vi.mock('../src/services/ttsClient.js', () => ({ tts: vi.fn() }));
-vi.mock('../src/services/ttsModeWeb.js', () => ({ selectTtsMode: vi.fn(async () => 'rest'), markTtsDegraded: vi.fn() }));
+vi.mock('../src/services/ttsModeWeb.js', () => ({
+  selectTtsMode: vi.fn(async () => 'rest'),
+  markTtsDegraded: vi.fn(),
+}));
 vi.mock('../src/services/sttWeb.js', () => ({ startSttSession: vi.fn() }));
 vi.mock('../src/lib/latency.js', () => ({
   createTurnTimer: vi.fn(() => {
@@ -51,7 +62,12 @@ vi.mock('@core/lipsync/streamingVisemeAccumulator', () => ({
 }));
 vi.mock('@core/voice/speculativeRetrieval', () => ({
   createSpeculativeRag: vi.fn(({ search }) => {
-    const s = { search, onPartial: vi.fn(), resolve: vi.fn(async () => ({ status: 'miss' })), cancel: vi.fn() };
+    const s = {
+      search,
+      onPartial: vi.fn(),
+      resolve: vi.fn(async () => ({ status: 'miss' })),
+      cancel: vi.fn(),
+    };
     fx.specs.push(s);
     return s;
   }),
@@ -65,7 +81,15 @@ const { startSttSession } = await import('../src/services/sttWeb.js');
 const { createTurnTimer } = await import('../src/lib/latency.js');
 
 // ─── fakes ───────────────────────────────────────────────────────────────────
-const deferred = () => { let resolve; let reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; };
+const deferred = () => {
+  let resolve;
+  let reject;
+  const promise = new Promise((a, b) => {
+    resolve = a;
+    reject = b;
+  });
+  return { promise, resolve, reject };
+};
 
 function fakeAvatar({ streaming = false } = {}) {
   const a = { supportsStreamingAudio: streaming };
@@ -73,7 +97,9 @@ function fakeAvatar({ streaming = false } = {}) {
   a.stopAudio = vi.fn();
   a.setSpeechEmotion = vi.fn();
   a.unlockAudio = vi.fn();
-  a.setOnAudioStart = vi.fn((cb) => { a.onStart = cb; });
+  a.setOnAudioStart = vi.fn((cb) => {
+    a.onStart = cb;
+  });
   a.startStreamingPlayback = vi.fn();
   a.appendAudioChunk = vi.fn();
   a.endStreamingPlayback = vi.fn(async () => {});
@@ -95,10 +121,25 @@ function fakeSession(transcript = 'how do I help') {
   return { stop: vi.fn(async () => ({ transcript, source: 'live' })), cancel: vi.fn() };
 }
 
-const SETTINGS = { audioResponses: true, voiceSpeed: 'normal', avatarId: 'aaron', handsFree: false, fasterVoice: false, responseStyle: 'balanced' };
+const SETTINGS = {
+  audioResponses: true,
+  voiceSpeed: 'normal',
+  avatarId: 'aaron',
+  handsFree: false,
+  fasterVoice: false,
+  responseStyle: 'balanced',
+};
 let current;
 async function mountVoice(over = {}) {
-  const props = { enabled: true, avatar: fakeAvatar(), settings: SETTINGS, messages: [], appendMessage: vi.fn(), muted: false, ...over };
+  const props = {
+    enabled: true,
+    avatar: fakeAvatar(),
+    settings: SETTINGS,
+    messages: [],
+    appendMessage: vi.fn(),
+    muted: false,
+    ...over,
+  };
   const r = await renderHook((p) => useVoiceConversation(p), { initialProps: props });
   current = { ...r, props };
   return current;
@@ -108,7 +149,9 @@ const tick = (ms = 0) => flush(() => vi.advanceTimersByTimeAsync(ms));
 // Run a hook action to completion, letting every fake timer it schedules fire.
 async function run(action) {
   let p;
-  await flush(() => { p = action(); });
+  await flush(() => {
+    p = action();
+  });
   for (let i = 0; i < 40; i++) await tick(2000);
   await flush(() => p);
 }
@@ -117,7 +160,13 @@ const spoken = (text) => ({ audio: `data:${text}`, visemeTimeline: { frames: [te
 beforeEach(() => {
   vi.useFakeTimers();
   localStorage.clear();
-  fx.profile = { id: 'aaron', name: 'Aaron', elevenVoiceId: 'voice-aaron', openaiVoice: 'onyx', visemeWeights: null };
+  fx.profile = {
+    id: 'aaron',
+    name: 'Aaron',
+    elevenVoiceId: 'voice-aaron',
+    openaiVoice: 'onyx',
+    visemeWeights: null,
+  };
   fx.streams.length = 0;
   fx.accumulators.length = 0;
   fx.specs.length = 0;
@@ -140,8 +189,14 @@ afterEach(async () => {
 // ─── typed turns, REST audio ─────────────────────────────────────────────────
 describe('a typed question with REST audio', () => {
   it('speaks each sentence in order, then records the answer', async () => {
-    const sources = [{ id: 's1', num: 1, title: 'Sleep' }, { num: 2, title: 'Routine' }, { title: 'x' }];
-    openaiClient.chatStream.mockImplementation(answer(['Rest helps. ', 'Try a routine.'], { sources }));
+    const sources = [
+      { id: 's1', num: 1, title: 'Sleep' },
+      { num: 2, title: 'Routine' },
+      { title: 'x' },
+    ];
+    openaiClient.chatStream.mockImplementation(
+      answer(['Rest helps. ', 'Try a routine.'], { sources })
+    );
     const history = [
       { role: 'user', text: 'Earlier question' },
       { role: 'aria', text: 'Earlier answer' },
@@ -153,23 +208,63 @@ describe('a typed question with REST audio', () => {
 
     const [q, hist, cbs, opts] = openaiClient.chatStream.mock.calls[0];
     expect(q).toBe('How do I help him sleep?');
-    expect(hist).toEqual([{ role: 'user', content: 'Earlier question' }, { role: 'assistant', content: 'Earlier answer' }]);
+    expect(hist).toEqual([
+      { role: 'user', content: 'Earlier question' },
+      { role: 'assistant', content: 'Earlier answer' },
+    ]);
     expect(typeof cbs.onSources).toBe('function');
-    expect(opts).toEqual({ ...mapSettingsToRag(SETTINGS), skipThrottle: true, preRetrievedChunks: null });
+    expect(opts).toEqual({
+      ...mapSettingsToRag(SETTINGS),
+      skipThrottle: true,
+      preRetrievedChunks: null,
+    });
 
-    const ttsOpts = { speechRate: 0.78, visemeWeights: null, elevenVoiceId: 'voice-aaron', openaiVoice: 'onyx' };
-    expect(tts.mock.calls).toEqual([['Rest helps.', ttsOpts], ['Try a routine.', ttsOpts]]);
-    expect(props.avatar.playAudio.mock.calls.map(([seg]) => seg.text)).toEqual(['Rest helps.', 'Try a routine.']);
-    expect(props.avatar.playAudio.mock.calls[0][0]).toMatchObject({ audio: 'data:Rest helps.', visemeTimeline: { frames: ['Rest helps.'] }, emotion: expect.any(String) });
+    const ttsOpts = {
+      speechRate: 0.78,
+      visemeWeights: null,
+      elevenVoiceId: 'voice-aaron',
+      openaiVoice: 'onyx',
+    };
+    expect(tts.mock.calls).toEqual([
+      ['Rest helps.', ttsOpts],
+      ['Try a routine.', ttsOpts],
+    ]);
+    expect(props.avatar.playAudio.mock.calls.map(([seg]) => seg.text)).toEqual([
+      'Rest helps.',
+      'Try a routine.',
+    ]);
+    expect(props.avatar.playAudio.mock.calls[0][0]).toMatchObject({
+      audio: 'data:Rest helps.',
+      visemeTimeline: { frames: ['Rest helps.'] },
+      emotion: expect.any(String),
+    });
     expect(props.avatar.setSpeechEmotion).toHaveBeenCalledTimes(2);
 
     expect(props.appendMessage.mock.calls).toEqual([
       [{ role: 'user', text: 'How do I help him sleep?' }],
-      [{ role: 'aria', text: 'Rest helps. Try a routine.', citations: mapSourcesToCitations(sources), sources, safety: false }],
+      [
+        {
+          role: 'aria',
+          text: 'Rest helps. Try a routine.',
+          citations: mapSourcesToCitations(sources),
+          sources,
+          safety: false,
+        },
+      ],
     ]);
     const timer = fx.timers[0];
     expect(createTurnTimer).toHaveBeenCalledTimes(1);
-    expect(timer.marks).toEqual(expect.arrayContaining(['ragDone', 'llmSend', 'firstToken', 'firstSentence', 'ttsRequest', 'ttsResponse', 'firstAudio']));
+    expect(timer.marks).toEqual(
+      expect.arrayContaining([
+        'ragDone',
+        'llmSend',
+        'firstToken',
+        'firstSentence',
+        'ttsRequest',
+        'ttsResponse',
+        'firstAudio',
+      ])
+    );
     expect(timer.finish).toHaveBeenCalledTimes(1);
     expect(result.current).toMatchObject({ vState: 'idle', vSubtitle: '', error: null });
   });
@@ -179,7 +274,9 @@ describe('a typed question with REST audio', () => {
     const { result, props } = await mountVoice();
     props.avatar.playAudio.mockReturnValueOnce(play.promise);
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await tick();
     expect(result.current.vState).toBe('speaking');
     expect(result.current.vSubtitle).toBe('Rest helps.');
@@ -196,7 +293,10 @@ describe('a typed question with REST audio', () => {
     const { result, props } = await mountVoice();
     await run(() => result.current.askText('Q'));
     expect(tts.mock.calls.map(([text]) => text)).toEqual(['Rest helps.', 'Try a routine.']);
-    expect(props.avatar.playAudio.mock.calls.map(([seg]) => seg.text)).toEqual(['Rest helps.', 'Try a routine.']);
+    expect(props.avatar.playAudio.mock.calls.map(([seg]) => seg.text)).toEqual([
+      'Rest helps.',
+      'Try a routine.',
+    ]);
     expect(fx.timers[0].marks.filter((m) => m === 'ttsRequest')).toHaveLength(2);
     expect(result.current).toMatchObject({ vState: 'idle', error: null });
   });
@@ -212,7 +312,12 @@ describe('a typed question with REST audio', () => {
     fx.profile = { id: 'custom', name: 'Custom', visemeWeights: { aa: 0.6 } };
     const { result } = await mountVoice({ settings: { ...SETTINGS, voiceSpeed: 'slower' } });
     await run(() => result.current.askText('Q'));
-    expect(tts.mock.calls[0][1]).toEqual({ speechRate: 0.65, visemeWeights: { aa: 0.6 }, elevenVoiceId: null, openaiVoice: null });
+    expect(tts.mock.calls[0][1]).toEqual({
+      speechRate: 0.65,
+      visemeWeights: { aa: 0.6 },
+      elevenVoiceId: null,
+      openaiVoice: null,
+    });
   });
 
   it('ignores blank input, and questions while listening or thinking', async () => {
@@ -224,7 +329,9 @@ describe('a typed question with REST audio', () => {
     const gate = deferred();
     openaiClient.chatStream.mockImplementation(answer([gate.promise]));
     let p;
-    await flush(() => { p = result.current.askText('first'); });
+    await flush(() => {
+      p = result.current.askText('first');
+    });
     expect(result.current.vState).toBe('thinking');
     await run(() => result.current.askText('second'));
     expect(openaiClient.chatStream).toHaveBeenCalledTimes(1);
@@ -241,11 +348,15 @@ describe('a typed question with REST audio', () => {
     const { result, props } = await mountVoice();
     props.avatar.playAudio.mockReturnValueOnce(play.promise);
     let first;
-    await flush(() => { first = result.current.askText('first'); });
+    await flush(() => {
+      first = result.current.askText('first');
+    });
     await tick();
     expect(result.current.vState).toBe('speaking');
     let second;
-    await flush(() => { second = result.current.askText('second'); });
+    await flush(() => {
+      second = result.current.askText('second');
+    });
     expect(props.avatar.stopAudio).toHaveBeenCalled();
     await flush(() => play.resolve());
     await run(() => Promise.all([first, second]));
@@ -257,7 +368,9 @@ describe('audio off', () => {
   it('muted: no TTS; subtitles are paced by reading speed', async () => {
     const { result, props } = await mountVoice({ muted: true });
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await tick();
     expect(result.current.vSubtitle).toBe('Rest helps.');
     await tick(1399); // min 1.4 s per subtitle
@@ -276,7 +389,9 @@ describe('audio off', () => {
     openaiClient.chatStream.mockImplementation(answer(['y'.repeat(40) + '.']));
     const { result } = await mountVoice({ settings: { ...SETTINGS, audioResponses: false } });
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await tick();
     await tick(41 * 55 - 1);
     expect(result.current.vState).toBe('speaking');
@@ -299,13 +414,23 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     saveKeys({ openai: '', eleven: 'el-key', azure: '' });
     selectTtsMode.mockResolvedValue('eleven-stream');
   });
-  const streamingProps = () => ({ avatar: fakeAvatar({ streaming: true }), settings: { ...SETTINGS, fasterVoice: true } });
-  const chunk = (charTimes, frames = ['v']) => ({ pcmBase64: 'pcm', durationSec: 0.5, alignment: { charTimes, frames } });
+  const streamingProps = () => ({
+    avatar: fakeAvatar({ streaming: true }),
+    settings: { ...SETTINGS, fasterVoice: true },
+  });
+  const chunk = (charTimes, frames = ['v']) => ({
+    pcmBase64: 'pcm',
+    durationSec: 0.5,
+    alignment: { charTimes, frames },
+  });
 
   it('only streams with Faster voice on, a streaming-capable avatar and the stream mode', async () => {
     const a = await mountVoice({ avatar: fakeAvatar({ streaming: true }) }); // fasterVoice off
     await run(() => a.result.current.askText('Q'));
-    const b = await mountVoice({ avatar: fakeAvatar({ streaming: false }), settings: { ...SETTINGS, fasterVoice: true } });
+    const b = await mountVoice({
+      avatar: fakeAvatar({ streaming: false }),
+      settings: { ...SETTINGS, fasterVoice: true },
+    });
     await run(() => b.result.current.askText('Q'));
     expect(selectTtsMode).not.toHaveBeenCalled();
     selectTtsMode.mockResolvedValue('rest');
@@ -319,7 +444,9 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     const { result, props } = await mountVoice(streamingProps());
     const { avatar } = props;
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await settle();
     const s = fx.streams[0];
     expect(s.opts).toMatchObject({ apiKey: 'el-key', voiceId: 'voice-aaron', speechRate: 0.78 });
@@ -331,10 +458,21 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     expect(tts).not.toHaveBeenCalled();
 
     // First audio for the first 12 characters ("Rest helps. ").
-    await flush(() => s.opts.onAudioChunk(chunk(Array.from({ length: 12 }, (_, i) => i * 0.05), ['v1'])));
+    await flush(() =>
+      s.opts.onAudioChunk(
+        chunk(
+          Array.from({ length: 12 }, (_, i) => i * 0.05),
+          ['v1']
+        )
+      )
+    );
     const sessionId = avatar.startStreamingPlayback.mock.calls[0][0];
     expect(sessionId).toMatch(/^s_\d+$/);
-    expect(avatar.startStreamingPlayback).toHaveBeenCalledWith(sessionId, ELEVEN_STREAM_SAMPLE_RATE, expect.any(String));
+    expect(avatar.startStreamingPlayback).toHaveBeenCalledWith(
+      sessionId,
+      ELEVEN_STREAM_SAMPLE_RATE,
+      expect.any(String)
+    );
     expect(avatar.appendAudioChunk).toHaveBeenCalledWith(sessionId, 'pcm', ['v1']);
     expect(result.current.vState).toBe('thinking'); // not audible yet
 
@@ -345,7 +483,14 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     expect(fx.timers[0].marks).toContain('firstAudio');
 
     // The rest of the alignment arrives; the second subtitle is timed to it.
-    await flush(() => s.opts.onAudioChunk(chunk(Array.from({ length: 14 }, (_, i) => 1 + i * 0.05), ['v2'])));
+    await flush(() =>
+      s.opts.onAudioChunk(
+        chunk(
+          Array.from({ length: 14 }, (_, i) => 1 + i * 0.05),
+          ['v2']
+        )
+      )
+    );
     await tick(999);
     expect(result.current.vSubtitle).toBe('Rest helps.');
     await tick(1);
@@ -364,7 +509,9 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     fx.profile = { id: 'x', name: 'X', visemeWeights: null };
     const { result, props } = await mountVoice(streamingProps());
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await settle();
     const s = fx.streams[0];
     expect(s.opts.voiceId).toBe('nPczCjzI2devNBz1zQrb');
@@ -379,13 +526,17 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     const { result, props } = await mountVoice(streamingProps());
     const { avatar } = props;
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await settle();
     const s = fx.streams[0];
     await flush(() => s.opts.onAudioChunk(chunk(Array.from({ length: 12 }, (_, i) => i * 0.01))));
     await flush(() => avatar.onStart());
     await tick(); // "Rest helps." is on screen
-    s.abort.mockImplementationOnce(() => { throw new Error('already closed'); });
+    s.abort.mockImplementationOnce(() => {
+      throw new Error('already closed');
+    });
     await flush(() => s.opts.onError(new Error('ws 1006')));
     await flush(() => s.opts.onError(new Error('again'))); // ignored
     await flush(() => s.opts.onAudioChunk(chunk([9]))); // late audio ignored
@@ -407,7 +558,9 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     openaiClient.chatStream.mockImplementation(answer(['Rest helps. ', gate.promise]));
     const { result } = await mountVoice(streamingProps());
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await settle();
     const s = fx.streams[0];
     await flush(() => s.opts.onError('handshake refused')); // as open().catch would
@@ -422,7 +575,14 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     const { result } = await mountVoice(streamingProps());
     const { createElevenLabsStream } = await import('@core/tts/elevenLabsStreamService');
     createElevenLabsStream.mockImplementationOnce((opts) => {
-      const s = { opts, open: vi.fn(() => Promise.reject(new Error('401 from socket'))), sendText: vi.fn(), flush: vi.fn(), end: vi.fn(), abort: vi.fn() };
+      const s = {
+        opts,
+        open: vi.fn(() => Promise.reject(new Error('401 from socket'))),
+        sendText: vi.fn(),
+        flush: vi.fn(),
+        end: vi.fn(),
+        abort: vi.fn(),
+      };
       fx.streams.push(s);
       return s;
     });
@@ -436,7 +596,9 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
     tts.mockReturnValueOnce(pending.promise);
     const { result, props } = await mountVoice(streamingProps());
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await settle();
     const s = fx.streams[0];
     await flush(() => s.opts.onAudioChunk(chunk([0, 0.01])));
@@ -454,7 +616,9 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
   it('stopping mid-stream aborts the socket and ends the turn without waiting for audio', async () => {
     const { result, props } = await mountVoice(streamingProps());
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await settle();
     const s = fx.streams[0];
     await flush(() => s.opts.onAudioChunk(chunk([0, 0.01])));
@@ -478,9 +642,13 @@ describe('streaming TTS (ElevenLabs WebSocket)', () => {
   it('an abort that throws while closing the socket is tolerated', async () => {
     const { result } = await mountVoice(streamingProps());
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await settle();
-    fx.streams[0].abort.mockImplementation(() => { throw new Error('closed'); });
+    fx.streams[0].abort.mockImplementation(() => {
+      throw new Error('closed');
+    });
     await flush(() => result.current.stop());
     await flush(() => fx.streams[0].opts.onFinal());
     await run(() => p);
@@ -497,7 +665,9 @@ describe('interrupting a REST answer', () => {
     const { result, props } = await mountVoice();
     props.avatar.playAudio.mockReturnValueOnce(play.promise);
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await tick();
     expect(result.current.vSubtitle).toBe('One.');
     await flush(() => result.current.micTap()); // speaking → stop
@@ -515,7 +685,9 @@ describe('interrupting a REST answer', () => {
     tts.mockReturnValueOnce(audio.promise);
     const { result, props } = await mountVoice();
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await tick();
     expect(result.current.vState).toBe('speaking');
     await flush(() => result.current.stop());
@@ -529,7 +701,9 @@ describe('interrupting a REST answer', () => {
     const { result, props } = await mountVoice();
     props.avatar.playAudio.mockReturnValueOnce(play.promise);
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     await tick();
     await settle(); // both sentences queued
     await flush(() => result.current.stop());
@@ -551,18 +725,25 @@ describe('turn failures', () => {
     expect(result.current.error).toBe('The answer was cut off — please try again.');
     expect(result.current.vState).toBe('idle');
     expect(props.appendMessage.mock.calls[1][0].text).toBe('Partial. ');
-    expect(console.error).toHaveBeenCalledWith('[useVoiceConversation] processQuery error:', expect.any(Error));
+    expect(console.error).toHaveBeenCalledWith(
+      '[useVoiceConversation] processQuery error:',
+      expect.any(Error)
+    );
   });
 
   it('credential failures get the shared copy; errors with no message get a generic line', async () => {
-    openaiClient.chatStream.mockImplementation(async function* () { throw Object.assign(new Error('x'), { name: 'StudyLimitError' }); });
+    openaiClient.chatStream.mockImplementation(async function* () {
+      throw Object.assign(new Error('x'), { name: 'StudyLimitError' });
+    });
     const { result } = await mountVoice();
     await run(() => result.current.askText('Q'));
     expect(result.current.error).toMatch(/Today’s limit for this access code has been reached/);
     await flush(() => result.current.clearError());
     expect(result.current.error).toBeNull();
 
-    openaiClient.chatStream.mockImplementation(async function* () { throw {}; });
+    openaiClient.chatStream.mockImplementation(async function* () {
+      throw {};
+    });
     await run(() => result.current.askText('Q'));
     expect(result.current.error).toBe('Something went wrong. Please try again.');
   });
@@ -627,7 +808,9 @@ describe('recording and transcription', () => {
     await flush(() => result.current.micTap());
     await run(() => result.current.micTap());
     expect(fx.specs[0].cancel).toHaveBeenCalled();
-    expect(result.current.error).toBe("I didn't catch that — try again a little closer to the microphone.");
+    expect(result.current.error).toBe(
+      "I didn't catch that — try again a little closer to the microphone."
+    );
     expect(result.current.vState).toBe('idle');
     expect(openaiClient.chatStream).not.toHaveBeenCalled();
   });
@@ -639,7 +822,9 @@ describe('recording and transcription', () => {
     const { result, props } = await mountVoice();
     await flush(() => result.current.micTap());
     await run(() => result.current.micTap());
-    expect(result.current.error).toBe("I didn't catch that — try again a little closer to the microphone.");
+    expect(result.current.error).toBe(
+      "I didn't catch that — try again a little closer to the microphone."
+    );
     expect(result.current.vState).toBe('idle');
     expect(openaiClient.chatStream).not.toHaveBeenCalled();
     expect(props.appendMessage).not.toHaveBeenCalled();
@@ -657,13 +842,23 @@ describe('recording and transcription', () => {
   });
 
   it('a transcription failure is shown and the screen returns to idle', async () => {
-    startSttSession.mockImplementation(async () => ({ stop: vi.fn(async () => { throw new Error('Whisper error: 500'); }), cancel: vi.fn() }));
+    startSttSession.mockImplementation(async () => ({
+      stop: vi.fn(async () => {
+        throw new Error('Whisper error: 500');
+      }),
+      cancel: vi.fn(),
+    }));
     const { result } = await mountVoice();
     await flush(() => result.current.micTap());
     await run(() => result.current.micTap());
     expect(result.current.error).toBe('Whisper error: 500');
     expect(result.current.vState).toBe('idle');
-    startSttSession.mockImplementation(async () => ({ stop: vi.fn(async () => { throw {}; }), cancel: vi.fn() }));
+    startSttSession.mockImplementation(async () => ({
+      stop: vi.fn(async () => {
+        throw {};
+      }),
+      cancel: vi.fn(),
+    }));
     await flush(() => result.current.micTap());
     await run(() => result.current.micTap());
     expect(result.current.error).toBe('Could not transcribe audio. Please try again.');
@@ -690,7 +885,9 @@ describe('recording and transcription', () => {
     props.avatar.playAudio.mockReturnValueOnce(play.promise);
     await flush(() => result.current.micTap());
     let p;
-    await flush(() => { p = result.current.micTap(); });
+    await flush(() => {
+      p = result.current.micTap();
+    });
     await tick();
     expect(result.current.vState).toBe('speaking');
     await flush(() => result.current.micTap()); // stop
@@ -726,14 +923,20 @@ describe('recording and transcription', () => {
     startSttSession.mockResolvedValue(session);
     const { result } = await mountVoice();
     await flush(() => result.current.micTap());
-    await flush(() => startSttSession.mock.calls[0][0].onError(new Error('speech recognition error: network')));
+    await flush(() =>
+      startSttSession.mock.calls[0][0].onError(new Error('speech recognition error: network'))
+    );
     expect(session.cancel).toHaveBeenCalled();
     expect(fx.specs[0].cancel).toHaveBeenCalled();
     expect(result.current.error).toMatch(/Something went wrong with the microphone/);
     expect(result.current.vState).toBe('idle');
     // A revoked permission is reported as a denial; a bare value is stringified.
     await flush(() => result.current.micTap());
-    await flush(() => startSttSession.mock.calls[1][0].onError(Object.assign(new Error('denied'), { code: 'permission-denied' })));
+    await flush(() =>
+      startSttSession.mock.calls[1][0].onError(
+        Object.assign(new Error('denied'), { code: 'permission-denied' })
+      )
+    );
     expect(result.current.error).toMatch(/Your microphone was blocked/);
     await flush(() => result.current.micTap());
     await flush(() => startSttSession.mock.calls[2][0].onError('aborted'));
@@ -741,10 +944,14 @@ describe('recording and transcription', () => {
   });
 
   it('a blocked microphone at start names the avatar and points to typing', async () => {
-    startSttSession.mockRejectedValue(Object.assign(new Error('Microphone permission denied'), { code: 'permission-denied' }));
+    startSttSession.mockRejectedValue(
+      Object.assign(new Error('Microphone permission denied'), { code: 'permission-denied' })
+    );
     const { result } = await mountVoice();
     await flush(() => result.current.micTap());
-    expect(result.current.error).toBe('Microphone access is blocked — allow it in your browser settings to talk with Aaron, or type your question below.');
+    expect(result.current.error).toBe(
+      'Microphone access is blocked — allow it in your browser settings to talk with Aaron, or type your question below.'
+    );
     expect(result.current.vState).toBe('idle');
   });
 
@@ -778,7 +985,9 @@ describe('recording and transcription', () => {
     openaiClient.chatStream.mockImplementation(answer([gate.promise]));
     const { result } = await mountVoice();
     let p;
-    await flush(() => { p = result.current.askText('Q'); });
+    await flush(() => {
+      p = result.current.askText('Q');
+    });
     expect(result.current.vState).toBe('thinking');
     await flush(() => result.current.micTap());
     expect(startSttSession).not.toHaveBeenCalled();
@@ -790,21 +999,35 @@ describe('recording and transcription', () => {
 
 // ─── repeat, stop, unmount ───────────────────────────────────────────────────
 describe('repeatLast', () => {
-  const msgs = [{ role: 'user', text: 'Q' }, { role: 'aria', text: 'Old answer [1].' }, { role: 'aria', text: 'Keep calm [1] and rest [2].' }];
+  const msgs = [
+    { role: 'user', text: 'Q' },
+    { role: 'aria', text: 'Old answer [1].' },
+    { role: 'aria', text: 'Keep calm [1] and rest [2].' },
+  ];
 
   it('re-speaks the last answer without citation markers', async () => {
     const { result, props } = await mountVoice({ messages: msgs });
     await run(() => result.current.repeatLast());
     expect(props.avatar.unlockAudio).toHaveBeenCalled();
-    expect(tts).toHaveBeenCalledWith('Keep calm and rest.', { speechRate: 0.78, visemeWeights: null, elevenVoiceId: 'voice-aaron', openaiVoice: 'onyx' });
-    expect(props.avatar.playAudio).toHaveBeenCalledWith({ ...spoken('Keep calm and rest.'), emotion: expect.any(String) });
+    expect(tts).toHaveBeenCalledWith('Keep calm and rest.', {
+      speechRate: 0.78,
+      visemeWeights: null,
+      elevenVoiceId: 'voice-aaron',
+      openaiVoice: 'onyx',
+    });
+    expect(props.avatar.playAudio).toHaveBeenCalledWith({
+      ...spoken('Keep calm and rest.'),
+      emotion: expect.any(String),
+    });
     expect(result.current).toMatchObject({ vState: 'idle', vSubtitle: '' });
   });
 
   it('with audio off, shows the answer as a paced subtitle', async () => {
     const { result } = await mountVoice({ messages: msgs, muted: true });
     let p;
-    await flush(() => { p = result.current.repeatLast(); });
+    await flush(() => {
+      p = result.current.repeatLast();
+    });
     expect(result.current).toMatchObject({ vState: 'speaking', vSubtitle: 'Keep calm and rest.' });
     await tick(1399);
     expect(result.current.vState).toBe('speaking');
@@ -867,8 +1090,13 @@ describe('stop and unmount', () => {
   it('leaving with an open stream aborts it', async () => {
     saveKeys({ openai: '', eleven: 'el-key', azure: '' });
     selectTtsMode.mockResolvedValue('eleven-stream');
-    const { result, unmount } = await mountVoice({ avatar: fakeAvatar({ streaming: true }), settings: { ...SETTINGS, fasterVoice: true } });
-    await flush(() => { result.current.askText('Q'); });
+    const { result, unmount } = await mountVoice({
+      avatar: fakeAvatar({ streaming: true }),
+      settings: { ...SETTINGS, fasterVoice: true },
+    });
+    await flush(() => {
+      result.current.askText('Q');
+    });
     await settle();
     await unmount();
     expect(fx.streams[0].abort).toHaveBeenCalled();

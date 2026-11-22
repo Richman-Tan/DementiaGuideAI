@@ -43,9 +43,9 @@ export default async function handler(req, res) {
           model_id: MODEL_ID,
           output_format: 'mp3_44100_64',
           voice_settings: {
-            stability: 0.40,
+            stability: 0.4,
             similarity_boost: 0.75,
-            style: 0.20,
+            style: 0.2,
             speed: Math.min(Math.max(Number(speechRate) || 0.78, 0.5), 1.2),
           },
         }),

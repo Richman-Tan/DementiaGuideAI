@@ -94,5 +94,7 @@ export function parseInline(text) {
  * would either skip or read out. A "#" before a digit ("#1") is kept.
  */
 export function stripMarkdownForSpeech(text) {
-  return String(text ?? '').replace(/\*+/g, '').replace(/#+(?!\d)/g, '');
+  return String(text ?? '')
+    .replace(/\*+/g, '')
+    .replace(/#+(?!\d)/g, '');
 }

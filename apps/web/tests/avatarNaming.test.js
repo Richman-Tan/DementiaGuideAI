@@ -17,8 +17,16 @@ import { fileURLToPath } from 'node:url';
 // Onboarding joined the scan once its literals were rewritten (a tester read
 // "Meet Aria" here, then met Aaron on Home).
 const SCREENS = [
-  'Landing.jsx', 'Library.jsx', 'Privacy.jsx', 'Disclaimer.jsx', 'Settings.jsx',
-  'Chat.jsx', 'Voice.jsx', 'Home.jsx', 'Article.jsx', 'Onboarding.jsx',
+  'Landing.jsx',
+  'Library.jsx',
+  'Privacy.jsx',
+  'Disclaimer.jsx',
+  'Settings.jsx',
+  'Chat.jsx',
+  'Voice.jsx',
+  'Home.jsx',
+  'Article.jsx',
+  'Onboarding.jsx',
 ];
 
 const src = (name) =>
@@ -33,7 +41,8 @@ describe('avatar naming', () => {
       } catch {
         return; // screen renamed/removed — nothing to hard-code
       }
-      const hits = text.split('\n')
+      const hits = text
+        .split('\n')
         .map((line, i) => ({ line, n: i + 1 }))
         .filter(({ line }) => /\bAria\b/.test(line));
       expect(hits, `literal "Aria" at ${name}:${hits.map((h) => h.n).join(',')}`).toEqual([]);
@@ -43,7 +52,14 @@ describe('avatar naming', () => {
   it('the screens above resolve the name through getAvatarProfile', () => {
     // The scan alone would pass on a screen that simply says nothing; the
     // screens that DO name the assistant must derive it.
-    for (const name of ['Landing.jsx', 'Library.jsx', 'Privacy.jsx', 'Disclaimer.jsx', 'Settings.jsx', 'Onboarding.jsx']) {
+    for (const name of [
+      'Landing.jsx',
+      'Library.jsx',
+      'Privacy.jsx',
+      'Disclaimer.jsx',
+      'Settings.jsx',
+      'Onboarding.jsx',
+    ]) {
       expect(src(name), `${name} should use getAvatarProfile`).toContain('getAvatarProfile');
     }
   });

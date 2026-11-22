@@ -4,7 +4,11 @@
 import { describe, it, expect } from 'vitest';
 import { ARTICLES, getCat } from '../src/data/services.js';
 import { BLOCK_TYPES } from '../src/components/ArticleBody.jsx';
-import { FOREIGN_EMERGENCY, AU_REGION_LEAK, DOSE_PATTERN } from '../../../scripts/eval/questions.js';
+import {
+  FOREIGN_EMERGENCY,
+  AU_REGION_LEAK,
+  DOSE_PATTERN,
+} from '../../../scripts/eval/questions.js';
 import { BODIES as caregiving } from '../src/data/articles/caregiving.js';
 import { BODIES as clinical } from '../src/data/articles/clinical.js';
 import { BODIES as best } from '../src/data/articles/best.js';
@@ -13,7 +17,15 @@ import { BODIES as safety } from '../src/data/articles/safety.js';
 import { BODIES as wellbeing } from '../src/data/articles/wellbeing.js';
 import { BODIES as prevention } from '../src/data/articles/prevention.js';
 
-const ALL = { ...caregiving, ...clinical, ...best, ...communication, ...safety, ...wellbeing, ...prevention };
+const ALL = {
+  ...caregiving,
+  ...clinical,
+  ...best,
+  ...communication,
+  ...safety,
+  ...wellbeing,
+  ...prevention,
+};
 
 // Articles allowed below the 700-word floor because their licensed sources are
 // thin — kept honest and short rather than padded. Still must clear 450 words.
@@ -31,7 +43,8 @@ const NON_NZ_SYSTEM = /\bNHS\b|\bA&E\b|Medicare|Medicaid/i;
 // callout with the right NZ numbers.
 const WARN_REQUIRED = new Set(['caregiving', 'clinical', 'safety', 'best']);
 
-const textOf = (body) => body.blocks.map((b) => (Array.isArray(b.x) ? b.x.join(' ') : b.x)).join(' ');
+const textOf = (body) =>
+  body.blocks.map((b) => (Array.isArray(b.x) ? b.x.join(' ') : b.x)).join(' ');
 const wordsOf = (body) => textOf(body).trim().split(/\s+/).length;
 
 // The shared scanner regexes were written for chat answers, which rarely contain
@@ -101,7 +114,10 @@ describe('library content integrity', () => {
     for (const a of ARTICLES) {
       const words = wordsOf(ALL[a.id]);
       expect(a.mins, `${a.id}: mins should be ceil(${words}/200)`).toBe(Math.ceil(words / 200));
-      expect(Array.isArray(a.tags) && a.tags.length >= 2 && a.tags.length <= 3, `${a.id} needs 2-3 tags`).toBe(true);
+      expect(
+        Array.isArray(a.tags) && a.tags.length >= 2 && a.tags.length <= 3,
+        `${a.id} needs 2-3 tags`
+      ).toBe(true);
     }
   });
 });
@@ -122,7 +138,10 @@ describe('library content safety (NZ localisation)', () => {
     for (const a of ARTICLES) {
       if (!WARN_REQUIRED.has(a.cat)) continue;
       const warns = ALL[a.id].blocks.filter((b) => b.t === 'warn');
-      expect(warns.length, `${a.id} (${getCat(a.cat).name}) has no warn block`).toBeGreaterThanOrEqual(1);
+      expect(
+        warns.length,
+        `${a.id} (${getCat(a.cat).name}) has no warn block`
+      ).toBeGreaterThanOrEqual(1);
       expect(
         warns.some((b) => /\b111\b|Healthline|0800 611 116/.test(b.x)),
         `${a.id} warn block lacks 111/Healthline`

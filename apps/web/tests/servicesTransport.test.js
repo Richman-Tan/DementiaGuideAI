@@ -6,7 +6,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { saveKeys } from '../src/state/keysStore.js';
 import { saveAccess } from '../src/state/accessStore.js';
-import { openaiTransport, openaiUrl, elevenTransport, warmProxy } from '../src/services/transport.js';
+import {
+  openaiTransport,
+  openaiUrl,
+  elevenTransport,
+  warmProxy,
+} from '../src/services/transport.js';
 import { credentialErrorCopy } from '../src/services/credentialErrorCopy.js';
 import { apiUrl, apiIsCrossOrigin } from '../src/services/apiBase.js';
 
@@ -98,7 +103,9 @@ describe('apiBase', () => {
 describe('transport', () => {
   it('openaiUrl goes straight to OpenAI for a personal key', () => {
     saveKeys({ openai: 'sk-1', eleven: '', azure: '' });
-    expect(openaiUrl(openaiTransport(), '/chat/completions')).toBe('https://api.openai.com/v1/chat/completions');
+    expect(openaiUrl(openaiTransport(), '/chat/completions')).toBe(
+      'https://api.openai.com/v1/chat/completions'
+    );
     expect(openaiUrl(null, '/embeddings')).toBe('https://api.openai.com/v1/embeddings');
   });
 
@@ -119,13 +126,16 @@ describe('transport', () => {
     expect(elevenTransport()).toEqual({ proxied: false, headers: { 'xi-api-key': 'el-key' } });
     saveKeys({ openai: '', eleven: '', azure: '' });
     saveAccess(GUEST);
-    expect(elevenTransport()).toEqual({ proxied: true, guest: true, headers: { 'x-study-code': GUEST } });
+    expect(elevenTransport()).toEqual({
+      proxied: true,
+      guest: true,
+      headers: { 'x-study-code': GUEST },
+    });
   });
 
   it('ElevenLabs is unavailable with no key and no guest code', () => {
     expect(elevenTransport()).toBeNull();
   });
-
 });
 
 describe('warmProxy', () => {
@@ -140,15 +150,25 @@ describe('warmProxy', () => {
 
   it('boots embed, chat, transcribe and speech with the access code, and swallows failures', async () => {
     saveAccess(GUEST);
-    const fetchMock = vi.fn(async () => { throw new TypeError('offline'); });
+    const fetchMock = vi.fn(async () => {
+      throw new TypeError('offline');
+    });
     vi.stubGlobal('fetch', fetchMock);
     expect(() => warmProxy()).not.toThrow();
     await Promise.resolve();
     await new Promise((r) => setTimeout(r, 0)); // let the rejected fetches settle
-    const calls = fetchMock.mock.calls.map(([url, init]) => [url, JSON.parse(init.body), init.headers['x-study-code']]);
+    const calls = fetchMock.mock.calls.map(([url, init]) => [
+      url,
+      JSON.parse(init.body),
+      init.headers['x-study-code'],
+    ]);
     expect(calls).toEqual([
       [apiUrl('/api/embed'), { model: 'text-embedding-3-small', input: 'warm-up' }, GUEST],
-      [apiUrl('/api/chat'), { model: 'gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'ok' }] }, GUEST],
+      [
+        apiUrl('/api/chat'),
+        { model: 'gpt-4o-mini', max_tokens: 1, messages: [{ role: 'user', content: 'ok' }] },
+        GUEST,
+      ],
       [apiUrl('/api/transcribe'), {}, GUEST],
       [apiUrl('/api/speech'), {}, GUEST],
     ]);
@@ -163,8 +183,12 @@ describe('credentialErrorCopy', () => {
   const named = (name) => Object.assign(new Error(name), { name });
 
   it('names the OpenAI key problem and the provider rate limit in the user’s terms', () => {
-    expect(credentialErrorCopy(named('OpenAIAuthError'))).toBe('Your OpenAI API key looks invalid — check it in Settings → Advanced.');
-    expect(credentialErrorCopy(named('OpenAIRateLimitError'))).toBe('The AI service is rate-limited right now — wait a moment and retry.');
+    expect(credentialErrorCopy(named('OpenAIAuthError'))).toBe(
+      'Your OpenAI API key looks invalid — check it in Settings → Advanced.'
+    );
+    expect(credentialErrorCopy(named('OpenAIRateLimitError'))).toBe(
+      'The AI service is rate-limited right now — wait a moment and retry.'
+    );
   });
 
   it('returns null for a missing error so callers keep their own fallback', () => {
@@ -194,7 +218,9 @@ describe('selectTtsMode / markTtsDegraded', () => {
     markTtsDegraded('again');
     expect(await selectTtsMode()).toBe('rest');
     expect(console.warn).toHaveBeenCalledTimes(1);
-    expect(console.warn).toHaveBeenCalledWith('[TTS] streaming degraded for this session: socket closed 1006');
+    expect(console.warn).toHaveBeenCalledWith(
+      '[TTS] streaming degraded for this session: socket closed 1006'
+    );
   });
 });
 
@@ -237,7 +263,11 @@ describe('chatService', () => {
       vi.useFakeTimers();
       const { generateReply, mockReply } = await load();
       const onToken = vi.fn();
-      const p = generateReply({ question: 'How do I help with wandering?', settings: { concise: true }, onToken });
+      const p = generateReply({
+        question: 'How do I help with wandering?',
+        settings: { concise: true },
+        onToken,
+      });
       await vi.advanceTimersByTimeAsync(1099);
       expect(onToken).not.toHaveBeenCalled();
       await vi.advanceTimersByTimeAsync(1);
@@ -246,7 +276,11 @@ describe('chatService', () => {
       expect(onToken.mock.calls[0][0]).toBe(expected.text.split(' ').slice(0, 2).join(' '));
       await vi.runAllTimersAsync();
       const result = await p;
-      expect(result).toEqual({ text: expected.text, citations: expected.citations, safety: expected.safety });
+      expect(result).toEqual({
+        text: expected.text,
+        citations: expected.citations,
+        safety: expected.safety,
+      });
       expect(onToken).toHaveBeenLastCalledWith(expected.text);
       expect(mockReply).toHaveBeenCalledWith('How do I help with wandering?', { concise: true });
     });
@@ -271,7 +305,9 @@ describe('chatService', () => {
       vi.useFakeTimers();
       const { generateReply, mockReply } = await load();
       mockReply.mockReturnValueOnce({ error: true });
-      const settled = generateReply({ question: 'q', settings: {}, onToken: vi.fn() }).catch((e) => e);
+      const settled = generateReply({ question: 'q', settings: {}, onToken: vi.fn() }).catch(
+        (e) => e
+      );
       await vi.advanceTimersByTimeAsync(1100);
       expect((await settled).message).toBe('mock knowledge base outage');
     });
@@ -281,7 +317,11 @@ describe('chatService', () => {
     const { generateReply, realGenerate, mockReply } = await load();
     saveKeys({ openai: 'sk-1', eleven: '', azure: '' });
     const opts = { question: 'q', settings: {}, onToken: vi.fn() };
-    expect(await generateReply(opts)).toEqual({ text: 'real answer', citations: [], safety: false });
+    expect(await generateReply(opts)).toEqual({
+      text: 'real answer',
+      citations: [],
+      safety: false,
+    });
     expect(realGenerate).toHaveBeenCalledWith(opts);
     expect(mockReply).not.toHaveBeenCalled();
   });

@@ -46,7 +46,7 @@ export function VoiceSpeedScreen({ navigation, route }) {
       onSkip={handleSkip}
       onNext={handleNext}
       nextLabel="Next"
-      title={"How fast would you like\nAria to speak?"}
+      title={'How fast would you like\nAria to speak?'}
       subtitle="You can change this in Settings at any time."
     >
       {OPTIONS.map((opt) => (

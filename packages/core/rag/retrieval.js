@@ -9,7 +9,7 @@
 function sourceFamilyOf(chunk) {
   let doc = chunk.document_id;
   if (!doc) {
-    const tag = (chunk.tags || []).find(t => t.startsWith('document_id:'));
+    const tag = (chunk.tags || []).find((t) => t.startsWith('document_id:'));
     doc = tag ? tag.split(':')[1] : 'curated';
   }
   return doc.startsWith('isupport') ? 'isupport' : doc;

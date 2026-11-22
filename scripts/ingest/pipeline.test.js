@@ -11,8 +11,10 @@ jest.mock('pdf-parse', () => ({
     getText: jest.fn().mockResolvedValue({
       // Same shape as chunking.test.js's stripPdfBoilerplate fixture: a
       // running header repeated on every "page", unique body per page.
-      text: Array.from({ length: 4 }, (_, i) =>
-        `-- ${i + 1} of 4 --\niSupport Manual\nUnique body paragraph number ${i} with real content here.`,
+      text: Array.from(
+        { length: 4 },
+        (_, i) =>
+          `-- ${i + 1} of 4 --\niSupport Manual\nUnique body paragraph number ${i} with real content here.`
       ).join('\n'),
     }),
   })),
@@ -33,7 +35,13 @@ jest.mock('@mozilla/readability', () => ({
   })),
 }));
 
-const { pdfBufferToText, fetchUrlToArticle, textToChunks, makeOpenAIClient, withRetry } = require('./pipeline.js');
+const {
+  pdfBufferToText,
+  fetchUrlToArticle,
+  textToChunks,
+  makeOpenAIClient,
+  withRetry,
+} = require('./pipeline.js');
 
 describe('pdfBufferToText', () => {
   it('strips the repeated running header and keeps unique body text', async () => {
@@ -46,7 +54,9 @@ describe('pdfBufferToText', () => {
 describe('fetchUrlToArticle', () => {
   const html = `<!doctype html><title>Managing sundowning</title><article>${'Sundowning causes evening confusion and agitation. '.repeat(20)}</article>`;
 
-  afterEach(() => { jest.restoreAllMocks(); });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
   it('extracts the article text and title via the DOM/Readability pipeline', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => html });
@@ -80,7 +90,9 @@ describe('textToChunks', () => {
 });
 
 describe('makeOpenAIClient', () => {
-  afterEach(() => { jest.restoreAllMocks(); });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
   function stubOpenAI() {
     global.fetch = jest.fn(async (url, init) => {
@@ -91,7 +103,10 @@ describe('makeOpenAIClient', () => {
       }
       if (String(url).includes('/embeddings')) {
         const inputs = Array.isArray(body.input) ? body.input : [body.input];
-        return { ok: true, json: async () => ({ data: inputs.map((_, i) => ({ index: i, embedding: [i] })) }) };
+        return {
+          ok: true,
+          json: async () => ({ data: inputs.map((_, i) => ({ index: i, embedding: [i] })) }),
+        };
       }
       throw new Error(`unhandled fetch: ${url}`);
     });
@@ -111,12 +126,17 @@ describe('makeOpenAIClient', () => {
       call += 1;
       // First call returns a title that's already "used"; second call (with
       // the avoid clause injected) returns a distinct one.
-      const content = body.messages[1].content.includes('already uses the title') ? 'Distinct Title' : 'Evening confusion';
+      const content = body.messages[1].content.includes('already uses the title')
+        ? 'Distinct Title'
+        : 'Evening confusion';
       return { ok: true, json: async () => ({ choices: [{ message: { content } }] }) };
     });
     const client = makeOpenAIClient('sk-test', { embeddingModel: 'text-embedding-3-small' });
     const used = new Set(['Evening confusion']);
-    const title = await client.simplifyTitleUnique({ id: 'c1', title: 't', content: 'content' }, used);
+    const title = await client.simplifyTitleUnique(
+      { id: 'c1', title: 't', content: 'content' },
+      used
+    );
     expect(title).toBe('Distinct Title');
     expect(call).toBe(2);
     expect(used.has('Distinct Title')).toBe(true);
@@ -137,19 +157,33 @@ describe('makeOpenAIClient', () => {
 describe('withRetry', () => {
   it('retries a retryable failure and succeeds', async () => {
     let attempts = 0;
-    const result = await withRetry('test', async () => {
-      attempts += 1;
-      if (attempts < 2) throw new Error('503 upstream');
-      return 'ok';
-    }, 3, 1);
+    const result = await withRetry(
+      'test',
+      async () => {
+        attempts += 1;
+        if (attempts < 2) throw new Error('503 upstream');
+        return 'ok';
+      },
+      3,
+      1
+    );
     expect(result).toBe('ok');
     expect(attempts).toBe(2);
   });
 
   it('does not retry a non-retryable failure', async () => {
     let attempts = 0;
-    await expect(withRetry('test', async () => { attempts += 1; throw new Error('bad input'); }, 3, 1))
-      .rejects.toThrow('bad input');
+    await expect(
+      withRetry(
+        'test',
+        async () => {
+          attempts += 1;
+          throw new Error('bad input');
+        },
+        3,
+        1
+      )
+    ).rejects.toThrow('bad input');
     expect(attempts).toBe(1);
   });
 });

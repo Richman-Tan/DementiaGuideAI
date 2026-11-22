@@ -3,7 +3,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/theme/colors';
 import { Typography } from '@/theme/typography';
 import { UnityAvatarBridge } from '@/features/avatar/bridge/UnityAvatarBridge';
-import { UnityAvatarNativeView, isUnityAvatarAvailable } from '../../../../modules/unity-avatar-module/src';
+import {
+  UnityAvatarNativeView,
+  isUnityAvatarAvailable,
+} from '../../../../modules/unity-avatar-module/src';
 
 /**
  * AvatarUnity — Phase 5.
@@ -31,23 +34,32 @@ export const AvatarUnity = forwardRef(function AvatarUnity(props, ref) {
   // Same state derivation and precedence as AvatarVRM, so both renderers agree
   // on what the avatar is doing. Drives IdleAnimator's six-way blend Unity-side.
   useEffect(() => {
-    const next = isSpeaking    ? 'speaking'
-      : isThinking   ? 'thinking'
-        : isEmpathetic ? 'empathy'
-          : isListening  ? 'listening'
-            : isWaiting    ? 'waiting'
+    const next = isSpeaking
+      ? 'speaking'
+      : isThinking
+        ? 'thinking'
+        : isEmpathetic
+          ? 'empathy'
+          : isListening
+            ? 'listening'
+            : isWaiting
+              ? 'waiting'
               : 'idle';
     UnityAvatarBridge.setAvatarState(next);
   }, [isListening, isSpeaking, isThinking, isEmpathetic, isWaiting]);
 
-  useImperativeHandle(ref, () => ({
-    playAudio:       UnityAvatarBridge.playAudio,
-    stopAudio:       UnityAvatarBridge.stopAudio,
-    setOnAudioStart: UnityAvatarBridge.setOnAudioStart,
-    setCharacter:    UnityAvatarBridge.setCharacter,
-    setAvatarState:  UnityAvatarBridge.setAvatarState,
-    setDebugMode:    UnityAvatarBridge.setDebugMode,
-  }), []);
+  useImperativeHandle(
+    ref,
+    () => ({
+      playAudio: UnityAvatarBridge.playAudio,
+      stopAudio: UnityAvatarBridge.stopAudio,
+      setOnAudioStart: UnityAvatarBridge.setOnAudioStart,
+      setCharacter: UnityAvatarBridge.setCharacter,
+      setAvatarState: UnityAvatarBridge.setAvatarState,
+      setDebugMode: UnityAvatarBridge.setDebugMode,
+    }),
+    []
+  );
 
   if (!isUnityAvatarAvailable) {
     const initial = (characterId || 'A').charAt(0).toUpperCase();

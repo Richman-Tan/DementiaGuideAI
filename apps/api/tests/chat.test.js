@@ -5,17 +5,30 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { makeReq, makeRes, load, stubFetch, jsonResponse } from './helpers.js';
 
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
 
-const messages = [{ role: 'system', content: 'sys' }, { role: 'user', content: 'hello' }];
+const messages = [
+  { role: 'system', content: 'sys' },
+  { role: 'user', content: 'hello' },
+];
 
 function sseResponse(frames, { failAfter = null } = {}) {
   let i = 0;
   const enc = new TextEncoder();
   const stream = new ReadableStream({
     pull(controller) {
-      if (failAfter !== null && i >= failAfter) { controller.error(new Error('socket reset')); return; }
-      if (i >= frames.length) { controller.close(); return; }
+      if (failAfter !== null && i >= failAfter) {
+        controller.error(new Error('socket reset'));
+        return;
+      }
+      if (i >= frames.length) {
+        controller.close();
+        return;
+      }
       controller.enqueue(enc.encode(frames[i++]));
     },
   });
@@ -24,7 +37,9 @@ function sseResponse(frames, { failAfter = null } = {}) {
 
 async function run(body, { response, env } = {}) {
   const { mod } = await load('../api/chat.js', { env });
-  const fetch = stubFetch(response ?? sseResponse(['data: {"choices":[]}\n\n', 'data: [DONE]\n\n']));
+  const fetch = stubFetch(
+    response ?? sseResponse(['data: {"choices":[]}\n\n', 'data: [DONE]\n\n'])
+  );
   const res = makeRes();
   await mod.default(makeReq({ body }), res);
   return { res, fetch };
@@ -55,7 +70,10 @@ describe('input bounds', () => {
     const { res, fetch } = await run({ model: 'gpt-4o', messages: big });
     expect(res.statusCode).toBe(413);
     expect(fetch).not.toHaveBeenCalled();
-    const ok = await run({ model: 'gpt-4o', messages: [{ role: 'user', content: 'x'.repeat(60000) }] });
+    const ok = await run({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: 'x'.repeat(60000) }],
+    });
     expect(ok.res.statusCode).toBe(200);
   });
 });
@@ -69,7 +87,13 @@ describe('what goes upstream', () => {
   });
 
   it('clamps temperature to [0, 1] and defaults a missing or non-numeric value to 0.4', async () => {
-    const cases = [[1.7, 1], [-2, 0], [0.7, 0.7], [undefined, 0.4], ['abc', 0.4]];
+    const cases = [
+      [1.7, 1],
+      [-2, 0],
+      [0.7, 0.7],
+      [undefined, 0.4],
+      ['abc', 0.4],
+    ];
     for (const [given, expected] of cases) {
       const { fetch } = await run({ model: 'gpt-4o', messages, temperature: given });
       const sent = JSON.parse(fetch.mock.calls[0][1].body);
@@ -98,7 +122,10 @@ describe('what goes upstream', () => {
 describe('upstream status mapping', () => {
   it('maps upstream 429 to 429', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    const { res } = await run({ model: 'gpt-4o', messages }, { response: jsonResponse({ error: 'slow down' }, 429) });
+    const { res } = await run(
+      { model: 'gpt-4o', messages },
+      { response: jsonResponse({ error: 'slow down' }, 429) }
+    );
     expect(res.statusCode).toBe(429);
     expect(res.body).toEqual({ error: 'rate limited' });
   });
@@ -106,7 +133,10 @@ describe('upstream status mapping', () => {
   it('maps every other upstream failure — including 401, which is OUR key — to 502', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     for (const status of [401, 500, 503]) {
-      const { res } = await run({ model: 'gpt-4o', messages }, { response: jsonResponse({}, status) });
+      const { res } = await run(
+        { model: 'gpt-4o', messages },
+        { response: jsonResponse({}, status) }
+      );
       expect(res.statusCode, `upstream ${status}`).toBe(502);
     }
   });
@@ -114,7 +144,12 @@ describe('upstream status mapping', () => {
   it('returns 502 when fetch itself throws', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const { mod } = await load('../api/chat.js');
-    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('ECONNRESET'); }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('ECONNRESET');
+      })
+    );
     const res = makeRes();
     await mod.default(makeReq({ body: { model: 'gpt-4o', messages } }), res);
     expect(res.statusCode).toBe(502);
@@ -122,7 +157,10 @@ describe('upstream status mapping', () => {
 
   it('returns 503 when the server key is not configured', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    const { res } = await run({ model: 'gpt-4o', messages }, { env: { OPENAI_API_KEY: undefined } });
+    const { res } = await run(
+      { model: 'gpt-4o', messages },
+      { env: { OPENAI_API_KEY: undefined } }
+    );
     expect(res.statusCode).toBe(503);
   });
 });
@@ -141,7 +179,10 @@ describe('streaming', () => {
   it('emits the stream_interrupted marker when upstream dies mid-stream', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const frames = ['data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n'];
-    const { res } = await run({ model: 'gpt-4o', messages }, { response: sseResponse(frames, { failAfter: 1 }) });
+    const { res } = await run(
+      { model: 'gpt-4o', messages },
+      { response: sseResponse(frames, { failAfter: 1 }) }
+    );
     expect(res.statusCode).toBe(200);
     expect(res.chunks.at(-1)).toBe('data: {"error":"stream_interrupted"}\n\n');
     expect(res.ended).toBe(true);
@@ -159,7 +200,9 @@ describe('streaming', () => {
     stubFetch(sseResponse(withUsage));
     await a.mod.default(makeReq({ body: { model: 'gpt-4o', messages }, headers: auth }), makeRes());
     expect(a.admin.insertIgnoringConflicts).toHaveBeenCalledWith(
-      'usage_events', [{ user_id: 'user-1', kind: 'chat', units: 2600, model: 'gpt-4o' }], 'id',
+      'usage_events',
+      [{ user_id: 'user-1', kind: 'chat', units: 2600, model: 'gpt-4o' }],
+      'id'
     );
 
     const b = await load('../api/chat.js');
@@ -183,7 +226,14 @@ describe('guard', () => {
 describe('upstream error bodies', () => {
   it('answers 502 even when the error body cannot be read', async () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const broken = new Response(new ReadableStream({ start(c) { c.error(new Error('reset')); } }), { status: 500 });
+    const broken = new Response(
+      new ReadableStream({
+        start(c) {
+          c.error(new Error('reset'));
+        },
+      }),
+      { status: 500 }
+    );
     const { res } = await run({ model: 'gpt-4o', messages }, { response: broken });
     expect(res.statusCode).toBe(502);
     expect(res.body).toEqual({ error: 'upstream error' });
@@ -195,21 +245,38 @@ describe('client disconnect', () => {
   it('stops relaying and cancels the upstream read once the caller goes away, with no error marker', async () => {
     const { mod, admin } = await load('../api/chat.js');
     const enc = new TextEncoder();
-    const frames = ['data: {"choices":[{"delta":{"content":"Hel"}}]}\n\n', 'data: {"choices":[{"delta":{"content":"lo"}}]}\n\n', 'data: [DONE]\n\n'];
+    const frames = [
+      'data: {"choices":[{"delta":{"content":"Hel"}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"lo"}}]}\n\n',
+      'data: [DONE]\n\n',
+    ];
     let i = 0;
     const cancelled = vi.fn();
-    const upstream = new Response(new ReadableStream({
-      pull(c) { if (i < frames.length) c.enqueue(enc.encode(frames[i++])); else c.close(); },
-      cancel: cancelled,
-    }), { status: 200 });
+    const upstream = new Response(
+      new ReadableStream({
+        pull(c) {
+          if (i < frames.length) c.enqueue(enc.encode(frames[i++]));
+          else c.close();
+        },
+        cancel: cancelled,
+      }),
+      { status: 200 }
+    );
     const fetch = stubFetch(upstream);
 
     const claims = Buffer.from(JSON.stringify({ sub: 'user-1' })).toString('base64url');
-    const req = makeReq({ body: { model: 'gpt-4o', messages }, headers: { authorization: `Bearer a.${claims}.b` } });
+    const req = makeReq({
+      body: { model: 'gpt-4o', messages },
+      headers: { authorization: `Bearer a.${claims}.b` },
+    });
     const res = makeRes();
     // The participant navigates away as soon as the first frame reaches them.
     const write = res.write.bind(res);
-    res.write = (c) => { const r = write(c); req.emit('close'); return r; };
+    res.write = (c) => {
+      const r = write(c);
+      req.emit('close');
+      return r;
+    };
     await mod.default(req, res);
 
     expect(res.chunks).toEqual([frames[0]]);
@@ -221,16 +288,24 @@ describe('client disconnect', () => {
     expect(req.listenerCount('close')).toBe(0);
     // The call is still metered. The usage frame never arrived, so it reads 0.
     expect(admin.insertIgnoringConflicts).toHaveBeenCalledWith(
-      'usage_events', [{ user_id: 'user-1', kind: 'chat', units: 0, model: 'gpt-4o' }], 'id',
+      'usage_events',
+      [{ user_id: 'user-1', kind: 'chat', units: 0, model: 'gpt-4o' }],
+      'id'
     );
   });
 
   it('stops when the response has been destroyed under it', async () => {
     const { mod } = await load('../api/chat.js');
-    stubFetch(sseResponse(['data: {"choices":[]}\n\n', 'data: {"choices":[]}\n\n', 'data: [DONE]\n\n']));
+    stubFetch(
+      sseResponse(['data: {"choices":[]}\n\n', 'data: {"choices":[]}\n\n', 'data: [DONE]\n\n'])
+    );
     const res = makeRes();
     const write = res.write.bind(res);
-    res.write = (c) => { const r = write(c); res.destroyed = true; return r; };
+    res.write = (c) => {
+      const r = write(c);
+      res.destroyed = true;
+      return r;
+    };
     await mod.default(makeReq({ body: { model: 'gpt-4o', messages } }), res);
     expect(res.chunks).toHaveLength(1);
     expect(res.ended).toBe(true);

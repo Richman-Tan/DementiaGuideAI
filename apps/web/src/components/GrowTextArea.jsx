@@ -4,7 +4,15 @@
 // `style`; height is managed here and resets when the value is cleared.
 import React, { useLayoutEffect, useRef } from 'react';
 
-export function GrowTextArea({ value, onChange, onSubmit, onGrow, maxHeight = 120, style, ...rest }) {
+export function GrowTextArea({
+  value,
+  onChange,
+  onSubmit,
+  onGrow,
+  maxHeight = 120,
+  style,
+  ...rest
+}) {
   const el = useRef(null);
   // The textarea below is always rendered and its ref is always `el` (set after
   // the spread, so a caller's `ref` prop cannot replace it), and React attaches
@@ -21,8 +29,22 @@ export function GrowTextArea({ value, onChange, onSubmit, onGrow, maxHeight = 12
       rows={1}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(); } }}
-      style={{ resize: 'none', overflowY: 'hidden', fontFamily: 'inherit', fontSize: '1rem', lineHeight: '1.5', color: 'var(--text)', boxSizing: 'border-box', ...style }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          onSubmit();
+        }
+      }}
+      style={{
+        resize: 'none',
+        overflowY: 'hidden',
+        fontFamily: 'inherit',
+        fontSize: '1rem',
+        lineHeight: '1.5',
+        color: 'var(--text)',
+        boxSizing: 'border-box',
+        ...style,
+      }}
       {...rest}
       ref={el}
     />

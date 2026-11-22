@@ -11,7 +11,7 @@
 // web sessions with no changes, and anyone debugging a session can read the
 // same numbers straight out of the console.
 const now = () =>
-  (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
+  typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
 
 /**
  * createTurnTimer() → timer
@@ -25,7 +25,8 @@ export function createTurnTimer() {
   const marks = Object.create(null);
 
   const rel = (a) => (marks[a] == null ? null : Math.round(marks[a]));
-  const delta = (a, b) => (marks[a] == null || marks[b] == null ? null : Math.round(marks[b] - marks[a]));
+  const delta = (a, b) =>
+    marks[a] == null || marks[b] == null ? null : Math.round(marks[b] - marks[a]);
 
   return {
     /** First call for a given name wins — later duplicates are ignored. */

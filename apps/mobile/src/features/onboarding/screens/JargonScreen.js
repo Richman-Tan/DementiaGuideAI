@@ -46,7 +46,7 @@ export function JargonScreen({ navigation, route }) {
       onSkip={handleSkip}
       onNext={handleNext}
       nextLabel="Next"
-      title={"When medical words\ncome up, what would\nyou prefer?"}
+      title={'When medical words\ncome up, what would\nyou prefer?'}
     >
       {OPTIONS.map((opt) => (
         <OptionCard

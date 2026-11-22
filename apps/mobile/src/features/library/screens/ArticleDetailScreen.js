@@ -18,21 +18,23 @@ import { KNOWLEDGE_CATEGORIES } from '@/constants/data';
 import { KNOWLEDGE_BASE } from '@/features/library/data/knowledgeBase';
 import { useSettings } from '@/context/SettingsContext';
 
-const wordCount = content => content.split(/\s+/).length;
-const readTime = content => `${Math.ceil(wordCount(content) / 200)} min read`;
+const wordCount = (content) => content.split(/\s+/).length;
+const readTime = (content) => `${Math.ceil(wordCount(content) / 200)} min read`;
 
 // Split content into numbered list items or plain paragraphs
 const parseContent = (content) => {
   // Detect (1), (2) ... numbered list pattern
   if (/\(1\)/.test(content)) {
     const parts = content.split(/(?=\(\d+\)\s)/);
-    return parts.map((part, i) => {
-      const match = part.match(/^\((\d+)\)\s([\s\S]+)/);
-      if (match) {
-        return { type: 'numbered', num: match[1], text: match[2].trim(), key: i };
-      }
-      return part.trim() ? { type: 'paragraph', text: part.trim(), key: i } : null;
-    }).filter(Boolean);
+    return parts
+      .map((part, i) => {
+        const match = part.match(/^\((\d+)\)\s([\s\S]+)/);
+        if (match) {
+          return { type: 'numbered', num: match[1], text: match[2].trim(), key: i };
+        }
+        return part.trim() ? { type: 'paragraph', text: part.trim(), key: i } : null;
+      })
+      .filter(Boolean);
   }
   return [{ type: 'paragraph', text: content, key: 0 }];
 };
@@ -44,12 +46,12 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(18)).current;
 
-  const category = KNOWLEDGE_CATEGORIES.find(c => c.id === article.category);
+  const category = KNOWLEDGE_CATEGORIES.find((c) => c.id === article.category);
   const contentParts = parseContent(article.content);
 
-  const relatedArticles = KNOWLEDGE_BASE
-    .filter(a => a.category === article.category && a.id !== article.id)
-    .slice(0, 3);
+  const relatedArticles = KNOWLEDGE_BASE.filter(
+    (a) => a.category === article.category && a.id !== article.id
+  ).slice(0, 3);
 
   useEffect(() => {
     Animated.parallel([
@@ -64,7 +66,9 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
         title: article.title,
         message: `${article.title}\n\n${article.content.slice(0, 300)}…\n\nShared from DementiaGuide AI`,
       });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [article]);
 
   const handleAskAria = useCallback(() => {
@@ -76,9 +80,12 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
     });
   }, [navigation, article]);
 
-  const handleRelatedArticle = useCallback((related) => {
-    navigation.push('ArticleDetail', { article: related });
-  }, [navigation]);
+  const handleRelatedArticle = useCallback(
+    (related) => {
+      navigation.push('ArticleDetail', { article: related });
+    },
+    [navigation]
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -86,7 +93,10 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
 
       {/* Coloured header band */}
       <LinearGradient
-        colors={[category?.color ?? Colors.primary, category?.color ? `${category.color}CC` : Colors.primaryLight]}
+        colors={[
+          category?.color ?? Colors.primary,
+          category?.color ? `${category.color}CC` : Colors.primaryLight,
+        ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.headerBand, { paddingTop: insets.top }]}
@@ -119,14 +129,15 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
             size={13}
             color="rgba(255,255,255,0.9)"
           />
-          <Text style={styles.categoryBadgeText}>
-            {category?.title ?? article.category}
-          </Text>
+          <Text style={styles.categoryBadgeText}>{category?.title ?? article.category}</Text>
         </Animated.View>
 
         {/* Title */}
         <Animated.Text
-          style={[styles.headerTitle, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
+          style={[
+            styles.headerTitle,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+          ]}
         >
           {article.title}
         </Animated.Text>
@@ -146,35 +157,71 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-
           {/* Article body */}
           <View style={styles.bodySection}>
             {contentParts.map((part) =>
               part.type === 'numbered' ? (
                 <View key={part.key} style={styles.numberedItem}>
-                  <View style={[styles.numBadge, { backgroundColor: category?.colorMuted ?? Colors.primaryMuted }]}>
-                    <Text style={[styles.numBadgeText, { color: category?.color ?? Colors.primary }]}>
+                  <View
+                    style={[
+                      styles.numBadge,
+                      { backgroundColor: category?.colorMuted ?? Colors.primaryMuted },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.numBadgeText, { color: category?.color ?? Colors.primary }]}
+                    >
                       {part.num}
                     </Text>
                   </View>
-                  <Text style={[styles.numberedText, { fontSize: 16 * textScale, lineHeight: 26 * textScale, color: colors.textPrimary }]}>{part.text}</Text>
+                  <Text
+                    style={[
+                      styles.numberedText,
+                      {
+                        fontSize: 16 * textScale,
+                        lineHeight: 26 * textScale,
+                        color: colors.textPrimary,
+                      },
+                    ]}
+                  >
+                    {part.text}
+                  </Text>
                 </View>
               ) : (
-                <Text key={part.key} style={[styles.bodyText, { fontSize: 16 * textScale, lineHeight: 26 * textScale, color: colors.textPrimary }]}>{part.text}</Text>
+                <Text
+                  key={part.key}
+                  style={[
+                    styles.bodyText,
+                    {
+                      fontSize: 16 * textScale,
+                      lineHeight: 26 * textScale,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                >
+                  {part.text}
+                </Text>
               )
             )}
           </View>
 
           {/* Tags */}
           <View style={styles.tagsSection}>
-            <Text style={[styles.tagsSectionLabel, { color: colors.textTertiary }]}>Topics covered</Text>
+            <Text style={[styles.tagsSectionLabel, { color: colors.textTertiary }]}>
+              Topics covered
+            </Text>
             <View style={styles.tagsRow}>
-              {article.tags.map(tag => (
+              {article.tags.map((tag) => (
                 <View
                   key={tag}
-                  style={[styles.tag, { backgroundColor: category?.colorMuted ?? Colors.primaryMuted }]}
+                  style={[
+                    styles.tag,
+                    { backgroundColor: category?.colorMuted ?? Colors.primaryMuted },
+                  ]}
                 >
-                  <Text style={[styles.tagText, { color: category?.color ?? Colors.primary }]}>{tag}</Text>
+                  <Text style={[styles.tagText, { color: category?.color ?? Colors.primary }]}>
+                    {tag}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -198,23 +245,37 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
                 <Text style={styles.ariaCtaTitle}>Ask Aria about this</Text>
                 <Text style={styles.ariaCtaSub}>Get personalised guidance from your AI guide</Text>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.75)" />
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={20}
+                color="rgba(255,255,255,0.75)"
+              />
             </LinearGradient>
           </TouchableOpacity>
 
           {/* Related articles */}
           {relatedArticles.length > 0 && (
             <View style={styles.relatedSection}>
-              <Text style={[styles.relatedTitle, { color: colors.textTertiary }]}>More in {category?.title}</Text>
-              {relatedArticles.map(related => (
+              <Text style={[styles.relatedTitle, { color: colors.textTertiary }]}>
+                More in {category?.title}
+              </Text>
+              {relatedArticles.map((related) => (
                 <TouchableOpacity
                   key={related.id}
-                  style={[styles.relatedCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  style={[
+                    styles.relatedCard,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                  ]}
                   onPress={() => handleRelatedArticle(related)}
                   activeOpacity={0.75}
                   accessibilityLabel={related.title}
                 >
-                  <View style={[styles.relatedIcon, { backgroundColor: category?.colorMuted ?? Colors.primaryMuted }]}>
+                  <View
+                    style={[
+                      styles.relatedIcon,
+                      { backgroundColor: category?.colorMuted ?? Colors.primaryMuted },
+                    ]}
+                  >
                     <MaterialCommunityIcons
                       name={category?.icon ?? 'file-document-outline'}
                       size={16}
@@ -222,10 +283,21 @@ export const ArticleDetailScreen = ({ navigation, route }) => {
                     />
                   </View>
                   <View style={styles.relatedMeta}>
-                    <Text style={[styles.relatedCardTitle, { color: colors.textPrimary }]} numberOfLines={2}>{related.title}</Text>
-                    <Text style={[styles.relatedReadTime, { color: colors.textTertiary }]}>{readTime(related.content)}</Text>
+                    <Text
+                      style={[styles.relatedCardTitle, { color: colors.textPrimary }]}
+                      numberOfLines={2}
+                    >
+                      {related.title}
+                    </Text>
+                    <Text style={[styles.relatedReadTime, { color: colors.textTertiary }]}>
+                      {readTime(related.content)}
+                    </Text>
                   </View>
-                  <MaterialCommunityIcons name="chevron-right" size={16} color={Colors.textTertiary} />
+                  <MaterialCommunityIcons
+                    name="chevron-right"
+                    size={16}
+                    color={Colors.textTertiary}
+                  />
                 </TouchableOpacity>
               ))}
             </View>

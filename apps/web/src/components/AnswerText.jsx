@@ -23,20 +23,35 @@ export function AnswerText({ text, citations, onCite }) {
     const margin = `0 0 ${i < blocks.length - 1 ? GAP : '0'}`;
     const inline = (t) => <Inline text={t} citations={citations} onCite={onCite} />;
     if (b.type === 'heading') {
-      return <p key={i} style={{ margin, fontWeight: '700' }}>{inline(b.text)}</p>;
+      return (
+        <p key={i} style={{ margin, fontWeight: '700' }}>
+          {inline(b.text)}
+        </p>
+      );
     }
     if (b.type === 'ul' || b.type === 'ol') {
       const List = b.type;
       return (
-        <List key={i} start={b.type === 'ol' ? b.start : undefined} style={{ margin, paddingLeft: '1.5em' }}>
-          {b.items.map((item, j) => <li key={j} style={{ margin: '.25em 0' }}>{inline(item)}</li>)}
+        <List
+          key={i}
+          start={b.type === 'ol' ? b.start : undefined}
+          style={{ margin, paddingLeft: '1.5em' }}
+        >
+          {b.items.map((item, j) => (
+            <li key={j} style={{ margin: '.25em 0' }}>
+              {inline(item)}
+            </li>
+          ))}
         </List>
       );
     }
     return (
       <p key={i} style={{ margin }}>
         {b.lines.map((line, j) => (
-          <React.Fragment key={j}>{j > 0 && <br />}{inline(line)}</React.Fragment>
+          <React.Fragment key={j}>
+            {j > 0 && <br />}
+            {inline(line)}
+          </React.Fragment>
         ))}
       </p>
     );

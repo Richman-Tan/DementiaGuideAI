@@ -38,6 +38,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Prettier, over the scope .prettierignore leaves in. The whole codebase
+      # was formatted once (see .git-blame-ignore-revs), so this stays green as
+      # long as each change is formatted, which the pre-commit hook does.
+      - name: Format check
+        run: npm run format:check
+
       # Runs both suites: jest (apps/mobile + packages/core + scripts) and
       # vitest (apps/web, including the mobile↔web interop tests).
       - name: Test

@@ -14,9 +14,14 @@ const repoCore = path.resolve(__dirname, '../../packages/core');
 // used by BOTH dev serve and the Rollup build, so the pipelines can't diverge.
 // A new CJS lib in packages/core has to be added here too, or the web build
 // ships raw `module.exports`; apps/web/tests/interop.test.js is the canary.
-const CJS_LIBS = ['rag/ragConfig.js', 'rag/prompt.js', 'rag/retrieval.js', 'rag/citations.js', 'voice/voiceConfig.js', 'brand/mark.js'].map(
-  (p) => path.join(repoCore, p)
-);
+const CJS_LIBS = [
+  'rag/ragConfig.js',
+  'rag/prompt.js',
+  'rag/retrieval.js',
+  'rag/citations.js',
+  'voice/voiceConfig.js',
+  'brand/mark.js',
+].map((p) => path.join(repoCore, p));
 
 function cjsLibsToEsm() {
   return {
@@ -83,8 +88,12 @@ function unityBrotliHeaders() {
   // — which vite then calls with no arguments, crashing dev/preview/vitest.
   return {
     name: 'dg-unity-brotli-headers',
-    configureServer(server) { server.middlewares.use(middleware); },
-    configurePreviewServer(server) { server.middlewares.use(middleware); },
+    configureServer(server) {
+      server.middlewares.use(middleware);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(middleware);
+    },
   };
 }
 
@@ -107,7 +116,10 @@ function apiDevServer() {
       server.middlewares.use(async (req, res, next) => {
         if (!req.url?.startsWith('/api/')) return next();
 
-        const route = req.url.split('?')[0].replace(/^\/api\//, '').replace(/\/+$/, '');
+        const route = req.url
+          .split('?')[0]
+          .replace(/^\/api\//, '')
+          .replace(/\/+$/, '');
         // Route names come off the URL, so refuse anything that could climb out
         // of api/ before it reaches the filesystem.
         if (!/^[a-zA-Z0-9/_-]+$/.test(route) || route.includes('..')) {
@@ -121,7 +133,10 @@ function apiDevServer() {
           // picked up without restarting the dev server.
           mod = await server.ssrLoadModule(path.resolve(API_DIR, `${route}.js`));
         } catch (err) {
-          if (err?.code === 'ERR_MODULE_NOT_FOUND' || /Failed to load url/.test(String(err?.message))) {
+          if (
+            err?.code === 'ERR_MODULE_NOT_FOUND' ||
+            /Failed to load url/.test(String(err?.message))
+          ) {
             return next();
           }
           server.config.logger.error(`[api] ${route}: ${err?.message ?? err}`);
@@ -154,10 +169,16 @@ function readJsonBody(req) {
   return new Promise((resolve) => {
     if (req.method === 'GET' || req.method === 'HEAD') return resolve(undefined);
     let raw = '';
-    req.on('data', (c) => { raw += c; });
+    req.on('data', (c) => {
+      raw += c;
+    });
     req.on('end', () => {
       if (!raw) return resolve(undefined);
-      try { resolve(JSON.parse(raw)); } catch { resolve(undefined); }
+      try {
+        resolve(JSON.parse(raw));
+      } catch {
+        resolve(undefined);
+      }
     });
     req.on('error', () => resolve(undefined));
   });
@@ -169,7 +190,10 @@ function decorate(res) {
   // the whole dev server down over one buggy route. On Vercel each invocation
   // is isolated, so this only ever bites locally — but it bites hard.
   res.on('error', () => {});
-  res.status = (code) => { res.statusCode = code; return res; };
+  res.status = (code) => {
+    res.statusCode = code;
+    return res;
+  };
   res.json = (body) => {
     if (res.writableEnded) return res;
     if (!res.headersSent) res.setHeader('Content-Type', 'application/json');
@@ -206,8 +230,17 @@ export default defineConfig(({ mode }) => {
       // instrumented. Straight after the CJS shim (whose regexes must see the
       // plain source, and which keeps every line in place) and before every
       // other transform, so unit and e2e runs instrument identical code.
-      ...(COVERAGE ? [istanbulPre({ root: path.resolve(__dirname, '../..'), dirs: ['apps/web/src/', 'packages/core/'] })] : []),
-      unityBrotliHeaders(), apiDevServer(), react(),
+      ...(COVERAGE
+        ? [
+            istanbulPre({
+              root: path.resolve(__dirname, '../..'),
+              dirs: ['apps/web/src/', 'packages/core/'],
+            }),
+          ]
+        : []),
+      unityBrotliHeaders(),
+      apiDevServer(),
+      react(),
     ],
     resolve: {
       alias: {

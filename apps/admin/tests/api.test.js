@@ -4,7 +4,12 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { validate, buildRequestBody, submitResource, CATEGORIES } from '../src/lib/api.js';
 
-const baseFields = { sourceType: 'url', title: 'Evening confusion', category: CATEGORIES[0], url: 'https://example.com/a' };
+const baseFields = {
+  sourceType: 'url',
+  title: 'Evening confusion',
+  category: CATEGORIES[0],
+  url: 'https://example.com/a',
+};
 
 describe('validate', () => {
   it('passes a well-formed url submission', () => {
@@ -29,7 +34,10 @@ describe('validate', () => {
 
 describe('buildRequestBody', () => {
   it('trims strings and nulls out blank optional fields', () => {
-    const body = buildRequestBody({ ...baseFields, sourceOrg: '  ', sourceUrl: '', licence: undefined, country: undefined }, 'payload-value');
+    const body = buildRequestBody(
+      { ...baseFields, sourceOrg: '  ', sourceUrl: '', licence: undefined, country: undefined },
+      'payload-value'
+    );
     expect(body).toEqual({
       sourceType: 'url',
       payload: 'payload-value',
@@ -43,30 +51,54 @@ describe('buildRequestBody', () => {
   });
 
   it('keeps provided optional fields', () => {
-    const body = buildRequestBody({ ...baseFields, sourceOrg: 'Alzheimers NZ', country: 'NZ' }, 'p');
+    const body = buildRequestBody(
+      { ...baseFields, sourceOrg: 'Alzheimers NZ', country: 'NZ' },
+      'p'
+    );
     expect(body.sourceOrg).toBe('Alzheimers NZ');
     expect(body.country).toBe('NZ');
   });
 });
 
 describe('submitResource', () => {
-  afterEach(() => { vi.unstubAllGlobals(); });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
   it('posts to /api/admin/ingest with the Supabase access token as a Bearer header', async () => {
-    const fetchStub = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ document_id: 'admin-x', chunkCount: 1, chunks: [] }) });
+    const fetchStub = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ document_id: 'admin-x', chunkCount: 1, chunks: [] }),
+    });
     vi.stubGlobal('fetch', fetchStub);
 
-    const data = await submitResource({ apiBaseUrl: 'https://api.example.com', accessToken: 'jwt-value', body: { a: 1 } });
+    const data = await submitResource({
+      apiBaseUrl: 'https://api.example.com',
+      accessToken: 'jwt-value',
+      body: { a: 1 },
+    });
 
-    expect(fetchStub).toHaveBeenCalledWith('https://api.example.com/api/admin/ingest', expect.objectContaining({
-      method: 'POST',
-      headers: expect.objectContaining({ Authorization: 'Bearer jwt-value' }),
-    }));
+    expect(fetchStub).toHaveBeenCalledWith(
+      'https://api.example.com/api/admin/ingest',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: 'Bearer jwt-value' }),
+      })
+    );
     expect(data.document_id).toBe('admin-x');
   });
 
   it('throws the server error message on a non-ok response', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 400, json: async () => ({ error: 'category must be one of: …' }) }));
-    await expect(submitResource({ apiBaseUrl: '', accessToken: 'jwt-value', body: {} })).rejects.toThrow(/category must be one of/);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: 'category must be one of: …' }),
+      })
+    );
+    await expect(
+      submitResource({ apiBaseUrl: '', accessToken: 'jwt-value', body: {} })
+    ).rejects.toThrow(/category must be one of/);
   });
 });

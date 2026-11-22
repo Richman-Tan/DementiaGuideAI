@@ -8,11 +8,19 @@ test.describe('landing page', () => {
     await mockProviders(page);
     await seedStorage(page, { keys: false, settings: { onboarded: false } });
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Dementia care answers you can actually talk to.' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Dementia care answers you can actually talk to.' })
+    ).toBeVisible();
     // The helper named is the one that resolved (no Unity build here → Aaron).
-    await expect(page.getByText('Aaron is a caring AI guide who answers your questions with trusted, cited information — by text or voice.')).toBeVisible();
+    await expect(
+      page.getByText(
+        'Aaron is a caring AI guide who answers your questions with trusted, cited information — by text or voice.'
+      )
+    ).toBeVisible();
     await expect(page.getByText('avatar stage · Aaron (3D, lip-synced)')).toBeVisible();
-    await expect(page.getByText('DementiaGuide AI provides general information, not medical advice.')).toBeVisible();
+    await expect(
+      page.getByText('DementiaGuide AI provides general information, not medical advice.')
+    ).toBeVisible();
 
     await page.getByRole('button', { name: 'Browse the library' }).click();
     await expect(page).toHaveURL(/#\/onboarding\/1$/);
@@ -39,14 +47,18 @@ test.describe('landing page', () => {
     await page.goto('/');
     await page.getByRole('link', { name: 'Privacy Policy' }).click();
     await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible();
-    await expect(page.getByText(/Your conversations with Aaron are saved to an account/)).toBeVisible();
+    await expect(
+      page.getByText(/Your conversations with Aaron are saved to an account/)
+    ).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Deleting them' })).toBeVisible();
 
     await page.goto('/#/');
     await page.getByRole('link', { name: 'Medical Disclaimer' }).click();
     await expect(page.getByRole('heading', { name: 'Medical Disclaimer' })).toBeVisible();
     await expect(page.getByText('In an emergency, call 111.')).toBeVisible();
-    await expect(page.getByText(/Aaron is not a doctor, nurse, or health professional/)).toBeVisible();
+    await expect(
+      page.getByText(/Aaron is not a doctor, nurse, or health professional/)
+    ).toBeVisible();
   });
 });
 
@@ -59,7 +71,9 @@ test.describe('routing', () => {
     await expect(page.getByRole('heading', { name: /^Kia ora — I'm / })).toBeVisible();
   });
 
-  test('an unknown address shows the 404 page, with ways back to Home and the Library', async ({ page }) => {
+  test('an unknown address shows the 404 page, with ways back to Home and the Library', async ({
+    page,
+  }) => {
     await mockProviders(page);
     await seedStorage(page, { keys: false });
     await page.goto('/#/app/nowhere');
@@ -76,36 +90,50 @@ test.describe('routing', () => {
     await mockProviders(page);
     // A chat cache written by an older build: a message whose citations is not
     // a list. The chat screen cannot render it.
-    await seedStorage(page, { keys: false, history: [{ role: 'aria', text: 'Old answer', citations: 'not-a-list', time: '9:00 am' }] });
+    await seedStorage(page, {
+      keys: false,
+      history: [{ role: 'aria', text: 'Old answer', citations: 'not-a-list', time: '9:00 am' }],
+    });
     await page.goto('/#/app/chat');
     await expect(page.getByRole('heading', { name: 'Something went wrong' })).toBeVisible();
     await expect(page.getByText('Your conversations and settings are safe.')).toBeVisible();
     await page.getByRole('button', { name: 'Home' }).click();
     await expect(page).toHaveURL(/#\/app\/home$/);
-    await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening)$/ })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /^Good (morning|afternoon|evening)$/ })
+    ).toBeVisible();
   });
 });
 
 test.describe('stored data from older or damaged builds', () => {
-  test('unreadable saved data falls back to defaults instead of breaking the app', async ({ page }) => {
+  test('unreadable saved data falls back to defaults instead of breaking the app', async ({
+    page,
+  }) => {
     await mockProviders(page);
     await page.addInitScript(() => {
       if (sessionStorage.getItem('dg_e2e_garbled')) return;
       sessionStorage.setItem('dg_e2e_garbled', '1');
-      for (const key of ['dg_settings', 'dg_keys', 'dg_history', 'dg_access']) localStorage.setItem(key, '{not json');
+      for (const key of ['dg_settings', 'dg_keys', 'dg_history', 'dg_access'])
+        localStorage.setItem(key, '{not json');
     });
     await page.goto('/');
     // Defaults: not onboarded, so the app opens on setup; no key, so chat is in example mode.
-    await expect(page.getByRole('heading', { name: 'Dementia care answers you can actually talk to.' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Dementia care answers you can actually talk to.' })
+    ).toBeVisible();
     await page.getByRole('button', { name: 'Open the app' }).first().click();
     await expect(page).toHaveURL(/#\/onboarding\/1$/);
     await page.getByRole('button', { name: 'Skip setup' }).click();
     await page.goto('/#/app/chat');
-    await expect(page.getByText('Some evenings he lashes out at me and I get scared. What should I do?')).toBeVisible();
+    await expect(
+      page.getByText('Some evenings he lashes out at me and I get scared. What should I do?')
+    ).toBeVisible();
   });
 
   for (const retired of ['aria', 'zhenja']) {
-    test(`a settings blob that still names the retired "${retired}" avatar shows Aaron`, async ({ page }) => {
+    test(`a settings blob that still names the retired "${retired}" avatar shows Aaron`, async ({
+      page,
+    }) => {
       await mockProviders(page);
       await installFakeUnity(page, { auto: true });
       await page.addInitScript((avatarId) => {
@@ -115,11 +143,22 @@ test.describe('stored data from older or damaged builds', () => {
       }, retired);
       await page.goto('/#/app/home');
       await expect(page.getByText('Aaron', { exact: true })).toBeVisible();
-      await expect.poll(() => page.evaluate(() => window.__unity.messages.filter((m) => m.type === 'setCharacter').map((m) => m.id))).toContain('aaron');
+      await expect
+        .poll(() =>
+          page.evaluate(() =>
+            window.__unity.messages.filter((m) => m.type === 'setCharacter').map((m) => m.id)
+          )
+        )
+        .toContain('aaron');
       // Nothing is rewritten; Settings highlights Aaron and the picker still works.
-      expect((await page.evaluate(() => JSON.parse(localStorage.getItem('dg_settings')))).avatarId).toBe(retired);
+      expect(
+        (await page.evaluate(() => JSON.parse(localStorage.getItem('dg_settings')))).avatarId
+      ).toBe(retired);
       await page.goto('/#/app/settings');
-      await page.getByRole('group', { name: 'Avatar' }).getByRole('button', { name: 'Ariana' }).click();
+      await page
+        .getByRole('group', { name: 'Avatar' })
+        .getByRole('button', { name: 'Ariana' })
+        .click();
       await page.reload();
       await expect(page.getByText("Display Ariana's visual avatar interface")).toBeVisible();
     });

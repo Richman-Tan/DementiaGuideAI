@@ -1,6 +1,12 @@
 const {
-  MARK, MARK_REVERSED, MARK_COMPACT, COMPACT_BELOW,
-  markFor, markBounds, markViewBox, markAspect,
+  MARK,
+  MARK_REVERSED,
+  MARK_COMPACT,
+  COMPACT_BELOW,
+  markFor,
+  markBounds,
+  markViewBox,
+  markAspect,
 } = require('./mark');
 
 // The geometry every renderer draws from. scripts/brand/build-icons.test.js pins
@@ -55,6 +61,7 @@ describe('markAspect', () => {
   });
 
   it('is always wider than tall', () => {
-    for (const mark of [MARK, MARK_REVERSED, MARK_COMPACT]) expect(markAspect(mark)).toBeGreaterThan(1);
+    for (const mark of [MARK, MARK_REVERSED, MARK_COMPACT])
+      expect(markAspect(mark)).toBeGreaterThan(1);
   });
 });

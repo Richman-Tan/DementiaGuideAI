@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -27,10 +21,7 @@ export function OnboardingLayout({
   const { textScale } = useSettings();
 
   return (
-    <SafeAreaView
-      style={styles.safe}
-      edges={['top', 'bottom']}
-    >
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
         {/* Left: back button */}
@@ -52,9 +43,7 @@ export function OnboardingLayout({
 
         {/* Centre: progress bar */}
         <View style={styles.headerCentre}>
-          {step !== undefined && (
-            <ProgressBar step={step} totalSteps={totalSteps} />
-          )}
+          {step !== undefined && <ProgressBar step={step} totalSteps={totalSteps} />}
         </View>
 
         {/* Right: skip button */}
@@ -82,9 +71,7 @@ export function OnboardingLayout({
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {title ? (
-          <Text style={[styles.title, { fontSize: 26 * textScale }]}>{title}</Text>
-        ) : null}
+        {title ? <Text style={[styles.title, { fontSize: 26 * textScale }]}>{title}</Text> : null}
         {subtitle ? (
           <Text style={[styles.subtitle, { fontSize: 17 * textScale }]}>{subtitle}</Text>
         ) : null}

@@ -53,10 +53,13 @@ export async function rpc(fn, args) {
 
 /** First matching row, or null. `query` is a PostgREST query string. */
 export async function selectOne(table, columns, query) {
-  const { rows } = await request(`${table}?select=${encodeURIComponent(columns)}&${query}&limit=1`, {
-    method: 'GET',
-    headers: headers(),
-  });
+  const { rows } = await request(
+    `${table}?select=${encodeURIComponent(columns)}&${query}&limit=1`,
+    {
+      method: 'GET',
+      headers: headers(),
+    }
+  );
   return Array.isArray(rows) && rows.length ? rows[0] : null;
 }
 

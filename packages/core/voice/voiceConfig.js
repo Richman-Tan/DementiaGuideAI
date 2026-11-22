@@ -44,8 +44,8 @@ const ELEVEN_CHUNK_SCHEDULE = [90, 120, 160, 250];
 // 22.05 kHz — far below injectJavaScript practical limits, few enough calls).
 const CHUNK_BUCKET_MS = 250;
 
-const WS_OPEN_TIMEOUT_MS = 3000;   // WS connect slower than this → REST fallback
-const WS_STALL_TIMEOUT_MS = 6000;  // no audio while input pending → REST fallback
+const WS_OPEN_TIMEOUT_MS = 3000; // WS connect slower than this → REST fallback
+const WS_STALL_TIMEOUT_MS = 6000; // no audio while input pending → REST fallback
 
 // ─── Speculative RAG (PR 4) ───────────────────────────────────────────────────
 // Fire retrieval on a stabilized live-STT partial while the user is still
@@ -54,10 +54,10 @@ const WS_STALL_TIMEOUT_MS = 6000;  // no audio while input pending → REST fall
 const VOICE_SPECULATIVE_RAG = true;
 // 600ms: measured on device — short questions stabilize <900ms before the
 // tap-stop, so the original threshold never fired. Refires are capped at 2.
-const SPECULATIVE_STABLE_MS = 600;      // partial unchanged this long → fire
-const SPECULATIVE_MIN_WORDS = 4;        // don't fire on fragments
-const SPECULATIVE_MAX_FIRES = 2;        // cap wasted embedding tokens per turn
-const SPECULATIVE_REUSE_JACCARD = 0.8;  // token overlap needed to reuse the result
+const SPECULATIVE_STABLE_MS = 600; // partial unchanged this long → fire
+const SPECULATIVE_MIN_WORDS = 4; // don't fire on fragments
+const SPECULATIVE_MAX_FIRES = 2; // cap wasted embedding tokens per turn
+const SPECULATIVE_REUSE_JACCARD = 0.8; // token overlap needed to reuse the result
 
 module.exports = {
   VOICE_STREAMING_STT,

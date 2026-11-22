@@ -9,13 +9,16 @@ import { SourceDrawerBody } from '../src/components/SourceDrawerBody.jsx';
 
 const render = (drawer) =>
   renderToStaticMarkup(
-    React.createElement(SourceDrawerBody, { drawer, effDark: false, onOpenArticle: () => {} }),
+    React.createElement(SourceDrawerBody, { drawer, effDark: false, onOpenArticle: () => {} })
   );
 
 describe('a KB source matched to a library article, with a URL', () => {
   const html = render({
-    title: 'Sleep Disturbances', org: 'Alzheimers NZ',
-    url: 'https://alzheimers.org.nz/', excerpt: '…', articleId: 'managing-sundowning',
+    title: 'Sleep Disturbances',
+    org: 'Alzheimers NZ',
+    url: 'https://alzheimers.org.nz/',
+    excerpt: '…',
+    articleId: 'managing-sundowning',
   });
 
   it('offers the in-app article AND the original source', () => {
@@ -37,7 +40,12 @@ describe('a KB source matched to a library article, with a URL', () => {
 });
 
 describe('a KB source with a URL and no article match', () => {
-  const html = render({ title: 'iSupport module', org: 'World Health Organization', url: 'https://iris.who.int/handle/10665/324794', excerpt: '…' });
+  const html = render({
+    title: 'iSupport module',
+    org: 'World Health Organization',
+    url: 'https://iris.who.int/handle/10665/324794',
+    excerpt: '…',
+  });
 
   it('offers only the external link, with the new-tab wording', () => {
     expect(html).toContain('https://iris.who.int/handle/10665/324794');
@@ -64,7 +72,11 @@ describe('a KB source with no URL at all', () => {
 });
 
 describe('a mock-mode citation (a library article itself)', () => {
-  const html = render({ id: 'managing-sundowning', title: 'Managing Sundowning Behaviour', cat: 'caregiving' });
+  const html = render({
+    id: 'managing-sundowning',
+    title: 'Managing Sundowning Behaviour',
+    cat: 'caregiving',
+  });
 
   it('renders the article path with its reviewed-content meta', () => {
     expect(html).toContain('Read full article');

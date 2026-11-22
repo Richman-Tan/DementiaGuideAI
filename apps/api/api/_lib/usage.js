@@ -27,7 +27,9 @@ export function recordUsage({ userId, kind, units, model }) {
         await insertIgnoringConflicts('usage_events', [row], 'id');
         console.warn('[usage] recorded without `model` — run the backend_v1 migration');
         return;
-      } catch { /* fall through to the warning below */ }
+      } catch {
+        /* fall through to the warning below */
+      }
     }
     console.warn(`[usage] could not record ${kind}: ${err?.message ?? err}`);
   });

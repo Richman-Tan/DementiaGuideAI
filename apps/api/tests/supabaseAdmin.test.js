@@ -7,7 +7,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { stubFetch, jsonResponse } from './helpers.js';
 
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
 
 const URL_BASE = 'https://example.supabase.co';
 const KEY = 'service-role-test';
@@ -16,7 +20,12 @@ const KEY = 'service-role-test';
 async function loadAdmin(env = {}) {
   vi.resetModules();
   vi.unstubAllEnvs();
-  const all = { SUPABASE_URL: URL_BASE, SUPABASE_SERVICE_ROLE_KEY: KEY, VITE_SUPABASE_URL: undefined, ...env };
+  const all = {
+    SUPABASE_URL: URL_BASE,
+    SUPABASE_SERVICE_ROLE_KEY: KEY,
+    VITE_SUPABASE_URL: undefined,
+    ...env,
+  };
   for (const [k, v] of Object.entries(all)) vi.stubEnv(k, v ?? '');
   return import('../api/_lib/supabaseAdmin.js');
 }
@@ -53,7 +62,11 @@ describe('rpc', () => {
     const c = call(fetch);
     expect(c.url).toBe(`${URL_BASE}/rest/v1/rpc/claim_participant_number`);
     expect(c.method).toBe('POST');
-    expect(c.headers).toEqual({ apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' });
+    expect(c.headers).toEqual({
+      apikey: KEY,
+      Authorization: `Bearer ${KEY}`,
+      'Content-Type': 'application/json',
+    });
     expect(c.json).toEqual({});
   });
 
@@ -69,9 +82,13 @@ describe('selectOne', () => {
     const admin = await loadAdmin();
     const row = { id: 'abc', participant_code: 'P07' };
     const fetch = stubFetch(jsonResponse([row]));
-    expect(await admin.selectOne('study_sessions', 'id,participant_code', 'participant_code=eq.P07')).toEqual(row);
+    expect(
+      await admin.selectOne('study_sessions', 'id,participant_code', 'participant_code=eq.P07')
+    ).toEqual(row);
     const c = call(fetch);
-    expect(c.url).toBe(`${URL_BASE}/rest/v1/study_sessions?select=id%2Cparticipant_code&participant_code=eq.P07&limit=1`);
+    expect(c.url).toBe(
+      `${URL_BASE}/rest/v1/study_sessions?select=id%2Cparticipant_code&participant_code=eq.P07&limit=1`
+    );
     expect(c.method).toBe('GET');
     expect(c.headers.Authorization).toBe(`Bearer ${KEY}`);
   });
@@ -87,7 +104,9 @@ describe('insertReturning', () => {
   it('POSTs the row as a one-element array and asks for the representation back', async () => {
     const admin = await loadAdmin();
     const fetch = stubFetch(jsonResponse([{ id: 'new-id' }], 201));
-    expect(await admin.insertReturning('study_sessions', { participant_code: 'P31' }, 'id')).toEqual({ id: 'new-id' });
+    expect(
+      await admin.insertReturning('study_sessions', { participant_code: 'P31' }, 'id')
+    ).toEqual({ id: 'new-id' });
     const c = call(fetch);
     expect(c.url).toBe(`${URL_BASE}/rest/v1/study_sessions?select=id`);
     expect(c.method).toBe('POST');
@@ -105,10 +124,15 @@ describe('insertReturning', () => {
 describe('insertManyReturning', () => {
   it('POSTs the rows as an array and returns the representation for each', async () => {
     const admin = await loadAdmin();
-    const written = [{ id: 'a', display_title: 'A' }, { id: 'b', display_title: 'B' }];
+    const written = [
+      { id: 'a', display_title: 'A' },
+      { id: 'b', display_title: 'B' },
+    ];
     const fetch = stubFetch(jsonResponse(written, 201));
     const rows = [{ id: 'a' }, { id: 'b' }];
-    expect(await admin.insertManyReturning('knowledge_chunks', rows, 'id,display_title')).toEqual(written);
+    expect(await admin.insertManyReturning('knowledge_chunks', rows, 'id,display_title')).toEqual(
+      written
+    );
     const c = call(fetch);
     expect(c.url).toBe(`${URL_BASE}/rest/v1/knowledge_chunks?select=id%2Cdisplay_title`);
     expect(c.headers.Prefer).toBe('return=representation');
@@ -164,14 +188,18 @@ describe('insertIgnoringConflicts', () => {
   it('assumes every row landed when the count is missing', async () => {
     const admin = await loadAdmin();
     stubFetch(new Response(null, { status: 204 }));
-    expect(await admin.insertIgnoringConflicts('usage_events', [{ a: 1 }, { a: 2 }, { a: 3 }], 'id')).toBe(3);
+    expect(
+      await admin.insertIgnoringConflicts('usage_events', [{ a: 1 }, { a: 2 }, { a: 3 }], 'id')
+    ).toBe(3);
   });
 });
 
 describe('updateWhere', () => {
   it('PATCHes the matching rows with return=minimal', async () => {
     const admin = await loadAdmin();
-    const fetch = stubFetch(new Response(null, { status: 204, headers: { 'Content-Range': '0-0/*' } }));
+    const fetch = stubFetch(
+      new Response(null, { status: 204, headers: { 'Content-Range': '0-0/*' } })
+    );
     const out = await admin.updateWhere('study_sessions', { step: 'task' }, 'id=eq.abc');
     expect(out).toEqual({ rows: null, contentRange: '0-0/*' });
     const c = call(fetch);
@@ -186,14 +214,21 @@ describe('errors', () => {
   it('throws with the status, logging the upstream detail rather than putting it in the message', async () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
     const admin = await loadAdmin();
-    const body = JSON.stringify({ message: 'duplicate key', details: 'participant_code=P07 row contents' });
+    const body = JSON.stringify({
+      message: 'duplicate key',
+      details: 'participant_code=P07 row contents',
+    });
     stubFetch(new Response(body, { status: 409 }));
     const thrown = await admin.insertReturning('study_sessions', {}, 'id').catch((e) => e);
     expect(thrown).toBeInstanceOf(Error);
     expect(thrown.message).toBe('PostgREST 409');
     expect(thrown.status).toBe(409);
     expect(thrown.message).not.toContain('P07');
-    expect(err).toHaveBeenCalledWith(expect.stringContaining('PostgREST 409 on study_sessions?select=id: {"message":"duplicate key"'));
+    expect(err).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'PostgREST 409 on study_sessions?select=id: {"message":"duplicate key"'
+      )
+    );
   });
 
   it('caps the logged detail at 300 characters', async () => {
@@ -208,9 +243,16 @@ describe('errors', () => {
   it('still throws the status when the error body cannot be read', async () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
     const admin = await loadAdmin();
-    const broken = new ReadableStream({ start(c) { c.error(new Error('connection reset')); } });
+    const broken = new ReadableStream({
+      start(c) {
+        c.error(new Error('connection reset'));
+      },
+    });
     stubFetch(new Response(broken, { status: 503 }));
-    await expect(admin.updateWhere('study_sessions', {}, 'id=eq.x')).rejects.toMatchObject({ message: 'PostgREST 503', status: 503 });
+    await expect(admin.updateWhere('study_sessions', {}, 'id=eq.x')).rejects.toMatchObject({
+      message: 'PostgREST 503',
+      status: 503,
+    });
     expect(err.mock.calls[0][0]).toMatch(/PostgREST 503 on study_sessions\?id=eq\.x: $/);
   });
 });

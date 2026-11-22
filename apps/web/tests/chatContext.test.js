@@ -27,8 +27,13 @@ vi.mock('../src/state/conversationStore.js', () => ({
   deleteAllConversations: vi.fn(async () => ({ deleted: true, scope: 'server' })),
 }));
 vi.mock('../src/state/AuthContext.jsx', () => ({ useAuth: () => h.auth }));
-vi.mock('../src/state/SettingsContext.jsx', () => ({ useSettings: () => ({ settings: h.settings }) }));
-vi.mock('../src/services/chatService.js', () => ({ isMockMode: vi.fn(() => false), generateReply: vi.fn() }));
+vi.mock('../src/state/SettingsContext.jsx', () => ({
+  useSettings: () => ({ settings: h.settings }),
+}));
+vi.mock('../src/services/chatService.js', () => ({
+  isMockMode: vi.fn(() => false),
+  generateReply: vi.fn(),
+}));
 vi.mock('../src/lib/latency.js', () => ({ createTurnTimer: vi.fn(() => h.turn) }));
 
 const { ChatProvider, useChat } = await import('../src/state/ChatContext.jsx');
@@ -39,8 +44,12 @@ const { createTurnTimer } = await import('../src/lib/latency.js');
 const mount = () => renderHook(() => useChat(), { wrapper: ChatProvider });
 const texts = (msgs) => msgs.map((m) => `${m.role}:${m.text}`);
 const deferred = () => {
-  let resolve; let reject;
-  const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
   return { promise, resolve, reject };
 };
 
@@ -152,13 +161,20 @@ describe('a typed turn', () => {
   it('streams the reply into one bubble, then finalises and persists it', async () => {
     const scroll = vi.fn();
     const seen = [];
-    generateReply.mockImplementation(async ({ onToken, onStage, question, settings, history, signal }) => {
-      seen.push({ question, settings, history, signal });
-      onStage('ragDone');
-      onToken('Rest');
-      onToken('Rest helps');
-      return { text: 'Rest helps [1].', citations: [{ num: 1 }], sources: [{ id: 's1' }, { num: 2 }, {}], safety: true };
-    });
+    generateReply.mockImplementation(
+      async ({ onToken, onStage, question, settings, history, signal }) => {
+        seen.push({ question, settings, history, signal });
+        onStage('ragDone');
+        onToken('Rest');
+        onToken('Rest helps');
+        return {
+          text: 'Rest helps [1].',
+          citations: [{ num: 1 }],
+          sources: [{ id: 's1' }, { num: 2 }, {}],
+          safety: true,
+        };
+      }
+    );
     const { result } = await mount();
     await settle();
     result.current.scrollCb.current = scroll;
@@ -173,8 +189,12 @@ describe('a typed turn', () => {
     expect(user).toMatchObject({ role: 'user', text: 'How do I rest?' });
     expect(user.time).toMatch(/^\d{1,2}:\d{2} (am|pm)$/);
     expect(aria).toMatchObject({
-      role: 'aria', text: 'Rest helps [1].', citations: [{ num: 1 }], sources: [{ id: 's1' }, { num: 2 }, {}],
-      safety: true, streaming: false,
+      role: 'aria',
+      text: 'Rest helps [1].',
+      citations: [{ num: 1 }],
+      sources: [{ id: 's1' }, { num: 2 }, {}],
+      safety: true,
+      streaming: false,
     });
     expect(result.current.typing).toBe(false);
     expect(store.appendMessage.mock.calls).toEqual([
@@ -191,7 +211,10 @@ describe('a typed turn', () => {
   it('shows the typing state until the first token', async () => {
     const gen = deferred();
     let onToken;
-    generateReply.mockImplementation((opts) => { onToken = opts.onToken; return gen.promise; });
+    generateReply.mockImplementation((opts) => {
+      onToken = opts.onToken;
+      return gen.promise;
+    });
     const { result } = await mount();
     await settle();
     await flush(() => result.current.send('Q'));
@@ -199,9 +222,18 @@ describe('a typed turn', () => {
     expect(texts(result.current.messages).slice(-1)).toEqual(['user:Q']);
     await flush(() => onToken('Partial'));
     expect(result.current.typing).toBe(false);
-    expect(result.current.messages.at(-1)).toMatchObject({ role: 'aria', text: 'Partial', streaming: true });
+    expect(result.current.messages.at(-1)).toMatchObject({
+      role: 'aria',
+      text: 'Partial',
+      streaming: true,
+    });
     await flush(() => gen.resolve({ text: 'Done' }));
-    expect(result.current.messages.at(-1)).toMatchObject({ text: 'Done', citations: [], sources: null, safety: false });
+    expect(result.current.messages.at(-1)).toMatchObject({
+      text: 'Done',
+      citations: [],
+      sources: null,
+      safety: false,
+    });
   });
 
   it('ignores blank input and a second send while a turn is in flight', async () => {
@@ -220,7 +252,9 @@ describe('a typed turn', () => {
   });
 
   it('a failure reports the error, drops the empty bubble, and retry re-asks the same question', async () => {
-    generateReply.mockRejectedValueOnce(Object.assign(new Error('socket hang up'), { name: 'TypeError' }));
+    generateReply.mockRejectedValueOnce(
+      Object.assign(new Error('socket hang up'), { name: 'TypeError' })
+    );
     const { result } = await mount();
     await settle();
     await flush(() => result.current.send('Why?'));
@@ -242,12 +276,16 @@ describe('a typed turn', () => {
 
   it('a refused guest code gets the credential copy', async () => {
     saveAccess('guest-access-code-0001');
-    generateReply.mockRejectedValueOnce(Object.assign(new Error('nope'), { name: 'StudyAccessError' }));
+    generateReply.mockRejectedValueOnce(
+      Object.assign(new Error('nope'), { name: 'StudyAccessError' })
+    );
     const { result } = await mount();
     await settle();
     await flush(() => result.current.send('Q'));
     await settle();
-    expect(result.current.chatErrorMsg).toBe('Your access code is no longer accepted — update it in Settings.');
+    expect(result.current.chatErrorMsg).toBe(
+      'Your access code is no longer accepted — update it in Settings.'
+    );
   });
 
   it('a non-Error rejection is still reported', async () => {
@@ -292,7 +330,10 @@ describe('cancelling a turn', () => {
   it('New conversation aborts the turn; its late tokens and result are ignored', async () => {
     const gen = deferred();
     let opts;
-    generateReply.mockImplementation((o) => { opts = o; return gen.promise; });
+    generateReply.mockImplementation((o) => {
+      opts = o;
+      return gen.promise;
+    });
     const { result } = await mount();
     await settle();
     await flush(() => result.current.send('Q'));
@@ -301,7 +342,10 @@ describe('cancelling a turn', () => {
     await flush(() => opts.onToken('late token'));
     await flush(() => gen.resolve({ text: 'late answer' }));
     expect(result.current.messages).toEqual([]);
-    expect(store.appendMessage).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ role: 'aria' }));
+    expect(store.appendMessage).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ role: 'aria' })
+    );
   });
 
   it('an error from an aborted turn is not reported', async () => {
@@ -318,7 +362,10 @@ describe('cancelling a turn', () => {
 
   it('unmounting aborts the in-flight turn', async () => {
     let signal;
-    generateReply.mockImplementation((o) => { signal = o.signal; return new Promise(() => {}); });
+    generateReply.mockImplementation((o) => {
+      signal = o.signal;
+      return new Promise(() => {});
+    });
     const { result, unmount } = await mount();
     await settle();
     await flush(() => result.current.send('Q'));
@@ -350,22 +397,34 @@ describe('newConvo / appendMessage / clearHistory', () => {
     const { result } = await mount();
     await settle();
     const before = result.current.messages.length;
-    await flush(() => result.current.appendMessage({ role: 'aria', text: 'Spoken answer', citations: [] }));
+    await flush(() =>
+      result.current.appendMessage({ role: 'aria', text: 'Spoken answer', citations: [] })
+    );
     const added = result.current.messages.at(-1);
     expect(result.current.messages).toHaveLength(before + 1);
     expect(added).toMatchObject({ role: 'aria', text: 'Spoken answer' });
     expect(added.time).toMatch(/(am|pm)$/);
     expect(store.saveCached).toHaveBeenLastCalledWith(result.current.messages);
-    expect(store.appendMessage).toHaveBeenLastCalledWith('conv-1', { role: 'aria', text: 'Spoken answer', citations: [] });
+    expect(store.appendMessage).toHaveBeenLastCalledWith('conv-1', {
+      role: 'aria',
+      text: 'Spoken answer',
+      citations: [],
+    });
   });
 
   it('clearHistory keeps the screen when the delete fails', async () => {
-    store.deleteAllConversations.mockResolvedValue({ deleted: false, scope: 'server', message: 'offline' });
+    store.deleteAllConversations.mockResolvedValue({
+      deleted: false,
+      scope: 'server',
+      message: 'offline',
+    });
     const { result } = await mount();
     await settle();
     const before = result.current.messages;
     let out;
-    await flush(async () => { out = await result.current.clearHistory(); });
+    await flush(async () => {
+      out = await result.current.clearHistory();
+    });
     expect(out).toEqual({ deleted: false, scope: 'server', message: 'offline' });
     expect(result.current.messages).toBe(before);
     expect(store.startNewConversation).not.toHaveBeenCalled();
@@ -376,7 +435,9 @@ describe('newConvo / appendMessage / clearHistory', () => {
     const { result } = await mount();
     await settle();
     let out;
-    await flush(async () => { out = await result.current.clearHistory(); });
+    await flush(async () => {
+      out = await result.current.clearHistory();
+    });
     expect(out).toEqual({ deleted: true, scope: 'server' });
     expect(store.deleteAllConversations).toHaveBeenCalledWith('u1');
     expect(result.current.messages).toEqual([]);

@@ -3,7 +3,11 @@
 // the mobile Jest run and never by the web unit or end-to-end runs. These pin
 // the parser chosen for each kind of file.
 import { describe, it, expect } from 'vitest';
-import { instrumenterFor, isInstrumented, COVERAGE_VARIABLE } from '../../../scripts/test/istanbul-pre-plugin.mjs';
+import {
+  instrumenterFor,
+  isInstrumented,
+  COVERAGE_VARIABLE,
+} from '../../../scripts/test/istanbul-pre-plugin.mjs';
 
 const ROOT = '/repo';
 const DIRS = ['apps/web/src/', 'packages/core/'];
@@ -12,18 +16,25 @@ function instrument(file, code) {
   const inst = instrumenterFor(file);
   const out = inst.instrumentSync(code, file);
   const coverage = inst.lastFileCoverage();
-  return { out, functions: Object.values(coverage.fnMap).map((f) => f.name), statements: Object.keys(coverage.statementMap).length };
+  return {
+    out,
+    functions: Object.values(coverage.fnMap).map((f) => f.name),
+    statements: Object.keys(coverage.statementMap).length,
+  };
 }
 
 describe('instrumenterFor', () => {
   it('measures TypeScript, leaving the types for the build to strip', () => {
-    const { out, functions, statements } = instrument('/repo/packages/core/rag/rank.ts', `
+    const { out, functions, statements } = instrument(
+      '/repo/packages/core/rag/rank.ts',
+      `
       interface Chunk { id: string; score: number }
       export function best(chunks: Chunk[]): Chunk | undefined {
         const sorted = [...chunks].sort((a, b) => b.score - a.score);
         return sorted[0];
       }
-    `);
+    `
+    );
     expect(out).toContain(COVERAGE_VARIABLE);
     expect(out).toContain('interface Chunk');
     expect(functions).toContain('best');
@@ -44,11 +55,14 @@ describe('instrumenterFor', () => {
   });
 
   it('measures TSX', () => {
-    const { functions } = instrument('/repo/apps/web/src/ui/Tag.tsx', `
+    const { functions } = instrument(
+      '/repo/apps/web/src/ui/Tag.tsx',
+      `
       export function Tag({ label }: { label: string }) {
         return <b>{label}</b>;
       }
-    `);
+    `
+    );
     expect(functions).toContain('Tag');
   });
 

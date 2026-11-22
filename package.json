@@ -76,7 +76,8 @@
     "brand:icons": "node scripts/brand/build-icons.js",
     "kb:ingest": "node scripts/ingest/ingest.mjs",
     "kb:ingest:dry": "node scripts/ingest/ingest.mjs --dry-run",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
@@ -85,9 +86,18 @@
     "eslint-config-expo": "^57.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
+    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "lint-staged": "^17.6.2",
     "patch-package": "^8.0.1",
     "pdf-parse": "^2.4.5",
     "prettier": "^3.9.5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "prettier --write",
+      "eslint --no-warn-ignored"
+    ],
+    "*.{json,css,yml,yaml}": "prettier --write"
   }
 }

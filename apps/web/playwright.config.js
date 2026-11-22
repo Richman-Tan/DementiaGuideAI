@@ -30,7 +30,8 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}`,
     // Pin a plain Chrome UA so a future Playwright bump changing the headless
     // UA string cannot change what the app sees.
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    userAgent:
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

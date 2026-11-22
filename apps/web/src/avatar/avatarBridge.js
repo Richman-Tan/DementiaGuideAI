@@ -20,7 +20,9 @@ let sessionTarget = null; // pinned engine for the active streaming session
 
 export const voiceAvatar = {
   // Unity renderer doesn't stream (mobile parity) — consult the live target.
-  get supportsStreamingAudio() { return target().supportsStreamingAudio; },
+  get supportsStreamingAudio() {
+    return target().supportsStreamingAudio;
+  },
 
   // Chrome's autoplay policy unblocks AudioContext.resume() after any user
   // gesture on the page (sticky activation) — the mic tap covers every engine
@@ -30,8 +32,12 @@ export const voiceAvatar = {
     peekUnityAvatar()?.unlockAudio();
   },
 
-  setOnAudioStart(cb) { (sessionTarget ?? target()).setOnAudioStart(cb); },
-  playAudio(segment) { return target().playAudio(segment); },
+  setOnAudioStart(cb) {
+    (sessionTarget ?? target()).setOnAudioStart(cb);
+  },
+  playAudio(segment) {
+    return target().playAudio(segment);
+  },
 
   startStreamingPlayback(sessionId, sampleRate, emotion) {
     sessionTarget = target();
@@ -49,9 +55,13 @@ export const voiceAvatar = {
     }
   },
 
-  setSpeechEmotion(emotion) { (sessionTarget ?? target()).setSpeechEmotion(emotion); },
+  setSpeechEmotion(emotion) {
+    (sessionTarget ?? target()).setSpeechEmotion(emotion);
+  },
   // The Unity mount also sends its state; the message is idempotent.
-  setAvatarState(state) { peekUnityAvatar()?.setAvatarState(state); },
+  setAvatarState(state) {
+    peekUnityAvatar()?.setAvatarState(state);
+  },
   stopAudio() {
     // Broadcast — barge-in must silence whichever engine is playing.
     peekUnityAvatar()?.stopAudio();

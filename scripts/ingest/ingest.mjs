@@ -32,7 +32,13 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { getEntry, REGISTRY } = require('./registry.js');
 const { contentHash, normalise } = require('./chunking.js');
-const { withRetry, pdfBufferToText, fetchUrlToArticle, textToChunks, makeOpenAIClient } = require('./pipeline.js');
+const {
+  withRetry,
+  pdfBufferToText,
+  fetchUrlToArticle,
+  textToChunks,
+  makeOpenAIClient,
+} = require('./pipeline.js');
 const { EMBEDDING_MODEL, CATEGORIES } = require('../../packages/core/rag/ragConfig.js');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -56,18 +62,29 @@ const OPENAI_API_KEY = env.OPENAI_API_KEY;
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
-const argVal = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
+const argVal = (name) => {
+  const i = args.indexOf(name);
+  return i === -1 ? null : args[i + 1];
+};
 const DOC = argVal('--doc');
 const DRY_RUN = args.includes('--dry-run');
 const PRUNE = args.includes('--prune');
 const BACKFILL_TITLES = args.includes('--backfill-titles');
 const FORCE_TITLES = args.includes('--force-titles');
-const ONLY_IDS = argVal('--only')?.split(',').map(s => s.trim()).filter(Boolean) ?? null;
+const ONLY_IDS =
+  argVal('--only')
+    ?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean) ?? null;
 const AVOID_TITLE = argVal('--avoid'); // manual override for a KNOWN cross-document collision (see --only)
 
 if (!DOC) {
-  console.error('Usage: node scripts/ingest/ingest.mjs --doc <document_id> [--dry-run] [--prune] [--backfill-titles [--force-titles | --only <id[,id...]> [--avoid "<title>"]]]');
-  console.error(`Registered documents: ${REGISTRY.map(e => `${e.document_id}${e.enabled ? '' : ' (disabled)'}`).join(', ')}`);
+  console.error(
+    'Usage: node scripts/ingest/ingest.mjs --doc <document_id> [--dry-run] [--prune] [--backfill-titles [--force-titles | --only <id[,id...]> [--avoid "<title>"]]]'
+  );
+  console.error(
+    `Registered documents: ${REGISTRY.map((e) => `${e.document_id}${e.enabled ? '' : ' (disabled)'}`).join(', ')}`
+  );
   process.exit(1);
 }
 // --backfill-titles only reads/patches display_title on rows that already
@@ -77,15 +94,21 @@ if (!DOC) {
 // versioned re-ingestion planned in registry.js but not yet run/pruned).
 const entry = BACKFILL_TITLES ? null : getEntry(DOC);
 if (!BACKFILL_TITLES && !entry) {
-  console.error(`Unknown document_id '${DOC}'. Add it to scripts/ingest/registry.js first — unregistered content is not ingested.`);
+  console.error(
+    `Unknown document_id '${DOC}'. Add it to scripts/ingest/registry.js first — unregistered content is not ingested.`
+  );
   process.exit(1);
 }
 if (!BACKFILL_TITLES && !entry.enabled) {
-  console.error(`'${DOC}' is disabled in the registry (licence gate). Confirm licence/provenance, set enabled: true, then re-run.`);
+  console.error(
+    `'${DOC}' is disabled in the registry (licence gate). Confirm licence/provenance, set enabled: true, then re-run.`
+  );
   process.exit(1);
 }
 if (!SUPABASE_URL || (!DRY_RUN && !SERVICE_KEY) || !OPENAI_API_KEY) {
-  console.error('Missing env: need SUPABASE_URL (or EXPO_PUBLIC_SUPABASE_URL), SUPABASE_SERVICE_ROLE_KEY (unless --dry-run), OPENAI_API_KEY.');
+  console.error(
+    'Missing env: need SUPABASE_URL (or EXPO_PUBLIC_SUPABASE_URL), SUPABASE_SERVICE_ROLE_KEY (unless --dry-run), OPENAI_API_KEY.'
+  );
   process.exit(1);
 }
 
@@ -95,8 +118,13 @@ const openai = makeOpenAIClient(OPENAI_API_KEY, { embeddingModel: EMBEDDING_MODE
 // show a real diff without the service-role key; writes always need it.
 const ANON_KEY = env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 const sbHeaders = (extra = {}, { write = true } = {}) => {
-  const key = write ? SERVICE_KEY : (SERVICE_KEY || ANON_KEY);
-  return { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...extra };
+  const key = write ? SERVICE_KEY : SERVICE_KEY || ANON_KEY;
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    'Content-Type': 'application/json',
+    ...extra,
+  };
 };
 
 // ─── Loaders ──────────────────────────────────────────────────────────────────
@@ -109,10 +137,13 @@ function loadCuratedJs(entry) {
   // nothing type-checks or lints it. A repo reorganisation moved this file once
   // already and the bare readFileSync just threw ENOENT with no hint why.
   if (!existsSync(path)) throw new Error(`Source file missing: ${entry.local_path}`);
-  const src = readFileSync(path, 'utf8').replace(/^export const KNOWLEDGE_BASE/m, 'const KNOWLEDGE_BASE');
+  const src = readFileSync(path, 'utf8').replace(
+    /^export const KNOWLEDGE_BASE/m,
+    'const KNOWLEDGE_BASE'
+  );
   // eslint-disable-next-line no-new-func
   const kb = new Function(`${src}\nreturn KNOWLEDGE_BASE;`)();
-  return kb.map(c => ({
+  return kb.map((c) => ({
     id: c.id, // hand-authored ids preserved (eval labels reference them)
     category: c.category,
     title: c.title,
@@ -126,10 +157,11 @@ function loadCuratedJs(entry) {
 
 async function loadPdf(entry) {
   const path = resolve(ROOT, entry.local_path);
-  if (!existsSync(path)) throw new Error(`Source file missing: ${entry.local_path} (see content/sources/MANIFEST.md)`);
+  if (!existsSync(path))
+    throw new Error(`Source file missing: ${entry.local_path} (see content/sources/MANIFEST.md)`);
   const text = await pdfBufferToText(readFileSync(path));
   const idBase = entry.document_id.replace(/[^a-z0-9]+/gi, '_').slice(0, 30);
-  return textToChunks(text, { idBase, sourceTitle: entry.title }).map(c => ({
+  return textToChunks(text, { idBase, sourceTitle: entry.title }).map((c) => ({
     ...c,
     category: entry.category,
     tags: [],
@@ -142,19 +174,21 @@ function loadText(entry) {
   const path = resolve(ROOT, entry.local_path);
   if (!existsSync(path)) throw new Error(`Source file missing: ${entry.local_path}`);
   const idBase = entry.document_id.replace(/[^a-z0-9]+/gi, '_').slice(0, 30);
-  return textToChunks(readFileSync(path, 'utf8'), { idBase, sourceTitle: entry.title }).map(c => ({
-    ...c,
-    category: entry.category,
-    tags: [],
-    source_url: entry.source_url,
-    source_org: entry.source_org,
-  }));
+  return textToChunks(readFileSync(path, 'utf8'), { idBase, sourceTitle: entry.title }).map(
+    (c) => ({
+      ...c,
+      category: entry.category,
+      tags: [],
+      source_url: entry.source_url,
+      source_org: entry.source_org,
+    })
+  );
 }
 
 async function loadUrl(entry) {
   const { text, title } = await fetchUrlToArticle(entry.source_url);
   const idBase = entry.document_id.replace(/[^a-z0-9]+/gi, '_').slice(0, 30);
-  return textToChunks(text, { idBase, sourceTitle: title || entry.title }).map(c => ({
+  return textToChunks(text, { idBase, sourceTitle: title || entry.title }).map((c) => ({
     ...c,
     category: entry.category,
     tags: [],
@@ -184,12 +218,14 @@ const LOADERS = { 'curated-js': loadCuratedJs, pdf: loadPdf, text: loadText, url
 async function fetchExisting(documentId) {
   const r = await fetch(
     `${SUPABASE_URL}/rest/v1/knowledge_chunks?document_id=eq.${encodeURIComponent(documentId)}&select=id,content_hash,title,content,display_title`,
-    { headers: sbHeaders({}, { write: false }) },
+    { headers: sbHeaders({}, { write: false }) }
   );
   if (!r.ok) {
     const body = await r.text();
     if (/content_hash|document_id/.test(body) && /column/.test(body)) {
-      throw new Error('Provenance columns missing — run scripts/migrations/2026-07-17_a_provenance_columns.sql first.');
+      throw new Error(
+        'Provenance columns missing — run scripts/migrations/2026-07-17_a_provenance_columns.sql first.'
+      );
     }
     throw new Error(`Existing-rows fetch failed (${r.status}): ${body.slice(0, 200)}`);
   }
@@ -197,12 +233,18 @@ async function fetchExisting(documentId) {
 }
 
 async function patchDisplayTitle(id, displayTitle) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/knowledge_chunks?id=eq.${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    headers: sbHeaders(),
-    body: JSON.stringify({ display_title: displayTitle }),
-  });
-  if (!r.ok) throw new Error(`display_title patch failed for ${id} (${r.status}): ${(await r.text()).slice(0, 200)}`);
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/knowledge_chunks?id=eq.${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      headers: sbHeaders(),
+      body: JSON.stringify({ display_title: displayTitle }),
+    }
+  );
+  if (!r.ok)
+    throw new Error(
+      `display_title patch failed for ${id} (${r.status}): ${(await r.text()).slice(0, 200)}`
+    );
 }
 
 // force=true regenerates EVERY row's display_title (e.g. to fix titles that
@@ -210,18 +252,26 @@ async function patchDisplayTitle(id, displayTitle) {
 // missing one are touched.
 async function backfillTitles(documentId, { force = false, only = null, avoid = null } = {}) {
   const rows = await fetchExisting(documentId);
-  const targets = only ? rows.filter(r => only.includes(r.id))
-    : force ? rows
-    : rows.filter(r => !r.display_title);
-  console.log(`${documentId}: ${targets.length} of ${rows.length} chunks ${only ? `(--only ${only.join(',')})` : force ? '(forced regeneration)' : 'missing display_title'}.`);
-  const targetIds = new Set(targets.map(r => r.id));
+  const targets = only
+    ? rows.filter((r) => only.includes(r.id))
+    : force
+      ? rows
+      : rows.filter((r) => !r.display_title);
+  console.log(
+    `${documentId}: ${targets.length} of ${rows.length} chunks ${only ? `(--only ${only.join(',')})` : force ? '(forced regeneration)' : 'missing display_title'}.`
+  );
+  const targetIds = new Set(targets.map((r) => r.id));
   // Seed same-document dedup from every OTHER row's current title, excluding
   // the targets themselves so a row being regenerated doesn't "collide" with
   // its own stale title. Cross-document collisions (this function only sees
   // one document_id) are handled instead via an explicit --avoid override.
-  const used = new Set(rows.filter(r => r.display_title && !targetIds.has(r.id)).map(r => r.display_title));
+  const used = new Set(
+    rows.filter((r) => r.display_title && !targetIds.has(r.id)).map((r) => r.display_title)
+  );
   for (const row of targets) {
-    row.display_title = avoid ? await openai.simplifyTitle(row, { avoid }) : await openai.simplifyTitleUnique(row, used);
+    row.display_title = avoid
+      ? await openai.simplifyTitle(row, { avoid })
+      : await openai.simplifyTitleUnique(row, used);
     console.log(`  ${row.id}\n    "${row.title.slice(0, 70)}"\n    → "${row.display_title}"`);
     if (!DRY_RUN) await patchDisplayTitle(row.id, row.display_title);
   }
@@ -232,11 +282,13 @@ async function backfillTitles(documentId, { force = false, only = null, avoid = 
 async function upsert(rows) {
   for (let i = 0; i < rows.length; i += 50) {
     const batch = rows.slice(i, i + 50);
-    const r = await withRetry('upsert', () => fetch(`${SUPABASE_URL}/rest/v1/knowledge_chunks`, {
-      method: 'POST',
-      headers: sbHeaders({ Prefer: 'resolution=merge-duplicates' }),
-      body: JSON.stringify(batch),
-    }));
+    const r = await withRetry('upsert', () =>
+      fetch(`${SUPABASE_URL}/rest/v1/knowledge_chunks`, {
+        method: 'POST',
+        headers: sbHeaders({ Prefer: 'resolution=merge-duplicates' }),
+        body: JSON.stringify(batch),
+      })
+    );
     if (!r.ok) throw new Error(`Upsert failed (${r.status}): ${(await r.text()).slice(0, 300)}`);
   }
 }
@@ -249,10 +301,10 @@ async function upsert(rows) {
 // table — exactly the kind of silent corruption that is worth one extra query.
 async function assertSearchVectorPopulated(ids) {
   const sample = ids.slice(0, 50);
-  const list = sample.map(id => `"${id}"`).join(',');
+  const list = sample.map((id) => `"${id}"`).join(',');
   const r = await fetch(
     `${SUPABASE_URL}/rest/v1/knowledge_chunks?id=in.(${encodeURIComponent(list)})&search_vector=is.null&select=id`,
-    { headers: sbHeaders({}, { write: false }) },
+    { headers: sbHeaders({}, { write: false }) }
   );
   if (!r.ok) {
     console.warn(`  (could not verify search_vector: HTTP ${r.status})`);
@@ -262,8 +314,8 @@ async function assertSearchVectorPopulated(ids) {
   if (nulls.length > 0) {
     throw new Error(
       `${nulls.length} of ${sample.length} checked chunks have a NULL search_vector (e.g. ${nulls[0].id}).\n` +
-      'Keyword retrieval will silently miss them. The trigger that maintains search_vector is missing —\n' +
-      'inspect it with scripts/migrations/2026-07-16_production_snapshot_request.sql and restore it before re-ingesting.',
+        'Keyword retrieval will silently miss them. The trigger that maintains search_vector is missing —\n' +
+        'inspect it with scripts/migrations/2026-07-16_production_snapshot_request.sql and restore it before re-ingesting.'
     );
   }
   console.log(`Verified search_vector populated on ${sample.length} written chunk(s).`);
@@ -271,11 +323,17 @@ async function assertSearchVectorPopulated(ids) {
 
 async function deleteIds(ids) {
   for (let i = 0; i < ids.length; i += 50) {
-    const list = ids.slice(i, i + 50).map(id => `"${id}"`).join(',');
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/knowledge_chunks?id=in.(${encodeURIComponent(list)})`, {
-      method: 'DELETE',
-      headers: sbHeaders(),
-    });
+    const list = ids
+      .slice(i, i + 50)
+      .map((id) => `"${id}"`)
+      .join(',');
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/knowledge_chunks?id=in.(${encodeURIComponent(list)})`,
+      {
+        method: 'DELETE',
+        headers: sbHeaders(),
+      }
+    );
     if (!r.ok) throw new Error(`Prune delete failed (${r.status})`);
   }
 }
@@ -283,18 +341,24 @@ async function deleteIds(ids) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   if (BACKFILL_TITLES) {
-    console.log(`Backfilling display_title for '${DOC}'${FORCE_TITLES ? ' [FORCE regenerate all]' : ''}${DRY_RUN ? ' [DRY RUN]' : ''}`);
+    console.log(
+      `Backfilling display_title for '${DOC}'${FORCE_TITLES ? ' [FORCE regenerate all]' : ''}${DRY_RUN ? ' [DRY RUN]' : ''}`
+    );
     await backfillTitles(DOC, { force: FORCE_TITLES, only: ONLY_IDS, avoid: AVOID_TITLE });
     return;
   }
 
-  console.log(`Ingesting '${entry.document_id}' (${entry.loader}: ${entry.local_path ?? entry.source_url})${DRY_RUN ? ' [DRY RUN]' : ''}`);
+  console.log(
+    `Ingesting '${entry.document_id}' (${entry.loader}: ${entry.local_path ?? entry.source_url})${DRY_RUN ? ' [DRY RUN]' : ''}`
+  );
   const chunks = await LOADERS[entry.loader](entry);
   console.log(`Loaded ${chunks.length} chunks from source.`);
 
   for (const c of chunks) {
     if (c.category && !CATEGORIES.includes(c.category)) {
-      throw new Error(`Chunk ${c.id} has unknown category '${c.category}' (valid: ${CATEGORIES.join(', ')})`);
+      throw new Error(
+        `Chunk ${c.id} has unknown category '${c.category}' (valid: ${CATEGORIES.join(', ')})`
+      );
     }
   }
 
@@ -305,17 +369,20 @@ async function main() {
     if (!DRY_RUN) throw e;
     console.warn(`(dry-run) could not diff against DB: ${e.message}`);
   }
-  const existingHashById = new Map(existing.map(r => [r.id, r.content_hash]));
-  const sourceIds = new Set(chunks.map(c => c.id));
+  const existingHashById = new Map(existing.map((r) => [r.id, r.content_hash]));
+  const sourceIds = new Set(chunks.map((c) => c.id));
 
-  const unchanged = chunks.filter(c => existingHashById.get(c.id) === c.contentHash);
-  const toWrite = chunks.filter(c => existingHashById.get(c.id) !== c.contentHash);
-  const orphans = existing.filter(r => !sourceIds.has(r.id)).map(r => r.id);
+  const unchanged = chunks.filter((c) => existingHashById.get(c.id) === c.contentHash);
+  const toWrite = chunks.filter((c) => existingHashById.get(c.id) !== c.contentHash);
+  const orphans = existing.filter((r) => !sourceIds.has(r.id)).map((r) => r.id);
 
-  console.log(`Diff: ${unchanged.length} unchanged (skipped), ${toWrite.length} new/changed, ${orphans.length} orphaned in DB${PRUNE ? ' (will prune)' : ' (kept; use --prune to remove)'}`);
+  console.log(
+    `Diff: ${unchanged.length} unchanged (skipped), ${toWrite.length} new/changed, ${orphans.length} orphaned in DB${PRUNE ? ' (will prune)' : ' (kept; use --prune to remove)'}`
+  );
 
   if (DRY_RUN) {
-    for (const c of toWrite.slice(0, 10)) console.log(`  would write: ${c.id}  "${c.title.slice(0, 70)}"`);
+    for (const c of toWrite.slice(0, 10))
+      console.log(`  would write: ${c.id}  "${c.title.slice(0, 70)}"`);
     if (toWrite.length > 10) console.log(`  … and ${toWrite.length - 10} more`);
     return;
   }
@@ -329,7 +396,7 @@ async function main() {
     console.log('Simplifying titles for caregiver display…');
     // Seed with unchanged siblings' titles too, so a re-ingested chunk can't
     // collide with a chunk from the same document that isn't being rewritten.
-    const usedTitles = new Set(existing.filter(r => r.display_title).map(r => r.display_title));
+    const usedTitles = new Set(existing.filter((r) => r.display_title).map((r) => r.display_title));
     for (const c of toWrite) {
       c.display_title = await openai.simplifyTitleUnique(c, usedTitles);
     }
@@ -338,41 +405,50 @@ async function main() {
     const now = new Date().toISOString();
     for (let i = 0; i < toWrite.length; i += EMBED_BATCH) {
       const batch = toWrite.slice(i, i + EMBED_BATCH);
-      const vectors = await openai.embedBatch(batch.map(c => `${c.title}. ${c.content}`));
-      batch.forEach((c, j) => { c.embedding = vectors[j]; });
+      const vectors = await openai.embedBatch(batch.map((c) => `${c.title}. ${c.content}`));
+      batch.forEach((c, j) => {
+        c.embedding = vectors[j];
+      });
       process.stdout.write('.');
     }
     console.log(' done.');
 
-    await upsert(toWrite.map(c => ({
-      id: c.id,
-      category: c.category,
-      title: c.title,
-      display_title: c.display_title,
-      content: c.content,
-      tags: c.tags,
-      source_url: c.source_url ?? null,
-      source_org: c.source_org ?? entry.source_org,
-      embedding: c.embedding,
-      document_id: entry.document_id,
-      source_version: entry.source_version,
-      country: entry.country,
-      chunk_level: c.chunk_level ?? null,
-      content_hash: c.contentHash,
-      embedding_model: EMBEDDING_MODEL,
-      embedded_at: now,
-      licence: entry.licence,
-    })));
+    await upsert(
+      toWrite.map((c) => ({
+        id: c.id,
+        category: c.category,
+        title: c.title,
+        display_title: c.display_title,
+        content: c.content,
+        tags: c.tags,
+        source_url: c.source_url ?? null,
+        source_org: c.source_org ?? entry.source_org,
+        embedding: c.embedding,
+        document_id: entry.document_id,
+        source_version: entry.source_version,
+        country: entry.country,
+        chunk_level: c.chunk_level ?? null,
+        content_hash: c.contentHash,
+        embedding_model: EMBEDDING_MODEL,
+        embedded_at: now,
+        licence: entry.licence,
+      }))
+    );
     console.log(`Upserted ${toWrite.length} chunks.`);
-    await assertSearchVectorPopulated(toWrite.map(c => c.id));
+    await assertSearchVectorPopulated(toWrite.map((c) => c.id));
   }
 
   if (PRUNE && orphans.length > 0) {
     await deleteIds(orphans);
-    console.log(`Pruned ${orphans.length} orphaned chunks: ${orphans.slice(0, 8).join(', ')}${orphans.length > 8 ? ', …' : ''}`);
+    console.log(
+      `Pruned ${orphans.length} orphaned chunks: ${orphans.slice(0, 8).join(', ')}${orphans.length > 8 ? ', …' : ''}`
+    );
   }
 
   console.log('Done. Re-run npm run rag:eval:retrieval to verify retrieval after content changes.');
 }
 
-main().catch(e => { console.error(`\nERROR: ${e.message}`); process.exit(1); });
+main().catch((e) => {
+  console.error(`\nERROR: ${e.message}`);
+  process.exit(1);
+});

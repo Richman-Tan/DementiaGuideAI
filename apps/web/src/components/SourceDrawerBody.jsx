@@ -22,23 +22,67 @@ export function SourceDrawerBody({ drawer, effDark, onOpenArticle }) {
   const chipLabel = art ? S.getCat(art.cat).name : drawer.org || 'Source';
   const title = drawer.title || (art ? art.title : '');
   const excerpt = art ? S.excerptFor(art) : drawer.excerpt || '';
-  const metaLine = art ? `Reviewed content · ${art.mins} min read` : drawer.org ? `Source: ${drawer.org}` : 'Knowledge base source';
+  const metaLine = art
+    ? `Reviewed content · ${art.mins} min read`
+    : drawer.org
+      ? `Source: ${drawer.org}`
+      : 'Knowledge base source';
 
-  const actionBase = { minHeight: '50px', borderRadius: '14px', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
+  const actionBase = {
+    minHeight: '50px',
+    borderRadius: '14px',
+    fontWeight: '600',
+    fontSize: '1rem',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textDecoration: 'none',
+  };
   const linkStyle = articleId
-    ? { ...actionBase, border: 'var(--bw) solid var(--border)', background: 'var(--surface)', color: 'var(--text)' }
+    ? {
+        ...actionBase,
+        border: 'var(--bw) solid var(--border)',
+        background: 'var(--surface)',
+        color: 'var(--text)',
+      }
     : { ...actionBase, border: 'none', background: 'var(--primary)', color: '#fff' };
 
   return (
     <>
-      <span style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '999px', fontSize: '.82rem', fontWeight: '600', background: y ? y.bg : 'var(--tint)', color: y ? y.fg : 'var(--primary-d)' }}>
-        <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: y ? y.dot : 'var(--primary)' }} />{chipLabel}
+      <span
+        style={{
+          alignSelf: 'flex-start',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '4px 12px',
+          borderRadius: '999px',
+          fontSize: '.82rem',
+          fontWeight: '600',
+          background: y ? y.bg : 'var(--tint)',
+          color: y ? y.fg : 'var(--primary-d)',
+        }}
+      >
+        <span
+          style={{
+            width: '7px',
+            height: '7px',
+            borderRadius: '50%',
+            background: y ? y.dot : 'var(--primary)',
+          }}
+        />
+        {chipLabel}
       </span>
       <h2 style={{ margin: '0', fontSize: '1.35rem', lineHeight: '1.3' }}>{title}</h2>
       <p style={{ margin: '0', color: 'var(--text2)', lineHeight: '1.65' }}>{excerpt}</p>
       <p style={{ margin: '0', color: 'var(--text2)', fontSize: '.88rem' }}>{metaLine}</p>
       {articleId && (
-        <button onClick={() => onOpenArticle(articleId)} style={{ ...actionBase, border: 'none', background: 'var(--primary)', color: '#fff' }} className="hv2">
+        <button
+          onClick={() => onOpenArticle(articleId)}
+          style={{ ...actionBase, border: 'none', background: 'var(--primary)', color: '#fff' }}
+          className="hv2"
+        >
           {art ? 'Read full article →' : 'Read related article →'}
         </button>
       )}

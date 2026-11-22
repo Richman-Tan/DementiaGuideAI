@@ -51,10 +51,12 @@ describe('normalizeSpokenText', () => {
       // past 15 digits a JS number is no longer exact anyway.
       expect(normalizeSpokenText('9'.repeat(309))).toBe(Array(309).fill('nine').join(' '));
       expect(normalizeSpokenText('1234567890123456')).toBe(
-        'one two three four five six seven eight nine zero one two three four five six');
+        'one two three four five six seven eight nine zero one two three four five six'
+      );
       expect(normalizeSpokenText('123456789012345')).toBe(
-        'one hundred twenty-three thousand four hundred fifty-six billion '
-        + 'seven hundred eighty-nine million twelve thousand three hundred forty-five');
+        'one hundred twenty-three thousand four hundred fifty-six billion ' +
+          'seven hundred eighty-nine million twelve thousand three hundred forty-five'
+      );
     });
   });
 
@@ -62,7 +64,9 @@ describe('normalizeSpokenText', () => {
     it('says dollars, singular for one', () => {
       expect(normalizeSpokenText('$5')).toBe('five dollars');
       expect(normalizeSpokenText('$1')).toBe('one dollar');
-      expect(normalizeSpokenText('$1,250 a week')).toBe('one thousand two hundred fifty dollars a week');
+      expect(normalizeSpokenText('$1,250 a week')).toBe(
+        'one thousand two hundred fifty dollars a week'
+      );
     });
 
     it('adds cents, singular for one, and drops a zero-cents tail', () => {
@@ -73,11 +77,15 @@ describe('normalizeSpokenText', () => {
 
     it('reads an amount written without thousands commas whole', () => {
       // Used to stop at the third digit: "one hundred twenty-five dollars0".
-      expect(normalizeSpokenText('$1250 a week')).toBe('one thousand two hundred fifty dollars a week');
+      expect(normalizeSpokenText('$1250 a week')).toBe(
+        'one thousand two hundred fifty dollars a week'
+      );
     });
 
     it('reads a very long amount digit by digit instead of throwing', () => {
-      expect(normalizeSpokenText(`$${'9'.repeat(309)}`)).toBe(`${Array(309).fill('nine').join(' ')} dollars`);
+      expect(normalizeSpokenText(`$${'9'.repeat(309)}`)).toBe(
+        `${Array(309).fill('nine').join(' ')} dollars`
+      );
     });
   });
 
@@ -108,8 +116,9 @@ describe('normalizeSpokenText', () => {
   });
 
   it('expands every kind in one sentence', () => {
-    expect(normalizeSpokenText('Call at 9:00 & pay $20 — 10% off for 2 people.'))
-      .toBe("Call at nine o'clock and pay twenty dollars — ten percent off for two people.");
+    expect(normalizeSpokenText('Call at 9:00 & pay $20 — 10% off for 2 people.')).toBe(
+      "Call at nine o'clock and pay twenty dollars — ten percent off for two people."
+    );
   });
 
   // Phone numbers are read digit by digit, zero as "oh", the way New Zealanders
@@ -118,16 +127,37 @@ describe('normalizeSpokenText', () => {
     describe('every helpline the assistant can give', () => {
       it.each([
         ['Call 111 now.', 'Call one one one now.'],
-        ['You can call or text 1737 any time.', 'You can call or text one seven three seven any time.'],
+        [
+          'You can call or text 1737 any time.',
+          'You can call or text one seven three seven any time.',
+        ],
         ['Healthline (0800 611 116)', 'Healthline (oh eight hundred, six one one, one one six)'],
-        ['Alzheimers New Zealand on 0800 004 001.', 'Alzheimers New Zealand on oh eight hundred, oh oh four, oh oh one.'],
-        ['Lifeline on 0800 543 354', 'Lifeline on oh eight hundred, five four three, three five four'],
-        ['the Suicide Crisis Helpline, 0508 828 865', 'the Suicide Crisis Helpline, oh five oh eight, eight two eight, eight six five'],
+        [
+          'Alzheimers New Zealand on 0800 004 001.',
+          'Alzheimers New Zealand on oh eight hundred, oh oh four, oh oh one.',
+        ],
+        [
+          'Lifeline on 0800 543 354',
+          'Lifeline on oh eight hundred, five four three, three five four',
+        ],
+        [
+          'the Suicide Crisis Helpline, 0508 828 865',
+          'the Suicide Crisis Helpline, oh five oh eight, eight two eight, eight six five',
+        ],
         // Dementia Australia, named only by the v1 rollback prompt.
-        ['Dementia Australia (1800 100 500)', 'Dementia Australia (one eight hundred, one oh oh, five oh oh)'],
+        [
+          'Dementia Australia (1800 100 500)',
+          'Dementia Australia (one eight hundred, one oh oh, five oh oh)',
+        ],
         // Other lines the model has given in the eval runs.
-        ['Elder abuse: 0800 32 668 65', 'Elder abuse: oh eight hundred, three two, six six eight, six five'],
-        ['National Poisons Centre 0800 764 766', 'National Poisons Centre oh eight hundred, seven six four, seven six six'],
+        [
+          'Elder abuse: 0800 32 668 65',
+          'Elder abuse: oh eight hundred, three two, six six eight, six five',
+        ],
+        [
+          'National Poisons Centre 0800 764 766',
+          'National Poisons Centre oh eight hundred, seven six four, seven six six',
+        ],
       ])('%s → %s', (written, spoken) => {
         expect(normalizeSpokenText(written)).toBe(spoken);
       });
@@ -142,13 +172,17 @@ describe('normalizeSpokenText', () => {
         }
       });
 
-      it('speaks the v2 prompt\'s own safety numbers digit by digit', () => {
+      it("speaks the v2 prompt's own safety numbers digit by digit", () => {
         const spoken = normalizeSpokenText(buildSystemPrompt({}));
         expect(spoken).toContain('tell them to call one one one at the START');
-        expect(spoken).toContain('Healthline (oh eight hundred, six one one, one one six, free twenty-four/seven nurse advice)');
+        expect(spoken).toContain(
+          'Healthline (oh eight hundred, six one one, one one six, free twenty-four/seven nurse advice)'
+        );
         expect(spoken).toContain('support line (oh eight hundred, oh oh four, oh oh one)');
         expect(spoken).toContain('call or text one seven three seven any time');
-        expect(spoken).not.toMatch(/one hundred eleven|one thousand seven hundred|eight hundred six hundred/);
+        expect(spoken).not.toMatch(
+          /one hundred eleven|one thousand seven hundred|eight hundred six hundred/
+        );
       });
     });
 
@@ -167,29 +201,46 @@ describe('normalizeSpokenText', () => {
       });
 
       it('reads NZ landlines and mobiles in their groups', () => {
-        expect(normalizeSpokenText('09 123 4567')).toBe('oh nine, one two three, four five six seven');
-        expect(normalizeSpokenText('(09) 123 4567')).toBe('oh nine, one two three, four five six seven');
-        expect(normalizeSpokenText('091234567')).toBe('oh nine, one two three, four five six seven');
-        expect(normalizeSpokenText('021 123 4567')).toBe('oh two one, one two three, four five six seven');
-        expect(normalizeSpokenText('027 123 456')).toBe('oh two seven, one two three, four five six');
+        expect(normalizeSpokenText('09 123 4567')).toBe(
+          'oh nine, one two three, four five six seven'
+        );
+        expect(normalizeSpokenText('(09) 123 4567')).toBe(
+          'oh nine, one two three, four five six seven'
+        );
+        expect(normalizeSpokenText('091234567')).toBe(
+          'oh nine, one two three, four five six seven'
+        );
+        expect(normalizeSpokenText('021 123 4567')).toBe(
+          'oh two one, one two three, four five six seven'
+        );
+        expect(normalizeSpokenText('027 123 456')).toBe(
+          'oh two seven, one two three, four five six'
+        );
       });
 
       it('leaves groups past a full number to the ordinary rules', () => {
-        expect(normalizeSpokenText('Healthline 0800 611 116 24/7'))
-          .toBe('Healthline oh eight hundred, six one one, one one six twenty-four/seven');
-        expect(normalizeSpokenText('09 123 4567 24 hours'))
-          .toBe('oh nine, one two three, four five six seven twenty-four hours');
+        expect(normalizeSpokenText('Healthline 0800 611 116 24/7')).toBe(
+          'Healthline oh eight hundred, six one one, one one six twenty-four/seven'
+        );
+        expect(normalizeSpokenText('09 123 4567 24 hours')).toBe(
+          'oh nine, one two three, four five six seven twenty-four hours'
+        );
       });
 
       it('starts a new number where the last one ends', () => {
-        expect(normalizeSpokenText('0800 611 116 0800 004 001'))
-          .toBe('oh eight hundred, six one one, one one six oh eight hundred, oh oh four, oh oh one');
-        expect(normalizeSpokenText('05 0800 611 116')).toBe('five oh eight hundred, six one one, one one six');
+        expect(normalizeSpokenText('0800 611 116 0800 004 001')).toBe(
+          'oh eight hundred, six one one, one one six oh eight hundred, oh oh four, oh oh one'
+        );
+        expect(normalizeSpokenText('05 0800 611 116')).toBe(
+          'five oh eight hundred, six one one, one one six'
+        );
       });
 
       it('says the name of a bare freephone prefix', () => {
         expect(normalizeSpokenText('an 0800 number')).toBe('an oh eight hundred number');
-        expect(normalizeSpokenText('0508 numbers and (0900) lines')).toBe('oh five oh eight numbers and oh nine hundred lines');
+        expect(normalizeSpokenText('0508 numbers and (0900) lines')).toBe(
+          'oh five oh eight numbers and oh nine hundred lines'
+        );
         expect(normalizeSpokenText('0800 EA NOT OK')).toBe('oh eight hundred EA NOT OK');
       });
 
@@ -217,8 +268,10 @@ describe('normalizeSpokenText', () => {
         ['emergency services — (111)', 'emergency services — (one one one)'],
         ['call them now and 111', 'call them now and one one one'],
         // A whole phone number counts as one word of the four.
-        ['Family Services (0800 211 211) or 1737',
-          'Family Services (oh eight hundred, two one one, two one one) or one seven three seven'],
+        [
+          'Family Services (0800 211 211) or 1737',
+          'Family Services (oh eight hundred, two one one, two one one) or one seven three seven',
+        ],
         ['Call 111 or 1737', 'Call one one one or one seven three seven'],
         // Or a cue straight after it.
         ['the 111 operator', 'the one one one operator'],
@@ -249,10 +302,18 @@ describe('normalizeSpokenText', () => {
     });
 
     it('leaves ordinary numbers as they were', () => {
-      expect(normalizeSpokenText('Take 2 tablets 3 times a day.')).toBe('Take two tablets three times a day.');
-      expect(normalizeSpokenText('About 65 years, in 2026.')).toBe('About sixty-five years, in two thousand twenty-six.');
-      expect(normalizeSpokenText('30% of 70,000 people')).toBe('thirty percent of seventy thousand people');
-      expect(normalizeSpokenText('wait 10-15 minutes on 2 or 3 days')).toBe('wait ten-fifteen minutes on two or three days');
+      expect(normalizeSpokenText('Take 2 tablets 3 times a day.')).toBe(
+        'Take two tablets three times a day.'
+      );
+      expect(normalizeSpokenText('About 65 years, in 2026.')).toBe(
+        'About sixty-five years, in two thousand twenty-six.'
+      );
+      expect(normalizeSpokenText('30% of 70,000 people')).toBe(
+        'thirty percent of seventy thousand people'
+      );
+      expect(normalizeSpokenText('wait 10-15 minutes on 2 or 3 days')).toBe(
+        'wait ten-fifteen minutes on two or three days'
+      );
     });
 
     it('accepts that a weak cue can mark a stray 111 (reads it as digits, never wrongly as a helpline)', () => {

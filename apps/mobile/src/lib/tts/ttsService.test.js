@@ -68,10 +68,14 @@ test('an invalid ElevenLabs key falls back to the OpenAI voice', async () => {
   // ElevenLabs was tried first, with the key from Settings, and refused it…
   expect(global.fetch).toHaveBeenCalledTimes(2);
   const [elevenUrl, elevenInit] = global.fetch.mock.calls[0];
-  expect(elevenUrl).toMatch(/^https:\/\/api\.elevenlabs\.io\/v1\/text-to-speech\/.+\/with-timestamps$/);
+  expect(elevenUrl).toMatch(
+    /^https:\/\/api\.elevenlabs\.io\/v1\/text-to-speech\/.+\/with-timestamps$/
+  );
   expect(elevenInit.headers['xi-api-key']).toBe(FAKE_ELEVEN_KEY);
   expect(warn).toHaveBeenCalledWith(
-    expect.stringMatching(/provider=elevenlabs failed .*Invalid ElevenLabs API key — falling back to OpenAI TTS/)
+    expect.stringMatching(
+      /provider=elevenlabs failed .*Invalid ElevenLabs API key — falling back to OpenAI TTS/
+    )
   );
 
   // …then the OpenAI voice answered, with the profile's OpenAI voice.

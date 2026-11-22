@@ -42,8 +42,10 @@ export default async function handler(req, res) {
 
   const body = await upstream.json();
   recordUsage({
-    userId: readUserId(req), kind: 'embedding',
-    units: body?.usage?.total_tokens ?? 0, model,
+    userId: readUserId(req),
+    kind: 'embedding',
+    units: body?.usage?.total_tokens ?? 0,
+    model,
   });
   res.status(200).json(body);
 }

@@ -33,12 +33,16 @@ export function prewarmVoicePipeline() {
 
   // OpenAI: key read + one tiny authed GET (models endpoint responds fast and
   // exercises the same host as embeddings/chat/whisper).
-  openaiService.getApiKey().then(key => {
-    if (!key) return;
-    return fetch('https://api.openai.com/v1/models/gpt-4o', {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-  }).then(() => console.log(`[PREWARM] openai ok ms=${Date.now() - t0}`)).catch(swallow);
+  openaiService
+    .getApiKey()
+    .then((key) => {
+      if (!key) return;
+      return fetch('https://api.openai.com/v1/models/gpt-4o', {
+        headers: { Authorization: `Bearer ${key}` },
+      });
+    })
+    .then(() => console.log(`[PREWARM] openai ok ms=${Date.now() - t0}`))
+    .catch(swallow);
 
   // Supabase REST (pgvector search host). HEAD on the REST root is enough to
   // open the pooled connection; no table access needed.
@@ -46,16 +50,22 @@ export function prewarmVoicePipeline() {
     fetch(`${SUPABASE_URL}/rest/v1/`, {
       method: 'HEAD',
       headers: { apikey: SUPABASE_ANON_KEY },
-    }).then(() => console.log(`[PREWARM] supabase ok ms=${Date.now() - t0}`)).catch(swallow);
+    })
+      .then(() => console.log(`[PREWARM] supabase ok ms=${Date.now() - t0}`))
+      .catch(swallow);
   }
 
   // ElevenLabs: key read + smallest authed GET.
-  elevenLabsService.getApiKey().then(key => {
-    if (!key) return;
-    return fetch('https://api.elevenlabs.io/v1/user', {
-      headers: { 'xi-api-key': key },
-    });
-  }).then(() => console.log(`[PREWARM] elevenlabs ok ms=${Date.now() - t0}`)).catch(swallow);
+  elevenLabsService
+    .getApiKey()
+    .then((key) => {
+      if (!key) return;
+      return fetch('https://api.elevenlabs.io/v1/user', {
+        headers: { 'xi-api-key': key },
+      });
+    })
+    .then(() => console.log(`[PREWARM] elevenlabs ok ms=${Date.now() - t0}`))
+    .catch(swallow);
 
   // Azure: credentials live in SecureStore too — warm the cached read. The
   // Speech SDK opens its own connection per synthesis, so there is no useful

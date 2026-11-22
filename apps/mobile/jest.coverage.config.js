@@ -26,7 +26,10 @@ module.exports = {
   transform: {
     '\\.[jt]sx?$': [
       'babel-jest',
-      { configFile: path.join(here, 'babel.config.js'), caller: { name: 'metro', bundler: 'metro', platform: 'ios' } },
+      {
+        configFile: path.join(here, 'babel.config.js'),
+        caller: { name: 'metro', bundler: 'metro', platform: 'ios' },
+      },
     ],
   },
   coverageProvider: 'v8',

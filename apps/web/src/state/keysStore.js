@@ -12,11 +12,19 @@ export function loadKeys() {
 }
 
 export function saveKeys(keys) {
-  try { localStorage.setItem(KEY, JSON.stringify(keys)); } catch { /* blocked */ }
+  try {
+    localStorage.setItem(KEY, JSON.stringify(keys));
+  } catch {
+    /* blocked */
+  }
 }
 
 export function clearKeys() {
-  try { localStorage.removeItem(KEY); } catch { /* blocked */ }
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    /* blocked */
+  }
 }
 
 export const getOpenaiKey = () => loadKeys().openai.trim();

@@ -12,9 +12,20 @@ export const ADMIN_EMAIL = 'admin@example.com'; // allowlisted test identity for
 export const ORIGIN = 'https://dementiaguide-web.vercel.app';
 
 export function makeReq({
-  method = 'POST', headers = {}, body, chunks = null, code = CODE, origin = ORIGIN,
+  method = 'POST',
+  headers = {},
+  body,
+  chunks = null,
+  code = CODE,
+  origin = ORIGIN,
 } = {}) {
-  const req = chunks ? Readable.from(chunks) : new Readable({ read() { this.push(null); } });
+  const req = chunks
+    ? Readable.from(chunks)
+    : new Readable({
+        read() {
+          this.push(null);
+        },
+      });
   req.method = method;
   req.headers = {
     ...(origin ? { origin } : {}),
@@ -33,15 +44,43 @@ export function makeRes() {
     chunks: [],
     ended: false,
     destroyed: false,
-    setHeader(k, v) { this.headers[k.toLowerCase()] = v; return this; },
-    getHeader(k) { return this.headers[k.toLowerCase()]; },
-    status(c) { this.statusCode = c; return this; },
-    json(o) { this.body = o; this.ended = true; return this; },
-    send(b) { this.body = b; this.ended = true; return this; },
-    end() { this.ended = true; return this; },
-    write(c) { this.chunks.push(typeof c === 'string' ? c : Buffer.from(c).toString('utf8')); return true; },
-    writeHead(c, h = {}) { this.statusCode = c; for (const [k, v] of Object.entries(h)) this.setHeader(k, v); return this; },
-    on() { return this; },
+    setHeader(k, v) {
+      this.headers[k.toLowerCase()] = v;
+      return this;
+    },
+    getHeader(k) {
+      return this.headers[k.toLowerCase()];
+    },
+    status(c) {
+      this.statusCode = c;
+      return this;
+    },
+    json(o) {
+      this.body = o;
+      this.ended = true;
+      return this;
+    },
+    send(b) {
+      this.body = b;
+      this.ended = true;
+      return this;
+    },
+    end() {
+      this.ended = true;
+      return this;
+    },
+    write(c) {
+      this.chunks.push(typeof c === 'string' ? c : Buffer.from(c).toString('utf8'));
+      return true;
+    },
+    writeHead(c, h = {}) {
+      this.statusCode = c;
+      for (const [k, v] of Object.entries(h)) this.setHeader(k, v);
+      return this;
+    },
+    on() {
+      return this;
+    },
   };
   return res;
 }
@@ -64,13 +103,16 @@ export async function load(modulePath, { env = {}, admin } = {}) {
   vi.resetModules();
   vi.unstubAllEnvs();
   for (const [k, v] of Object.entries({ ...baseEnv, ...env })) {
-    if (v === undefined) vi.stubEnv(k, ''); else vi.stubEnv(k, v);
+    if (v === undefined) vi.stubEnv(k, '');
+    else vi.stubEnv(k, v);
   }
   const adminMock = {
     adminConfigured: true,
     rpc: vi.fn(async () => true),
     insertIgnoringConflicts: vi.fn(async (t, rows) => rows.length),
-    insertManyReturning: vi.fn(async (t, rows) => rows.map((r) => ({ id: r.id, display_title: r.display_title }))),
+    insertManyReturning: vi.fn(async (t, rows) =>
+      rows.map((r) => ({ id: r.id, display_title: r.display_title }))
+    ),
     selectOne: vi.fn(async () => null),
     insertReturning: vi.fn(async () => null),
     updateWhere: vi.fn(async () => ({})),
@@ -89,5 +131,8 @@ export function stubFetch(response) {
 }
 
 export function jsonResponse(body, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }

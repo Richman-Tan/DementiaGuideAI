@@ -17,8 +17,13 @@ import { insertManyReturning } from '../_lib/supabaseAdmin.js';
 // build time. These modules have no I/O of their own beyond fetch, so
 // nothing here depends on Node's CLI-specific env/file handling.
 const require = createRequire(import.meta.url);
-const { withRetry, pdfBufferToText, fetchUrlToArticle, textToChunks, makeOpenAIClient } =
-  require('../../../../scripts/ingest/pipeline.js');
+const {
+  withRetry,
+  pdfBufferToText,
+  fetchUrlToArticle,
+  textToChunks,
+  makeOpenAIClient,
+} = require('../../../../scripts/ingest/pipeline.js');
 const { EMBEDDING_MODEL, CATEGORIES } = require('../../../../packages/core/rag/ragConfig.js');
 
 // Vercel's serverless request body cap is ~4.5MB and isn't configurable in
@@ -31,7 +36,11 @@ const EMBED_BATCH = 20;
 export const config = { maxDuration: 60 };
 
 function slugify(title) {
-  return (title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  return (title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
 }
 
 function makeDocumentId(title) {
@@ -47,8 +56,14 @@ export default async function handler(req, res) {
   if (!apiKey) return;
 
   const {
-    sourceType, payload, title,
-    sourceOrg = null, sourceUrl = null, licence = null, category, country = null,
+    sourceType,
+    payload,
+    title,
+    sourceOrg = null,
+    sourceUrl = null,
+    licence = null,
+    category,
+    country = null,
   } = req.body || {};
 
   if (!['pdf', 'url', 'text'].includes(sourceType)) {
@@ -68,7 +83,10 @@ export default async function handler(req, res) {
     return;
   }
   if (sourceType === 'pdf' && payload.length > MAX_PDF_BASE64_BYTES) {
-    res.status(413).json({ error: 'PDF too large for this tool (roughly 3MB). For bigger documents, ask a developer to add it via the registry + CLI path.' });
+    res.status(413).json({
+      error:
+        'PDF too large for this tool (roughly 3MB). For bigger documents, ask a developer to add it via the registry + CLI path.',
+    });
     return;
   }
 
@@ -91,7 +109,9 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error(`[admin] extraction failed for '${title}' (${sourceType}): ${err?.stack ?? err}`);
-    res.status(422).json({ error: `Could not read that ${sourceType === 'url' ? 'page' : sourceType}: ${String(err?.message ?? err).slice(0, 200)}` });
+    res.status(422).json({
+      error: `Could not read that ${sourceType === 'url' ? 'page' : sourceType}: ${String(err?.message ?? err).slice(0, 200)}`,
+    });
     return;
   }
 
@@ -114,7 +134,9 @@ export default async function handler(req, res) {
     for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
       const batch = chunks.slice(i, i + EMBED_BATCH);
       const vectors = await openai.embedBatch(batch.map((c) => `${c.title}. ${c.content}`));
-      batch.forEach((c, j) => { c.embedding = vectors[j]; });
+      batch.forEach((c, j) => {
+        c.embedding = vectors[j];
+      });
     }
 
     const rows = chunks.map((c) => ({
@@ -139,9 +161,12 @@ export default async function handler(req, res) {
     }));
 
     const written = await withRetry('admin-ingest insert', () =>
-      insertManyReturning('knowledge_chunks', rows, 'id,display_title'));
+      insertManyReturning('knowledge_chunks', rows, 'id,display_title')
+    );
 
-    console.log(`[admin] ${written.length} chunk(s) saved under '${documentId}' (submitted by ${user.email}, pending review)`);
+    console.log(
+      `[admin] ${written.length} chunk(s) saved under '${documentId}' (submitted by ${user.email}, pending review)`
+    );
     res.status(200).json({
       document_id: documentId,
       chunkCount: written.length,
@@ -154,7 +179,9 @@ export default async function handler(req, res) {
     // failure partway through a large submission may have already written
     // some rows under this document_id — surfaced here rather than claimed
     // away, since chunks.length can exceed one batch for a long document.
-    console.error(`[admin] ingest failed for document '${documentId}' (submitted by ${user.email}): ${err?.stack ?? err}`);
+    console.error(
+      `[admin] ingest failed for document '${documentId}' (submitted by ${user.email}): ${err?.stack ?? err}`
+    );
     res.status(502).json({
       error: `Processing failed partway through. Some chunks may have already saved under document_id '${documentId}' — check the Supabase table editor before retrying.`,
     });

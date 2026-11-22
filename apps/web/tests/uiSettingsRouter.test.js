@@ -62,7 +62,12 @@ describe('SettingsContext', () => {
 
   it('starts from the defaults and applies theme, contrast and text scale to <html>', async () => {
     const { result } = await mount();
-    expect(result.current.settings).toMatchObject({ onboarded: false, avatarId: 'aaron', textScale: 1, darkMode: null });
+    expect(result.current.settings).toMatchObject({
+      onboarded: false,
+      avatarId: 'aaron',
+      textScale: 1,
+      darkMode: null,
+    });
     expect(result.current.effDark).toBe(false); // jsdom has no matchMedia → light
     const d = document.documentElement;
     expect(d.dataset.theme).toBe('light');
@@ -74,8 +79,16 @@ describe('SettingsContext', () => {
     const { result } = await mount();
     await flush(() => result.current.setSetting('darkMode', true));
     await flush(() => result.current.setMany({ highContrast: true, textScale: 1.5 }));
-    expect(result.current.settings).toMatchObject({ darkMode: true, highContrast: true, textScale: 1.5 });
-    expect(JSON.parse(localStorage.getItem('dg_settings'))).toMatchObject({ darkMode: true, highContrast: true, textScale: 1.5 });
+    expect(result.current.settings).toMatchObject({
+      darkMode: true,
+      highContrast: true,
+      textScale: 1.5,
+    });
+    expect(JSON.parse(localStorage.getItem('dg_settings'))).toMatchObject({
+      darkMode: true,
+      highContrast: true,
+      textScale: 1.5,
+    });
     const d = document.documentElement;
     expect(d.dataset.theme).toBe('dark');
     expect(d.dataset.hc).toBe('1');
@@ -87,7 +100,10 @@ describe('SettingsContext', () => {
     const { result } = await mount();
     expect(result.current.settings.avatarId).toBe('aria');
     expect(result.current.settings.onboarded).toBe(true);
-    expect(JSON.parse(localStorage.getItem('dg_settings'))).toEqual({ avatarId: 'aria', onboarded: true });
+    expect(JSON.parse(localStorage.getItem('dg_settings'))).toEqual({
+      avatarId: 'aria',
+      onboarded: true,
+    });
   });
 
   it('a corrupt blob boots on the defaults', async () => {
@@ -98,7 +114,9 @@ describe('SettingsContext', () => {
   });
 
   it('full or blocked storage never breaks a settings change', async () => {
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('QuotaExceededError'); });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
     const { result } = await mount();
     expect(result.current.settings.avatarId).toBe('aaron');
     await flush(() => result.current.setSetting('concise', true));
@@ -183,7 +201,7 @@ describe('router', () => {
 describe('providers render their children', () => {
   it('UiProvider and SettingsProvider pass their subtree through', async () => {
     const { container, unmount } = await render(
-      h(SettingsProvider, null, h(UiProvider, null, h('p', null, 'inside'))),
+      h(SettingsProvider, null, h(UiProvider, null, h('p', null, 'inside')))
     );
     expect(container.textContent).toBe('inside');
     await unmount();

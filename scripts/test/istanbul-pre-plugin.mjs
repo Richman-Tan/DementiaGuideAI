@@ -40,19 +40,23 @@ export function instrumenterFor(file) {
   const dialect = DIALECTS.find((d) => d.test.test(file));
   if (!dialect) return null;
   if (!instrumenters.has(dialect)) {
-    instrumenters.set(dialect, createInstrumenter({
-      coverageVariable: COVERAGE_VARIABLE,
-      esModules: true,
-      produceSourceMap: true,
-      parserPlugins: [...defaults.instrumenter.parserPlugins, ...dialect.plugins],
-    }));
+    instrumenters.set(
+      dialect,
+      createInstrumenter({
+        coverageVariable: COVERAGE_VARIABLE,
+        esModules: true,
+        produceSourceMap: true,
+        parserPlugins: [...defaults.instrumenter.parserPlugins, ...dialect.plugins],
+      })
+    );
   }
   return instrumenters.get(dialect);
 }
 
 /** True for a file the gate measures (see coverage-scope.mjs AREAS). */
 export function isInstrumented(file, root, dirs) {
-  if (!instrumenterFor(file) || file.includes('/node_modules/') || /\.(test|spec)\./.test(file)) return false;
+  if (!instrumenterFor(file) || file.includes('/node_modules/') || /\.(test|spec)\./.test(file))
+    return false;
   const rel = path.relative(root, file).split(path.sep).join('/');
   return dirs.some((d) => rel.startsWith(d));
 }

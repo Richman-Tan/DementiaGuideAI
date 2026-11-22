@@ -10,7 +10,9 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 export const supabaseConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 if (!supabaseConfigured) {
-  console.warn('[supabase] VITE_SUPABASE_URL/_ANON_KEY not set — retrieval disabled, answers will cite nothing');
+  console.warn(
+    '[supabase] VITE_SUPABASE_URL/_ANON_KEY not set — retrieval disabled, answers will cite nothing'
+  );
 }
 
 export const supabase = createClient(

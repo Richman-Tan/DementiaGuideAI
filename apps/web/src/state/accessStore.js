@@ -18,8 +18,13 @@ export function loadAccess() {
 
 export function saveAccess(code, status = 'ok') {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ code: code.trim(), status, checkedAt: new Date().toISOString() }));
-  } catch { /* storage blocked */ }
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ code: code.trim(), status, checkedAt: new Date().toISOString() })
+    );
+  } catch {
+    /* storage blocked */
+  }
 }
 
 // A code the server later refuses is kept, not dropped: dropping it would
@@ -31,7 +36,11 @@ export function markAccessRejected() {
 }
 
 export function clearAccess() {
-  try { localStorage.removeItem(KEY); } catch { /* storage blocked */ }
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    /* storage blocked */
+  }
 }
 
 export const guestAccessCode = () => loadAccess()?.code.trim() || '';

@@ -14,7 +14,11 @@ export const CategoryCard = ({ category, onPress, compact = false }) => {
       accessibilityRole="button"
     >
       <View style={[styles.iconContainer, { backgroundColor: category.colorMuted }]}>
-        <MaterialCommunityIcons name={category.icon} size={compact ? 20 : 24} color={category.color} />
+        <MaterialCommunityIcons
+          name={category.icon}
+          size={compact ? 20 : 24}
+          color={category.color}
+        />
       </View>
 
       <View style={styles.content}>

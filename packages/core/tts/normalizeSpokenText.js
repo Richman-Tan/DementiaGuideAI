@@ -21,13 +21,28 @@
  */
 
 const ONES = [
-  'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
-  'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen',
-  'seventeen', 'eighteen', 'nineteen',
+  'zero',
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'ten',
+  'eleven',
+  'twelve',
+  'thirteen',
+  'fourteen',
+  'fifteen',
+  'sixteen',
+  'seventeen',
+  'eighteen',
+  'nineteen',
 ];
-const TENS = [
-  '', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety',
-];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
 const SCALES = [
   { value: 1e9, name: 'billion' },
   { value: 1e6, name: 'million' },
@@ -55,7 +70,10 @@ function intToWords(n) {
 
 /** Reads a run of digits one at a time: "05" → "zero five" (for decimals). */
 function digitsToWords(digits) {
-  return digits.split('').map((d) => ONES[Number(d)]).join(' ');
+  return digits
+    .split('')
+    .map((d) => ONES[Number(d)])
+    .join(' ');
 }
 
 // A JS number holds an integer exactly only up to 15–16 digits, and a run of
@@ -134,8 +152,8 @@ const PREFIX_NAMES = {
   '0800': 'oh eight hundred',
   '0508': 'oh five oh eight',
   '0900': 'oh nine hundred',
-  '1800': 'one eight hundred',
-  '1300': 'one three hundred',
+  1800: 'one eight hundred',
+  1300: 'one three hundred',
 };
 
 /**
@@ -144,31 +162,35 @@ const PREFIX_NAMES = {
  */
 const NZ_SHAPES = [
   { prefix: /^0(?:800|508|900)/, length: 4, min: 6, max: 7 }, // freephone, premium
-  { prefix: /^02\d/, length: 3, min: 6, max: 8 },             // mobile
-  { prefix: /^0[34679]/, length: 2, min: 7, max: 7 },         // landline
+  { prefix: /^02\d/, length: 3, min: 6, max: 8 }, // mobile
+  { prefix: /^0[34679]/, length: 2, min: 7, max: 7 }, // landline
 ];
 
 const PHONE_RE = new RegExp(
-  '(?:'
-  // 1: leading zero, optionally "(09)"; then the groups that follow
-  + String.raw`(?:\((0\d{1,3})\)|\b(0\d+))((?:[ \u00a0-]\d{2,7})*)`
-  // 2: Australian freephone
-  + String.raw`|\b(1[38]00)[ \u00a0-]?(\d{3})[ \u00a0-]?(\d{3})`
-  // 3: the short helplines
-  + String.raw`|\b(111|1737)`
-  + ')'
-  // Not joined to a letter, digit or %, nor part of a decimal, time or range.
-  + String.raw`(?![\w%]|[.,:\-–]\d)`,
+  '(?:' +
+    // 1: leading zero, optionally "(09)"; then the groups that follow
+    String.raw`(?:\((0\d{1,3})\)|\b(0\d+))((?:[ \u00a0-]\d{2,7})*)` +
+    // 2: Australian freephone
+    String.raw`|\b(1[38]00)[ \u00a0-]?(\d{3})[ \u00a0-]?(\d{3})` +
+    // 3: the short helplines
+    String.raw`|\b(111|1737)` +
+    ')' +
+    // Not joined to a letter, digit or %, nor part of a decimal, time or range.
+    String.raw`(?![\w%]|[.,:\-–]\d)`,
   'g'
 );
 
 // Cues for 111 and 1737 (rule 3). CUE_WORD must stay disjoint from AFTER_CUE:
 // the streaming hold below relies on it.
 const CUE_WINDOW = 4;
-const CUE_WORD = new RegExp(String.raw`\b(?:call(?:s|ed|ing)?|dial(?:s|led|ed|ling|ing)?|ring(?:s|ing)?|rang`
-  + String.raw`|(?:tele|free)?phon(?:e|es|ed|ing)|text(?:s|ed|ing)?|contact(?:s|ed|ing)?|reach(?:es|ed|ing)?`
-  + String.raw`|on|at|via|through|emergency|emergencies|helplines?|lines?|services?|numbers?)\b`, 'i');
-const AFTER_CUE = /^[)\]*"'”’]*[ \u00a0]+[(*"'“]*(?:immediately|now|urgently|right|straight|any|anytime|operator|24\/7)\b/i;
+const CUE_WORD = new RegExp(
+  String.raw`\b(?:call(?:s|ed|ing)?|dial(?:s|led|ed|ling|ing)?|ring(?:s|ing)?|rang` +
+    String.raw`|(?:tele|free)?phon(?:e|es|ed|ing)|text(?:s|ed|ing)?|contact(?:s|ed|ing)?|reach(?:es|ed|ing)?` +
+    String.raw`|on|at|via|through|emergency|emergencies|helplines?|lines?|services?|numbers?)\b`,
+  'i'
+);
+const AFTER_CUE =
+  /^[)\]*"'”’]*[ \u00a0]+[(*"'“]*(?:immediately|now|urgently|right|straight|any|anytime|operator|24\/7)\b/i;
 
 /** A word that closes a sentence; the cue window never reaches past one. */
 const ENDS_SENTENCE = /[.!?]["'”’)\]*]*$/;
@@ -176,7 +198,10 @@ const ENDS_SENTENCE = /[.!?]["'”’)\]*]*$/;
 const NUMBER_TOKEN = /^[(*"'“]*\d(?:[\d-]|[.,]\d)*[)*"'”]*$/;
 
 function speakDigits(digits) {
-  return digits.split('').map((d) => PHONE_DIGITS[d]).join(' ');
+  return digits
+    .split('')
+    .map((d) => PHONE_DIGITS[d])
+    .join(' ');
 }
 
 /** "611116" → ["611", "116"]: threes, with the last group up to four long. */
@@ -245,12 +270,15 @@ function speakLeadingZero(match, head, rest) {
 
 /** Rewrites every phone number in `text` into its spoken form. */
 function speakPhoneNumbers(text) {
-  return text.replace(PHONE_RE, (match, parenHead, bareHead, rest, au, auMid, auEnd, short, offset, str) => {
-    if (/[$+]$|\d[.,\-–]$/.test(str.slice(Math.max(0, offset - 2), offset))) return match;
-    if (au) return speakPhone(au, [auMid, auEnd]);
-    if (short) return hasHelplineCue(str, offset, match.length) ? speakDigits(short) : match;
-    return speakLeadingZero(match, parenHead ?? bareHead, rest);
-  });
+  return text.replace(
+    PHONE_RE,
+    (match, parenHead, bareHead, rest, au, auMid, auEnd, short, offset, str) => {
+      if (/[$+]$|\d[.,\-–]$/.test(str.slice(Math.max(0, offset - 2), offset))) return match;
+      if (au) return speakPhone(au, [auMid, auEnd]);
+      if (short) return hasHelplineCue(str, offset, match.length) ? speakDigits(short) : match;
+      return speakLeadingZero(match, parenHead ?? bareHead, rest);
+    }
+  );
 }
 
 /**
@@ -297,8 +325,9 @@ export function normalizeSpokenText(text) {
   });
 
   // Percent: "50%" → "fifty percent" (accepts an optional decimal).
-  out = out.replace(/(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d+))?\s*%/g, (_m, intPart, fracPart) =>
-    `${decimalToWords(intPart, fracPart)} percent`
+  out = out.replace(
+    /(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d+))?\s*%/g,
+    (_m, intPart, fracPart) => `${decimalToWords(intPart, fracPart)} percent`
   );
 
   // Clock times: "3:30" → "three thirty" (H:MM, minutes 00–59).

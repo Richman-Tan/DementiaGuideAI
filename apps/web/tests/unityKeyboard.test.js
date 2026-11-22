@@ -30,7 +30,15 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const webRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const unityScripts = join(webRoot, '..', '..', 'unity-avatar', 'UnityAvatarProject', 'Assets', 'Scripts');
+const unityScripts = join(
+  webRoot,
+  '..',
+  '..',
+  'unity-avatar',
+  'UnityAvatarProject',
+  'Assets',
+  'Scripts'
+);
 
 // A sibling that has been in the Unity project far longer than this fix, so its
 // presence means "the submodule is checked out" and never "the fix is intact".
@@ -52,9 +60,9 @@ describe.skipIf(!submoduleCheckedOut)('Unity leaves the page keyboard alone on W
   it('still has the WebGLKeyboardInput.cs that carries the fix', () => {
     expect(
       existsSync(target),
-      'WebGLKeyboardInput.cs is gone from the Unity project.\n'
-        + 'Without it Unity preventDefault()s keypress at the document level and every\n'
-        + 'HTML text box in the web app silently refuses typed characters.',
+      'WebGLKeyboardInput.cs is gone from the Unity project.\n' +
+        'Without it Unity preventDefault()s keypress at the document level and every\n' +
+        'HTML text box in the web app silently refuses typed characters.'
     ).toBe(true);
   });
 
@@ -75,6 +83,8 @@ describe.skipIf(!submoduleCheckedOut)('Unity leaves the page keyboard alone on W
   it('applies itself at startup, so no scene or prefab has to carry it', () => {
     // RuntimeInitializeOnLoadMethod is what keeps this out of the shared scene
     // file — the same trick WebGLCameraFraming.cs uses to stay web-only.
-    expect(gated).toMatch(/\[RuntimeInitializeOnLoadMethod\(RuntimeInitializeLoadType\.BeforeSceneLoad\)\]/);
+    expect(gated).toMatch(
+      /\[RuntimeInitializeOnLoadMethod\(RuntimeInitializeLoadType\.BeforeSceneLoad\)\]/
+    );
   });
 });

@@ -3,8 +3,13 @@
 import { getCat } from '../data/services.js';
 
 const DEEP = {
-  caregiving: '#8A4A22', clinical: '#2D5F70', best: '#7A5A16',
-  communication: '#4E4373', safety: '#7E352E', wellbeing: '#2E5F4D', prevention: '#2A5A8A',
+  caregiving: '#8A4A22',
+  clinical: '#2D5F70',
+  best: '#7A5A16',
+  communication: '#4E4373',
+  safety: '#7E352E',
+  wellbeing: '#2E5F4D',
+  prevention: '#2A5A8A',
 };
 
 export function catStyle(cid, dark) {

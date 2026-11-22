@@ -5,7 +5,9 @@
 export function mapSettingsToRag(settings = {}) {
   return {
     conciseMode: !!settings.concise,
-    responseStyle: { short: 'brief', balanced: 'balanced', thorough: 'detailed' }[settings.responseStyle] || 'balanced',
+    responseStyle:
+      { short: 'brief', balanced: 'balanced', thorough: 'detailed' }[settings.responseStyle] ||
+      'balanced',
     jargonMode: { plain: 'avoid', explained: 'explain', fine: 'ok' }[settings.jargon] || 'explain',
     ariaPersonality: settings.ariaStyle || 'warm',
     // 'exploring for myself' is the only non-carer setup path.

@@ -98,7 +98,15 @@ export async function tts(text: string, options: TtsOptions = {}): Promise<TtsRe
   // openaiVoice; options.voice may be an Azure (en-US-EricNeural) or ElevenLabs
   // (voice-id) name, which OpenAI rejects — whitelist and fall back to onyx.
   const OPENAI_VOICES = new Set([
-    'nova', 'shimmer', 'echo', 'onyx', 'fable', 'alloy', 'ash', 'sage', 'coral',
+    'nova',
+    'shimmer',
+    'echo',
+    'onyx',
+    'fable',
+    'alloy',
+    'ash',
+    'sage',
+    'coral',
   ]);
   const requestedOpenaiVoice = options.openaiVoice ?? options.voice;
   const openaiVoice =

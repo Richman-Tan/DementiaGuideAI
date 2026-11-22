@@ -69,7 +69,11 @@ export default async function handler(req, res) {
   }
 
   const form = new FormData();
-  form.append('file', new Blob([audio.bytes], { type: audio.type || 'audio/webm' }), audio.filename || 'recording.webm');
+  form.append(
+    'file',
+    new Blob([audio.bytes], { type: audio.type || 'audio/webm' }),
+    audio.filename || 'recording.webm'
+  );
   form.append('model', MODEL);
   form.append('language', 'en');
 
@@ -95,6 +99,11 @@ export default async function handler(req, res) {
 
   // Bytes stand in for duration: the response carries no length, and the ratio
   // is stable enough for a usage signal. Recorded as such, not as seconds.
-  recordUsage({ userId: readUserId(req), kind: 'whisper', units: audio.bytes.length, model: MODEL });
+  recordUsage({
+    userId: readUserId(req),
+    kind: 'whisper',
+    units: audio.bytes.length,
+    model: MODEL,
+  });
   res.status(200).json(await upstream.json());
 }

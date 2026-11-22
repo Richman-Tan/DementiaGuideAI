@@ -9,8 +9,13 @@ async function load() {
   return import('../src/avatar/unity/unityBridge.js');
 }
 
-beforeEach(() => { document.body.innerHTML = ''; });
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+beforeEach(() => {
+  document.body.innerHTML = '';
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe('shared canvas ownership', () => {
   it('a mount that lost the canvas to another mount does not pull it back out', async () => {
@@ -48,13 +53,20 @@ describe('mountUnity', () => {
     vi.stubGlobal('devicePixelRatio', dpr);
     const create = vi.fn(async () => ({ SendMessage: vi.fn(), Quit: vi.fn() }));
     vi.stubGlobal('createUnityInstance', create);
-    vi.stubGlobal('fetch', vi.fn(async (url, init) => {
-      if (init?.method === 'HEAD') return { ok: true, headers: new Headers({ 'content-type': 'text/javascript' }) };
-      return { ok: false, headers: new Headers() }; // no manifest: default file names
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url, init) => {
+        if (init?.method === 'HEAD')
+          return { ok: true, headers: new Headers({ 'content-type': 'text/javascript' }) };
+        return { ok: false, headers: new Headers() }; // no manifest: default file names
+      })
+    );
     const realAppend = document.head.appendChild.bind(document.head);
     vi.spyOn(document.head, 'appendChild').mockImplementation((node) => {
-      if (node.tagName === 'SCRIPT') { queueMicrotask(() => node.onload()); return node; }
+      if (node.tagName === 'SCRIPT') {
+        queueMicrotask(() => node.onload());
+        return node;
+      }
       return realAppend(node);
     });
     const bridge = await load();

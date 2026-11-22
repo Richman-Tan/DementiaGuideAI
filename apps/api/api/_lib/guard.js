@@ -30,7 +30,9 @@ function validCodes() {
   // error, so refuse it rather than serving with it.
   const weak = codes.filter((c) => c.length < MIN_CODE_LENGTH);
   if (weak.length) {
-    console.error(`[study] ${weak.length} access code(s) shorter than ${MIN_CODE_LENGTH} characters — refusing to accept them`);
+    console.error(
+      `[study] ${weak.length} access code(s) shorter than ${MIN_CODE_LENGTH} characters — refusing to accept them`
+    );
   }
   return codes.filter((c) => c.length >= MIN_CODE_LENGTH);
 }
@@ -132,9 +134,7 @@ async function underLimit(code) {
 }
 
 // Returns the access code on success, or null after having sent the response.
-export async function guard(req, res, {
-  methods = ['POST'], meter = true,
-} = {}) {
+export async function guard(req, res, { methods = ['POST'], meter = true } = {}) {
   // Before the method check: a preflight arrives as OPTIONS, which no route
   // lists, so checking methods first would answer every preflight with a 405
   // and the real request would never be sent.

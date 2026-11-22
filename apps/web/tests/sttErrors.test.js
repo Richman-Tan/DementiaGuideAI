@@ -8,7 +8,9 @@ import { sttErrorPresentation } from '../src/voice/sttErrorCopy.js';
 
 describe('presenting microphone failures', () => {
   it('names a blocked mic and points at the padlock and the typed path', () => {
-    const denied = Object.assign(new Error('Microphone permission denied'), { code: 'permission-denied' });
+    const denied = Object.assign(new Error('Microphone permission denied'), {
+      code: 'permission-denied',
+    });
     const { copy } = sttErrorPresentation(denied);
     expect(copy).toMatch(/padlock/i);
     expect(copy).toMatch(/type/i);

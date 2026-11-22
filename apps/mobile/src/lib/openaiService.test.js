@@ -25,7 +25,11 @@ function mockRpc(data, error = null) {
 function mockEmbeddingThenChat(chatJson) {
   global.fetch = jest
     .fn()
-    .mockResolvedValueOnce({ status: 200, ok: true, json: async () => ({ data: [{ embedding: [0.1, 0.2] }] }) })
+    .mockResolvedValueOnce({
+      status: 200,
+      ok: true,
+      json: async () => ({ data: [{ embedding: [0.1, 0.2] }] }),
+    })
     .mockResolvedValueOnce(chatJson);
 }
 
@@ -63,9 +67,11 @@ describe('API key management', () => {
 describe('search()', () => {
   beforeEach(() => {
     openaiService._cachedKey = 'sk-test';
-    global.fetch = jest
-      .fn()
-      .mockResolvedValue({ status: 200, ok: true, json: async () => ({ data: [{ embedding: [0.1, 0.2] }] }) });
+    global.fetch = jest.fn().mockResolvedValue({
+      status: 200,
+      ok: true,
+      json: async () => ({ data: [{ embedding: [0.1, 0.2] }] }),
+    });
   });
 
   it('calls match_chunks with TOP_K*RETRIEVAL_OVERSAMPLE and MIN_SIMILARITY, then applies the source-family cap', async () => {
@@ -80,16 +86,22 @@ describe('search()', () => {
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'match_chunks',
-      expect.objectContaining({ match_count: 50, min_similarity: 0.25, query_text: 'how do I manage sundowning?' })
+      expect.objectContaining({
+        match_count: 50,
+        min_similarity: 0.25,
+        query_text: 'how do I manage sundowning?',
+      })
     );
     expect(abortSignal).toHaveBeenCalledWith(expect.any(AbortSignal));
     // MAX_PER_SOURCE_FAMILY=2 admits i1, i2, skips i3, then admits c1.
-    expect(results.map(r => r.id)).toEqual(['i1', 'i2', 'c1']);
+    expect(results.map((r) => r.id)).toEqual(['i1', 'i2', 'c1']);
   });
 
   it('wraps a Supabase RPC error rather than leaking the raw error object', async () => {
     mockRpc(null, { message: 'connection timeout' });
-    await expect(openaiService.search('question')).rejects.toThrow('Supabase search error: connection timeout');
+    await expect(openaiService.search('question')).rejects.toThrow(
+      'Supabase search error: connection timeout'
+    );
   });
 
   it('reuses a cached embedding for a repeated query regardless of case/whitespace', async () => {
@@ -102,9 +114,11 @@ describe('search()', () => {
   it('evicts the oldest entry once the embedding cache exceeds EMBED_CACHE_MAX (20)', async () => {
     mockRpc([]);
     let n = 0;
-    global.fetch = jest
-      .fn()
-      .mockImplementation(async () => ({ status: 200, ok: true, json: async () => ({ data: [{ embedding: [n++] }] }) }));
+    global.fetch = jest.fn().mockImplementation(async () => ({
+      status: 200,
+      ok: true,
+      json: async () => ({ data: [{ embedding: [n++] }] }),
+    }));
 
     for (let i = 0; i < 21; i++) await openaiService.search(`distinct query ${i}`);
 
@@ -143,12 +157,20 @@ describe('chat() — happy path', () => {
 
   it('runs retrieved chunks through extractCitations() and returns renumbered, validated sources', async () => {
     mockRpc([
-      { id: 'c1', title: 'Sundowning', content: 'Keep a consistent evening routine.', similarity: 0.9, document_id: 'curated' },
+      {
+        id: 'c1',
+        title: 'Sundowning',
+        content: 'Keep a consistent evening routine.',
+        similarity: 0.9,
+        document_id: 'curated',
+      },
     ]);
     mockEmbeddingThenChat({
       status: 200,
       ok: true,
-      json: async () => ({ choices: [{ message: { content: 'Keep a consistent evening routine [S1].' } }] }),
+      json: async () => ({
+        choices: [{ message: { content: 'Keep a consistent evening routine [S1].' } }],
+      }),
     });
 
     const result = await openaiService.chat('How do I manage sundowning?');
@@ -160,12 +182,22 @@ describe('chat() — happy path', () => {
   });
 
   it('drops a hallucinated [S#] marker that does not match any supplied passage', async () => {
-    mockRpc([{ id: 'c1', title: 'Sundowning', content: 'Keep a routine.', similarity: 0.9, document_id: 'curated' }]);
+    mockRpc([
+      {
+        id: 'c1',
+        title: 'Sundowning',
+        content: 'Keep a routine.',
+        similarity: 0.9,
+        document_id: 'curated',
+      },
+    ]);
     mockEmbeddingThenChat({
       status: 200,
       ok: true,
       // Only one passage was supplied ([S1]); [S2] is hallucinated.
-      json: async () => ({ choices: [{ message: { content: 'Try this [S1] and also this [S2].' } }] }),
+      json: async () => ({
+        choices: [{ message: { content: 'Try this [S1] and also this [S2].' } }],
+      }),
     });
 
     const result = await openaiService.chat('question');

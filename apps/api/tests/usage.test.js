@@ -4,7 +4,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { load } from './helpers.js';
 
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
 
 function postgrestError(status) {
   const e = new Error(`PostgREST ${status}`);
@@ -23,7 +27,9 @@ async function loadUsage({ adminConfigured = true, insert = async (t, rows) => r
     seen.push({ table, rows: structuredClone(rows), onConflict });
     return insert(table, rows, onConflict);
   });
-  const { mod } = await load('../api/_lib/usage.js', { admin: { adminConfigured, insertIgnoringConflicts } });
+  const { mod } = await load('../api/_lib/usage.js', {
+    admin: { adminConfigured, insertIgnoringConflicts },
+  });
   return { recordUsage: mod.recordUsage, insertIgnoringConflicts, seen };
 }
 
@@ -31,7 +37,13 @@ describe('recordUsage', () => {
   it('writes one usage row labelled with the user, kind, units and model', async () => {
     const { recordUsage, seen } = await loadUsage();
     recordUsage({ userId: 'user-1', kind: 'chat', units: 2600, model: 'gpt-4o' });
-    expect(seen).toEqual([{ table: 'usage_events', rows: [{ user_id: 'user-1', kind: 'chat', units: 2600, model: 'gpt-4o' }], onConflict: 'id' }]);
+    expect(seen).toEqual([
+      {
+        table: 'usage_events',
+        rows: [{ user_id: 'user-1', kind: 'chat', units: 2600, model: 'gpt-4o' }],
+        onConflict: 'id',
+      },
+    ]);
   });
 
   it('omits the model when none is given, and caps a long one at 60 characters', async () => {
@@ -70,7 +82,11 @@ describe('recordUsage', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     let calls = 0;
     const { recordUsage, seen } = await loadUsage({
-      insert: async () => { calls += 1; if (calls === 1) throw postgrestError(400); return 1; },
+      insert: async () => {
+        calls += 1;
+        if (calls === 1) throw postgrestError(400);
+        return 1;
+      },
     });
     recordUsage({ userId: 'u', kind: 'tts', units: 42, model: 'tts-1' });
     await vi.waitFor(() => expect(warn).toHaveBeenCalled());
@@ -84,22 +100,38 @@ describe('recordUsage', () => {
 
   it('warns, and does not throw, when the retry fails as well', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { recordUsage, seen } = await loadUsage({ insert: async () => { throw postgrestError(400); } });
-    expect(() => recordUsage({ userId: 'u', kind: 'tts', units: 42, model: 'tts-1' })).not.toThrow();
+    const { recordUsage, seen } = await loadUsage({
+      insert: async () => {
+        throw postgrestError(400);
+      },
+    });
+    expect(() =>
+      recordUsage({ userId: 'u', kind: 'tts', units: 42, model: 'tts-1' })
+    ).not.toThrow();
     await vi.waitFor(() => expect(warn).toHaveBeenCalled());
     expect(seen).toHaveLength(2);
-    expect(warn.mock.calls.map((c) => c[0])).toEqual(['[usage] could not record tts: PostgREST 400']);
+    expect(warn.mock.calls.map((c) => c[0])).toEqual([
+      '[usage] could not record tts: PostgREST 400',
+    ]);
   });
 
   it('does not retry other failures, or a 400 on a row with no model to drop', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const a = await loadUsage({ insert: async () => { throw postgrestError(503); } });
+    const a = await loadUsage({
+      insert: async () => {
+        throw postgrestError(503);
+      },
+    });
     a.recordUsage({ userId: 'u', kind: 'chat', units: 1, model: 'gpt-4o' });
     await vi.waitFor(() => expect(warn).toHaveBeenCalledTimes(1));
     expect(a.seen).toHaveLength(1);
     expect(warn.mock.calls[0][0]).toBe('[usage] could not record chat: PostgREST 503');
 
-    const b = await loadUsage({ insert: async () => { throw postgrestError(400); } });
+    const b = await loadUsage({
+      insert: async () => {
+        throw postgrestError(400);
+      },
+    });
     b.recordUsage({ userId: 'u', kind: 'whisper', units: 1 });
     await vi.waitFor(() => expect(warn).toHaveBeenCalledTimes(2));
     expect(b.seen).toHaveLength(1);
@@ -107,7 +139,11 @@ describe('recordUsage', () => {
 
   it('describes a non-Error rejection too', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { recordUsage } = await loadUsage({ insert: async () => { throw 'socket hang up'; } });
+    const { recordUsage } = await loadUsage({
+      insert: async () => {
+        throw 'socket hang up';
+      },
+    });
     recordUsage({ userId: 'u', kind: 'chat', units: 1 });
     await vi.waitFor(() => expect(warn).toHaveBeenCalled());
     expect(warn.mock.calls[0][0]).toBe('[usage] could not record chat: socket hang up');

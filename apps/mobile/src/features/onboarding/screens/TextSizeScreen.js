@@ -36,17 +36,14 @@ export function TextSizeScreen({ navigation, route }) {
       onSkip={handleSkip}
       onNext={handleNext}
       nextLabel="Next"
-      title={"How would you like\nthe text to appear?"}
+      title={'How would you like\nthe text to appear?'}
     >
       {SIZE_OPTIONS.map((opt) => {
         const isSelected = selected === opt.value;
         return (
           <TouchableOpacity
             key={opt.value}
-            style={[
-              styles.sizeCard,
-              isSelected ? styles.sizeCardSelected : styles.sizeCardDefault,
-            ]}
+            style={[styles.sizeCard, isSelected ? styles.sizeCardSelected : styles.sizeCardDefault]}
             onPress={() => setSelected(opt.value)}
             activeOpacity={0.75}
             accessibilityRole="radio"
@@ -65,7 +62,10 @@ export function TextSizeScreen({ navigation, route }) {
               <Text
                 style={[
                   styles.sizeLabel,
-                  { fontSize: opt.fontSize, color: isSelected ? Colors.primary : Colors.textPrimary },
+                  {
+                    fontSize: opt.fontSize,
+                    color: isSelected ? Colors.primary : Colors.textPrimary,
+                  },
                 ]}
               >
                 {opt.label}

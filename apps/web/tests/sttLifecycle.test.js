@@ -12,23 +12,46 @@ vi.mock('../src/services/openaiClient.js', () => ({
 // ─── browser fakes ───────────────────────────────────────────────────────────
 let recognizers;
 class FakeRecognition {
-  constructor() { recognizers.push(this); }
-  start() { this.started = true; }
-  stop() { this.stopped = true; queueMicrotask(() => this.onend?.()); }
-  abort() { this.aborted = true; }
-  say(text) { this.onresult?.({ results: [[{ transcript: text }]] }); }
+  constructor() {
+    recognizers.push(this);
+  }
+  start() {
+    this.started = true;
+  }
+  stop() {
+    this.stopped = true;
+    queueMicrotask(() => this.onend?.());
+  }
+  abort() {
+    this.aborted = true;
+  }
+  say(text) {
+    this.onresult?.({ results: [[{ transcript: text }]] });
+  }
 }
 
 // Microphone level the fake analyser reports (normalised RMS == |level|).
 let level;
 let audioContexts;
 class FakeAudioContext {
-  constructor() { audioContexts.push(this); this.closed = false; }
-  createMediaStreamSource(stream) { this.source = stream; return { connect: (n) => { this.connected = n; } }; }
+  constructor() {
+    audioContexts.push(this);
+    this.closed = false;
+  }
+  createMediaStreamSource(stream) {
+    this.source = stream;
+    return {
+      connect: (n) => {
+        this.connected = n;
+      },
+    };
+  }
   createAnalyser() {
     return { fftSize: 0, getFloatTimeDomainData: (buf) => buf.fill(level) };
   }
-  close() { this.closed = true; }
+  close() {
+    this.closed = true;
+  }
 }
 
 let tracks;
@@ -47,9 +70,18 @@ function installMic() {
 let recorders;
 function installMediaRecorder({ supported = ['audio/webm;codecs=opus'], bytes = 0 } = {}) {
   class FakeMediaRecorder {
-    static isTypeSupported(m) { return supported.includes(m); }
-    constructor(stream, opts) { recorders.push(this); this.opts = opts; this.state = 'inactive'; }
-    start(ms) { this.timeslice = ms; this.state = 'recording'; }
+    static isTypeSupported(m) {
+      return supported.includes(m);
+    }
+    constructor(stream, opts) {
+      recorders.push(this);
+      this.opts = opts;
+      this.state = 'inactive';
+    }
+    start(ms) {
+      this.timeslice = ms;
+      this.state = 'recording';
+    }
     stop() {
       if (this.state === 'inactive') throw new Error('InvalidStateError');
       this.state = 'inactive';
@@ -155,8 +187,15 @@ describe('hands-free endpointing', () => {
   });
 
   it('a failure after the meter is running still closes it and stops the mic', async () => {
-    class ThrowingRecognition extends FakeRecognition { start() { throw new Error('already started'); } }
-    vi.stubGlobal('window', { SpeechRecognition: ThrowingRecognition, AudioContext: FakeAudioContext });
+    class ThrowingRecognition extends FakeRecognition {
+      start() {
+        throw new Error('already started');
+      }
+    }
+    vi.stubGlobal('window', {
+      SpeechRecognition: ThrowingRecognition,
+      AudioContext: FakeAudioContext,
+    });
     const { startSttSession } = await freshModule();
     const session = await startSttSession({ handsFree: true });
     expect(session.provider).toBe('whisper'); // degraded
@@ -166,8 +205,15 @@ describe('hands-free endpointing', () => {
   });
 
   it('an audio context that refuses to close does not break teardown', async () => {
-    class StubbornContext extends FakeAudioContext { close() { throw new Error('already closed'); } }
-    vi.stubGlobal('window', { SpeechRecognition: FakeRecognition, webkitAudioContext: StubbornContext });
+    class StubbornContext extends FakeAudioContext {
+      close() {
+        throw new Error('already closed');
+      }
+    }
+    vi.stubGlobal('window', {
+      SpeechRecognition: FakeRecognition,
+      webkitAudioContext: StubbornContext,
+    });
     const { startSttSession } = await freshModule();
     const session = await startSttSession({ handsFree: true });
     expect(() => session.cancel()).not.toThrow();
@@ -188,7 +234,10 @@ describe('recognizer errors after start', () => {
     const session = await startSttSession({ onError });
     recognizers[0].onerror({ error: 'not-allowed' });
     expect(onError).toHaveBeenCalledTimes(1);
-    expect(onError.mock.calls[0][0]).toMatchObject({ message: 'Microphone permission denied', code: 'permission-denied' });
+    expect(onError.mock.calls[0][0]).toMatchObject({
+      message: 'Microphone permission denied',
+      code: 'permission-denied',
+    });
     session.cancel();
   });
 
@@ -292,7 +341,13 @@ describe('recording support', () => {
   it('a mic failure that is not a denial carries the browser’s message', async () => {
     vi.stubGlobal('window', {});
     installMediaRecorder();
-    vi.stubGlobal('navigator', { mediaDevices: { getUserMedia: vi.fn(async () => { throw Object.assign(new Error('Requested device not found'), { name: 'NotFoundError' }); }) } });
+    vi.stubGlobal('navigator', {
+      mediaDevices: {
+        getUserMedia: vi.fn(async () => {
+          throw Object.assign(new Error('Requested device not found'), { name: 'NotFoundError' });
+        }),
+      },
+    });
     const { startSttSession } = await freshModule();
     const err = await startSttSession().catch((e) => e);
     expect(err.message).toBe('Requested device not found');
@@ -302,15 +357,30 @@ describe('recording support', () => {
   it('a SecurityError from getUserMedia counts as a denial', async () => {
     vi.stubGlobal('window', {});
     installMediaRecorder();
-    vi.stubGlobal('navigator', { mediaDevices: { getUserMedia: vi.fn(async () => { throw Object.assign(new Error('insecure'), { name: 'SecurityError' }); }) } });
+    vi.stubGlobal('navigator', {
+      mediaDevices: {
+        getUserMedia: vi.fn(async () => {
+          throw Object.assign(new Error('insecure'), { name: 'SecurityError' });
+        }),
+      },
+    });
     const { startSttSession } = await freshModule();
-    await expect(startSttSession()).rejects.toMatchObject({ code: 'permission-denied', message: 'Microphone permission denied' });
+    await expect(startSttSession()).rejects.toMatchObject({
+      code: 'permission-denied',
+      message: 'Microphone permission denied',
+    });
   });
 
   it('a non-Error rejection from getUserMedia is stringified', async () => {
     vi.stubGlobal('window', {});
     installMediaRecorder();
-    vi.stubGlobal('navigator', { mediaDevices: { getUserMedia: vi.fn(async () => { throw 'blocked'; }) } });
+    vi.stubGlobal('navigator', {
+      mediaDevices: {
+        getUserMedia: vi.fn(async () => {
+          throw 'blocked';
+        }),
+      },
+    });
     const { startSttSession } = await freshModule();
     await expect(startSttSession()).rejects.toThrow('blocked');
   });

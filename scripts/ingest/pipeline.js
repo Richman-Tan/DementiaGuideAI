@@ -22,8 +22,10 @@ async function withRetry(label, fn, tries = 4, baseMs = 1500) {
       const retryable = /429|5\d\d|ECONNRESET|ETIMEDOUT|fetch failed/i.test(String(e.message));
       if (!retryable || attempt >= tries) throw e;
       const wait = baseMs * 2 ** (attempt - 1);
-      console.warn(`  ${label}: attempt ${attempt} failed (${String(e.message).slice(0, 120)}) — retrying in ${wait}ms`);
-      await new Promise(r => setTimeout(r, wait));
+      console.warn(
+        `  ${label}: attempt ${attempt} failed (${String(e.message).slice(0, 120)}) — retrying in ${wait}ms`
+      );
+      await new Promise((r) => setTimeout(r, wait));
     }
   }
 }
@@ -42,9 +44,11 @@ async function pdfBufferToText(buffer) {
 async function fetchUrlToArticle(url) {
   const { JSDOM } = require('jsdom');
   const { Readability } = require('@mozilla/readability');
-  const resp = await withRetry('fetch', () => fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DementiaGuideAI-Ingest/2.0)' },
-  }));
+  const resp = await withRetry('fetch', () =>
+    fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DementiaGuideAI-Ingest/2.0)' },
+    })
+  );
   if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching ${url}`);
   const dom = new JSDOM(await resp.text(), { url });
   const article = new Readability(dom.window.document).parse();
@@ -75,23 +79,33 @@ function makeOpenAIClient(apiKey, { baseUrl = 'https://api.openai.com/v1', embed
   }
 
   async function autoTag(chunk) {
-    const data = await withRetry(`tag ${chunk.id}`, () => openaiJson('/chat/completions', {
-      model: TAG_MODEL,
-      max_tokens: 60,
-      temperature: 0,
-      messages: [
-        { role: 'system', content:
-          'You are a specialist tagger for a dementia care knowledge base used by caregivers and clinicians. ' +
-          'Given a chunk of text, produce ONLY a JSON array of 5 to 8 lowercase tags that are SPECIFIC to the exact content — ' +
-          'specific conditions, symptoms, techniques, medications, risk factors, or situations; not generic labels like "dementia" or "caregiving". ' +
-          '1-3 words per tag. No explanation, no markdown — only the JSON array.' },
-        { role: 'user', content: `Title: ${chunk.title}\n\nContent: ${chunk.content.slice(0, 800)}` },
-      ],
-    }));
+    const data = await withRetry(`tag ${chunk.id}`, () =>
+      openaiJson('/chat/completions', {
+        model: TAG_MODEL,
+        max_tokens: 60,
+        temperature: 0,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a specialist tagger for a dementia care knowledge base used by caregivers and clinicians. ' +
+              'Given a chunk of text, produce ONLY a JSON array of 5 to 8 lowercase tags that are SPECIFIC to the exact content — ' +
+              'specific conditions, symptoms, techniques, medications, risk factors, or situations; not generic labels like "dementia" or "caregiving". ' +
+              '1-3 words per tag. No explanation, no markdown — only the JSON array.',
+          },
+          {
+            role: 'user',
+            content: `Title: ${chunk.title}\n\nContent: ${chunk.content.slice(0, 800)}`,
+          },
+        ],
+      })
+    );
     try {
       const tags = JSON.parse(data.choices[0].message.content.trim());
       return Array.isArray(tags) ? tags.map(String) : [];
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   }
 
   // `avoid`, when set, is a single colliding title from another chunk in the
@@ -102,20 +116,28 @@ function makeOpenAIClient(apiKey, { baseUrl = 'https://api.openai.com/v1', embed
     const avoidClause = avoid
       ? ` Another chunk from the same source already uses the title "${avoid}" — make this one clearly distinct while still reflecting THIS excerpt.`
       : '';
-    const data = await withRetry(`simplify-title ${chunk.id}`, () => openaiJson('/chat/completions', {
-      model: TAG_MODEL,
-      max_tokens: 30,
-      temperature: 0,
-      messages: [
-        { role: 'system', content:
-          'You write short reference titles for a dementia care app used by family caregivers, many with no ' +
-          'clinical or technical background. Given a technical source title and an excerpt, rewrite the title as ' +
-          'a plain-language phrase a worried family member would understand at a glance: at most 6 words, no ' +
-          'document names, module/section/part numbers, or clinical jargon. Output ONLY the plain title text — ' +
-          'no quotes, no explanation.' },
-        { role: 'user', content: `Technical title: ${chunk.title}\n\nExcerpt: ${chunk.content.slice(0, 500)}${avoidClause}` },
-      ],
-    }));
+    const data = await withRetry(`simplify-title ${chunk.id}`, () =>
+      openaiJson('/chat/completions', {
+        model: TAG_MODEL,
+        max_tokens: 30,
+        temperature: 0,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You write short reference titles for a dementia care app used by family caregivers, many with no ' +
+              'clinical or technical background. Given a technical source title and an excerpt, rewrite the title as ' +
+              'a plain-language phrase a worried family member would understand at a glance: at most 6 words, no ' +
+              'document names, module/section/part numbers, or clinical jargon. Output ONLY the plain title text — ' +
+              'no quotes, no explanation.',
+          },
+          {
+            role: 'user',
+            content: `Technical title: ${chunk.title}\n\nExcerpt: ${chunk.content.slice(0, 500)}${avoidClause}`,
+          },
+        ],
+      })
+    );
     return data.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
   }
 
@@ -130,8 +152,10 @@ function makeOpenAIClient(apiKey, { baseUrl = 'https://api.openai.com/v1', embed
   }
 
   async function embedBatch(texts) {
-    const data = await withRetry('embed', () => openaiJson('/embeddings', { model: embeddingModel, input: texts }));
-    return data.data.sort((a, b) => a.index - b.index).map(d => d.embedding);
+    const data = await withRetry('embed', () =>
+      openaiJson('/embeddings', { model: embeddingModel, input: texts })
+    );
+    return data.data.sort((a, b) => a.index - b.index).map((d) => d.embedding);
   }
 
   return { autoTag, simplifyTitle, simplifyTitleUnique, embedBatch };

@@ -37,7 +37,9 @@ export function AuthProvider({ children }) {
       const { data: signed, error } = await supabase.auth.signInAnonymously();
       if (cancelled) return;
       if (error) {
-        console.warn(`[auth] anonymous sign-in failed (${error.message}) — conversations will not be saved`);
+        console.warn(
+          `[auth] anonymous sign-in failed (${error.message}) — conversations will not be saved`
+        );
         setStatus('unavailable');
         return;
       }
@@ -50,7 +52,10 @@ export function AuthProvider({ children }) {
       if (next) setStatus('ready');
     });
 
-    return () => { cancelled = true; sub?.subscription?.unsubscribe(); };
+    return () => {
+      cancelled = true;
+      sub?.subscription?.unsubscribe();
+    };
   }, []);
 
   /**
@@ -68,17 +73,20 @@ export function AuthProvider({ children }) {
     setStatus('loading');
   }, []);
 
-  const value = useMemo(() => ({
-    session,
-    status,
-    userId: session?.user?.id ?? null,
-    // Supabase marks anonymous users in the JWT; the UI uses this to decide
-    // whether to offer "save your conversations to another device".
-    isAnonymous: session?.user?.is_anonymous ?? true,
-    accessToken: session?.access_token ?? null,
-    linkEmail,
-    signOut,
-  }), [session, status, linkEmail, signOut]);
+  const value = useMemo(
+    () => ({
+      session,
+      status,
+      userId: session?.user?.id ?? null,
+      // Supabase marks anonymous users in the JWT; the UI uses this to decide
+      // whether to offer "save your conversations to another device".
+      isAnonymous: session?.user?.is_anonymous ?? true,
+      accessToken: session?.access_token ?? null,
+      linkEmail,
+      signOut,
+    }),
+    [session, status, linkEmail, signOut]
+  );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }

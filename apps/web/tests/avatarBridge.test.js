@@ -7,14 +7,25 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 const fake = vi.hoisted(() => ({ unity: null, headless: null }));
 
-vi.mock('../src/avatar/unity/UnityAvatarController.js', () => ({ peekUnityAvatar: () => fake.unity }));
+vi.mock('../src/avatar/unity/UnityAvatarController.js', () => ({
+  peekUnityAvatar: () => fake.unity,
+}));
 vi.mock('../src/avatar/headlessAvatar.js', () => ({ getHeadlessAvatar: () => fake.headless }));
 
 const { voiceAvatar } = await import('../src/avatar/avatarBridge.js');
 
 function engine(name, extra = {}) {
   const e = { name, supportsStreamingAudio: true, ...extra };
-  for (const m of ['unlockAudio', 'setOnAudioStart', 'startStreamingPlayback', 'appendAudioChunk', 'setSpeechEmotion', 'setAvatarState', 'stopAudio']) e[m] = vi.fn();
+  for (const m of [
+    'unlockAudio',
+    'setOnAudioStart',
+    'startStreamingPlayback',
+    'appendAudioChunk',
+    'setSpeechEmotion',
+    'setAvatarState',
+    'stopAudio',
+  ])
+    e[m] = vi.fn();
   e.playAudio = vi.fn(async () => `${name} played`);
   e.endStreamingPlayback = vi.fn(async () => `${name} ended`);
   return e;
@@ -22,7 +33,11 @@ function engine(name, extra = {}) {
 
 function memoryStorage() {
   const map = new Map();
-  return { getItem: (k) => (map.has(k) ? map.get(k) : null), setItem: (k, v) => map.set(k, String(v)), removeItem: (k) => map.delete(k) };
+  return {
+    getItem: (k) => (map.has(k) ? map.get(k) : null),
+    setItem: (k, v) => map.set(k, String(v)),
+    removeItem: (k) => map.delete(k),
+  };
 }
 const setAvatar = (avatarId) => localStorage.setItem('dg_settings', JSON.stringify({ avatarId }));
 
@@ -33,7 +48,9 @@ beforeEach(() => {
   voiceAvatar.stopAudio(); // drop any pinned session from the previous test
   fake.headless.stopAudio.mockClear();
 });
-afterEach(() => { vi.unstubAllGlobals(); });
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('engine selection', () => {
   it('the Unity controller when it is showing the selected character', async () => {

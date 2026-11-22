@@ -15,7 +15,11 @@ module.exports = [
     settings: {
       'import/resolver': {
         typescript: {
-          project: ['apps/mobile/tsconfig.json', 'apps/web/tsconfig.json', 'apps/admin/tsconfig.json'],
+          project: [
+            'apps/mobile/tsconfig.json',
+            'apps/web/tsconfig.json',
+            'apps/admin/tsconfig.json',
+          ],
         },
       },
     },
@@ -45,7 +49,12 @@ module.exports = [
     // Node-context files: build scripts, tool configs, and the web app's
     // serverless API routes. eslint-config-expo loads browser globals, so these
     // need Node's declared explicitly.
-    files: ['**/*.config.{js,mjs}', 'apps/web/scripts/**/*.mjs', 'apps/web/vite.config.js', 'apps/api/**/*.js'],
+    files: [
+      '**/*.config.{js,mjs}',
+      'apps/web/scripts/**/*.mjs',
+      'apps/web/vite.config.js',
+      'apps/api/**/*.js',
+    ],
     languageOptions: {
       globals: {
         __dirname: 'readonly',

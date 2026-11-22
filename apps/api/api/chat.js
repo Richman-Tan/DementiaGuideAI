@@ -32,7 +32,9 @@ function totalTokensFrom(chunk) {
     try {
       const n = JSON.parse(d)?.usage?.total_tokens;
       if (Number.isFinite(n)) return n;
-    } catch { /* partial frame */ }
+    } catch {
+      /* partial frame */
+    }
   }
   return 0;
 }
@@ -72,7 +74,7 @@ export default async function handler(req, res) {
   }
   const totalChars = messages.reduce(
     (n, m) => n + (typeof m?.content === 'string' ? m.content.length : 0),
-    0,
+    0
   );
   if (totalChars > MAX_INPUT_CHARS) {
     res.status(413).json({ error: 'conversation too long for one request' });
@@ -160,8 +162,10 @@ export default async function handler(req, res) {
     req.off('close', onClose);
     res.end();
     recordUsage({
-      userId: readUserId(req), kind: 'chat',
-      units: totalTokensFrom(tail), model,
+      userId: readUserId(req),
+      kind: 'chat',
+      units: totalTokensFrom(tail),
+      model,
     });
   }
 }

@@ -6,11 +6,7 @@ import { Colors } from '@/theme/colors';
 export function OptionCard({ label, description, icon, selected, onPress, style }) {
   return (
     <TouchableOpacity
-      style={[
-        styles.card,
-        selected ? styles.cardSelected : styles.cardDefault,
-        style,
-      ]}
+      style={[styles.card, selected ? styles.cardSelected : styles.cardDefault, style]}
       onPress={onPress}
       activeOpacity={0.75}
       accessibilityRole="radio"
@@ -33,17 +29,8 @@ export function OptionCard({ label, description, icon, selected, onPress, style 
       )}
 
       <View style={styles.textBlock}>
-        <Text
-          style={[
-            styles.label,
-            { color: Colors.textPrimary },
-          ]}
-        >
-          {label}
-        </Text>
-        {!!description && (
-          <Text style={styles.description}>{description}</Text>
-        )}
+        <Text style={[styles.label, { color: Colors.textPrimary }]}>{label}</Text>
+        {!!description && <Text style={styles.description}>{description}</Text>}
       </View>
 
       {selected ? (

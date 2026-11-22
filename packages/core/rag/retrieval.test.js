@@ -23,21 +23,37 @@ describe('sourceFamilyOf', () => {
   it('prefers the document_id COLUMN over tags when present', () => {
     // Canonical match_chunks returns document_id directly; the column wins.
     expect(sourceFamilyOf({ id: 'f', document_id: 'isupport-nz', tags: [] })).toBe('isupport');
-    expect(sourceFamilyOf({ id: 'g', document_id: 'curated', tags: ['document_id:isupport-who'] })).toBe('curated');
+    expect(
+      sourceFamilyOf({ id: 'g', document_id: 'curated', tags: ['document_id:isupport-who'] })
+    ).toBe('curated');
   });
 });
 
 describe('capBySourceFamily', () => {
   it('caps the isupport family at maxPerFamily within top-k', () => {
-    const rows = [isupport('i1'), isupport('i2'), isupport('i3'), curated('c1'), curated('c2'), curated('c3')];
+    const rows = [
+      isupport('i1'),
+      isupport('i2'),
+      isupport('i3'),
+      curated('c1'),
+      curated('c2'),
+      curated('c3'),
+    ];
     const out = capBySourceFamily(rows, 5, 2);
-    expect(out.map(r => r.id)).toEqual(['i1', 'i2', 'c1', 'c2', 'c3']);
+    expect(out.map((r) => r.id)).toEqual(['i1', 'i2', 'c1', 'c2', 'c3']);
   });
 
   it('preserves similarity order for admitted rows', () => {
-    const rows = [curated('c1'), isupport('i1'), curated('c2'), isupport('i2'), isupport('i3'), curated('c3')];
+    const rows = [
+      curated('c1'),
+      isupport('i1'),
+      curated('c2'),
+      isupport('i2'),
+      isupport('i3'),
+      curated('c3'),
+    ];
     const out = capBySourceFamily(rows, 5, 2);
-    expect(out.map(r => r.id)).toEqual(['c1', 'i1', 'c2', 'i2', 'c3']);
+    expect(out.map((r) => r.id)).toEqual(['c1', 'i1', 'c2', 'i2', 'c3']);
   });
 
   it('does not cap non-isupport families (current intentional behaviour)', () => {
@@ -47,7 +63,7 @@ describe('capBySourceFamily', () => {
 
   it('returns fewer than k when candidates run out', () => {
     const rows = [isupport('i1'), isupport('i2'), isupport('i3')];
-    expect(capBySourceFamily(rows, 5, 2).map(r => r.id)).toEqual(['i1', 'i2']);
+    expect(capBySourceFamily(rows, 5, 2).map((r) => r.id)).toEqual(['i1', 'i2']);
   });
 
   it('handles empty input', () => {

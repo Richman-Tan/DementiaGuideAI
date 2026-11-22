@@ -414,8 +414,8 @@ export function useVoiceConversation({
         }
       }
       return !token.aborted;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [avatar, appendMessage, speechRate, profile.id]
   );
 

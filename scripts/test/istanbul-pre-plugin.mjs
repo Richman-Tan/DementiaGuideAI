@@ -15,24 +15,44 @@ import { defaults } from '@istanbuljs/schema';
 
 export const COVERAGE_VARIABLE = '__coverage__';
 
-let instrumenter = null;
+// One instrumenter per source dialect, because the parser plugins conflict:
+// with `jsx` on, a TypeScript angle-bracket assertion (`<Chunk>value`) is read
+// as the start of an element and fails to parse, so plain `.ts` has to be
+// parsed without it, as TypeScript itself does. TypeScript is instrumented as
+// TypeScript (the types are still in the output); the build's own transform
+// strips them later.
+const DIALECTS = [
+  { test: /\.(m?js|jsx)$/, plugins: ['jsx'] },
+  { test: /\.tsx$/, plugins: ['typescript', 'jsx'] },
+  { test: /\.m?ts$/, plugins: ['typescript'] },
+];
+const DECLARATION = /\.d\.m?ts$/;
 
-/** The shared instrumenter; coverage-gate.mjs uses it to size never-loaded files. */
-export function getInstrumenter() {
-  if (!instrumenter) {
-    instrumenter = createInstrumenter({
+const instrumenters = new Map();
+
+/**
+ * The instrumenter for a source file, or null for one that is not measured
+ * (type declarations, and anything that is not JavaScript or TypeScript).
+ * coverage-gate.mjs also uses it to size files that no test loaded.
+ */
+export function instrumenterFor(file) {
+  if (DECLARATION.test(file)) return null;
+  const dialect = DIALECTS.find((d) => d.test.test(file));
+  if (!dialect) return null;
+  if (!instrumenters.has(dialect)) {
+    instrumenters.set(dialect, createInstrumenter({
       coverageVariable: COVERAGE_VARIABLE,
       esModules: true,
       produceSourceMap: true,
-      parserPlugins: [...defaults.instrumenter.parserPlugins, 'jsx'],
-    });
+      parserPlugins: [...defaults.instrumenter.parserPlugins, ...dialect.plugins],
+    }));
   }
-  return instrumenter;
+  return instrumenters.get(dialect);
 }
 
 /** True for a file the gate measures (see coverage-scope.mjs AREAS). */
 export function isInstrumented(file, root, dirs) {
-  if (!/\.(m?js|jsx)$/.test(file) || file.includes('/node_modules/') || /\.(test|spec)\./.test(file)) return false;
+  if (!instrumenterFor(file) || file.includes('/node_modules/') || /\.(test|spec)\./.test(file)) return false;
   const rel = path.relative(root, file).split(path.sep).join('/');
   return dirs.some((d) => rel.startsWith(d));
 }
@@ -48,7 +68,7 @@ export function istanbulPre({ root, dirs }) {
     transform(code, id) {
       const file = id.split('?')[0];
       if (!isInstrumented(file, root, dirs)) return null;
-      const inst = getInstrumenter();
+      const inst = instrumenterFor(file);
       const out = inst.instrumentSync(code, file);
       return { code: out, map: inst.lastSourceMap() };
     },

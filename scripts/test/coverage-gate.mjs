@@ -25,7 +25,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import libCoverage from 'istanbul-lib-coverage';
 import { AREAS, EXCLUDED, IGNORE, EXTENSIONS } from './coverage-scope.mjs';
-import { getInstrumenter } from './istanbul-pre-plugin.mjs';
+import { instrumenterFor } from './istanbul-pre-plugin.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ENFORCE = process.argv.includes('--enforce');
@@ -93,9 +93,9 @@ function walk(dir) {
 
 /** All-zero coverage for a file no test loaded, from the same instrumenter. */
 function zeroCoverage(f) {
-  if (!/\.(m?js|jsx)$/.test(f)) return null;
+  const inst = instrumenterFor(f);
+  if (!inst) return null;
   try {
-    const inst = getInstrumenter();
     inst.instrumentSync(readFileSync(path.join(ROOT, f), 'utf8'), path.join(ROOT, f));
     return libCoverage.createFileCoverage(inst.lastFileCoverage());
   } catch {

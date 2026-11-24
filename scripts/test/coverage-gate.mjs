@@ -154,6 +154,7 @@ function main() {
     const inScope = files.filter((f) => !(f in EXCLUDED));
     const totals = libCoverage.createCoverageSummary();
     const rows = [];
+    const typeOnly = [];
     for (const f of inScope) {
       // The best single source for this file (see coverage-scope.mjs on why not a union).
       let best = null;
@@ -164,6 +165,15 @@ function main() {
         const s = fc.toSummary();
         if (!best || pct(s.statements) > pct(best.summary.statements))
           best = { id, fc, summary: s };
+      }
+      // A module of type declarations has nothing to execute, so nothing to
+      // cover. Type-only imports are erased, which also means no test ever
+      // loads it; without this it would count as an untested file.
+      if (!best || GATED.some((k) => pct(best.summary[k]) < 100)) {
+        if (zeroCoverage(f)?.toSummary().statements.total === 0) {
+          typeOnly.push(f);
+          continue;
+        }
       }
       if (!best) {
         // Never loaded by any test: still counted, at its real size, so an
@@ -201,7 +211,7 @@ function main() {
     say(`## ${area.label}`);
     say('');
     say(
-      `${inScope.length} files in scope, ${files.length - inScope.length} excluded. Loaded files: statements ${fmt(totals.statements)}, lines ${fmt(totals.lines)}, branches ${fmt(totals.branches)}, functions ${fmt(totals.functions)}${never ? `; ${never} file(s) never loaded` : ''}.`
+      `${inScope.length} files in scope, ${files.length - inScope.length} excluded. Loaded files: statements ${fmt(totals.statements)}, lines ${fmt(totals.lines)}, branches ${fmt(totals.branches)}, functions ${fmt(totals.functions)}${never ? `; ${never} file(s) never loaded` : ''}${typeOnly.length ? `; ${typeOnly.length} file(s) with no executable code (type declarations)` : ''}.`
     );
     if (rows.length) {
       say('');

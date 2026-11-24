@@ -7,6 +7,9 @@
     "allowJs": true,
     "checkJs": false,
     "noEmit": true,
+    // packages/core imports its own modules as ./x.ts so that plain Node can run
+    // it without a build.
+    "allowImportingTsExtensions": true,
     // Third-party .d.ts files are not ours to fix. @types/webrtc@0.0.37 arrives
     // transitively via microsoft-cognitiveservices-speech-sdk (a mobile dep,
     // hoisted to the root) and duplicates types that lib.dom.d.ts now ships, so

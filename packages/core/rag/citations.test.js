@@ -84,12 +84,43 @@ describe('createMarkerStripper (streaming)', () => {
   });
 
   it('drops an unclosed citation fragment at end of stream, keeps ordinary brackets', () => {
+    // The space before the bracket is held until it is known what follows it.
     const s = createMarkerStripper();
-    expect(s.write('End with [S2')).toBe('End with ');
-    expect(s.flush()).toBe(''); // citation fragment dropped
+    expect(s.write('End with [S2')).toBe('End with');
+    expect(s.flush()).toBe(' '); // citation fragment dropped
 
     const t = createMarkerStripper();
-    expect(t.write('See [note')).toBe('See ');
-    expect(t.flush()).toBe('[note'); // ordinary bracket text released
+    expect(t.write('See [note')).toBe('See');
+    expect(t.flush()).toBe(' [note'); // ordinary bracket text released
+  });
+
+  it('leaves no space before punctuation where a marker was removed', () => {
+    const s = createMarkerStripper();
+    let out = '';
+    out += s.write('Keep afternoons calm [S1]. Carers NZ can help [S2][S3], too.');
+    out += s.flush();
+    expect(out).toBe('Keep afternoons calm. Carers NZ can help, too.');
+  });
+
+  it('gives the same text however the stream is cut up', () => {
+    const answer =
+      'Keep afternoons calm [S1]. Close the curtains [S2] before dusk; it helps [S1, S2]!';
+    const whole = createMarkerStripper();
+    const expected = whole.write(answer) + whole.flush();
+    expect(expected).toBe('Keep afternoons calm. Close the curtains before dusk; it helps!');
+    for (const size of [1, 2, 3, 7]) {
+      const s = createMarkerStripper();
+      let out = '';
+      for (let i = 0; i < answer.length; i += size) out += s.write(answer.slice(i, i + size));
+      out += s.flush();
+      expect(out).toBe(expected);
+    }
+  });
+
+  it('keeps the space between words when a chunk ends on it', () => {
+    const s = createMarkerStripper();
+    expect(s.write('Warm light ')).toBe('Warm light');
+    expect(s.write('helps.')).toBe(' helps.');
+    expect(s.flush()).toBe('');
   });
 });

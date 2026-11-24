@@ -2,6 +2,9 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    // packages/core imports its own modules as ./x.ts so that plain Node can run
+    // it without a build; nothing is emitted here, so that is allowed.
+    "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],

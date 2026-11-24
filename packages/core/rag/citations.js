@@ -60,20 +60,32 @@ function extractCitations(rawText, chunks = []) {
   return { text, sources };
 }
 
-// Streaming-safe marker stripper for the voice path: TTS must never speak
-// "[S1]". Feed each streamed chunk through write(); it holds back any text
-// that could be the start of a marker until it can be resolved. flush()
-// releases whatever remains at end of stream.
+// Streaming-safe marker stripper: text shown or spoken while the answer is
+// still arriving must never contain "[S1]". Feed each streamed chunk through
+// write(); it holds back any text that could be the start of a marker until it
+// can be resolved. flush() releases whatever remains at end of stream.
+//
+// Removing a marker leaves the space that stood in front of it, so the stream
+// would read "calm ." where the final answer reads "calm.". To match the final
+// answer, whitespace at the end of each emission is held until the next text
+// arrives, and dropped if that text starts with punctuation.
 function createMarkerStripper() {
   let buf = '';
-  let lastEndedWithSpace = false;
+  let heldSpace = '';
   const PARTIAL_TAIL = /\[[^\]]*$/; // an unclosed '[' at the end of the buffer
 
-  const clean = (s) => {
-    let out = s.replace(MARKER_RE, '').replace(/[ \t]{2,}/g, ' ');
-    // A stripped marker can leave a doubled space SPLIT across two emissions.
-    if (lastEndedWithSpace) out = out.replace(/^[ \t]+/, '');
-    if (out) lastEndedWithSpace = /[ \t]$/.test(out);
+  const clean = (s, end) => {
+    let out = (heldSpace + s.replace(MARKER_RE, ''))
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/[ \t]+([.,;!?])/g, '$1');
+    heldSpace = '';
+    if (!end) {
+      const tail = out.match(/[ \t]+$/);
+      if (tail) {
+        heldSpace = tail[0];
+        out = out.slice(0, -tail[0].length);
+      }
+    }
     return out;
   };
 
@@ -89,12 +101,12 @@ function createMarkerStripper() {
         emit = buf;
         buf = '';
       }
-      return clean(emit);
+      return clean(emit, false);
     },
     flush() {
       // An unclosed marker at end of stream ("… [S2") is clearly a citation
       // fragment — drop it rather than speak it. Ordinary bracket text stays.
-      const out = clean(buf.replace(/\[\s*S\d[\d\s,S]*$/, ''));
+      const out = clean(buf.replace(/\[\s*S\d[\d\s,S]*$/, ''), true);
       buf = '';
       return out;
     },

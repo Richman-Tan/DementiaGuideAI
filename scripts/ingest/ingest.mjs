@@ -28,6 +28,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { createRequire } from 'node:module';
+import { EMBEDDING_MODEL, CATEGORIES } from '../../packages/core/rag/ragConfig.js';
 
 const require = createRequire(import.meta.url);
 const { getEntry, REGISTRY } = require('./registry.js');
@@ -39,7 +40,6 @@ const {
   textToChunks,
   makeOpenAIClient,
 } = require('./pipeline.js');
-const { EMBEDDING_MODEL, CATEGORIES } = require('../../packages/core/rag/ragConfig.js');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');

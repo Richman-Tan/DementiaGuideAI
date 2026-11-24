@@ -62,10 +62,10 @@ the ElevenLabs WebSocket path needs the key in the browser.
 
 ## Architecture notes
 
-- `apps/mobile/src/lib/rag`, `apps/mobile/src/lib/lipsync`, `apps/mobile/src/lib/tts`, sentence tracking and
-  speculative retrieval are imported **verbatim from the mobile app** via the
-  `@` alias (see `vite.config.js` — a tiny transform converts the five
-  deliberately-CJS config modules to ESM).
+- The retrieval config and prompt, citation handling, lip-sync, text-to-speech
+  helpers, sentence tracking and speculative retrieval are shared with the
+  mobile app: they live in `packages/core` and are imported through the `@core`
+  alias (see `vite.config.js`). Everything there is an ES module.
 - Unity avatars (Aaron default / Ariana) are the only renderer — mobile
   parity. The WebGL build is a git-ignored artifact: export from the Unity
   project (Tools → UaaL → Export WebGL), then `npm run sync:unity` copies it

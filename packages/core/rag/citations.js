@@ -4,7 +4,7 @@
 // supplied, renumbers used ones to contiguous [1]…[n] (the format the
 // ChatScreen CitationText UI renders as tappable badges), and STRIPS markers
 // that don't correspond to any supplied passage — a hallucinated citation must
-// never render as a real source. Plain CommonJS (see ragConfig.js header).
+// never render as a real source. No platform imports (see ragConfig.js header).
 
 const EXCERPT_CHARS = 200;
 
@@ -101,4 +101,4 @@ function createMarkerStripper() {
   };
 }
 
-module.exports = { extractCitations, createMarkerStripper, MARKER_RE };
+export { extractCitations, createMarkerStripper, MARKER_RE };

@@ -1,7 +1,7 @@
 // The Aria system prompt and user-content construction — the ONLY definition.
 // Consumed by src/lib/openaiService.js (production) and scripts/ (eval), so a
-// change here is automatically what gets evaluated. Plain CommonJS — no React
-// Native imports (see ragConfig.js header). Guarded by a Jest snapshot test.
+// change here is automatically what gets evaluated. No React Native imports
+// (see ragConfig.js header). Guarded by a Jest snapshot test.
 //
 // Two versions exist:
 //   v1            — pre-2026-07-16 prompt (Australian framing, no safety block).
@@ -11,7 +11,7 @@
 //                   own knowledge and never refuses because retrieval missed.
 // The active version is ragConfig.PROMPT_VERSION; buildSystemPrompt() dispatches.
 
-const { PROMPT_VERSION, CITATION_MODE } = require('./ragConfig');
+import { PROMPT_VERSION, CITATION_MODE } from './ragConfig.js';
 
 function buildSystemPromptV1({
   conciseMode = false,
@@ -190,4 +190,4 @@ function buildUserContent(userMessage, chunks, citationMode = CITATION_MODE) {
   return `[REFERENCE PASSAGES — may or may not be relevant]\n${passages}\n[/REFERENCE PASSAGES]\n\nUser question: ${userMessage}`;
 }
 
-module.exports = { buildSystemPrompt, buildSystemPromptV1, buildSystemPromptV2, buildUserContent };
+export { buildSystemPrompt, buildSystemPromptV1, buildSystemPromptV2, buildUserContent };

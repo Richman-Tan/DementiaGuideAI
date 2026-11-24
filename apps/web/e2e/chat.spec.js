@@ -1,10 +1,7 @@
 // Flows (a)–(c): the text chat with a BYO key, every provider mocked.
-import { createRequire } from 'node:module';
 import { test, mockProviders, seedStorage, ask, expect, CHUNKS } from './support.js';
-
-const require = createRequire(import.meta.url);
 // The same constants the client uses, so the assertion cannot drift from the config.
-const { maxTokensForStyle } = require('../../../packages/core/rag/ragConfig.js');
+import { maxTokensForStyle } from '../../../packages/core/rag/ragConfig.js';
 
 test.describe('text chat (BYO key, mocked providers)', () => {
   test('(a) a question streams an answer with citation markers, and the source drawer lists the cited source', async ({

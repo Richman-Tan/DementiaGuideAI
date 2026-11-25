@@ -81,6 +81,9 @@ export function makeRes() {
     on() {
       return this;
     },
+    off() {
+      return this;
+    },
   };
   return res;
 }

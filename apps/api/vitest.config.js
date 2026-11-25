@@ -6,10 +6,10 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['tests/**/*.test.js'],
+    include: ['tests/**/*.test.{js,ts}'],
     coverage: {
       provider: 'istanbul',
-      include: ['api/**'],
+      include: ['api/**', 'src/**'],
       reporter: ['json', 'json-summary', 'text-summary'],
       reportsDirectory: 'coverage',
     },

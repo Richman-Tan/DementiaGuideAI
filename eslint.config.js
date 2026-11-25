@@ -28,7 +28,15 @@ module.exports = [
     rules: {
       // `@assets/…glb` are Metro/Vite binary assets, not modules — no resolver
       // can follow them, and both bundlers are verified to emit them.
-      'import/no-unresolved': ['error', { ignore: ['\\.(glb|gltf|vrm)$'] }],
+      //
+      // `../dist/*.mjs` is the API's bundled server code (apps/api/build.mjs):
+      // build output, so it exists after `npm run bundle -w apps/api` and not in
+      // a fresh checkout. An ignore here, not a disable comment at the import,
+      // because a comment would be reported as unused whenever the bundle exists.
+      'import/no-unresolved': [
+        'error',
+        { ignore: ['\\.(glb|gltf|vrm)$', '^\\.\\./dist/[^/]+\\.mjs$'] },
+      ],
       // Idiomatic React Native Animated pattern: `useRef(new Animated.Value(0)).current`
       // read in a style prop. The react-compiler ref/immutability rules flag this as a
       // false positive, so we keep them visible as warnings rather than hard errors.

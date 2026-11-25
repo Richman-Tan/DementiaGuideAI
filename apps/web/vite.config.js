@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { istanbulPre } from '../../scripts/test/istanbul-pre-plugin.mjs';
 import path from 'node:path';
-import { createReadStream, statSync } from 'node:fs';
+import { createReadStream, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -77,6 +77,10 @@ function apiDevServer() {
   // apps/api/api — the handlers sit in the `api/` directory Vercel serves
   // functions from, so the service root stays free for package.json and docs.
   const API_DIR = path.resolve(__dirname, '../api/api');
+  // An endpoint written in TypeScript deploys as a bundle that its file under
+  // api/ re-exports (apps/api/build.mjs). In dev its source is loaded instead:
+  // no bundle step, and an edit applies on the next request.
+  const API_ENTRY_DIR = path.resolve(__dirname, '../api/src/entry');
   return {
     name: 'dg-api-dev',
     apply: 'serve',
@@ -99,7 +103,10 @@ function apiDevServer() {
         try {
           // Re-imported per request with a cache-buster so edits to a route are
           // picked up without restarting the dev server.
-          mod = await server.ssrLoadModule(path.resolve(API_DIR, `${route}.js`));
+          const entry = path.resolve(API_ENTRY_DIR, `${route}.ts`);
+          mod = await server.ssrLoadModule(
+            existsSync(entry) ? entry : path.resolve(API_DIR, `${route}.js`)
+          );
         } catch (err) {
           if (
             err?.code === 'ERR_MODULE_NOT_FOUND' ||

@@ -19,6 +19,10 @@ vi.mock('@supabase/supabase-js', () => ({ createClient: vi.fn((url, key) => ({ u
 vi.mock('../src/services/openaiClient.js', () => ({
   realGenerate: vi.fn(async () => ({ text: 'real answer', citations: [], safety: false })),
 }));
+vi.mock('../src/services/turnClient.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  serverGenerate: vi.fn(async () => ({ text: 'server answer', citations: [], safety: false })),
+}));
 vi.mock('../src/data/services.js', async (importOriginal) => {
   const mod = await importOriginal();
   return { ...mod, mockReply: vi.fn(mod.mockReply) };
@@ -194,6 +198,44 @@ describe('credentialErrorCopy', () => {
   it('returns null for a missing error so callers keep their own fallback', () => {
     expect(credentialErrorCopy(undefined)).toBeNull();
   });
+
+  describe('a turn the server refused', () => {
+    const refused = (status, code = null) =>
+      Object.assign(new Error('refused'), { name: 'TurnRequestError', status, code });
+
+    it('says which daily limit was reached, and when it resets', () => {
+      expect(credentialErrorCopy(refused(429, 'visitor_limit'))).toBe(
+        'You have reached today’s limit for the live demo. It resets around midday NZ time.'
+      );
+      expect(credentialErrorCopy(refused(429, 'demo_limit'))).toBe(
+        'The live demo has reached today’s limit. It resets around midday NZ time.'
+      );
+    });
+
+    it('says the assistant is unavailable, by code or by status', () => {
+      const copy = 'The assistant is temporarily unavailable. Please try again shortly.';
+      expect(credentialErrorCopy(refused(503, 'unavailable'))).toBe(copy);
+      expect(credentialErrorCopy(refused(503))).toBe(copy);
+    });
+
+    it('explains a message that is too long and a session that is missing or expired', () => {
+      expect(credentialErrorCopy(refused(400, 'message_too_long'))).toBe(
+        'That message is too long to send. Please shorten it and try again.'
+      );
+      expect(credentialErrorCopy(refused(401, 'no_session'))).toBe(
+        'Your session could not be started. Reload the page and try again.'
+      );
+      expect(credentialErrorCopy(refused(401))).toBe(
+        'Your session has expired. Reload the page and try again.'
+      );
+    });
+
+    it('leaves anything else to the caller’s own wording', () => {
+      expect(credentialErrorCopy(refused(0, 'connection_lost'))).toBeNull();
+      expect(credentialErrorCopy(refused(0, 'generation_failed'))).toBeNull();
+      expect(credentialErrorCopy(refused(400))).toBeNull();
+    });
+  });
 });
 
 describe('selectTtsMode / markTtsDegraded', () => {
@@ -232,9 +274,11 @@ describe('chatService', () => {
     const chat = await import('../src/services/chatService.js');
     const S = await import('../src/data/services.js');
     const { realGenerate } = await import('../src/services/openaiClient.js');
+    const { serverGenerate } = await import('../src/services/turnClient.js');
     S.mockReply.mockClear();
     realGenerate.mockClear();
-    return { ...chat, mockReply: S.mockReply, realGenerate };
+    serverGenerate.mockClear();
+    return { ...chat, mockReply: S.mockReply, realGenerate, serverGenerate };
   }
 
   describe('isMockMode', () => {
@@ -310,6 +354,41 @@ describe('chatService', () => {
       );
       await vi.advanceTimersByTimeAsync(1100);
       expect((await settled).message).toBe('mock knowledge base outage');
+    });
+  });
+
+  describe('with the server pipeline switched on', () => {
+    beforeEach(() => vi.stubEnv('VITE_TURN_ENDPOINT', 'on'));
+
+    it('is not mock mode even with no key or code, since the server needs neither', async () => {
+      const { isMockMode } = await load();
+      expect(isMockMode()).toBe(false);
+    });
+
+    it('can still be forced into mock mode', async () => {
+      const { isMockMode, generateReply, serverGenerate } = await load();
+      vi.stubGlobal('location', { search: '?mock=1' });
+      expect(isMockMode()).toBe(true);
+      vi.useFakeTimers();
+      const p = generateReply({ question: 'q', settings: {}, onToken: vi.fn() });
+      await vi.runAllTimersAsync();
+      await p;
+      vi.useRealTimers();
+      expect(serverGenerate).not.toHaveBeenCalled();
+    });
+
+    it('sends the turn to the server, ahead of a stored personal key', async () => {
+      const { generateReply, serverGenerate, realGenerate, mockReply } = await load();
+      saveKeys({ openai: 'sk-1', eleven: '', azure: '' });
+      const opts = { question: 'q', settings: {}, onToken: vi.fn() };
+      expect(await generateReply(opts)).toEqual({
+        text: 'server answer',
+        citations: [],
+        safety: false,
+      });
+      expect(serverGenerate).toHaveBeenCalledWith(opts);
+      expect(realGenerate).not.toHaveBeenCalled();
+      expect(mockReply).not.toHaveBeenCalled();
     });
   });
 

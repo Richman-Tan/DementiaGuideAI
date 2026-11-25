@@ -14,6 +14,7 @@ import type {
   TurnEvent,
   Usage,
 } from '../../../packages/core/rag/pipeline/types.ts';
+import type { ServerEvent } from '../../../packages/core/rag/client/turnStream.ts';
 import { applyCors } from '../api/_lib/guard.js';
 import type { Admission } from './admission.ts';
 import { bearerToken } from './http.ts';
@@ -22,13 +23,6 @@ import { openEventStream } from './sse.ts';
 import type { SessionVerifier } from './session.ts';
 import { parseTurnRequest } from './turnRequest.ts';
 import type { TurnRequest } from './turnRequest.ts';
-
-/**
- * What the stream carries: the pipeline's events, plus one of the server's own
- * for a failure the pipeline did not report itself.
- */
-export type StreamEvent =
-  TurnEvent | { type: 'error'; code: 'internal'; message: string; retryable: boolean };
 
 export interface TurnSummary {
   userId: string;
@@ -111,7 +105,7 @@ export function createTurnHandler(deps: TurnDeps): Handler {
     };
     res.on('close', onClose);
 
-    const stream = openEventStream<StreamEvent>(res);
+    const stream = openEventStream<ServerEvent>(res);
     const summary: TurnSummary = {
       userId,
       request,

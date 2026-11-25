@@ -32,6 +32,10 @@ export const EXCLUDED = {
   'apps/api/api/speak.js':
     'Deploy shim: re-exports the bundle that `npm run bundle -w apps/api` makes from apps/api/src, and sets the ' +
     'function time limit. The code it deploys is in scope under apps/api/src; the bundle does not exist until built.',
+  'apps/web/src/voice/pcmTap.worklet.js':
+    'Runs inside the audio thread (an AudioWorkletGlobalScope), where no coverage is collected: it copies ' +
+    'microphone samples into 20 ms frames and posts them. What is done with the frames (voice/micInput.js, ' +
+    'packages/core/voice/speechDetector.ts) is in scope.',
   'apps/web/src/avatar/audioEngine.js':
     'Drives the Web Audio API (AudioContext scheduling, AnalyserNode); extracted verbatim from the ' +
     'mobile renderer, and its timing depends on a real audio clock rather than on logic a test can stub.',

@@ -23,6 +23,7 @@ function engine(name, extra = {}) {
     'appendAudioChunk',
     'setSpeechEmotion',
     'setAvatarState',
+    'setVolume',
     'stopAudio',
   ])
     e[m] = vi.fn();
@@ -131,6 +132,15 @@ describe('broadcasts', () => {
     expect(fake.headless.stopAudio).toHaveBeenCalled();
     voiceAvatar.appendAudioChunk('s1', 'pcm', []);
     expect(fake.unity.appendAudioChunk).toHaveBeenCalled(); // no longer pinned to headless
+  });
+
+  it('setVolume lowers every engine, whichever is the one playing', () => {
+    voiceAvatar.setVolume(0.25);
+    expect(fake.headless.setVolume).toHaveBeenCalledWith(0.25);
+    fake.unity = engine('unity', { characterId: 'aaron' });
+    voiceAvatar.setVolume(1);
+    expect(fake.unity.setVolume).toHaveBeenCalledWith(1);
+    expect(fake.headless.setVolume).toHaveBeenLastCalledWith(1);
   });
 
   it('stopAudio with only the headless engine', () => {

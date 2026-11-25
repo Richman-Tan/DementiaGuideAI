@@ -16,8 +16,9 @@ const PORT = Number(process.env.E2E_PORT || 4173);
 const SLOW = process.env.E2E_COVERAGE === '1' ? 3 : 1;
 // Specs for the production-like build (the `shipped` project below).
 const SHIPPED = /account\.spec\.js/;
-// Specs for the chat on the server's pipeline (the `server` project below).
-const SERVER = /server\.spec\.js/;
+// Specs for the app on the server's pipeline (the `server` project below): the
+// chat, and the spoken conversation.
+const SERVER = /(server|conversation)\.spec\.js/;
 
 export default defineConfig({
   testDir: './e2e',

@@ -17,6 +17,12 @@ export interface SupabaseSearchOptions {
    * filled the column this function reads.
    */
   functionName: string;
+  /**
+   * The share of the score that comes from vector similarity (the rest is
+   * keyword rank). Only match_chunks_v2 takes it; leave it unset for the
+   * function's own default.
+   */
+  vectorWeight?: number;
   fetch?: Fetch;
 }
 
@@ -24,6 +30,7 @@ export function createSupabaseSearch({
   url,
   key,
   functionName,
+  vectorWeight,
   fetch: fetchFn = globalThis.fetch,
 }: SupabaseSearchOptions): Providers['search'] {
   return ({ embedding, queryText, matchCount, minSimilarity, signal }) =>
@@ -37,6 +44,7 @@ export function createSupabaseSearch({
         query_text: queryText,
         match_count: matchCount,
         min_similarity: minSimilarity,
+        ...(vectorWeight === undefined ? {} : { vector_weight: vectorWeight }),
       },
       signal
     );

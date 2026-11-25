@@ -42,6 +42,29 @@ describe('createSupabaseSearch', () => {
     expect(calls[0]?.init.signal).toBe(signal);
   });
 
+  it('passes the vector/keyword mix when one is configured', async () => {
+    let body: Record<string, unknown> = {};
+    const fetchFn = (async (_url: string, init: RequestInit) => {
+      body = JSON.parse(init.body as string);
+      return new Response('[]', { status: 200 });
+    }) as unknown as Fetch;
+    const search = createSupabaseSearch({
+      url: 'https://abc.supabase.co',
+      key: 'k',
+      functionName: 'match_chunks_v2',
+      vectorWeight: 0.6,
+      fetch: fetchFn,
+    });
+    await search({ embedding: [1], queryText: 'q', matchCount: 5, minSimilarity: 0.3 });
+    expect(body).toEqual({
+      query_embedding: [1],
+      query_text: 'q',
+      match_count: 5,
+      min_similarity: 0.3,
+      vector_weight: 0.6,
+    });
+  });
+
   it('reports the database error, naming the function', async () => {
     const fetchFn = (async () =>
       new Response('{"code":"PGRST203","message":"Could not choose the best candidate function"}', {

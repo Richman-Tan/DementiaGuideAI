@@ -1,13 +1,19 @@
-// Chat facade: mock (prototype-parity canned replies, word-streamed) vs real
-// (phase b: gpt-4o + Supabase RAG). Mock is active when no credentials are
-// available — neither a stored OpenAI key nor a guest access code — when
-// VITE_FORCE_MOCK is set, or with ?mock=1 in the URL.
+// Chat facade. Three ways a reply is produced:
+//
+//   mock    canned replies, word-streamed: when VITE_FORCE_MOCK is set, with
+//           ?mock=1 in the URL, or when nothing else is available
+//   server  the pipeline on the server (services/turnClient.js), when
+//           VITE_TURN_ENDPOINT is on. No key or code is needed.
+//   client  the older in-browser pipeline, with a stored OpenAI key or a guest
+//           access code
 import * as S from '../data/services.js';
 import { hasCredentials } from './transport.js';
+import { serverPipelineEnabled } from './turnClient.js';
 
 export function isMockMode() {
   if (import.meta.env.VITE_FORCE_MOCK) return true;
   if (typeof location !== 'undefined' && /[?&]mock=1/.test(location.search)) return true;
+  if (serverPipelineEnabled()) return false;
   return !hasCredentials();
 }
 
@@ -41,7 +47,11 @@ async function mockGenerate({ question, settings, signal, onToken }) {
 
 export async function generateReply(opts) {
   if (isMockMode()) return mockGenerate(opts);
-  // Real path (phase b): dynamic import keeps the RAG stack out of the mock bundle.
+  if (serverPipelineEnabled()) {
+    const { serverGenerate } = await import('./turnClient.js');
+    return serverGenerate(opts);
+  }
+  // The in-browser pipeline: a dynamic import keeps its RAG stack out of the other paths.
   const { realGenerate } = await import('./openaiClient.js');
   return realGenerate(opts);
 }

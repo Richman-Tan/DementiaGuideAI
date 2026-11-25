@@ -16,6 +16,8 @@ const PORT = Number(process.env.E2E_PORT || 4173);
 const SLOW = process.env.E2E_COVERAGE === '1' ? 3 : 1;
 // Specs for the production-like build (the `shipped` project below).
 const SHIPPED = /account\.spec\.js/;
+// Specs for the chat on the server's pipeline (the `server` project below).
+const SERVER = /server\.spec\.js/;
 
 export default defineConfig({
   testDir: './e2e',
@@ -36,7 +38,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', testIgnore: SHIPPED, use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium', testIgnore: [SHIPPED, SERVER], use: { ...devices['Desktop Chrome'] } },
     // The app as production builds it: Supabase configured, so anonymous
     // sign-in, the server-side conversation threads and the account upgrade
     // run. The Supabase URL
@@ -46,6 +48,14 @@ export default defineConfig({
       name: 'shipped',
       testMatch: SHIPPED,
       use: { ...devices['Desktop Chrome'], baseURL: `http://127.0.0.1:${PORT + 1}` },
+    },
+    // The app with VITE_TURN_ENDPOINT on: a chat turn is one request to
+    // POST /api/turn, which the specs answer in the browser. Supabase is
+    // configured here too, because the request carries the visitor's session.
+    {
+      name: 'server',
+      testMatch: SERVER,
+      use: { ...devices['Desktop Chrome'], baseURL: `http://127.0.0.1:${PORT + 2}` },
     },
   ],
   webServer: [
@@ -60,6 +70,11 @@ export default defineConfig({
       VITE_SUPABASE_URL: 'https://e2e-supabase.invalid',
       VITE_SUPABASE_ANON_KEY: 'e2e-anon-key',
     }),
+    server(PORT + 2, {
+      VITE_SUPABASE_URL: 'https://e2e-supabase.invalid',
+      VITE_SUPABASE_ANON_KEY: 'e2e-anon-key',
+      VITE_TURN_ENDPOINT: 'on',
+    }),
   ],
 });
 
@@ -72,6 +87,8 @@ function server(port, appEnv) {
     reuseExistingServer: !process.env.CI && process.env.E2E_COVERAGE !== '1',
     timeout: 120_000,
     env: {
+      // Off unless a server asks for it, whatever a developer's .env says.
+      VITE_TURN_ENDPOINT: '',
       ...appEnv,
       VITE_API_BASE_URL: '',
       VITE_FORCE_MOCK: '',

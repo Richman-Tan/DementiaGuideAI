@@ -460,28 +460,15 @@ export { OpenAIAuthError, OpenAIRateLimitError, StudyAccessError, StudyLimitErro
 // Streams cleaned text into onToken; resolves with the final transcript text
 // (renumbered [1..n] markers), drawer-ready citations, and a safety flag.
 import { mapSettingsToRag } from '../state/mapSettingsToRag.js';
-import { matchSourceToArticle } from './kbToLibrary.js';
+import { mapSourcesToCitations } from './sourceCitations.js';
+
+export { mapSourcesToCitations };
 
 // The design's amber "If you need help now" callout. The model itself handles
 // safety in the v2-nz-safety prompt; this flag only adds the visual treatment
 // for clearly high-risk topics.
 const SAFETY_RE =
   /(aggress|violen|hit|hurt|harm|suicid|self.?harm|danger|emergency|missing|lost and)/i;
-
-// Drawer-ready citations from validated KB sources (shared with the voice path).
-export function mapSourcesToCitations(sources) {
-  return (sources || []).map((s) => {
-    const match = matchSourceToArticle(s);
-    return {
-      title: s.title,
-      org: s.org,
-      url: s.url,
-      excerpt: s.excerpt,
-      num: s.num,
-      ...(match ? { articleId: match.id, cat: match.cat } : {}),
-    };
-  });
-}
 
 export async function realGenerate({ question, settings, history, signal, onToken, onStage }) {
   const opts = { ...mapSettingsToRag(settings), signal };

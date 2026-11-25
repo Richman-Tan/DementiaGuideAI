@@ -7,16 +7,13 @@ import type {
   Modality,
   TurnSettings,
 } from '../../../packages/core/rag/pipeline/types.ts';
+import { TURN_LIMITS } from '../../../packages/core/rag/client/turnStream.ts';
 
 /** The assistant's name comes from the avatar chosen, never from the request as text. */
 export const AVATAR_NAMES = { aaron: 'Aaron', ariana: 'Ariana' } as const;
 
-export const LIMITS = {
-  messageChars: 2000,
-  historyMessages: 12,
-  historyMessageChars: 6000,
-  historyChars: 24000,
-};
+/** The request's size limits, shared with the clients so they can stay within them. */
+export const LIMITS = TURN_LIMITS;
 
 export interface TurnRequest {
   message: string;

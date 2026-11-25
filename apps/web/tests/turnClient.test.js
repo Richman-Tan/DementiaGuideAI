@@ -139,6 +139,9 @@ describe('serverGenerate', () => {
       question: 'What about at night?',
       settings: { avatarId: 'ariana', ariaStyle: 'calm' },
       history: [
+        // The example conversation a new visitor is shown is not theirs.
+        { role: 'user', text: 'Some evenings he lashes out at me.', demo: true },
+        { role: 'aria', text: 'An example answer.', demo: true },
         { role: 'user', text: 'How do I manage sundowning?' },
         { role: 'aria', text: 'Keep afternoons calm.' },
         { role: 'aria', text: 'half an ans', streaming: true },
@@ -159,7 +162,8 @@ describe('serverGenerate', () => {
     expect(init.signal).toBe(signal);
     expect(sent(fetchFn)).toEqual({
       message: 'What about at night?',
-      // Finished turns only, in the endpoint's roles, without the question being asked.
+      // The visitor's own finished turns only, in the endpoint's roles, without
+      // the question being asked.
       history: [
         { role: 'user', content: 'How do I manage sundowning?' },
         { role: 'assistant', content: 'Keep afternoons calm.' },

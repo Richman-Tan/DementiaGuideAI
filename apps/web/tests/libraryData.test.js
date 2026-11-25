@@ -147,6 +147,10 @@ describe('mock replies', () => {
     expect(t.map((m) => m.role)).toEqual(['user', 'aria', 'user', 'aria']);
     expect(t[3].safety).toBe(true);
   });
+
+  it('marks every message of it as an example, not something the visitor said', () => {
+    expect(seedThread().every((m) => m.demo === true)).toBe(true);
+  });
 });
 
 describe('catStyle', () => {

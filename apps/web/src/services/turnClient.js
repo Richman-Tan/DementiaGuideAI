@@ -49,7 +49,8 @@ export function turnOptions(settings = {}) {
 /** Earlier turns as the endpoint wants them, without the question being asked now. */
 function earlierTurns(history, question) {
   const turns = (history || [])
-    .filter((m) => m.text && !m.streaming)
+    // The example conversation is not theirs, and is not sent as if it were.
+    .filter((m) => m.text && !m.streaming && !m.demo)
     .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
   // The chat appends the new question before asking; it travels as `message`.
   const last = turns[turns.length - 1];

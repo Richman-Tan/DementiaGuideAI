@@ -11,7 +11,14 @@ test.describe('text chat (BYO key, mocked providers)', () => {
     await seedStorage(page);
     await page.goto('/#/app/chat');
 
+    // A first visit shows an example conversation, and says that is what it is.
+    await expect(
+      page.getByRole('note').filter({ hasText: 'An example conversation' })
+    ).toBeVisible();
+    await expect(page.getByRole('note').filter({ hasText: 'Your conversation' })).toHaveCount(0);
+
     await ask(page, 'My mum gets restless and upset every evening. What can I try?');
+    await expect(page.getByRole('note').filter({ hasText: 'Your conversation' })).toBeVisible();
 
     // The reply renders with renumbered [1]/[2] badges (the raw [S#] markers
     // are stripped by the real marker stripper). The screen
@@ -29,8 +36,10 @@ test.describe('text chat (BYO key, mocked providers)', () => {
     expect(log.rpc[0]).toMatchObject({ match_count: 50, min_similarity: 0.25 });
     expect(log.rpc[0].query_embedding).toHaveLength(1536);
 
-    // The chat request carried the retrieved passages and the production model.
+    // The chat request carried the retrieved passages and the production model,
+    // and none of the example conversation: the visitor never said it.
     expect(log.chat).toHaveLength(1);
+    expect(log.chat[0].messages.map((m) => m.role)).toEqual(['system', 'user']);
     expect(log.chat[0].model).toBe('gpt-4o');
     expect(log.chat[0].stream).toBe(true);
     const userMsg = log.chat[0].messages.at(-1);

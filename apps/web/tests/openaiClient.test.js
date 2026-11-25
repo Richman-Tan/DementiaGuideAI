@@ -733,6 +733,9 @@ describe('realGenerate', () => {
         setupType: 'exploring',
       },
       history: [
+        // The example conversation is not sent as if the visitor had said it.
+        { role: 'user', text: 'How do I manage sundowning?', demo: true },
+        { role: 'aria', text: 'An example answer', demo: true },
         { role: 'aria', text: 'Hello' },
         { role: 'user', text: '' },
         { role: 'aria', text: 'typing', streaming: true },

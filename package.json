@@ -76,6 +76,7 @@
     "brand:icons": "node scripts/brand/build-icons.js",
     "kb:ingest": "node scripts/ingest/ingest.mjs",
     "kb:ingest:dry": "node scripts/ingest/ingest.mjs --dry-run",
+    "kb:reembed": "node scripts/ingest/reembed.mjs",
     "postinstall": "patch-package",
     "prepare": "husky || true"
   },

@@ -49,6 +49,12 @@ jobs:
       - name: Test
         run: npm test
 
+      # The server's TypeScript (apps/api/src) deploys as a bundle that the
+      # files under apps/api/api re-export. The tests above run the source, so
+      # this builds the bundle and loads each endpoint through it.
+      - name: Bundle the API
+        run: npm run bundle -w apps/api -- --check
+
   prebuild-smoke:
     # Exercises every config-plugin code path (apps/mobile/plugins/withUnityFramework.js)
     # on a checkout WITHOUT the git-lfs Unity artifacts — the iOS copy mod and

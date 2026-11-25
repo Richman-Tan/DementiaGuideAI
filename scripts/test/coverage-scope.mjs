@@ -20,10 +20,15 @@ export const AREAS = [
     sources: ['jest', 'web'],
   },
   { id: 'api', label: 'API — apps/api/api', root: 'apps/api/api/', sources: ['api'] },
+  // The server's TypeScript, which the files under api/ deploy as a bundle.
+  { id: 'api-src', label: 'API — apps/api/src', root: 'apps/api/src/', sources: ['api'] },
 ];
 
 /** Source files that are part of an area but not of the gate: path → reason. */
 export const EXCLUDED = {
+  'apps/api/api/turn.js':
+    'Deploy shim: re-exports the bundle that `npm run bundle -w apps/api` makes from apps/api/src, and sets the ' +
+    'function time limit. The code it deploys is in scope under apps/api/src; the bundle does not exist until built.',
   'apps/web/src/avatar/audioEngine.js':
     'Drives the Web Audio API (AudioContext scheduling, AnalyserNode); extracted verbatim from the ' +
     'mobile renderer, and its timing depends on a real audio clock rather than on logic a test can stub.',

@@ -3,6 +3,7 @@
 // is replaced, by a fetch that answers as each service would.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { composeTurnHandler, DEFAULT_LIMITS } from '../src/compose.ts';
+import { composeSpeakHandler, DEFAULT_SPEAK_LIMITS } from '../src/composeSpeak.ts';
 import type { Backend } from '../src/compose.ts';
 import { createProviders, missingEnv } from '../src/providers.ts';
 import type { ApiRequest, ApiResponse } from '../src/http.ts';
@@ -123,6 +124,7 @@ function fakeNetwork({
         });
       }
       if (url.includes('/rest/v1/rpc/')) return json([CHUNK, OTHER_CHUNK]);
+      if (url.includes('api.elevenlabs.io')) return json({ audio_base64: 'AAAA', alignment: null });
       if (url.includes('/v1/messages')) {
         const model = String(body.model);
         if (body.stream)
@@ -397,6 +399,80 @@ describe('composeTurnHandler: switched on', () => {
   });
 });
 
+describe('composeSpeakHandler', () => {
+  const SPEAK_ENV = {
+    SPEAK_ENDPOINT: 'on',
+    ELEVENLABS_API_KEY: 'eleven-key',
+    SUPABASE_URL: 'https://db.example',
+    SUPABASE_SERVICE_ROLE_KEY: 'service-key',
+  };
+  const speech = () =>
+    fakeRequest({
+      code: '',
+      headers: { authorization: 'Bearer session-token' },
+      body: { text: 'Keep afternoons calm.', voiceId: 'nPczCjzI2devNBz1zQrb' },
+    });
+
+  it('is off unless SPEAK_ENDPOINT is "on", and then calls nothing', async () => {
+    const calls = fakeNetwork();
+    const services = backend();
+    const { SPEAK_ENDPOINT: _off, ...env } = SPEAK_ENV;
+    const res = response();
+    await composeSpeakHandler(env, services)(speech(), res);
+    expect(res.statusCode).toBe(503);
+    expect(calls).toEqual([]);
+    expect(services.rpc).not.toHaveBeenCalled();
+  });
+
+  it('stays off, and says which keys are missing, when switched on without them', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = response();
+    await composeSpeakHandler(
+      { SPEAK_ENDPOINT: 'on', SUPABASE_URL: 'https://db.example' },
+      backend()
+    )(speech(), res);
+    expect(res.statusCode).toBe(503);
+    expect(log).toHaveBeenCalledWith(
+      '[speak] SPEAK_ENDPOINT is on but ELEVENLABS_API_KEY, SUPABASE_SERVICE_ROLE_KEY is not set; staying off'
+    );
+  });
+
+  it('speaks for a verified visitor: counted under its own names, with the voice key, and metered', async () => {
+    const calls = fakeNetwork();
+    const services = backend();
+    const res = response();
+    await composeSpeakHandler(SPEAK_ENV, services)(speech(), res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ audio_base64: 'AAAA', alignment: null });
+
+    expect(to(calls, '/auth/v1/user')).toHaveLength(1);
+    expect(services.rpc.mock.calls).toEqual([
+      ['bump_study_usage', { p_code: 'speak:user-1', p_limit: DEFAULT_SPEAK_LIMITS.visitorDaily }],
+      ['bump_study_usage', { p_code: 'speak:all', p_limit: DEFAULT_SPEAK_LIMITS.globalDaily }],
+    ]);
+    const [voice] = to(calls, 'api.elevenlabs.io');
+    expect(voice?.headers['xi-api-key']).toBe('eleven-key');
+    expect(services.recordUsage.mock.calls).toEqual([
+      [{ userId: 'user-1', kind: 'tts', units: 21, model: 'eleven_turbo_v2_5' }],
+    ]);
+    expect(calls).toHaveLength(2);
+  });
+
+  it('follows the limits in the environment, and refuses once one is used', async () => {
+    const calls = fakeNetwork();
+    const services = backend((key) => key !== 'speak:all');
+    const res = response();
+    await composeSpeakHandler(
+      { ...SPEAK_ENV, SPEAK_VISITOR_DAILY_LIMIT: '9', SPEAK_GLOBAL_DAILY_LIMIT: '90' },
+      services
+    )(speech(), res);
+    expect(services.rpc.mock.calls.map(([, args]) => args.p_limit)).toEqual([9, 90]);
+    expect(res.statusCode).toBe(429);
+    expect(res.body).toMatchObject({ code: 'demo_limit' });
+    expect(to(calls, 'api.elevenlabs.io')).toEqual([]);
+  });
+});
+
 describe('createProviders', () => {
   it('names what is missing', () => {
     expect(missingEnv({})).toEqual([
@@ -414,6 +490,49 @@ describe('createProviders', () => {
   it('has a clock', () => {
     fakeNetwork();
     expect(createProviders(ENV).now()).toBeGreaterThan(0);
+  });
+});
+
+describe('the deployed speech entry', () => {
+  const speech = () =>
+    fakeRequest({
+      code: '',
+      headers: { authorization: 'Bearer session-token' },
+      body: { text: 'Keep afternoons calm.', voiceId: 'nPczCjzI2devNBz1zQrb' },
+    });
+  type Entry = (req: ApiRequest, res: ApiResponse) => Promise<void>;
+
+  it('is off by default', async () => {
+    const calls = fakeNetwork();
+    const { mod } = await load('../src/entry/speak.ts', { env: { SPEAK_ENDPOINT: undefined } });
+    const res = response();
+    await (mod.default as Entry)(speech(), res);
+    expect(res.statusCode).toBe(503);
+    expect(calls).toEqual([]);
+  });
+
+  it('counts through the database helper and records through the usage meter when switched on', async () => {
+    fakeNetwork();
+    const { mod, admin } = await load('../src/entry/speak.ts', {
+      env: {
+        SPEAK_ENDPOINT: 'on',
+        ELEVENLABS_API_KEY: 'eleven-key',
+        SUPABASE_URL: 'https://db.example',
+        ALLOWED_ORIGINS: ORIGIN,
+      },
+    });
+    const res = response();
+    await (mod.default as Entry)(speech(), res);
+    expect(res.statusCode).toBe(200);
+    expect(admin.rpc).toHaveBeenCalledWith('bump_study_usage', {
+      p_code: 'speak:user-1',
+      p_limit: DEFAULT_SPEAK_LIMITS.visitorDaily,
+    });
+    expect(admin.insertIgnoringConflicts).toHaveBeenCalledWith(
+      'usage_events',
+      [{ user_id: 'user-1', kind: 'tts', units: 21, model: 'eleven_turbo_v2_5' }],
+      'id'
+    );
   });
 });
 

@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createAdmission, dailyLimit, GLOBAL_KEY } from '../src/admission.ts';
+import { createAdmission, dailyLimit, globalKey } from '../src/admission.ts';
+
+const GLOBAL_KEY = globalKey('turn');
 
 /** A counter like the database one: adds one, then says whether the count is within the limit. */
 function counter() {
@@ -79,6 +81,41 @@ describe('createAdmission', () => {
       error: 'The assistant is temporarily unavailable.',
     });
     expect(log).toHaveBeenCalledWith(`[turn] usage counter unavailable: ${logged}`);
+  });
+});
+
+describe('createAdmission: scopes', () => {
+  it('counts speech under its own names, so it does not use up the turns', async () => {
+    const { bump, calls, counts } = counter();
+    const turns = createAdmission({ bump, visitorDailyLimit: 1, globalDailyLimit: 10 });
+    const speech = createAdmission({
+      bump,
+      scope: 'speak',
+      visitorDailyLimit: 2,
+      globalDailyLimit: 10,
+    });
+    expect(await turns('user-1')).toEqual({ ok: true });
+    expect(await speech('user-1')).toEqual({ ok: true });
+    expect(await speech('user-1')).toEqual({ ok: true });
+    expect(await speech('user-1')).toMatchObject({ ok: false, code: 'visitor_limit' });
+    expect(calls.slice(2, 4)).toEqual([
+      ['speak:user-1', 2],
+      ['speak:all', 10],
+    ]);
+    expect(counts.get('turn:all')).toBe(1);
+    expect(counts.get(globalKey('speak'))).toBe(2);
+  });
+
+  it('names the scope when the counter cannot be reached', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const speech = createAdmission({
+      bump: () => Promise.reject(new Error('down')),
+      scope: 'speak',
+      visitorDailyLimit: 1,
+      globalDailyLimit: 1,
+    });
+    expect(await speech('user-1')).toMatchObject({ ok: false, status: 503 });
+    expect(log).toHaveBeenCalledWith('[speak] usage counter unavailable: down');
   });
 });
 

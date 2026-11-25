@@ -1,5 +1,7 @@
 // Puts the turn endpoint together from the server's environment: whether it is
 // on, who may call it, what a day may cost, and what gets recorded.
+// (composeSpeak.ts does the same for speech, in its own file so that the speech
+// function's bundle does not carry the model SDK.)
 //
 // It answers 503 unless TURN_ENDPOINT is "on" and every key it needs is set.
 // An endpoint that spends money on each call stays shut until it is switched

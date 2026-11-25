@@ -232,7 +232,13 @@ export async function* runTurn(
     const parts = config.prompt.sections ? splitSections(raw) : { lead: raw, detail: '' };
     const whole = parts.detail ? `${parts.lead}\n\n${parts.detail}` : parts.lead;
     const cited = extractCitations(whole, chunks) as { text: string; sources: Source[] };
-    yield { type: 'final', text: cited.text, lead: lead.trim(), sources: cited.sources };
+    yield {
+      type: 'final',
+      text: cited.text,
+      marked: whole,
+      lead: lead.trim(),
+      sources: cited.sources,
+    };
   }
   if (usage) yield { type: 'usage', ...usage };
 

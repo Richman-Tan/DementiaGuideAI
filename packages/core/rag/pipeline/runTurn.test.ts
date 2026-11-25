@@ -198,6 +198,8 @@ describe('runTurn: a normal turn', () => {
     const [final] = of(events, 'final');
     // [S9] names no supplied passage: a made-up citation is dropped, never shown.
     expect(final?.text).toBe('Keep afternoons calm [1]. Carers NZ can help [2].');
+    // The model's own markers are kept too, for evaluation and traces.
+    expect(final?.marked).toBe('Keep afternoons calm [S1]. Carers NZ can help [S2][S9].');
     expect(final?.sources.map((s) => [s.num, s.id, s.title])).toEqual([
       [1, 'kb-1', 'Managing evening restlessness'],
       [2, 'kb-2', 'carer-support'],
@@ -374,6 +376,9 @@ describe('runTurn: lead and detail', () => {
       'Keep afternoons calm [1].\n\n1. Close the curtains.\n2. Carers NZ can help [2].'
     );
     expect(final?.text).not.toContain(SECTION_DELIMITER);
+    expect(final?.marked).toBe(
+      'Keep afternoons calm [S1].\n\n1. Close the curtains.\n2. Carers NZ can help [S2].'
+    );
   });
 
   it('treats an answer with no delimiter as all lead', async () => {

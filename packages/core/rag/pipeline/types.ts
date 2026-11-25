@@ -119,6 +119,12 @@ export type TurnEvent =
       type: 'final';
       /** The whole answer, with citation markers renumbered [1]…[n] in order of first use. */
       text: string;
+      /**
+       * The whole answer as the model wrote it, with its own [S#] markers. For
+       * traces and evaluation, which check each marker against the passages
+       * supplied; the apps show `text`.
+       */
+      marked: string;
       /** The part meant to be spoken, without markers. */
       lead: string;
       sources: Source[];

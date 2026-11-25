@@ -139,10 +139,13 @@ export interface SearchRequest {
   signal?: AbortSignal;
 }
 
+/** How hard the model works on an answer; the lever for speed against thoroughness. */
+export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+
 export interface GenerateRequest {
   model: string;
   maxTokens: number;
-  effort?: string;
+  effort?: Effort;
   /**
    * Instructions, in two parts so a provider can cache the first: `stable` is
    * the same on every turn of a conversation, `perTurn` may change.
@@ -217,7 +220,7 @@ export interface RetrievalConfig {
 export interface GenerationConfig {
   model: string;
   maxTokens: number;
-  effort?: string;
+  effort?: Effort;
 }
 
 export interface PipelineConfig {

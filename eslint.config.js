@@ -54,6 +54,7 @@ module.exports = [
       'apps/web/scripts/**/*.mjs',
       'apps/web/vite.config.js',
       'apps/api/**/*.js',
+      'evals/**/*.mjs',
     ],
     languageOptions: {
       globals: {

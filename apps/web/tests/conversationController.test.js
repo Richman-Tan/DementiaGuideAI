@@ -273,6 +273,16 @@ describe('a spoken turn', () => {
     expect(s.services.tts).toHaveBeenCalledTimes(1);
   });
 
+  it('says nothing for a piece of the lead with no words in it', async () => {
+    const s = setup();
+    await s.start();
+    await s.say('how do I manage sundowning', WAIT.questionMs);
+    // The splitter's own boundary mark, stray in the model's output, comes back
+    // as an empty sentence.
+    await s.lead('\x1FKeep afternoons calm. ');
+    expect(s.services.tts.mock.calls.map(([text]) => text)).toEqual(['Keep afternoons calm.']);
+  });
+
   it('starts the next stretch of listening with a clean transcript', async () => {
     const s = setup();
     await s.start();
@@ -396,6 +406,43 @@ describe('talking over the avatar', () => {
     s.words.onText('keep afternoons calm');
     await after(BARGE);
     expect(s.snap.notice).toMatch(/I kept hearing my own voice/);
+  });
+
+  it('plays nothing if it is stopped while the speech is still being fetched', async () => {
+    let deliver;
+    const s = setup({ tts: () => new Promise((resolve) => (deliver = resolve)) });
+    await s.start();
+    await s.say('how do I manage sundowning', WAIT.questionMs);
+    await s.lead('Keep afternoons calm. ');
+    s.conversation.interrupt();
+    deliver({ audio: 'audio:late', visemeTimeline: null });
+    await flush();
+    expect(s.world.avatar.calls.some((c) => c.startsWith('play'))).toBe(false);
+    expect(s.snap).toMatchObject({ phase: 'listening', subtitle: '' });
+  });
+
+  it('carries on when the avatar cannot change its volume, and says so in the log', async () => {
+    const avatar = fakeAvatar();
+    avatar.setVolume = () => {
+      throw new Error('no audio context');
+    };
+    const s = await midAnswer({ avatar });
+    s.world.micCallbacks.onSpeechStart();
+    s.words.onText('sorry can I');
+    await after(BARGE);
+    expect(console.warn).toHaveBeenCalledWith('[conversation]', 'no audio context');
+    expect(s.snap.phase).toBe('userSpeaking'); // still stopped to listen
+    expect(s.generation.opts.signal.aborted).toBe(true);
+  });
+
+  it('logs a port failure that is not an Error', async () => {
+    const avatar = fakeAvatar();
+    avatar.setVolume = () => {
+      throw 'volume unavailable';
+    };
+    const s = await midAnswer({ avatar });
+    s.world.micCallbacks.onSpeechStart();
+    expect(console.warn).toHaveBeenCalledWith('[conversation]', 'volume unavailable');
   });
 
   it('stops on the stop control and records the question with what was heard of the answer', async () => {

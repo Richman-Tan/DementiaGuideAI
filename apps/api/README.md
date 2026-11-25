@@ -76,6 +76,7 @@ addressable.
 | Path | Role |
 |---|---|
 | `api/turn.js` | The assistant: one turn in, a stream of events out. A shim over the bundle of `src/`; see [The turn endpoint](#the-turn-endpoint) |
+| `api/speak.js` | A piece of the reply as speech, for a visitor's session. Also a shim; see [The speech endpoint](#the-speech-endpoint) |
 | `src/` | The server's own code, in TypeScript: the turn handler (`turn.ts`), request validation (`turnRequest.ts`), session verification (`session.ts`), the daily cap (`admission.ts`), the event stream (`sse.ts`), and where the real services are put together (`providers.ts`, `compose.ts`). `src/entry/*.ts` are the bundle's entry points, one per endpoint |
 | `build.mjs` | Bundles `src/entry/*.ts`, with the pipeline from `packages/core`, into `dist/` |
 | `api/chat.js`, `api/embed.js`, `api/speech.js`, `api/transcribe.js`, `api/eleven-tts.js` | Credentialed proxies. Explicit per-endpoint allowlists, not a catch-all passthrough: a leaked access code must not reach an arbitrary model. |
@@ -154,6 +155,29 @@ well; it is the backstop that does not depend on this code.
 
 Known gaps: the cap counts turns, not dollars, and an interrupted turn is counted
 but its tokens are not written to `usage_events`.
+
+## The speech endpoint
+
+`POST /api/speak` turns a sentence or two of the reply into audio, with the
+timing of each character that moves the avatar's mouth. It is what lets the
+avatar speak for a visitor who has no key: the ElevenLabs key stays on the
+server.
+
+It follows the turn endpoint's rules. It answers 503 unless `SPEAK_ENDPOINT=on`
+and `ELEVENLABS_API_KEY`, `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set;
+it needs the visitor's session token; and each request passes the daily cap
+first, counted separately from turns (`SPEAK_VISITOR_DAILY_LIMIT`, default 60,
+and `SPEAK_GLOBAL_DAILY_LIMIT`, default 300: three requests for each turn).
+
+Request: `{ "text": "…", "voiceId": "…", "speechRate": 0.78 }`. The text is at
+most 600 characters and the voice must be one of the two roster voices, so the
+endpoint cannot be used as a general text-to-speech service. The reply is
+ElevenLabs' JSON unchanged (`audio_base64`, `alignment`). A failure upstream is
+logged here and reported to the caller without the provider's wording.
+
+ElevenLabs bills by character against a monthly allowance, and this cap counts
+requests: at the defaults a day is at most 300 × 600 characters, and far less in
+practice. Size the global limit to the plan.
 
 ## Local development
 

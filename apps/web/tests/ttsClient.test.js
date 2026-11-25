@@ -7,6 +7,9 @@ import { saveKeys } from '../src/state/keysStore.js';
 import { saveAccess } from '../src/state/accessStore.js';
 import { apiUrl } from '../src/services/apiBase.js';
 
+vi.mock('../src/services/supabase.js', () => ({
+  supabase: { auth: { getSession: vi.fn() } },
+}));
 vi.mock('../src/services/openaiClient.js', () => ({
   openaiClient: { tts: vi.fn(async (text, voice) => `data:audio/mpeg;base64,OPENAI:${voice}`) },
 }));
@@ -21,6 +24,7 @@ vi.mock('@core/lipsync/createVisemeTimeline', () => ({
 
 const { tts } = await import('../src/services/ttsClient.js');
 const { openaiClient } = await import('../src/services/openaiClient.js');
+const { supabase } = await import('../src/services/supabase.js');
 const { createVisemeTimeline } = await import('@core/lipsync/createVisemeTimeline');
 
 const ALIGNMENT = {
@@ -51,7 +55,103 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   vi.restoreAllMocks();
+});
+
+describe('speech from the server (VITE_TURN_ENDPOINT on)', () => {
+  beforeEach(() => {
+    vi.stubEnv('VITE_TURN_ENDPOINT', 'on');
+    supabase.auth.getSession.mockResolvedValue({
+      data: { session: { access_token: 'session-token' } },
+    });
+  });
+
+  it('asks the server with the visitor’s session, and builds the mouth timing from its reply', async () => {
+    const result = await tts('Hello', {
+      elevenVoiceId: 'nPczCjzI2devNBz1zQrb',
+      speechRate: 0.92,
+      visemeWeights: { aa: 1 },
+    });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(apiUrl('/api/speak'));
+    expect(init.method).toBe('POST');
+    expect(init.headers).toEqual({
+      Authorization: 'Bearer session-token',
+      'Content-Type': 'application/json',
+    });
+    expect(JSON.parse(init.body)).toEqual({
+      text: 'Hello',
+      voiceId: 'nPczCjzI2devNBz1zQrb',
+      speechRate: 0.92,
+    });
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(result.audio).toBe('data:audio/mpeg;base64,QUJD');
+    expect(createVisemeTimeline).toHaveBeenCalledWith(ALIGNMENT, { visemeWeights: { aa: 1 } });
+    expect(result.visemeTimeline.alignment).toBe(ALIGNMENT);
+  });
+
+  it('is used ahead of a stored key, and defaults the voice and rate', async () => {
+    saveKeys({ openai: 'sk-1', eleven: 'el-key', azure: '' });
+    await tts('Hello');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(apiUrl('/api/speak'));
+    expect(JSON.parse(init.body)).toEqual({
+      text: 'Hello',
+      voiceId: 'EXAVITQu4vr4xnSDxMaL',
+      speechRate: 0.78,
+    });
+  });
+
+  it('throws the server’s refusal with its reason code, and tries no other provider', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 429,
+      json: async () => ({ error: "The live demo has reached today's limit.", code: 'demo_limit' }),
+    });
+    await expect(tts('Hello')).rejects.toMatchObject({
+      name: 'TurnRequestError',
+      status: 429,
+      code: 'demo_limit',
+      message: "The live demo has reached today's limit.",
+    });
+    expect(openaiClient.tts).not.toHaveBeenCalled();
+  });
+
+  it('describes a refusal it cannot read by its status', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: async () => {
+        throw new Error('not json');
+      },
+    });
+    await expect(tts('Hello')).rejects.toMatchObject({
+      status: 502,
+      code: null,
+      message: 'speech failed (502)',
+    });
+    fetchMock.mockResolvedValue({ ok: false, status: 503, json: async () => ({}) });
+    await expect(tts('Hello')).rejects.toMatchObject({ status: 503, code: null });
+  });
+
+  it.each([
+    ['there is no session', { data: { session: null } }],
+    ['Supabase returns nothing', {}],
+  ])('asks for nothing when %s', async (_name, result) => {
+    supabase.auth.getSession.mockResolvedValue(result);
+    await expect(tts('Hello')).rejects.toMatchObject({ status: 401, code: 'no_session' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('a reply with no audio is a failure, and a network failure passes through', async () => {
+    fetchMock.mockResolvedValue(okJson({ alignment: ALIGNMENT }));
+    await expect(tts('Hello')).rejects.toThrow('missing audio_base64');
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    await expect(tts('Hello')).rejects.toThrow('Failed to fetch');
+    expect(openaiClient.tts).not.toHaveBeenCalled();
+  });
 });
 
 describe('ElevenLabs direct (personal key)', () => {

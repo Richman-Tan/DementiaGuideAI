@@ -138,11 +138,12 @@ function NavItem({ item: [key, label, route, icon], active, shape }) {
     );
   }
   // A tab has no fill; the current one is darker and carries a dot.
+  // (`leading-tight`: a link inherits the page's paragraph line height, a button did not.)
   return (
     <a
       href={route}
       aria-current={current}
-      className={`${LINK} flex min-h-12 min-w-14 flex-col items-center gap-0.5 text-xs font-semibold ${
+      className={`${LINK} flex min-h-12 min-w-14 flex-col items-center gap-0.5 text-xs leading-tight font-semibold ${
         on ? 'text-primary-dark' : 'text-text-muted'
       }`}
     >

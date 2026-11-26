@@ -64,17 +64,29 @@ test.describe('home', () => {
       [/^Library\s*49 curated articles$/, /#\/app\/library$/, 'Library'],
       [/^Settings\s*Make it yours$/, /#\/app\/settings$/, 'Settings'],
     ]) {
-      await main.getByRole('button', { name: card }).click();
+      await main.getByRole('link', { name: card }).click();
       await expect(page).toHaveURL(url);
       await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
       await page.goto('/#/app/home');
     }
-    await main.getByRole('button', { name: /^Voice\s*Talk with Aaron$/ }).click();
+    await main.getByRole('link', { name: /^Voice\s*Talk with Aaron$/ }).click();
     await expect(page).toHaveURL(/#\/app\/voice$/);
     await expect(page.getByText('Set up voice conversations')).toBeVisible();
 
     await page.goto('/#/app/home');
-    await main.getByRole('button', { name: /Understanding the Stages of Dementia/ }).click();
+    // The page has an outline: the greeting, then each group of things under it.
+    await expect(main.getByRole('heading', { level: 2 })).toHaveText([
+      'Quick questions',
+      'Featured resources',
+    ]);
+    // The count on the Library card is the library's, not a number typed in.
+    await expect(main.getByRole('link', { name: /^Library/ })).toContainText('49 curated articles');
+    // Beside the question box, the way to ask by voice goes somewhere, so it is a link.
+    await expect(main.getByRole('link', { name: 'Ask Aaron by voice' })).toHaveAttribute(
+      'href',
+      '#/app/voice'
+    );
+    await main.getByRole('link', { name: /Understanding the Stages of Dementia/ }).click();
     await expect(page).toHaveURL(/#\/app\/library\/stages$/);
     await expect(
       page.getByRole('heading', { name: 'Understanding the Stages of Dementia' })

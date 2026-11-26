@@ -6,11 +6,26 @@ import React, { useState } from 'react';
 import * as S from '../data/services.js';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { useChat } from '../state/ChatContext.jsx';
-import { go, useWidth } from '../state/router.js';
+import { useWidth } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
 import { AvatarBust, AvatarHomeStage } from '../avatar/AvatarStage.jsx';
 import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
+import { Button } from '../components/ui/Button.jsx';
+
+// A card that goes somewhere. It is a link, so it is in a screen reader's list
+// of links and can be opened in a new tab; it used to be a button that changed
+// the address when pressed.
+//
+// Two things a button did by itself and a link does not: `leading-tight`,
+// because a link inherits the page's line height, which is set for paragraphs
+// (each card came out a third taller); and `box-border`, because a link's
+// width does not include its padding (each came out 30px wider).
+const CARD =
+  'box-border rounded-lg border-(length:--bw) border-solid border-border bg-surface text-left leading-tight text-text no-underline shadow-card transition-colors hover:border-primary';
+
+// The name of a group of things on the page: small, quiet, and a heading.
+const GROUP = 'm-0 mb-2 text-sm font-semibold tracking-wider text-text-muted uppercase';
 
 const MicIcon = () => (
   <svg
@@ -54,7 +69,7 @@ export default function Home() {
       catName: S.getCat(a.cat).name,
       chipBg: y.bg,
       chipFg: y.fg,
-      open: go('#/app/library/' + a.id),
+      href: '#/app/library/' + a.id,
     };
   });
 
@@ -178,24 +193,7 @@ export default function Home() {
                   background: 'var(--elev)',
                 }}
               />
-              <button
-                onClick={submit}
-                aria-label="Send question"
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  flexShrink: 0,
-                  borderRadius: '13px',
-                  border: 'none',
-                  background: 'var(--primary)',
-                  color: 'var(--on-primary)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                className="hv2"
-              >
+              <Button icon aria-label="Send question" className="shrink-0" onClick={submit}>
                 <svg
                   width="20"
                   height="20"
@@ -209,43 +207,21 @@ export default function Home() {
                   <path d="M4 12h14" />
                   <path d="M13 6l6 6-6 6" />
                 </svg>
-              </button>
-              <button
-                onClick={go('#/app/voice')}
+              </Button>
+              <Button
+                icon
+                variant="secondary"
+                href="#/app/voice"
                 aria-label={`Ask ${who} by voice`}
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  flexShrink: 0,
-                  borderRadius: '13px',
-                  border: 'var(--bw) solid var(--border)',
-                  background: 'var(--tint)',
-                  color: 'var(--primary-d)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                className="hv7"
+                className="shrink-0"
               >
                 <MicIcon />
-              </button>
+              </Button>
             </div>
           </div>
 
           <div style={{ flexShrink: 0 }}>
-            <div
-              style={{
-                fontWeight: 600,
-                marginBottom: '8px',
-                color: 'var(--text2)',
-                fontSize: '.82rem',
-                textTransform: 'uppercase',
-                letterSpacing: '.06em',
-              }}
-            >
-              Quick questions
-            </div>
+            <h2 className={GROUP}>Quick questions</h2>
             <div
               style={
                 isMobile
@@ -256,21 +232,11 @@ export default function Home() {
               {S.QUICK_QUESTIONS.map((q) => (
                 <button
                   key={q}
+                  type="button"
                   onClick={() => askNow(q)}
-                  style={{
-                    minHeight: '40px',
-                    padding: '6px 14px',
-                    borderRadius: '999px',
-                    border: 'var(--bw) solid var(--border)',
-                    background: 'var(--surface)',
-                    color: 'var(--text)',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    fontSize: 'clamp(.85rem, 1.2vw, .95rem)',
-                    whiteSpace: isMobile ? 'nowrap' : 'normal',
-                    flexShrink: 0,
-                  }}
-                  className="hv8"
+                  className={`min-h-10 shrink-0 cursor-pointer rounded-pill border-(length:--bw) border-solid border-border bg-surface px-3.5 py-1.5 text-left text-[length:clamp(.85rem,1.2vw,.95rem)] text-text transition-colors hover:border-primary hover:bg-tint ${
+                    isMobile ? 'whitespace-nowrap' : ''
+                  }`}
                 >
                   {q}
                 </button>
@@ -289,108 +255,49 @@ export default function Home() {
             {[
               ['Chat', 'Ask questions', '#/app/chat'],
               ['Voice', `Talk with ${who}`, '#/app/voice'],
-              ['Library', '49 curated articles', '#/app/library'],
+              ['Library', `${S.ARTICLES.length} curated articles`, '#/app/library'],
               ['Settings', 'Make it yours', '#/app/settings'],
             ].map(([t, sub, r]) => (
-              <button
+              <a
                 key={t}
-                onClick={go(r)}
-                style={{
-                  ...card,
-                  textAlign: 'left',
-                  padding: isMobile ? '10px 12px' : '12px 14px',
-                  cursor: 'pointer',
-                  color: 'var(--text)',
-                  minWidth: 0,
-                }}
-                className="hv9"
+                href={r}
+                className={`${CARD} block min-w-0 hover:bg-tint ${
+                  isMobile ? 'px-3 py-2.5' : 'px-3.5 py-3'
+                }`}
               >
-                <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: 'clamp(.92rem, 1.3vw, 1.02rem)',
-                    marginBottom: '2px',
-                  }}
-                >
+                <div className="mb-0.5 text-[length:clamp(.92rem,1.3vw,1.02rem)] font-bold">
                   {t}
                 </div>
-                <div
-                  style={{
-                    color: 'var(--text2)',
-                    fontSize: 'clamp(.78rem, 1.1vw, .9rem)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
+                <div className="truncate text-[length:clamp(.78rem,1.1vw,.9rem)] text-text-muted">
                   {sub}
                 </div>
-              </button>
+              </a>
             ))}
           </div>
 
           <div style={{ flexShrink: 0, marginTop: 'auto', minHeight: 0 }}>
-            <div
-              style={{
-                fontWeight: 600,
-                marginBottom: '8px',
-                color: 'var(--text2)',
-                fontSize: '.82rem',
-                textTransform: 'uppercase',
-                letterSpacing: '.06em',
-              }}
-            >
-              Featured resources
-            </div>
+            <h2 className={GROUP}>Featured resources</h2>
             <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
               {featured.map((f) => (
-                <button
+                <a
                   key={f.title}
-                  onClick={f.open}
-                  style={{
-                    ...card,
-                    flex: '0 0 auto',
-                    width: isMobile ? '180px' : 'clamp(190px, 21vw, 250px)',
-                    textAlign: 'left',
-                    padding: '12px 14px',
-                    cursor: 'pointer',
-                    color: 'var(--text)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    alignItems: 'flex-start',
-                  }}
-                  className="hv6"
+                  href={f.href}
+                  className={`${CARD} flex flex-none flex-col items-start gap-2 px-3.5 py-3 ${
+                    isMobile ? 'w-45' : 'w-[clamp(190px,21vw,250px)]'
+                  }`}
                 >
+                  {/* The chip's colours are its category's, worked out per theme. */}
                   <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '3px 10px',
-                      borderRadius: '999px',
-                      fontSize: '.75rem',
-                      fontWeight: 600,
-                      background: f.chipBg,
-                      color: f.chipFg,
-                    }}
+                    className="inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-semibold"
+                    style={{ background: f.chipBg, color: f.chipFg }}
                   >
                     {f.catName}
                   </span>
-                  <span
-                    style={{
-                      fontWeight: 700,
-                      fontSize: 'clamp(.85rem, 1.2vw, .95rem)',
-                      lineHeight: 1.3,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
+                  <span className="line-clamp-2 text-[length:clamp(.85rem,1.2vw,.95rem)] leading-[1.3] font-bold">
                     {f.title}
                   </span>
-                  <span style={{ color: 'var(--text2)', fontSize: '.8rem' }}>{f.mins} read</span>
-                </button>
+                  <span className="text-sm text-text-muted">{f.mins} read</span>
+                </a>
               ))}
             </div>
           </div>

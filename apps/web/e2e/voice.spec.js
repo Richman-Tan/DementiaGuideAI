@@ -365,7 +365,7 @@ test.describe('voice: speaking a question', () => {
   test('leaving the voice screen while listening lets go of the microphone', async ({ page }) => {
     await openVoice(page, { media: { live: false, recorderTypes: [] } });
     await page.goto('/#/app/home');
-    await page.getByRole('button', { name: 'Ask Aaron by voice' }).click();
+    await page.getByRole('link', { name: 'Ask Aaron by voice' }).click();
     await page.getByRole('button', { name: 'Tap to talk' }).click();
     await expect(page.getByText('Listening…')).toBeVisible();
     expect(await page.evaluate(() => window.__stt.micReleased())).toBe(false);
@@ -496,7 +496,7 @@ test.describe('voice: setup, navigation and layout', () => {
   test('closing the voice screen goes back to where the person came from', async ({ page }) => {
     await openVoice(page);
     await page.goto('/#/app/home');
-    await page.getByRole('button', { name: 'Ask Aaron by voice' }).click();
+    await page.getByRole('link', { name: 'Ask Aaron by voice' }).click();
     await expect(page.getByText(IDLE)).toBeVisible();
     await page.getByRole('button', { name: 'Close voice conversation' }).click();
     await expect(page).toHaveURL(/#\/app\/home$/);

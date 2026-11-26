@@ -185,7 +185,8 @@ export function elevenRestBody(text = '', seconds = 0.25) {
  * Scripted stand-ins for the browser's audio-input stack, installed before the
  * app boots. A headless browser has no microphone and no speech service, so:
  *
- *   mic       'ok' → getUserMedia returns a real (silent) MediaStream from Web Audio;
+ *   mic       'ok' → getUserMedia returns a real MediaStream from Web Audio, silent
+ *             until the test makes a sound on it with window.__stt.voice(true);
  *             'denied' → rejects with NotAllowedError; 'missing' → NotFoundError
  *   live      true → a fake SpeechRecognition the test drives through
  *             window.__stt.say(text) / .fail(code); false → none (Whisper path)
@@ -208,8 +209,11 @@ export async function installFakeMedia(
 ) {
   await page.addInitScript(
     ({ mic, live, liveStartThrows, recorderBytes, recorder, recorderTypes }) => {
-      const stt = { instances: [], active: null, starts: 0, streams: [] };
+      const stt = { instances: [], active: null, starts: 0, streams: [], voices: [] };
       window.__stt = stt;
+      // A steady tone on every open microphone stream, on or off: what the
+      // app's speech detector hears as someone speaking.
+      stt.voice = (on) => stt.voices.forEach((gain) => (gain.gain.value = on ? 0.3 : 0));
       stt.say = (text) => stt.active?.onresult?.({ results: [[{ transcript: text }]] });
       stt.fail = (code) => stt.active?.onerror?.({ error: code });
 
@@ -218,7 +222,16 @@ export async function installFakeMedia(
         if (mic === 'missing')
           throw new DOMException('Requested device not found', 'NotFoundError');
         const ctx = new AudioContext();
-        const stream = ctx.createMediaStreamDestination().stream;
+        const destination = ctx.createMediaStreamDestination();
+        const tone = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        tone.frequency.value = 180;
+        tone.connect(gain);
+        gain.connect(destination);
+        tone.start();
+        stt.voices.push(gain);
+        const stream = destination.stream;
         stt.streams.push(stream);
         return stream;
       };

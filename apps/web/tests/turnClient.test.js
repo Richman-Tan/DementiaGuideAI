@@ -201,6 +201,39 @@ describe('serverGenerate', () => {
     ]);
   });
 
+  it('hands over the part to be spoken piece by piece, and none of the detail', async () => {
+    reply(ANSWER);
+    const onLeadToken = vi.fn();
+    await serverGenerate({ question: 'q', onToken: vi.fn(), onLeadToken });
+    expect(onLeadToken.mock.calls.map(([piece]) => piece)).toEqual(['Keep afternoons', ' calm. ']);
+  });
+
+  it('says when the part to be spoken is complete: as the detail begins, and once', async () => {
+    reply(ANSWER);
+    const order = [];
+    await serverGenerate({
+      question: 'q',
+      onToken: (text) => order.push(`shown: ${text.length}`),
+      onLeadToken: (piece) => order.push(`lead: ${piece}`),
+      onLeadEnd: () => order.push('lead ended'),
+    });
+    expect(order).toEqual([
+      'lead: Keep afternoons',
+      'shown: 15',
+      'lead:  calm. ',
+      'shown: 22',
+      'lead ended', // before the first of the detail is shown
+      'shown: 42',
+    ]);
+  });
+
+  it('says so at the end of an answer that has no detail', async () => {
+    reply(ANSWER.filter((e) => !(e.type === 'token' && e.section === 'detail')));
+    const onLeadEnd = vi.fn();
+    await serverGenerate({ question: 'q', onToken: vi.fn(), onLeadEnd });
+    expect(onLeadEnd).toHaveBeenCalledTimes(1);
+  });
+
   it('marks the stage boundaries for the latency timer, in order', async () => {
     reply(ANSWER);
     const onStage = vi.fn();

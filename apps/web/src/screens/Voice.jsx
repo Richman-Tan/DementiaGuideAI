@@ -2,12 +2,21 @@
 // WebGL build reframes the shared camera vertically for a video-call shot),
 // and every control floats over it as translucent glass — close top-left,
 // status chip top-center, repeat/transcript icons top-right, captions above a
-// bottom cluster of mic + type-or-talk message bar (oshikoi-style). There is
-// NO demo mode — without an OpenAI key a setup card sits over the stage.
+// bottom cluster of mic + type-or-talk message bar (oshikoi-style).
+//
+// Two voice modes share this screen. With the server's pipeline on and a
+// browser that can recognise speech as it is spoken, it is a conversation: the
+// microphone stays open and the avatar stops to listen when spoken over
+// (voice/useConversation.js), and nothing needs setting up. Otherwise it is
+// tap-to-talk (voice/useVoiceConversation.js), which needs a key or an access
+// code, and a setup card sits over the stage until there is one.
 import React, { useState } from 'react';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { useChat } from '../state/ChatContext.jsx';
 import { useVoiceConversation } from '../voice/useVoiceConversation.js';
+import { useConversation } from '../voice/useConversation.js';
+import { liveWordsAvailable } from '../voice/liveWords.js';
+import { serverPipelineEnabled } from '../services/turnClient.js';
 import { voiceAvatar } from '../avatar/avatarBridge.js';
 import { navigate, useWidth } from '../state/router.js';
 import { AvatarBust, AvatarMount } from '../avatar/AvatarStage.jsx';
@@ -308,33 +317,46 @@ export default function Voice() {
   // A visitor with a guest access code reaches the model through the server-side
   // proxy, so there is nothing for them to set up — and showing them a raw
   // `sk-…` field would be both confusing and a dead end.
-  const hasKey = savedKeys.openai.trim().length > 0 || hasCredentials();
+  // Decided once per visit: neither the build flag nor the browser changes.
+  const [conversational] = useState(() => serverPipelineEnabled() && liveWordsAvailable());
+  const hasKey = conversational || savedKeys.openai.trim().length > 0 || hasCredentials();
 
+  const voiceOptions = { avatar: voiceAvatar, settings, messages, appendMessage, muted };
+  const tapToTalk = useVoiceConversation({ ...voiceOptions, enabled: hasKey && !conversational });
+  const conversation = useConversation({ ...voiceOptions, enabled: conversational });
   const { vState, vTranscript, vDone, vSubtitle, micTap, askText, repeatLast, error, clearError } =
-    useVoiceConversation({
-      enabled: hasKey,
-      avatar: voiceAvatar,
-      settings,
-      messages,
-      appendMessage,
-      muted,
-    });
+    conversational ? conversation : tapToTalk;
+  const notice = conversational ? conversation.notice : '';
 
   const vIdle = vState === 'idle';
   const vListening = vState === 'listening';
   const vSpeaking = vState === 'speaking';
-  const hf = !!settings.handsFree;
+  // In a conversation the avatar always notices the end of speech.
+  const hf = conversational || !!settings.handsFree;
+  // Mid-sentence, the button is "I'm done": it sends what has been said now.
+  const midSentence =
+    conversational &&
+    (conversation.phase === 'userSpeaking' || conversation.phase === 'endOfTurnCheck');
   const micLabel = vIdle
-    ? 'Tap to talk'
+    ? conversational
+      ? 'Start talking'
+      : 'Tap to talk'
     : vListening
-      ? hf
-        ? 'End conversation'
-        : 'Tap when finished'
+      ? midSentence
+        ? 'I’m done'
+        : hf
+          ? 'End conversation'
+          : 'Tap when finished'
       : vSpeaking
         ? 'Tap to interrupt'
-        : 'One moment…';
+        : conversational
+          ? 'Tap to stop'
+          : 'One moment…';
+  // Tap-to-talk cannot cancel a turn once it is in flight; a conversation can.
+  const micBusy = vState === 'thinking' && !conversational;
   const showSubtitle = !!settings.subtitles && vSpeaking && !!vSubtitle;
-  const canType = vIdle || vSpeaking;
+  // A typed question can come at any point in a conversation: it takes over.
+  const canType = conversational || vIdle || vSpeaking;
 
   // A long answer stacked above the mic covers the avatar's face — the one
   // thing the screen exists to show. Where there is room beside him, the
@@ -563,7 +585,7 @@ export default function Voice() {
             pointerEvents: 'none',
           }}
         >
-          {vListening && !!vTranscript && (
+          {(vListening || (conversational && vState === 'thinking')) && !!vTranscript && (
             <div
               style={{
                 ...glass,
@@ -615,6 +637,22 @@ export default function Voice() {
               </button>
             </div>
           )}
+          {!!notice && (
+            <div
+              role="status"
+              style={{
+                ...glass,
+                maxWidth: '34em',
+                color: 'var(--text)',
+                fontSize: '.95rem',
+                borderRadius: '14px',
+                padding: '10px 16px',
+                pointerEvents: 'auto',
+              }}
+            >
+              {notice}
+            </div>
+          )}
           {hf && vListening && (
             <div
               style={{
@@ -626,7 +664,10 @@ export default function Voice() {
                 pointerEvents: 'auto',
               }}
             >
-              {who} will notice when you finish speaking
+              {/* Opening the microphone takes a moment; do not invite speech before it is live. */}
+              {conversational && !conversation.micLive
+                ? 'Getting the microphone ready…'
+                : `${who} will notice when you finish speaking`}
             </div>
           )}
 
@@ -653,7 +694,7 @@ export default function Voice() {
               onClick={micTap}
               aria-label={micLabel}
               title={micLabel}
-              aria-disabled={vState === 'thinking'}
+              aria-disabled={micBusy}
               className="hv2"
               style={{
                 width: '72px',
@@ -662,8 +703,8 @@ export default function Voice() {
                 border: 'none',
                 background: 'var(--primary)',
                 color: '#fff',
-                cursor: vState === 'thinking' ? 'default' : 'pointer',
-                opacity: vState === 'thinking' ? 0.55 : 1,
+                cursor: micBusy ? 'default' : 'pointer',
+                opacity: micBusy ? 0.55 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

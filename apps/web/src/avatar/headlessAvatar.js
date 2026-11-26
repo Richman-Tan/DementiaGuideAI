@@ -56,6 +56,9 @@ export function getHeadlessAvatar() {
     setSpeechEmotion(emotion) {
       engine.setSpeechEmotion(emotion);
     },
+    setVolume(value) {
+      engine.setVolume(value);
+    },
     stopAudio() {
       engine.stopAudioLipSync();
     },

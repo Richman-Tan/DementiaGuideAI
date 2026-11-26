@@ -63,6 +63,13 @@ class RecordingAudioContext {
   createAnalyser() {
     return { fftSize: 0, frequencyBinCount: 256, connect() {} };
   }
+  // The engine plays everything through one master volume.
+  createGain() {
+    return {
+      connect() {},
+      gain: { value: 1, cancelScheduledValues() {}, setTargetAtTime() {} },
+    };
+  }
   createBufferSource() {
     const src = {
       buffer: null,

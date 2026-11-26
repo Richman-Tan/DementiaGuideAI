@@ -124,7 +124,12 @@ describe('createTurnRuntime', () => {
     s.runtime.replyStart(1);
     s.runtime.speechStart();
     s.time.advance(DEFAULT_TURN_CONFIG.bargeInMs);
-    expect(s.calls.slice(-3)).toEqual(['duck', 'unduck', 'stop #1 (bargeIn)']);
+    expect(s.calls.slice(-4)).toEqual([
+      'duck',
+      'resetTranscript', // what is heard from here on is the person, not the reply
+      'unduck',
+      'stop #1 (bargeIn)',
+    ]);
     expect(s.runtime.state.phase).toBe('userSpeaking');
   });
 

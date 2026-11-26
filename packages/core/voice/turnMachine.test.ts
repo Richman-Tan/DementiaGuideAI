@@ -269,6 +269,59 @@ describe('speech that produced no words', () => {
   });
 });
 
+describe('words the microphone did not report as speech', () => {
+  it('takes words as speech, and sends them once they have stopped changing', () => {
+    // A quiet voice: the recogniser hears it, the level meter does not.
+    const c = conversation()
+      .at(0, { type: 'start' })
+      .at(1000, { type: 'heard', text: 'my mum' })
+      .at(1400, { type: 'heard', text: 'my mum is not sleeping' });
+    expect(c.phase).toBe('endOfTurnCheck');
+    c.until(2599);
+    expect(c.log).toEqual(['0 mic on']);
+    c.until(2600); // 1,200 ms after the words last changed
+    expect(c.log.at(-1)).toBe('2600 send #1 "my mum is not sleeping"');
+  });
+
+  it('keeps waiting while the words keep coming', () => {
+    const c = conversation().at(0, { type: 'start' });
+    for (let t = 1000; t <= 5000; t += 500) {
+      c.at(t, { type: 'heard', text: 'word '.repeat((t - 500) / 500).trim() });
+    }
+    expect(c.log).toEqual(['0 mic on']); // four seconds of speech, never cut into
+    c.until(6200);
+    expect(c.log.at(-1)).toMatch(/^6200 send #1 "word /);
+  });
+
+  it('hands over to the microphone once it does report speech', () => {
+    const c = conversation()
+      .at(0, { type: 'start' })
+      .at(1000, { type: 'heard', text: 'my mum' })
+      .at(1100, { type: 'speechStart' });
+    expect(c.phase).toBe('userSpeaking');
+    expect(c.state.wordsOnly).toBe(false);
+    c.at(3000, { type: 'heard', text: 'my mum is not sleeping at all' }).until(10_000);
+    expect(c.log).toEqual(['0 mic on']); // still speaking: nothing is sent on words alone now
+    c.at(10_100, { type: 'speechEnd' }).until(11_400);
+    expect(c.log.at(-1)).toBe('11300 send #1 "my mum is not sleeping at all"');
+  });
+
+  it('does not take empty words for speech', () => {
+    const c = conversation().at(0, { type: 'start' }).at(1000, { type: 'heard', text: '  ' });
+    expect(c.phase).toBe('listening');
+    expect(c.timers.has('listenTimeout')).toBe(true);
+  });
+
+  it('does not time out the microphone while words are being heard', () => {
+    const c = conversation()
+      .at(0, { type: 'start' })
+      .at(89_500, { type: 'heard', text: 'hello there' });
+    c.until(90_100);
+    expect(c.phase).toBe('endOfTurnCheck');
+    expect(c.log.some((l) => l.includes('listeningTimedOut'))).toBe(false);
+  });
+});
+
 describe('talking over the assistant', () => {
   it('lowers the volume at the first sound, and stops to listen once the person keeps talking', () => {
     const c = speaking().at(6000, { type: 'speechStart' });
@@ -330,6 +383,33 @@ describe('talking over the assistant', () => {
     const c = speaking().at(6000, { type: 'speechStart' }).at(6100, { type: 'interrupt' });
     expect(c.log.slice(-2)).toEqual(['6100 unduck', '6100 stop #1 (stopped)']);
     expect(c.timers.has('bargeIn')).toBe(false);
+  });
+});
+
+describe('what counts as heard during a check', () => {
+  it('starts the transcript afresh when a sound begins over a reply', () => {
+    const c = speaking();
+    const before = c.effects.length;
+    c.at(6000, { type: 'speechStart' });
+    expect(c.effects.slice(before).map((e) => e.type)).toEqual([
+      'duck',
+      'resetTranscript',
+      'startTimer',
+    ]);
+    expect(c.state.heard).toBe('');
+  });
+
+  it('takes only the words said since the sound began as the start of the next turn', () => {
+    // Words that arrived while the assistant was speaking are not acted on,
+    // and are not carried into what the person says next.
+    const c = speaking().at(5000, { type: 'heard', text: 'keep the late afternoon calm' });
+    expect(c.state.heard).toBe('');
+    c.at(6000, { type: 'speechStart' }).at(6300, { type: 'heard', text: 'sorry wait' }).until(6400);
+    expect(c.phase).toBe('userSpeaking');
+    c.at(7000, { type: 'heard', text: 'sorry wait what about her tablets' })
+      .at(7100, { type: 'speechEnd' })
+      .until(8400);
+    expect(c.log.at(-1)).toBe('8300 send #2 "sorry wait what about her tablets"');
   });
 });
 
@@ -662,12 +742,6 @@ describe('events that no longer apply', () => {
     const before = c.state;
     c.at(4500, { type: 'replyStart', turnId: 1 });
     expect(c.state).toBe(before);
-  });
-
-  it('keeps words that arrive before the microphone reports speech', () => {
-    const c = conversation().at(0, { type: 'start' }).at(900, { type: 'heard', text: 'how' });
-    expect(c.phase).toBe('listening');
-    expect(c.state.heard).toBe('how');
   });
 
   it('never changes the state it was given', () => {

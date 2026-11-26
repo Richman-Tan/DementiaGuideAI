@@ -177,6 +177,17 @@ describe('createSpeechDetector', () => {
     expect(events).toEqual([]);
   });
 
+  it('hears someone who was already speaking when the microphone opened', () => {
+    // No quiet at all before the voice: it must not be taken for the room.
+    const { events } = detect(
+      recording([
+        [1500, VOICE],
+        [1000, ROOM],
+      ])
+    );
+    expect(summary(events)).toEqual(['start 300', 'end 1900']);
+  });
+
   it('stops counting a noise that stays, such as a fan switched on', () => {
     const { events, detector } = detect(
       recording([

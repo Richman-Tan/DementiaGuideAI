@@ -21,6 +21,7 @@ vi.mock('../src/avatar/audioEngine.js', () => ({
         'startStreamingPlayback',
         'appendAudioChunk',
         'setSpeechEmotion',
+        'setVolume',
         'stopAudioLipSync',
       ])
         this[m] = vi.fn(async () => {});
@@ -138,6 +139,7 @@ describe('headless avatar', () => {
     a.appendAudioChunk('s1', 'pcm', [1]);
     expect(await a.endStreamingPlayback('s1')).toBe('ended');
     a.setSpeechEmotion('sad');
+    a.setVolume(0.25);
     a.stopAudio();
     expect(a.setAvatarState('thinking')).toBeUndefined(); // no visual
     expect(engine.unlock).toHaveBeenCalled();
@@ -145,6 +147,7 @@ describe('headless avatar', () => {
     expect(engine.appendAudioChunk).toHaveBeenCalledWith('s1', 'pcm', [1]);
     expect(engine.endStreamingPlayback).toHaveBeenCalledWith('s1');
     expect(engine.setSpeechEmotion).toHaveBeenCalledWith('sad');
+    expect(engine.setVolume).toHaveBeenCalledWith(0.25);
     expect(engine.stopAudioLipSync).toHaveBeenCalled();
   });
 });

@@ -17,6 +17,7 @@ export class AvatarAudioEngine {
     this.onAudioStart = onAudioStart || (() => {});
     this.onAudioEnd = onAudioEnd || (() => {}); // ({ error?, underruns? })
     this.ctx = null;
+    this.out = null; // master gain: every path plays through it (setVolume)
     this.source = null;
     this.analyser = null;
     this.analyserBuf = null;
@@ -34,6 +35,8 @@ export class AvatarAudioEngine {
   ensureCtx() {
     if (!this.ctx) {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.out = this.ctx.createGain();
+      this.out.connect(this.ctx.destination);
       this.ctx.addEventListener('statechange', () => {
         if (this.ctx && this.ctx.state === 'suspended') {
           this.ctx.resume().catch(() => {});
@@ -135,7 +138,7 @@ export class AvatarAudioEngine {
       this.source = this.ctx.createBufferSource();
       this.source.buffer = decoded;
       this.source.connect(this.analyser);
-      this.analyser.connect(this.ctx.destination);
+      this.analyser.connect(this.out);
       this.active = true;
 
       this.source.onended = () => this._onAudioEnded(null);
@@ -160,7 +163,7 @@ export class AvatarAudioEngine {
       if (seq !== this._playSeq) return; // stopped or replaced while decoding
       this.source = this.ctx.createBufferSource();
       this.source.buffer = decoded;
-      this.source.connect(this.ctx.destination);
+      this.source.connect(this.out);
       this.active = true;
 
       this.source.onended = () => this._onAudioEnded(null);
@@ -236,7 +239,7 @@ export class AvatarAudioEngine {
 
       const src = this.ctx.createBufferSource();
       src.buffer = buffer;
-      src.connect(this.ctx.destination);
+      src.connect(this.out);
       src.onended = () => {
         s.pending--;
         const idx = s.sources.indexOf(src);
@@ -290,6 +293,16 @@ export class AvatarAudioEngine {
 
   setSpeechEmotion(emotion) {
     this.speechEmotion = emotion || 'neutral';
+  }
+
+  // Lowers or restores playback without stopping it: when a sound suggests the
+  // person may be starting to speak, the avatar drops its voice first and only
+  // stops if they carry on. Eased over a few tens of milliseconds, since a step
+  // in gain is heard as a click.
+  setVolume(value, rampMs = 60) {
+    const ctx = this.ensureCtx();
+    this.out.gain.cancelScheduledValues(ctx.currentTime);
+    this.out.gain.setTargetAtTime(value, ctx.currentTime, rampMs / 3000);
   }
 
   stopAudioLipSync() {

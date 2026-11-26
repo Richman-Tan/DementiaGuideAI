@@ -34,6 +34,13 @@ export interface SpeechDetectorConfig {
   loudAdaptRate: number;
   /** How long the room is listened to before anything is reported. */
   calibrationMs: number;
+  /**
+   * The loudest the room is allowed to be taken for after calibrating. If
+   * someone is already speaking when the microphone opens, the quietest moment
+   * of those first frames is their voice, not the room; without this limit
+   * their voice would become the background and go unheard.
+   */
+  maxCalibratedLevel: number;
 }
 
 export const DEFAULT_SPEECH_DETECTOR: Omit<SpeechDetectorConfig, 'sampleRate'> = {
@@ -46,6 +53,7 @@ export const DEFAULT_SPEECH_DETECTOR: Omit<SpeechDetectorConfig, 'sampleRate'> =
   adaptRate: 0.05,
   loudAdaptRate: 0.002,
   calibrationMs: 200,
+  maxCalibratedLevel: 0.02,
 };
 
 export interface SpeechEvent {
@@ -98,7 +106,7 @@ export function createSpeechDetector(
     const atMs = frames * config.frameMs;
 
     if (atMs <= config.calibrationMs) {
-      background = Math.min(background, level);
+      background = Math.min(background, level, config.maxCalibratedLevel);
       return;
     }
 

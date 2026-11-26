@@ -72,6 +72,9 @@ export class UnityAvatarControllerImpl {
   setAvatarState(state) {
     sendBridgeMessage({ type: 'setState', state });
   }
+  setVolume(value) {
+    this.engine.setVolume(value);
+  }
   stopAudio() {
     this.engine.stopAudioLipSync();
     sendBridgeMessage({ type: 'stop' });

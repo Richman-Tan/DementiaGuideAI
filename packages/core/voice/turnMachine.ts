@@ -139,6 +139,12 @@ export interface TurnState {
   replaces: number | null;
   /** When speech last stopped, while the end of the turn is being decided. */
   speechEndedAt: number | null;
+  /**
+   * The end of the turn is being judged from the words alone: they arrived
+   * without the microphone reporting any speech (a quiet voice, a noisy room).
+   * The wait then runs from the last time the words changed.
+   */
+  wordsOnly: boolean;
   /** During a barge-in check: whether the reply had become audible. */
   replyAudible: boolean;
   /** During a barge-in check: the words heard match the assistant's own. */
@@ -162,6 +168,7 @@ export const initialTurnState = (): TurnState => ({
   carried: '',
   replaces: null,
   speechEndedAt: null,
+  wordsOnly: false,
   replyAudible: false,
   echoSuspected: false,
   falseTriggers: 0,
@@ -230,6 +237,7 @@ export function step(
     carried: '',
     replaces: null,
     speechEndedAt: null,
+    wordsOnly: false,
     echoSuspected: false,
   };
 
@@ -245,8 +253,20 @@ export function step(
     else set({ phase: state.mic === 'paused' ? 'paused' : 'idle', ...forget });
   };
 
+  /**
+   * A sound has begun while a reply is in flight. The transcript starts afresh
+   * here: a recogniser that has been hearing the assistant would otherwise put
+   * its words in front of the person's, and those are the words the check, and
+   * then the person's turn, go by.
+   */
+  const checkSound = (replyAudible: boolean) => {
+    set({ phase: 'bargeInCheck', replyAudible, heard: '', echoSuspected: false });
+    effects.push({ type: 'resetTranscript' });
+    startTimer('bargeIn', config.bargeInMs);
+  };
+
   const hearSpeech = () => {
-    set({ phase: 'userSpeaking', speechEndedAt: null });
+    set({ phase: 'userSpeaking', speechEndedAt: null, wordsOnly: false });
     startTimer('utteranceCap', config.utteranceCapMs);
   };
 
@@ -324,12 +344,10 @@ export function step(
         cancelTimer('transcriptWait');
         hearSpeech();
       } else if (state.phase === 'thinking') {
-        set({ phase: 'bargeInCheck', replyAudible: false, echoSuspected: false });
-        startTimer('bargeIn', config.bargeInMs);
+        checkSound(false);
       } else if (state.phase === 'speaking' && !state.strictTurns) {
-        set({ phase: 'bargeInCheck', replyAudible: true, echoSuspected: false });
         effects.push({ type: 'duck', on: true });
-        startTimer('bargeIn', config.bargeInMs);
+        checkSound(true);
       }
       break;
     }
@@ -352,8 +370,17 @@ export function step(
     }
 
     case 'heard': {
-      if (state.phase === 'listening' || state.phase === 'userSpeaking') {
+      if (state.phase === 'userSpeaking') {
         set({ heard: event.text });
+      } else if (state.phase === 'listening') {
+        set({ heard: event.text });
+        // Words with no speech reported: the recogniser heard someone the level
+        // meter did not. They are speaking; judge the end by the words.
+        if (event.text.trim()) {
+          cancelTimer('listenTimeout');
+          set({ phase: 'endOfTurnCheck', speechEndedAt: event.at, wordsOnly: true });
+          startTimer('endOfTurn', endOfTurnWaitMs(event.text, config.endOfTurn));
+        }
       } else if (state.phase === 'bargeInCheck') {
         set({ heard: event.text, echoSuspected: event.echo === true });
       } else if (state.phase === 'endOfTurnCheck') {
@@ -363,7 +390,10 @@ export function step(
           // These are the words that were being waited for.
           if (text) send(text, state.replaces);
         } else {
-          // The words changed after speech stopped, so the wait they call for may have too.
+          // The words changed after speech stopped, so the wait they call for
+          // may have too. Going by words alone, new words are the speech: the
+          // wait starts again from them.
+          if (state.wordsOnly) set({ speechEndedAt: event.at });
           const wait = endOfTurnWaitMs(text, config.endOfTurn);
           const remaining = (state.speechEndedAt as number) + wait - event.at;
           if (remaining <= 0) finishTurn();

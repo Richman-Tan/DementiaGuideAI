@@ -63,6 +63,8 @@ export async function serverGenerate({
   history,
   signal,
   onToken,
+  onLeadToken,
+  onLeadEnd,
   onStage,
   modality = 'text',
 }) {
@@ -77,6 +79,16 @@ export async function serverGenerate({
   let detail = '';
   let final = null;
   let safety = 'none';
+  // Tells a caller that speaks the lead that it has all of it, as soon as that
+  // is known: the detail has begun, or the answer has ended without any. The
+  // lead's last sentence has nothing after it to mark its end otherwise, and
+  // would wait for the whole answer.
+  let leadOpen = true;
+  const endLead = () => {
+    if (!leadOpen) return;
+    leadOpen = false;
+    onLeadEnd?.();
+  };
   const events = streamTurn({
     url: apiUrl('/api/turn'),
     token,
@@ -96,12 +108,19 @@ export async function serverGenerate({
       onStage?.('llmSend');
     } else if (event.type === 'token') {
       onStage?.('firstToken');
-      if (event.section === 'lead') lead += event.text;
-      else detail += event.text;
+      if (event.section === 'lead') {
+        lead += event.text;
+        // The part worth saying aloud, piece by piece, for a caller that speaks it.
+        onLeadToken?.(event.text);
+      } else {
+        endLead();
+        detail += event.text;
+      }
       onToken(detail ? `${lead.trimEnd()}\n\n${detail}` : lead);
     } else if (event.type === 'safety') {
       safety = event.level;
     } else if (event.type === 'final') {
+      endLead();
       final = event;
     } else if (event.type === 'error') {
       throw new TurnRequestError(event.message, 0, event.code);

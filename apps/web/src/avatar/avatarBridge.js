@@ -62,6 +62,11 @@ export const voiceAvatar = {
   setAvatarState(state) {
     peekUnityAvatar()?.setAvatarState(state);
   },
+  // Broadcast, like stopAudio: whichever engine is playing is the one to lower.
+  setVolume(value) {
+    peekUnityAvatar()?.setVolume(value);
+    getHeadlessAvatar().setVolume(value);
+  },
   stopAudio() {
     // Broadcast — barge-in must silence whichever engine is playing.
     peekUnityAvatar()?.stopAudio();

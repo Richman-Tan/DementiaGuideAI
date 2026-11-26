@@ -12,6 +12,8 @@ import type { Handler } from './http.ts';
 import { createProviders, missingEnv } from './providers.ts';
 import type { Env } from './providers.ts';
 import { createSessionVerifier } from './session.ts';
+import { toTraceRow } from './trace.ts';
+import type { TraceRow } from './trace.ts';
 import { createTurnHandler } from './turn.ts';
 
 /** Used when the environment sets no limit. Chosen to be cautious; see the README for what they cost. */
@@ -24,7 +26,13 @@ export interface Backend {
   recordUsage(reading: { userId: string; kind: string; units: number; model: string }): void;
 }
 
-export function composeTurnHandler(env: Env, backend: Backend): Handler {
+/** What the turn endpoint needs beyond that. */
+export interface TurnBackend extends Backend {
+  /** Records what a turn did (see trace.ts). Never throws. */
+  recordTrace(row: TraceRow): void;
+}
+
+export function composeTurnHandler(env: Env, backend: TurnBackend): Handler {
   const wanted = env.TURN_ENDPOINT === 'on';
   const missing = missingEnv(env);
   if (wanted && missing.length) {
@@ -46,7 +54,11 @@ export function composeTurnHandler(env: Env, backend: Backend): Handler {
       visitorDailyLimit: dailyLimit(env.TURN_VISITOR_DAILY_LIMIT, DEFAULT_LIMITS.visitorDaily),
       globalDailyLimit: dailyLimit(env.TURN_GLOBAL_DAILY_LIMIT, DEFAULT_LIMITS.globalDaily),
     }),
-    onFinished({ userId, usage }) {
+    onFinished(summary) {
+      const { userId, usage } = summary;
+      // A turn that failed or was interrupted is worth a trace too: those are
+      // the ones most worth knowing about. TURN_TRACES=off keeps none.
+      if (env.TURN_TRACES !== 'off') backend.recordTrace(toTraceRow(summary));
       if (!usage) return;
       backend.recordUsage({
         userId,

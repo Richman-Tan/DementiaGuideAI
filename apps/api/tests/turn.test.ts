@@ -290,6 +290,36 @@ describe('POST /api/turn: the stream', () => {
     expect(requests[0]?.question).toBe('What about at night?');
   });
 
+  it('reports what the turn did, for the trace: the search, the verdict, what was cited', async () => {
+    const { handler, finished, config } = setup();
+    await handler(request(), response());
+    expect(finished[0]).toMatchObject({
+      errorCode: null,
+      promptVersion: config.prompt.version,
+      model: config.generation.text.model,
+      retrieval: {
+        mode: 'fresh',
+        chunks: [{ id: 'kb-1', similarity: 0.7 }],
+        ms: expect.any(Number),
+      },
+      safety: { level: 'none', source: 'keywords' },
+      cited: ['kb-1'],
+      // "Keep afternoons calm [1]." and "Close the curtains.", as shown.
+      answerChars: 'Keep afternoons calm [1].\n\nClose the curtains.'.length,
+    });
+  });
+
+  it('keeps the length of the answer, never its words', async () => {
+    const { handler, finished } = setup();
+    await handler(request(), response());
+    const { request: _asked, ...kept } = finished[0]!;
+    // Everything but the request, which the trace takes two lengths from.
+    const written = JSON.stringify(kept);
+    expect(written).not.toContain('afternoons');
+    expect(written).not.toContain('curtains');
+    expect(written).not.toContain('sundowning');
+  });
+
   it('reports the finished turn for metering, with who it was for and what it used', async () => {
     const { handler, finished, config } = setup();
     await handler(request(), response());
@@ -326,7 +356,15 @@ describe('POST /api/turn: the stream', () => {
       '[turn] generation_failed: 529 overloaded (request req_123, organisation acme)'
     );
     expect(res.ended).toBe(true);
-    expect(finished[0]).toMatchObject({ stopReason: 'error', usage: null });
+    expect(finished[0]).toMatchObject({
+      stopReason: 'error',
+      errorCode: 'generation_failed',
+      usage: null,
+      // The search had run before the model failed, and that is still known.
+      retrieval: { mode: 'fresh' },
+      cited: [],
+      answerChars: null,
+    });
   });
 
   it('reports an unexpected failure in the stream without leaking its detail, and still closes it', async () => {
@@ -354,6 +392,7 @@ describe('POST /api/turn: the stream', () => {
     );
     expect(res.ended).toBe(true);
     expect(finished).toHaveLength(1);
+    expect(finished[0]).toMatchObject({ stopReason: 'error', errorCode: 'internal' });
   });
 
   it('logs an unexpected failure that is not an Error', async () => {

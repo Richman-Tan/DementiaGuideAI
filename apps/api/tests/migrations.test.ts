@@ -1,0 +1,386 @@
+// The database migrations, run for real.
+//
+// Every file in scripts/migrations is written to be pasted into the Supabase
+// SQL editor, and until now none of them had ever run anywhere else: the first
+// execution of each was against production. Two of them caused outages that
+// way (see that folder's README). This applies the whole chain to a Postgres
+// running in this process (PGlite, with pgvector) and then exercises what the
+// server depends on: the search over the new embeddings, the daily counter
+// behind the spending cap, and who may read or call what.
+//
+// What stands in for Supabase is the short bootstrap below: its three roles,
+// the auth schema, and the default privileges it gives new tables. That part is
+// a reconstruction, so a pass here says the SQL is valid and behaves as
+// written, not that production is configured the same way.
+import { readdirSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { PGlite } from '@electric-sql/pglite';
+import { vector } from '@electric-sql/pglite/vector';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+const DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../scripts/migrations');
+const ORDER = JSON.parse(readFileSync(join(DIR, 'order.json'), 'utf8')) as {
+  fresh: string[];
+  referenceOnly: string[];
+};
+
+// What a Supabase project has before any of these files run.
+const SUPABASE = `
+  create role anon nologin;
+  create role authenticated nologin;
+  create role service_role nologin bypassrls;
+  grant usage on schema public to anon, authenticated, service_role;
+  alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+  alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+  create schema auth;
+  create table auth.users (id uuid primary key default gen_random_uuid(), email text);
+  create function auth.uid() returns uuid language sql stable as $$
+    select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
+  $$;
+  grant usage on schema auth to anon, authenticated, service_role;
+`;
+
+const sql = (file: string) => readFileSync(join(DIR, file), 'utf8');
+
+async function freshDatabase(): Promise<PGlite> {
+  const db = new PGlite({ extensions: { vector } });
+  await db.exec(SUPABASE);
+  return db;
+}
+
+async function migrate(db: PGlite, files: string[] = ORDER.fresh): Promise<void> {
+  for (const file of files) {
+    try {
+      await db.exec(sql(file));
+    } catch (err) {
+      throw new Error(`${file}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+}
+
+/** Runs a query as one of Supabase's roles, optionally as a signed-in user. */
+async function as<T>(db: PGlite, role: string, query: string, userId = ''): Promise<T[]> {
+  await db.exec(`set role ${role}; set request.jwt.claim.sub = '${userId}';`);
+  try {
+    return (await db.query<T>(query)).rows;
+  } finally {
+    await db.exec(`reset role; reset request.jwt.claim.sub;`);
+  }
+}
+
+/** A unit vector of the given width pointing mostly along one axis. */
+const along = (axis: number, width: number, lean = 0) => {
+  const v = new Array<number>(width).fill(0);
+  v[axis] = 1;
+  if (lean) v[axis + 1] = lean;
+  return `[${v.join(',')}]`;
+};
+
+let db: PGlite;
+
+beforeAll(async () => {
+  db = await freshDatabase();
+  await migrate(db);
+}, 120_000);
+
+afterAll(async () => {
+  await db.close();
+});
+
+describe('the migration files', () => {
+  it('are each listed once, as run on a fresh database or as reference only', () => {
+    const onDisk = readdirSync(DIR)
+      .filter((f) => f.endsWith('.sql'))
+      .sort();
+    const listed = [...ORDER.fresh, ...ORDER.referenceOnly];
+    expect([...listed].sort()).toEqual(onDisk);
+    expect(new Set(listed).size).toBe(listed.length);
+  });
+
+  it('do not apply in filename order, which is why the order is written down', async () => {
+    const byName = [...ORDER.fresh].sort();
+    const scratch = await freshDatabase();
+    await expect(migrate(scratch, byName)).rejects.toThrow(
+      '2026-08-18_backend_v1.sql: relation "public.study_sessions" does not exist'
+    );
+    await scratch.close();
+  }, 120_000);
+
+  it('leave exactly one search function of each name', async () => {
+    // Two functions named match_chunks made the app's call ambiguous and took
+    // retrieval down (2026-07-13). The new search has its own name instead.
+    const { rows } = await db.query<{ proname: string; n: number }>(
+      `select proname, count(*)::int as n from pg_proc
+       where proname in ('match_chunks', 'match_chunks_v2') group by proname order by proname`
+    );
+    expect(rows).toEqual([
+      { proname: 'match_chunks', n: 1 },
+      { proname: 'match_chunks_v2', n: 1 },
+    ]);
+  });
+
+  it('can have the newest one run again without harm', async () => {
+    await expect(db.exec(sql('2026-11-25_embedding_v2_voyage.sql'))).resolves.toBeDefined();
+  });
+});
+
+describe('a database that already holds passages when a migration arrives', () => {
+  it('keeps them searchable through the review-status migration', async () => {
+    // The first version of that file left every existing row "pending", and
+    // search returned nothing until it was corrected on the live database.
+    const before = ORDER.fresh.indexOf('2026-10-07_review_status.sql');
+    const scratch = await freshDatabase();
+    await migrate(scratch, ORDER.fresh.slice(0, before));
+    await scratch.exec(`
+      insert into knowledge_chunks (id, category, title, content, embedding)
+      values ('old-1', 'caregiving', 'Sundowning', 'Keep late afternoons calm.', '${along(0, 1536)}');
+    `);
+    await migrate(scratch, ORDER.fresh.slice(before));
+
+    const { rows } = await scratch.query<{ review_status: string }>(
+      `select review_status from knowledge_chunks where id = 'old-1'`
+    );
+    expect(rows).toEqual([{ review_status: 'approved' }]);
+    const found = await scratch.query<{ id: string }>(
+      `select id from match_chunks('${along(0, 1536)}'::vector, 'sundowning', 5, 0.25)`
+    );
+    expect(found.rows).toEqual([{ id: 'old-1' }]);
+    // A passage added afterwards waits for review.
+    await scratch.exec(
+      `insert into knowledge_chunks (id, category, title, content) values ('new-1', 'c', 't', 'x')`
+    );
+    const added = await scratch.query<{ review_status: string }>(
+      `select review_status from knowledge_chunks where id = 'new-1'`
+    );
+    expect(added.rows).toEqual([{ review_status: 'pending' }]);
+    await scratch.close();
+  }, 120_000);
+});
+
+describe('search over the Voyage embeddings (match_chunks_v2)', () => {
+  const Q = along(0, 1024); // the question points along axis 0
+
+  beforeAll(async () => {
+    await db.exec(`
+      insert into knowledge_chunks (id, category, title, content, review_status, embedding_v2, embedding_v2_at, embedded_at) values
+        ('near',     'caregiving', 'Sundowning',     'Keep late afternoons calm and well lit.', 'approved', '${along(0, 1024, 0.1)}', now(), now() - interval '1 day'),
+        ('nearer',   'caregiving', 'Evening routine', 'A steady routine helps in the evening.',  'approved', '${along(0, 1024)}',      now(), null),
+        ('far',      'legal',      'Power of attorney', 'An enduring power of attorney covers sundowning decisions too.', 'approved', '${along(5, 1024)}', now(), null),
+        ('unrelated','legal',      'Wills',          'How to update a will.',                   'approved', '${along(9, 1024)}',      now(), null),
+        ('pending',  'caregiving', 'Draft',          'Not yet reviewed.',                       'pending',  '${along(0, 1024)}',      now(), null),
+        ('no-v2',    'caregiving', 'Old embedding',  'Has only the OpenAI vector.',             'approved', null,                     null,  null),
+        ('stale',    'caregiving', 'Re-ingested',    'Changed since it was embedded.',          'approved', '${along(3, 1024)}',      now() - interval '2 days', now());
+    `);
+  });
+
+  const search = (text: string, extra = '') =>
+    db.query<{ id: string; similarity: number }>(
+      `select id, similarity from match_chunks_v2('${Q}'::vector, '${text}', 5, 0.25${extra})`
+    );
+
+  it('returns approved passages that have a Voyage embedding, closest first', async () => {
+    const { rows } = await search('');
+    expect(rows.map((r) => r.id)).toEqual(['nearer', 'near']);
+    expect(rows[0]?.similarity).toBeCloseTo(0.7, 5); // 0.7 x a cosine of 1, with no keyword match
+  });
+
+  it('leaves out passages awaiting review and passages with no Voyage embedding', async () => {
+    const ids = (await search('')).rows.map((r) => r.id);
+    expect(ids).not.toContain('pending');
+    expect(ids).not.toContain('no-v2');
+  });
+
+  it('also finds a passage by its words when its vector is nowhere near', async () => {
+    // "far" points away from the question and mentions sundowning.
+    const { rows } = await search('sundowning');
+    expect(rows.map((r) => r.id)).toContain('far');
+    expect(rows.map((r) => r.id)).not.toContain('unrelated');
+  });
+
+  it('takes the balance between vector and words as an argument', async () => {
+    const vectorOnly = await search('sundowning', ', null, null, null, null, 1.0');
+    const wordsOnly = await search('sundowning', ', null, null, null, null, 0.0');
+    const score = (rows: { id: string; similarity: number }[], id: string) =>
+      rows.find((r) => r.id === id)?.similarity ?? null;
+    // With vectors only, the perfect vector match scores 1 and the keyword-only passage 0.
+    expect(score(vectorOnly.rows, 'nearer')).toBeCloseTo(1, 5);
+    expect(score(vectorOnly.rows, 'far')).toBeCloseTo(0, 5);
+    // With words only, a passage with no matching word scores 0 and one with the word scores above it.
+    expect(score(wordsOnly.rows, 'nearer')).toBeCloseTo(0, 5);
+    expect(score(wordsOnly.rows, 'far')).toBeGreaterThan(0);
+  });
+
+  it('respects the number asked for', async () => {
+    const { rows } = await db.query(`select id from match_chunks_v2('${Q}'::vector, '', 1, 0.25)`);
+    expect(rows).toEqual([{ id: 'nearer' }]);
+  });
+
+  it('is what the server calls: the named arguments it sends are accepted', async () => {
+    const { rows } = await db.query<{ id: string }>(
+      `select id from match_chunks_v2(query_embedding => '${Q}'::vector, query_text => 'evening',
+         match_count => 50, min_similarity => 0.25, vector_weight => 0.7)`
+    );
+    expect(rows[0]?.id).toBe('nearer');
+  });
+
+  it('does not change the existing search, which still reads the old column', async () => {
+    const { rows } = await db.query(
+      `select id from match_chunks('${along(0, 1536)}'::vector, '', 5, 0.25)`
+    );
+    expect(rows).toEqual([]); // none of these rows has an OpenAI embedding
+  });
+
+  it('counts the approved passages the new search cannot yet answer from', async () => {
+    // "no-v2" has no Voyage embedding; "stale" was re-ingested after its one was written.
+    const { rows } = await db.query<{ missing: number }>(
+      `select knowledge_chunks_v2_missing() as missing`
+    );
+    expect(rows).toEqual([{ missing: 2 }]);
+    await db.exec(`
+      update knowledge_chunks set embedding_v2 = '${along(2, 1024)}', embedding_v2_at = now()
+      where id in ('no-v2', 'stale');
+    `);
+    const after = await db.query<{ missing: number }>(
+      `select knowledge_chunks_v2_missing() as missing`
+    );
+    expect(after.rows).toEqual([{ missing: 0 }]);
+  });
+
+  it('refuses a vector of the wrong width', async () => {
+    await expect(
+      db.exec(`update knowledge_chunks set embedding_v2 = '${along(0, 1536)}' where id = 'near'`)
+    ).rejects.toThrow(/expected 1024 dimensions/);
+  });
+});
+
+describe('the daily counter behind the spending cap (bump_study_usage)', () => {
+  const bump = (key: string, limit: number) =>
+    as<{ ok: boolean }>(db, 'service_role', `select bump_study_usage('${key}', ${limit}) as ok`);
+
+  it('allows up to the limit and refuses after it', async () => {
+    expect(await bump('turn:all', 2)).toEqual([{ ok: true }]);
+    expect(await bump('turn:all', 2)).toEqual([{ ok: true }]);
+    expect(await bump('turn:all', 2)).toEqual([{ ok: false }]);
+  });
+
+  it('counts each name on its own, so speech does not use up the turns', async () => {
+    expect(await bump('speak:all', 1)).toEqual([{ ok: true }]);
+    expect(await bump('turn:visitor-1', 1)).toEqual([{ ok: true }]);
+    expect(await bump('turn:visitor-2', 1)).toEqual([{ ok: true }]);
+    expect(await bump('turn:visitor-1', 1)).toEqual([{ ok: false }]);
+  });
+
+  it('keeps counting past the limit, and starts again the next day', async () => {
+    const { rows } = await db.query<{ count: number }>(
+      `select count from study_usage where code = 'turn:all'`
+    );
+    expect(rows).toEqual([{ count: 3 }]);
+    await db.exec(`update study_usage set day = day - 1 where code = 'turn:all'`);
+    expect(await bump('turn:all', 2)).toEqual([{ ok: true }]);
+  });
+
+  it.each(['anon', 'authenticated'])('cannot be called by a visitor (%s)', async (role) => {
+    await expect(as(db, role, `select bump_study_usage('turn:all', 1000000)`)).rejects.toThrow(
+      /permission denied for function bump_study_usage/
+    );
+  });
+});
+
+describe('who can read and write what', () => {
+  const ANA = '11111111-1111-4111-8111-111111111111';
+  const BEN = '22222222-2222-4222-8222-222222222222';
+
+  beforeAll(async () => {
+    await db.exec(`
+      insert into auth.users (id) values ('${ANA}'), ('${BEN}');
+      insert into conversations (id, user_id, surface) values
+        ('aaaaaaaa-0000-4000-8000-000000000001', '${ANA}', 'chat'),
+        ('bbbbbbbb-0000-4000-8000-000000000002', '${BEN}', 'chat');
+      insert into messages (conversation_id, role, content) values
+        ('aaaaaaaa-0000-4000-8000-000000000001', 'user', 'Ana asks'),
+        ('bbbbbbbb-0000-4000-8000-000000000002', 'user', 'Ben asks');
+      insert into usage_events (user_id, kind, units, model) values
+        ('${ANA}', 'chat', 2070, 'claude-opus-5-5'),
+        ('${BEN}', 'tts', 21, 'eleven_turbo_v2_5');
+    `);
+  });
+
+  it('lets anyone read the knowledge base, and nobody but the server write to it', async () => {
+    const read = await as<{ n: number }>(
+      db,
+      'anon',
+      `select count(*)::int as n from knowledge_chunks`
+    );
+    expect(read[0]?.n).toBeGreaterThan(0);
+    await expect(
+      as(
+        db,
+        'anon',
+        `insert into knowledge_chunks (id, category, title, content) values ('x', 'c', 't', 'y')`
+      )
+    ).rejects.toThrow(/row-level security/);
+    const changed = await as(
+      db,
+      'anon',
+      `update knowledge_chunks set title = 'defaced' returning id`
+    );
+    expect(changed).toEqual([]);
+  });
+
+  it('shows a signed-in visitor their own conversation and messages, and no one else’s', async () => {
+    const mine = await as<{ content: string }>(
+      db,
+      'authenticated',
+      `select content from messages`,
+      ANA
+    );
+    expect(mine).toEqual([{ content: 'Ana asks' }]);
+    const conversations = await as<{ user_id: string }>(
+      db,
+      'authenticated',
+      `select user_id from conversations`,
+      BEN
+    );
+    expect(conversations).toEqual([{ user_id: BEN }]);
+  });
+
+  it('shows a visitor with no session nothing at all', async () => {
+    expect(await as(db, 'anon', `select 1 from conversations`)).toEqual([]);
+    expect(await as(db, 'anon', `select 1 from messages`)).toEqual([]);
+    expect(await as(db, 'anon', `select 1 from usage_events`)).toEqual([]);
+  });
+
+  it('keeps the counters out of visitors’ reach entirely', async () => {
+    for (const role of ['anon', 'authenticated']) {
+      await expect(as(db, role, `select 1 from study_usage`)).rejects.toThrow(
+        /permission denied for table study_usage/
+      );
+    }
+  });
+
+  it('lets a visitor read their own usage, and never write it', async () => {
+    const mine = await as<{ kind: string }>(
+      db,
+      'authenticated',
+      `select kind from usage_events`,
+      ANA
+    );
+    expect(mine).toEqual([{ kind: 'chat' }]);
+    await expect(
+      as(
+        db,
+        'authenticated',
+        `insert into usage_events (user_id, kind, units) values ('${ANA}', 'chat', 1)`,
+        ANA
+      )
+    ).rejects.toThrow(/row-level security/);
+  });
+
+  it('accepts the two kinds of usage the server records, and no kind it has not heard of', async () => {
+    // The turn endpoint records 'chat' and the speech endpoint 'tts'.
+    await expect(
+      db.exec(`insert into usage_events (user_id, kind, units) values ('${ANA}', 'turn', 1)`)
+    ).rejects.toThrow(/usage_events_kind_check/);
+  });
+});

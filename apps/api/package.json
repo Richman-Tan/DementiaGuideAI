@@ -16,6 +16,7 @@
     "pdf-parse": "^2.4.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.4.5",
     "@vitest/coverage-istanbul": "^3.2.7",
     "esbuild": "^0.25.12",
     "vitest": "^3.2.7"

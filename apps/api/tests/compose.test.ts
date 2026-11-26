@@ -4,7 +4,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { composeTurnHandler, DEFAULT_LIMITS } from '../src/compose.ts';
 import { composeSpeakHandler, DEFAULT_SPEAK_LIMITS } from '../src/composeSpeak.ts';
-import type { Backend } from '../src/compose.ts';
+import type { TurnBackend } from '../src/compose.ts';
 import { createProviders, missingEnv } from '../src/providers.ts';
 import type { ApiRequest, ApiResponse } from '../src/http.ts';
 import { load, makeReq, makeRes, ORIGIN } from './helpers.js';
@@ -151,7 +151,8 @@ function backend(bump: (key: string, limit: number) => unknown = () => true) {
     bump(String(args.p_code), Number(args.p_limit))
   );
   const recordUsage = vi.fn();
-  return { rpc, recordUsage } satisfies Backend;
+  const recordTrace = vi.fn();
+  return { rpc, recordUsage, recordTrace } satisfies TurnBackend;
 }
 
 const fakeRequest = makeReq as unknown as (options: Record<string, unknown>) => ApiRequest;
@@ -299,6 +300,44 @@ describe('composeTurnHandler: switched on', () => {
     ]);
   });
 
+  it('records what the turn did, with no words and no account in it', async () => {
+    fakeNetwork();
+    const services = backend();
+    await composeTurnHandler(ENV, services)(request(), response());
+    expect(services.recordTrace).toHaveBeenCalledTimes(1);
+    const row = services.recordTrace.mock.calls[0]?.[0];
+    expect(row).toMatchObject({
+      prompt_version: 'v3-claude-nz',
+      model: 'claude-opus-5-5',
+      modality: 'text',
+      stop_reason: 'end_turn',
+      error_code: null,
+      history_turns: 0,
+      question_chars: 'How do I manage sundowning?'.length,
+      retrieval_mode: 'fresh',
+      cited: ['kb-1'],
+      safety_level: 'none',
+      input_tokens: 900,
+      output_tokens: 120,
+      cache_read_tokens: 1000,
+      cache_write_tokens: 50,
+    });
+    expect(row.retrieved[0]).toEqual({ id: 'kb-1', similarity: 0.7 });
+    expect(row.total_ms).toBeGreaterThanOrEqual(0);
+    const written = JSON.stringify(row);
+    for (const said of ['sundowning', 'afternoons', 'curtains', 'user-1']) {
+      expect(written, said).not.toContain(said);
+    }
+  });
+
+  it('keeps no traces when TURN_TRACES is off, and still meters the turn', async () => {
+    fakeNetwork();
+    const services = backend();
+    await composeTurnHandler({ ...ENV, TURN_TRACES: 'off' }, services)(request(), response());
+    expect(services.recordTrace).not.toHaveBeenCalled();
+    expect(services.recordUsage).toHaveBeenCalledTimes(1);
+  });
+
   it('refuses, with the reason code, once the shared daily limit is used, and calls no model', async () => {
     const calls = fakeNetwork();
     const services = backend((key) => key !== 'turn:all');
@@ -312,6 +351,8 @@ describe('composeTurnHandler: switched on', () => {
     expect(to(calls, '/v1/messages')).toEqual([]);
     expect(to(calls, '/embeddings')).toEqual([]);
     expect(services.recordUsage).not.toHaveBeenCalled();
+    // A refused request is not a turn.
+    expect(services.recordTrace).not.toHaveBeenCalled();
   });
 
   it('treats any counter reply other than true as over the limit', async () => {
@@ -348,6 +389,13 @@ describe('composeTurnHandler: switched on', () => {
     await composeTurnHandler(ENV, services)(request(), res);
     expect(events(res).at(-1)).toMatchObject({ type: 'error', code: 'generation_failed' });
     expect(services.recordUsage).not.toHaveBeenCalled();
+    // Nothing was billed, but the failure is exactly what a trace is for.
+    expect(services.recordTrace.mock.calls[0]?.[0]).toMatchObject({
+      stop_reason: 'error',
+      error_code: 'generation_failed',
+      input_tokens: null,
+      answer_chars: null,
+    });
   });
 
   it('follows the environment: limits, model, search function, Voyage endpoint, reranking', async () => {

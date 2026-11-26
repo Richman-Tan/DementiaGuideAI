@@ -156,20 +156,7 @@ export async function runEvalQuestion({
   return row;
 }
 
-/** List prices in US dollars per million tokens. */
-export interface Price {
-  input: number;
-  output: number;
-  cacheRead: number;
-  cacheWrite: number;
-}
-
-export function costUsd(usage: Usage, price: Price): number {
-  return (
-    (usage.inputTokens * price.input +
-      usage.outputTokens * price.output +
-      usage.cacheReadTokens * price.cacheRead +
-      usage.cacheWriteTokens * price.cacheWrite) /
-    1_000_000
-  );
-}
+// Prices and the cost of an answer live with the pipeline now; re-exported so
+// the evaluation tools keep one import.
+export { costUsd } from '../prices.ts';
+export type { Price } from '../prices.ts';

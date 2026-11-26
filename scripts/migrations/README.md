@@ -12,6 +12,31 @@ reproducing production 1:1. Then apply anything below it that is not already
 folded in. On an existing database it has already been run; start from the
 dated files.
 
+**The run order is `order.json`, not the filenames.** Two files share a date and
+depend on each other the other way round from how they sort: `study_tables`
+creates a table that `backend_v1` alters, so on a fresh database `study_tables`
+runs first. The table below is in that order.
+
+## These files are tested
+
+`apps/api/tests/migrations.test.ts` applies the whole chain, in `order.json`'s
+order, to a Postgres running inside the test (PGlite, with pgvector), on every
+run of `npm test`. It then checks what the server relies on:
+
+- exactly one `match_chunks` and one `match_chunks_v2` (the PGRST203 outage);
+- rows that exist before `review_status` arrives come out approved and
+  searchable (the 2026-10-07 outage);
+- `match_chunks_v2` returns only approved rows with a Voyage embedding, ranks
+  them, and takes its vector/keyword balance as an argument;
+- `knowledge_chunks_v2_missing()` counts what the new search cannot yet see;
+- `bump_study_usage` allows up to its limit, and visitors cannot call it;
+- who can read and write each table.
+
+A new `.sql` file that is not added to `order.json` fails the test. What the
+test cannot show is that production is configured as its stand-in for Supabase
+assumes (the three roles and their default privileges), so the VERIFY block in
+each file still applies after a real run.
+
 | File | Status | Purpose |
 |---|---|---|
 | `000_supabase-setup.sql` | 🏁 fresh databases only | Full schema: `knowledge_chunks`, pgvector + tsvector indexes, `match_chunks`, `search_vector` trigger, RLS policy |
@@ -21,14 +46,14 @@ dated files.
 | `2026-07-16_production_snapshot.sql` | 📄 reference (do NOT run) | Verbatim capture of the live objects from that dump — the source of truth for F-14 |
 | `2026-07-17_a_provenance_columns.sql` | ✅ run 2026-07-17 | Added provenance columns; backfilled from tags[] (0 NULL document_id; iSupport → country/module/chunk_level; curated → document_id='curated') |
 | `2026-07-17_b_canonical_match_chunks.sql` | ✅ run 2026-07-17 | Canonical `match_chunks`: production scoring verbatim (0.7 cosine / 0.3 ts_rank_cd), filters on provenance columns, returns document_id/chunk_level. **Verified: all 32 labelled eval questions return byte-identical retrieved ids vs the frozen baseline.** |
-| `2026-08-18_backend_v1.sql` | ✅ run (verified 2026-08-24) | Identity, server-side `conversations`, `usage_events` |
 | `2026-08-18_study_tables.sql` | ✅ run (verified 2026-08-24) | `study_sessions`, `study_events`, `study_usage` + `bump_study_usage()`; RLS on with no policies, `service_role` only |
+| `2026-08-18_backend_v1.sql` | ✅ run (verified 2026-08-24) | Identity, server-side `conversations`, `usage_events` |
 | `2026-08-18_participant_allocation.sql` | ⏳ apply with study_tables | `study_participant_seq` + `claim_participant_number()`. Not verifiable with the anon key — check with the service role before enrolling |
 | `2026-08-19_study_version_stamp.sql` | ⏳ verify before enrolling | Adds `study_sessions.study_version`. `apps/api/api/study/session.js` selects **and** inserts this column, so if it is missing every session create fails |
 | `2026-09-16_display_title.sql` | ✅ confirmed live 2026-10-07 | Adds `knowledge_chunks.display_title` (caregiver-facing plain-language title, separate from the embedding-input `title`) and returns it from `match_chunks`. The row above was stale — a direct check against production (`pg_get_function_result`) found this version already live, 11-column return shape, before the review_status migration below was written against it |
 | `2026-10-07_review_status.sql` | ✅ run 2026-10-07 (corrected live, see below) | Adds `knowledge_chunks.review_status` (`pending`/`approved`/`rejected`, default `pending`, existing rows backfilled to `approved`) and gates `match_chunks` on `review_status = 'approved'`. Lets the new admin intake tool (`apps/admin` + `apps/api/api/admin/ingest.js`) write submissions that aren't retrievable until a reviewer approves them in the table editor |
 | `2026-10-07_study_protocol.sql` | ⏳ apply before enabling the feedback round | Adds `study_sessions.protocol` (`tasks` \| `feedback`) and lets a feedback session have no arm/set order. `session.js` uses the column only when `STUDY_PROTOCOLS` includes `feedback`, so run this first |
-| `2026-11-25_embedding_v2_voyage.sql` | ⏳ not yet run | Adds `knowledge_chunks.embedding_v2` (`vector(1024)`, Voyage) with its model and time, a separately named `match_chunks_v2` reading it (the vector/keyword mix is an argument), and `knowledge_chunks_v2_missing()`. Additive: `match_chunks` and `embedding` are untouched. After running it, backfill with `npm run kb:reembed`, and switch nothing to `match_chunks_v2` until `npm run kb:reembed -- --check` passes |
+| `2026-11-25_embedding_v2_voyage.sql` | ⏳ not yet run on production (runs clean in the test) | Adds `knowledge_chunks.embedding_v2` (`vector(1024)`, Voyage) with its model and time, a separately named `match_chunks_v2` reading it (the vector/keyword mix is an argument), and `knowledge_chunks_v2_missing()`. Additive: `match_chunks` and `embedding` are untouched. After running it, backfill with `npm run kb:reembed`, and switch nothing to `match_chunks_v2` until `npm run kb:reembed -- --check` passes |
 
 After any corpus replacement (Stage 9), rebuild the ivfflat index so its
 training clusters match the new data: `reindex index knowledge_chunks_embedding_idx;`

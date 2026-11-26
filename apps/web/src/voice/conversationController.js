@@ -286,6 +286,7 @@ export function createConversation({
             citations: result.citations || [],
             sources: result.sources || null,
             safety: !!result.safety,
+            trace: result.trace || null,
           });
         }
         reply = null;

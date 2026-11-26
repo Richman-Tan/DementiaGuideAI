@@ -151,6 +151,8 @@ export function ChatProvider({ children }) {
           citations: result.citations || [],
           sources: result.sources || null,
           safety: !!result.safety,
+          // How it was made, when the server's pipeline answered.
+          trace: result.trace || null,
           streaming: false,
         });
         setTyping(false);

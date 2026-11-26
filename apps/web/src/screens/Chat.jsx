@@ -8,6 +8,7 @@ import { AvatarBust } from '../avatar/AvatarStage.jsx';
 import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
 import { AnswerText } from '../components/AnswerText.jsx';
+import { AnswerTrace } from '../components/AnswerTrace.jsx';
 import { makeStickTracker } from '../lib/autoscroll.js';
 
 const Dots = () => (
@@ -409,6 +410,7 @@ export default function Chat({ isDesktop, isMobile }) {
                           ))}
                         </div>
                       )}
+                      {!m.streaming && <AnswerTrace trace={m.trace} />}
                       <div
                         style={{
                           alignSelf: 'flex-start',

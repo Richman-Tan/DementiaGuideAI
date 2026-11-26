@@ -27,7 +27,16 @@ function answered({ safety = 'none' } = {}) {
       model: 'claude-opus-5-5',
       modality: 'text',
     },
-    { type: 'retrieval', mode: 'fresh', query: 'q', chunks: [], ms: 40 },
+    {
+      type: 'retrieval',
+      mode: 'fresh',
+      query: 'managing sundowning in the evening',
+      ms: 412,
+      chunks: [
+        { id: 'kb-1', title: SOURCE.title, org: SOURCE.org, url: SOURCE.url, similarity: 0.71 },
+        { id: 'kb-2', title: 'Carer support', org: 'Carers NZ', url: null, similarity: 0.42 },
+      ],
+    },
     { type: 'token', text: 'Keep the late afternoon calm and well lit.', section: 'lead' },
     {
       type: 'token',
@@ -56,7 +65,7 @@ function answered({ safety = 'none' } = {}) {
       cacheReadTokens: 0,
       cacheWriteTokens: 0,
     },
-    { type: 'timings', total: 900 },
+    { type: 'timings', retrievalDone: 430, firstToken: 1180, streamEnd: 3900, total: 3912 },
     { type: 'done', stopReason: 'end_turn' },
   ];
 }
@@ -155,6 +164,35 @@ test.describe('chat on the server pipeline, with no key and no access code', () 
 
     // No help callout: the server judged the message, and found nothing.
     await expect(callout(page)).toHaveCount(0);
+  });
+
+  test('"How this answer was made" shows the search, the check, the time and the cost behind an answer', async ({
+    page,
+  }) => {
+    await open(page, () => stream(answered()));
+    await ask(page, 'How do I manage sundowning?');
+    await expect(page.getByText('Close the curtains at dusk.')).toBeVisible();
+
+    // Only the answer the server wrote has one, and it is closed until asked for.
+    const panel = page.locator('details').filter({ hasText: 'How this answer was made' });
+    await expect(panel).toHaveCount(1);
+    await expect(panel.getByText('Searched for')).toBeHidden();
+    await panel.getByText('How this answer was made').click();
+
+    await expect(panel.getByText('“managing sundowning in the evening” (412 ms)')).toBeVisible();
+    // Both passages found, with their scores, and which one the answer used.
+    await expect(panel.getByText(`${SOURCE.title} (${SOURCE.org}), match 0.71`)).toBeVisible();
+    await expect(panel.getByText(', cited as [1]')).toBeVisible();
+    await expect(panel.getByText('Carer support (Carers NZ), match 0.42')).toBeVisible();
+    await expect(panel.getByText('No emergency found, judged by a model')).toBeVisible();
+    await expect(panel.getByText('search 430 ms, first words 1.2 s, finished 3.9 s')).toBeVisible();
+    await expect(panel.getByText('900 in, 120 out')).toBeVisible();
+    // 900 x 4 + 120 x 20 per million, at Opus 5.5's list price.
+    await expect(
+      panel.getByText('About US$0.0060 at list prices, for writing the answer alone.')
+    ).toBeVisible();
+    await expect(panel.getByText('claude-opus-5-5')).toBeVisible();
+    await expect(panel.getByText('v3-claude-nz@e2e')).toBeVisible();
   });
 
   test('a follow-up carries the conversation so far', async ({ page }) => {

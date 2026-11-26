@@ -178,7 +178,7 @@ class ErrorBoundary extends React.Component {
             borderRadius: '14px',
             border: 'none',
             background: 'var(--primary)',
-            color: '#fff',
+            color: 'var(--on-primary)',
             fontWeight: '700',
             cursor: 'pointer',
           }}

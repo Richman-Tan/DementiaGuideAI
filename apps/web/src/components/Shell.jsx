@@ -170,7 +170,7 @@ export default function Shell({ active, isDesktop, isTablet, isMobile, children 
               fontSize: '1.02rem',
               fontWeight: '700',
               background: 'var(--primary)',
-              color: '#fff',
+              color: 'var(--on-primary)',
               boxShadow: 'var(--shadow)',
             }}
             className="hv1"
@@ -272,7 +272,7 @@ export default function Shell({ active, isDesktop, isTablet, isMobile, children 
               alignItems: 'center',
               justifyContent: 'center',
               background: 'var(--primary)',
-              color: '#fff',
+              color: 'var(--on-primary)',
               boxShadow: 'var(--shadow)',
             }}
             className="hv2"
@@ -374,7 +374,7 @@ export default function Shell({ active, isDesktop, isTablet, isMobile, children 
               borderRadius: '50%',
               border: 'none',
               background: 'var(--primary)',
-              color: '#fff',
+              color: 'var(--on-primary)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',

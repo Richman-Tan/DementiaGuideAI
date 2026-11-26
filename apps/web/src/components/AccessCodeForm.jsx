@@ -107,7 +107,7 @@ export function AccessCodeForm({ onChange }) {
           borderRadius: '12px',
           border: 'none',
           background: canSubmit ? 'var(--primary)' : 'var(--border)',
-          color: canSubmit ? '#fff' : 'var(--text2)',
+          color: canSubmit ? 'var(--on-primary)' : 'var(--text2)',
           fontWeight: '700',
           cursor: canSubmit ? 'pointer' : 'not-allowed',
         }}

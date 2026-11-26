@@ -52,7 +52,7 @@ export default function Article({ artId }) {
             borderRadius: '14px',
             border: 'none',
             background: 'var(--primary)',
-            color: '#fff',
+            color: 'var(--on-primary)',
             fontWeight: '600',
             cursor: 'pointer',
           }}
@@ -160,7 +160,7 @@ export default function Article({ artId }) {
                 borderRadius: '12px',
                 border: 'none',
                 background: 'var(--primary)',
-                color: '#fff',
+                color: 'var(--on-primary)',
                 fontWeight: '600',
                 cursor: 'pointer',
               }}
@@ -181,7 +181,7 @@ export default function Article({ artId }) {
             borderRadius: '14px',
             border: 'none',
             background: 'var(--primary)',
-            color: '#fff',
+            color: 'var(--on-primary)',
             fontSize: '1rem',
             fontWeight: '700',
             cursor: 'pointer',

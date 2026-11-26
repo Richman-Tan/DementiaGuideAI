@@ -108,7 +108,7 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
               borderRadius: '12px',
               border: 'none',
               background: 'var(--primary)',
-              color: '#fff',
+              color: 'var(--on-primary)',
               fontWeight: 600,
               cursor: 'pointer',
             }}

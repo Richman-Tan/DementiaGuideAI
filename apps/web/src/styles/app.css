@@ -1,7 +1,7 @@
 /* Hover styles generated from the prototype's style-hover attributes. */
 .hv1:hover {
   background: var(--primary-d);
-  color: #fff;
+  color: var(--on-primary);
 }
 .hv2:hover {
   background: var(--primary-d);
@@ -21,7 +21,7 @@
 }
 .hv7:hover {
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
 }
 .hv8:hover {
   background: var(--tint);

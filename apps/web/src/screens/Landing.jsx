@@ -32,7 +32,7 @@ export default function Landing({ openApp, browseLibrary }) {
             borderRadius: '12px',
             border: 'none',
             background: 'var(--primary)',
-            color: '#fff',
+            color: 'var(--on-primary)',
             fontWeight: '600',
             cursor: 'pointer',
           }}
@@ -80,7 +80,7 @@ export default function Landing({ openApp, browseLibrary }) {
                 borderRadius: '14px',
                 border: 'none',
                 background: 'var(--primary)',
-                color: '#fff',
+                color: 'var(--on-primary)',
                 fontSize: '1.05rem',
                 fontWeight: '600',
                 cursor: 'pointer',

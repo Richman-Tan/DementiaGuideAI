@@ -1,5 +1,8 @@
 :root {
-  color-scheme: light dark;
+  /* Light only. Every colour below is a light-theme colour; while this said
+     "light dark", a dark system theme turned the text white and left the
+     page's own pale background in place, so nothing could be read. */
+  color-scheme: light;
   font-family:
     system-ui,
     -apple-system,
@@ -95,4 +98,119 @@ button:disabled {
   padding: 0;
   text-decoration: underline;
   font-size: 0.85rem;
+}
+
+/* The two views, and the Usage page. */
+.app.wide {
+  max-width: 1040px;
+}
+
+.views {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 18px;
+  border-bottom: 1px solid #ccc;
+}
+
+.view {
+  background: none;
+  color: inherit;
+  border-radius: 6px 6px 0 0;
+  border-bottom: 3px solid transparent;
+  padding: 8px 14px;
+}
+
+.view[aria-current='page'] {
+  border-bottom-color: #4a7c8e;
+  font-weight: 600;
+}
+
+.range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.range select {
+  font-size: 1rem;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.budget {
+  background: #eaf2f5;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.totals div {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.totals dt {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.totals dd {
+  margin: 2px 0 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+caption {
+  text-align: left;
+  font-size: 0.85rem;
+  opacity: 0.75;
+  padding-bottom: 6px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid #ddd;
+  white-space: nowrap;
+}
+
+thead th {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+tbody th {
+  font-weight: 600;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  font-size: 0.85rem;
+  opacity: 0.75;
+  margin-top: 16px;
 }

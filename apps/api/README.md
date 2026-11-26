@@ -220,6 +220,17 @@ written, the answer is unaffected and the first failure is logged; until the
 migration has been run that is one warning per server instance. `TURN_TRACES=off`
 keeps none.
 
+### Reading it back
+
+`GET /api/admin-usage?days=14` (1 to 90 days) returns the daily summary for
+the admin tool's Usage tab: one line for each day, kind of turn, model and
+pipeline version, with a cost worked out from the list prices, the totals, and
+today against `DAILY_BUDGET_USD` if one is set (`src/usageReport.ts`,
+`src/adminUsage.ts`). Admins only: the same Supabase sign-in and
+`ADMIN_ALLOWED_EMAILS` list as the intake endpoint. If a model has no list
+price its line has no cost, and then neither does the total, rather than a
+total that quietly leaves it out.
+
 ## The speech endpoint
 
 `POST /api/speak` turns a sentence or two of the reply into audio, with the

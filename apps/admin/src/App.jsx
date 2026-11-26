@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from './lib/useAuth.js';
 import { CATEGORIES, validate, buildRequestBody, fileToBase64, submitResource } from './lib/api.js';
+import Usage from './Usage.jsx';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -19,6 +20,7 @@ const EMPTY_FIELDS = {
 
 export default function App() {
   const auth = useAuth();
+  const [view, setView] = useState('intake');
 
   if (auth.status === 'unavailable') {
     return (
@@ -46,19 +48,45 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={view === 'usage' ? 'app wide' : 'app'}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <h1>Add a resource to the knowledge base</h1>
+        <h1>
+          {view === 'usage'
+            ? 'How the assistant is being used'
+            : 'Add a resource to the knowledge base'}
+        </h1>
         <button type="button" className="signout" onClick={auth.signOut}>
           Sign out ({auth.email})
         </button>
       </div>
-      <p>
-        Submissions are reviewed before they're used in chat — a team member checks them in Supabase
-        (<code>knowledge_chunks</code>, filter <code>review_status = pending</code>) and approves or
-        rejects.
-      </p>
-      <IntakeForm accessToken={auth.accessToken} />
+      <nav className="views" aria-label="Views">
+        {[
+          ['intake', 'Add a resource'],
+          ['usage', 'Usage'],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className="view"
+            aria-current={view === id ? 'page' : undefined}
+            onClick={() => setView(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+      {view === 'usage' ? (
+        <Usage accessToken={auth.accessToken} />
+      ) : (
+        <>
+          <p>
+            Submissions are reviewed before they're used in chat — a team member checks them in
+            Supabase (<code>knowledge_chunks</code>, filter <code>review_status = pending</code>)
+            and approves or rejects.
+          </p>
+          <IntakeForm accessToken={auth.accessToken} />
+        </>
+      )}
     </div>
   );
 }

@@ -63,6 +63,12 @@ export async function selectOne(table, columns, query) {
   return Array.isArray(rows) && rows.length ? rows[0] : null;
 }
 
+/** Every matching row. `query` is a whole PostgREST query string, `select=` included. */
+export async function selectMany(table, query) {
+  const { rows } = await request(`${table}?${query}`, { method: 'GET', headers: headers() });
+  return Array.isArray(rows) ? rows : [];
+}
+
 /** Insert one row and return the requested columns. */
 export async function insertReturning(table, row, columns) {
   const { rows } = await request(`${table}?select=${encodeURIComponent(columns)}`, {

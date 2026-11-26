@@ -184,8 +184,8 @@ test.describe('stored data from older or damaged builds', () => {
       ).toBe(retired);
       await page.goto('/#/app/settings');
       await page
-        .getByRole('group', { name: 'Avatar' })
-        .getByRole('button', { name: 'Ariana' })
+        .getByRole('radiogroup', { name: 'Avatar' })
+        .getByRole('radio', { name: 'Ariana' })
         .click();
       await page.reload();
       await expect(page.getByText("Display Ariana's visual avatar interface")).toBeVisible();

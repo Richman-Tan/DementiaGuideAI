@@ -12,24 +12,19 @@ import { useSettings } from '../state/SettingsContext.jsx';
 import { useUi } from '../state/UiContext.jsx';
 import { navigate } from '../state/router.js';
 import { AvatarBust } from '../avatar/AvatarStage.jsx';
-import { getAvatarProfile, AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { Button } from '../components/ui/Button.jsx';
 import { ChoiceGroup } from '../components/ui/ChoiceGroup.jsx';
 import {
   askingFor,
   current as currentChoice,
   DETAIL,
+  GUIDE,
   MEDICAL_WORDS,
   pick,
-} from '../lib/answerChoices.js';
+} from '../lib/settingChoices.js';
 
 const STEPS = 3;
-
-const GUIDES = Object.values(AVATAR_PROFILES).map((profile) => ({
-  value: profile.id,
-  label: profile.name,
-  note: profile.voiceNote,
-}));
 
 export default function Onboarding({ step }) {
   const { settings, setSetting, setMany } = useSettings();
@@ -106,12 +101,7 @@ export default function Onboarding({ step }) {
                   can start.
                 </p>
               </div>
-              <ChoiceGroup
-                label="Who would you like to talk with?"
-                value={profile.id}
-                onChange={(id) => setSetting('avatarId', id)}
-                options={GUIDES}
-              />
+              {choice(GUIDE)}
               <div className="flex flex-col items-center gap-1">
                 <Button size="lg" className="self-stretch" onClick={() => go(2)}>
                   Let's begin

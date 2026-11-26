@@ -1,4 +1,4 @@
-// The choices about how answers are written (src/lib/answerChoices.js), which
+// The settings chosen from a few options (src/lib/settingChoices.js), which
 // setup and Settings both offer. What matters is that the option shown as
 // chosen is the one answers are really being written to.
 import { describe, it, expect } from 'vitest';
@@ -6,12 +6,15 @@ import {
   askingFor,
   current,
   DETAIL,
+  GUIDE,
   MEDICAL_WORDS,
   pick,
   STYLE,
-} from '../src/lib/answerChoices.js';
-import { mapSettingsToRag } from '../src/state/mapSettingsToRag.js';
-import { AVATAR_PROFILES } from '../src/avatar/avatarProfiles.js';
+  TEXT_SIZE,
+  voiceSpeed,
+} from '../src/lib/settingChoices.js';
+import { mapSettingsToRag, speechRateFor } from '../src/state/mapSettingsToRag.js';
+import { AVATAR_PROFILES, getAvatarProfile } from '../src/avatar/avatarProfiles.js';
 
 const ASKING = askingFor('Aaron');
 const ALL = [ASKING, DETAIL, MEDICAL_WORDS, STYLE];
@@ -117,5 +120,49 @@ describe('the guides', () => {
     }
     const notes = Object.values(AVATAR_PROFILES).map((p) => p.voiceNote);
     expect(new Set(notes).size).toBe(notes.length);
+  });
+});
+
+describe('who speaks, how fast, and how large the text is', () => {
+  const SPEED = voiceSpeed('Aaron');
+
+  it('offers every guide on the roster, by name, with what they sound like', () => {
+    expect(GUIDE.options.map((o) => o.label)).toEqual(
+      Object.values(AVATAR_PROFILES).map((p) => p.name)
+    );
+    expect(GUIDE.options.every((o) => /voice/.test(o.note))).toBe(true);
+  });
+
+  it('shows a retired or missing guide as the one who will actually appear', () => {
+    for (const stored of ['aria', 'zhenja', undefined, null]) {
+      expect(current(GUIDE, { avatarId: stored })).toBe(getAvatarProfile(stored).id);
+    }
+    expect(current(GUIDE, { avatarId: 'ariana' })).toBe('ariana');
+    expect(pick(GUIDE, 'ariana')).toEqual({ avatarId: 'ariana' });
+  });
+
+  it('gives each voice speed its own rate, and treats a missing one as Normal', () => {
+    const rates = SPEED.options.map((o) => speechRateFor({ voiceSpeed: o.value }));
+    expect(new Set(rates).size).toBe(3);
+    expect([...rates].sort()).toEqual(rates); // slower, normal, faster: in rising order
+    expect(speechRateFor({})).toBe(speechRateFor({ voiceSpeed: SPEED.fallback }));
+    expect(current(SPEED, {})).toBe('normal');
+    expect(SPEED.options[0].note).toBe('How fast Aaron speaks.');
+  });
+
+  it('stores the text size as the number the page is scaled by', () => {
+    expect(pick(TEXT_SIZE, '1.25')).toEqual({ textScale: 1.25 });
+    expect(pick(TEXT_SIZE, '0.85')).toEqual({ textScale: 0.85 });
+    // And reads a stored number back as the option it is.
+    expect(current(TEXT_SIZE, { textScale: 1.25 })).toBe('1.25');
+    expect(current(TEXT_SIZE, { textScale: 1 })).toBe('1');
+    expect(current(TEXT_SIZE, { textScale: 0.85 })).toBe('0.85');
+    // A size that is not one of the three shows as Medium.
+    expect(current(TEXT_SIZE, { textScale: 3 })).toBe('1');
+    expect(current(TEXT_SIZE, {})).toBe('1');
+  });
+
+  it('keeps every other setting as the text it is', () => {
+    expect(pick(SPEED, 'faster')).toEqual({ voiceSpeed: 'faster' });
   });
 });

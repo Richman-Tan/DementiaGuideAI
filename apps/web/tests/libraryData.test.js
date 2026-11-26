@@ -20,6 +20,7 @@ import {
   VOICE_QUESTIONS,
 } from '../src/data/services.js';
 import { catStyle } from '../src/lib/catStyle.js';
+import { contrast } from '@core/design/tokens.ts';
 import { matchSourceToArticle } from '../src/services/kbToLibrary.js';
 
 describe('article bodies (data/articles/index.js)', () => {
@@ -157,7 +158,27 @@ describe('catStyle', () => {
   it('uses pale background + deep text in light mode and tint + accent in dark mode', () => {
     const c = getCat('clinical');
     expect(catStyle('clinical', false)).toEqual({ bg: c.pale, fg: '#2D5F70', dot: c.accent });
-    expect(catStyle('clinical', true)).toEqual({ bg: c.dk, fg: c.accent, dot: c.accent });
+    // In the dark theme the text is the accent, where the accent can be read.
+    const care = getCat('caregiving');
+    expect(catStyle('caregiving', true)).toEqual({
+      bg: care.dk,
+      fg: care.accent,
+      dot: care.accent,
+    });
+    // Clinical's accent is too dim on its dark tint, so its text is lighter; the dot keeps the accent.
+    expect(catStyle('clinical', true)).toEqual({ bg: c.dk, fg: '#7FB6C8', dot: c.accent });
+  });
+
+  it('keeps every category chip readable in both themes (WCAG AA, 4.5:1)', () => {
+    for (const cat of CATS) {
+      for (const dark of [false, true]) {
+        const { bg, fg } = catStyle(cat.id, dark);
+        expect(
+          contrast(fg.toLowerCase(), bg.toLowerCase()),
+          `${cat.id}, ${dark ? 'dark' : 'light'} theme`
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 
   it('falls back to the theme tokens for an unknown category', () => {

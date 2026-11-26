@@ -4,15 +4,12 @@
    control's resting colours as inline styles, and an inline style beats any
    stylesheet rule that is not !important. Without it these rules did nothing
    at all: for a long time no button, link or card in the app responded to the
-   pointer. The component layer will carry its own states; until then this is
-   what makes them work.
+   pointer. The component layer carries its own states, and a class goes from
+   here when the last control using it has moved there (hv1 and hv5 have gone;
+   a test fails if a rule is left with nothing using it).
 
    A control that is disabled, or marked aria-disabled because pressing it does
    nothing just now, does not light up. */
-.hv1:not(:disabled, [aria-disabled='true']):hover {
-  background: var(--primary-d) !important;
-  color: var(--on-primary) !important;
-}
 .hv2:not(:disabled, [aria-disabled='true']):hover {
   background: var(--primary-d) !important;
 }
@@ -21,9 +18,6 @@
 }
 .hv4:not(:disabled, [aria-disabled='true']):hover {
   background: var(--tint) !important;
-  color: var(--primary-d) !important;
-}
-.hv5:not(:disabled, [aria-disabled='true']):hover {
   color: var(--primary-d) !important;
 }
 .hv6:not(:disabled, [aria-disabled='true']):hover {
@@ -43,7 +37,7 @@
 }
 /* The change eases in rather than snapping. The reduced-motion rule in
    tokens.css turns this off for anyone who has asked for less movement. */
-:is(.hv1, .hv2, .hv3, .hv4, .hv5, .hv6, .hv7, .hv8, .hv9) {
+:is(.hv2, .hv3, .hv4, .hv6, .hv7, .hv8, .hv9) {
   transition:
     background-color var(--dur-fast) var(--ease),
     border-color var(--dur-fast) var(--ease),

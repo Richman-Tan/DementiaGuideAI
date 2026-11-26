@@ -54,11 +54,21 @@ describe('text on the primary colour', () => {
 
 describe('the hover styles', () => {
   const css = read('styles/app.css');
-  // One rule for each hover class, hv1 to hv9.
+  // One rule for each hover class still in use.
   const rules = [...css.matchAll(/^\.hv(\d)([^{]*)\{([^}]*)\}/gm)];
 
-  it('exist for each of the nine hover classes', () => {
-    expect(rules.map((r) => r[1])).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9']);
+  it('are exactly the hover classes something still uses', () => {
+    // A rule goes when the last control using it has moved to the component
+    // layer, and a class with no rule would do nothing: neither can linger.
+    const used = new Set();
+    for (const file of sources()) {
+      for (const [, n] of readFileSync(file, 'utf8').matchAll(/className="hv(\d)"/g)) used.add(n);
+    }
+    expect(rules.map((r) => r[1])).toEqual([...used].sort());
+    expect(used.size).toBeGreaterThan(0);
+    // The eased transition names the same classes.
+    const eased = css.match(/:is\(([^)]*)\) \{\s*transition:/)[1];
+    expect(eased.match(/\d/g)).toEqual([...used].sort());
   });
 
   it('are !important, because the controls carry their resting colours inline', () => {

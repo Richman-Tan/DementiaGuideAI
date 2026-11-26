@@ -41,7 +41,7 @@ for (const [name, palette, settings] of [
     test('a primary button darkens (or, in the dark theme, lightens) and keeps readable text', async ({
       page,
     }) => {
-      const talk = page.getByRole('button', { name: /Talk to Aaron/ });
+      const talk = page.getByRole('link', { name: /Talk to Aaron/ });
       expect(await colours(talk)).toMatchObject({
         background: rgb(palette.primary),
         text: rgb(palette.onPrimary),
@@ -57,7 +57,7 @@ for (const [name, palette, settings] of [
     });
 
     test('a navigation item that is not the current one takes the tint', async ({ page }) => {
-      const library = page.getByRole('button', { name: 'Library', exact: true }).first();
+      const library = page.getByRole('link', { name: 'Library', exact: true }).first();
       expect((await colours(library)).background).not.toBe(rgb(palette.tint));
       expect((await hovered(page, library)).background).toBe(rgb(palette.tint));
     });

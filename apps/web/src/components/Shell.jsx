@@ -1,9 +1,16 @@
-// App shell: desktop sidebar / tablet icon rail / mobile bottom tab bar.
+// The app's frame: the navigation, and the screen inside it. The navigation is
+// a sidebar on a desktop, a rail of icons on a tablet and a bar of tabs along
+// the bottom of a phone.
+//
+// In each of the three it is the same thing to a screen reader: a navigation
+// landmark of links, one of which says it is the current page. That used to be
+// shown by colour alone, on buttons, and on a desktop or tablet not inside a
+// landmark at all.
 import React from 'react';
-import { go } from '../state/router.js';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import BrandMark from './BrandMark.jsx';
+import { Button } from './ui/Button.jsx';
 
 const I = {
   home: (
@@ -92,329 +99,135 @@ const NAV = [
   ['set', 'Settings', '#/app/settings', I.set],
 ];
 
-const navStyle = (on) => ({
-  bg: on ? 'var(--tint)' : 'transparent',
-  c: on ? 'var(--primary-d)' : 'var(--text2)',
-  dot: on ? 'var(--primary)' : 'transparent',
-});
+const VOICE = '#/app/voice';
+
+const LINK = 'no-underline transition-colors';
+// The current page is tinted; the others take the tint under the pointer.
+const tone = (on) => (on ? 'bg-tint text-primary-dark' : 'text-text-muted hover:bg-tint');
+
+/**
+ * One destination, in the shape its layout needs: a row with its name
+ * (desktop), an icon alone (tablet) or a tab (phone).
+ */
+function NavItem({ item: [key, label, route, icon], active, shape }) {
+  const on = active === key;
+  const current = on ? 'page' : undefined;
+  if (shape === 'row') {
+    return (
+      <a
+        href={route}
+        aria-current={current}
+        className={`${LINK} flex min-h-12 items-center gap-3 rounded-md px-3.5 font-semibold ${tone(on)}`}
+      >
+        {icon}
+        <span>{label}</span>
+      </a>
+    );
+  }
+  if (shape === 'icon') {
+    return (
+      <a
+        href={route}
+        aria-current={current}
+        aria-label={label}
+        title={label}
+        className={`${LINK} flex size-12 items-center justify-center rounded-md ${tone(on)}`}
+      >
+        {icon}
+      </a>
+    );
+  }
+  // A tab has no fill; the current one is darker and carries a dot.
+  return (
+    <a
+      href={route}
+      aria-current={current}
+      className={`${LINK} flex min-h-12 min-w-14 flex-col items-center gap-0.5 text-xs font-semibold ${
+        on ? 'text-primary-dark' : 'text-text-muted'
+      }`}
+    >
+      {icon}
+      {label}
+      <span className={`size-1.5 rounded-pill ${on ? 'bg-primary' : 'bg-transparent'}`} />
+    </a>
+  );
+}
+
+const SIDE =
+  'sticky top-0 box-border flex h-screen shrink-0 flex-col border-0 border-r-(length:--bw) border-solid border-border bg-surface';
 
 export default function Shell({ active, isDesktop, isTablet, isMobile, children }) {
   const { settings, setSetting, effDark } = useSettings();
   const talkTo = `Talk to ${getAvatarProfile(settings.avatarId).name}`;
+  const items = (shape, from, to) =>
+    NAV.slice(from, to).map((item) => (
+      <NavItem key={item[0]} item={item} active={active} shape={shape} />
+    ));
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="flex min-h-screen">
       {isDesktop && (
-        <aside
-          style={{
-            width: '260px',
-            flexShrink: '0',
-            position: 'sticky',
-            top: '0',
-            height: '100vh',
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px',
-            background: 'var(--surface)',
-            borderRight: 'var(--bw) solid var(--border)',
-            padding: '22px 14px 16px',
-          }}
-        >
-          <div
-            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 10px 18px' }}
-          >
+        <aside className={`${SIDE} w-65 gap-1 px-3.5 pt-5.5 pb-4`}>
+          <div className="flex items-center gap-2.5 px-2.5 pb-4.5">
             <BrandMark size={34} tile />
-            <strong style={{ fontSize: '1.02rem' }}>DementiaGuide AI</strong>
+            <strong>DementiaGuide AI</strong>
           </div>
-          {NAV.map(([key, label, route, icon]) => {
-            const n = navStyle(active === key);
-            return (
-              <button
-                key={key}
-                onClick={go(route)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  minHeight: '48px',
-                  padding: '0 14px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  textAlign: 'left',
-                  background: n.bg,
-                  color: n.c,
-                }}
-                className="hv3"
-              >
-                {icon}
-                <span>{label}</span>
-              </button>
-            );
-          })}
+          <nav aria-label="Main" className="flex flex-col gap-1">
+            {items('row')}
+            <Button href={VOICE} size="lg" className="mt-3.5 shadow-card">
+              {I.mic(20)}
+              {talkTo}
+            </Button>
+          </nav>
+          <div className="flex-1" />
           <button
-            onClick={go('#/app/voice')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              minHeight: '54px',
-              marginTop: '14px',
-              borderRadius: '16px',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '1.02rem',
-              fontWeight: '700',
-              background: 'var(--primary)',
-              color: 'var(--on-primary)',
-              boxShadow: 'var(--shadow)',
-            }}
-            className="hv1"
-          >
-            {I.mic(20)}
-            {talkTo}
-          </button>
-          <div style={{ flex: '1' }} />
-          <button
+            type="button"
             onClick={() => setSetting('darkMode', !effDark)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              minHeight: '44px',
-              padding: '0 14px',
-              borderRadius: '12px',
-              border: 'var(--bw) solid var(--border)',
-              background: 'var(--elev)',
-              color: 'var(--text2)',
-              fontWeight: '600',
-              cursor: 'pointer',
-            }}
-            className="hv3"
+            className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-md border-(length:--bw) border-solid border-border bg-elevated px-3.5 font-semibold text-text-muted transition-colors hover:bg-tint"
           >
-            <span
-              style={{
-                width: '16px',
-                height: '16px',
-                borderRadius: '50%',
-                background: 'linear-gradient(90deg,var(--text2) 50%,transparent 50%)',
-                border: '2px solid var(--text2)',
-                boxSizing: 'border-box',
-              }}
-            />
+            <span className="box-border size-4 rounded-pill border-2 border-solid border-text-muted bg-[linear-gradient(90deg,var(--text2)_50%,transparent_50%)]" />
             {effDark ? 'Light theme' : 'Dark theme'}
           </button>
-          <div style={{ padding: '12px 10px 0', color: 'var(--text2)', fontSize: '.8rem' }}>
-            v1.0 · Made in Aotearoa NZ
-          </div>
+          <div className="px-2.5 pt-3 text-xs text-text-muted">v1.0 · Made in Aotearoa NZ</div>
         </aside>
       )}
       {isTablet && (
-        <aside
-          style={{
-            width: '72px',
-            flexShrink: '0',
-            position: 'sticky',
-            top: '0',
-            height: '100vh',
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'var(--surface)',
-            borderRight: 'var(--bw) solid var(--border)',
-            padding: '20px 0 16px',
-          }}
-        >
+        <aside className={`${SIDE} w-18 items-center pt-5 pb-4`}>
           <BrandMark size={36} tile style={{ marginBottom: '14px' }} />
-          {NAV.slice(0, 2).map(([key, label, route, icon]) => {
-            const n = navStyle(active === key);
-            return (
-              <button
-                key={key}
-                onClick={go(route)}
-                title={label}
-                aria-label={label}
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: n.bg,
-                  color: n.c,
-                }}
-                className="hv3"
-              >
-                {icon}
-              </button>
-            );
-          })}
-          <button
-            onClick={go('#/app/voice')}
-            title={talkTo}
-            aria-label={talkTo}
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '16px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--primary)',
-              color: 'var(--on-primary)',
-              boxShadow: 'var(--shadow)',
-            }}
-            className="hv2"
-          >
-            {I.mic()}
-          </button>
-          {NAV.slice(2).map(([key, label, route, icon]) => {
-            const n = navStyle(active === key);
-            return (
-              <button
-                key={key}
-                onClick={go(route)}
-                title={label}
-                aria-label={label}
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: n.bg,
-                  color: n.c,
-                }}
-                className="hv3"
-              >
-                {icon}
-              </button>
-            );
-          })}
+          <nav aria-label="Main" className="flex flex-col items-center gap-1.5">
+            {items('icon', 0, 2)}
+            <Button
+              href={VOICE}
+              icon
+              size="lg"
+              className="shadow-card"
+              aria-label={talkTo}
+              title={talkTo}
+            >
+              {I.mic()}
+            </Button>
+            {items('icon', 2)}
+          </nav>
         </aside>
       )}
-      <main style={{ flex: '1', minWidth: '0', paddingBottom: isMobile ? '96px' : '0px' }}>
-        <div
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: '0 20px',
-            boxSizing: 'border-box',
-          }}
-        >
-          {children}
-        </div>
+      <main className={`min-w-0 flex-1 ${isMobile ? 'pb-24' : ''}`}>
+        <div className="mx-auto box-border max-w-300 px-5">{children}</div>
       </main>
       {isMobile && (
         <nav
           aria-label="Main"
-          style={{
-            position: 'fixed',
-            bottom: '0',
-            left: '0',
-            right: '0',
-            zIndex: '40',
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-around',
-            background: 'var(--surface)',
-            borderTop: 'var(--bw) solid var(--border)',
-            padding: '6px 4px 10px',
-          }}
+          className="fixed inset-x-0 bottom-0 z-40 flex items-end justify-around border-0 border-t-(length:--bw) border-solid border-border bg-surface px-1 pt-1.5 pb-2.5"
         >
-          {NAV.slice(0, 2).map(([key, label, route, icon]) => {
-            const n = navStyle(active === key);
-            return (
-              <button
-                key={key}
-                onClick={go(route)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '2px',
-                  minWidth: '56px',
-                  minHeight: '48px',
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                  color: n.c,
-                  fontSize: '.72rem',
-                  fontWeight: '600',
-                }}
-              >
-                {icon}
-                {label}
-                <span
-                  style={{ width: '5px', height: '5px', borderRadius: '50%', background: n.dot }}
-                />
-              </button>
-            );
-          })}
-          <button
-            onClick={go('#/app/voice')}
+          {items('tab', 0, 2)}
+          {/* The one thing raised above the bar: its own shape and shadow. */}
+          <a
+            href={VOICE}
             aria-label={talkTo}
-            style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              border: 'none',
-              background: 'var(--primary)',
-              color: 'var(--on-primary)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transform: 'translateY(-18px)',
-              boxShadow: '0 4px 14px rgba(45,95,112,.4)',
-            }}
-            className="hv2"
+            className={`${LINK} flex size-14 -translate-y-4.5 items-center justify-center rounded-pill bg-primary text-on-primary shadow-[0_4px_14px_rgba(45,95,112,.4)] hover:bg-primary-dark`}
           >
             {I.mic(24)}
-          </button>
-          {NAV.slice(2).map(([key, label, route, icon]) => {
-            const n = navStyle(active === key);
-            return (
-              <button
-                key={key}
-                onClick={go(route)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '2px',
-                  minWidth: '56px',
-                  minHeight: '48px',
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                  color: n.c,
-                  fontSize: '.72rem',
-                  fontWeight: '600',
-                }}
-              >
-                {icon}
-                {label}
-                <span
-                  style={{ width: '5px', height: '5px', borderRadius: '50%', background: n.dot }}
-                />
-              </button>
-            );
-          })}
+          </a>
+          {items('tab', 2)}
         </nav>
       )}
     </div>

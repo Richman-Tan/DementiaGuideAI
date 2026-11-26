@@ -125,8 +125,31 @@ test.describe('settings: privacy and history', () => {
     await expect(dialog).toContainText(
       'This removes all past conversations from this device. It cannot be undone.'
     );
+    // It is named by its heading and described by its message, and focus
+    // starts on the choice that changes nothing.
+    await expect(
+      page.getByRole('alertdialog', { name: 'Clear conversation history?' })
+    ).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Keep history' })).toBeFocused();
     await dialog.getByRole('button', { name: 'Keep history' }).click();
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
+
+    // Escape is the same as "Keep history", and puts focus back on the button that asked.
+    const clear = page.getByRole('button', { name: /Clear Conversation History/ });
+    await clear.click();
+    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    expect(
+      await page.evaluate(() => !!document.activeElement?.closest('[role="alertdialog"]'))
+    ).toBe(true); // Tab stays inside it
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(clear).toBeFocused();
+    await page.goto('/#/app/chat');
+    await expect(page.getByText('How do I manage sundowning?')).toHaveCount(2); // nothing was cleared
+    await page.goto('/#/app/settings');
 
     await page.getByRole('button', { name: /Clear Conversation History/ }).click();
     await page.getByRole('alertdialog').getByRole('button', { name: 'Clear history' }).click();

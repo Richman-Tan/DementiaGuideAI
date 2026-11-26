@@ -56,6 +56,53 @@ test.describe('text chat (BYO key, mocked providers)', () => {
     await expect(drawer).toHaveCount(0);
   });
 
+  test('the source drawer is a proper dialog: focus goes in, stays in, Escape closes it, and focus comes back', async ({
+    page,
+  }) => {
+    await mockProviders(page);
+    await seedStorage(page);
+    await page.goto('/#/app/chat');
+    await ask(page, 'My mum gets restless and upset every evening. What can I try?');
+    // Wait for the answer to finish: its citation badges only appear then, and
+    // the example conversation above it has badges with the same names.
+    await expect(page.getByText(/close the curtains before dusk/).last()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open source 2' }).last()).toBeVisible();
+    const cite = page.getByRole('button', { name: 'Open source 1' }).last();
+    await cite.click();
+
+    const drawer = page.getByRole('dialog', { name: 'Source preview' });
+    await expect(drawer).toBeVisible();
+    const focusInside = () =>
+      page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'));
+    // Focus moves into the drawer when it opens.
+    await expect.poll(focusInside).toBe(true);
+    // The page behind it is out of reach: the question box cannot be found by role.
+    await expect(page.getByRole('textbox', { name: 'Type your question' })).toHaveCount(0);
+    // Tab goes round inside the drawer and never out to the page.
+    for (let i = 0; i < 8; i += 1) {
+      await page.keyboard.press('Tab');
+      expect(await focusInside()).toBe(true);
+    }
+
+    await page.keyboard.press('Escape');
+    await expect(drawer).toHaveCount(0);
+    // Focus returns to the citation that opened it, and the page is back.
+    await expect(cite).toBeFocused();
+    await expect(page.getByRole('textbox', { name: 'Type your question' })).toHaveCount(1);
+
+    // Pressing outside it closes it too.
+    await cite.click();
+    await expect(drawer).toBeVisible();
+    // It starts listening for a press outside a moment after it opens, so that
+    // the press which opened it does not also close it. A test can press sooner
+    // than a person can, so press until it has closed. The spot is an empty part
+    // of the sidebar: nothing under the dimmed page is pressed by mistake.
+    await expect(async () => {
+      await page.mouse.click(120, 520);
+      await expect(drawer).toHaveCount(0, { timeout: 500 });
+    }).toPass();
+  });
+
   test('(b) an emergency question shows the safety callout and the answer escalates to 111', async ({
     page,
   }) => {

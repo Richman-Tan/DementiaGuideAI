@@ -79,6 +79,10 @@ test.describe('landing page', () => {
       page.getByText(/Your conversations with Aaron are saved to an account/)
     ).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Deleting them' })).toBeVisible();
+    // Built without the server endpoint, answers are written in the browser,
+    // and the page says so: the question goes to OpenAI, and nothing is recorded.
+    await expect(page.getByText(/sent to an AI provider \(OpenAI\)/)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What the server keeps' })).toHaveCount(0);
 
     await page.goto('/#/');
     await page.getByRole('link', { name: 'Medical Disclaimer' }).click();

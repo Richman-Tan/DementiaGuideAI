@@ -8,6 +8,7 @@
 // on deliberately.
 import { pipelineConfig } from '../../../packages/core/rag/pipelineConfig.ts';
 import { createAdmission, dailyLimit } from './admission.ts';
+import { budgetLimit, createBudget, createTurnBudget } from './budget.ts';
 import type { Handler } from './http.ts';
 import { createProviders, missingEnv } from './providers.ts';
 import type { Env } from './providers.ts';
@@ -40,13 +41,30 @@ export function composeTurnHandler(env: Env, backend: TurnBackend): Handler {
   }
   const enabled = wanted && missing.length === 0;
 
+  const config = pipelineConfig(env.PIPELINE_MODEL ? { model: env.PIPELINE_MODEL } : {});
+  // A day's budget in dollars, on top of the request counters, when one is set.
+  const dailyBudgetUsd = budgetLimit(env.DAILY_BUDGET_USD);
+  if (env.DAILY_BUDGET_USD && dailyBudgetUsd === null) {
+    console.error(
+      `[turn] DAILY_BUDGET_USD is "${env.DAILY_BUDGET_USD}", which is not an amount above zero; no dollar budget is in force`
+    );
+  }
+
   return createTurnHandler({
     providers: enabled ? createProviders(env) : null,
     verifySession: createSessionVerifier({
       supabaseUrl: env.SUPABASE_URL ?? '',
       serviceKey: env.SUPABASE_SERVICE_ROLE_KEY ?? '',
     }),
-    config: pipelineConfig(env.PIPELINE_MODEL ? { model: env.PIPELINE_MODEL } : {}),
+    config,
+    ...(dailyBudgetUsd === null
+      ? {}
+      : {
+          reserve: createTurnBudget(
+            createBudget({ rpc: backend.rpc, dailyLimitUsd: dailyBudgetUsd }),
+            config
+          ),
+        }),
     admit: createAdmission({
       // The counter is the one the access codes used; its name is historical.
       bump: async (key, limit) =>

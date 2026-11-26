@@ -71,6 +71,13 @@ export interface TurnDeps {
    * without one.
    */
   admit(userId: string, request: TurnRequest): Promise<Admission>;
+  /**
+   * The dollar budget, when one is set (budget.ts). Sets aside the most this
+   * turn can cost and resolves to how to settle it afterwards, or to null if
+   * today has no room for it. If it rejects, the turn is refused: a cap that
+   * lets requests through when it cannot count is not a cap.
+   */
+  reserve?(request: TurnRequest): Promise<((summary: TurnSummary) => void) | null>;
   /** Called once the stream has ended, for metering and traces. Must not throw. */
   onFinished?(summary: TurnSummary): void;
 }
@@ -115,6 +122,27 @@ export function createTurnHandler(deps: TurnDeps): Handler {
     if (!admission.ok) {
       res.status(admission.status).json({ error: admission.error, code: admission.code });
       return;
+    }
+
+    let settle: ((summary: TurnSummary) => void) | null = null;
+    if (deps.reserve) {
+      try {
+        settle = await deps.reserve(request);
+      } catch (err) {
+        console.error(
+          `[turn] budget unavailable: ${err instanceof Error ? err.message : String(err)}`
+        );
+        res
+          .status(503)
+          .json({ error: 'The assistant is temporarily unavailable.', code: 'unavailable' });
+        return;
+      }
+      if (!settle) {
+        res
+          .status(429)
+          .json({ error: "The live demo has reached today's limit.", code: 'demo_limit' });
+        return;
+      }
     }
 
     // A connection that closes before the answer is finished is the caller
@@ -178,6 +206,7 @@ export function createTurnHandler(deps: TurnDeps): Handler {
     } finally {
       res.off('close', onClose);
       stream.close();
+      settle?.(summary);
       deps.onFinished?.(summary);
     }
   };

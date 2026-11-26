@@ -36,6 +36,7 @@ interface Setup {
   stream?: GenerateEvent[];
   generate?: Providers['generate'];
   admit?: TurnDeps['admit'];
+  reserve?: TurnDeps['reserve'];
   now?: () => number;
 }
 
@@ -67,6 +68,7 @@ function setup(options: Setup = {}) {
     verifySession,
     config,
     admit: options.admit ?? (async () => ({ ok: true })),
+    ...(options.reserve ? { reserve: options.reserve } : {}),
     onFinished: (summary) => finished.push(summary),
   });
   return { handler, requests, finished, verifySession, config };
@@ -229,6 +231,108 @@ describe('POST /api/turn: who may call', () => {
     const { handler, requests } = setup({ admit: async () => ({ ok: true }) });
     await handler(request(), response());
     expect(requests).toHaveLength(1);
+  });
+});
+
+describe('POST /api/turn: the dollar budget', () => {
+  it('sets money aside after the request counters allow the turn, and before any model call', async () => {
+    const order: string[] = [];
+    const settle = vi.fn();
+    const { handler, requests } = setup({
+      admit: async () => {
+        order.push('admit');
+        return { ok: true };
+      },
+      reserve: async (asked) => {
+        order.push(`reserve:${asked.message}:${requests.length}`);
+        return settle;
+      },
+    });
+    await handler(request(), response());
+    // No model request had been made when the money was set aside.
+    expect(order).toEqual(['admit', 'reserve:How do I manage sundowning?:0']);
+    expect(requests).toHaveLength(1);
+  });
+
+  it('settles once the turn has ended, with how it ended and what it used', async () => {
+    const settle = vi.fn();
+    const { handler, finished } = setup({ reserve: async () => settle });
+    await handler(request(), response());
+    expect(settle).toHaveBeenCalledTimes(1);
+    expect(settle.mock.calls[0]?.[0]).toBe(finished[0]);
+    expect(settle.mock.calls[0]?.[0]).toMatchObject({
+      stopReason: 'end_turn',
+      usage: { inputTokens: 900, outputTokens: 120 },
+    });
+  });
+
+  it('refuses, as the daily limit, when today has no room, and calls no model', async () => {
+    const { handler, requests, finished } = setup({ reserve: async () => null });
+    const res = response();
+    await handler(request(), res);
+    expect(res.statusCode).toBe(429);
+    expect(res.body).toEqual({
+      error: "The live demo has reached today's limit.",
+      code: 'demo_limit',
+    });
+    expect(requests).toEqual([]);
+    // A refused request is not a turn: nothing is metered or traced.
+    expect(finished).toEqual([]);
+  });
+
+  it('refuses when the budget cannot be reached, and says why in the log only', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { handler, requests } = setup({
+      reserve: async () => {
+        throw new Error('function public.spend_reserve does not exist');
+      },
+    });
+    const res = response();
+    await handler(request(), res);
+    expect(res.statusCode).toBe(503);
+    expect(res.body).toEqual({
+      error: 'The assistant is temporarily unavailable.',
+      code: 'unavailable',
+    });
+    expect(requests).toEqual([]);
+    expect(log).toHaveBeenCalledWith(
+      '[turn] budget unavailable: function public.spend_reserve does not exist'
+    );
+  });
+
+  it('logs a budget failure that is not an Error', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { handler } = setup({
+      reserve: async () => {
+        throw 'no connection';
+      },
+    });
+    await handler(request(), response());
+    expect(log).toHaveBeenCalledWith('[turn] budget unavailable: no connection');
+  });
+
+  it('settles a turn that failed, so its reservation does not sit there all day', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const settle = vi.fn();
+    const { handler } = setup({
+      reserve: async () => settle,
+      generate: async function* () {
+        yield* [];
+        throw new Error('529 overloaded');
+      },
+    });
+    await handler(request(), response());
+    expect(settle.mock.calls[0]?.[0]).toMatchObject({ stopReason: 'error', usage: null });
+  });
+
+  it('is not asked about a request the counters refused', async () => {
+    const reserve = vi.fn(async () => vi.fn());
+    const { handler } = setup({
+      admit: async () => ({ ok: false, status: 429, code: 'visitor_limit', error: 'over' }),
+      reserve,
+    });
+    await handler(request(), response());
+    expect(reserve).not.toHaveBeenCalled();
   });
 });
 

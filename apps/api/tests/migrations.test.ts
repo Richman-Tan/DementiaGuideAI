@@ -18,6 +18,9 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { vector } from '@electric-sql/pglite/vector';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { toTraceRow } from '../src/trace.ts';
+import type { TraceRow } from '../src/trace.ts';
+import type { TurnSummary } from '../src/turn.ts';
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../scripts/migrations');
 const ORDER = JSON.parse(readFileSync(join(DIR, 'order.json'), 'utf8')) as {
@@ -383,4 +386,214 @@ describe('who can read and write what', () => {
       db.exec(`insert into usage_events (user_id, kind, units) values ('${ANA}', 'turn', 1)`)
     ).rejects.toThrow(/usage_events_kind_check/);
   });
+});
+
+describe('the trace of each turn (turn_traces)', () => {
+  const finished = (overrides: Partial<TurnSummary> = {}): TurnSummary => ({
+    userId: 'user-1',
+    request: {
+      message: 'How do I manage sundowning?',
+      history: [],
+      modality: 'text',
+      settings: {
+        assistantName: 'Aaron',
+        responseStyle: 'balanced',
+        jargonMode: 'explain',
+        personality: 'warm',
+        conciseMode: false,
+        isCaregiverSetup: true,
+      },
+    },
+    stopReason: 'end_turn',
+    errorCode: null,
+    usage: {
+      model: 'claude-opus-5-5',
+      inputTokens: 900,
+      outputTokens: 120,
+      cacheReadTokens: 1000,
+      cacheWriteTokens: 50,
+    },
+    timings: { retrievalDone: 300, llmSend: 305, firstToken: 1500, streamEnd: 4000, total: 4010 },
+    pipelineVersion: 'p-test',
+    promptVersion: 'v3-claude-nz',
+    model: 'claude-opus-5-5',
+    retrieval: { mode: 'fresh', chunks: [{ id: 'kb-1', similarity: 0.71 }], ms: 290 },
+    safety: { level: 'none', source: 'triage' },
+    cited: ['kb-1'],
+    answerChars: 400,
+    ...overrides,
+  });
+
+  /**
+   * Inserts a row the way the server's does: as JSON, each value converted to
+   * its column's type, which is what PostgREST does with a posted row.
+   */
+  async function write(row: TraceRow | Record<string, unknown>, role = 'service_role') {
+    const columns = Object.keys(row).join(', ');
+    await db.exec(`set role ${role};`);
+    try {
+      await db.query(
+        `insert into public.turn_traces (${columns})
+         select ${columns} from jsonb_populate_record(null::public.turn_traces, $1::jsonb)`,
+        [JSON.stringify(row)]
+      );
+    } finally {
+      await db.exec('reset role;');
+    }
+  }
+
+  it('accepts the row the server builds, value for value', async () => {
+    const row = toTraceRow(finished());
+    await write(row);
+    const [stored] = await as<Record<string, unknown>>(
+      db,
+      'service_role',
+      `select * from turn_traces order by id desc limit 1`
+    );
+    const { id: _id, created_at: _at, ...columns } = stored!;
+    expect(columns).toEqual(row);
+  });
+
+  it('has a column for everything the server sends, and for nothing else', async () => {
+    const columns = await as<{ column_name: string }>(
+      db,
+      'service_role',
+      `select column_name from information_schema.columns
+       where table_schema = 'public' and table_name = 'turn_traces'`
+    );
+    expect(columns.map((c) => c.column_name).sort()).toEqual(
+      [...Object.keys(toTraceRow(finished())), 'id', 'created_at'].sort()
+    );
+  });
+
+  it('has nowhere to put a question, an answer or an account', async () => {
+    const columns = await as<{ column_name: string; data_type: string }>(
+      db,
+      'service_role',
+      `select column_name, data_type from information_schema.columns
+       where table_schema = 'public' and table_name = 'turn_traces'`
+    );
+    expect(columns.filter((c) => c.data_type === 'uuid')).toEqual([]);
+    // Every text column holds a name the system chose, never words a person wrote.
+    expect(
+      columns
+        .filter((c) => c.data_type === 'text')
+        .map((c) => c.column_name)
+        .sort()
+    ).toEqual([
+      'error_code',
+      'modality',
+      'model',
+      'pipeline_version',
+      'prompt_version',
+      'retrieval_mode',
+      'safety_level',
+      'safety_source',
+      'stop_reason',
+    ]);
+  });
+
+  it('keeps the time to the hour, so a trace cannot be matched to a usage row by its timestamp', async () => {
+    const [row] = await as<{ on_the_hour: boolean }>(
+      db,
+      'service_role',
+      `select created_at = date_trunc('hour', created_at) as on_the_hour
+       from turn_traces order by id desc limit 1`
+    );
+    expect(row?.on_the_hour).toBe(true);
+  });
+
+  it('accepts a turn that failed before anything was known about it', async () => {
+    await write(
+      toTraceRow(
+        finished({
+          stopReason: 'error',
+          errorCode: 'internal',
+          usage: null,
+          timings: null,
+          promptVersion: null,
+          model: null,
+          retrieval: null,
+          safety: null,
+          cited: [],
+          answerChars: null,
+        })
+      )
+    );
+  });
+
+  it('refuses a modality it has not heard of, and a negative size or time', async () => {
+    const row = toTraceRow(finished());
+    await expect(write({ ...row, modality: 'telepathy' })).rejects.toThrow(/check constraint/);
+    await expect(write({ ...row, question_chars: -1 })).rejects.toThrow(/check constraint/);
+    await expect(write({ ...row, first_token_ms: -5 })).rejects.toThrow(/check constraint/);
+    await expect(write({ ...row, output_tokens: -1 })).rejects.toThrow(/check constraint/);
+  });
+
+  it('is out of visitors’ reach entirely: no reading, no writing, not through the summary either', async () => {
+    for (const role of ['anon', 'authenticated']) {
+      await expect(as(db, role, `select 1 from turn_traces`)).rejects.toThrow(
+        /permission denied for table turn_traces/
+      );
+      await expect(write(toTraceRow(finished()), role)).rejects.toThrow(/permission denied/);
+      await expect(as(db, role, `select 1 from turn_traces_daily`)).rejects.toThrow(
+        /permission denied/
+      );
+    }
+  });
+
+  it('sums a day: turns, failures, empty searches, waits and tokens', async () => {
+    const scratch = await freshDatabase();
+    await migrate(scratch);
+    const put = async (overrides: Partial<TurnSummary>) => {
+      const row = toTraceRow(finished(overrides));
+      const columns = Object.keys(row).join(', ');
+      await scratch.query(
+        `insert into public.turn_traces (${columns})
+         select ${columns} from jsonb_populate_record(null::public.turn_traces, $1::jsonb)`,
+        [JSON.stringify(row)]
+      );
+    };
+    const waited = (firstToken: number): TurnSummary['timings'] => ({
+      firstToken,
+      total: firstToken + 2000,
+    });
+    await put({ timings: waited(1000) });
+    await put({ timings: waited(2000) });
+    await put({ timings: waited(3000), safety: { level: 'emergency', source: 'keywords' } });
+    await put({
+      timings: waited(4000),
+      retrieval: { mode: 'none', chunks: [], ms: 200 },
+      cited: [],
+    });
+    await put({ stopReason: 'aborted', usage: null, timings: { total: 900 } });
+    await put({ stopReason: 'error', errorCode: 'generation_failed', usage: null, timings: null });
+    // A spoken turn is its own line.
+    await put({ request: { ...finished().request, modality: 'voice' }, timings: waited(800) });
+
+    const { rows } = await scratch.query<Record<string, unknown>>(
+      `select * from turn_traces_daily order by modality`
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      modality: 'text',
+      model: 'claude-opus-5-5',
+      pipeline_version: 'p-test',
+      turns: 6,
+      failed: 1,
+      interrupted: 1,
+      without_passages: 1,
+      emergencies: 1,
+      // Of the four that reached a first word: 1, 2, 3 and 4 seconds.
+      first_token_p50_ms: 2500,
+      first_token_p95_ms: 3850,
+      // Four answered turns' tokens; the two that did not answer add none.
+      input_tokens: 3600,
+      output_tokens: 480,
+      cache_read_tokens: 4000,
+      cache_write_tokens: 200,
+    });
+    expect(rows[1]).toMatchObject({ modality: 'voice', turns: 1, first_token_p50_ms: 800 });
+    await scratch.close();
+  }, 120_000);
 });

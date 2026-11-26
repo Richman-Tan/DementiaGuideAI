@@ -156,6 +156,38 @@ well; it is the backstop that does not depend on this code.
 Known gaps: the cap counts turns, not dollars, and an interrupted turn is counted
 but its tokens are not written to `usage_events`.
 
+### What is recorded about a turn
+
+When a turn ends, the server writes one row to `turn_traces` (`src/trace.ts`;
+table in `scripts/migrations/2026-11-27_turn_traces.sql`). It is a record of
+what the system did:
+
+| Kept | For |
+|---|---|
+| Pipeline version, prompt version, model, text or voice | Tying a number to the code that produced it |
+| How it ended: `end_turn`, `max_tokens`, `refusal`, `aborted`, or `error` and which | Failure and interruption rates |
+| The ids and similarity scores of the passages found, and the ids of those cited | How often the search comes back empty; which passages earn their place |
+| The safety verdict, and whether the model or the keyword fallback gave it | How often it fires |
+| Tokens of each kind | Cost, worked out from list prices when displayed |
+| Milliseconds: the search, then to the first word, the last word and the end | How long people wait |
+| The length of the question and of the answer, and how many earlier turns came with it | Sizes, without the text |
+
+**It does not hold what was said, or who said it.** There is no question, no
+answer and no account id, and the time is kept to the hour so a trace cannot be
+matched to a `usage_events` row by its timestamp. Tests hold the table to
+exactly the columns the server sends, and to having no column that could carry
+a person's words.
+
+`turn_traces_daily` sums it by day: turns, failures, interruptions, searches
+that found nothing, emergencies, the median and 95th-percentile wait for the
+first word, and tokens.
+
+A turn that failed or was interrupted is traced too. A refused request (not
+signed in, over a limit) is not a turn and leaves nothing. If the row cannot be
+written, the answer is unaffected and the first failure is logged; until the
+migration has been run that is one warning per server instance. `TURN_TRACES=off`
+keeps none.
+
 ## The speech endpoint
 
 `POST /api/speak` turns a sentence or two of the reply into audio, with the

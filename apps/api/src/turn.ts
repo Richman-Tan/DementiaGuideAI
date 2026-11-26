@@ -10,6 +10,8 @@ import { runTurn } from '../../../packages/core/rag/pipeline/runTurn.ts';
 import type {
   PipelineConfig,
   Providers,
+  RetrievalMode,
+  SafetyLevel,
   Timings,
   TurnEvent,
   Usage,
@@ -24,13 +26,35 @@ import type { SessionVerifier } from './session.ts';
 import { parseTurnRequest } from './turnRequest.ts';
 import type { TurnRequest } from './turnRequest.ts';
 
+/**
+ * What a finished turn amounted to, for metering and traces. It holds what
+ * happened, not the answer: a trace is built from this, and must not be able
+ * to carry what was said.
+ */
 export interface TurnSummary {
   userId: string;
   request: TurnRequest;
+  /** `error` unless the pipeline said how it ended. */
   stopReason: string;
+  /** Which failure, when it ended in one. */
+  errorCode: string | null;
   usage: Usage | null;
   timings: Timings | null;
   pipelineVersion: string;
+  /** The prompt and model the pipeline said it was using; null if it never started. */
+  promptVersion: string | null;
+  model: string | null;
+  /** What the search found, best first, and how long the search took. */
+  retrieval: {
+    mode: RetrievalMode;
+    chunks: { id: string; similarity: number | null }[];
+    ms: number;
+  } | null;
+  safety: { level: SafetyLevel; source: 'triage' | 'keywords' } | null;
+  /** The ids of the passages the answer cited, in order of first use. */
+  cited: string[];
+  /** The length of the answer as shown; null when there was none. */
+  answerChars: number | null;
 }
 
 export interface TurnDeps {
@@ -110,9 +134,16 @@ export function createTurnHandler(deps: TurnDeps): Handler {
       userId,
       request,
       stopReason: 'error',
+      errorCode: null,
       usage: null,
       timings: null,
       pipelineVersion: deps.config.pipelineVersion,
+      promptVersion: null,
+      model: null,
+      retrieval: null,
+      safety: null,
+      cited: [],
+      answerChars: null,
     };
     try {
       for await (const event of runTurn(
@@ -137,6 +168,7 @@ export function createTurnHandler(deps: TurnDeps): Handler {
       console.error(
         `[turn] unexpected failure: ${err instanceof Error ? err.message : String(err)}`
       );
+      summary.errorCode = 'internal';
       stream.send({
         type: 'error',
         code: 'internal',
@@ -152,13 +184,45 @@ export function createTurnHandler(deps: TurnDeps): Handler {
 }
 
 function record(summary: TurnSummary, event: TurnEvent): void {
-  if (event.type === 'usage') {
-    const { type: _type, ...usage } = event;
-    summary.usage = usage;
-  } else if (event.type === 'timings') {
-    const { type: _type, ...timings } = event;
-    summary.timings = timings;
-  } else if (event.type === 'done') {
-    summary.stopReason = event.stopReason;
+  switch (event.type) {
+    case 'meta':
+      summary.promptVersion = event.promptVersion;
+      summary.model = event.model;
+      break;
+    case 'retrieval':
+      summary.retrieval = {
+        mode: event.mode,
+        chunks: event.chunks.map(({ id, similarity }) => ({ id, similarity })),
+        ms: event.ms,
+      };
+      break;
+    case 'safety':
+      summary.safety = { level: event.level, source: event.source };
+      break;
+    case 'final':
+      // The length and the ids, not the words.
+      summary.answerChars = event.text.length;
+      summary.cited = event.sources.map((source) => source.id);
+      break;
+    case 'usage': {
+      const { type: _type, ...usage } = event;
+      summary.usage = usage;
+      break;
+    }
+    case 'timings': {
+      const { type: _type, ...timings } = event;
+      summary.timings = timings;
+      break;
+    }
+    case 'done':
+      summary.stopReason = event.stopReason;
+      break;
+    case 'error':
+      summary.errorCode = event.code;
+      break;
+    // The words of the answer pass through here on their way to the caller
+    // and are deliberately not kept.
+    case 'token':
+      break;
   }
 }

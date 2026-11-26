@@ -16,7 +16,8 @@
     "2026-09-16_display_title.sql",
     "2026-10-07_review_status.sql",
     "2026-10-07_study_protocol.sql",
-    "2026-11-25_embedding_v2_voyage.sql"
+    "2026-11-25_embedding_v2_voyage.sql",
+    "2026-11-27_turn_traces.sql"
   ],
   "referenceOnly": ["2026-07-16_production_snapshot.sql"]
 }

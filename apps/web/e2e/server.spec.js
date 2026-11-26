@@ -284,3 +284,34 @@ test.describe('chat on the server pipeline, with no key and no access code', () 
     await expect(page.getByText('Keep the late')).toHaveCount(0);
   });
 });
+
+test.describe('the privacy page, when answers are written on the server', () => {
+  test('says who is sent a question and what the server keeps, and checks clean', async ({
+    page,
+  }) => {
+    await mockProviders(page);
+    await mockSupabase(page);
+    await seedStorage(page, { keys: false, settings: { avatarId: 'ariana' } });
+    await page.goto('/#/privacy');
+    await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible();
+
+    await expect(page.getByText(/a search provider \(Voyage AI\)/)).toBeVisible();
+    await expect(
+      page.getByText(/an AI provider \(Anthropic\), which writes the answer/)
+    ).toBeVisible();
+    await expect(page.getByText(/sent to an AI provider \(OpenAI\)/)).toHaveCount(0);
+
+    await expect(page.getByRole('heading', { name: 'What the server keeps' })).toBeVisible();
+    await expect(
+      page.getByText(/It does not contain your question, the answer or your account/)
+    ).toBeVisible();
+    // The chosen guide is named, as everywhere else.
+    await expect(page.getByText(/Your conversations with Ariana are saved/)).toBeVisible();
+    await expect(page.getByText(/whether you talk with Ariana/)).toBeVisible();
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    expect(results.violations).toEqual([]);
+  });
+});

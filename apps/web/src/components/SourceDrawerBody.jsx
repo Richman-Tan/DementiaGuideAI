@@ -46,7 +46,7 @@ export function SourceDrawerBody({ drawer, effDark, onOpenArticle }) {
         background: 'var(--surface)',
         color: 'var(--text)',
       }
-    : { ...actionBase, border: 'none', background: 'var(--primary)', color: '#fff' };
+    : { ...actionBase, border: 'none', background: 'var(--primary)', color: 'var(--on-primary)' };
 
   return (
     <>
@@ -80,7 +80,12 @@ export function SourceDrawerBody({ drawer, effDark, onOpenArticle }) {
       {articleId && (
         <button
           onClick={() => onOpenArticle(articleId)}
-          style={{ ...actionBase, border: 'none', background: 'var(--primary)', color: '#fff' }}
+          style={{
+            ...actionBase,
+            border: 'none',
+            background: 'var(--primary)',
+            color: 'var(--on-primary)',
+          }}
           className="hv2"
         >
           {art ? 'Read full article →' : 'Read related article →'}

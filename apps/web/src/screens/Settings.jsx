@@ -91,7 +91,7 @@ const Card = ({ children, mb = 26 }) => (
 
 const segStyle = (on) => ({
   background: on ? 'var(--primary)' : 'transparent',
-  color: on ? '#fff' : 'var(--text2)',
+  color: on ? 'var(--on-primary)' : 'var(--text2)',
 });
 
 // Anonymous by default, upgradeable on request. Deliberately framed as "keep
@@ -203,7 +203,7 @@ function AccountUpgrade({ onLink, showToast }) {
             borderRadius: '12px',
             border: 'none',
             background: 'var(--primary)',
-            color: '#fff',
+            color: 'var(--on-primary)',
             fontWeight: '600',
             cursor: busy ? 'default' : 'pointer',
             opacity: busy || !email.trim() || password.length < 6 ? 0.5 : 1,
@@ -677,7 +677,7 @@ export default function Settings() {
                   borderRadius: '12px',
                   border: 'none',
                   background: 'var(--primary)',
-                  color: '#fff',
+                  color: 'var(--on-primary)',
                   fontWeight: '600',
                   cursor: 'pointer',
                 }}

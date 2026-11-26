@@ -188,7 +188,7 @@ export default function Home() {
                   borderRadius: '13px',
                   border: 'none',
                   background: 'var(--primary)',
-                  color: '#fff',
+                  color: 'var(--on-primary)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',

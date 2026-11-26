@@ -1,50 +1,8 @@
-/* DementiaGuide AI design tokens — verbatim from the Claude Design prototype.
+/* Base rules and animations. The design tokens themselves (colours, spacing,
+   radii, type, motion) are in tokens.generated.css, written from
+   packages/core/design/tokens.ts.
    Theme switching: html[data-theme] + html[data-hc], set pre-paint in index.html
    and kept in sync by SettingsContext. Text scale: root font-size = 17px * scale. */
-:root {
-  --bg: #f7f5f2;
-  --surface: #ffffff;
-  --elev: #fafafa;
-  --primary: #4a7c8e;
-  --primary-l: #6a9bad;
-  --primary-d: #2d5f70;
-  --tint: #ebf3f6;
-  --text: #26323a;
-  --text2: #5c6b74;
-  --border: #e4e0da;
-  --bw: 1px;
-  --amber: #8a5a17;
-  --amber-bg: #fbf3e4;
-  --amber-bd: #e8c88a;
-  --shadow: 0 1px 3px rgba(28, 48, 58, 0.07);
-}
-html[data-theme='dark'] {
-  --bg: #111820;
-  --surface: #1c2532;
-  --elev: #222e3d;
-  --primary: #5c9cb0;
-  --primary-l: #7fb6c8;
-  --primary-d: #9ccbdb;
-  --tint: #0f2535;
-  --text: #e8edf1;
-  --text2: #a3b1bb;
-  --border: #2e3b4a;
-  --amber: #e8b76b;
-  --amber-bg: #2a2318;
-  --amber-bd: #5a4a28;
-  --shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-}
-html[data-hc='1'] {
-  --bw: 2px;
-  --text: #14181b;
-  --text2: #39444b;
-  --border: #6b7378;
-}
-html[data-hc='1'][data-theme='dark'] {
-  --text: #ffffff;
-  --text2: #d9e1e7;
-  --border: #93a3af;
-}
 /* scrollbar-gutter keeps the vertical scrollbar's space reserved whether or not
    it is showing. Without it, any change to document height can add or remove the
    scrollbar, which changes the viewport width and rewraps text. Also stops the

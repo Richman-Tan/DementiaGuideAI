@@ -1,0 +1,74 @@
+/* Generated from packages/core/design/tokens.ts by `npm run tokens -w apps/web`.
+   Do not edit: change the tokens and run it again. */
+:root {
+  --bg: #f7f5f2;
+  --surface: #ffffff;
+  --elev: #fafafa;
+  --primary: #4a7c8e;
+  --primary-l: #6a9bad;
+  --primary-d: #2d5f70;
+  --on-primary: #ffffff;
+  --tint: #ebf3f6;
+  --text: #26323a;
+  --text2: #5c6b74;
+  --border: #e4e0da;
+  --amber: #8a5a17;
+  --amber-bg: #fbf3e4;
+  --amber-bd: #e8c88a;
+  --shadow: 0 1px 3px rgba(28, 48, 58, 0.07);
+  --bw: 1px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+  --font-xs: 0.75rem;
+  --font-sm: 0.85rem;
+  --font-base: 1rem;
+  --font-lg: 1.15rem;
+  --font-xl: 1.4rem;
+  --font-2xl: 1.9rem;
+  --font-3xl: 2.6rem;
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --touch: 44px;
+}
+html[data-theme='dark'] {
+  --bg: #111820;
+  --surface: #1c2532;
+  --elev: #222e3d;
+  --primary: #5c9cb0;
+  --primary-l: #7fb6c8;
+  --primary-d: #9ccbdb;
+  --on-primary: #111820;
+  --tint: #0f2535;
+  --text: #e8edf1;
+  --text2: #a3b1bb;
+  --border: #2e3b4a;
+  --amber: #e8b76b;
+  --amber-bg: #2a2318;
+  --amber-bd: #5a4a28;
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+html[data-hc='1'] {
+  --bw: 2px;
+  --text: #14181b;
+  --text2: #39444b;
+  --border: #6b7378;
+}
+html[data-hc='1'][data-theme='dark'] {
+  --text: #ffffff;
+  --text2: #d9e1e7;
+  --border: #93a3af;
+}

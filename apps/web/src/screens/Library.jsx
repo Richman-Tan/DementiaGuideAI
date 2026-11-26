@@ -272,7 +272,7 @@ export default function Library() {
               borderRadius: '14px',
               border: 'none',
               background: 'var(--primary)',
-              color: '#fff',
+              color: 'var(--on-primary)',
               fontWeight: '600',
               cursor: 'pointer',
             }}

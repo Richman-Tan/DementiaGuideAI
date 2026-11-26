@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "sync:unity": "node scripts/sync-unity-webgl.mjs"
+    "sync:unity": "node scripts/sync-unity-webgl.mjs",
+    "tokens": "node scripts/tokens.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.106.0",

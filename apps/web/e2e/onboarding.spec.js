@@ -213,11 +213,18 @@ test.describe('setup on a phone, at the largest text size', () => {
       await page.goto(`/#/onboarding/${n}`);
       await expect(step(page)).toHaveAttribute('aria-valuetext', `Step ${n} of 3`);
       const overflow = await page.evaluate(() => {
-        const page = document.documentElement;
+        // Measured against the page's own box, not the window: where a
+        // scrollbar's space is reserved (Linux, Windows) the page is narrower
+        // than the window, and that is not overflow.
+        const root = document.documentElement;
+        const edge = root.getBoundingClientRect().right;
         const wide = [...document.querySelectorAll('button, h1, p')].filter(
-          (el) => el.getBoundingClientRect().right > page.clientWidth + 0.5
+          (el) => el.getBoundingClientRect().right > edge + 0.5
         );
-        return { sideways: page.scrollWidth - page.clientWidth, wide: wide.length };
+        return {
+          sideways: Math.max(0, root.scrollWidth - Math.ceil(edge)),
+          wide: wide.length,
+        };
       });
       expect(overflow, `step ${n}`).toEqual({ sideways: 0, wide: 0 });
     }

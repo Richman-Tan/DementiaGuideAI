@@ -36,6 +36,12 @@ export const VARIANTS = {
     'border-(length:--bw) border-border bg-surface text-text',
     'not-disabled:not-aria-disabled:hover:bg-tint',
   ].join(' '),
+  // Quiet: reads as text until the pointer is on it. For a way out, not a way on.
+  ghost: [
+    'border-0 bg-transparent text-text-muted',
+    'not-disabled:not-aria-disabled:hover:bg-tint',
+    'not-disabled:not-aria-disabled:hover:text-primary-dark',
+  ].join(' '),
 };
 
 // Both are at least the 44px a finger needs.
@@ -50,7 +56,7 @@ export const SIZES = {
 
 /**
  * @param {object} props
- * @param {'primary'|'secondary'} [props.variant]
+ * @param {'primary'|'secondary'|'ghost'} [props.variant]
  * @param {'md'|'lg'} [props.size]
  * @param {boolean} [props.icon]   Square, for a glyph with no text. It then needs an `aria-label`.
  * @param {string} [props.href]    With this it is a link that looks like a button.

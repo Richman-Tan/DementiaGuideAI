@@ -374,6 +374,154 @@ describe('cancelling a turn', () => {
   });
 });
 
+describe('stopping an answer', () => {
+  /** A turn whose reply can be fed word by word and never ends unless told to. */
+  const streamed = () => {
+    const turns = [];
+    generateReply.mockImplementation((opts) => {
+      const gen = deferred();
+      // As the real generator does, it gives up when its signal is aborted.
+      opts.signal.addEventListener('abort', () =>
+        gen.reject(new DOMException('aborted', 'AbortError'))
+      );
+      turns.push({ ...opts, gen });
+      return gen.promise;
+    });
+    return turns;
+  };
+
+  it('keeps what had been written, marked as unfinished, and saves it as it stands', async () => {
+    const turns = streamed();
+    const { result } = await mount();
+    await settle();
+    await flush(() => result.current.send('How do I rest?'));
+    await flush(() => turns[0].onToken('Rest when'));
+    await flush(() => turns[0].onToken('Rest when you can'));
+    expect(result.current.messages.at(-1)).toMatchObject({ streaming: true });
+
+    await flush(() => result.current.stop());
+    await settle();
+    expect(turns[0].signal.aborted).toBe(true);
+    expect(result.current.typing).toBe(false);
+    expect(result.current.chatError).toBe(false);
+    expect(result.current.messages.at(-1)).toMatchObject({
+      role: 'aria',
+      text: 'Rest when you can',
+      streaming: false,
+      stopped: true,
+    });
+    // The server's copy matches the screen, so the next turn's history is true.
+    expect(store.appendMessage.mock.calls.at(-1)).toEqual([
+      'conv-1',
+      { role: 'aria', text: 'Rest when you can', citations: [] },
+    ]);
+    expect(store.saveCached.mock.calls.at(-1)[0].at(-1)).toMatchObject({ stopped: true });
+    expect(result.current.notice).toEqual({ kind: 'stopped' });
+  });
+
+  it('leaves only the question when stopped before the first word', async () => {
+    const turns = streamed();
+    const { result } = await mount();
+    await settle();
+    await flush(() => result.current.send('Q'));
+    expect(result.current.typing).toBe(true);
+    const saved = store.appendMessage.mock.calls.length;
+
+    await flush(() => result.current.stop());
+    await settle();
+    expect(turns[0].signal.aborted).toBe(true);
+    expect(result.current.typing).toBe(false);
+    expect(texts(result.current.messages).at(-1)).toBe('user:Q');
+    expect(store.appendMessage.mock.calls.length).toBe(saved);
+    expect(result.current.notice).toEqual({ kind: 'stopped' });
+  });
+
+  it('ignores words that arrive after it', async () => {
+    const turns = streamed();
+    const { result } = await mount();
+    await settle();
+    await flush(() => result.current.send('Q'));
+    await flush(() => turns[0].onToken('One'));
+    await flush(() => result.current.stop());
+    await flush(() => turns[0].onToken('One two three'));
+    await settle();
+    expect(result.current.messages.at(-1)).toMatchObject({ text: 'One', stopped: true });
+  });
+
+  it('lets the next question be asked at once, and the stopped turn cannot unlock a third', async () => {
+    const turns = streamed();
+    const { result } = await mount();
+    await settle();
+    await flush(() => result.current.send('First'));
+    await flush(() => turns[0].onToken('Partial'));
+    await flush(() => result.current.stop());
+    // Straight away, before the stopped turn has finished unwinding.
+    await flush(() => result.current.send('Second'));
+    await settle();
+    expect(turns).toHaveLength(2);
+    expect(turns[1].question).toBe('Second');
+    // What the second turn is told was said is what was on screen.
+    expect(texts(turns[1].history)).toEqual(
+      expect.arrayContaining(['user:First', 'aria:Partial', 'user:Second'])
+    );
+    // The first turn has unwound by now. It must not have cleared the way for
+    // another question while the second is still being answered.
+    await flush(() => result.current.send('Third'));
+    await settle();
+    expect(turns).toHaveLength(2);
+
+    await flush(() => turns[1].gen.resolve({ text: 'Done.', citations: [] }));
+    await settle();
+    expect(texts(result.current.messages).slice(-2)).toEqual(['user:Second', 'aria:Done.']);
+    // And once it has finished, the next question goes through.
+    await flush(() => result.current.send('Third'));
+    await settle();
+    expect(turns).toHaveLength(3);
+  });
+
+  it('does nothing when no answer is being written', async () => {
+    const { result } = await mount();
+    await settle();
+    const before = result.current.messages;
+    await flush(() => result.current.stop());
+    expect(result.current.messages).toBe(before);
+    expect(result.current.notice).toBeNull();
+
+    // Nor after one has finished.
+    generateReply.mockResolvedValue({ text: 'Done.', citations: [] });
+    await flush(() => result.current.send('Q'));
+    await settle();
+    await flush(() => result.current.stop());
+    expect(result.current.messages.at(-1)).not.toHaveProperty('stopped');
+    expect(result.current.notice).toBeNull();
+  });
+});
+
+describe('what is announced about a turn', () => {
+  it('says an answer is being written, and nothing more once it is on screen to be read', async () => {
+    const gen = deferred();
+    generateReply.mockReturnValue(gen.promise);
+    const { result } = await mount();
+    await settle();
+    expect(result.current.notice).toBeNull();
+    await flush(() => result.current.send('Q'));
+    expect(result.current.notice).toEqual({ kind: 'writing' });
+    await flush(() => gen.resolve({ text: 'Rest helps [1].', citations: [{ num: 1 }] }));
+    await settle();
+    expect(result.current.notice).toBeNull();
+  });
+
+  it('leaves a failure to the error shown on screen', async () => {
+    generateReply.mockRejectedValue(new Error('network down'));
+    const { result } = await mount();
+    await settle();
+    await flush(() => result.current.send('Q'));
+    await settle();
+    expect(result.current.chatError).toBe(true);
+    expect(result.current.notice).toBeNull();
+  });
+});
+
 describe('newConvo / appendMessage / clearHistory', () => {
   it('a failed new-thread insert keeps the old conversation id', async () => {
     const { result } = await mount();

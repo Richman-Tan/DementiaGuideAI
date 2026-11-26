@@ -47,6 +47,10 @@ export function ChatProvider({ children }) {
   const [chatError, setChatError] = useState(false);
   const [chatErrorMsg, setChatErrorMsg] = useState('');
   const [drawer, setDrawer] = useState(null); // mock: article id · real: source object
+  // What a screen reader is told that is not on screen as words: that an answer
+  // is being written, or was stopped ({ kind: 'writing' | 'stopped' }). The
+  // answer and any error are read from where they are shown.
+  const [notice, setNotice] = useState(null);
   const failedQ = useRef('');
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
@@ -112,6 +116,7 @@ export function ChatProvider({ children }) {
       busyRef.current = true;
       setTyping(true);
       setChatError(false);
+      setNotice({ kind: 'writing' });
       const ac = new AbortController();
       abortRef.current = ac;
       const msg = {
@@ -156,6 +161,7 @@ export function ChatProvider({ children }) {
           streaming: false,
         });
         setTyping(false);
+        setNotice(null);
         persist(base.concat([{ ...msg }]));
         persistMessage(convIdRef.current, {
           role: 'aria',
@@ -172,13 +178,37 @@ export function ChatProvider({ children }) {
         setChatErrorMsg(
           credentialErrorCopy(err) ?? "I couldn't reach the knowledge base — try again."
         );
+        setNotice(null);
         setMessages(base); // drop the empty streaming bubble if any
       } finally {
-        busyRef.current = false;
+        // Only the turn in flight clears the flag. One that was stopped has
+        // already cleared it, and a new turn may have started since.
+        if (abortRef.current === ac) busyRef.current = false;
       }
     },
     [persist]
   );
+
+  /**
+   * Stop the answer being written. Whatever has arrived stays, marked as
+   * unfinished, and is saved as it stands so that what the next turn is told
+   * was said is what was on screen. On the server's path, closing the
+   * connection also stops the model, so nothing more is paid for.
+   */
+  const stop = useCallback(() => {
+    if (!busyRef.current || !abortRef.current) return;
+    abortRef.current.abort();
+    busyRef.current = false;
+    setTyping(false);
+    setNotice({ kind: 'stopped' });
+    const shown = messagesRef.current;
+    const last = shown[shown.length - 1];
+    // Stopped before the first word: there is nothing to keep.
+    if (!last || last.role !== 'aria' || !last.streaming) return;
+    const kept = { ...last, streaming: false, stopped: true };
+    persist(shown.slice(0, -1).concat([kept]));
+    persistMessage(convIdRef.current, { role: 'aria', text: kept.text, citations: [] });
+  }, [persist]);
 
   const retry = useCallback(() => {
     const q = failedQ.current;
@@ -244,6 +274,8 @@ export function ChatProvider({ children }) {
     chatError,
     chatErrorMsg,
     send,
+    stop,
+    notice,
     retry,
     askNow,
     newConvo,

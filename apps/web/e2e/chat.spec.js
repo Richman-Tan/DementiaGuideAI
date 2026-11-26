@@ -458,6 +458,98 @@ test.describe('chat: slow and broken answers', () => {
   });
 });
 
+test.describe('chat: copying an answer, and hearing that it arrived', () => {
+  test('Copy puts the answer, its sources and what it is on the clipboard', async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await mockProviders(page);
+    await seedStorage(page);
+    await page.goto('/#/app/chat');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await ask(page, 'My mum gets restless and upset every evening. What can I try?');
+    await expect(page.getByRole('button', { name: 'Open source 2' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Copy' }).click();
+    await expect(page.getByRole('status').filter({ hasText: 'Copied' })).toBeVisible();
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    expect(copied).toMatch(/close the curtains before dusk/);
+    // Its markers point at the list underneath, and it says what it is.
+    expect(copied).toMatch(/\[1\]/);
+    expect(copied).toMatch(/\n\nSources:\n\[1\] .+\n\[2\] .+/);
+    expect(copied).toMatch(
+      /\n\nFrom DementiaGuide AI\. General information only — not medical advice\.$/
+    );
+    // No Markdown markers and no raw passage labels.
+    expect(copied).not.toMatch(/\*\*|\[S\d\]/);
+  });
+
+  test('when the clipboard is refused, it says so and how to copy instead', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: () => Promise.reject(new Error('NotAllowedError')) },
+      });
+    });
+    await mockProviders(page);
+    await seedStorage(page);
+    await page.goto('/#/app/chat');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await ask(page, 'My mum gets restless and upset every evening. What can I try?');
+    await page.getByRole('button', { name: 'Copy' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: "Couldn't copy — select the text instead" })
+    ).toBeVisible();
+  });
+
+  test('the conversation is a log: an answer joins it whole, not word by word', async ({
+    page,
+  }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false });
+    await page.goto('/#/app/chat');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    const log = page.getByRole('log', { name: 'Conversation' });
+    const said = page.locator('[aria-live="polite"]');
+    await expect(said).toHaveText('');
+
+    await ask(page, 'How do I manage sundowning?');
+    // The question joins the log at once; that an answer is coming is said.
+    await expect(log.getByText('How do I manage sundowning?')).toBeVisible();
+    await expect(said).toHaveText('Aaron is writing an answer.');
+    // The first words are on screen, and are not in the log yet: a screen
+    // reader is not made to restart with every word.
+    const answer = page.getByText(/^Sundowning/).last();
+    await expect(answer).toBeVisible();
+    await expect(log.getByText(/^Sundowning/)).toHaveCount(0);
+
+    // Whole, it is in the log, once, and there is nothing left to announce.
+    await expect(page.getByRole('button', { name: 'Send' })).toBeVisible({ timeout: 20_000 });
+    await expect(log.getByText(/^Sundowning/)).toHaveCount(1);
+    await expect(page.getByText(/^Sundowning/)).toHaveCount(1);
+    await expect(said).toHaveText('');
+    // The status is there to be heard, not seen.
+    const box = await said.boundingBox();
+    expect(box.width).toBeLessThanOrEqual(1);
+    expect(box.height).toBeLessThanOrEqual(1);
+  });
+
+  test('a failure is announced from where it is shown', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page);
+    await page.route('https://api.openai.com/v1/chat/completions', (route) =>
+      route.fulfill({ status: 500, body: 'upstream error' })
+    );
+    await page.goto('/#/app/chat');
+    await ask(page, 'What helps in the evenings?');
+    await expect(page.getByRole('alert')).toContainText(
+      "I couldn't reach the knowledge base — try again."
+    );
+    await expect(page.getByRole('alert').getByRole('button', { name: 'Retry' })).toBeVisible();
+    await expect(page.locator('[aria-live="polite"]')).toHaveText('');
+  });
+});
+
 test.describe('chat: changing course mid-answer', () => {
   test('?mock=1 forces the example answers even with a key; a second question while one is coming waits its turn', async ({
     page,
@@ -467,11 +559,83 @@ test.describe('chat: changing course mid-answer', () => {
     await page.goto('/?mock=1#/app/chat');
     await page.getByRole('button', { name: 'New conversation' }).click();
     await ask(page, 'How do I manage sundowning?');
-    // Sent while the first answer is still "typing": ignored.
-    await ask(page, 'And bathing?');
+    // While the first answer is on its way there is no Send, only Stop, and
+    // Enter does not send. What was typed stays in the box.
+    const box = page.getByLabel('Type your question');
+    await box.fill('And bathing?');
+    await expect(page.getByRole('button', { name: 'Stop answering' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Send' })).toHaveCount(0);
+    await box.press('Enter');
     await expect(page.getByText(/Sundowning — becoming more restless or confused/)).toBeVisible();
-    await expect(page.getByText('And bathing?')).toHaveCount(0);
+    await expect(box).toHaveValue('And bathing?');
     expect(log.chat).toHaveLength(0);
+    // Once the answer is whole, Send is back and the waiting question goes.
+    await expect(page.getByRole('button', { name: 'Stop answering' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Send' }).click();
+    await expect(page.getByText('And bathing?')).toBeVisible();
+    await expect(box).toHaveValue('');
+  });
+
+  test('Stop part-way through keeps what was written, says it is unfinished, and nothing more arrives', async ({
+    page,
+  }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false });
+    await page.goto('/#/app/chat');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await ask(page, 'How do I manage sundowning?');
+    // The first words are on screen; the rest are still coming.
+    const answer = page.getByText(/^Sundowning/).last();
+    await expect(answer).toBeVisible();
+    await page.getByRole('button', { name: 'Stop answering' }).click();
+
+    await expect(page.getByText('stopped before it was finished')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
+    const kept = await answer.textContent();
+    expect(kept.length).toBeGreaterThan(5);
+    await page.waitForTimeout(1200);
+    expect(await answer.textContent()).toBe(kept);
+    // The whole answer ends with its advice about the evening; this one does not.
+    expect(kept.length).toBeLessThan(300);
+    await expect(page.locator('[aria-live="polite"]')).toHaveText(
+      'Stopped. Aaron did not finish the answer.'
+    );
+
+    // It is saved as it stands, and the next question is answered in full.
+    await page.reload();
+    await expect(page.getByText('stopped before it was finished')).toBeVisible();
+    await ask(page, 'How do I manage sundowning?');
+    await expect(page.getByRole('button', { name: 'Stop answering' })).toHaveCount(0, {
+      timeout: 20_000,
+    });
+    await expect(page.getByText('stopped before it was finished')).toHaveCount(1);
+  });
+
+  test('Stop before the first word cancels the request and leaves only the question', async ({
+    page,
+  }) => {
+    await mockProviders(page);
+    await seedStorage(page);
+    let pending = false;
+    await page.route('https://api.openai.com/v1/chat/completions', () => {
+      pending = true;
+    }); // never answered
+    const cancelled = [];
+    page.on('requestfailed', (request) => {
+      if (request.url().includes('/chat/completions')) cancelled.push(request.failure().errorText);
+    });
+    await page.goto('/#/app/chat');
+    await page.getByRole('button', { name: 'New conversation' }).click();
+    await ask(page, 'What helps in the evenings?');
+    await expect.poll(() => pending).toBe(true);
+    await expect(page.locator('[aria-live="polite"]')).toHaveText('Aaron is writing an answer.');
+
+    await page.getByRole('button', { name: 'Stop answering' }).click();
+    await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
+    await expect.poll(() => cancelled).toEqual(['net::ERR_ABORTED']);
+    await expect(page.getByText('What helps in the evenings?')).toBeVisible();
+    await expect(page.getByText('stopped before it was finished')).toHaveCount(0);
+    await expect(page.getByText("I couldn't reach the knowledge base — try again.")).toHaveCount(0);
   });
 
   test('"New conversation" while an example answer is coming cancels it', async ({ page }) => {

@@ -84,9 +84,9 @@ test.describe('Unity avatar loading', () => {
     await installFakeUnity(page, { auto: true });
     await seedStorage(page, { keys: false });
     await page.goto('/#/app/settings');
-    const picker = page.getByRole('group', { name: 'Avatar' });
-    await expect(picker.getByRole('button', { name: 'Ariana' })).toBeEnabled();
-    await picker.getByRole('button', { name: 'Ariana' }).click();
+    const picker = page.getByRole('radiogroup', { name: 'Avatar' });
+    await expect(picker.getByRole('radio', { name: 'Ariana' })).toBeEnabled();
+    await picker.getByRole('radio', { name: 'Ariana' }).click();
     await expect(page.getByText("Display Ariana's visual avatar interface")).toBeVisible();
 
     await page.goto('/#/app/home');

@@ -22,12 +22,17 @@ test.describe('settings: accessibility and appearance', () => {
   }) => {
     await openSettings(page, { settings: { darkMode: false } });
     const html = page.locator('html');
-    await page.getByRole('button', { name: 'Text size large' }).click();
+    const size = page.getByRole('radiogroup', { name: 'Text size' });
+    // Which size is in force is said, not only shown.
+    await expect(size.getByRole('radio', { name: 'Medium' })).toBeChecked();
+    await size.getByRole('radio', { name: 'Large' }).click();
     await expect(html).toHaveCSS('font-size', '21.25px');
-    await page.getByRole('button', { name: 'Text size small' }).click();
+    await expect(size.getByRole('radio', { name: 'Large' })).toBeChecked();
+    await size.getByRole('radio', { name: 'Small' }).click();
     await expect(html).toHaveCSS('font-size', '14.45px');
-    await page.getByRole('button', { name: 'Text size medium' }).click();
+    await size.getByRole('radio', { name: 'Medium' }).click();
     await expect(html).toHaveCSS('font-size', '17px');
+    await expect(size).toHaveAccessibleDescription('Takes effect everywhere, straight away.');
 
     const contrast = page.getByRole('switch', { name: 'High Contrast' });
     await contrast.click();
@@ -112,27 +117,31 @@ test.describe('settings: accessibility and appearance', () => {
 
   test('voice speed is chosen from three and remembered', async ({ page }) => {
     await openSettings(page);
-    const speed = page.getByRole('group', { name: 'Voice speed' });
-    await speed.getByRole('button', { name: 'Slower' }).click();
+    const speed = page.getByRole('radiogroup', { name: 'Voice speed' });
+    await expect(speed.getByRole('radio', { name: 'Normal' })).toBeChecked();
+    await speed.getByRole('radio', { name: 'Slower' }).click();
     expect((await stored(page)).voiceSpeed).toBe('slower');
-    await speed.getByRole('button', { name: 'Faster' }).click();
+    await speed.getByRole('radio', { name: 'Faster' }).click();
     expect((await stored(page)).voiceSpeed).toBe('faster');
-    await expect(page.getByText('How fast Aaron speaks')).toBeVisible();
+    await expect(speed.getByRole('radio', { name: 'Faster' })).toBeChecked();
+    await expect(speed).toHaveAccessibleDescription('How fast Aaron speaks.');
   });
 
   test('the avatar picker offers Aaron and Ariana, with or without the 3D build, and remembers the pick', async ({
     page,
   }) => {
     await openSettings(page, { settings: { avatarId: 'aaron' } });
-    const picker = page.getByRole('group', { name: 'Avatar' });
-    await expect(picker.getByRole('button')).toHaveText(['Aaron', 'Ariana']);
-    await expect(picker.getByRole('button', { name: 'Aaron' })).toBeEnabled();
-    await expect(picker.getByRole('button', { name: 'Ariana' })).toBeEnabled();
+    const picker = page.getByRole('radiogroup', { name: 'Avatar' });
+    await expect(picker.getByRole('radio')).toHaveText([/^Aaron/, /^Ariana/]);
+    await expect(picker.getByRole('radio', { name: 'Aaron' })).toBeChecked();
+    await expect(picker.getByRole('radio', { name: 'Ariana' })).toBeEnabled();
+    await expect(picker).toHaveAccessibleDescription('A man’s voice, warm and steady.');
 
-    await picker.getByRole('button', { name: 'Ariana' }).click();
+    await picker.getByRole('radio', { name: 'Ariana' }).click();
     await expect(page.getByText("Display Ariana's visual avatar interface")).toBeVisible();
+    await expect(picker.getByRole('radio', { name: 'Ariana' })).toBeChecked();
     expect((await stored(page)).avatarId).toBe('ariana');
-    await picker.getByRole('button', { name: 'Aaron' }).click();
+    await picker.getByRole('radio', { name: 'Aaron' }).click();
     expect((await stored(page)).avatarId).toBe('aaron');
   });
 });

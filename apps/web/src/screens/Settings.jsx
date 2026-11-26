@@ -5,10 +5,20 @@ import { useUi } from '../state/UiContext.jsx';
 import { loadKeys, saveKeys as persistKeys, clearKeys as wipeKeys } from '../state/keysStore.js';
 import { useAuth } from '../state/AuthContext.jsx';
 import { navigate } from '../state/router.js';
-import { AVATAR_PROFILES, getAvatarProfile } from '../avatar/avatarProfiles.js';
+import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { AccessCodeForm } from '../components/AccessCodeForm.jsx';
 import { ChoiceGroup } from '../components/ui/ChoiceGroup.jsx';
-import { askingFor, current, DETAIL, MEDICAL_WORDS, pick, STYLE } from '../lib/answerChoices.js';
+import {
+  askingFor,
+  current,
+  DETAIL,
+  GUIDE,
+  MEDICAL_WORDS,
+  pick,
+  STYLE,
+  TEXT_SIZE,
+  voiceSpeed,
+} from '../lib/settingChoices.js';
 
 const Toggle = ({ label, on, onToggle }) => (
   <button
@@ -90,11 +100,6 @@ const Card = ({ children, mb = 26 }) => (
     {children}
   </div>
 );
-
-const segStyle = (on) => ({
-  background: on ? 'var(--primary)' : 'transparent',
-  color: on ? 'var(--on-primary)' : 'var(--text2)',
-});
 
 // Anonymous by default, upgradeable on request. Deliberately framed as "keep
 // your conversations", not "create an account": the benefit is the thing worth
@@ -244,6 +249,17 @@ export default function Settings() {
   const effective = getAvatarProfile(settings.avatarId);
   const who = effective.name;
 
+  // One of a few options, as a radio group that shows which is in force.
+  const choose = (choice) => (
+    <ChoiceGroup
+      key={choice.key}
+      label={choice.label}
+      value={current(choice, settings)}
+      onChange={(value) => setMany(pick(choice, value))}
+      options={choice.options}
+    />
+  );
+
   const avRows = [
     ['showAvatar', 'Show Avatar', `Display ${who}'s visual avatar interface`],
     ['audioResponses', 'Audio Responses', `${who} speaks responses aloud`],
@@ -313,59 +329,8 @@ export default function Settings() {
 
       <SectionTitle>Accessibility</SectionTitle>
       <Card>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: '12px',
-            minHeight: '64px',
-            padding: '12px 0',
-            borderBottom: 'var(--bw) solid var(--border)',
-          }}
-        >
-          <span style={{ flex: '1', minWidth: '180px' }}>
-            <span style={{ display: 'block', fontWeight: '600' }}>Text Size</span>
-            <span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>
-              Takes effect everywhere, immediately
-            </span>
-          </span>
-          <div
-            role="group"
-            aria-label="Text size"
-            style={{
-              display: 'flex',
-              background: 'var(--elev)',
-              border: 'var(--bw) solid var(--border)',
-              borderRadius: '12px',
-              padding: '3px',
-              gap: '3px',
-            }}
-          >
-            {[
-              [0.85, '.85rem'],
-              [1, '1.05rem'],
-              [1.25, '1.3rem'],
-            ].map(([v, fs]) => (
-              <button
-                key={v}
-                onClick={() => setSetting('textScale', v)}
-                aria-label={`Text size ${v === 0.85 ? 'small' : v === 1 ? 'medium' : 'large'}`}
-                style={{
-                  minWidth: '52px',
-                  minHeight: '44px',
-                  borderRadius: '9px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: '700',
-                  fontSize: fs,
-                  ...segStyle(settings.textScale === v),
-                }}
-              >
-                A
-              </button>
-            ))}
-          </div>
+        <div className="border-0 border-b-(length:--bw) border-solid border-border py-4">
+          {choose(TEXT_SIZE)}
         </div>
         <ToggleRow
           label="High Contrast"
@@ -385,73 +350,14 @@ export default function Settings() {
       <SectionTitle>Answers</SectionTitle>
       <Card>
         <div className="flex flex-col gap-5 py-4">
-          {[askingFor(who), DETAIL, MEDICAL_WORDS, STYLE].map((choice) => (
-            <ChoiceGroup
-              key={choice.key}
-              label={choice.label}
-              value={current(choice, settings)}
-              onChange={(value) => setMany(pick(choice, value))}
-              options={choice.options}
-            />
-          ))}
+          {[askingFor(who), DETAIL, MEDICAL_WORDS, STYLE].map(choose)}
         </div>
       </Card>
 
       <SectionTitle>Avatar &amp; Audio</SectionTitle>
       <Card>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: '12px',
-            minHeight: '64px',
-            padding: '12px 0',
-            borderBottom: 'var(--bw) solid var(--border)',
-          }}
-        >
-          <span style={{ flex: '1', minWidth: '180px' }}>
-            <span style={{ display: 'block', fontWeight: '600' }}>Avatar</span>
-            <span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>
-              Who you talk with
-            </span>
-          </span>
-          <div
-            role="group"
-            aria-label="Avatar"
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              background: 'var(--elev)',
-              border: 'var(--bw) solid var(--border)',
-              borderRadius: '12px',
-              padding: '3px',
-              gap: '3px',
-            }}
-          >
-            {Object.values(AVATAR_PROFILES).map((p) => {
-              const on = effective.id === p.id;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => setSetting('avatarId', p.id)}
-                  title={p.description}
-                  style={{
-                    minHeight: '44px',
-                    padding: '0 14px',
-                    borderRadius: '9px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    fontSize: '.9rem',
-                    ...segStyle(on),
-                  }}
-                >
-                  {p.name}
-                </button>
-              );
-            })}
-          </div>
+        <div className="border-0 border-b-(length:--bw) border-solid border-border py-4">
+          {choose({ ...GUIDE, label: 'Avatar' })}
         </div>
         {avRows.map(([k, label, sub]) => (
           <ToggleRow
@@ -462,58 +368,7 @@ export default function Settings() {
             onToggle={() => setSetting(k, !settings[k])}
           />
         ))}
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: '12px',
-            minHeight: '64px',
-            padding: '12px 0',
-          }}
-        >
-          <span style={{ flex: '1', minWidth: '180px' }}>
-            <span style={{ display: 'block', fontWeight: '600' }}>Voice Speed</span>
-            <span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>
-              How fast {who} speaks
-            </span>
-          </span>
-          <div
-            role="group"
-            aria-label="Voice speed"
-            style={{
-              display: 'flex',
-              background: 'var(--elev)',
-              border: 'var(--bw) solid var(--border)',
-              borderRadius: '12px',
-              padding: '3px',
-              gap: '3px',
-            }}
-          >
-            {[
-              ['slower', 'Slower'],
-              ['normal', 'Normal'],
-              ['faster', 'Faster'],
-            ].map(([v, label]) => (
-              <button
-                key={v}
-                onClick={() => setSetting('voiceSpeed', v)}
-                style={{
-                  minHeight: '44px',
-                  padding: '0 14px',
-                  borderRadius: '9px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  fontSize: '.9rem',
-                  ...segStyle(settings.voiceSpeed === v),
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <div className="py-4">{choose(voiceSpeed(who))}</div>
       </Card>
 
       <SectionTitle>Privacy &amp; Trust</SectionTitle>

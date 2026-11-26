@@ -167,7 +167,7 @@ test.describe('the build is fetched on first use, not on page load', () => {
     ).toBeVisible();
     await page.getByRole('button', { name: 'Open the app' }).first().click();
     await expect(page).toHaveURL(/#\/onboarding\/1$/);
-    for (let step = 1; step < 12; step += 1) {
+    for (let step = 1; step < 3; step += 1) {
       await page.evaluate((n) => {
         location.hash = `#/onboarding/${n}`;
       }, step + 1);
@@ -176,7 +176,7 @@ test.describe('the build is fetched on first use, not on page load', () => {
     await page.waitForTimeout(500);
     expect(urls).toEqual([]);
 
-    await page.getByRole('button', { name: /^Meet Aaron/ }).click();
+    await page.getByRole('button', { name: 'I understand — meet Aaron' }).click();
     await expect(page).toHaveURL(/#\/app\/home$/);
     await expect(page.locator('#unity-canvas')).toBeVisible();
     expect(urls.some((u) => u.startsWith('/unity/Build/'))).toBe(true);

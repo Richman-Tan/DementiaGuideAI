@@ -1,149 +1,158 @@
-// Onboarding wizard: one helper name throughout, and a voice preview that never fails silently.
-// The helper's name comes from the stored character, whether or not the 3D build is installed
-// (the e2e mocks refuse it); the assertions check consistency with the name shown.
-import { test, mockProviders, seedStorage, expect, slow } from './support.js';
+// Setup, in three steps: meet your guide, say how answers should be written,
+// read the one thing everyone has to know. One name throughout, every choice
+// stored, and every step passable without choosing anything.
+import { test, mockProviders, seedStorage, expect } from './support.js';
 
-const fresh = { keys: false, settings: { onboarded: false } };
+const fresh = { keys: false, settings: { onboarded: false, darkMode: false } };
+const stored = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('dg_settings')));
+const step = (page) => page.getByRole('progressbar', { name: 'Setup progress' });
 
-test.describe('onboarding wizard', () => {
-  test('(a) the greeting, the disclaimer and the final button all name the same helper', async ({
+test.describe('setup', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockProviders(page);
+  });
+
+  test('the guide you choose is the one who greets you, warns you and meets you', async ({
     page,
   }) => {
-    await mockProviders(page);
     await seedStorage(page, fresh);
     await page.goto('/#/onboarding/1');
-    const heading = page.getByRole('heading', { name: /^Kia ora — I'm / });
-    await expect(heading).toBeVisible();
-    const name = (await heading.textContent()).replace("Kia ora — I'm ", '').trim();
-    expect(name.length).toBeGreaterThan(0);
+    await expect(page.getByRole('heading', { name: "Kia ora — I'm Aaron" })).toBeVisible();
+    await expect(step(page)).toHaveAttribute('aria-valuetext', 'Step 1 of 3');
 
-    await page.goto('/#/onboarding/11');
-    await expect(
-      page.getByText(`${name} gives general information, not medical advice.`)
-    ).toBeVisible();
+    const guides = page.getByRole('radiogroup', { name: 'Who would you like to talk with?' });
+    await expect(guides.getByRole('radio', { name: 'Aaron' })).toBeChecked();
+    await expect(guides).toHaveAccessibleDescription('A man’s voice, warm and steady.');
 
-    await page.goto('/#/onboarding/12');
-    await expect(page.getByRole('button', { name: `Meet ${name} →` })).toBeVisible();
-    await expect(page.getByText(/will help you, in the style you chose/)).toBeVisible();
-  });
+    // Choosing the other guide changes who is speaking, there and then.
+    await guides.getByRole('radio', { name: 'Ariana' }).click();
+    await expect(page.getByRole('heading', { name: "Kia ora — I'm Ariana" })).toBeVisible();
+    await expect(guides).toHaveAccessibleDescription('A woman’s voice, warm and clear.');
 
-  test('(b) Back moves one step without an error, all the way to the start', async ({ page }) => {
-    await mockProviders(page);
-    await seedStorage(page, fresh);
-    await page.goto('/#/onboarding/5');
-    for (let step = 5; step > 1; step--) {
-      await page.getByRole('button', { name: '← Back' }).click();
-      await expect(page).toHaveURL(new RegExp(`#/onboarding/${step - 1}$`));
-      await expect(page.getByText('Something went wrong')).toHaveCount(0);
-    }
-  });
-
-  test('(c) Preview voice without a key or code says why it cannot play', async ({ page }) => {
-    await mockProviders(page);
-    await seedStorage(page, fresh);
-    await page.goto('/#/onboarding/8');
-    await page.getByRole('button', { name: /Preview voice/ }).click();
-    await expect(page.getByRole('status')).toContainText('needs an access code or your own key');
-  });
-
-  test('(d) Preview voice whose speech request fails says so instead of animating silently', async ({
-    page,
-  }) => {
-    await mockProviders(page);
-    await seedStorage(page, { keys: true, settings: { onboarded: false } });
-    await page.route('https://api.openai.com/v1/audio/speech', (route) =>
-      route.fulfill({ status: 500, body: 'upstream error' })
-    );
-    await page.goto('/#/onboarding/8');
-    await page.getByRole('button', { name: /Preview voice/ }).click();
-    await expect(page.getByRole('status')).toContainText("The preview couldn't play");
-  });
-});
-
-test.describe('onboarding: the whole wizard', () => {
-  test('every step, answered, adds up to the summary; Change goes back to a step; finishing opens Home', async ({
-    page,
-  }) => {
-    await mockProviders(page);
-    await seedStorage(page, { keys: false, settings: { onboarded: false, darkMode: false } });
-    await page.goto('/#/onboarding/1');
     await page.getByRole('button', { name: "Let's begin" }).click();
-
-    const pick = async (title, option) => {
-      await expect(page.getByRole('heading', { name: title })).toBeVisible();
-      await page.getByRole('button', { name: option }).click();
-      await page.getByRole('button', { name: 'Continue' }).click();
-    };
-    await pick('Who is setting up this app today?', 'I work in care professionally');
-    await pick('How comfortable are you with using apps like this?', /I'd like extra guidance/);
-    await pick('What kind of helper feels right for you?', 'Calm & steady');
-    await pick('When you ask a question, how much detail would you like?', 'Short and simple');
-    await pick('When medical words come up, what would you prefer?', 'Medical terms are fine');
-    await pick('How would you like to talk with Aaron?', /^Type my questions/);
-    await pick('How fast would you like Aaron to speak?', 'Faster');
-
+    await expect(page).toHaveURL(/#\/onboarding\/2$/);
+    await expect(page.getByRole('heading', { name: 'How should Ariana answer?' })).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: 'How would you like the text to appear?' })
+      page.getByText('Ariana speaks to you as a carer or support worker.')
     ).toBeVisible();
-    await page.getByRole('button', { name: /Large/ }).click();
-    await expect(page.locator('html')).toHaveCSS('font-size', '21.25px');
-    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(step(page)).toHaveAttribute('aria-valuetext', 'Step 2 of 3');
 
-    await expect(page.getByRole('heading', { name: 'A few display choices' })).toBeVisible();
-    for (const label of [
-      'Dark mode',
-      'High contrast',
-      'Subtitles during voice replies',
-      'Show Aaron on screen',
-    ]) {
-      const sw = page.getByRole('switch', { name: label });
-      const was = await sw.getAttribute('aria-checked');
-      await sw.click();
-      await expect(sw).toHaveAttribute('aria-checked', was === 'true' ? 'false' : 'true');
-    }
     await page.getByRole('button', { name: 'Continue' }).click();
-
+    await expect(page).toHaveURL(/#\/onboarding\/3$/);
     await expect(page.getByRole('heading', { name: 'One important thing to know' })).toBeVisible();
-    await page.getByRole('button', { name: 'I understand' }).click();
-
     await expect(
-      page.getByRole('heading', { name: "Here's how you've set things up" })
+      page.getByText('Ariana gives general information, not medical advice.')
     ).toBeVisible();
-    for (const value of [
-      'I work in care professionally',
-      'Extra guidance please',
-      'Calm & steady',
-      'Short and simple',
-      'Medical terms are fine',
-      'Type my questions',
-      'Faster',
-      'Large',
-      'Dark · high contrast',
-    ]) {
-      await expect(page.getByText(value, { exact: true })).toBeVisible();
-    }
-    // "Short and simple" also turns on the concise style.
-    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dg_settings')).concise)).toBe(
-      true
-    );
+    await expect(page.getByText('In an emergency, call 111.')).toBeVisible();
+    await expect(page.getByText('Healthline on 0800 611 116')).toBeVisible();
 
-    // Change → the step → Continue walks forward again.
-    await page.getByRole('button', { name: 'Change' }).nth(3).click();
-    await expect(page).toHaveURL(/#\/onboarding\/5$/);
-    await page.getByRole('button', { name: 'Balanced' }).click();
-    await page.goto('/#/onboarding/12');
-    await expect(page.getByText('Balanced', { exact: true })).toBeVisible();
-
-    await page.getByRole('button', { name: 'Meet Aaron →' }).click();
+    await page.getByRole('button', { name: 'I understand — meet Ariana' }).click();
     await expect(page).toHaveURL(/#\/app\/home$/);
     await expect(page.getByRole('status')).toHaveText("You're all set — welcome");
+    expect(await stored(page)).toMatchObject({ onboarded: true, avatarId: 'ariana' });
   });
 
-  test('"Skip setup" on the first step and "Skip for now" later both go straight to Home', async ({
+  test('each choice is stored, and says what it does', async ({ page }) => {
+    await seedStorage(page, fresh);
+    await page.goto('/#/onboarding/2');
+
+    const asking = page.getByRole('radiogroup', { name: 'Who are you asking for?' });
+    await expect(asking.getByRole('radio', { name: 'Someone I care for' })).toBeChecked();
+    await asking.getByRole('radio', { name: 'Myself' }).click();
+    await expect(asking.getByRole('radio', { name: 'Myself' })).toBeChecked();
+    await expect(asking).toHaveAccessibleDescription('Aaron speaks to you directly.');
+
+    const detail = page.getByRole('radiogroup', { name: 'How much detail?' });
+    await expect(detail.getByRole('radio', { name: 'Balanced' })).toBeChecked();
+    await detail.getByRole('radio', { name: 'Short' }).click();
+    await expect(detail).toHaveAccessibleDescription('A few sentences, straight to the point.');
+
+    const words = page.getByRole('radiogroup', { name: 'Medical words' });
+    await expect(words.getByRole('radio', { name: 'Avoid them' })).toBeChecked();
+    await words.getByRole('radio', { name: 'Explain them' }).click();
+    await expect(words).toHaveAccessibleDescription(
+      'Medical terms are explained in plain language as they come up.'
+    );
+
+    // "Short" also turns on the concise style; any other length turns it off.
+    expect(await stored(page)).toMatchObject({
+      setupType: 'exploring',
+      responseStyle: 'short',
+      concise: true,
+      jargon: 'explained',
+    });
+    await detail.getByRole('radio', { name: 'Thorough' }).click();
+    expect(await stored(page)).toMatchObject({ responseStyle: 'thorough', concise: false });
+  });
+
+  test('every step can be passed without choosing anything, and the defaults stand', async ({
     page,
   }) => {
-    await mockProviders(page);
-    await seedStorage(page, { keys: false, settings: { onboarded: false } });
+    await seedStorage(page, fresh);
+    await page.goto('/#/onboarding/1');
+    await page.getByRole('button', { name: "Let's begin" }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await page.getByRole('button', { name: 'I understand — meet Aaron' }).click();
+    await expect(page).toHaveURL(/#\/app\/home$/);
+    expect(await stored(page)).toMatchObject({
+      onboarded: true,
+      avatarId: 'aaron',
+      setupType: 'caring',
+      responseStyle: 'balanced',
+      jargon: 'plain',
+      concise: false,
+    });
+  });
+
+  test('the arrow keys move between options, as in any radio group', async ({ page }) => {
+    await seedStorage(page, fresh);
+    await page.goto('/#/onboarding/2');
+    const detail = page.getByRole('radiogroup', { name: 'How much detail?' });
+    // The key is held for a moment, as a finger holds it. The group chooses the
+    // option it moves to only while an arrow key is down, and a key released
+    // within the same instant (which only a script can do) moves without choosing.
+    const arrow = (key) => page.keyboard.press(key, { delay: 100 });
+    await detail.getByRole('radio', { name: 'Balanced' }).focus();
+    await arrow('ArrowRight');
+    await expect(detail.getByRole('radio', { name: 'Thorough' })).toBeFocused();
+    await expect(detail.getByRole('radio', { name: 'Thorough' })).toBeChecked();
+    await arrow('ArrowLeft');
+    await expect(detail.getByRole('radio', { name: 'Balanced' })).toBeChecked();
+    await arrow('ArrowLeft');
+    await expect(detail.getByRole('radio', { name: 'Short' })).toBeChecked();
+    // One stop for the whole group: Tab leaves it rather than visiting each option.
+    await page.keyboard.press('Tab');
+    await expect(
+      page.getByRole('radiogroup', { name: 'Medical words' }).getByRole('radio', { checked: true })
+    ).toBeFocused();
+  });
+
+  test('the chosen option is marked with a tick, not by colour alone', async ({ page }) => {
+    await seedStorage(page, fresh);
+    await page.goto('/#/onboarding/2');
+    const detail = page.getByRole('radiogroup', { name: 'How much detail?' });
+    await expect(detail.getByRole('radio', { name: 'Balanced' })).toContainText('✓');
+    await expect(detail.getByRole('radio', { name: 'Short' })).not.toContainText('✓');
+    await detail.getByRole('radio', { name: 'Short' }).click();
+    await expect(detail.getByRole('radio', { name: 'Short' })).toContainText('✓');
+    await expect(detail.getByRole('radio', { name: 'Balanced' })).not.toContainText('✓');
+  });
+
+  test('Back moves one step at a time, to the start', async ({ page }) => {
+    await seedStorage(page, fresh);
+    await page.goto('/#/onboarding/3');
+    await page.getByRole('button', { name: '← Back' }).click();
+    await expect(page).toHaveURL(/#\/onboarding\/2$/);
+    await page.getByRole('button', { name: '← Back' }).click();
+    await expect(page).toHaveURL(/#\/onboarding\/1$/);
+    await expect(page.getByRole('button', { name: '← Back' })).toHaveCount(0);
+    await expect(page.getByText('Something went wrong')).toHaveCount(0);
+  });
+
+  test('"Skip setup" on the first step and "Skip for now" on the second go straight to Home', async ({
+    page,
+  }) => {
+    await seedStorage(page, fresh);
     await page.goto('/#/onboarding/1');
     await page.getByRole('button', { name: 'Skip setup' }).click();
     await expect(page).toHaveURL(/#\/app\/home$/);
@@ -151,37 +160,73 @@ test.describe('onboarding: the whole wizard', () => {
       'Setup skipped — you can redo it in Settings'
     );
 
-    await page.goto('/#/onboarding/3');
+    await page.goto('/#/onboarding/2');
     await page.getByRole('button', { name: 'Skip for now' }).click();
     await expect(page).toHaveURL(/#\/app\/home$/);
+
+    // The last step is the one thing that is not skipped past.
+    await page.goto('/#/onboarding/3');
+    await expect(page.getByRole('button', { name: /Skip/ })).toHaveCount(0);
   });
 
-  test('an out-of-range step address shows the nearest real step', async ({ page }) => {
-    await mockProviders(page);
-    await seedStorage(page, { keys: false, settings: { onboarded: false } });
-    await page.goto('/#/onboarding/99');
-    await expect(
-      page.getByRole('heading', { name: "Here's how you've set things up" })
-    ).toBeVisible();
+  test('an address for a step that does not exist shows the nearest one that does', async ({
+    page,
+  }) => {
+    await seedStorage(page, fresh);
+    // The setup used to have twelve steps; an old link to a later one still lands.
+    await page.goto('/#/onboarding/12');
+    await expect(page.getByRole('heading', { name: 'One important thing to know' })).toBeVisible();
+    await expect(step(page)).toHaveAttribute('aria-valuetext', 'Step 3 of 3');
     await page.goto('/#/onboarding/zero');
     await expect(page.getByRole('heading', { name: /^Kia ora — I'm / })).toBeVisible();
   });
 
-  test('Preview voice with a key plays the chosen voice, then settles', async ({ page }) => {
-    const log = await mockProviders(page, { audioSeconds: 1.5 });
-    await seedStorage(page, { keys: true, settings: { onboarded: false, voiceSpeed: 'slower' } });
-    await page.goto('/#/onboarding/8');
-    await page.getByRole('button', { name: /Preview voice/ }).click();
-    await expect(
-      page.getByText("“Kia ora — I'm Aaron. This is about how I'll sound.”")
-    ).toBeVisible();
-    expect(log.speech[0]).toMatchObject({
-      voice: 'onyx',
-      input: "Kia ora — I'm Aaron. This is about how I'll sound.",
+  test('settings saved by the longer setup still show which choice is in force', async ({
+    page,
+  }) => {
+    // "I work in care professionally" is no longer offered; it was always
+    // treated as a carer. "Get to the Point" overrides the stored length.
+    await seedStorage(page, {
+      keys: false,
+      settings: {
+        onboarded: false,
+        setupType: 'professional',
+        responseStyle: 'thorough',
+        concise: true,
+        jargon: 'fine',
+      },
     });
-    // When the clip ends the preview returns to its button.
-    await expect(
-      page.getByText("“Kia ora — I'm Aaron. This is about how I'll sound.”")
-    ).toHaveCount(0, { timeout: slow(15_000) });
+    await page.goto('/#/onboarding/2');
+    await expect(page.getByRole('radio', { name: 'Someone I care for' })).toBeChecked();
+    await expect(page.getByRole('radio', { name: 'Short' })).toBeChecked();
+    await expect(page.getByRole('radio', { name: 'Leave them' })).toBeChecked();
+  });
+});
+
+test.describe('setup on a phone, at the largest text size', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('nothing runs off the side of the screen on any step', async ({ page }) => {
+    await mockProviders(page);
+    await seedStorage(page, { keys: false, settings: { onboarded: false, textScale: 1.25 } });
+    for (const n of [1, 2, 3]) {
+      await page.goto(`/#/onboarding/${n}`);
+      await expect(step(page)).toHaveAttribute('aria-valuetext', `Step ${n} of 3`);
+      const overflow = await page.evaluate(() => {
+        // Measured against the page's own box, not the window: where a
+        // scrollbar's space is reserved (Linux, Windows) the page is narrower
+        // than the window, and that is not overflow.
+        const root = document.documentElement;
+        const edge = root.getBoundingClientRect().right;
+        const wide = [...document.querySelectorAll('button, h1, p')].filter(
+          (el) => el.getBoundingClientRect().right > edge + 0.5
+        );
+        return {
+          sideways: Math.max(0, root.scrollWidth - Math.ceil(edge)),
+          wide: wide.length,
+        };
+      });
+      expect(overflow, `step ${n}`).toEqual({ sideways: 0, wide: 0 });
+    }
   });
 });

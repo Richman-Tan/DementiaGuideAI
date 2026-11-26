@@ -61,6 +61,55 @@ test.describe('settings: accessibility and appearance', () => {
     }
   });
 
+  test('how answers are written can be changed: who for, detail, medical words and style', async ({
+    page,
+  }) => {
+    await openSettings(page);
+    const group = (name) => page.getByRole('radiogroup', { name });
+
+    await expect(group('Who are you asking for?').getByRole('radio', { checked: true })).toHaveText(
+      /Someone I care for/
+    );
+    await group('Who are you asking for?').getByRole('radio', { name: 'Myself' }).click();
+    await group('Medical words').getByRole('radio', { name: 'Leave them' }).click();
+    // Style is not asked during setup, so this is the only place it is chosen.
+    await expect(group('Style').getByRole('radio', { name: 'Warm' })).toBeChecked();
+    await group('Style').getByRole('radio', { name: 'Practical' }).click();
+    await expect(group('Style')).toHaveAccessibleDescription(
+      'Leads with what is most useful and skips long preambles.'
+    );
+    await group('How much detail?').getByRole('radio', { name: 'Thorough' }).click();
+    expect(await stored(page)).toMatchObject({
+      setupType: 'exploring',
+      jargon: 'fine',
+      ariaStyle: 'practical',
+      responseStyle: 'thorough',
+      concise: false,
+    });
+  });
+
+  test('"Get to the Point" and the detail choice never disagree', async ({ page }) => {
+    await openSettings(page);
+    const detail = page.getByRole('radiogroup', { name: 'How much detail?' });
+    const toThePoint = page.getByRole('switch', { name: 'Get to the Point' });
+    await expect(detail.getByRole('radio', { name: 'Balanced' })).toBeChecked();
+    await expect(toThePoint).toHaveAttribute('aria-checked', 'false');
+
+    // The switch overrides the length, so with it on the detail in force is Short.
+    await toThePoint.click();
+    await expect(detail.getByRole('radio', { name: 'Short' })).toBeChecked();
+    expect(await stored(page)).toMatchObject({ concise: true, responseStyle: 'balanced' });
+    // And off again, the stored length is back in force.
+    await toThePoint.click();
+    await expect(detail.getByRole('radio', { name: 'Balanced' })).toBeChecked();
+
+    // Choosing Short turns the switch on; choosing another length turns it off.
+    await detail.getByRole('radio', { name: 'Short' }).click();
+    await expect(toThePoint).toHaveAttribute('aria-checked', 'true');
+    await detail.getByRole('radio', { name: 'Thorough' }).click();
+    await expect(toThePoint).toHaveAttribute('aria-checked', 'false');
+  });
+
   test('voice speed is chosen from three and remembered', async ({ page }) => {
     await openSettings(page);
     const speed = page.getByRole('group', { name: 'Voice speed' });

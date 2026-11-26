@@ -57,14 +57,14 @@ for (const dark of [false, true]) {
       });
     }
 
-    test('onboarding, on its first and a later step', async ({ page }) => {
+    test('setup, on each of its three steps', async ({ page }) => {
       await open(page, '#/onboarding/1', { dark, onboarded: false });
       const progress = page.getByRole('progressbar', { name: 'Setup progress' });
-      await expect(progress).toHaveAttribute('aria-valuetext', 'Step 1 of 12');
-      expect(await violations(page)).toEqual([]);
-      await page.goto('/#/onboarding/4');
-      await expect(progress).toHaveAttribute('aria-valuetext', 'Step 4 of 12');
-      expect(await violations(page)).toEqual([]);
+      for (const step of [1, 2, 3]) {
+        await page.goto(`/#/onboarding/${step}`);
+        await expect(progress).toHaveAttribute('aria-valuetext', `Step ${step} of 3`);
+        expect(await violations(page)).toEqual([]);
+      }
     });
 
     test('a library article', async ({ page }) => {

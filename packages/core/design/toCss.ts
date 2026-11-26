@@ -95,9 +95,9 @@ export function spacingUnit(scale: { 1: string; [step: string]: string } = space
  * mean. Written to apps/web/src/styles/theme.generated.css.
  *
  * Colours point at the variables above, not at fixed values, so one class
- * follows the light, dark and high-contrast themes. Tailwind's own palette and
- * radii are cleared first: a class for a colour that is not a token produces
- * nothing.
+ * follows the light, dark and high-contrast themes. Tailwind's own palette,
+ * radii and type sizes are cleared first: a class for a colour or a size that
+ * is not a token produces nothing.
  */
 export function tokensToTailwindTheme(): string {
   const colourNames = (Object.keys(light) as (keyof Palette)[]).filter((key) => key !== 'shadow');
@@ -110,6 +110,8 @@ export function tokensToTailwindTheme(): string {
       `--spacing: ${spacingUnit()};`,
       '--radius-*: initial;',
       ...scale('radius', radius),
+      '--text-*: initial;',
+      ...scale('text', fontSize),
       `--default-transition-duration: ${motion.fast};`,
       `--default-transition-timing-function: ${motion.easing};`,
     ]),

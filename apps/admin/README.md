@@ -35,6 +35,25 @@ will reject every request). Deleting the Supabase user too is optional.
 Open the deployed URL (https://dementiaguide-admin.vercel.app) and sign in with the email + password from above.
 Auth is `supabase.auth.signInWithPassword` — see `src/lib/useAuth.js`.
 
+## Seeing how the assistant is used
+
+The **Usage** tab shows what the live assistant has been doing over the last
+7 to 90 days: turns a day, how many failed or were interrupted, how often the
+search found no passage, how many were emergencies, how long people waited for
+the first word (median and 95th percentile), and an estimated cost. If a daily
+budget is set (`DAILY_BUDGET_USD` on `apps/api`), it also shows how much of
+today's is spent.
+
+It reads the daily summary of the turn traces through `GET /api/admin-usage`,
+behind the same sign-in and allowlist as everything else here. A trace holds
+what the system did on a turn and never what was said, so nothing on this page
+is anyone's question or answer. Costs are tokens at list prices: an estimate,
+not the provider's bill, and speech is not included.
+
+It needs `scripts/migrations/2026-11-27_turn_traces.sql` to have been run, and
+says so if it has not. Until the server's answering endpoint is switched on
+there are no turns to show.
+
 ## Submitting a resource
 
 Pick a source type (PDF upload / website URL / pasted text), fill in the

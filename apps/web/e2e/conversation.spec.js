@@ -7,6 +7,7 @@
 // real (short) audio. What is scripted: the microphone (a tone the test turns
 // on and off, support.js installFakeMedia), the browser's speech recogniser,
 // and the two server endpoints, answered here in their real formats.
+import { AxeBuilder } from '@axe-core/playwright';
 import {
   test,
   mockProviders,
@@ -128,6 +129,13 @@ test.describe('a spoken conversation, with no key and no access code', () => {
     await expect(page.getByLabel(/OpenAI/i)).toHaveCount(0);
 
     await listening(page);
+    // The open-microphone screen passes the automated accessibility rules.
+    const listeningScreen = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    expect(
+      listeningScreen.violations.map((v) => `${v.id}: ${v.nodes[0].target.join(' ')}`)
+    ).toEqual([]);
 
     await say(page, 'How do I manage sundowning');
     await expect(page.getByText('How do I manage sundowning')).toBeVisible();

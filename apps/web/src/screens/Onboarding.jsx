@@ -365,7 +365,12 @@ export default function Onboarding({ step }) {
         </div>
         <div
           style={{ display: 'flex', gap: '7px', justifyContent: 'center' }}
+          role="progressbar"
           aria-label="Setup progress"
+          aria-valuemin={1}
+          aria-valuemax={12}
+          aria-valuenow={obStep}
+          aria-valuetext={`Step ${obStep} of 12`}
         >
           {Array.from({ length: 12 }, (_, i) => (
             <span

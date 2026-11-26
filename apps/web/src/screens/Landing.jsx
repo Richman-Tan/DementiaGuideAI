@@ -1,6 +1,7 @@
 import React from 'react';
 import { AvatarStageCard } from '../avatar/AvatarStage.jsx';
 import BrandMark from '../components/BrandMark.jsx';
+import { Button } from '../components/ui/Button.jsx';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 
@@ -24,22 +25,7 @@ export default function Landing({ openApp, browseLibrary }) {
           <BrandMark size={36} tile />
           <strong style={{ fontSize: '1.1rem', letterSpacing: '.01em' }}>DementiaGuide AI</strong>
         </div>
-        <button
-          onClick={openApp}
-          style={{
-            minHeight: '44px',
-            padding: '0 20px',
-            borderRadius: '12px',
-            border: 'none',
-            background: 'var(--primary)',
-            color: 'var(--on-primary)',
-            fontWeight: '600',
-            cursor: 'pointer',
-          }}
-          className="hv1"
-        >
-          Open the app
-        </button>
+        <Button onClick={openApp}>Open the app</Button>
       </header>
       <div
         style={{
@@ -72,40 +58,12 @@ export default function Landing({ openApp, browseLibrary }) {
             }}
           >{`${who} is a caring AI guide who answers your questions with trusted, cited information — by text or voice.`}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-            <button
-              onClick={openApp}
-              style={{
-                minHeight: '52px',
-                padding: '0 26px',
-                borderRadius: '14px',
-                border: 'none',
-                background: 'var(--primary)',
-                color: 'var(--on-primary)',
-                fontSize: '1.05rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-              }}
-              className="hv2"
-            >
+            <Button size="lg" onClick={openApp}>
               Open the app
-            </button>
-            <button
-              onClick={browseLibrary}
-              style={{
-                minHeight: '52px',
-                padding: '0 26px',
-                borderRadius: '14px',
-                border: 'var(--bw) solid var(--border)',
-                background: 'var(--surface)',
-                color: 'var(--text)',
-                fontSize: '1.05rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-              }}
-              className="hv3"
-            >
+            </Button>
+            <Button size="lg" variant="secondary" onClick={browseLibrary}>
               Browse the library
-            </button>
+            </Button>
           </div>
         </div>
         <div

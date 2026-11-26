@@ -4,6 +4,9 @@
 //
 // The colour variables keep the short names the screens already use (--text2,
 // --primary-d, --amber-bd), so nothing has to be renamed to adopt this.
+//
+// `tokensToTailwindTheme` is the same tokens as a Tailwind theme, so a utility
+// class can only name a colour, a space or a radius that is a token.
 import {
   borderWidth,
   dark,
@@ -67,5 +70,48 @@ export function tokensToCss(): string {
       ...colours(highContrast.light),
     ]),
     rule("html[data-hc='1'][data-theme='dark']", colours(highContrast.dark)),
+  ].join('\n')}\n`;
+}
+
+const kebab = (name: string) => name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+
+/**
+ * The one spacing unit Tailwind multiplies: `p-5` is five of them. That only
+ * matches the tokens while every step is its number times the first, so this
+ * refuses a scale where one is not.
+ */
+export function spacingUnit(scale: { 1: string; [step: string]: string } = space): string {
+  const unit = Number.parseInt(scale[1], 10);
+  for (const [name, value] of Object.entries(scale)) {
+    if (Number.parseInt(value, 10) !== unit * Number(name)) {
+      throw new Error(`space.${name} is ${value}, not ${name} × ${scale[1]}`);
+    }
+  }
+  return scale[1];
+}
+
+/**
+ * The tokens as a Tailwind theme: what `bg-primary`, `px-5` and `rounded-md`
+ * mean. Written to apps/web/src/styles/theme.generated.css.
+ *
+ * Colours point at the variables above, not at fixed values, so one class
+ * follows the light, dark and high-contrast themes. Tailwind's own palette and
+ * radii are cleared first: a class for a colour that is not a token produces
+ * nothing.
+ */
+export function tokensToTailwindTheme(): string {
+  const colourNames = (Object.keys(light) as (keyof Palette)[]).filter((key) => key !== 'shadow');
+  return `${[
+    '/* Generated from packages/core/design/tokens.ts by `npm run tokens -w apps/web`.\n   Do not edit: change the tokens and run it again. */',
+    rule('@theme inline', [
+      '--color-*: initial;',
+      ...colourNames.map((key) => `--color-${kebab(key)}: var(${COLOUR_VARIABLE[key]});`),
+      `--shadow-card: var(${COLOUR_VARIABLE.shadow});`,
+      `--spacing: ${spacingUnit()};`,
+      '--radius-*: initial;',
+      ...scale('radius', radius),
+      `--default-transition-duration: ${motion.fast};`,
+      `--default-transition-timing-function: ${motion.easing};`,
+    ]),
   ].join('\n')}\n`;
 }

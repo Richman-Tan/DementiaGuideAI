@@ -13,6 +13,7 @@ import { useChat } from '../state/ChatContext.jsx';
 import { useUi } from '../state/UiContext.jsx';
 import { navigate } from '../state/router.js';
 import { SourceDrawerBody } from './SourceDrawerBody.jsx';
+import { Button } from './ui/Button.jsx';
 
 const scrim = { position: 'fixed', inset: '0', background: 'rgba(15,25,32,.45)' };
 
@@ -93,23 +94,9 @@ export function SourceDrawer({ isMobile }) {
         >
           <Dialog.Title style={hidden}>Source preview</Dialog.Title>
           <Dialog.Close asChild>
-            <button
-              aria-label="Close preview"
-              style={{
-                alignSelf: 'flex-end',
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
-                border: 'var(--bw) solid var(--border)',
-                background: 'var(--elev)',
-                color: 'var(--text2)',
-                cursor: 'pointer',
-                fontSize: '1.1rem',
-              }}
-              className="hv3"
-            >
+            <Button icon variant="secondary" aria-label="Close preview" className="self-end">
               ✕
-            </button>
+            </Button>
           </Dialog.Close>
           {drawer && (
             <SourceDrawerBody
@@ -163,39 +150,10 @@ export function ConfirmDialog() {
           </AlertDialog.Description>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
             <AlertDialog.Cancel asChild>
-              <button
-                style={{
-                  minHeight: '48px',
-                  padding: '0 20px',
-                  borderRadius: '12px',
-                  border: 'var(--bw) solid var(--border)',
-                  background: 'var(--surface)',
-                  color: 'var(--text)',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                }}
-                className="hv3"
-              >
-                {confirm?.noLabel || 'Keep history'}
-              </button>
+              <Button variant="secondary">{confirm?.noLabel || 'Keep history'}</Button>
             </AlertDialog.Cancel>
             <AlertDialog.Action asChild>
-              <button
-                onClick={confirmAccept}
-                style={{
-                  minHeight: '48px',
-                  padding: '0 20px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: 'var(--primary)',
-                  color: 'var(--on-primary)',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                }}
-                className="hv2"
-              >
-                {confirm?.yesLabel || 'Confirm'}
-              </button>
+              <Button onClick={confirmAccept}>{confirm?.yesLabel || 'Confirm'}</Button>
             </AlertDialog.Action>
           </div>
         </AlertDialog.Content>

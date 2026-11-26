@@ -37,6 +37,18 @@ describe('a KB source matched to a library article, with a URL', () => {
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener noreferrer"');
   });
+
+  it('makes the article the main action and the link the second one', () => {
+    // The link once carried the primary button's hover on a secondary look:
+    // dark text on a dark fill under the pointer. Its look, hover included, is
+    // now whichever kind of button it is.
+    const article = html.match(/<button[^>]*class="([^"]*)"/)[1];
+    const link = html.match(/<a [^>]*class="([^"]*)"/)[1];
+    expect(article).toContain('bg-primary');
+    expect(link).toContain('bg-surface');
+    expect(link).toContain('hover:bg-tint');
+    expect(link).not.toContain('bg-primary');
+  });
 });
 
 describe('a KB source with a URL and no article match', () => {
@@ -51,6 +63,12 @@ describe('a KB source with a URL and no article match', () => {
     expect(html).toContain('https://iris.who.int/handle/10665/324794');
     expect(html).toContain('(opens in a new tab)');
     expect(html).not.toContain('article');
+  });
+
+  it('makes the link the main action, being the only one', () => {
+    const link = html.match(/<a [^>]*class="([^"]*)"/)[1];
+    expect(link).toContain('bg-primary');
+    expect(link).toContain('text-on-primary');
   });
 });
 

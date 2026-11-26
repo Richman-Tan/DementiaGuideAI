@@ -6,6 +6,7 @@ import { ChatProvider } from './state/ChatContext.jsx';
 import { useRoute, useWidth, navigate } from './state/router.js';
 import Shell from './components/Shell.jsx';
 import { SourceDrawer, ConfirmDialog, Toast } from './components/Chrome.jsx';
+import { Button } from './components/ui/Button.jsx';
 import Landing from './screens/Landing.jsx';
 import Onboarding from './screens/Onboarding.jsx';
 import Home from './screens/Home.jsx';
@@ -167,24 +168,15 @@ class ErrorBoundary extends React.Component {
         <p style={{ margin: 0, color: 'var(--text2)', maxWidth: '30em' }}>
           Your conversations and settings are safe. Try going back to the start.
         </p>
-        <button
+        <Button
+          size="lg"
           onClick={() => {
             this.setState({ error: null });
             navigate('#/app/home');
           }}
-          style={{
-            minHeight: '50px',
-            padding: '0 24px',
-            borderRadius: '14px',
-            border: 'none',
-            background: 'var(--primary)',
-            color: 'var(--on-primary)',
-            fontWeight: '700',
-            cursor: 'pointer',
-          }}
         >
           Home
-        </button>
+        </Button>
       </div>
     );
   }

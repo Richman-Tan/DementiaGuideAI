@@ -1,6 +1,7 @@
 import React from 'react';
 import { go } from '../state/router.js';
 import { AvatarBust } from '../avatar/AvatarStage.jsx';
+import { Button } from '../components/ui/Button.jsx';
 
 export default function NotFound() {
   return (
@@ -22,38 +23,12 @@ export default function NotFound() {
         The link may be old or mistyped. No worries — everything is still here.
       </p>
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <button
-          onClick={go('#/app/home')}
-          style={{
-            minHeight: '50px',
-            padding: '0 24px',
-            borderRadius: '14px',
-            border: 'none',
-            background: 'var(--primary)',
-            color: 'var(--on-primary)',
-            fontWeight: '700',
-            cursor: 'pointer',
-          }}
-          className="hv2"
-        >
+        <Button size="lg" onClick={go('#/app/home')}>
           Home
-        </button>
-        <button
-          onClick={go('#/app/library')}
-          style={{
-            minHeight: '50px',
-            padding: '0 24px',
-            borderRadius: '14px',
-            border: 'var(--bw) solid var(--border)',
-            background: 'var(--surface)',
-            color: 'var(--text)',
-            fontWeight: '700',
-            cursor: 'pointer',
-          }}
-          className="hv3"
-        >
+        </Button>
+        <Button size="lg" variant="secondary" onClick={go('#/app/library')}>
           Library
-        </button>
+        </Button>
       </div>
     </section>
   );

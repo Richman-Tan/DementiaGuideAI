@@ -3,36 +3,47 @@
    packages/core/design/tokens.ts.
    Theme switching: html[data-theme] + html[data-hc], set pre-paint in index.html
    and kept in sync by SettingsContext. Text scale: root font-size = 17px * scale. */
-/* scrollbar-gutter keeps the vertical scrollbar's space reserved whether or not
-   it is showing. Without it, any change to document height can add or remove the
-   scrollbar, which changes the viewport width and rewraps text. Also stops the
-   whole page shifting sideways whenever a chat answer grows past one screen. */
-html {
-  scrollbar-gutter: stable;
-}
-html,
-body {
-  margin: 0;
-  padding: 0;
-  background: var(--bg);
-}
-body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-a {
-  color: var(--primary-d);
-}
-a:hover {
-  color: var(--primary);
-}
-button {
-  font-family: inherit;
-}
-input,
-button {
-  font-size: inherit;
+/* These are in the base layer so that a utility class on a component can
+   override them: a rule outside any layer beats every layered one, and would
+   otherwise pin, say, a focused button's corners to 8px whatever its class
+   says. Inline styles still beat both, so the screens are unaffected. */
+@layer base {
+  /* scrollbar-gutter keeps the vertical scrollbar's space reserved whether or not
+     it is showing. Without it, any change to document height can add or remove the
+     scrollbar, which changes the viewport width and rewraps text. Also stops the
+     whole page shifting sideways whenever a chat answer grows past one screen. */
+  html {
+    scrollbar-gutter: stable;
+  }
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+  }
+  body {
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a {
+    color: var(--primary-d);
+  }
+  a:hover {
+    color: var(--primary);
+  }
+  button {
+    font-family: inherit;
+  }
+  input,
+  button {
+    font-size: inherit;
+  }
+  :focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
 }
 @keyframes dgBreathe {
   0%,
@@ -80,11 +91,6 @@ button {
   50% {
     transform: scaleY(1);
   }
-}
-:focus-visible {
-  outline: 3px solid var(--primary);
-  outline-offset: 2px;
-  border-radius: 8px;
 }
 @media (prefers-reduced-motion: reduce) {
   *,

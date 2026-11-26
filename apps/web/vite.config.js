@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { istanbulPre } from '../../scripts/test/istanbul-pre-plugin.mjs';
 import path from 'node:path';
 import { createReadStream, existsSync, statSync } from 'node:fs';
@@ -214,6 +215,7 @@ export default defineConfig(({ mode }) => {
       unityBrotliHeaders(),
       apiDevServer(),
       react(),
+      tailwindcss(),
     ],
     resolve: {
       alias: {

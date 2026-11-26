@@ -5,6 +5,7 @@ import { useSettings } from '../state/SettingsContext.jsx';
 import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
+import { Button } from '../components/ui/Button.jsx';
 
 export default function Library() {
   const { settings, effDark } = useSettings();
@@ -264,20 +265,7 @@ export default function Library() {
           <p
             style={{ margin: '0', color: 'var(--text2)' }}
           >{`Try different words — or ask ${who} in Chat instead; ${who} can search the whole library for you.`}</p>
-          <button
-            onClick={go('#/app/chat')}
-            style={{
-              minHeight: '48px',
-              padding: '0 22px',
-              borderRadius: '14px',
-              border: 'none',
-              background: 'var(--primary)',
-              color: 'var(--on-primary)',
-              fontWeight: '600',
-              cursor: 'pointer',
-            }}
-            className="hv2"
-          >{`Ask ${who} in Chat`}</button>
+          <Button onClick={go('#/app/chat')}>{`Ask ${who} in Chat`}</Button>
         </div>
       )}
     </section>

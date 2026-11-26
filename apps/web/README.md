@@ -75,6 +75,22 @@ the ElevenLabs WebSocket path needs the key in the browser.
   or if it fails to load, the same character keeps its name and voice: the
   stage shows the bust and speech plays through the headless audio engine.
 
+## Styling
+
+- **Design tokens** (colours, spacing, radii, type sizes, motion) are decided in
+  `packages/core/design/tokens.ts`. `npm run tokens` writes them out twice:
+  `src/styles/tokens.generated.css` (the CSS variables, per theme) and
+  `src/styles/theme.generated.css` (the Tailwind theme that names them). Tests
+  fail if either file is stale.
+- **Components** live in `src/components/ui` and are styled with Tailwind
+  classes. The theme is cleared of Tailwind's own palette, so a class can only
+  name a colour or radius that is a token, and one class follows the light,
+  dark and high-contrast themes. `Button` is the first.
+- **Most screens still style themselves inline.** They are being moved to the
+  component layer one at a time. Until the last has moved, Tailwind's reset is
+  left out (`src/styles/tailwind.css` says why), and the `hv1`–`hv9` hover
+  classes in `src/styles/app.css` stay for the controls not yet moved.
+
 ## Deploy
 
 This app and `apps/api` are **two separate Vercel projects**. Routing, headers and

@@ -1,0 +1,21 @@
+/* Tailwind, as a set of utility classes over the design tokens.
+
+   Its reset ("preflight") is left out on purpose. Most screens still style
+   themselves inline and lean on the browser's defaults for anything they do
+   not set, so a reset would shift them. It comes in when the last of those
+   screens has moved to the component layer.
+
+   Layers decide who wins. Anything in a later layer beats an earlier one, and
+   a rule in no layer beats them all, so the app's own element rules sit in
+   `base` (styles/tokens.css) where a utility class can override them.
+
+   What the classes can name is in theme.generated.css, written from
+   packages/core/design/tokens.ts.
+
+   Tailwind makes a class when it reads its name in a source file. `source`
+   keeps that reading to src/, so a class named only in a test is not made, and
+   a test cannot pass on a class the app never uses. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities) source('..');
+@import './theme.generated.css';

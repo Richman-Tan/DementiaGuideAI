@@ -7,6 +7,7 @@ import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { useChat } from '../state/ChatContext.jsx';
 import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
+import { Button } from '../components/ui/Button.jsx';
 
 export default function Article({ artId }) {
   const { settings, effDark } = useSettings();
@@ -44,22 +45,7 @@ export default function Article({ artId }) {
     return (
       <section style={{ padding: '60px 0', textAlign: 'center' }}>
         <h1 style={{ fontSize: '1.5rem' }}>We couldn't find that article</h1>
-        <button
-          onClick={go('#/app/library')}
-          style={{
-            minHeight: '48px',
-            padding: '0 22px',
-            borderRadius: '14px',
-            border: 'none',
-            background: 'var(--primary)',
-            color: 'var(--on-primary)',
-            fontWeight: '600',
-            cursor: 'pointer',
-          }}
-          className="hv2"
-        >
-          Back to Library
-        </button>
+        <Button onClick={go('#/app/library')}>Back to Library</Button>
       </section>
     );
   }
@@ -152,42 +138,13 @@ export default function Article({ artId }) {
             <p style={{ margin: '0 0 12px', lineHeight: '1.65' }}>
               This article couldn't be loaded. Check your connection and try again.
             </p>
-            <button
-              onClick={() => setAttempt((n) => n + 1)}
-              style={{
-                minHeight: '44px',
-                padding: '0 18px',
-                borderRadius: '12px',
-                border: 'none',
-                background: 'var(--primary)',
-                color: 'var(--on-primary)',
-                fontWeight: '600',
-                cursor: 'pointer',
-              }}
-              className="hv2"
-            >
-              Try again
-            </button>
+            <Button onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
           </div>
         )}
-        <button
+        <Button
+          size="lg"
+          className="mt-5 mb-8"
           onClick={() => askNow('Tell me more about ' + art.title.toLowerCase())}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '10px',
-            minHeight: '52px',
-            padding: '0 24px',
-            borderRadius: '14px',
-            border: 'none',
-            background: 'var(--primary)',
-            color: 'var(--on-primary)',
-            fontSize: '1rem',
-            fontWeight: '700',
-            cursor: 'pointer',
-            margin: '18px 0 30px',
-          }}
-          className="hv2"
         >
           <svg
             width="18"
@@ -202,7 +159,7 @@ export default function Article({ artId }) {
             <path d="M4 5h16v11H9l-5 4z" />
           </svg>
           {`Ask ${who} about this`}
-        </button>
+        </Button>
         <h2 style={{ fontSize: '1.2rem', margin: '0 0 12px' }}>Related articles</h2>
         <div
           style={{

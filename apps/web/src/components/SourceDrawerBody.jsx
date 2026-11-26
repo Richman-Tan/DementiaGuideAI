@@ -13,6 +13,7 @@
 import React from 'react';
 import * as S from '../data/services.js';
 import { catStyle } from '../lib/catStyle.js';
+import { Button } from './ui/Button.jsx';
 
 export function SourceDrawerBody({ drawer, effDark, onOpenArticle }) {
   const art = drawer.id ? S.getArticle(drawer.id) : null;
@@ -27,26 +28,6 @@ export function SourceDrawerBody({ drawer, effDark, onOpenArticle }) {
     : drawer.org
       ? `Source: ${drawer.org}`
       : 'Knowledge base source';
-
-  const actionBase = {
-    minHeight: '50px',
-    borderRadius: '14px',
-    fontWeight: '600',
-    fontSize: '1rem',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    textDecoration: 'none',
-  };
-  const linkStyle = articleId
-    ? {
-        ...actionBase,
-        border: 'var(--bw) solid var(--border)',
-        background: 'var(--surface)',
-        color: 'var(--text)',
-      }
-    : { ...actionBase, border: 'none', background: 'var(--primary)', color: 'var(--on-primary)' };
 
   return (
     <>
@@ -78,30 +59,22 @@ export function SourceDrawerBody({ drawer, effDark, onOpenArticle }) {
       <p style={{ margin: '0', color: 'var(--text2)', lineHeight: '1.65' }}>{excerpt}</p>
       <p style={{ margin: '0', color: 'var(--text2)', fontSize: '.88rem' }}>{metaLine}</p>
       {articleId && (
-        <button
-          onClick={() => onOpenArticle(articleId)}
-          style={{
-            ...actionBase,
-            border: 'none',
-            background: 'var(--primary)',
-            color: 'var(--on-primary)',
-          }}
-          className="hv2"
-        >
+        <Button size="lg" onClick={() => onOpenArticle(articleId)}>
           {art ? 'Read full article →' : 'Read related article →'}
-        </button>
+        </Button>
       )}
       {drawer.url && (
-        <a
+        // The main action when it is the only one; second to the article otherwise.
+        <Button
+          size="lg"
+          variant={articleId ? 'secondary' : 'primary'}
           href={drawer.url}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="View original source — opens in a new tab"
-          style={linkStyle}
-          className="hv2"
         >
           View original source (opens in a new tab)
-        </a>
+        </Button>
       )}
       {!articleId && !drawer.url && (
         <p style={{ margin: '0', color: 'var(--text2)', fontSize: '.92rem', lineHeight: 1.6 }}>

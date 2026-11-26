@@ -7,6 +7,7 @@
 import React from 'react';
 import { AvatarBust } from './AvatarStage.jsx';
 import { ensureUnityBoot } from './unity/unityBridge.js';
+import { Button } from '../components/ui/Button.jsx';
 
 export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
   const bustSize = compact ? 90 : 150;
@@ -99,22 +100,7 @@ export function AvatarLoadProgress({ phase, pct, name, compact = false }) {
             {!compact &&
               ' The download is large (about 230 MB), so a brief drop in connection can interrupt it.'}
           </div>
-          <button
-            onClick={ensureUnityBoot}
-            className="hv2"
-            style={{
-              minHeight: '46px',
-              padding: '0 22px',
-              borderRadius: '12px',
-              border: 'none',
-              background: 'var(--primary)',
-              color: 'var(--on-primary)',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Try again
-          </button>
+          <Button onClick={ensureUnityBoot}>Try again</Button>
         </>
       )}
     </div>

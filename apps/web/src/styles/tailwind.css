@@ -19,3 +19,9 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities) source('..');
 @import './theme.generated.css';
+
+/* Named here because they are not design tokens: the animations, whose
+   keyframes are in tokens.css. */
+@theme inline {
+  --animate-breathe: dgBreathe 5.5s ease-in-out infinite;
+}

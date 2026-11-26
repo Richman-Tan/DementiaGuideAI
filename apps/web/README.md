@@ -84,8 +84,10 @@ the ElevenLabs WebSocket path needs the key in the browser.
   fail if either file is stale.
 - **Components** live in `src/components/ui` and are styled with Tailwind
   classes. The theme is cleared of Tailwind's own palette, so a class can only
-  name a colour or radius that is a token, and one class follows the light,
-  dark and high-contrast themes. `Button` is the first.
+  name a colour, radius or type size that is a token, and one class follows
+  the light, dark and high-contrast themes. So far: `Button`, and `ChoiceGroup`
+  (one choice out of a few, as a radio group). The setup screens are the first
+  written entirely this way.
 - **Most screens still style themselves inline.** They are being moved to the
   component layer one at a time. Until the last has moved, Tailwind's reset is
   left out (`src/styles/tailwind.css` says why), and the `hv1`–`hv9` hover

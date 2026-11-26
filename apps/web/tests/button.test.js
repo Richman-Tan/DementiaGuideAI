@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Button, SIZES, VARIANTS } from '../src/components/ui/Button.jsx';
 import { spacingUnit, tokensToTailwindTheme } from '@core/design/toCss.ts';
-import { space, touchTarget } from '@core/design/tokens.ts';
+import { fontSize, space, touchTarget } from '@core/design/tokens.ts';
 
 const WEB = join(dirname(fileURLToPath(import.meta.url)), '..');
 const render = (props, children = 'Save') =>
@@ -48,6 +48,14 @@ describe('how it looks', () => {
     expect(classes).toEqual(
       expect.arrayContaining(['min-h-11', 'rounded-md', 'px-5', 'font-semibold'])
     );
+  });
+
+  it('takes the quiet look: no fill and no border until the pointer is on it', () => {
+    const classes = classesOf(render({ variant: 'ghost' }));
+    expect(classes).toEqual(
+      expect.arrayContaining(['bg-transparent', 'border-0', 'text-text-muted'])
+    );
+    expect(classes).toContain('not-disabled:not-aria-disabled:hover:bg-tint');
   });
 
   it('takes the secondary look, with the border width high contrast thickens', () => {
@@ -139,7 +147,10 @@ describe('the classes it uses', () => {
       .filter((c) => /^(bg|text|border)-[a-z]/.test(c) && !/^border-\(/.test(c))
       .map((c) => c.replace(/^(bg|text|border)-/, ''));
     expect(colours.length).toBeGreaterThan(4);
-    for (const colour of colours) expect(theme, colour).toContain(`--color-${colour}:`);
+    // `transparent` is a keyword, not a colour of ours.
+    for (const colour of colours.filter((c) => c !== 'transparent')) {
+      expect(theme, colour).toContain(`--color-${colour}:`);
+    }
   });
 
   it('name only radii that are design tokens', () => {
@@ -158,9 +169,16 @@ describe('the Tailwind theme', () => {
     expect(readFileSync(join(WEB, 'src/styles/theme.generated.css'), 'utf8')).toBe(theme);
   });
 
-  it('clears Tailwind’s own palette and radii, so only tokens can be named', () => {
+  it('clears Tailwind’s own palette, radii and type sizes, so only tokens can be named', () => {
     expect(theme).toContain('--color-*: initial;');
     expect(theme).toContain('--radius-*: initial;');
+    expect(theme).toContain('--text-*: initial;');
+  });
+
+  it('carries the type scale', () => {
+    for (const [name, size] of Object.entries(fontSize)) {
+      expect(theme).toContain(`--text-${name}: ${size};`);
+    }
   });
 
   it('points each colour at its variable, so one class follows every theme', () => {

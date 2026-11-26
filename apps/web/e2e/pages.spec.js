@@ -3,6 +3,34 @@
 // the app does with saved data it cannot read or that an older build wrote.
 import { test, mockProviders, seedStorage, installFakeUnity, expect } from './support.js';
 
+test.describe('installing the app', () => {
+  test('the page offers a manifest, and the manifest and each of its icons are served', async ({
+    page,
+  }) => {
+    await mockProviders(page);
+    await seedStorage(page);
+    await page.goto('/');
+    const href = await page.locator('link[rel="manifest"]').getAttribute('href');
+    expect(href).toBe('/manifest.webmanifest');
+
+    const response = await page.request.get(href);
+    expect(response.ok()).toBe(true);
+    const manifest = await response.json();
+    expect(manifest).toMatchObject({ name: 'DementiaGuide AI', display: 'standalone' });
+
+    for (const icon of manifest.icons) {
+      const image = await page.request.get(icon.src);
+      expect(image.ok(), icon.src).toBe(true);
+      expect(image.headers()['content-type']).toBe('image/png');
+    }
+    // Opening it where an installed app starts lands in the app, not on a blank page.
+    await page.goto(manifest.start_url);
+    await expect(
+      page.getByRole('heading', { name: /Good (morning|afternoon|evening)/ })
+    ).toBeVisible();
+  });
+});
+
 test.describe('landing page', () => {
   test('a first-time visitor is taken to setup from either button', async ({ page }) => {
     await mockProviders(page);

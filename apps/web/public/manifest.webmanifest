@@ -1,0 +1,21 @@
+{
+  "name": "DementiaGuide AI",
+  "short_name": "DementiaGuide",
+  "description": "Dementia care answers you can talk to: grounded, cited guidance by text or voice.",
+  "lang": "en-NZ",
+  "start_url": "/#/app/home",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f5f2",
+  "theme_color": "#4a7c8e",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

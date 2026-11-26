@@ -16,6 +16,10 @@ describe('committed brand assets', () => {
     const paths = built.map((f) => f.path);
     expect(paths).toContain('apps/web/public/favicon.svg');
     expect(paths).toContain('apps/web/public/apple-touch-icon.png');
+    // The installed web app's icons (apps/web/public/manifest.webmanifest).
+    expect(paths).toContain('apps/web/public/icon-192.png');
+    expect(paths).toContain('apps/web/public/icon-512.png');
+    expect(paths).toContain('apps/web/public/icon-maskable-512.png');
     expect(paths).toContain('apps/mobile/assets/icon.png');
     expect(paths).toContain('apps/mobile/assets/adaptive-icon.png');
   });

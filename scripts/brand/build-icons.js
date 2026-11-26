@@ -314,6 +314,33 @@ const PNG_FILES = [
     alpha: false,
   },
 
+  // The installed web app (apps/web/public/manifest.webmanifest). Two sizes of
+  // the rounded tile for "any" use, and a "maskable" one: full-bleed and opaque,
+  // because the device cuts its own shape out of it, with the mark held inside
+  // the area every mask keeps. Android's adaptive safe zone (61% of the width)
+  // is tighter than the 80% the web manifest spec asks for, so it serves both.
+  {
+    out: 'apps/web/public/icon-192.png',
+    size: 192,
+    tile: 'rounded',
+    ratio: tileRatio,
+    alpha: true,
+  },
+  {
+    out: 'apps/web/public/icon-512.png',
+    size: 512,
+    tile: 'rounded',
+    ratio: tileRatio,
+    alpha: true,
+  },
+  {
+    out: 'apps/web/public/icon-maskable-512.png',
+    size: 512,
+    tile: 'square',
+    widthPx: 'android-safe',
+    alpha: false,
+  },
+
   // Mobile. Expo's `web.favicon`; unused in practice (the real web app is Vite)
   // but kept in step so the two never disagree.
   {

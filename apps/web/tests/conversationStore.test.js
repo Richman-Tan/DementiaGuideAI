@@ -280,6 +280,9 @@ describe('migrateLegacyHistory', () => {
       { role: 'aria', text: 'A1', citations: [{ num: 1 }] },
       { role: 'aria', text: '', streaming: false },
       { role: 'aria', text: 'partial', streaming: true },
+      // The example conversation was never theirs, and is not saved as theirs.
+      { role: 'user', text: 'How do I manage sundowning?', demo: true },
+      { role: 'aria', text: 'An example answer', demo: true },
     ]);
     await store.migrateLegacyHistory('u1', 'c1');
     expect(fake.calls).toHaveLength(1);

@@ -99,7 +99,8 @@ export function useVoiceConversation({
 
   const historyForModel = () =>
     messagesRef.current
-      .filter((m) => m.text && !m.streaming)
+      // The example conversation is not theirs, and is not sent as if it were.
+      .filter((m) => m.text && !m.streaming && !m.demo)
       .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
 
   // ─── Core conversation loop (producer/consumer, mobile parity) ─────────────

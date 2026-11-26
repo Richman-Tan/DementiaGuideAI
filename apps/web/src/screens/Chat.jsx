@@ -265,8 +265,32 @@ export default function Chat({ isDesktop, isMobile }) {
                 const y = catStyle(c.cat, effDark);
                 return { ...c, dot: y.dot };
               });
+              // The example conversation is labelled where it starts, and so is
+              // the point where the visitor's own begins.
+              const before = messages[i - 1];
+              const label =
+                m.demo && !before?.demo
+                  ? 'An example conversation'
+                  : !m.demo && before?.demo
+                    ? 'Your conversation'
+                    : null;
               return (
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {label && (
+                    <div
+                      role="note"
+                      style={{
+                        alignSelf: 'center',
+                        color: 'var(--text2)',
+                        fontSize: '.8rem',
+                        fontWeight: '600',
+                        letterSpacing: '.02em',
+                        padding: '4px 0',
+                      }}
+                    >
+                      {label}
+                    </div>
+                  )}
                   {isUser ? (
                     <>
                       <div

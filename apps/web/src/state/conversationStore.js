@@ -187,7 +187,8 @@ export async function migrateLegacyHistory(userId, conversationId) {
     if (!legacy?.length) return;
 
     const rows = legacy
-      .filter((m) => m.text && !m.streaming)
+      // The example conversation was never theirs: it is not saved to their account.
+      .filter((m) => m.text && !m.streaming && !m.demo)
       .map((m) => ({
         conversation_id: conversationId,
         role: m.role === 'user' ? 'user' : 'assistant',

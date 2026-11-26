@@ -198,6 +198,9 @@ describe('a typed question with REST audio', () => {
       answer(['Rest helps. ', 'Try a routine.'], { sources })
     );
     const history = [
+      // The example conversation is not sent as if the visitor had said it.
+      { role: 'user', text: 'How do I manage sundowning?', demo: true },
+      { role: 'aria', text: 'An example answer', demo: true },
       { role: 'user', text: 'Earlier question' },
       { role: 'aria', text: 'Earlier answer' },
       { role: 'aria', text: '', streaming: false },

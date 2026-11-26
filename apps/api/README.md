@@ -153,8 +153,40 @@ maximum length. Both figures are estimates from list prices and assumed token
 counts, not measurements. Set a hard spend limit on the Anthropic account as
 well; it is the backstop that does not depend on this code.
 
-Known gaps: the cap counts turns, not dollars, and an interrupted turn is counted
-but its tokens are not written to `usage_events`.
+#### A budget in dollars
+
+Set `DAILY_BUDGET_USD` (say `5`) and a day is also capped as an amount of money
+(`src/budget.ts`; table and functions in
+`scripts/migrations/2026-11-27_daily_spend.sql`, which must be run first):
+
+1. Before a turn calls the model, the most it could cost is set aside from
+   today's budget: everything it can send priced as input, the answer running
+   to its full length, and the two helper calls. On Opus 5.5 that is about 36
+   cents for a written answer and 20 for a spoken one.
+2. If today's spending plus everything set aside would pass the budget, the
+   turn is refused (429, `code: "demo_limit"`) before it has cost anything.
+3. When the turn ends, what it cost takes the reservation's place:
+
+| The turn | Is charged |
+|---|---|
+| Answered | Its tokens at list prices, plus the helper calls |
+| Was interrupted while the model was writing | The whole reservation: its usage never arrives |
+| Ended before the model was asked, or the model call failed | The helper calls only |
+
+Because a reservation is the ceiling and a typical turn costs about a tenth of
+it, the last turns of a day are refused while a little of the budget is still
+unspent. That is the direction a cap should err in.
+
+If the budget cannot be reached, or the model has no list price to budget
+with, the turn is refused (503). A turn that never settles (the function was
+killed mid-answer) keeps its reservation until the day ends.
+
+It covers the model calls, which are billed by use. Speech is billed against a
+plan's monthly allowance, which is a ceiling already, and stays on its request
+counters. The amounts are estimates from list prices, not the provider's bill;
+the hard limit on the provider account is still the backstop.
+
+Known gap: an interrupted turn's tokens are not written to `usage_events`.
 
 ### What is recorded about a turn
 

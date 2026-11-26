@@ -146,10 +146,16 @@ function fakeNetwork({
   return calls;
 }
 
-function backend(bump: (key: string, limit: number) => unknown = () => true) {
-  const rpc = vi.fn(async (_fn: string, args: Record<string, unknown>) =>
-    bump(String(args.p_code), Number(args.p_limit))
-  );
+function backend(
+  bump: (key: string, limit: number) => unknown = () => true,
+  // The dollar budget's two functions: what `spend_reserve` answers.
+  reserve: () => unknown = () => '2026-11-27'
+) {
+  const rpc = vi.fn(async (fn: string, args: Record<string, unknown>) => {
+    if (fn === 'spend_reserve') return reserve();
+    if (fn === 'spend_settle') return null;
+    return bump(String(args.p_code), Number(args.p_limit));
+  });
   const recordUsage = vi.fn();
   const recordTrace = vi.fn();
   return { rpc, recordUsage, recordTrace } satisfies TurnBackend;
@@ -336,6 +342,74 @@ describe('composeTurnHandler: switched on', () => {
     await composeTurnHandler({ ...ENV, TURN_TRACES: 'off' }, services)(request(), response());
     expect(services.recordTrace).not.toHaveBeenCalled();
     expect(services.recordUsage).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no dollar budget unless one is set', async () => {
+    fakeNetwork();
+    const services = backend();
+    await composeTurnHandler(ENV, services)(request(), response());
+    expect(services.rpc.mock.calls.map(([fn]) => fn)).toEqual([
+      'bump_study_usage',
+      'bump_study_usage',
+    ]);
+  });
+
+  it('with DAILY_BUDGET_USD set, sets the turn’s ceiling aside and settles with what it cost', async () => {
+    fakeNetwork();
+    const services = backend();
+    const res = response();
+    await composeTurnHandler({ ...ENV, DAILY_BUDGET_USD: '5' }, services)(request(), res);
+    expect(events(res).at(-1)).toEqual({ type: 'done', stopReason: 'end_turn' });
+
+    const spend = services.rpc.mock.calls.filter(([fn]) => fn.startsWith('spend_'));
+    expect(spend.map(([fn]) => fn)).toEqual(['spend_reserve', 'spend_settle']);
+    const reserved = spend[0]![1] as { p_micros: number; p_limit_micros: number };
+    expect(reserved.p_limit_micros).toBe(5_000_000);
+    // About 36 cents for a written answer on Opus 5.5 running to its limit.
+    expect(reserved.p_micros).toBeGreaterThan(300_000);
+    expect(reserved.p_micros).toBeLessThan(450_000);
+
+    const settled = spend[1]![1] as Record<string, unknown>;
+    expect(settled).toMatchObject({ p_day: '2026-11-27', p_reserved_micros: reserved.p_micros });
+    // 900 input, 120 output, 1000 read from the cache and 50 written to it, at
+    // list prices, plus the helper calls: under a cent and a half.
+    expect(settled.p_spent_micros).toBeGreaterThan(6_000);
+    expect(settled.p_spent_micros).toBeLessThan(15_000);
+  });
+
+  it('refuses once the day’s dollars are spent, after counting the request and before any model call', async () => {
+    const calls = fakeNetwork();
+    const services = backend(
+      () => true,
+      () => null
+    );
+    const res = response();
+    await composeTurnHandler({ ...ENV, DAILY_BUDGET_USD: '5' }, services)(request(), res);
+    expect(res.statusCode).toBe(429);
+    expect(res.body).toEqual({
+      error: "The live demo has reached today's limit.",
+      code: 'demo_limit',
+    });
+    expect(to(calls, '/v1/messages')).toEqual([]);
+    expect(services.rpc.mock.calls.map(([fn]) => fn)).toEqual([
+      'bump_study_usage',
+      'bump_study_usage',
+      'spend_reserve',
+    ]);
+    expect(services.recordTrace).not.toHaveBeenCalled();
+  });
+
+  it('ignores a budget that is not an amount above zero, and says so', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    fakeNetwork();
+    const services = backend();
+    const res = response();
+    await composeTurnHandler({ ...ENV, DAILY_BUDGET_USD: 'five' }, services)(request(), res);
+    expect(events(res).at(-1)).toEqual({ type: 'done', stopReason: 'end_turn' });
+    expect(services.rpc.mock.calls.some(([fn]) => fn.startsWith('spend_'))).toBe(false);
+    expect(log).toHaveBeenCalledWith(
+      '[turn] DAILY_BUDGET_USD is "five", which is not an amount above zero; no dollar budget is in force'
+    );
   });
 
   it('refuses, with the reason code, once the shared daily limit is used, and calls no model', async () => {

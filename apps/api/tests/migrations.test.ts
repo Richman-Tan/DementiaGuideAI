@@ -597,3 +597,119 @@ describe('the trace of each turn (turn_traces)', () => {
     await scratch.close();
   }, 120_000);
 });
+
+describe('the day’s budget in dollars (spend_reserve, spend_settle)', () => {
+  let ledger: PGlite;
+  const today = async () =>
+    (await ledger.query<{ day: string }>(`select (now() at time zone 'utc')::date::text as day`))
+      .rows[0]!.day;
+  const reserve = async (micros: number, limit: number) =>
+    (
+      await ledger.query<{ day: string | null }>(`select spend_reserve($1, $2)::text as day`, [
+        micros,
+        limit,
+      ])
+    ).rows[0]!.day;
+  const settle = (day: string, reserved: number, spent: number) =>
+    ledger.query(`select spend_settle($1::date, $2, $3)`, [day, reserved, spent]);
+  const row = async () =>
+    (
+      await ledger.query<{ reserved: number; spent: number }>(
+        `select reserved_micros::int as reserved, spent_micros::int as spent from daily_spend`
+      )
+    ).rows[0];
+
+  beforeAll(async () => {
+    ledger = await freshDatabase();
+    await migrate(ledger);
+  }, 120_000);
+
+  afterAll(async () => {
+    await ledger.close();
+  });
+
+  it('sets money aside, and answers with the day it was set aside under', async () => {
+    expect(await reserve(400_000, 1_000_000)).toBe(await today());
+    expect(await row()).toEqual({ reserved: 400_000, spent: 0 });
+  });
+
+  it('counts what is already set aside: a second turn fits, a third does not', async () => {
+    expect(await reserve(400_000, 1_000_000)).toBe(await today());
+    // 800,000 is set aside; another 400,000 would pass the million.
+    expect(await reserve(400_000, 1_000_000)).toBeNull();
+    // A refusal changes nothing.
+    expect(await row()).toEqual({ reserved: 800_000, spent: 0 });
+    // Exactly reaching the limit is allowed.
+    expect(await reserve(200_000, 1_000_000)).toBe(await today());
+    expect(await row()).toEqual({ reserved: 1_000_000, spent: 0 });
+  });
+
+  it('settling replaces what was set aside with what was spent, and makes room again', async () => {
+    await settle(await today(), 400_000, 41_200);
+    expect(await row()).toEqual({ reserved: 600_000, spent: 41_200 });
+    expect(await reserve(350_000, 1_000_000)).toBe(await today());
+    expect(await row()).toEqual({ reserved: 950_000, spent: 41_200 });
+  });
+
+  it('records spending above the reservation as it is, and then refuses more', async () => {
+    await settle(await today(), 950_000, 990_000);
+    expect(await row()).toEqual({ reserved: 0, spent: 1_031_200 });
+    expect(await reserve(1, 1_000_000)).toBeNull();
+    // A higher limit lets the day go on.
+    expect(await reserve(1, 2_000_000)).toBe(await today());
+    await settle(await today(), 1, 0);
+  });
+
+  it('never lets what is set aside go below nothing', async () => {
+    await settle(await today(), 5_000_000, 0);
+    expect((await row())?.reserved).toBe(0);
+  });
+
+  it('settles under the day the money was set aside, not the day it ends', async () => {
+    await ledger.exec(
+      `insert into daily_spend (day, reserved_micros) values ('2026-01-01', 300000)`
+    );
+    await settle('2026-01-01', 300_000, 20_000);
+    const { rows } = await ledger.query<{ reserved: number; spent: number }>(
+      `select reserved_micros::int as reserved, spent_micros::int as spent
+       from daily_spend where day = '2026-01-01'`
+    );
+    expect(rows[0]).toEqual({ reserved: 0, spent: 20_000 });
+    // Today's row is untouched by it.
+    expect((await row())?.spent).toBeGreaterThan(1_000_000);
+  });
+
+  it('refuses negative amounts, which would create budget out of nothing', async () => {
+    await expect(reserve(-1, 1_000_000)).rejects.toThrow(/cannot be negative/);
+    await expect(settle(await today(), -1, 0)).rejects.toThrow(/cannot be negative/);
+    await expect(settle(await today(), 0, -1)).rejects.toThrow(/cannot be negative/);
+  });
+
+  it('is what the server calls: the named arguments it sends are accepted', async () => {
+    const [made] = await as<{ day: string | null }>(
+      ledger,
+      'service_role',
+      `select spend_reserve(p_micros => 1, p_limit_micros => 9000000)::text as day`
+    );
+    expect(made?.day).toBe(await today());
+    await as(
+      ledger,
+      'service_role',
+      `select spend_settle(p_day => '${made!.day}', p_reserved_micros => 1, p_spent_micros => 0)`
+    );
+  });
+
+  it('is out of visitors’ reach entirely: not the table, and neither function', async () => {
+    for (const role of ['anon', 'authenticated']) {
+      await expect(as(ledger, role, `select 1 from daily_spend`)).rejects.toThrow(
+        /permission denied for table daily_spend/
+      );
+      await expect(as(ledger, role, `select spend_reserve(1, 1000000)`)).rejects.toThrow(
+        /permission denied for function spend_reserve/
+      );
+      await expect(
+        as(ledger, role, `select spend_settle(current_date, 1000000, 0)`)
+      ).rejects.toThrow(/permission denied for function spend_settle/);
+    }
+  });
+});

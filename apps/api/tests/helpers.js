@@ -117,6 +117,7 @@ export async function load(modulePath, { env = {}, admin } = {}) {
       rows.map((r) => ({ id: r.id, display_title: r.display_title }))
     ),
     selectOne: vi.fn(async () => null),
+    selectMany: vi.fn(async () => []),
     insertReturning: vi.fn(async () => null),
     updateWhere: vi.fn(async () => ({})),
     ...admin,

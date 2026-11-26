@@ -100,6 +100,31 @@ describe('selectOne', () => {
   });
 });
 
+describe('selectMany', () => {
+  it('GETs every matching row, with the query passed through as written', async () => {
+    const admin = await loadAdmin();
+    const rows = [{ day: '2026-11-27' }, { day: '2026-11-26' }];
+    const fetch = stubFetch(jsonResponse(rows));
+    expect(
+      await admin.selectMany('turn_traces_daily', 'select=*&day=gte.2026-11-14&order=day.desc')
+    ).toEqual(rows);
+    const c = call(fetch);
+    expect(c.url).toBe(
+      `${URL_BASE}/rest/v1/turn_traces_daily?select=*&day=gte.2026-11-14&order=day.desc`
+    );
+    expect(c.method).toBe('GET');
+    expect(c.headers.Authorization).toBe(`Bearer ${KEY}`);
+  });
+
+  it('is an empty list when nothing matches, or the reply is not a list', async () => {
+    const admin = await loadAdmin();
+    stubFetch(jsonResponse([]));
+    expect(await admin.selectMany('daily_spend', 'select=*')).toEqual([]);
+    stubFetch(jsonResponse({ message: 'odd' }));
+    expect(await admin.selectMany('daily_spend', 'select=*')).toEqual([]);
+  });
+});
+
 describe('insertReturning', () => {
   it('POSTs the row as a one-element array and asks for the representation back', async () => {
     const admin = await loadAdmin();

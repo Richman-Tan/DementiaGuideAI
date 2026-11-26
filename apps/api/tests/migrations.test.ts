@@ -19,6 +19,8 @@ import { PGlite } from '@electric-sql/pglite';
 import { vector } from '@electric-sql/pglite/vector';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { toTraceRow } from '../src/trace.ts';
+import { buildUsageReport } from '../src/usageReport.ts';
+import type { DailyTraceRow } from '../src/usageReport.ts';
 import type { TraceRow } from '../src/trace.ts';
 import type { TurnSummary } from '../src/turn.ts';
 
@@ -571,9 +573,12 @@ describe('the trace of each turn (turn_traces)', () => {
     // A spoken turn is its own line.
     await put({ request: { ...finished().request, modality: 'voice' }, timings: waited(800) });
 
-    const { rows } = await scratch.query<Record<string, unknown>>(
-      `select * from turn_traces_daily order by modality`
-    );
+    // The day as text, which is how it arrives over the API.
+    const { rows } = await scratch
+      .query<Record<string, unknown>>(
+        `select to_jsonb(d) as line from turn_traces_daily d order by modality`
+      )
+      .then((result) => ({ rows: result.rows.map((r) => r.line as Record<string, unknown>) }));
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({
       modality: 'text',
@@ -594,6 +599,48 @@ describe('the trace of each turn (turn_traces)', () => {
       cache_write_tokens: 200,
     });
     expect(rows[1]).toMatchObject({ modality: 'voice', turns: 1, first_token_p50_ms: 800 });
+
+    // The admin tool's report reads exactly these columns; a renamed one would
+    // show as a zero, not as an error.
+    const report = buildUsageReport({
+      traces: rows as unknown as DailyTraceRow[],
+      spend: [],
+      from: '2026-11-01',
+      to: '2026-11-30',
+      dailyLimitUsd: null,
+    });
+    expect(Object.keys(rows[0]!).sort()).toEqual(
+      [
+        'day',
+        'modality',
+        'model',
+        'pipeline_version',
+        'turns',
+        'failed',
+        'interrupted',
+        'without_passages',
+        'emergencies',
+        'first_token_p50_ms',
+        'first_token_p95_ms',
+        'total_p50_ms',
+        'input_tokens',
+        'output_tokens',
+        'cache_read_tokens',
+        'cache_write_tokens',
+      ].sort()
+    );
+    expect(report.totals).toMatchObject({
+      turns: 7,
+      failed: 1,
+      interrupted: 1,
+      withoutPassages: 1,
+      emergencies: 1,
+    });
+    expect(report.lines[0]).toMatchObject({
+      firstWordP50Ms: 2500,
+      tokens: { input: 3600, output: 480, cacheRead: 4000, cacheWrite: 200 },
+    });
+    expect(report.totals.estimatedCostUsd).toBeGreaterThan(0);
     await scratch.close();
   }, 120_000);
 });

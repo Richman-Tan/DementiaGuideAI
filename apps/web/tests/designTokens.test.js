@@ -48,6 +48,43 @@ describe('text on the primary colour', () => {
   });
 
   it('is what the primary hover styles use too', () => {
-    expect(read('styles/app.css')).toContain('color: var(--on-primary);');
+    expect(read('styles/app.css')).toContain('color: var(--on-primary) !important;');
+  });
+});
+
+describe('the hover styles', () => {
+  const css = read('styles/app.css');
+  // One rule for each hover class, hv1 to hv9.
+  const rules = [...css.matchAll(/^\.hv(\d)([^{]*)\{([^}]*)\}/gm)];
+
+  it('exist for each of the nine hover classes', () => {
+    expect(rules.map((r) => r[1])).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9']);
+  });
+
+  it('are !important, because the controls carry their resting colours inline', () => {
+    // An inline style beats any stylesheet rule that is not. Without it these
+    // rules did nothing at all.
+    for (const [, n, , body] of rules) {
+      const declarations = body
+        .split(';')
+        .map((d) => d.trim())
+        .filter(Boolean);
+      expect(declarations.length, `hv${n}`).toBeGreaterThan(0);
+      for (const declaration of declarations) {
+        expect(declaration, `hv${n}`).toMatch(/ !important$/);
+      }
+    }
+  });
+
+  it('leave a disabled control alone', () => {
+    for (const [, n, selector] of rules) {
+      expect(selector, `hv${n}`).toContain(":not(:disabled, [aria-disabled='true']):hover");
+    }
+  });
+
+  it('use only the design tokens', () => {
+    for (const [, n, , body] of rules) {
+      expect(body, `hv${n}`).not.toMatch(/#[0-9a-f]{3,6}\b/i);
+    }
   });
 });

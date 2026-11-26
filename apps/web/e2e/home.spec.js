@@ -84,9 +84,34 @@ test.describe('home', () => {
   test('the desktop sidebar navigates, opens voice, and switches the theme', async ({ page }) => {
     await openHome(page, { darkMode: false });
     const sidebar = page.getByRole('complementary').first();
-    await sidebar.getByRole('button', { name: 'Library' }).click();
+    const nav = sidebar.getByRole('navigation', { name: 'Main' });
+    // The destinations are links, and the one you are on says so.
+    await expect(nav.getByRole('link')).toHaveText([
+      'Home',
+      'Chat',
+      'Library',
+      'Settings',
+      'Talk to Aaron',
+    ]);
+    await expect(nav.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
+    await expect(nav.locator('[aria-current]')).toHaveCount(1);
+    await nav.getByRole('link', { name: 'Library' }).click();
     await expect(page).toHaveURL(/#\/app\/library$/);
-    await sidebar.getByRole('button', { name: 'Talk to Aaron' }).click();
+    await expect(nav.getByRole('link', { name: 'Library' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    await expect(nav.locator('[aria-current]')).toHaveCount(1);
+    // An article is still part of the library.
+    await page.goto('/#/app/library/managing-sundowning');
+    await expect(nav.getByRole('link', { name: 'Library' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    // A page that is none of the four marks none of them.
+    await page.goto('/#/privacy');
+    await expect(nav.locator('[aria-current]')).toHaveCount(0);
+    await nav.getByRole('link', { name: 'Talk to Aaron' }).click();
     await expect(page).toHaveURL(/#\/app\/voice$/);
     await page.goto('/#/app/home');
 
@@ -103,14 +128,18 @@ test.describe('home when the window changes size', () => {
     page,
   }) => {
     await openHome(page);
-    await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
+    // There is one navigation at every width; what changes is where it is.
+    const nav = page.getByRole('navigation', { name: 'Main' });
+    const sidebar = page.getByRole('complementary');
+    await expect(nav).toHaveCount(1);
+    await expect(sidebar).toHaveCount(1);
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible();
+    await expect(nav).toHaveCount(1);
+    await expect(sidebar).toHaveCount(0);
+    await expect(nav.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
     await page.setViewportSize({ width: 1280, height: 720 });
-    await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
-    await expect(
-      page.getByRole('complementary').first().getByRole('button', { name: 'Talk to Aaron' })
-    ).toBeVisible();
+    await expect(sidebar).toHaveCount(1);
+    await expect(sidebar.getByRole('link', { name: 'Talk to Aaron' })).toBeVisible();
   });
 });
 
@@ -119,12 +148,16 @@ test.describe('home on a tablet', () => {
 
   test('the icon rail replaces the sidebar and still reaches every screen', async ({ page }) => {
     await openHome(page);
-    const rail = page.getByRole('complementary').first();
-    await rail.getByRole('button', { name: 'Chat' }).click();
+    const rail = page.getByRole('complementary').first().getByRole('navigation', { name: 'Main' });
+    // Icons alone, so each one carries its name.
+    await expect(rail.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
+    await rail.getByRole('link', { name: 'Chat' }).click();
     await expect(page).toHaveURL(/#\/app\/chat$/);
-    await rail.getByRole('button', { name: 'Settings' }).click();
+    await expect(rail.getByRole('link', { name: 'Chat' })).toHaveAttribute('aria-current', 'page');
+    await rail.getByRole('link', { name: 'Settings' }).click();
     await expect(page).toHaveURL(/#\/app\/settings$/);
-    await rail.getByRole('button', { name: 'Talk to Aaron' }).click();
+    await expect(rail.locator('[aria-current]')).toHaveCount(1);
+    await rail.getByRole('link', { name: 'Talk to Aaron' }).click();
     await expect(page).toHaveURL(/#\/app\/voice$/);
   });
 });
@@ -139,11 +172,16 @@ test.describe('home on a phone', () => {
     // No subtitle line under the greeting on a phone.
     await expect(page.getByText('Ask a question, explore resources')).toHaveCount(0);
     const tabs = page.getByRole('navigation', { name: 'Main' });
-    await tabs.getByRole('button', { name: 'Library' }).click();
+    await tabs.getByRole('link', { name: 'Library' }).click();
     await expect(page).toHaveURL(/#\/app\/library$/);
-    await tabs.getByRole('button', { name: 'Home' }).click();
+    await expect(tabs.getByRole('link', { name: 'Library' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    await tabs.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL(/#\/app\/home$/);
-    await tabs.getByRole('button', { name: 'Talk to Aaron' }).click();
+    await expect(tabs.locator('[aria-current]')).toHaveCount(1);
+    await tabs.getByRole('link', { name: 'Talk to Aaron' }).click();
     await expect(page).toHaveURL(/#\/app\/voice$/);
     await page.goto('/#/app/home');
     await page.getByRole('button', { name: 'What respite care options are available?' }).click();

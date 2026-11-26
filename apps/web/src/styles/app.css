@@ -1,33 +1,51 @@
-/* Hover styles generated from the prototype's style-hover attributes. */
-.hv1:hover {
-  background: var(--primary-d);
-  color: var(--on-primary);
+/* Hover feedback: what a control looks like under the pointer.
+
+   Every declaration here is !important, and has to be. The screens set each
+   control's resting colours as inline styles, and an inline style beats any
+   stylesheet rule that is not !important. Without it these rules did nothing
+   at all: for a long time no button, link or card in the app responded to the
+   pointer. The component layer will carry its own states; until then this is
+   what makes them work.
+
+   A control that is disabled, or marked aria-disabled because pressing it does
+   nothing just now, does not light up. */
+.hv1:not(:disabled, [aria-disabled='true']):hover {
+  background: var(--primary-d) !important;
+  color: var(--on-primary) !important;
 }
-.hv2:hover {
-  background: var(--primary-d);
+.hv2:not(:disabled, [aria-disabled='true']):hover {
+  background: var(--primary-d) !important;
 }
-.hv3:hover {
-  background: var(--tint);
+.hv3:not(:disabled, [aria-disabled='true']):hover {
+  background: var(--tint) !important;
 }
-.hv4:hover {
-  background: var(--tint);
-  color: var(--primary-d);
+.hv4:not(:disabled, [aria-disabled='true']):hover {
+  background: var(--tint) !important;
+  color: var(--primary-d) !important;
 }
-.hv5:hover {
-  color: var(--primary-d);
+.hv5:not(:disabled, [aria-disabled='true']):hover {
+  color: var(--primary-d) !important;
 }
-.hv6:hover {
-  border-color: var(--primary);
+.hv6:not(:disabled, [aria-disabled='true']):hover {
+  border-color: var(--primary) !important;
 }
-.hv7:hover {
-  background: var(--primary);
-  color: var(--on-primary);
+.hv7:not(:disabled, [aria-disabled='true']):hover {
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
 }
-.hv8:hover {
-  background: var(--tint);
-  border-color: var(--primary);
+.hv8:not(:disabled, [aria-disabled='true']):hover {
+  background: var(--tint) !important;
+  border-color: var(--primary) !important;
 }
-.hv9:hover {
-  border-color: var(--primary);
-  background: var(--tint);
+.hv9:not(:disabled, [aria-disabled='true']):hover {
+  border-color: var(--primary) !important;
+  background: var(--tint) !important;
+}
+/* The change eases in rather than snapping. The reduced-motion rule in
+   tokens.css turns this off for anyone who has asked for less movement. */
+:is(.hv1, .hv2, .hv3, .hv4, .hv5, .hv6, .hv7, .hv8, .hv9) {
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }

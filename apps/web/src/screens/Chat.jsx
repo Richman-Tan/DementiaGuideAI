@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as S from '../data/services.js';
 import { useSettings } from '../state/SettingsContext.jsx';
 import { useChat } from '../state/ChatContext.jsx';
+import { useUi } from '../state/UiContext.jsx';
 import { go } from '../state/router.js';
 import { catStyle } from '../lib/catStyle.js';
 import { AvatarBust } from '../avatar/AvatarStage.jsx';
@@ -9,6 +10,8 @@ import { getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { GrowTextArea } from '../components/GrowTextArea.jsx';
 import { AnswerText } from '../components/AnswerText.jsx';
 import { AnswerTrace } from '../components/AnswerTrace.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { announcement, answerForCopy } from '../lib/answerPlain.js';
 import { makeStickTracker } from '../lib/autoscroll.js';
 
 const Dots = () => (
@@ -42,8 +45,20 @@ const Dots = () => (
 export default function Chat({ isDesktop, isMobile }) {
   const { settings, effDark } = useSettings();
   const who = getAvatarProfile(settings.avatarId).name;
-  const { messages, typing, chatError, chatErrorMsg, send, retry, newConvo, setDrawer, scrollCb } =
-    useChat();
+  const {
+    messages,
+    typing,
+    chatError,
+    chatErrorMsg,
+    send,
+    stop,
+    notice,
+    retry,
+    newConvo,
+    setDrawer,
+    scrollCb,
+  } = useChat();
+  const { showToast } = useUi();
   const [chatInput, setChatInput] = useState('');
   const [panel, setPanel] = useState(true);
   const chatEl = useRef(null);
@@ -84,18 +99,201 @@ export default function Chat({ isDesktop, isMobile }) {
     if (chatEl.current) chatEl.current.scrollTop = chatEl.current.scrollHeight;
   };
 
-  const submit = () => {
-    if (chatInput.trim()) {
-      send(chatInput);
-      setChatInput('');
-    }
-  };
   // Keep the last message visible when the composer grows and shrinks the transcript.
   const growCb = useCallback(() => {
     scrollCb.current && scrollCb.current();
   }, [scrollCb]);
   const chatEmpty = messages.length === 0 && !typing;
+  // From the question being sent until the answer is whole (or stopped).
+  const answering = typing || !!messages[messages.length - 1]?.streaming;
+  const submit = () => {
+    // One turn at a time. Enter while an answer is on its way keeps what was
+    // typed in the box, where it used to be thrown away unsent.
+    if (!chatInput.trim() || answering) return;
+    send(chatInput);
+    setChatInput('');
+  };
+  const copy = async (message) => {
+    try {
+      await navigator.clipboard.writeText(answerForCopy(message));
+      showToast('Copied');
+    } catch {
+      // No permission, or a browser without the clipboard API.
+      showToast("Couldn't copy — select the text instead");
+    }
+  };
   const showPanel = panel && isDesktop;
+  // The answer being written, if there is one, and everything before it.
+  const last = messages[messages.length - 1];
+  const pending = last?.streaming ? last : null;
+  const settled = pending ? messages.slice(0, -1) : messages;
+
+  // One message of the conversation, as it is drawn.
+  const renderMessage = (m, i) => {
+    const isUser = m.role === 'user';
+    const chips = (m.citations || []).map((c) => {
+      const y = catStyle(c.cat, effDark);
+      return { ...c, dot: y.dot };
+    });
+    // The example conversation is labelled where it starts, and so is
+    // the point where the visitor's own begins.
+    const before = messages[i - 1];
+    const label =
+      m.demo && !before?.demo
+        ? 'An example conversation'
+        : !m.demo && before?.demo
+          ? 'Your conversation'
+          : null;
+    return (
+      <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        {label && (
+          <div
+            role="note"
+            style={{
+              alignSelf: 'center',
+              color: 'var(--text2)',
+              fontSize: '.8rem',
+              fontWeight: '600',
+              letterSpacing: '.02em',
+              padding: '4px 0',
+            }}
+          >
+            {label}
+          </div>
+        )}
+        {isUser ? (
+          <>
+            <div
+              title={m.time}
+              style={{
+                alignSelf: 'flex-end',
+                maxWidth: '82%',
+                background: 'var(--primary)',
+                color: 'var(--on-primary)',
+                borderRadius: '18px 18px 4px 18px',
+                padding: '12px 16px',
+                lineHeight: '1.55',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {m.text}
+            </div>
+            <div
+              style={{
+                alignSelf: 'flex-end',
+                color: 'var(--text2)',
+                fontSize: '.75rem',
+                paddingRight: '4px',
+              }}
+            >
+              {m.time}
+            </div>
+          </>
+        ) : (
+          <>
+            <div
+              title={m.time}
+              style={{
+                alignSelf: 'flex-start',
+                maxWidth: '86%',
+                background: 'var(--surface)',
+                border: 'var(--bw) solid var(--border)',
+                borderLeft: m.safety ? '4px solid var(--amber)' : 'var(--bw) solid var(--border)',
+                borderRadius: '18px 18px 18px 4px',
+                padding: '14px 18px',
+                lineHeight: '1.6',
+                boxShadow: 'var(--shadow)',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              <AnswerText text={m.text} citations={m.citations} onCite={setDrawer} />
+              {m.safety && (
+                <div
+                  style={{
+                    marginTop: '12px',
+                    background: 'var(--amber-bg)',
+                    border: 'var(--bw) solid var(--amber-bd)',
+                    borderLeft: '4px solid var(--amber)',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
+                    color: 'var(--text)',
+                  }}
+                >
+                  <strong>If you need help now:</strong> {S.SAFETY_NOTE}
+                </div>
+              )}
+            </div>
+            {chips.length > 0 && !m.streaming && (
+              <div
+                style={{
+                  alignSelf: 'flex-start',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: '8px',
+                  maxWidth: '86%',
+                }}
+              >
+                <span
+                  style={{
+                    color: 'var(--text2)',
+                    fontSize: '.8rem',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '.05em',
+                  }}
+                >
+                  Sources
+                </span>
+                {chips.map((c, j) => (
+                  <button
+                    key={j}
+                    onClick={() => setDrawer(c)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      minHeight: '36px',
+                      padding: '4px 14px',
+                      borderRadius: '999px',
+                      border: 'var(--bw) solid var(--border)',
+                      background: 'var(--surface)',
+                      color: 'var(--text)',
+                      fontSize: '.85rem',
+                      cursor: 'pointer',
+                    }}
+                    className="hv8"
+                  >
+                    <span
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: c.dot,
+                      }}
+                    />
+                    {c.title}
+                  </button>
+                ))}
+              </div>
+            )}
+            {!m.streaming && <AnswerTrace trace={m.trace} />}
+            <div className="flex flex-wrap items-center gap-x-2 self-start">
+              <span style={{ color: 'var(--text2)', fontSize: '.75rem', paddingLeft: '4px' }}>
+                {m.time}
+                {m.stopped && ' · stopped before it was finished'}
+              </span>
+              {!m.streaming && m.text && (
+                <Button variant="ghost" onClick={() => copy(m)}>
+                  Copy
+                </Button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <section
@@ -260,175 +458,22 @@ export default function Chat({ isDesktop, isMobile }) {
                 <span style={{ flex: '1', height: '1px', background: 'var(--border)' }} />
               </div>
             )}
-            {messages.map((m, i) => {
-              const isUser = m.role === 'user';
-              const chips = (m.citations || []).map((c) => {
-                const y = catStyle(c.cat, effDark);
-                return { ...c, dot: y.dot };
-              });
-              // The example conversation is labelled where it starts, and so is
-              // the point where the visitor's own begins.
-              const before = messages[i - 1];
-              const label =
-                m.demo && !before?.demo
-                  ? 'An example conversation'
-                  : !m.demo && before?.demo
-                    ? 'Your conversation'
-                    : null;
-              return (
-                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {label && (
-                    <div
-                      role="note"
-                      style={{
-                        alignSelf: 'center',
-                        color: 'var(--text2)',
-                        fontSize: '.8rem',
-                        fontWeight: '600',
-                        letterSpacing: '.02em',
-                        padding: '4px 0',
-                      }}
-                    >
-                      {label}
-                    </div>
-                  )}
-                  {isUser ? (
-                    <>
-                      <div
-                        title={m.time}
-                        style={{
-                          alignSelf: 'flex-end',
-                          maxWidth: '82%',
-                          background: 'var(--primary)',
-                          color: 'var(--on-primary)',
-                          borderRadius: '18px 18px 4px 18px',
-                          padding: '12px 16px',
-                          lineHeight: '1.55',
-                          whiteSpace: 'pre-wrap',
-                        }}
-                      >
-                        {m.text}
-                      </div>
-                      <div
-                        style={{
-                          alignSelf: 'flex-end',
-                          color: 'var(--text2)',
-                          fontSize: '.75rem',
-                          paddingRight: '4px',
-                        }}
-                      >
-                        {m.time}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div
-                        title={m.time}
-                        style={{
-                          alignSelf: 'flex-start',
-                          maxWidth: '86%',
-                          background: 'var(--surface)',
-                          border: 'var(--bw) solid var(--border)',
-                          borderLeft: m.safety
-                            ? '4px solid var(--amber)'
-                            : 'var(--bw) solid var(--border)',
-                          borderRadius: '18px 18px 18px 4px',
-                          padding: '14px 18px',
-                          lineHeight: '1.6',
-                          boxShadow: 'var(--shadow)',
-                          whiteSpace: 'pre-wrap',
-                        }}
-                      >
-                        <AnswerText text={m.text} citations={m.citations} onCite={setDrawer} />
-                        {m.safety && (
-                          <div
-                            style={{
-                              marginTop: '12px',
-                              background: 'var(--amber-bg)',
-                              border: 'var(--bw) solid var(--amber-bd)',
-                              borderLeft: '4px solid var(--amber)',
-                              borderRadius: '12px',
-                              padding: '12px 14px',
-                              color: 'var(--text)',
-                            }}
-                          >
-                            <strong>If you need help now:</strong> {S.SAFETY_NOTE}
-                          </div>
-                        )}
-                      </div>
-                      {chips.length > 0 && !m.streaming && (
-                        <div
-                          style={{
-                            alignSelf: 'flex-start',
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            alignItems: 'center',
-                            gap: '8px',
-                            maxWidth: '86%',
-                          }}
-                        >
-                          <span
-                            style={{
-                              color: 'var(--text2)',
-                              fontSize: '.8rem',
-                              fontWeight: '600',
-                              textTransform: 'uppercase',
-                              letterSpacing: '.05em',
-                            }}
-                          >
-                            Sources
-                          </span>
-                          {chips.map((c, j) => (
-                            <button
-                              key={j}
-                              onClick={() => setDrawer(c)}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '7px',
-                                minHeight: '36px',
-                                padding: '4px 14px',
-                                borderRadius: '999px',
-                                border: 'var(--bw) solid var(--border)',
-                                background: 'var(--surface)',
-                                color: 'var(--text)',
-                                fontSize: '.85rem',
-                                cursor: 'pointer',
-                              }}
-                              className="hv8"
-                            >
-                              <span
-                                style={{
-                                  width: '8px',
-                                  height: '8px',
-                                  borderRadius: '50%',
-                                  background: c.dot,
-                                }}
-                              />
-                              {c.title}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      {!m.streaming && <AnswerTrace trace={m.trace} />}
-                      <div
-                        style={{
-                          alignSelf: 'flex-start',
-                          color: 'var(--text2)',
-                          fontSize: '.75rem',
-                          paddingLeft: '4px',
-                        }}
-                      >
-                        {m.time}
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
+            {/* The finished messages are a log: a screen reader reads each one as it
+                is added, whole. The answer still being written is drawn below it,
+                outside, and joins it when it is finished. Announcing an answer as
+                it streams would restart the reading with every word. */}
+            <div
+              role="log"
+              aria-label="Conversation"
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+            >
+              {settled.map(renderMessage)}
+            </div>
+            {pending && renderMessage(pending, settled.length)}
             {typing && <Dots />}
             {chatError && (
               <div
+                role="alert"
                 style={{
                   alignSelf: 'flex-start',
                   maxWidth: '86%',
@@ -554,38 +599,53 @@ export default function Chat({ isDesktop, isMobile }) {
                 <path d="M12 17v4" />
               </svg>
             </button>
-            <button
-              onClick={submit}
-              aria-label="Send"
-              style={{
-                width: '44px',
-                height: '44px',
-                flexShrink: '0',
-                borderRadius: '12px',
-                border: 'none',
-                background: 'var(--primary)',
-                color: 'var(--on-primary)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              className="hv2"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            {answering ? (
+              // While an answer is on its way the way to send becomes the way to stop.
+              <Button
+                icon
+                variant="secondary"
+                className="shrink-0"
+                aria-label="Stop answering"
+                onClick={stop}
               >
-                <path d="M4 12h14" />
-                <path d="M13 6l6 6-6 6" />
-              </svg>
-            </button>
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" />
+                </svg>
+              </Button>
+            ) : (
+              <button
+                onClick={submit}
+                aria-label="Send"
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  flexShrink: '0',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'var(--primary)',
+                  color: 'var(--on-primary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                className="hv2"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 12h14" />
+                  <path d="M13 6l6 6-6 6" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -635,6 +695,11 @@ export default function Chat({ isDesktop, isMobile }) {
           </button>
         </aside>
       )}
+      {/* What a sighted reader gets from the dots: that an answer is on its way,
+          or that it was stopped. The answer itself is read from the log. */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {announcement(notice, who)}
+      </div>
     </section>
   );
 }

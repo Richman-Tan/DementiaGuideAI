@@ -6,6 +6,7 @@
 // the answer, its sources and the safety verdict all come back on that stream.
 // The endpoint is answered here in the browser, in the format the real one
 // writes (apps/api/src/sse.ts). Supabase is the in-memory one in support.js.
+import { AxeBuilder } from '@axe-core/playwright';
 import { test, mockProviders, mockSupabase, seedStorage, ask, expect } from './support.js';
 
 const SOURCE = {
@@ -193,6 +194,12 @@ test.describe('chat on the server pipeline, with no key and no access code', () 
     ).toBeVisible();
     await expect(panel.getByText('claude-opus-5-5')).toBeVisible();
     await expect(panel.getByText('v3-claude-nz@e2e')).toBeVisible();
+
+    // The open panel passes the automated accessibility rules.
+    const { violations } = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(' ')}`)).toEqual([]);
   });
 
   test('a follow-up carries the conversation so far', async ({ page }) => {

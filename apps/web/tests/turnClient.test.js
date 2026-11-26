@@ -271,6 +271,63 @@ describe('serverGenerate', () => {
       sources: [SOURCE],
       safety: false,
       safetyLevel: 'none',
+      trace: expect.objectContaining({ model: 'm', pipelineVersion: 'v3@abc' }),
+    });
+  });
+
+  it('keeps how the answer was made: the search, the check, the time and the tokens', async () => {
+    reply(
+      ANSWER.map((e) =>
+        e.type === 'retrieval'
+          ? {
+              ...e,
+              query: 'managing sundowning',
+              chunks: [
+                {
+                  id: 'kb-1',
+                  title: 'Managing evening restlessness',
+                  org: 'Alzheimers NZ',
+                  url: null,
+                  similarity: 0.71,
+                },
+                { id: 'kb-2', title: 'Carer support', org: null, url: null, similarity: 0.42 },
+              ],
+            }
+          : e
+      )
+    );
+    const { trace } = await serverGenerate({ question: 'q', onToken: vi.fn() });
+    expect(trace).toEqual({
+      model: 'm',
+      pipelineVersion: 'v3@abc',
+      promptVersion: 'v3',
+      modality: 'text',
+      search: {
+        mode: 'fresh',
+        query: 'managing sundowning',
+        ms: 40,
+        passages: [
+          // The answer cited the first passage as [1] and did not use the second.
+          {
+            id: 'kb-1',
+            title: 'Managing evening restlessness',
+            org: 'Alzheimers NZ',
+            similarity: 0.71,
+            cited: 1,
+          },
+          { id: 'kb-2', title: 'Carer support', org: null, similarity: 0.42, cited: null },
+        ],
+      },
+      safety: { level: 'none', categories: [], source: 'triage' },
+      usage: {
+        inputTokens: 1,
+        outputTokens: 1,
+        cacheReadTokens: 0,
+        cacheWriteTokens: 0,
+        costUsd: null,
+      },
+      timings: { search: null, firstWords: null, total: 900 },
+      stopReason: 'end_turn',
     });
   });
 
@@ -302,6 +359,8 @@ describe('serverGenerate', () => {
       sources: [],
       safety: true,
       safetyLevel: 'emergency',
+      // No `meta` event came, so there is nothing to say about how it was made.
+      trace: null,
     });
   });
 

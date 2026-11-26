@@ -13,6 +13,7 @@ import {
   TURN_LIMITS,
   TurnRequestError,
 } from '@core/rag/client/turnStream.ts';
+import { buildTrace } from '../lib/answerTrace.js';
 import { mapSettingsToRag } from '../state/mapSettingsToRag.js';
 import { apiUrl } from './apiBase.js';
 import { mapSourcesToCitations } from './sourceCitations.js';
@@ -80,6 +81,8 @@ export async function serverGenerate({
   let detail = '';
   let final = null;
   let safety = 'none';
+  // Kept for the "how this answer was made" panel.
+  const seen = {};
   // Tells a caller that speaks the lead that it has all of it, as soon as that
   // is known: the detail has begun, or the answer has ended without any. The
   // lead's last sentence has nothing after it to mark its end otherwise, and
@@ -102,6 +105,9 @@ export async function serverGenerate({
     },
   });
   for await (const event of events) {
+    if (['meta', 'retrieval', 'safety', 'usage', 'timings', 'done'].includes(event.type)) {
+      seen[event.type] = event;
+    }
     if (event.type === 'retrieval') {
       // The server retrieves and then calls the model at once, so one event
       // marks both stage boundaries on this side of the network.
@@ -137,5 +143,14 @@ export async function serverGenerate({
     sources: final?.sources || [],
     safety: safety !== 'none',
     safetyLevel: safety,
+    trace: buildTrace({
+      meta: seen.meta,
+      retrieval: seen.retrieval,
+      safety: seen.safety,
+      usage: seen.usage,
+      timings: seen.timings,
+      stopReason: seen.done?.stopReason,
+      sources: final?.sources,
+    }),
   };
 }

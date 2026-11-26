@@ -5,11 +5,9 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 const DEFAULTS = {
   onboarded: false,
   setupType: 'caring',
-  supportLevel: 'somewhat',
   ariaStyle: 'warm',
   responseStyle: 'balanced',
   jargon: 'plain',
-  communication: 'both',
   voiceSpeed: 'normal',
   textScale: 1,
   darkMode: null, // null = follow system

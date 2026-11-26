@@ -12,6 +12,7 @@ export const AVATAR_PROFILES = {
     name: 'Aaron',
     label: 'Classic',
     description: 'Lifelike 3D guide (Unity)',
+    voiceNote: 'A man’s voice, warm and steady.',
     renderer: 'unity',
     unityCharacterId: 'aaron',
     elevenVoiceId: 'nPczCjzI2devNBz1zQrb', // Brian — warm, mature male
@@ -24,6 +25,7 @@ export const AVATAR_PROFILES = {
     name: 'Ariana',
     label: 'New',
     description: 'Lifelike 3D guide (Unity)',
+    voiceNote: 'A woman’s voice, warm and clear.',
     renderer: 'unity',
     unityCharacterId: 'ariana',
     elevenVoiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella — warm, clear female

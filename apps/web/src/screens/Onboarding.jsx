@@ -1,855 +1,169 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useSettings, isSystemDark } from '../state/SettingsContext.jsx';
+// Setup, in three steps: meet your guide, say how answers should be written,
+// and read the one thing everyone has to know before starting.
+//
+// It was twelve steps. Two of its questions were never read by anything, and
+// most of the rest are choices a person can make later, once they have seen an
+// answer: those are in Settings. What is asked here is what changes the very
+// first answer.
+//
+// Every choice has a default, so each step can be passed with one press.
+import React from 'react';
+import { useSettings } from '../state/SettingsContext.jsx';
 import { useUi } from '../state/UiContext.jsx';
 import { navigate } from '../state/router.js';
 import { AvatarBust } from '../avatar/AvatarStage.jsx';
 import { getAvatarProfile, AVATAR_PROFILES } from '../avatar/avatarProfiles.js';
-import { hasCredentials } from '../services/transport.js';
-import { tts } from '../services/ttsClient.js';
-import { speechRateFor } from '../state/mapSettingsToRag.js';
+import { Button } from '../components/ui/Button.jsx';
+import { ChoiceGroup } from '../components/ui/ChoiceGroup.jsx';
+import {
+  askingFor,
+  current as currentChoice,
+  DETAIL,
+  MEDICAL_WORDS,
+  pick,
+} from '../lib/answerChoices.js';
 
-// Steps 2–8 are plain option pickers; 1/9/10/11/12 have bespoke layouts.
-// {name} is the helper that will actually appear (Aaron by default), never a
-// hard-coded name: a tester met one name on this screen and another on Home.
-const OBDEFS = {
-  2: {
-    key: 'setupType',
-    title: 'Who is setting up this app today?',
-    sub: 'This helps {name} speak to you in the right way.',
-    opts: [
-      ['caring', "I'm caring for someone"],
-      ['professional', 'I work in care professionally'],
-      ['someone-else', "I'm setting it up for someone else"],
-      ['exploring', "I'm exploring for myself"],
-    ],
-  },
-  3: {
-    key: 'supportLevel',
-    title: 'How comfortable are you with using apps like this?',
-    sub: '',
-    opts: [
-      ['very', 'Very comfortable'],
-      ['somewhat', 'Somewhat comfortable'],
-      [
-        'guidance',
-        "I'd like extra guidance",
-        "We'll add a little more explanation throughout the app",
-      ],
-    ],
-  },
-  4: {
-    key: 'ariaStyle',
-    title: 'What kind of helper feels right for you?',
-    sub: 'You can always change this later.',
-    opts: [
-      ['warm', 'Warm & encouraging'],
-      ['calm', 'Calm & steady'],
-      ['practical', 'Straightforward & practical'],
-    ],
-  },
-  5: {
-    key: 'responseStyle',
-    title: 'When you ask a question, how much detail would you like?',
-    sub: '',
-    opts: [
-      ['short', 'Short and simple'],
-      ['balanced', 'Balanced'],
-      ['thorough', 'Thorough with explanations'],
-    ],
-  },
-  6: {
-    key: 'jargon',
-    title: 'When medical words come up, what would you prefer?',
-    sub: '',
-    opts: [
-      ['plain', 'Plain language only'],
-      ['explained', 'Medical terms with a short explanation'],
-      ['fine', 'Medical terms are fine'],
-    ],
-  },
-  7: {
-    key: 'communication',
-    title: 'How would you like to talk with {name}?',
-    sub: '',
-    opts: [
-      ['speak', 'Speak my questions', 'Hold a button and ask your question out loud'],
-      ['type', 'Type my questions', 'Use the keyboard to write your questions'],
-      ['both', 'Both'],
-    ],
-  },
-  8: {
-    key: 'voiceSpeed',
-    title: 'How fast would you like {name} to speak?',
-    sub: 'You can change this in Settings at any time.',
-    opts: [
-      ['slower', 'Slower'],
-      ['normal', 'Normal'],
-      ['faster', 'Faster'],
-    ],
-  },
-};
+const STEPS = 3;
 
-const L = (map, v) => map[v] || v || '—';
-const listNames = (xs) =>
-  xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0] || '';
-const LIFELIKE = listNames(Object.values(AVATAR_PROFILES).map((p) => p.name));
+const GUIDES = Object.values(AVATAR_PROFILES).map((profile) => ({
+  value: profile.id,
+  label: profile.name,
+  note: profile.voiceNote,
+}));
 
 export default function Onboarding({ step }) {
-  const { settings, setSetting, setMany, effDark } = useSettings();
+  const { settings, setSetting, setMany } = useSettings();
   const { showToast } = useUi();
+  // Whoever is chosen is who speaks, from the first heading on: a tester once
+  // met one name on this screen and another on Home.
   const profile = getAvatarProfile(settings.avatarId);
   const name = profile.name;
-  const withName = (s) => (s || '').replace(/\{name\}/g, name);
-  // Voice preview: idle | loading | playing | nokey | error. It used to animate
-  // for 2.8 s without making a sound, which testers reasonably read as broken.
-  const [pv, setPv] = useState('idle');
-  const audioRef = useRef(null);
-  useEffect(
-    () => () => {
-      audioRef.current?.pause();
-    },
-    []
+
+  // An address for a step that does not exist shows the nearest one that does.
+  const current = Math.min(STEPS, Math.max(1, step || 1));
+  const go = (n) => navigate('#/onboarding/' + n);
+  const leave = (message) => {
+    setSetting('onboarded', true);
+    navigate('#/app/home');
+    showToast(message);
+  };
+  const finish = () => leave("You're all set — welcome");
+  const skip = () => leave('Setup skipped — you can redo it in Settings');
+
+  const choice = (definition) => (
+    <ChoiceGroup
+      label={definition.label}
+      value={currentChoice(definition, settings)}
+      onChange={(value) => setMany(pick(definition, value))}
+      options={definition.options}
+    />
   );
 
-  const obStep = Math.min(12, Math.max(1, step || 1));
-  const obGo = (n) => navigate('#/onboarding/' + n);
-  const obNext = () => (obStep >= 12 ? finish() : obGo(obStep + 1));
-  const finish = () => {
-    setSetting('onboarded', true);
-    navigate('#/app/home');
-    showToast("You're all set — welcome");
-  };
-  const skip = () => {
-    setSetting('onboarded', true);
-    navigate('#/app/home');
-    showToast('Setup skipped — you can redo it in Settings');
-  };
-  const preview = async () => {
-    audioRef.current?.pause();
-    if (!hasCredentials()) {
-      setPv('nokey');
-      return;
-    }
-    setPv('loading');
-    try {
-      // Same voice and rate as a real reply: the effective profile's voice at
-      // the speed just chosen on this step.
-      const { audio } = await tts(`Kia ora — I'm ${name}. This is about how I'll sound.`, {
-        speechRate: speechRateFor(settings),
-        elevenVoiceId: profile.elevenVoiceId ?? null,
-        openaiVoice: profile.openaiVoice ?? null,
-      });
-      const a = new Audio(audio);
-      audioRef.current = a;
-      a.onended = () => setPv('idle');
-      await a.play();
-      setPv('playing');
-    } catch {
-      setPv('error');
-    }
-  };
-
-  const def = OBDEFS[obStep];
-  const showContinue = obStep >= 2 && obStep <= 10;
-  const options = def
-    ? def.opts.map((o) => {
-        const sel = settings[def.key] === o[0];
-        return {
-          label: o[1],
-          desc: o[2] || '',
-          bc: sel ? 'var(--primary)' : 'var(--border)',
-          bw2: sel ? '2px' : 'var(--bw)',
-          bg: sel ? 'var(--tint)' : 'var(--surface)',
-          tickO: sel ? 1 : 0,
-          pick: () => {
-            const extra = def.key === 'responseStyle' ? { concise: o[0] === 'short' } : {};
-            setMany({ [def.key]: o[0], ...extra });
-          },
-        };
-      })
-    : [];
-
-  const sizeOpts = [
-    ['Small', 0.85, '15px'],
-    ['Medium', 1, '19px'],
-    ['Large', 1.25, '24px'],
-  ].map(([label, v, fs]) => {
-    const sel = settings.textScale === v;
-    return {
-      label,
-      fs,
-      bc: sel ? 'var(--primary)' : 'var(--border)',
-      bw2: sel ? '2px' : 'var(--bw)',
-      bg: sel ? 'var(--tint)' : 'var(--surface)',
-      pick: () => setSetting('textScale', v),
-    };
-  });
-
-  const obToggles = [
-    {
-      label: 'Dark mode',
-      sub: 'Easier on the eyes in low light',
-      on: effDark,
-      toggle: () => setSetting('darkMode', !effDark),
-    },
-    {
-      label: 'High contrast',
-      sub: 'Increase colour contrast for readability',
-      on: settings.highContrast,
-      toggle: () => setSetting('highContrast', !settings.highContrast),
-    },
-    {
-      label: 'Subtitles during voice replies',
-      sub: `See ${name}'s words on screen while you listen`,
-      on: settings.subtitles,
-      toggle: () => setSetting('subtitles', !settings.subtitles),
-    },
-    {
-      label: `Show ${name} on screen`,
-      sub: 'Display the visual avatar on screen',
-      on: settings.showAvatar,
-      toggle: () => setSetting('showAvatar', !settings.showAvatar),
-    },
-  ];
-
-  const summary = [
-    [
-      'Who is setting up',
-      L(
-        {
-          caring: "I'm caring for someone",
-          professional: 'I work in care professionally',
-          'someone-else': 'Setting up for someone else',
-          exploring: 'Exploring for myself',
-        },
-        settings.setupType
-      ),
-      2,
-    ],
-    [
-      'Comfort with apps',
-      L(
-        {
-          very: 'Very comfortable',
-          somewhat: 'Somewhat comfortable',
-          guidance: 'Extra guidance please',
-        },
-        settings.supportLevel
-      ),
-      3,
-    ],
-    [
-      `${name}'s style`,
-      L(
-        {
-          warm: 'Warm & encouraging',
-          calm: 'Calm & steady',
-          practical: 'Straightforward & practical',
-        },
-        settings.ariaStyle
-      ),
-      4,
-    ],
-    [
-      'Detail level',
-      L(
-        { short: 'Short and simple', balanced: 'Balanced', thorough: 'Thorough' },
-        settings.responseStyle
-      ),
-      5,
-    ],
-    [
-      'Medical words',
-      L(
-        {
-          plain: 'Plain language only',
-          explained: 'Explained briefly',
-          fine: 'Medical terms are fine',
-        },
-        settings.jargon
-      ),
-      6,
-    ],
-    [
-      `Talking with ${name}`,
-      L(
-        { speak: 'Speak my questions', type: 'Type my questions', both: 'Speak or type' },
-        settings.communication
-      ),
-      7,
-    ],
-    [
-      'Voice speed',
-      L({ slower: 'Slower', normal: 'Normal', faster: 'Faster' }, settings.voiceSpeed),
-      8,
-    ],
-    ['Text size', L({ 0.85: 'Small', 1: 'Medium', 1.25: 'Large' }, settings.textScale), 9],
-    [
-      'Display',
-      ((settings.darkMode === null ? isSystemDark() : settings.darkMode) ? 'Dark' : 'Light') +
-        (settings.highContrast ? ' · high contrast' : '') +
-        (settings.subtitles ? ' · subtitles on' : ''),
-      10,
-    ],
-  ];
-
   return (
-    <section
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '20px 16px 40px',
-        boxSizing: 'border-box',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '18px',
-          flex: '1',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            minHeight: '44px',
-          }}
-        >
-          {obStep > 1 && (
-            <button
-              onClick={() => obGo(obStep - 1)}
-              style={{
-                minHeight: '44px',
-                padding: '0 14px',
-                borderRadius: '12px',
-                border: 'none',
-                background: 'none',
-                color: 'var(--text2)',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-              className="hv4"
-            >
+    <section className="box-border flex min-h-screen flex-col items-center px-4 pt-5 pb-10">
+      <div className="flex w-full max-w-140 flex-1 flex-col gap-4">
+        <div className="flex min-h-11 items-center justify-between">
+          {current > 1 && (
+            <Button variant="ghost" onClick={() => go(current - 1)}>
               ← Back
-            </button>
+            </Button>
           )}
-          <span style={{ flex: '1' }} />
-          {showContinue && (
-            <button
-              onClick={skip}
-              style={{
-                minHeight: '44px',
-                padding: '0 14px',
-                borderRadius: '12px',
-                border: 'none',
-                background: 'none',
-                color: 'var(--text2)',
-                fontWeight: '600',
-                cursor: 'pointer',
-              }}
-              className="hv4"
-            >
+          <span className="flex-1" />
+          {current === 2 && (
+            <Button variant="ghost" onClick={skip}>
               Skip for now
-            </button>
+            </Button>
           )}
         </div>
+
         <div
-          style={{ display: 'flex', gap: '7px', justifyContent: 'center' }}
+          className="flex justify-center gap-2"
           role="progressbar"
           aria-label="Setup progress"
           aria-valuemin={1}
-          aria-valuemax={12}
-          aria-valuenow={obStep}
-          aria-valuetext={`Step ${obStep} of 12`}
+          aria-valuemax={STEPS}
+          aria-valuenow={current}
+          aria-valuetext={`Step ${current} of ${STEPS}`}
         >
-          {Array.from({ length: 12 }, (_, i) => (
+          {Array.from({ length: STEPS }, (_, i) => (
             <span
               key={i}
-              style={{
-                width: '9px',
-                height: '9px',
-                borderRadius: '50%',
-                background: i + 1 <= obStep ? 'var(--primary)' : 'var(--border)',
-              }}
+              className={`h-2 w-8 rounded-pill ${i < current ? 'bg-primary' : 'bg-border'}`}
             />
           ))}
         </div>
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: 'var(--bw) solid var(--border)',
-            borderRadius: '22px',
-            boxShadow: 'var(--shadow)',
-            padding: '30px 26px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-          }}
-        >
-          {obStep === 1 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '14px',
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ animation: 'dgBreathe 5.5s ease-in-out infinite' }}>
-                <AvatarBust size={120} />
-              </div>
-              <h1 style={{ margin: '0', fontSize: '1.7rem' }}>Kia ora — I'm {name}</h1>
-              <p
-                style={{ margin: '0', color: 'var(--text2)', maxWidth: '26em', textWrap: 'pretty' }}
-              >
-                I'm here to help with questions about dementia care. Let's set things up so I can
-                speak to you in the way that suits you best.
-              </p>
-              <p style={{ margin: '0', color: 'var(--text2)', fontSize: '.92rem' }}>
-                Set up in about 2 minutes
-              </p>
-              <button
-                onClick={() => obGo(2)}
-                style={{
-                  minHeight: '52px',
-                  padding: '0 30px',
-                  borderRadius: '14px',
-                  border: 'none',
-                  background: 'var(--primary)',
-                  color: 'var(--on-primary)',
-                  fontSize: '1.05rem',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                }}
-                className="hv2"
-              >
-                Let's begin
-              </button>
-              <button
-                onClick={skip}
-                style={{
-                  minHeight: '44px',
-                  padding: '0 18px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: 'none',
-                  color: 'var(--text2)',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                }}
-                className="hv5"
-              >
-                Skip setup
-              </button>
-            </div>
-          )}
 
-          {def && (
+        <div className="flex flex-col gap-5 rounded-xl border-(length:--bw) border-solid border-border bg-surface p-6 shadow-card">
+          {current === 1 && (
             <>
-              <h1 style={{ margin: '0', fontSize: '1.45rem', textWrap: 'pretty' }}>
-                {withName(def.title)}
-              </h1>
-              {!!def.sub && (
-                <p style={{ margin: '-6px 0 0', color: 'var(--text2)' }}>{withName(def.sub)}</p>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {options.map((o) => (
-                  <button
-                    key={o.label}
-                    onClick={o.pick}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '14px',
-                      textAlign: 'left',
-                      minHeight: '60px',
-                      padding: '14px 18px',
-                      borderRadius: '16px',
-                      cursor: 'pointer',
-                      color: 'var(--text)',
-                      border: `${o.bw2} solid ${o.bc}`,
-                      background: o.bg,
-                    }}
-                    className="hv6"
-                  >
-                    <span style={{ flex: '1' }}>
-                      <span style={{ display: 'block', fontWeight: '600', fontSize: '1.02rem' }}>
-                        {o.label}
-                      </span>
-                      {!!o.desc && (
-                        <span
-                          style={{
-                            display: 'block',
-                            color: 'var(--text2)',
-                            fontSize: '.92rem',
-                            marginTop: '2px',
-                          }}
-                        >
-                          {o.desc}
-                        </span>
-                      )}
-                    </span>
-                    <span
-                      style={{
-                        width: '26px',
-                        height: '26px',
-                        flexShrink: '0',
-                        borderRadius: '50%',
-                        background: 'var(--primary)',
-                        color: 'var(--on-primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '.85rem',
-                        opacity: o.tickO,
-                      }}
-                    >
-                      ✓
-                    </span>
-                  </button>
-                ))}
-              </div>
-              {obStep === 8 && (
-                <>
-                  <button
-                    onClick={preview}
-                    disabled={pv === 'loading'}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '10px',
-                      minHeight: '48px',
-                      borderRadius: '14px',
-                      border: 'var(--bw) solid var(--border)',
-                      background: 'var(--tint)',
-                      color: 'var(--primary-d)',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                    }}
-                    className="hv7"
-                  >
-                    {pv === 'loading' ? 'Loading the voice…' : '▶ Preview voice'}
-                  </button>
-                  {pv === 'nokey' && (
-                    <p
-                      role="status"
-                      style={{ margin: '0', color: 'var(--text2)', textAlign: 'center' }}
-                    >
-                      The voice needs an access code or your own key, so the preview can't play yet.
-                      You can add one later in Settings.
-                    </p>
-                  )}
-                  {pv === 'error' && (
-                    <p
-                      role="status"
-                      style={{ margin: '0', color: 'var(--text2)', textAlign: 'center' }}
-                    >
-                      The preview couldn't play. Check that your sound is on, then try again.
-                    </p>
-                  )}
-                  {pv === 'playing' && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '10px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          height: '30px',
-                        }}
-                      >
-                        {[
-                          ['var(--primary)', 0],
-                          ['var(--primary)', 0.15],
-                          ['var(--primary-l)', 0.3],
-                          ['var(--primary)', 0.45],
-                        ].map(([c, d], i) => (
-                          <span
-                            key={i}
-                            style={{
-                              width: '5px',
-                              height: '24px',
-                              borderRadius: '3px',
-                              background: c,
-                              animation: `dgBar .9s ease-in-out ${d}s infinite`,
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <div style={{ color: 'var(--text2)', fontStyle: 'italic' }}>
-                        “Kia ora — I'm {name}. This is about how I'll sound.”
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
-
-          {obStep === 9 && (
-            <>
-              <h1 style={{ margin: '0', fontSize: '1.45rem' }}>
-                How would you like the text to appear?
-              </h1>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                {sizeOpts.map((o) => (
-                  <button
-                    key={o.label}
-                    onClick={o.pick}
-                    style={{
-                      flex: '1',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '6px',
-                      minHeight: '84px',
-                      padding: '14px',
-                      borderRadius: '16px',
-                      cursor: 'pointer',
-                      color: 'var(--text)',
-                      border: `${o.bw2} solid ${o.bc}`,
-                      background: o.bg,
-                    }}
-                    className="hv6"
-                  >
-                    <span style={{ fontWeight: '700', fontSize: o.fs }}>A</span>
-                    <span style={{ color: 'var(--text2)', fontSize: '.9rem' }}>{o.label}</span>
-                  </button>
-                ))}
-              </div>
-              <div
-                style={{
-                  background: 'var(--elev)',
-                  border: 'var(--bw) solid var(--border)',
-                  borderRadius: '16px',
-                  padding: '18px',
-                }}
-              >
-                <p style={{ margin: '0', lineHeight: '1.7' }}>
-                  This is how text will look throughout the app. Pick the size that feels easiest to
-                  read — you can change it any time in Settings.
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="animate-breathe">
+                  <AvatarBust size={120} />
+                </div>
+                <h1 className="m-0 text-2xl text-balance">Kia ora — I'm {name}</h1>
+                <p className="m-0 max-w-[26em] text-pretty text-text-muted">
+                  I'm here to help with questions about dementia care. A few quick choices and we
+                  can start.
                 </p>
               </div>
-            </>
-          )}
-
-          {obStep === 10 && (
-            <>
-              <h1 style={{ margin: '0', fontSize: '1.45rem' }}>A few display choices</h1>
-              <p style={{ margin: '-6px 0 0', color: 'var(--text2)' }}>
-                These can all be changed later in Settings.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {obToggles.map((r) => (
-                  <div
-                    key={r.label}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '14px',
-                      minHeight: '60px',
-                      padding: '8px 4px',
-                      borderBottom: 'var(--bw) solid var(--border)',
-                    }}
-                  >
-                    <span style={{ flex: '1' }}>
-                      <span style={{ display: 'block', fontWeight: '600' }}>{r.label}</span>
-                      <span style={{ display: 'block', color: 'var(--text2)', fontSize: '.92rem' }}>
-                        {r.sub}
-                      </span>
-                    </span>
-                    <button
-                      role="switch"
-                      aria-checked={r.on ? 'true' : 'false'}
-                      aria-label={r.label}
-                      onClick={r.toggle}
-                      style={{
-                        position: 'relative',
-                        width: '52px',
-                        height: '32px',
-                        flexShrink: '0',
-                        borderRadius: '999px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        background: r.on ? 'var(--primary)' : 'var(--border)',
-                        transition: 'background .2s',
-                      }}
-                    >
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: '2px',
-                          left: r.on ? '22px' : '2px',
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          background: '#fff',
-                          boxShadow: '0 1px 3px rgba(0,0,0,.3)',
-                          transition: 'left .2s',
-                        }}
-                      />
-                    </button>
-                  </div>
-                ))}
+              <ChoiceGroup
+                label="Who would you like to talk with?"
+                value={profile.id}
+                onChange={(id) => setSetting('avatarId', id)}
+                options={GUIDES}
+              />
+              <div className="flex flex-col items-center gap-1">
+                <Button size="lg" className="self-stretch" onClick={() => go(2)}>
+                  Let's begin
+                </Button>
+                <Button variant="ghost" onClick={skip}>
+                  Skip setup
+                </Button>
               </div>
             </>
           )}
 
-          {obStep === 11 && (
+          {current === 2 && (
             <>
-              <h1 style={{ margin: '0', fontSize: '1.45rem' }}>One important thing to know</h1>
-              <div
-                style={{
-                  background: 'var(--amber-bg)',
-                  border: 'var(--bw) solid var(--amber-bd)',
-                  borderRadius: '16px',
-                  padding: '20px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                }}
-              >
-                <p style={{ margin: '0' }}>
+              <div className="flex flex-col gap-1">
+                <h1 className="m-0 text-xl text-pretty">How should {name} answer?</h1>
+                <p className="m-0 text-text-muted">You can change any of this later in Settings.</p>
+              </div>
+              {choice(askingFor(name))}
+              {choice(DETAIL)}
+              {choice(MEDICAL_WORDS)}
+              <Button size="lg" onClick={() => go(3)}>
+                Continue
+              </Button>
+            </>
+          )}
+
+          {current === 3 && (
+            <>
+              <h1 className="m-0 text-xl">One important thing to know</h1>
+              <div className="flex flex-col gap-3 rounded-lg border-(length:--bw) border-solid border-amber-border bg-amber-bg p-5">
+                <p className="m-0">
                   <strong>{name} gives general information, not medical advice.</strong> {name} can
                   help you understand dementia and day-to-day care, but can't diagnose or treat.
                 </p>
-                <p style={{ margin: '0' }}>
+                <p className="m-0">
                   In an emergency, call <strong>111</strong>.
                 </p>
-                <p style={{ margin: '0' }}>
+                <p className="m-0">
                   For health concerns, contact your GP — or call{' '}
                   <strong>Healthline on 0800 611 116</strong>, free, any time of day or night.
                 </p>
               </div>
-              <button
-                onClick={obNext}
-                style={{
-                  minHeight: '54px',
-                  borderRadius: '14px',
-                  border: 'none',
-                  background: 'var(--primary)',
-                  color: 'var(--on-primary)',
-                  fontSize: '1.05rem',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                }}
-                className="hv2"
-              >
-                I understand
-              </button>
-            </>
-          )}
-
-          {obStep === 12 && (
-            <>
-              <h1 style={{ margin: '0', fontSize: '1.45rem' }}>Here's how you've set things up</h1>
-              <p style={{ margin: '-6px 0 0', color: 'var(--text2)' }}>
-                Tap Change to adjust anything.
+              <p className="m-0 text-sm text-text-muted">
+                Text size, dark mode, voice speed and {name}'s style are in Settings whenever you
+                want them.
               </p>
-              <p
-                style={{
-                  margin: '0',
-                  padding: '12px 14px',
-                  borderRadius: '12px',
-                  background: 'var(--tint)',
-                }}
-              >
-                <strong>{name}</strong> will help you, in the style you chose. You can pick a
-                different helper in Settings at any time: {LIFELIKE} are lifelike 3D helpers.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {summary.map(([label, value, n]) => (
-                  <div
-                    key={label}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      minHeight: '54px',
-                      padding: '8px 2px',
-                      borderBottom: 'var(--bw) solid var(--border)',
-                    }}
-                  >
-                    <span style={{ flex: '1', color: 'var(--text2)', fontSize: '.95rem' }}>
-                      {label}
-                    </span>
-                    <span style={{ fontWeight: '600', textAlign: 'right' }}>{value}</span>
-                    <button
-                      onClick={() => obGo(n)}
-                      style={{
-                        minHeight: '40px',
-                        padding: '0 12px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: 'none',
-                        color: 'var(--primary-d)',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                      }}
-                      className="hv3"
-                    >
-                      Change
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={finish}
-                style={{
-                  minHeight: '56px',
-                  borderRadius: '14px',
-                  border: 'none',
-                  background: 'var(--primary)',
-                  color: 'var(--on-primary)',
-                  fontSize: '1.1rem',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                }}
-                className="hv2"
-              >
-                Meet {name} →
-              </button>
+              <Button size="lg" onClick={finish}>
+                I understand — meet {name}
+              </Button>
             </>
           )}
         </div>
-        {showContinue && (
-          <button
-            onClick={obNext}
-            style={{
-              minHeight: '54px',
-              borderRadius: '14px',
-              border: 'none',
-              background: 'var(--primary)',
-              color: 'var(--on-primary)',
-              fontSize: '1.05rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-              boxShadow: 'var(--shadow)',
-            }}
-            className="hv2"
-          >
-            Continue
-          </button>
-        )}
       </div>
     </section>
   );

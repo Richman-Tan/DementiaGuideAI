@@ -7,6 +7,8 @@ import { useAuth } from '../state/AuthContext.jsx';
 import { navigate } from '../state/router.js';
 import { AVATAR_PROFILES, getAvatarProfile } from '../avatar/avatarProfiles.js';
 import { AccessCodeForm } from '../components/AccessCodeForm.jsx';
+import { ChoiceGroup } from '../components/ui/ChoiceGroup.jsx';
+import { askingFor, current, DETAIL, MEDICAL_WORDS, pick, STYLE } from '../lib/answerChoices.js';
 
 const Toggle = ({ label, on, onToggle }) => (
   <button
@@ -232,7 +234,7 @@ function AccountUpgrade({ onLink, showToast }) {
 }
 
 export default function Settings() {
-  const { settings, setSetting, effDark } = useSettings();
+  const { settings, setSetting, setMany, effDark } = useSettings();
   const { clearHistory: wipeConversations, conversationId } = useChat();
   const { showToast, askConfirm } = useUi();
   const auth = useAuth();
@@ -378,6 +380,21 @@ export default function Settings() {
           on={effDark}
           onToggle={() => setSetting('darkMode', !effDark)}
         />
+      </Card>
+
+      <SectionTitle>Answers</SectionTitle>
+      <Card>
+        <div className="flex flex-col gap-5 py-4">
+          {[askingFor(who), DETAIL, MEDICAL_WORDS, STYLE].map((choice) => (
+            <ChoiceGroup
+              key={choice.key}
+              label={choice.label}
+              value={current(choice, settings)}
+              onChange={(value) => setMany(pick(choice, value))}
+              options={choice.options}
+            />
+          ))}
+        </div>
       </Card>
 
       <SectionTitle>Avatar &amp; Audio</SectionTitle>

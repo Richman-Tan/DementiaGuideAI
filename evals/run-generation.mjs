@@ -66,11 +66,13 @@ import {
 } from '../packages/core/rag/providers/claude.ts';
 import { createVoyage, VOYAGE_ATLAS_URL } from '../packages/core/rag/providers/voyage.ts';
 import { createSupabaseSearch } from '../packages/core/rag/providers/supabaseSearch.ts';
+import { LIST_PRICES, PRICES_CACHED_ON } from '../packages/core/rag/prices.ts';
 
 const require = createRequire(import.meta.url);
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { QUESTIONS, questionText } = require('../scripts/eval/questions.js');
-const PRICES = JSON.parse(readFileSync(resolve(ROOT, 'evals/prices.json'), 'utf8'));
+// One price table for the estimate here and for the app's own cost figures.
+const PRICES = { models: LIST_PRICES, cachedOn: PRICES_CACHED_ON };
 
 // ─── Arguments ───────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
@@ -119,7 +121,7 @@ if (!DRY_RUN && !(MAX_USD > 0))
 const PRICE = PRICES.models[MODEL];
 if (!PRICE)
   fail(
-    `no list price for ${MODEL} in evals/prices.json; add it before running, so the spend guard can work`
+    `no list price for ${MODEL} in packages/core/rag/prices.ts; add it before running, so the spend guard can work`
   );
 
 const config = pipelineConfig({

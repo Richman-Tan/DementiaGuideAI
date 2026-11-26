@@ -57,6 +57,7 @@ and the rule-based checks and human labels remain the anchor.
 
 ## Prices
 
-`prices.json` holds list prices for the estimate and the spend guard, with the
-date they were cached and which figures are assumed. Check the pricing page
+`packages/core/rag/prices.ts` holds list prices for the estimate and the spend
+guard, with the date they were cached and which figures are assumed. The app's
+"how this answer was made" panel reads the same table. Check the pricing page
 before relying on a total.

@@ -236,6 +236,7 @@ describe('a spoken turn', () => {
         citations: ANSWER.citations,
         sources: ANSWER.sources,
         safety: false,
+        trace: null,
       },
     ]);
     expect(s.snap).toMatchObject({ phase: 'listening', subtitle: '', pending: '' });
@@ -301,7 +302,12 @@ describe('a spoken turn', () => {
     await s.start();
     await s.say('she has collapsed', WAIT.baseMs);
     await s.lead('Call 111 now.');
-    await s.answer({ text: 'Call 111 now.', lead: 'Call 111 now.', safety: true });
+    await s.answer({
+      text: 'Call 111 now.',
+      lead: 'Call 111 now.',
+      safety: true,
+      trace: { model: 'claude-opus-5-5' },
+    });
     s.world.avatar.audible();
     s.world.avatar.finish();
     await flush();
@@ -312,6 +318,7 @@ describe('a spoken turn', () => {
       citations: [],
       sources: null,
       safety: true,
+      trace: { model: 'claude-opus-5-5' },
     });
   });
 

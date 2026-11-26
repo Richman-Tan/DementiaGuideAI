@@ -473,7 +473,8 @@ const SAFETY_RE =
 export async function realGenerate({ question, settings, history, signal, onToken, onStage }) {
   const opts = { ...mapSettingsToRag(settings), signal };
   const apiHistory = (history || [])
-    .filter((m) => m.text && !m.streaming)
+    // The example conversation is not theirs, and is not sent as if it were.
+    .filter((m) => m.text && !m.streaming && !m.demo)
     .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
   // Drop the just-appended current question — it goes in as the prompt itself.
   if (

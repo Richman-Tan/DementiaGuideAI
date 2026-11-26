@@ -151,6 +151,9 @@ export function mockReply(q, settings, opts = {}) {
   return { text: concise ? generic.short : generic.long, citations: generic.citations, safety: false };
 }
 
+// The example conversation a first-time visitor sees. Every message is marked
+// `demo`: it was never said by this visitor, so it is labelled on screen, kept
+// out of the history sent to the model, and never saved to their account.
 export function seedThread() {
   const r1 = mockReply('How do I manage sundowning?', null);
   const r2 = mockReply('How do I handle aggressive behaviour?', null);
@@ -159,7 +162,7 @@ export function seedThread() {
     { role: 'aria', text: r1.text, citations: r1.citations, safety: false, time: '9:41 am' },
     { role: 'user', text: 'Some evenings he lashes out at me and I get scared. What should I do?', time: '9:44 am' },
     { role: 'aria', text: r2.text, citations: r2.citations, safety: true, time: '9:44 am' }
-  ];
+  ].map((m) => ({ ...m, demo: true }));
 }
 
 export const VOICE_QUESTIONS = QUICK_QUESTIONS;
